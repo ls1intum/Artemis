@@ -1,7 +1,8 @@
-<div class="row justify-content-center">
+<div class="row justify-content-center overflow-hidden">
     <ul>
         <li class="not_participated" [ngClass]="calculateClasses(NOT_PARTICIPATED)">0</li>
         <li
+            class="ms-0"
             [ngClass]="calculateClasses(REVIEWED_INSTRUCTIONS)"
             (click)="navigate()"
             [ngbTooltip]="'artemisApp.assessmentDashboard.readGradingInstructions' | artemisTranslate"
@@ -44,7 +45,7 @@
                 </div>
             </li>
         </ng-container>
-        <li class="progress-bar-li" [ngClass]="calculateClassProgressBar()">
+        <li class="progress-bar-li me-0" [ngClass]="calculateClassProgressBar()">
             <jhi-progress-bar
                 [tooltip]="'artemisApp.assessmentDashboard.evaluateStudentsComplaints' | artemisTranslate"
                 [percentage]="percentageComplaintsProgress"

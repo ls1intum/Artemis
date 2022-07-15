@@ -1,6 +1,6 @@
-import { ComponentFixture, TestBed, fakeAsync } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
-import { BehaviorSubject, of } from 'rxjs';
+import { of } from 'rxjs';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -18,7 +18,6 @@ import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { createTestExercises } from './exam-monitoring-helper';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { EndedExamAction } from 'app/entities/exam-user-activity.model';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exam Monitoring Component', () => {
@@ -201,8 +200,7 @@ describe('Exam Monitoring Component', () => {
         // GIVEN
         const responseFakeExam = { body: exam as Exam } as HttpResponse<Exam>;
         jest.spyOn(examManagementService, 'find').mockReturnValue(of(responseFakeExam));
-        const action = new EndedExamAction();
-        jest.spyOn(examActionService, 'subscribeForLatestExamAction').mockReturnValue(new BehaviorSubject(action));
+        jest.spyOn(examActionService, 'subscribeForLatestExamAction');
 
         // WHEN
         comp.ngOnInit();
