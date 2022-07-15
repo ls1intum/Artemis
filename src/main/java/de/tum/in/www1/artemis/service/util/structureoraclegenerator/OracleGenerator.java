@@ -84,7 +84,7 @@ public class OracleGenerator {
 
             // Initialize the types diff containing various properties as well as methods.
             JavaClassDiff javaClassDiff = new JavaClassDiff(solutionType, templateType);
-            if (javaClassDiff.classesAreEqual()) {
+            if (javaClassDiff.classesAreEqual() || JavaClassDiffSerializer.isElementToIgnore(solutionType)) {
                 continue;
             }
 

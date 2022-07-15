@@ -108,7 +108,7 @@ public class NotificationScheduleService {
             log.debug("Scheduled notify about started exercise after due date for exercise '{}' (#{}) for {}.", exercise.getTitle(), exercise.getId(), exercise.getReleaseDate());
         }
         catch (Exception exception) {
-            log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
+            log.error("Failed to schedule notification for exercise {}", exercise.getId(), exception);
         }
     }
 
@@ -148,7 +148,7 @@ public class NotificationScheduleService {
                     exercise.getAssessmentDueDate());
         }
         catch (Exception exception) {
-            log.error("Failed to schedule notification for exercise " + exercise.getId(), exception);
+            log.error("Failed to schedule notification for exercise {}", exercise.getId(), exception);
         }
     }
 

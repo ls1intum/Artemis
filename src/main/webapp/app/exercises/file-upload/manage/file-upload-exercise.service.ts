@@ -21,7 +21,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      * @param fileUploadExercise that will be sent to the server
      */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
@@ -37,7 +37,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
@@ -83,7 +83,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http

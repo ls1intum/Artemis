@@ -187,7 +187,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
             this.model = JSON.parse(this.submission.model);
         } else {
             this.alertService.closeAll();
-            this.alertService.error('artemisApp.modelingAssessmentEditor.messages.noModel');
+            this.alertService.warning('artemisApp.modelingAssessmentEditor.messages.noModel');
         }
         if ((!this.result?.assessor || this.result.assessor.id === this.userId) && !this.result?.completionDate) {
             this.alertService.closeAll();

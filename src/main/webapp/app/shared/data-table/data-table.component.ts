@@ -72,6 +72,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchNoResultsTranslation Translation string that has the variable {{ length }} in it (default: 'artemisApp.dataTable.search.noResults')
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
+     * @property searchEnabled Flag whether searching is enabled (default: true)
      * @property searchEntityFilterEnabled Flag whether searching should cause a filtering of the entities (default: true)
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
      * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
@@ -93,6 +94,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchNoResultsTranslation = 'artemisApp.dataTable.search.noResults';
     @Input() searchPlaceholderTranslation: string;
     @Input() searchFields: string[] = [];
+    @Input() searchEnabled = true;
     @Input() searchEntityFilterEnabled = true;
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;

@@ -763,7 +763,7 @@ public class GitService {
             pullCommand(git).call();
         }
         catch (GitAPIException ex) {
-            log.error("Cannot pull the repo " + repo.getLocalPath(), ex);
+            log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
     }
