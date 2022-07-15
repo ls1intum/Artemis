@@ -55,6 +55,17 @@ describe('Course management', () => {
             cy.get('#registered-students').contains(username).should('be.visible');
         });
 
+        it('Removes a student manually from the course', () => {
+            const username = artemis.users.getStudentOne().username;
+            artemisRequests.courseManagement.addStudentToCourse(courseId, username);
+            navigationBar.openCourseManagement();
+            courseManagementPage.openStudentOverviewOfCourse(courseId);
+            cy.get('#registered-students').contains(username).should('be.visible');
+            cy.get('#registered-students button[jhideletebutton]').should('be.visible').click();
+            cy.get('.modal #delete').click();
+            cy.get('#registered-students').contains(username).should('not.exist');
+        });
+
         after(() => {
             if (!!courseId) {
                 artemisRequests.courseManagement.deleteCourse(courseId).its('status').should('eq', 200);
