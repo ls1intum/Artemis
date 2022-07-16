@@ -148,6 +148,8 @@ public class ExerciseGroupResource {
             throws URISyntaxException {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
 
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
+
         List<ExerciseGroup> result = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
 
         return ResponseEntity.ok(result);

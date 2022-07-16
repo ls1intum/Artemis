@@ -1043,11 +1043,8 @@ public class ProgrammingExerciseService {
             return true;
         }
         String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
-        if (errorMessageCis != null) {
-            return true;
-        }
+        return errorMessageCis != null;
         // means the project does not exist in version control server and does not exist in continuous integration server
-        return false;
     }
 
     /**

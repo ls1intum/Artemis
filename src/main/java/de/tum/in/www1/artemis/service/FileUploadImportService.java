@@ -40,8 +40,7 @@ public class FileUploadImportService extends ExerciseImportService {
     public FileUploadExercise importFileUploadExercise(final FileUploadExercise templateExercise, FileUploadExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
         FileUploadExercise newExercise = copyFileUploadExerciseBasis(importedExercise);
-        newExercise = fileUploadExerciseRepository.save(newExercise);
-        return newExercise;
+        return fileUploadExerciseRepository.save(newExercise);
     }
 
     /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.

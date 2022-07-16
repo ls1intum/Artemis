@@ -293,14 +293,11 @@ export class ExerciseGroupsComponent implements OnInit {
         examImportModalRef.componentInstance.targetCourseId = this.courseId;
         examImportModalRef.componentInstance.targetExamId = this.examId;
 
-        examImportModalRef.result.then(
-            (exerciseGroups: ExerciseGroup[]) => {
-                if (exerciseGroups) {
-                    this.exerciseGroups = exerciseGroups;
-                    this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
-                }
-            },
-            () => {},
-        );
+        examImportModalRef.result.then((exerciseGroups: ExerciseGroup[]) => {
+            if (exerciseGroups) {
+                this.exerciseGroups = exerciseGroups;
+                this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
+            }
+        });
     }
 }

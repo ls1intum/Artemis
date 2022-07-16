@@ -98,7 +98,6 @@ public class ExamImportService {
     @NotNull
     public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) {
 
-        examAccessService.checkCourseAccessForInstructorElseThrow(targetCourseId);
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
 
         preCheckProgrammingExercisesForShortNameUniqueness(examToCopy.getExerciseGroups(), targetCourse.getShortName());
@@ -124,8 +123,6 @@ public class ExamImportService {
      */
     @NotNull
     public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) {
-
-        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, targetExamId);
 
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
 
@@ -260,7 +257,7 @@ public class ExamImportService {
 
     /**
      * Prepares a Programming Exercise for the import by setting irrelevant data to null.
-     * Additionally, the grading Criteria is loaded and attached to the exercise, as this needs to be released before the import
+     * Additionally, the grading criteria is loaded and attached to the exercise, as this needs to be released before the import
      *
      * @param newExercise      The new exercise which should be prepared for the import
      */

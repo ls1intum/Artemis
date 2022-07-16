@@ -222,20 +222,22 @@ public class ExamResource {
     @PostMapping("/courses/{courseId}/exam-import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
-        log.debug("REST request to create an exam : {}", examToBeImported);
+        log.debug("REST request to import an exam : {}", examToBeImported);
 
         // Step 1: Check if Exam has an ID
         if (examToBeImported.getId() != null) {
             throw new BadRequestAlertException("A imported exam cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
-        // Step 2: Validate the Exam dates
+        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
+
+        // Step 3: Validate the Exam dates
         checkForExamConflictsElseThrow(courseId, examToBeImported);
 
-        // Step 3: Import Exam with Exercises
+        // Step 4: Import Exam with Exercises
         Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
 
-        // Step 4: Set Exam Monitoring
+        // Step 5: Set Exam Monitoring
         if (examCopied.isMonitoring()) {
             examMonitoringScheduleService.scheduleExamActivitySave(examCopied.getId());
         }

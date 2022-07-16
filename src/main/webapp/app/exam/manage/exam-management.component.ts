@@ -148,12 +148,9 @@ export class ExamManagementComponent implements OnInit, OnDestroy {
 
         const importBaseRoute = ['/course-management', this.course.id, 'exams', 'import'];
 
-        examImportModalRef.result.then(
-            (exam: Exam) => {
-                importBaseRoute.push(exam.id);
-                this.router.navigate(importBaseRoute);
-            },
-            () => {},
-        );
+        examImportModalRef.result.then((exam: Exam) => {
+            importBaseRoute.push(exam.id);
+            this.router.navigate(importBaseRoute);
+        });
     }
 }

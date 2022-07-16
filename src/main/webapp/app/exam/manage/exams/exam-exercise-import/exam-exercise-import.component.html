@@ -95,7 +95,7 @@
                             </td>
                             <td>
                                 <input
-                                    *ngIf="exercise.type! !== exerciseType.PROGRAMMING"
+                                    *ngIf="exercise.type !== exerciseType.PROGRAMMING"
                                     class="form-control"
                                     required
                                     type="text"
@@ -104,7 +104,7 @@
                                     [(ngModel)]="exercise.title"
                                 />
                                 <input
-                                    *ngIf="exercise.type! === exerciseType.PROGRAMMING"
+                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
                                     class="form-control"
                                     required
                                     type="text"

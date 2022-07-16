@@ -1267,6 +1267,38 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
+        Exam exam = addExam(course);
+        for (int i = 0; i <= 4; i++) {
+            ModelFactory.generateExerciseGroup(true, exam);
+        }
+        exam.setNumberOfExercisesInExam(5);
+        exam.setMaxPoints(5 * 5);
+        exam = examRepository.save(exam);
+
+        ExerciseGroup modellingGroup = exam.getExerciseGroups().get(0);
+        Exercise modelling = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, modellingGroup);
+        modellingGroup.addExercise(modelling);
+        exerciseRepo.save(modelling);
+
+        ExerciseGroup textGroup = exam.getExerciseGroups().get(1);
+        Exercise text = ModelFactory.generateTextExerciseForExam(textGroup);
+        textGroup.addExercise(text);
+        exerciseRepo.save(text);
+
+        ExerciseGroup fileUploadGroup = exam.getExerciseGroups().get(2);
+        Exercise fileUpload = ModelFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
+        fileUploadGroup.addExercise(fileUpload);
+        exerciseRepo.save(fileUpload);
+
+        ExerciseGroup quizGroup = exam.getExerciseGroups().get(3);
+        Exercise quiz = ModelFactory.generateQuizExerciseForExam(quizGroup);
+        quizGroup.addExercise(quiz);
+        exerciseRepo.save(quiz);
+
+        return exam;
+    }
+
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExamRepository.save(studentExam);

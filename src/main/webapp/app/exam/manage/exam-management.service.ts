@@ -58,10 +58,10 @@ export class ExamManagementService {
      * @param exam The exam with exercises to import.
      */
     import(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertDateFromClient(exam);
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
         return this.http
             .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)));
     }
 
     /**
@@ -103,7 +103,7 @@ export class ExamManagementService {
     findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
         return this.http
             .get<Exam>(`${SERVER_API_URL}api/exams/${examId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)))
             .pipe(
                 tap((res: EntityResponseType) => {
                     if (res.body?.course) {

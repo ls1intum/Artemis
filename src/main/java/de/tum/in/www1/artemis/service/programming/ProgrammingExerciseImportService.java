@@ -261,6 +261,7 @@ public class ProgrammingExerciseImportService {
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
      * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
      * @param updateTemplate if the template files should be updated
+     * @param recreateBuildPlans if the build plans should be recreated
      * @return the imported programming exercise
      */
     public ProgrammingExercise importProgrammingExercise(ProgrammingExercise originalProgrammingExercise, ProgrammingExercise newExercise, boolean updateTemplate,

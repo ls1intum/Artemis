@@ -63,7 +63,7 @@ export class ExamExerciseImportComponent implements OnInit {
     initializeSelectedExercisesAndContainsProgrammingExercisesMaps() {
         // Initialize selectedExercises
         this.exam.exerciseGroups?.forEach((exerciseGroup) => {
-            this.selectedExercises!.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises!));
+            this.selectedExercises.set(exerciseGroup, new Set<Exercise>(exerciseGroup.exercises));
         });
         // Initialize containsProgrammingExercises
         this.exam.exerciseGroups!.forEach((exerciseGroup) => {
@@ -74,8 +74,8 @@ export class ExamExerciseImportComponent implements OnInit {
 
     initializeTitleAndShortNameMap() {
         // The title and short name of the programming exercises are added to the map to display the rejected title and short name to the user
-        this.selectedExercises.forEach((value) => {
-            value.forEach((exercise) => {
+        this.selectedExercises.forEach((exerciseSet) => {
+            exerciseSet.forEach((exercise) => {
                 if (exercise.type === ExerciseType.PROGRAMMING) {
                     this.titleAndShortNameOfProgrammingExercises.set(exercise.id!, [exercise.title!, exercise.shortName!]);
                 }
