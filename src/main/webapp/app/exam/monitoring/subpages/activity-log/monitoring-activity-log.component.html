@@ -102,13 +102,13 @@
         <div *ngSwitchCase="'SAVED_EXERCISE'">
             <span class="badge bg-primary">{{ value.exerciseId }}</span>
             <span class="badge bg-info">{{ value.submissionId }}</span>
-            <span *ngIf="value.forced" class="badge bg-warning">Forced</span>
-            <span *ngIf="value.failed" class="badge bg-danger">Failed</span>
-            <span *ngIf="value.automatically" class="badge bg-success">Automatically</span>
+            <span *ngIf="value.forced" class="badge bg-warning" jhiTranslate="artemisApp.examMonitoring.menu.activity-log.forced">Forced</span>
+            <span *ngIf="value.failed" class="badge bg-danger" jhiTranslate="artemisApp.examMonitoring.menu.activity-log.failed">Failed</span>
+            <span *ngIf="value.automatically" class="badge bg-success" jhiTranslate="artemisApp.examMonitoring.menu.activity-log.automatically">Automatically</span>
         </div>
         <div *ngSwitchCase="'CONNECTION_UPDATED'">
-            <span *ngIf="value.connected" class="badge bg-success">Connected</span>
-            <span *ngIf="!value.connected" class="badge bg-danger">Not connected</span>
+            <span *ngIf="value.connected" class="badge bg-success" jhiTranslate="artemisApp.examMonitoring.menu.activity-log.connected">Connected</span>
+            <span *ngIf="!value.connected" class="badge bg-danger" jhiTranslate="artemisApp.examMonitoring.menu.activity-log.notConnected">Not connected</span>
         </div>
     </container-element>
 </ng-template>
