@@ -263,7 +263,7 @@ public class UserCreationService {
      * @param lastName the updated last name of the user to save
      * @param email the updated email of the user to save
      * @param registrationNumber the updated registration number of the user to save
-     * @return
+     * @return updated user
      */
     public User updateUserLdap(@NotNull User user, String login, String firstName, String lastName, String email, String registrationNumber) {
         user.setLogin(login.toLowerCase());
