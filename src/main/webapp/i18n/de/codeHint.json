@@ -69,12 +69,12 @@
                     "notGenerated": "Bisher wurden keine Code-Hinweise generiert.",
                     "updateHintsButton": {
                         "label": "Code-Hinweise aktualisieren",
-                        "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungsfragmente neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
+                        "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungs Codeschnipsel neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
                         "success": "Code-Hinweise erfolgreich aktualisiert"
                     },
                     "createHintsButton": {
                         "label": "Code-Hinweise erstellen",
-                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungsfragmenten.",
+                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungs Codeschnipseln.",
                         "success": "Code-Hinweise erfolgreich erstellt"
                     },
                     "recreateHintsButton": {
@@ -86,10 +86,10 @@
             }
         },
         "programmingExerciseSolutionEntry": {
-            "simplifiedName": "Lösungsfragment",
-            "created": "Neues Lösungsfragment erstellt mit ID {{ param }}",
-            "updated": "Lösungsfragment aktualisiert mit ID {{ param }}",
-            "deleted": "Lösungsfragment gelöscht mit ID {{ param }}",
+            "simplifiedName": "Lösungs Codeschnipsel",
+            "created": "Neues Lösungs Codeschnipsel erstellt mit ID {{ param }}",
+            "updated": "Lösungs Codeschnipsel aktualisiert mit ID {{ param }}",
+            "deleted": "Lösungs Codeschnipsel gelöscht mit ID {{ param }}",
             "test": "Test",
             "testOnlyForCurrentTask": "Du kannst nur Tests auswählen, die in der aktuellen Task enthalten sind.",
             "file": "Datei",

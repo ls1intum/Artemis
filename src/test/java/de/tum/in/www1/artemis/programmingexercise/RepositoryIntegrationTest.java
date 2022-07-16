@@ -978,6 +978,13 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(logsList.get(0).getArgumentArray()).containsExactly(participation.getId());
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testGetSolutionFileNames() throws Exception {
+        var fileNames = request.get(studentRepoBaseUrl + participation.getId() + "/file-names", HttpStatus.OK, String[].class);
+        assertThat(fileNames).containsExactly("currentFileName");
+    }
+
     private List<FileSubmission> getFileSubmissions(String fileContent) {
         List<FileSubmission> fileSubmissions = new ArrayList<>();
         FileSubmission fileSubmission = new FileSubmission();

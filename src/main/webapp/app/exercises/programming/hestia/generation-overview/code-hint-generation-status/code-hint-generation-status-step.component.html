@@ -4,7 +4,7 @@
         <fa-icon *ngIf="!isPerformed" [icon]="faDotCircle" [ngClass]="currentlySelected ? 'current' : 'unset'"></fa-icon>
     </div>
     <div class="col status-step-content">
-        <span class="row text-center" [ngClass]="currentlySelected ? 'selected-label' : ''" [jhiTranslate]="labelTranslationKey">Current step</span>
+        <span class="row text-center" [class.selected-label]="currentlySelected" [jhiTranslate]="labelTranslationKey">Current step</span>
         <jhi-help-icon placement="auto" [text]="descriptionTranslationKey"></jhi-help-icon>
     </div>
 </div>

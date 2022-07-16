@@ -13,7 +13,7 @@
             },
             "entries": "Entries",
             "removeEntryQuestion": "Are you sure you want to remove this entry?",
-            "noEntries": "This code hint has no solution fragments.",
+            "noEntries": "This code hint has no Solution Code Snippets.",
             "deleted": "Deleted Code Hint with identifier {{ param }}",
             "management": {
                 "title": "Code Hint Management",
@@ -35,30 +35,30 @@
                     "notGenerated": "The coverage report has not been generated yet."
                 },
                 "step3": {
-                    "name": "Solution fragments",
-                    "description": "This steps allows to edit the individual solution fragments from which code hints are generated.",
-                    "notGenerated": "No solution fragments have been generated yet.",
+                    "name": "Solution Code Snippets",
+                    "description": "This steps allows to edit the individual Solution Code Snippets from which code hints are generated.",
+                    "notGenerated": "No Solution Code Snippets have been generated yet.",
                     "createManualFragmentButton": {
                         "label": "Create manual fragment",
-                        "tooltip": "Allows to create a manual solution fragment for a file and test case."
+                        "tooltip": "Allows to create a manual Solution Code Snippets for a file and test case."
                     },
                     "structuralEntriesButton": {
-                        "label": "Generate structural fragments",
+                        "label": "Generate structural snippets",
                         "tooltip": "Generates fragments for structural test cases. Already existing structural fragments will be overwritten."
                     },
                     "behavioralEntriesButton": {
-                        "label": "Generate behavioral fragments",
+                        "label": "Generate behavioral snippets",
                         "tooltip": "Generates fragments for behavioral test cases. Already existing behavioral fragments will be overwritten."
                     },
                     "deleteAllEntriesButton": {
-                        "label": "Delete all fragments",
-                        "tooltip": "Deletes all solution fragments for this exercise.",
-                        "question": "Are you sure to delete all solution fragments for this exercise?",
-                        "title": "Delete all solution fragments",
-                        "success": "Successfully deleted all solution fragments"
+                        "label": "Delete all snippets",
+                        "tooltip": "Deletes all Solution Code Snippets for this exercise.",
+                        "question": "Are you sure to delete all Solution Code Snippets for this exercise?",
+                        "title": "Delete all Solution Code Snippets",
+                        "success": "Successfully deleted all Solution Code Snippets"
                     },
                     "deleteIndividualEntryButton": {
-                        "question": "Are you sure to delete the solution fragment with ID {{ title }}?"
+                        "question": "Are you sure to delete the Solution Code Snippets with ID {{ title }}?"
                     }
                 },
                 "step4": {
@@ -69,27 +69,27 @@
                     "notGenerated": "No code hints have been generated yet.",
                     "updateHintsButton": {
                         "label": "Update code hints",
-                        "tooltip": "Create new code hints by re-assigning the existing solution fragments. The title, description, and content of the existing hint retain.",
+                        "tooltip": "Create new code hints by re-assigning the existing Solution Code Snippets. The title, description, and content of the existing hint retain.",
                         "success": "Code hints have been updated successfully"
                     },
                     "createHintsButton": {
                         "label": "Create code hints",
-                        "tooltip": "Creates code hints from the existing solution fragments.",
+                        "tooltip": "Creates code hints from the existing Solution Code Snippets.",
                         "success": "Code hints have been created successfully"
                     },
                     "recreateHintsButton": {
                         "label": "Recreate code hints",
-                        "tooltip": "Recreate code hints from the existing solution fragments. Existing hints will be overwritten.",
+                        "tooltip": "Recreate code hints from the existing Solution Code Snippets. Existing hints will be overwritten.",
                         "success": "Code hints have been recreated successfully"
                     }
                 }
             }
         },
         "programmingExerciseSolutionEntry": {
-            "simplifiedName": "Solution fragment",
-            "created": "Created solution fragment with ID {{ param }}",
-            "updated": "Updated solution fragment with ID {{ param }}",
-            "deleted": "Deleted solution fragment with ID {{ param }}",
+            "simplifiedName": "Solution Code Snippets",
+            "created": "Created Solution Code Snippets with ID {{ param }}",
+            "updated": "Updated Solution Code Snippets with ID {{ param }}",
+            "deleted": "Deleted Solution Code Snippets with ID {{ param }}",
             "test": "Test",
             "testOnlyForCurrentTask": "You can only select a test case that the currently selected task contains.",
             "file": "File",

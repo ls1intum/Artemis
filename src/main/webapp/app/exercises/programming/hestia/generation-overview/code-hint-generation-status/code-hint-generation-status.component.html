@@ -30,7 +30,7 @@
         [ngClass]="currentStep > 1 ? (!isPerformedByStep.get(GenerationStep.SOLUTION_ENTRIES)! ? 'current' : 'check') : 'unset'"
     ></div>
 
-    <!-- 3. Step: Solution Fragments -->
+    <!-- 3. Step: Solution Code Snippets -->
     <jhi-code-hint-generation-status-step
         [currentlySelected]="currentStep === GenerationStep.SOLUTION_ENTRIES"
         [isPerformed]="isPerformedByStep.get(GenerationStep.SOLUTION_ENTRIES)!"

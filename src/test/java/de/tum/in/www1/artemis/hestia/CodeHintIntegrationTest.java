@@ -138,8 +138,10 @@ public class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitb
         newEntry.setPreviousLine(300);
         newEntry.setCode("New code");
         newEntry.setPreviousCode("New previous code");
-        newEntry.setTestCase(testCases.stream().toList().get(1));
+        var testCase = testCases.stream().toList().get(0);
+        newEntry.setTestCase(testCase);
         var savedNewEntry = solutionEntryRepository.save(newEntry);
+        savedNewEntry.setTestCase(testCase);
         codeHint.setSolutionEntries(new HashSet<>(Set.of(changedEntry, savedNewEntry)));
 
         request.put("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/" + codeHint.getId(), codeHint, HttpStatus.OK);
