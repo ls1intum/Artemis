@@ -56,6 +56,10 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @ManyToOne
     private PlagiarismCase plagiarismCase;
 
+    /**
+     * We maintain a bidirectional relationship manually with submissionA and submissionB
+     */
+    @JsonIgnoreProperties({ "submissionA", "submissionB" })
     @OneToOne(targetEntity = PlagiarismComparison.class)
     @JoinColumn(name = "plagiarism_comparison_id")
     private PlagiarismComparison<E> plagiarismComparison;
