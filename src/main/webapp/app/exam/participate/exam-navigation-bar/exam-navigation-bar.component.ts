@@ -134,6 +134,8 @@ export class ExamNavigationBarComponent implements OnInit {
 
     /**
      * Save the currently active exercise and go to the next exercise.
+     * If it is already in the last exercise or if changeExercise is false,
+     * this method does not go to the next exercise but still saves the current one.
      * @param changeExercise whether to go to the next exercise {boolean}
      */
     saveExercise(changeExercise = true) {
