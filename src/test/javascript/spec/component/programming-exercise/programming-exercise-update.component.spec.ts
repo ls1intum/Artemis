@@ -50,6 +50,7 @@ import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/subm
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { By } from '@angular/platform-browser';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -683,8 +684,37 @@ describe('ProgrammingExercise Management Update Component', () => {
             }
         });
     });
-});
 
+    it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
+        // can be removed after https://github.com/ls1intum/Artemis/pull/5238 has been merged
+        comp.isBamboo = true;
+
+        const entity = new ProgrammingExercise(new Course(), undefined);
+        entity.id = 123;
+        comp.programmingExercise = entity;
+        comp.programmingExercise.course = course;
+        comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise: entity });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const scaCheckbox = debugElement.query(By.css('#field_staticCodeAnalysisEnabled'));
+        expect(scaCheckbox).toBeTruthy();
+        expect(scaCheckbox.nativeElement.disabled).toBeTrue();
+
+        const coverageCheckbox = debugElement.query(By.css('#field_testwiseCoverageEnabled'));
+        expect(coverageCheckbox).toBeTruthy();
+        expect(coverageCheckbox.nativeElement.disabled).toBeTrue();
+    }));
+});
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {
         case ProgrammingLanguage.SWIFT:
