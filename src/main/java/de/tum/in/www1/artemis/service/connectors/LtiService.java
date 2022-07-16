@@ -278,8 +278,7 @@ public class LtiService {
         }
         final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), firstName, fullname, email, true);
 
-        return Optional.of(
-                new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()))));
+        return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
     }
 
     @NotNull
