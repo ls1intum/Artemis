@@ -252,6 +252,19 @@ public class UserCreationService {
         return saveUser(user);
     }
 
+    /**
+     * Update all information for a specific user (including its password) based on the data made available by the LDAP
+     * server, and return the modified user.
+     * This method is typically invoked by the admin user
+     *
+     * @param user the user to save
+     * @param login the updated login of the user to save
+     * @param firstName the updated first name of the user to save
+     * @param lastName the updated last name of the user to save
+     * @param email the updated email of the user to save
+     * @param registrationNumber the updated registration number of the user to save
+     * @return
+     */
     public User updateUserLdap(@NotNull User user, String login, String firstName, String lastName, String email, String registrationNumber) {
         user.setLogin(login.toLowerCase());
         user.setFirstName(firstName);

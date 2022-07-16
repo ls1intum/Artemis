@@ -376,6 +376,13 @@ public class UserService {
         return Optional.empty();
     }
 
+    /**
+     * Searches the (optional) LDAP service for a user with the give registration number (= Matrikelnummer) and updates the Artemis user with
+     * the information provided by the LDAP server.
+     *
+     * @param registrationNumber the matriculation number of the student
+     * @return the user with the given registration number or null if no user with the given registration number was found
+     */
     public Optional<User> updateUserFromLdap(String registrationNumber) {
         if (!StringUtils.hasText(registrationNumber)) {
             return Optional.empty();
