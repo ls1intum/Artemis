@@ -58,14 +58,17 @@
                                     </ng-template>
                                     <ng-template ngx-datatable-cell-template let-row="row" let-value="value">
                                         <span *ngIf="!column.template">{{ value }}</span>
-                                        <container-element *ngIf="column.template" [ngSwitch]="column.template">
+                                        <ng-container *ngIf="column.template" [ngSwitch]="column.template">
                                             <ng-container *ngSwitchCase="'timestampRef'">
                                                 <ng-template *ngTemplateOutlet="timestampRef; context: { timestamp: value }"></ng-template>
                                             </ng-container>
                                             <ng-container *ngSwitchCase="'detailRef'">
                                                 <ng-template *ngTemplateOutlet="detailRef; context: { value: row }"></ng-template>
                                             </ng-container>
-                                        </container-element>
+                                            <ng-container *ngSwitchCase="'typeRef'">
+                                                <ng-template *ngTemplateOutlet="typeRef; context: { type: value }"></ng-template>
+                                            </ng-container>
+                                        </ng-container>
                                     </ng-template>
                                 </ngx-datatable-column>
                             </ngx-datatable>
@@ -81,25 +84,31 @@
     <span>{{ this.artemisDatePipe.transform(timestamp, 'time', true) }}</span>
 </ng-template>
 
+<ng-template #typeRef let-type="type">
+    <span>{{ type }}</span>
+</ng-template>
+
 <ng-template #detailRef let-value="value">
     <container-element [ngSwitch]="value.type">
         <div *ngSwitchCase="'STARTED_EXAM'">
-            <span>Session ID: {{ value.sessionId }}</span>
+            <span class="badge bg-info">{{ value.sessionId }}</span>
         </div>
-        <div *ngSwitchCase="'ENDED_EXAM'"><span>---</span></div>
-        <div *ngSwitchCase="'HANDED_IN_EARLY'"><span>---</span></div>
-        <div *ngSwitchCase="'CONTINUED_AFTER_HAND_IN_EARLY'"><span>---</span></div>
+        <div *ngSwitchCase="'ENDED_EXAM'"></div>
+        <div *ngSwitchCase="'HANDED_IN_EARLY'"></div>
+        <div *ngSwitchCase="'CONTINUED_AFTER_HAND_IN_EARLY'"></div>
         <div *ngSwitchCase="'SWITCHED_EXERCISE'">
-            <span>Exercise ID: {{ value.exerciseId }}</span>
+            <span class="badge bg-primary">{{ value.exerciseId }}</span>
         </div>
         <div *ngSwitchCase="'SAVED_EXERCISE'">
-            <span
-                >Exercise ID: {{ value.exerciseId }} | Submission ID: {{ value.submissionId }} | Forced: {{ value.forced }} | Failed: {{ value.failed }} | Automatically:
-                {{ value.automatically }}</span
-            >
+            <span class="badge bg-primary">{{ value.exerciseId }}</span>
+            <span class="badge bg-info">{{ value.submissionId }}</span>
+            <span *ngIf="value.forced" class="badge bg-warning">Forced</span>
+            <span *ngIf="value.failed" class="badge bg-danger">Failed</span>
+            <span *ngIf="value.automatically" class="badge bg-success">Automatically</span>
         </div>
         <div *ngSwitchCase="'CONNECTION_UPDATED'">
-            <span>Connected: {{ value.connected }}</span>
+            <span *ngIf="value.connected" class="badge bg-success">Connected</span>
+            <span *ngIf="!value.connected" class="badge bg-danger">Not connected</span>
         </div>
     </container-element>
 </ng-template>
