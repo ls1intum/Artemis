@@ -23,7 +23,7 @@ This section describes the process to:
 Create new quiz exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- In the Artemis home page, click on Course Management button |CourseManagementButton|
+- In the Artemis home page, click on Course Management button |CourseManagementButton|.
 
 - Navigate into **Exercises** of a specific course clicking in the exercise button.
 
@@ -34,7 +34,6 @@ Create new quiz exercise
 
     .. figure:: quiz/create-a-quiz-form.png
             :align: center
-
 
     - **Title**: Provide a title for the quiz exercise (The red line means that this field is mandatory).
 
@@ -62,8 +61,10 @@ Create new quiz exercise
 
     - **Should this exercise be included in the course score calculation?**:
 
-        - Yes: the points will be included in the course score calculation
+        - Yes: the points will be included in the course score calculation.
+
         - No: the points will not be included in the course score calculation.
+
         - Bonus: the points will be considered as bonus points.
 
     - **Questions**: There are four ways to add questions to a Quiz Exercise
@@ -76,24 +77,37 @@ Create new quiz exercise
                 :align: center
 
             - Short question title: Provide a short title (Mandatory).
+
             - Points: Assign the value points for this question.
+
             - Scoring type:
 
                 - All or nothing
                 - Proportional with Penalty
                 - Proportional without Penalty
 
-            - Present answer Options in Random order
+            - Present answer Options in Random order.
+
             - Single Choice Mode: When there is just one correct option. This disable the Scoring type.
+
             - Delete icon: To delete the current question.
+
             - Edit View: Enables the text editor to write the quiz statement and its options, hints and explanations.
-            - Edit bar: When the edit view is enable, the format bar allows to provide
-                - Style to the statement text,
+
+            - Edit bar: When the edit view is enable, the format bar allows to provide.
+
+                - Style to the statement text
+
                 - Correct Options [correct]
+
                 - Incorrect Options [wrong]
+
                 - Explanations [exp]
+
                 - Hints [hint]
+
             - Text editor: The quiz statement can be developed with options, hints and explanations.
+
             - Preview View: Enables the student view.
 
         - **Add Drag-And-Drop Question**
@@ -104,25 +118,41 @@ Create new quiz exercise
                 :align: center
 
             - Short question title: Provide a short title.
+
             - Points: Assign the value points for this question.
+
             - Scoring type:
 
                 - All or nothing
+
                 - Proportional with Penalty
+
                 - Proportional without Penalty
 
             - Present Drag Items in Ransom order.
+
             - Delete icon: To delete the current question.
+
             - Edit View: Enables the text editor to write the question statement with explanations and hints.
-            - Edit bar: When the edit view is enable, the format bar allows to provide
-                - Style to the statement text,
+
+            - Edit bar: When the edit view is enable, the format bar allows to provide.
+
+                - Style to the statement text
+
                 - Explanations [exp]
+
                 - Hints [hint]
-            - Text editor: The quiz statement can be developed with hints and explanations
+
+            - Text editor: The quiz statement can be developed with hints and explanations.
+
             - Upload Background: To select and upload the background from the PC files to drag and drop the options over it.
+
             - Add Drag Items:
+
                 - Text items: Type the options.
-                - Image items: Can be uploaded from the PC files
+
+                - Image items: Can be uploaded from the PC files.
+
             - Preview View: Enables the student view.
 
         - **Add Short-Answer Question**
@@ -133,41 +163,64 @@ Create new quiz exercise
                 :align: center
 
             - Short question title: Provide a short title.
+
             - Points: Assign the value points for this question.
+
             - Scoring type:
 
                 - All or nothing
+
                 - Proportional with Penalty
+
                 - Proportional without Penalty
 
             - Match Letter Case
+
             - Match Answers Exactly: This option moves the match slider to 100%.
+
             - Delete icon: To delete the current question.
+
             - Add Spot Option: To add the spot between the text to be fill out.
+
             - Add Answer Option: To provide the answer for each spot.
+
             - Text editor: The quiz statement can be developed with the spots and options.
+
             - Text view button: Enables the text editor to write and edit the question statement.
+
             - Preview View Button: Enables the student view.
 
-
         - **Add Existing Questions**
+
             This is a option that allows to import existing questions in other quiz exercises, courses, exams and from files.
 
             .. figure:: quiz/existing-question.png
                 :align: center
 
             - Source buttons:
+
                 - From a course
+
                 - From an exam
+
                 - From a file
-            - List picker to select specific course, exam or file
+
+            - List picker to select specific course, exam or file.
+
             - Searching bar: to look for the question providing its name or part of it.
+
             - Filter options according the type of questions
+
                 - Drag and Drop Questions
+
                 - Multiple Choice Questions
+
                 - Short answer Questions
+
             - Apply filter button
+
             - List of questions with the title, short title, and Type. In the Add column is possible to select all questions to be imported.
+
             - At the end of the list, click the Add selected Questions Button |AddSelectedQuestionsButton| to import all selected questions.
 
     - **Footer**: In the creation quiz page there is a footer with the following fields:
@@ -177,8 +230,11 @@ Create new quiz exercise
                 :scale: 50
 
         - Error messages
+
         - Warning messages
+
         - Cancel Button
+
         - Save Button
 
 Create Drag and Drop Model Quiz Exercise
@@ -201,20 +257,31 @@ Create Drag and Drop Model Quiz Exercise
             :scale: 50
 
         - Title: provide the title of the Drag and Drop Model Quiz
+
         - Diagram Type: List picker that allows to select among several diagrams
 
             - Class Diagram
+
             - Activity Diagram
+
             - Object Diagram
+
             - Use Case Diagram
+
             - Communication Diagram
+
             - Component Diagram
+
             - Deployment Diagram
+
             - Petri Net
+
             - Syntax Tree
+
             - Flowchart
 
         - Save Button
+
         - Cancel Button
 
     - Click the save button to open Apollon editor
@@ -223,45 +290,52 @@ Create Drag and Drop Model Quiz Exercise
             :align: center
 
         - Title: Allows to edit the tile of the diagram.
-        - Crop image to selection: Allows to download the current selection.
-        - Download Button: To download the selection
-        - Generate a Quiz Exercise Button
-        - Save Button
-        - Modeling field: The items for modeling the diagram will be displayed here.
-        - Elements to Drag and Drop in the Modeling field.
 
+        - Crop image to selection: Allows to download the current selection.
+
+        - Download Button: To download the selection.
+
+        - Generate a Quiz Exercise Button.
+
+        - Save Button.
+
+        - Modeling field: The items for modeling the diagram will be displayed here.
+
+        - Elements to Drag and Drop in the Modeling field.
 
 Import a Quiz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    - In the quiz exercises section, click on the Import a Quiz button |ImportQuizButton|
+    - In the quiz exercises section, click on the Import a Quiz button |ImportQuizButton|.
 
-    - The list of existing quizzes will appear
+    - The list of existing quizzes will appear.
 
         .. figure:: quiz/import-list-quizzes.png
             :align: center
             :scale: 50
 
         - The searching bar: Allows to look for a specific quiz by tipping its name or part of it.
+
         - The list of quizzes: Whit their ID, title, course and and indicator if they are exam questions.
+
         - By clicking the Import Button |ImportButton| opens the quiz editor with the existing questions. Here is possible to edit all parameter such as in the **Create new quiz exercise**.
 
 Export a Quiz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-    - In the quiz exercises section, click on the Export Quiz Exercises button |ExportQuizExerciseButton|
-
-    - The list of quizzes will be shown
+    - In the quiz exercises section, click on the Export Quiz Exercises button |ExportQuizExerciseButton| and the list of quizzes will be shown
 
         .. figure:: quiz/export-quizzes-list.png
             :align: center
             :scale: 50
 
         - Select te quizzes for being exported in the Export Column.
+
         - The Export Button |ExportButton| will download the quiz in a JSON file.
 
 Resolve a quiz exercise
 --------
+
     - In the Artemis Homepage, if there is a quiz exercise as a current exercise, will be possible to see it from the course overview or inside any course.
 
         .. figure:: quiz/current-quiz-exercise.png
@@ -271,9 +345,13 @@ Resolve a quiz exercise
     - The current exercise box will show:
 
         - The name of the quiz
+
         - The button to start the quiz
+
         - The category
+
         - The message if the quiz is active
+
         - The due date
 
     - To start the quiz, the student must press the Open quiz button |OpenQuizButton|.
@@ -293,20 +371,27 @@ Resolve a quiz exercise
     - The quiz page is compose by:
 
         - Number and title of the question
+
         - Points for solving that question
+
         - The quiz statement
 
         - Options:
 
             - Options with circles means one choice could be correct.
+
             - Options with squares means multiple options could be correct.
 
         - In the footer:
 
-            - Number of questions and overall points
-            - Time left to complete the quiz
+            - Number of questions and overall points.
+
+            - Time left to complete the quiz.
+
             - Last time saved: The quiz will save all changes after they occur.
-            - Connection status
+
+            - Connection status.
+
             - Submit button: To allow student submit the quiz before the time ends.
 
         - In case of Drag and Drop questions, the items to be drag and drop in the option spots will be available in the right side.
@@ -328,8 +413,6 @@ Resolve a quiz exercise
         .. figure:: quiz/solution-drag-and-drop.png
             :align: center
             :scale: 40
-
-
 
 .. |CourseManagementButton| image:: quiz/CourseManagementButton.png
     :scale: 50
