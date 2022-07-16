@@ -68,9 +68,11 @@ public class TestwiseCoverageService {
         Map<String, Set<CoverageFileReport>> fileReportsByTestName = new HashMap<>();
         coverageReports.forEach(coveragePerTestDTO -> {
 
+            // file reports for the current test case
+            Set<CoverageFileReport> testCoverageReports = new HashSet<>();
             for (var pathDTO : coveragePerTestDTO.getCoveredPathsPerTestDTOs()) {
 
-                // the file reports for the current test case
+                // the file reports for the current test case and path
                 Set<CoverageFileReport> fileCoverageReports = new HashSet<>();
                 for (var fileDTO : pathDTO.getCoveredFilesPerTestDTOs()) {
                     var coverageEntriesPerFile = Arrays.stream(fileDTO.getCoveredLinesWithRanges().split(",")).map(optionalLineRange -> {
@@ -99,12 +101,13 @@ public class TestwiseCoverageService {
                     fileReport.setTestwiseCoverageEntries(coverageEntriesPerFile);
                     fileCoverageReports.add(fileReport);
                 }
-
-                // extract the test case name from the uniformPath
-                String[] split = coveragePerTestDTO.getUniformPath().split("/");
-                String receivedTestCaseName = split[split.length - 1];
-                fileReportsByTestName.put(receivedTestCaseName, fileCoverageReports);
+                testCoverageReports.addAll(fileCoverageReports);
             }
+
+            // extract the test case name from the uniformPath
+            String[] split = coveragePerTestDTO.getUniformPath().split("/");
+            String receivedTestCaseName = split[split.length - 1];
+            fileReportsByTestName.put(receivedTestCaseName, testCoverageReports);
         });
 
         return fileReportsByTestName;
@@ -141,7 +144,8 @@ public class TestwiseCoverageService {
 
         fileReportByTestCaseName.forEach((testCaseName, fileReports) -> {
             // retrieve the test matching the extracted test case name
-            var optionalTestCase = testCases.stream().filter(testCase -> testCaseName.equals(testCase.getTestName())).findFirst();
+            var optionalTestCase = testCases.stream()
+                    .filter(testCase -> testCaseName.equals(testCase.getTestName()) || testCaseName.replace("()", "").equals(testCase.getTestName())).findFirst();
             if (optionalTestCase.isEmpty()) {
                 log.error("No test case with name {} could be found when matching with the testwise coverage", testCaseName);
                 return;
@@ -210,8 +214,8 @@ public class TestwiseCoverageService {
             var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
             var result = new HashMap<String, Integer>();
             solutionFiles.forEach((filePath, value) -> {
-                // do not count lines for non-java files
-                if (!filePath.endsWith(".java")) {
+                // do not count lines for non-java/kotlin files
+                if (!(filePath.endsWith(".java") || filePath.endsWith(".kt"))) {
                     return;
                 }
                 var lineCount = value.split("\n").length + 1;
