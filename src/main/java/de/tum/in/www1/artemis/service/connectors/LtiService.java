@@ -324,7 +324,7 @@ public class LtiService {
     }
 
     /**
-     * Save the LTO outcome url
+     * Save the LTI outcome url
      *
      * @param user      the user for which the lti outcome url should be saved
      * @param exercise  the exercise
