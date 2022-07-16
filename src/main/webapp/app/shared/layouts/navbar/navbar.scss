@@ -8,10 +8,42 @@ a:not(.btn):hover {
     text-decoration: none !important;
 }
 
+#navbar-icon-menu {
+    display: flex;
+    flex-direction: row;
+    gap: 30px;
+    justify-content: flex-end;
+    color: var(--navbar-dark-color);
+    align-items: center;
+    transition: color 0.2s;
+    padding: 0 10px 0 20px;
+
+    > *:hover {
+        color: var(--bs-body-color);
+    }
+
+    &.evenly {
+        justify-content: space-evenly;
+        gap: 5px;
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    &.in-menu {
+        padding-top: 5px;
+        padding-bottom: 5px;
+    }
+}
+
+#account-menu {
+    padding: 0;
+}
+
 .jh-navbar {
     background-color: var(--artemis-dark);
     white-space: nowrap;
     padding: 0.2em 1em;
+    color: var(--navbar-dark-color);
 
     .profile-image {
         margin: -10px 0px;
@@ -31,22 +63,30 @@ a:not(.btn):hover {
     }
 
     ul.navbar-nav {
+        flex-direction: row;
+        padding-right: 10px;
+
         .nav-item {
             margin-left: 1.5rem;
         }
 
-        .navbar-bottom-bar {
-            display: flex;
-            gap: 5px;
-            justify-content: space-evenly;
-            align-items: center;
-            flex-wrap: wrap;
+        &.vertical {
+            flex-direction: column;
+        }
+    }
 
-            > .nav-item {
-                flex: 0 1 auto;
+    @media screen and (min-width: 480px) {
+        ul.navbar-nav:not(.vertical) {
+            justify-content: flex-end;
+
+            .nav-item:first-child {
                 margin-left: 0;
             }
         }
+    }
+
+    .nav-link {
+        color: var(--navbar-dark-color);
     }
 
     a.nav-link {
@@ -92,12 +132,14 @@ a:not(.btn):hover {
             flex-wrap: nowrap;
             font-size: 18px;
             height: 50px;
+            gap: 10px;
+            justify-content: flex-start;
+            flex: 1;
         }
 
         .toggler-wrapper {
-            flex: 1;
             display: flex;
-            justify-content: end;
+            justify-content: flex-end;
             align-items: center;
 
             .toggler {
@@ -110,6 +152,29 @@ a:not(.btn):hover {
                 }
             }
         }
+    }
+}
+
+.jh-navbar.expanded {
+    flex-direction: row;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+
+    .navbar-nav {
+        flex-direction: row;
+
+        .nav-link {
+            padding-right: 0.5rem;
+            padding-left: 0.5rem;
+        }
+    }
+
+    .navbar-collapse {
+        display: flex !important;
+    }
+
+    .jh-logo-container .toggler-wrapper {
+        display: none;
     }
 }
 

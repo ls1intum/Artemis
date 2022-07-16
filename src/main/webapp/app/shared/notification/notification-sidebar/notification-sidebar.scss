@@ -1,10 +1,12 @@
-:host {
-    white-space: nowrap;
-}
-
 .light-button {
     border: 0;
     background-color: transparent;
+    color: var(--navbar-dark-color);
+    transition: color 0.2s;
+}
+
+.light-button:hover {
+    color: var(--bs-body-color);
 }
 
 .notification-overlay {
@@ -42,8 +44,10 @@
     #notification-sidebar-container {
         height: calc(100vh - 85px);
         overflow-y: auto;
+        overflow-x: hidden;
         .notification-item {
             cursor: pointer;
+            white-space: normal;
             &:nth-child(even) {
                 background-color: var(--notification-sb-even-child-bg);
             }

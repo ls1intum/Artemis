@@ -413,7 +413,7 @@
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
-            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java-Gradle-projects with non-sequential test runs.",
+            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",

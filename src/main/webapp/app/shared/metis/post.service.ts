@@ -2,11 +2,11 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
 import { Post } from 'app/entities/metis/post.model';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { PostingService } from 'app/shared/metis/posting.service';
 import { DisplayPriority, PostContextFilter } from 'app/shared/metis/metis.util';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<Post>;
 type EntityArrayResponseType = HttpResponse<Post[]>;
@@ -26,8 +26,8 @@ export class PostService extends PostingService<Post> {
      * @return {Observable<EntityResponseType>}
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(post);
-        return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        const copy = this.convertPostingDateFromClient(post);
+        return this.http.post<Post>(`${this.resourceUrl}${courseId}/posts`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -80,7 +80,7 @@ export class PostService extends PostingService<Post> {
                 params,
                 observe: 'response',
             })
-            .pipe(map(this.convertDateArrayFromServer));
+            .pipe(map(this.convertPostResponseArrayDatesFromServer));
     }
 
     /**
@@ -99,8 +99,8 @@ export class PostService extends PostingService<Post> {
      * @return {Observable<EntityResponseType>}
      */
     update(courseId: number, post: Post): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(post);
-        return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts/${post.id}`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        const copy = this.convertPostingDateFromClient(post);
+        return this.http.put<Post>(`${this.resourceUrl}${courseId}/posts/${post.id}`, copy, { observe: 'response' }).pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -113,7 +113,7 @@ export class PostService extends PostingService<Post> {
     updatePostDisplayPriority(courseId: number, postId: number, displayPriority: DisplayPriority): Observable<EntityResponseType> {
         return this.http
             .put(`${this.resourceUrl}${courseId}/posts/${postId}/display-priority`, {}, { params: { displayPriority }, observe: 'response' })
-            .pipe(map(this.convertDateFromServer));
+            .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -133,8 +133,10 @@ export class PostService extends PostingService<Post> {
      * @return {Observable<HttpResponse<void>>}
      */
     computeSimilarityScoresWithCoursePosts(tempPost: Post, courseId: number): Observable<EntityArrayResponseType> {
-        const copy = this.convertDateFromClient(tempPost);
-        return this.http.post<Post[]>(`${this.resourceUrl}${courseId}/posts/similarity-check`, copy, { observe: 'response' }).pipe(map(this.convertDateArrayFromServer));
+        const copy = this.convertPostingDateFromClient(tempPost);
+        return this.http
+            .post<Post[]>(`${this.resourceUrl}${courseId}/posts/similarity-check`, copy, { observe: 'response' })
+            .pipe(map(this.convertPostResponseArrayDatesFromServer));
     }
 
     /**
@@ -142,12 +144,12 @@ export class PostService extends PostingService<Post> {
      * @param   {HttpResponse<Post[]>} res
      * @return  {HttpResponse<Post[]>}
      */
-    convertDateArrayFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
+    convertPostResponseArrayDatesFromServer(res: HttpResponse<Post[]>): HttpResponse<Post[]> {
         if (res.body) {
             res.body.forEach((post: Post) => {
-                post.creationDate = post.creationDate ? dayjs(post.creationDate) : undefined;
+                post.creationDate = convertDateFromServer(post.creationDate);
                 post.answers?.forEach((answer: AnswerPost) => {
-                    answer.creationDate = answer.creationDate ? dayjs(answer.creationDate) : undefined;
+                    answer.creationDate = convertDateFromServer(answer.creationDate);
                 });
             });
         }

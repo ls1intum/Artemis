@@ -17,6 +17,8 @@ import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/program
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
 
+const DEFAULT_DISPLAY_THRESHOLD = 3;
+
 @Component({
     selector: 'jhi-exercise-hint-update',
     templateUrl: './exercise-hint-update.component.html',
@@ -66,6 +68,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
             this.exercise = exercise;
             exerciseHint.exercise = exercise;
             this.exerciseHint = exerciseHint;
+            this.exerciseHint.displayThreshold = this.exerciseHint.displayThreshold ?? DEFAULT_DISPLAY_THRESHOLD;
 
             this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exercise.id!).subscribe((tasks) => {
                 this.tasks = tasks;

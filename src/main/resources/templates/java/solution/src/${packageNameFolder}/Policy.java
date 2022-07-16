@@ -2,6 +2,9 @@ package ${packageName};
 
 public class Policy {
 
+    /**
+     * @oracleIgnore
+     */
     private static final int DATES_SIZE_THRESHOLD = 10;
 
     private Context context;

@@ -6,8 +6,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TranslateService } from '@ngx-translate/core';
-import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { RouterTestingModule } from '@angular/router/testing';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
@@ -30,6 +29,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;

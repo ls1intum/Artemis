@@ -32,12 +32,20 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AssessmentDashboardService;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
+import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
+import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
+import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -219,7 +227,7 @@ public class ExamResource {
 
         checkExamForWorkingTimeConflictsElseThrow(exam);
 
-        checkExamPointsElseThrow(exam);
+        checkExamPointsAndCorrectionRoundsElseThrow(exam);
     }
 
     /**
@@ -240,8 +248,8 @@ public class ExamResource {
 
     /**
      * Checks that the visible/start/end-dates are present and in the correct order.
-     * For RealExams: visibleDate < startDate < endDate
-     * For TestExams: visibleDate <= startDate < endDate
+     * For real exams: visibleDate < startDate < endDate
+     * For test exam: visibleDate <= startDate < endDate
      *
      * @param exam the exam to be checked
      */
@@ -263,7 +271,7 @@ public class ExamResource {
     }
 
     /**
-     * Validates the working time, which should be equal (RealExams) or smaller / equal (TestExams) to the
+     * Validates the working time, which should be equal (real exams) or smaller / equal (test exam) to the
      * difference between start- and endDate.
      *
      * @param exam the exam to be checked
@@ -278,7 +286,7 @@ public class ExamResource {
         }
         else if (exam.getWorkingTime() != differenceStartEndDate) {
             /*
-             * Set the working time to the time difference for RealExams, if not done by the client. This can be an issue if the working time calculation in the client is not
+             * Set the working time to the time difference for real exams, if not done by the client. This can be an issue if the working time calculation in the client is not
              * performed (e.g. for Cypress-2E2-Tests). However, since the working time currently depends on the start- and end-date, we can do a server-side assignment
              */
             exam.setWorkingTime(differenceStartEndDate);
@@ -290,9 +298,17 @@ public class ExamResource {
      *
      * @param exam the exam to be checked
      */
-    private void checkExamPointsElseThrow(Exam exam) {
+    private void checkExamPointsAndCorrectionRoundsElseThrow(Exam exam) {
         if (exam.getMaxPoints() <= 0) {
             throw new BadRequestAlertException("An exam cannot have negative points.", ENTITY_NAME, "negativePoints");
+        }
+
+        if (exam.isTestExam() && exam.getNumberOfCorrectionRoundsInExam() != 0) {
+            throw new BadRequestAlertException("A testExam has to have 0 correction rounds", ENTITY_NAME, "correctionRoundViolation");
+        }
+
+        if (!exam.isTestExam() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
+            throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
     }
 

@@ -31,6 +31,7 @@
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
+                        <!-- New Badge -->
                         <span class="position-absolute top-0 end-0 translate-middle-y badge rounded-pill bg-info">New</span>
                     </a>
 
@@ -160,7 +161,13 @@
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
-                    <span class="me-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                    <span
+                        class="me-1"
+                        *ngIf="
+                            (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
+                            programmingExercise.testwiseCoverageEnabled
+                        "
+                    >
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"

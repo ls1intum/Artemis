@@ -32,6 +32,24 @@
                         <option *ngFor="let task of tasks" [ngValue]="task">{{ task.taskName }}</option>
                     </select>
                 </div>
+
+                <div class="form-group">
+                    <div>
+                        <label class="label-narrow" jhiTranslate="artemisApp.exerciseHint.displayThreshold" for="field_description">Display Threshold</label>
+                        <jhi-help-icon placement="auto" text="artemisApp.exerciseHint.displayThresholdTooltip"></jhi-help-icon>
+                    </div>
+                    <input
+                        type="number"
+                        required
+                        min="0"
+                        max="100"
+                        class="form-control"
+                        name="displayThreshold"
+                        id="field_displayThreshold"
+                        [(ngModel)]="exerciseHint.displayThreshold"
+                    />
+                </div>
+
                 <div class="form-group hint-form__editor-wrapper">
                     <jhi-markdown-editor
                         [markdown]="exerciseHint.content"
