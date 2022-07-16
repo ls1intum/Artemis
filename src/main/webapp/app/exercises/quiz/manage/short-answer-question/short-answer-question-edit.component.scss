@@ -40,13 +40,14 @@
         .slider-container {
             display: flex;
             justify-content: center;
-            width: 20%;
+            width: 45%;
 
             .slider-with-label {
-                width: 70%;
+                width: 80%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                min-width: 50px;
 
                 input[type='range'] {
                     cursor: pointer;
