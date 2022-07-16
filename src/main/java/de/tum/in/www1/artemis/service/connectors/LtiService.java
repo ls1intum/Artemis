@@ -201,13 +201,10 @@ public class LtiService {
             throw new InternalAuthenticationServiceException("Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.");
         }
 
+        final String email = launchRequest.getLis_person_contact_email_primary();
         if (StringUtils.isEmpty(launchRequest.getLis_person_contact_email_primary())) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
-
-        final String email = launchRequest.getLis_person_contact_email_primary();
-        final String username = createUsernameFromLaunchRequest(launchRequest);
-        final String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
         // 2. Case: Existing mapping for LTI user id
         // Check if there is an existing mapping for the user ID
@@ -217,6 +214,9 @@ public class LtiService {
             // Authenticate
             return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
         }
+
+        final String username = createUsernameFromLaunchRequest(launchRequest);
+        final String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
 
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
         // Check if lookup by email is enabled
@@ -251,9 +251,11 @@ public class LtiService {
                 newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             }
             else {
-                String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest;
-                log.error(message);
-                throw new InternalAuthenticationServiceException(message);
+                newUser = userCreationService.createUser(username, null, groups, "", fullname, email, null, null, Constants.DEFAULT_LANGUAGE, true);
+                /*
+                 * TODO: This needs to be generic String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest;
+                 * log.error(message); throw new InternalAuthenticationServiceException(message);
+                 */
             }
             newUser.setActivationKey(null);
             userRepository.save(newUser);
@@ -291,7 +293,9 @@ public class LtiService {
             username = USER_PREFIX_U4I.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         }
         else {
-            throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest);
+            username = launchRequest.getLis_person_contact_email_primary();
+            // TODO: This should be generic!
+            // throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest);
         }
 
         return username;
@@ -311,6 +315,7 @@ public class LtiService {
             user.setGroups(groups);
             userCreationService.saveUser(user);
 
+            // TODO: Why isn't this done for edx users? Should this not be done for ALL lti users?
             if (!user.getLogin().startsWith("edx")) {
                 // try to sync with authentication service for actual users (not for edx users)
                 try {
