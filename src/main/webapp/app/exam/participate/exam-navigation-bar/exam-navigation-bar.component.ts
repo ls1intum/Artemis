@@ -137,18 +137,19 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param changeExercise whether to go to the next exercise {boolean}
      */
     saveExercise(changeExercise = true) {
-        const newIndex = this.exerciseIndex + 1;
         const submission = ExamParticipationService.getSubmissionForExercise(this.exercises[this.exerciseIndex]);
         // we do not submit programming exercises on a save
         if (submission && this.exercises[this.exerciseIndex].type !== ExerciseType.PROGRAMMING) {
             submission.submitted = true;
         }
-        if (!changeExercise || newIndex > this.exercises.length - 1) {
-            // we are either in the last exercise or we do not want to change exercise, so "change" active exercise to current in order to trigger a save
-            this.changePage(false, this.exerciseIndex, true);
-        } else {
-            this.changePage(false, newIndex, true);
+
+        // If changeExercise is false, set newIndex to the current index to trigger a save without navigating to a new exercise.
+        let newIndex = changeExercise ? this.exerciseIndex + 1 : this.exerciseIndex;
+        if (newIndex > this.exercises.length - 1) {
+            // we are in the last exercise, if out of range "change" active exercise to current in order to trigger a save
+            newIndex = this.exerciseIndex;
         }
+        this.changePage(false, newIndex, true);
     }
 
     isProgrammingExercise() {
@@ -204,6 +205,8 @@ export class ExamNavigationBarComponent implements OnInit {
      * Notify parent component when user wants to hand in early
      */
     handInEarly() {
+        // Save the current exercise without navigating to a new exercise so that the student does not lose data
+        // even if they do not confirm handing in early and re-open the exam page.
         this.saveExercise(false);
         this.onExamHandInEarly.emit();
     }
