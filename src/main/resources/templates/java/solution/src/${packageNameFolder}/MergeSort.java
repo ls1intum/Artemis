@@ -13,7 +13,10 @@ public class MergeSort implements SortStrategy {
         mergesort(input, 0, input.size() - 1);
     }
 
-    // Recursive merge sort method
+    /**
+     * Recursive merge sort method
+     * @oracleIgnore
+     */
     private void mergesort(List<Date> input, int low, int high) {
         if (high - low < 1) {
             return;
@@ -24,7 +27,10 @@ public class MergeSort implements SortStrategy {
         merge(input, low, mid, high);
     }
 
-    // Merge method
+    /**
+     * Merge method
+     * @oracleIgnore
+     */
     private void merge(List<Date> input, int low, int middle, int high) {
 
         Date[] temp = new Date[high - low + 1];

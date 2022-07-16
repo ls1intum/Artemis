@@ -128,12 +128,12 @@ public class LtiResource {
             ltiService.handleLaunchRequest(launchRequest, exercise);
         }
         catch (InternalAuthenticationServiceException ex) {
-            log.error("Error during LTI launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest, ex);
+            log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, ex.getMessage());
             return;
         }
         catch (Exception ex) {
-            log.error("Error during LTI launch request of exercise " + exercise.getTitle() + " for launch request: " + launchRequest, ex);
+            log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
             response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, ex.getMessage());
             return;
         }

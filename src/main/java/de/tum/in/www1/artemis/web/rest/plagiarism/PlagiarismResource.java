@@ -118,7 +118,7 @@ public class PlagiarismResource {
             comparisonA = this.plagiarismService.anonymizeComparisonForStudent(comparisonA, studentLogin);
         }
         comparisonA.getSubmissionA().setPlagiarismComparison(null);
-        comparisonB.getSubmissionB().setPlagiarismComparison(null);
+        comparisonA.getSubmissionB().setPlagiarismComparison(null);
         return ResponseEntity.ok(comparisonA);
     }
 
