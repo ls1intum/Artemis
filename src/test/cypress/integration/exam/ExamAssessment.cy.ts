@@ -131,7 +131,7 @@ describe('Exam assessment', () => {
                 });
             });
 
-            it('Assess a modeling exercise submission', () => {
+            it.skip('Assess a modeling exercise submission', () => {
                 cy.login(tutor, '/course-management/' + course.id + '/exams');
                 examManagement.openAssessmentDashboard(exam.id!, 60000);
                 startAssessing();

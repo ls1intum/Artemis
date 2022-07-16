@@ -41,7 +41,7 @@ describe('Course management', () => {
             });
         });
 
-        it('Adds a student manually to the course', () => {
+        it.skip('Adds a student manually to the course', () => {
             const username = artemis.users.getStudentOne().username;
             navigationBar.openCourseManagement();
             courseManagementPage.openStudentOverviewOfCourse(courseId);
@@ -57,7 +57,7 @@ describe('Course management', () => {
             cy.get('#registered-students').contains(username).should('be.visible');
         });
 
-        it('Removes a student manually from the course', () => {
+        it.skip('Removes a student manually from the course', () => {
             const user = artemis.users.getStudentOne();
             const username = user.username;
             artemisRequests.courseManagement.addStudentToCourse(course, user);
