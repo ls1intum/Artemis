@@ -119,6 +119,27 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
+    it('should change to overview page', () => {
+        jest.spyOn(comp.onPageChanged, 'emit');
+        jest.spyOn(comp, 'setExerciseButtonStatus');
+
+        expect(comp.exerciseIndex).toEqual(0);
+
+        const expectedExerciseIndex = -1;
+        const force = false;
+
+        comp.changePage(true, 2, force);
+
+        expect(comp.exerciseIndex).toBe(expectedExerciseIndex);
+        expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
+        expect(comp.onPageChanged.emit).toHaveBeenCalledWith({
+            overViewChange: true,
+            exercise: undefined,
+            forceSave: force,
+        });
+        expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(expectedExerciseIndex);
+    });
+
     it('should not change the exercise with invalid index', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
         jest.spyOn(comp, 'setExerciseButtonStatus');
