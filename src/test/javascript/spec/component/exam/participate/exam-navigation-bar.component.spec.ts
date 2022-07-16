@@ -60,7 +60,15 @@ describe('Exam Navigation Bar Component', () => {
                     } as StudentParticipation,
                 ],
             } as Exercise,
-            { id: 1, type: ExerciseType.TEXT } as Exercise,
+            {
+                id: 1,
+                type: ExerciseType.TEXT,
+                studentParticipations: [
+                    {
+                        submissions: [{ id: 4, isSynced: true, submitted: false } as Submission],
+                    } as StudentParticipation,
+                ],
+            } as Exercise,
             { id: 2, type: ExerciseType.MODELING } as Exercise,
         ];
     });
@@ -145,16 +153,45 @@ describe('Exam Navigation Bar Component', () => {
         expect(comp.isProgrammingExercise()).toBeFalse();
     });
 
-    it('save the exercise with changeExercise', () => {
+    it('should save the exercise with changeExercise', () => {
         jest.spyOn(comp, 'changePage');
         const changeExercise = true;
 
+        const oldExerciseIndex = comp.exerciseIndex;
         comp.saveExercise(changeExercise);
 
-        expect(comp.changePage).toHaveBeenCalled();
+        expect(comp.changePage).toHaveBeenCalledOnce();
+        expect(comp.changePage).toHaveBeenCalledWith(false, oldExerciseIndex + 1, true);
     });
 
-    it('save the exercise without changeExercise', () => {
+    it('should save the exercise with changeExercise for last exercise', () => {
+        jest.spyOn(comp, 'changePage');
+        const changeExercise = true;
+
+        comp.exerciseIndex = comp.exercises.length - 1;
+        const oldExerciseIndex = comp.exerciseIndex;
+        comp.saveExercise(changeExercise);
+
+        expect(comp.changePage).toHaveBeenCalledOnce();
+        expect(comp.changePage).toHaveBeenCalledWith(false, oldExerciseIndex, true);
+    });
+
+    it('should mark submission as submitted when saving the exercise', () => {
+        jest.spyOn(comp, 'changePage');
+        const changeExercise = true;
+
+        comp.exerciseIndex = 1;
+        const oldExerciseIndex = comp.exerciseIndex;
+
+        expect(comp.exercises[oldExerciseIndex]!.studentParticipations![0].submissions!.last()?.submitted).toBeFalse();
+        comp.saveExercise(changeExercise);
+        expect(comp.exercises[oldExerciseIndex]!.studentParticipations![0].submissions!.last()?.submitted).toBeTrue();
+
+        expect(comp.changePage).toHaveBeenCalledOnce();
+        expect(comp.changePage).toHaveBeenCalledWith(false, oldExerciseIndex + 1, true);
+    });
+
+    it('should save the exercise without changeExercise', () => {
         jest.spyOn(comp, 'changePage');
         const changeExercise = false;
 
