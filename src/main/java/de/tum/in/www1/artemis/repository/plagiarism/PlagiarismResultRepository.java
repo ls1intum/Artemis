@@ -32,6 +32,7 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
      * Store the given TextPlagiarismResult in the database.
      *
      * @param result TextPlagiarismResult to store in the database.
+     * @return the saved result
      */
     default PlagiarismResult<?> savePlagiarismResultAndRemovePrevious(PlagiarismResult<?> result) {
         Optional<PlagiarismResult<?>> optionalPreviousResult = findFirstByExerciseIdOrderByLastModifiedDateDesc(result.getExercise().getId());
@@ -40,6 +41,10 @@ public interface PlagiarismResultRepository extends JpaRepository<PlagiarismResu
         return result;
     }
 
+    /**
+     * prepare the result for sending it as JSON to the client by removing unnecessary values
+     * @param plagiarismResult the result for which a couple of related objects should be set to null
+     */
     default void prepareResultForClient(PlagiarismResult<?> plagiarismResult) {
         if (plagiarismResult != null) {
             for (var comparison : plagiarismResult.getComparisons()) {

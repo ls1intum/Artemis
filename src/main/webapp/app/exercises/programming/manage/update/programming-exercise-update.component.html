@@ -513,7 +513,7 @@
                         type="checkbox"
                         name="testwiseCoverageEnabled"
                         id="field_testwiseCoverageEnabled"
-                        [disabled]="!!programmingExercise.sequentialTestRuns"
+                        [disabled]="!!programmingExercise.sequentialTestRuns || !!programmingExercise.id"
                         [(ngModel)]="programmingExercise.testwiseCoverageEnabled"
                         checked
                     />
