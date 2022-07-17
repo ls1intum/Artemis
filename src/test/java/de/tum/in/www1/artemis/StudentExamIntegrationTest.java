@@ -9,7 +9,9 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.*;
 
 import java.time.Duration;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -38,6 +40,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService;
 import de.tum.in.www1.artemis.repository.*;
@@ -2084,4 +2087,58 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
                 StudentExam.class);
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testConductionOfTestExam_successful() throws Exception {
+        User student1 = users.get(0);
+        Exam testExamWithExercises = database.addTestExam(course1);
+        testExamWithExercises = database.addTextModelingProgrammingExercisesToExam(testExamWithExercises, false, true);
+        testExamWithExercises.setMaxPoints(19);
+        testExamWithExercises.setVisibleDate(ZonedDateTime.now().minusHours(1));
+        testExamWithExercises.setStartDate(ZonedDateTime.now().minusMinutes(30));
+        testExamWithExercises.setWorkingTime(6000);
+        testExamWithExercises = examRepository.save(testExamWithExercises);
+
+        // Step 1: Call /start
+        StudentExam studentExamForStart = request.get("/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/start", HttpStatus.OK, StudentExam.class);
+
+        assertEquals(studentExamForStart.getUser(), student1);
+        assertEquals(studentExamForStart.getExam().getId(), testExamWithExercises.getId());
+        assertThat(studentExamForStart.isStarted()).isNull();
+        assertThat(studentExamForStart.isSubmitted()).isFalse();
+        assertThat(studentExamForStart.getStartedDate()).isNull();
+        assertThat(studentExamForStart.getSubmissionDate()).isNull();
+        assertThat(studentExamForStart.getExercises()).hasSize(0);
+
+        // Step 2: Call /conduction to get the exam with exercises and started date set
+        StudentExam studentExamForConduction = request.get(
+                "/api/courses/" + course1.getId() + "/exams/" + testExamWithExercises.getId() + "/student-exams/" + studentExamForStart.getId() + "/conduction", HttpStatus.OK,
+                StudentExam.class);
+
+        assertEquals(studentExamForStart.getId(), studentExamForConduction.getId());
+        assertEquals(studentExamForConduction.getUser(), student1);
+        assertEquals(studentExamForConduction.getExam().getId(), testExamWithExercises.getId());
+        assertThat(studentExamForConduction.isStarted()).isTrue();
+        assertThat(studentExamForConduction.isSubmitted()).isFalse();
+        // Acceptance range, startedDate is to be set to now()
+        assertThat(ZonedDateTime.now().minusSeconds(10).isBefore(studentExamForConduction.getStartedDate())).isTrue();
+        assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentExamForConduction.getStartedDate())).isTrue();
+        assertThat(studentExamForConduction.getSubmissionDate()).isNull();
+        assertThat(studentExamForConduction.getExercises()).hasSize(3);
+
+        Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(Set.of(studentExamForConduction));
+        final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
+                exercisesOfUser.get(student1));
+        for (StudentParticipation studentParticipation : studentParticipations) {
+            // Acceptance range, initializationDate is to be set to now()
+            assertThat(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipation.getInitializationDate())).isTrue();
+            assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipation.getInitializationDate())).isTrue();
+
+            studentExamForConduction
+                    .setStartedDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+            studentParticipation
+                    .setInitializationDate(ZonedDateTime.ofInstant(studentParticipation.getInitializationDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+            assertThat(studentParticipation.getInitializationDate()).isEqualTo(studentExamForConduction.getStartedDate());
+        }
+    }
 }
