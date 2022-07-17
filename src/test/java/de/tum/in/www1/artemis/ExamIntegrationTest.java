@@ -2654,21 +2654,13 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testImportExamWithExercises_successfulWithExercises() throws Exception {
         Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
         exam.setId(null);
-        ExerciseGroup programmingGroup = exam.getExerciseGroups().get(4);
-        ProgrammingExercise programming = ModelFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
-        programmingGroup.addExercise(programming);
-        programming = exerciseRepo.save(programming);
-
-        doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
-        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
-        // doReturn(programming).when(programmingExerciseImportService).importProgrammingExercise(any(), any(), eq(false), eq(false));
 
         final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
         assertThat(received.getId()).isNotNull();
         assertThat(received.getTitle()).isEqualTo(exam.getTitle());
         assertThat(received.getCourse()).isEqualTo(course1);
         assertThat(received.getCourse()).isEqualTo(exam.getCourse());
-        assertThat(received.getExerciseGroups().size()).isEqualTo(5);
+        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
     }
 
     @Test
