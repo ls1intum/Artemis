@@ -263,7 +263,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_asPartOfExamImport() throws Exception {
-        programmingExerciseTestService.importProgrammingExercise_asPartOfExamImport();
+        programmingExerciseTestService.importProgrammingExerciseasPartOfExamImport();
     }
 
     @Test

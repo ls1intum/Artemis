@@ -742,11 +742,10 @@ public class ProgrammingExerciseTestService {
     }
 
     /**
-     * Method to test the correct import of a programming exercise into an exan during an exam import
+     * Method to test the correct import of a programming exercise into an exam during an exam import
      * For more Information see {@link de.tum.in.www1.artemis.service.exam.ExamImportService}
-     * @throws Exception
      */
-    public void importProgrammingExercise_asPartOfExamImport() throws Exception {
+    public void importProgrammingExerciseasPartOfExamImport() throws Exception {
         // Setup existing exam and exercise
         Exam sourceExam = database.addExamWithExerciseGroup(course, true);
 

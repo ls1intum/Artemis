@@ -164,14 +164,14 @@ public class ExamImportService {
      */
     private void copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam) {
         // Only exercise groups with at least one exercise should be imported.
-        exerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
+        List<ExerciseGroup> filteredExerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
         // If no exercise group is existent, we can aboard the process
-        if (exerciseGroupsToCopy.size() == 0) {
+        if (exerciseGroupsToCopy.isEmpty()) {
             return;
         }
 
         // Create a copy of each exercise group and add them to the exam
-        exerciseGroupsToCopy.forEach(exerciseGroupToCopy -> {
+        filteredExerciseGroupsToCopy.forEach(exerciseGroupToCopy -> {
             ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
             exerciseGroupCopied.setTitle(exerciseGroupToCopy.getTitle());
             exerciseGroupCopied.setIsMandatory(exerciseGroupToCopy.getIsMandatory());
@@ -185,12 +185,13 @@ public class ExamImportService {
 
         // We need to take the exercise groups from the exam to ensure the correct connection exam <-> exercise group
         // subList(from,to) needs the arguments in the following way: [from, to)
-        int to = targetExam.getExerciseGroups().size();
-        int from = to - exerciseGroupsToCopy.size();
-        List<ExerciseGroup> exerciseGroupsCopied = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId()).getExerciseGroups().subList(from, to);
+        int indexTo = targetExam.getExerciseGroups().size();
+        int indexFrom = indexTo - filteredExerciseGroupsToCopy.size();
+        List<ExerciseGroup> exerciseGroupsCopied = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId()).getExerciseGroups().subList(indexFrom,
+                indexTo);
 
         for (int index = 0; index < exerciseGroupsCopied.size(); index++) {
-            addExercisesToExerciseGroup(exerciseGroupsToCopy.get(index), exerciseGroupsCopied.get(index));
+            addExercisesToExerciseGroup(filteredExerciseGroupsToCopy.get(index), exerciseGroupsCopied.get(index));
         }
     }
 

@@ -277,7 +277,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_asPartOfExamImport() throws Exception {
         doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
-        programmingExerciseTestService.importProgrammingExercise_asPartOfExamImport();
+        programmingExerciseTestService.importProgrammingExerciseasPartOfExamImport();
     }
 
     @Test
