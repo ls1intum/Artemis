@@ -44,8 +44,6 @@ public class ExamImportService {
 
     private final ExerciseGroupRepository exerciseGroupRepository;
 
-    private final ExamAccessService examAccessService;
-
     private final QuizExerciseRepository quizExerciseRepository;
 
     private final QuizExerciseImportService quizExerciseImportService;
@@ -66,17 +64,16 @@ public class ExamImportService {
 
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
-            ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, QuizExerciseRepository quizExerciseRepository,
-            QuizExerciseImportService importQuizExercise, CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1,
-            ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseImportService programmingExerciseImportService,
-            FileUploadExerciseRepository fileUploadExerciseRepository, FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository) {
+            ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
+            CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
+            ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
+            FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.examRepository = examRepository;
         this.exerciseGroupRepository = exerciseGroupRepository;
-        this.examAccessService = examAccessService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.quizExerciseImportService = importQuizExercise;
         this.courseRepository = courseRepository;
