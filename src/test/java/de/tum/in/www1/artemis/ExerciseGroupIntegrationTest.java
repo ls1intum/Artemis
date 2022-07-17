@@ -10,7 +10,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -26,8 +25,6 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -43,12 +40,6 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Autowired
     private ExamRepository examRepository;
-
-    @SpyBean
-    private ProgrammingExerciseService programmingExerciseService;
-
-    @SpyBean
-    private ProgrammingExerciseImportService programmingExerciseImportService;
 
     private Course course1;
 
@@ -96,6 +87,8 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN, ExerciseGroup.class);
         request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.FORBIDDEN, ExerciseGroup.class);
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/import-exercise-group", List.of(exerciseGroup), ExerciseGroup.class,
+                HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -160,25 +153,21 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
-        ExerciseGroup programmingGroup = targetExam.getExerciseGroups().get(4);
-        ProgrammingExercise programming = ModelFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
-        programmingGroup.addExercise(programming);
-        programming = exerciseRepository.save(programming);
 
         final List<ExerciseGroup> listExpected = targetExam.getExerciseGroups();
 
-        doReturn(false).when(programmingExerciseService).preCheckProjectExistsOnVCSOrCI(any(), any());
-        doReturn(programming).when(programmingExerciseImportService).importProgrammingExercise(any(), any(), eq(false), eq(false));
-
         final List<ExerciseGroup> listReceived = request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + targetExam.getId() + "/import-exercise-group",
                 listExpected, ExerciseGroup.class, HttpStatus.OK);
-        assertThat(listReceived.size()).isEqualTo(10);
+        assertThat(listReceived.size()).isEqualTo(9);
 
+        // We import into the same exam -> double the exercise groups
         listExpected.addAll(listExpected);
 
+        // The first 5 should be the old ones
         for (int i = 0; i <= 4; i++) {
             assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
         }
+        // The last 4
         for (int i = 5; i <= 9; i++) {
             assertThat(listReceived.get(i).getId()).isNotNull();
             assertThat(listReceived.get(i).getId()).isNotEqualTo(listExpected.get(i).getId());
@@ -188,7 +177,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     public void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
@@ -256,9 +245,10 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
         programmingGroup.addExercise(programming);
         exerciseRepository.save(programming);
 
-        doReturn(true).when(programmingExerciseService).preCheckProjectExistsOnVCSOrCI(any(), any());
+        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
-        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", programmingGroup, ExerciseGroup.class,
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/import-exercise-group", List.of(programmingGroup), ExerciseGroup.class,
                 HttpStatus.BAD_REQUEST);
     }
 }

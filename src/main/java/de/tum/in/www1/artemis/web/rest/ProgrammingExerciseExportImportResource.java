@@ -111,7 +111,7 @@ public class ProgrammingExerciseExportImportResource {
      * This will import the whole exercise, including all base build plans (template, solution) and repositories
      * (template, solution, test). Referenced entities, s.a. the test cases or the hints will get cloned and assigned
      * a new id. For a concrete list of what gets copied and what not have a look
-     * at {@link ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)}
+     * at {@link ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)}
      *
      * @param sourceExerciseId   The ID of the original exercise which should get imported
      * @param newExercise        The new exercise containing values that should get overwritten in the imported exercise, s.a. the title or difficulty
@@ -119,9 +119,7 @@ public class ProgrammingExerciseExportImportResource {
      * @param updateTemplate     Option determining whether the template files should be updated with the most recent template version
      * @return The imported exercise (200), a not found error (404) if the template does not exist, or a forbidden error
      * (403) if the user is not at least an instructor in the target course.
-     * @see ProgrammingExerciseImportService#importProgrammingExerciseBasis(ProgrammingExercise, ProgrammingExercise)
-     * @see ProgrammingExerciseImportService#importBuildPlans(ProgrammingExercise, ProgrammingExercise)
-     * @see ProgrammingExerciseImportService#importRepositories(ProgrammingExercise, ProgrammingExercise)
+     * @see ProgrammingExerciseImportService#importProgrammingExercise(ProgrammingExercise, ProgrammingExercise, boolean, boolean)
      */
     @PostMapping(IMPORT)
     @PreAuthorize("hasRole('EDITOR')")

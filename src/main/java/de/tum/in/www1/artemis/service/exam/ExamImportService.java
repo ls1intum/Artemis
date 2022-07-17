@@ -6,10 +6,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.validation.constraints.NotNull;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.*;
@@ -29,8 +25,6 @@ import de.tum.in.www1.artemis.web.rest.errors.ExamConfigurationException;
 
 @Service
 public class ExamImportService {
-
-    private final Logger log = LoggerFactory.getLogger(ExamImportService.class);
 
     private final TextExerciseImportService textExerciseImportService;
 
@@ -92,7 +86,6 @@ public class ExamImportService {
      * @param targetCourseId the course to which the exam should be imported
      * @return the copied Exam with Exercise Groups and Exercises
      */
-    @NotNull
     public Exam importExamWithExercises(Exam examToCopy, long targetCourseId) {
 
         Course targetCourse = courseRepository.findByIdElseThrow(targetCourseId);
@@ -118,7 +111,6 @@ public class ExamImportService {
      * @param courseId             the associated course of the exam
      * @return a List of all Exercise Groups of the target exam
      */
-    @NotNull
     public List<ExerciseGroup> importExerciseGroupsWithExercisesToExistingExam(List<ExerciseGroup> exerciseGroupsToCopy, long targetExamId, long courseId) {
 
         Course targetCourse = courseRepository.findByIdElseThrow(courseId);
@@ -171,24 +163,48 @@ public class ExamImportService {
      * @param targetExam           the nex exam to which the new exerciseGroups should be linked
      */
     private void copyExerciseGroupsWithExercisesToExam(List<ExerciseGroup> exerciseGroupsToCopy, Exam targetExam) {
-        // Copy each exerciseGroup containing exercises
-        exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).forEach(exerciseGroupToCopy -> {
-            // Helper Method to copy the single Exercise Group and the exercises
-            copySingleExerciseGroupWithExercises(exerciseGroupToCopy, targetExam);
+        // Only exercise groups with at least one exercise should be imported.
+        exerciseGroupsToCopy = exerciseGroupsToCopy.stream().filter(exerciseGroup -> !exerciseGroup.getExercises().isEmpty()).toList();
+        // If no exercise group is existent, we can aboard the process
+        if (exerciseGroupsToCopy.size() == 0) {
+            return;
+        }
+
+        // Create a copy of each exercise group and add them to the exam
+        exerciseGroupsToCopy.forEach(exerciseGroupToCopy -> {
+            ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
+            exerciseGroupCopied.setTitle(exerciseGroupToCopy.getTitle());
+            exerciseGroupCopied.setIsMandatory(exerciseGroupToCopy.getIsMandatory());
+            targetExam.addExerciseGroup(exerciseGroupCopied);
         });
+
+        /*
+         * for (ExerciseGroup exerciseGroup : exerciseGroupsCopied) { targetExam.addExerciseGroup(exerciseGroup); }
+         */
+        examRepository.save(targetExam);
+
+        // We need to take the exercise groups from the exam to ensure the correct connection exam <-> exercise group
+        // subList(from,to) needs the arguments in the following way: [from, to)
+        int to = targetExam.getExerciseGroups().size();
+        int from = to - exerciseGroupsToCopy.size();
+        List<ExerciseGroup> exerciseGroupsCopied = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId()).getExerciseGroups().subList(from, to);
+
+        for (int index = 0; index < exerciseGroupsCopied.size(); index++) {
+            addExercisesToExerciseGroup(exerciseGroupsToCopy.get(index), exerciseGroupsCopied.get(index));
+        }
     }
 
     /**
-     * Helper method to create a copy of the given ExerciseGroups and its Exercises
+     * Helper method to create a copy of the given Exercises within one given exercise group and attaching them to the
+     * given new exercise groups
      *
      * @param exerciseGroupToCopy the exercise group to copy
-     * @param targetExam          the already copied exam to attach to the exercise group
+     * @param exerciseGroupCopied the copied exercise group, i.e. the ones attached to the new exam
      */
-    private void copySingleExerciseGroupWithExercises(ExerciseGroup exerciseGroupToCopy, Exam targetExam) {
-        // Create a new ExerciseGroup with the same name and boolean:mandatory
-        ExerciseGroup exerciseGroupCopied = copyExerciseGroupWithTitleAndIsMandatory(exerciseGroupToCopy, targetExam);
+    private void addExercisesToExerciseGroup(ExerciseGroup exerciseGroupToCopy, ExerciseGroup exerciseGroupCopied) {
         // Copy each exercise within the existing Exercise Group
         exerciseGroupToCopy.getExercises().forEach(exerciseToCopy -> {
+
             // We need to set the new Exercise Group to the old exercise, so the new exercise group is correctly set for the new exercise
             exerciseToCopy.setExerciseGroup(exerciseGroupCopied);
             Exercise exerciseCopied = null;
@@ -206,7 +222,6 @@ public class ExamImportService {
 
                 case TEXT -> {
                     final Optional<TextExercise> optionalOriginalTextExercise = textExerciseRepository.findByIdWithExampleSubmissionsAndResults(exerciseToCopy.getId());
-                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalTextExercise.isEmpty()) {
                         break;
                     }
@@ -227,7 +242,6 @@ public class ExamImportService {
 
                 case FILE_UPLOAD -> {
                     final Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseToCopy.getId());
-                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalFileUploadExercise.isEmpty()) {
                         break;
                     }
@@ -236,7 +250,6 @@ public class ExamImportService {
 
                 case QUIZ -> {
                     final Optional<QuizExercise> optionalOriginalQuizExercise = quizExerciseRepository.findById(exerciseToCopy.getId());
-                    // We do not want to abort the whole exam import process, we only skip the relevant exercise
                     if (optionalOriginalQuizExercise.isEmpty()) {
                         break;
                     }
@@ -244,7 +257,7 @@ public class ExamImportService {
                 }
 
             }
-            // Attach the newly created Exercise to the new Exercise Group
+            // Attach the newly created Exercise to the new Exercise Group only if the importing was sucessful
             if (exerciseCopied != null) {
                 exerciseGroupCopied.addExercise(exerciseCopied);
             }
@@ -268,34 +281,11 @@ public class ExamImportService {
         newExercise.setAssessmentDueDate(null);
         newExercise.setExampleSolutionPublicationDate(null);
 
-        // TODO: explain why this is actually necessary in this case (we don't do it in the "normal" single import)
-
-        // Fetch grading criterion into exercise
+        // Fetch grading criterion into exercise. For course exercises, this is performed before sending the exercise to the client.
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(newExercise.getId());
         newExercise.setGradingCriteria(gradingCriteria);
 
         newExercise.forceNewProjectKey();
-    }
-
-    /**
-     * Creates a new Exercise Group with the title and boolean:isMandatory of the provided Exercise Group
-     *
-     * @param exerciseGroupToCopy Exercise Group, which title and isMandatory should be copied
-     * @param targetExam          The Exam to which the new exerciseGroup should be linked
-     * @return a new Exercise Group with the same title and isMandatory
-     */
-    private ExerciseGroup copyExerciseGroupWithTitleAndIsMandatory(ExerciseGroup exerciseGroupToCopy, Exam targetExam) {
-        ExerciseGroup exerciseGroupCopied = new ExerciseGroup();
-        exerciseGroupCopied.setTitle(exerciseGroupToCopy.getTitle());
-        exerciseGroupCopied.setIsMandatory(exerciseGroupToCopy.getIsMandatory());
-
-        // The Exam needs to be reloaded, so the changes within the last exercise group in {@link ExamImportService#copySingleExerciseGroupWithExercises} are updated
-        targetExam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(targetExam.getId());
-        targetExam.addExerciseGroup(exerciseGroupCopied);
-        targetExam = examRepository.save(targetExam);
-        // When saving, an id is assigned to the exercise group. To retrieve the created exercise group, we get the last exercise group from the list
-        exerciseGroupCopied = targetExam.getExerciseGroups().get(targetExam.getExerciseGroups().size() - 1);
-        return exerciseGroupCopied;
     }
 
     /**

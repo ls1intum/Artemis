@@ -21,7 +21,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -49,8 +48,6 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
@@ -118,12 +115,6 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Autowired
     private ObjectMapper objectMapper;
-
-    @SpyBean
-    private ProgrammingExerciseService programmingExerciseService;
-
-    @SpyBean
-    private ProgrammingExerciseImportService programmingExerciseImportService;
 
     private List<User> users;
 
@@ -2668,8 +2659,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         programmingGroup.addExercise(programming);
         programming = exerciseRepo.save(programming);
 
-        doReturn(false).when(programmingExerciseService).preCheckProjectExistsOnVCSOrCI(any(), any());
-        doReturn(programming).when(programmingExerciseImportService).importProgrammingExercise(any(), any(), eq(false), eq(false));
+        doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        // doReturn(programming).when(programmingExerciseImportService).importProgrammingExercise(any(), any(), eq(false), eq(false));
 
         final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
         assertThat(received.getId()).isNotNull();
@@ -2709,7 +2701,8 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         programmingGroup.addExercise(programming);
         exerciseRepo.save(programming);
 
-        doReturn(true).when(programmingExerciseService).preCheckProjectExistsOnVCSOrCI(any(), any());
+        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
 
         request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
                 .andExpect(status().isBadRequest())

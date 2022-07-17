@@ -143,7 +143,7 @@ public class ExerciseGroupResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/import-exercise-group")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
             throws URISyntaxException {
         log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);

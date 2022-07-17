@@ -3,7 +3,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -276,6 +276,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void importProgrammingExercise_asPartOfExamImport() throws Exception {
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
         programmingExerciseTestService.importProgrammingExercise_asPartOfExamImport();
     }
 

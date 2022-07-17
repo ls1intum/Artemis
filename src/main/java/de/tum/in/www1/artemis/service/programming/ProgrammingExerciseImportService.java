@@ -256,7 +256,8 @@ public class ProgrammingExerciseImportService {
     }
 
     /**
-     * Method to process the import of a ProgrammingExercise. TODO Add more documentation
+     * Method to import a programming exercise, including all base build plans (template, solution) and repositories (template, solution, test).
+     * Referenced entities, s.a. the test cases or the hints will get cloned and assigned a new id.
      *
      * @param originalProgrammingExercise the Programming Exercise which should be used as a blueprint
      * @param newExercise The new exercise already containing values which should not get copied, i.e. overwritten
