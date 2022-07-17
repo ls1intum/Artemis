@@ -23,7 +23,7 @@ describe('Exam date verification', () => {
         cy.login(artemis.users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id!, artemis.users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course, artemis.users.getStudentOne());
         });
     });
 

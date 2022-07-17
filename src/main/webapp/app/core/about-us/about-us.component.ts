@@ -33,16 +33,16 @@ export class AboutUsComponent implements OnInit {
         ['grading', {}],
         ['assessment', {}],
         ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
-        ['notifications', {}],
+        ['notifications', { notificationsURL: 'https://docs.artemis.ase.in.tum.de/user/notifications' }],
         ['teamExercises', {}],
-        ['lectures', {}],
+        ['lectures', { lecturesUrl: 'https://docs.artemis.ase.in.tum.de/user/lectures/' }],
         ['integratedMarkdownEditor', {}],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
         ['learningAnalytics', {}],
         ['scalable', {}],
-        ['highUserSatisfaction', {}],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.ase.in.tum.de/user/user-experience/' }],
         ['customizable', {}],
-        ['openSource', {}],
+        ['openSource', { openSourceUrl: 'https://docs.artemis.ase.in.tum.de/dev/open-source/' }],
     ];
 
     readonly SERVER_API_URL = SERVER_API_URL;
