@@ -1791,6 +1791,21 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
+    public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        exam.getExerciseGroups().get(exerciseGroupNumber).addExercise(programmingExercise);
+        examRepository.save(exam);
+
+        return programmingExercise;
+    }
+
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,

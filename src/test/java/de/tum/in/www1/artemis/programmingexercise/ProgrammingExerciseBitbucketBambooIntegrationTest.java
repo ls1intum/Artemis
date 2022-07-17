@@ -275,6 +275,12 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void importProgrammingExercise_asPartOfExamImport() throws Exception {
+        programmingExerciseTestService.importProgrammingExercise_asPartOfExamImport();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void copyRepository_testConflictError() throws Exception {
         for (int i = 1; i <= 12; i++) {
             bitbucketRequestMockProvider.mockUserExists("student" + i);

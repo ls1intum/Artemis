@@ -37,6 +37,7 @@ import org.eclipse.jgit.treewalk.CanonicalTreeParser;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -61,6 +63,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultDTO;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabException;
 import de.tum.in.www1.artemis.service.programming.JavaTemplateUpgradeService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeature;
 import de.tum.in.www1.artemis.service.scheduled.AutomaticProgrammingExerciseCleanupService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -149,6 +152,9 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private UrlService urlService;
+
+    @SpyBean
+    private ProgrammingExerciseService programmingExerciseService;
 
     public Course course;
 
@@ -736,6 +742,69 @@ public class ProgrammingExerciseTestService {
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
                 .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
+    }
+
+    // TEST
+    public void importProgrammingExercise_asPartOfExamImport() throws Exception {
+        // Setup existing exam and exercise
+        Exam sourceExam = database.addExamWithExerciseGroup(course, true);
+
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToExam(sourceExam, 0);
+        sourceExercise.setStaticCodeAnalysisEnabled(false);
+        database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addHintsToExercise(sourceExercise);
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        // Setup to be imported exam and exercise
+        Exam targetExam = ModelFactory.generateExam(course);
+        ExerciseGroup targetExerciseGroup = ModelFactory.generateExerciseGroup(true, targetExam);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, course);
+        // Exam Exercise has no course
+        exerciseToBeImported.setCourse(null);
+        exerciseToBeImported.setExerciseGroup(targetExerciseGroup);
+        targetExerciseGroup.addExercise(exerciseToBeImported);
+        // The Id of the sourceExercise is used to retrieve it from the database
+        exerciseToBeImported.setId(sourceExercise.getId());
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+
+        doReturn(false).when(programmingExerciseService).preCheckProjectExistsOnVCSOrCI(any(), any());
+        // Import the exam
+        final Exam received = request.postWithResponseBody("/api/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
+
+        // Extract the programming exercise from the exam
+        Exercise exerciseReceived = received.getExerciseGroups().get(0).getExercises().stream().findFirst().get();
+        // Additonally, get the programming exercise from the server
+        var importedExercise = database.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) exerciseReceived);
+
+        assertThat(importedExercise.getId()).isNotNull();
+        assertThat(importedExercise.getTitle()).isEqualTo(exerciseReceived.getTitle());
+        // Check server-exercise
+        assertThat(importedExercise.getTitle()).isEqualTo(exerciseToBeImported.getTitle());
+        assertThat(importedExercise.getShortName()).isEqualTo(exerciseToBeImported.getShortName());
+        assertThat(importedExercise.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
+        // Check exercise send to client after importing
+        assertThat(exerciseReceived.getTitle()).isEqualTo(exerciseToBeImported.getTitle());
+        assertThat(exerciseReceived.getShortName()).isEqualTo(exerciseToBeImported.getShortName());
+        assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
+
+        // Assert correct creation of test cases
+        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
+        assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
+                .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+
+        // Assert correct creation of hints
+        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
+        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     // TEST

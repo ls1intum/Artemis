@@ -79,7 +79,7 @@ describe('Exam Management Service Tests', () => {
     it('should import an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
 
         // WHEN
         service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -114,7 +114,7 @@ describe('Exam Management Service Tests', () => {
         // GIVEN
         const mockExam: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
         const expected: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
-        const mockCopyExam = ExamManagementService.convertDateFromClient(expected);
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
         // WHEN
         service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
 
