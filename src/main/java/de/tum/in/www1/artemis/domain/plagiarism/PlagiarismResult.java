@@ -41,6 +41,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     /**
      * Duration of the plagiarism detection run in milliseconds.
      */
+    @Column(name = "duration")
     protected long duration;
 
     /**
