@@ -114,9 +114,19 @@ describe('CourseExamDetailComponent', () => {
 
         component.exam.startDate = currentDateMinus60;
         component.exam.endDate = currentDateMinus35;
-        component.exam.workingTime = 25 * 60;
+        component.exam.workingTime = 5 * 60;
         component.exam.examStudentReviewStart = currentDateMinus30;
         component.exam.examStudentReviewEnd = currentDateMinus20;
+        component.ngOnInit();
+        component.updateExamState();
+        expect(component.examState).toBe('CLOSED');
+
+        component.exam.testExam = true;
+        component.exam.startDate = currentDateMinus35;
+        component.exam.endDate = currentDateMinus30;
+        component.exam.workingTime = 3 * 60;
+        component.ngOnInit();
+        component.updateExamState();
         expect(component.examState).toBe('CLOSED');
     });
 

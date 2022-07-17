@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -86,7 +87,7 @@ public class ExamAccessService {
         checkExamBelongsToCourseElseThrow(courseId, exam);
 
         if (!examId.equals(exam.getId())) {
-            throw new AccessForbiddenException("The provided examId does not match with the examId of the studentExam");
+            throw new BadRequestAlertException("The provided examId does not match with the examId of the studentExam", ENTITY_NAME, "idMismatch");
         }
 
         // Check that the exam is visible
@@ -128,7 +129,7 @@ public class ExamAccessService {
         Exam exam = studentExam.getExam();
 
         if (!examId.equals(exam.getId())) {
-            throw new AccessForbiddenException("The provided examId does not match with the examId of the studentExam");
+            throw new BadRequestAlertException("The provided examId does not match with the examId of the studentExam", ENTITY_NAME, "examIdMismatch");
         }
 
         if (!exam.isTestExam()) {

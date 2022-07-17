@@ -272,7 +272,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Determine the default working time by computing the duration between start and end date of the exam
-        Integer defaultWorkingTime = exam.getWorkingTime();
+        int defaultWorkingTime = exam.getWorkingTime();
 
         // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
         List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();

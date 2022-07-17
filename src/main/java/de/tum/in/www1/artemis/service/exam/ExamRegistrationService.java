@@ -83,7 +83,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration of students is only allowed for RealExams");
+            throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
@@ -150,7 +150,7 @@ public class ExamRegistrationService {
      */
     public void registerStudentToExam(Course course, Exam exam, User student) {
         if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration of students is only allowed for RealExams");
+            throw new AccessForbiddenException("Registration of students is only allowed for real exams");
         }
 
         exam.addRegisteredUser(student);
@@ -178,7 +178,7 @@ public class ExamRegistrationService {
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
-            throw new AccessForbiddenException("Self-Registration is only allowed for TestExams");
+            throw new AccessForbiddenException("Self-Registration is only allowed for test exams");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
@@ -190,7 +190,7 @@ public class ExamRegistrationService {
 
             AuditEvent auditEvent = new AuditEvent(currentUser.getLogin(), Constants.ADD_USER_TO_EXAM, "TestExam=" + exam.getTitle());
             auditEventRepository.add(auditEvent);
-            log.info("User {} has self-registered to the TestExam {} with id {}", currentUser.getLogin(), exam.getTitle(), exam.getId());
+            log.info("User {} has self-registered to the test exam {} with id {}", currentUser.getLogin(), exam.getTitle(), exam.getId());
         }
     }
 
@@ -203,7 +203,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Deletion of users is only allowed for RealExams");
+            throw new AccessForbiddenException("Deletion of users is only allowed for real exams");
         }
 
         exam.removeRegisteredUser(student);
@@ -247,7 +247,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Unregistration is only allowed for RealExams");
+            throw new AccessForbiddenException("Unregistration is only allowed for real exams");
         }
 
         // remove all registered students
@@ -280,7 +280,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+            throw new AccessForbiddenException("Registration is only allowed for real exams");
         }
 
         Map<String, Object> userData = new HashMap<>();
