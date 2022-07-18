@@ -69,6 +69,9 @@ export class NotificationSidebarComponent implements OnInit {
     ngOnInit(): void {
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
+                // Check if we have a newer notification read date in session storage to prevent marking old notifications as new on a rerender
+                // If we have it, use the latest of both dates
+
                 const sessionLastNotificationReadRaw = this.sessionStorageService.retrieve(LAST_READ_STORAGE_KEY);
                 const sessionLastNotificationReadDayJs = sessionLastNotificationReadRaw ? dayjs(sessionLastNotificationReadRaw) : undefined;
 
