@@ -28,7 +28,7 @@ export class ExamUpdateComponent implements OnInit {
     workingTimeInMinutes: number;
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
-    // Interims-boolean to hide the option to create an test eam in production, as the feature is not yet fully implemented
+    // Interims-boolean to hide test exams and exam monitoring, as they are not yet fully implemented
     isAdmin: boolean;
     isImport = false;
     // Expose enums to the template
@@ -167,7 +167,7 @@ export class ExamUpdateComponent implements OnInit {
     /**
      * Validates the given StartDate.
      * For real exams, the visibleDate has to be strictly prior the startDate.
-     * For test exam, the visibleDate has to be prior or equal to the startDate.
+     * For test exams, the visibleDate has to be prior or equal to the startDate.
      */
     get isValidStartDate(): boolean {
         if (this.exam.startDate === undefined) {
@@ -204,7 +204,7 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Validates the WorkingTime.
-     * For test exam, the WorkingTime should be at least 1 and smaller / equal to the working window
+     * For test exams, the WorkingTime should be at least 1 and smaller / equal to the working window
      * For real exams, the WorkingTime is calculated based on the startDate and EndDate and should match the time difference.
      */
     get validateWorkingTime(): boolean {
@@ -225,7 +225,7 @@ export class ExamUpdateComponent implements OnInit {
 
     /**
      * Used to convert workingTimeInMinutes into exam.workingTime (in seconds) every time, the user inputs a new
-     * working time for a test eam
+     * working time for a test exam
      * @param event when the user inputs a new working time
      */
     convertWorkingTimeFromMinutesToSeconds(event: any) {

@@ -26,7 +26,8 @@ public class StudentExam extends AbstractAuditingEntity {
     private Boolean submitted;
 
     /**
-     * The working time in seconds
+     * The individual working time per student in seconds
+     * The default working time of an exam is stored in exam.workingTime
      */
     @Column(name = "working_time")
     private Integer workingTime;
@@ -154,6 +155,8 @@ public class StudentExam extends AbstractAuditingEntity {
 
     /**
      * check if the individual student exam has ended (based on the working time)
+     * For test exams, we cannot use exam.startTime, but need to use the student.startedDate. If this is not yet set,
+     * the studentExams has not yet started and therefore cannot be ended.
      *
      * @return true if the exam has finished, otherwise false, null if this cannot be determined
      */
@@ -164,36 +167,60 @@ public class StudentExam extends AbstractAuditingEntity {
         if (Boolean.TRUE.equals(testRun)) {
             return false;
         }
+        if (this.getExam().isTestExam() && !Boolean.TRUE.equals(this.started) && this.startedDate == null) {
+            return false;
+        }
         return ZonedDateTime.now().isAfter(getIndividualEndDate());
     }
 
     /**
-     * Returns the individual exam end date taking the working time of this student exam into account
+     * Returns the individual exam end date taking the working time of this student exam into account.
+     * For test exams, the startedDate needs to be defined as this is not equal to exam.startDate
      *
-     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period)
+     * @return the ZonedDateTime that marks the exam end for this student (excluding grace period), or null for test exams with undefined startedDate
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDate() {
+        if (exam.isTestExam()) {
+            if (this.startedDate == null) {
+                return null;
+            }
+            return this.startedDate.plusSeconds(workingTime);
+        }
         return exam.getStartDate().plusSeconds(workingTime);
     }
 
     /**
      * Returns the individual exam end date taking the working time of this student exam into account and the grace period set for this exam
      *
-     * @return the ZonedDateTime that marks the exam end for this student, including the exam's grace period
+     * @return the ZonedDateTime that marks the exam end for this student, including the exam's grace period, or null for test exams with undefined startedDate
      */
     @JsonIgnore
     public ZonedDateTime getIndividualEndDateWithGracePeriod() {
         int gracePeriodInSeconds = Objects.requireNonNullElse(exam.getGracePeriod(), 0);
+        if (exam.isTestExam()) {
+            if (this.startedDate == null) {
+                return null;
+            }
+            return this.startedDate.plusSeconds(workingTime + gracePeriodInSeconds);
+        }
         return exam.getStartDate().plusSeconds(workingTime + gracePeriodInSeconds);
     }
 
     /**
-     * Calls {@link Exam#resultsPublished()}
+     * Determines if the Results of an Exam are already published
+     * For a test exam, the Results are automatically published once the studentExam was submitted
+     * For real exams, {@link Exam#resultsPublished()} is called
+     *
      * @return true the results are published
      */
     @JsonIgnore
     public boolean areResultsPublishedYet() {
-        return exam.resultsPublished();
+        if (this.exam.isTestExam()) {
+            return this.submitted;
+        }
+        else {
+            return exam.resultsPublished();
+        }
     }
 }

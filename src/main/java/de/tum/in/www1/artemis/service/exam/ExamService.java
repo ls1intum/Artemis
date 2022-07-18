@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -740,6 +741,10 @@ public class ExamService {
      */
     public Integer evaluateQuizExercises(Long examId) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+        }
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
