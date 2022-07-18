@@ -313,6 +313,9 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled() != updatedProgrammingExercise.isStaticCodeAnalysisEnabled()) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
+        if (programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled() != updatedProgrammingExercise.isTestwiseCoverageEnabled()) {
+            throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
+        }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
