@@ -240,16 +240,15 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
     @MethodSource("setResultRatedPermutations")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void setProgrammingExerciseResultRated(boolean shouldBeRated, ZonedDateTime buildAndTestAfterDueDate, SubmissionType submissionType, ZonedDateTime dueDate) {
-
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").type(submissionType).submitted(true)
                 .submissionDate(ZonedDateTime.now());
-        database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
+        programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         Result result = database.addResultToParticipation(programmingExerciseStudentParticipation, programmingSubmission);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(buildAndTestAfterDueDate);
         programmingExercise.setDueDate(dueDate);
         programmingExerciseRepository.save(programmingExercise);
 
-        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission);
+        result.setRatedIfNotExceeded(programmingExercise.getDueDate(), programmingSubmission, programmingSubmission.getParticipation());
         assertThat(result.isRated()).isSameAs(shouldBeRated);
     }
 

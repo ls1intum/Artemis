@@ -140,7 +140,7 @@ public class ProgrammingExerciseGradingService {
 
             // Fetch submission or create a fallback
             var latestSubmission = getSubmissionForBuildResult(participation.getId(), buildResult).orElseGet(() -> createAndSaveFallbackSubmission(participation, buildResult));
-            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().noneMatch(feedback -> !feedback.isStaticCodeAnalysisFeedback()));
+            latestSubmission.setBuildFailed(newResult.getFeedbacks().stream().allMatch(Feedback::isStaticCodeAnalysisFeedback));
             // Add artifacts to submission
             latestSubmission.setBuildArtifact(buildResult.hasArtifact());
 
@@ -156,7 +156,7 @@ public class ProgrammingExerciseGradingService {
 
             // Note: we only set one side of the relationship because we don't know yet whether the result will actually be saved
             newResult.setSubmission(latestSubmission);
-            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission);
+            newResult.setRatedIfNotExceeded(exerciseDateService.getDueDate(participation).orElse(null), latestSubmission, (Participation) participation);
             // NOTE: the result is not saved yet, but is connected to the submission, the submission is not completely saved yet
         }
         catch (ContinuousIntegrationException ex) {
@@ -256,7 +256,7 @@ public class ProgrammingExerciseGradingService {
                 submissionPolicyService.handleLockRepositoryPolicy(processedResult, (Participation) participation, policy);
             }
 
-            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual()) {
+            if (programmingSubmission.getLatestResult() != null && programmingSubmission.getLatestResult().isManual() && !((Participation) participation).isTestRun()) {
                 // Note: in this case, we do not want to save the processedResult, but we only want to update the latest semi-automatic one
                 Result updatedLatestSemiAutomaticResult = updateLatestSemiAutomaticResultWithNewAutomaticFeedback(programmingSubmission.getLatestResult().getId(), processedResult);
                 // Adding back dropped submission
@@ -288,7 +288,6 @@ public class ProgrammingExerciseGradingService {
      *
      * @param lastSemiAutomaticResultId The latest manual result for the same submission (which must exist in the database)
      * @param newAutomaticResult The new automatic result
-     * @param programmingExercise The programming exercise
      * @return The updated semi-automatic result
      */
     private Result updateLatestSemiAutomaticResultWithNewAutomaticFeedback(long lastSemiAutomaticResultId, Result newAutomaticResult) {
