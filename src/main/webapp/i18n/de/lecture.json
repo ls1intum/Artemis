@@ -7,10 +7,10 @@
                 "importLabel": "Vorlesung importieren",
                 "filterLabel": "Filter",
                 "filterOptions": {
-                    "filterPast": "Vergangenheit",
-                    "filterCurrent": "Gegenwart",
-                    "filterFuture": "Zukunft",
-                    "filterUnspecifiedDates": "Unbestimmter Zeitpunkt"
+                    "filterPast": "Vergangene",
+                    "filterCurrent": "Aktuelle",
+                    "filterFuture": "Zukünftige",
+                    "filterUnspecifiedDates": "Ohne Zeitangaben"
                 },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },
