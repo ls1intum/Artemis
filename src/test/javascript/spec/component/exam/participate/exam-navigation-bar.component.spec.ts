@@ -164,12 +164,10 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should hand in the exam early', () => {
-        jest.spyOn(comp, 'saveExercise');
         jest.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
 
-        expect(comp.saveExercise).toHaveBeenCalled();
         expect(comp.onExamHandInEarly.emit).toHaveBeenCalled();
     });
 
