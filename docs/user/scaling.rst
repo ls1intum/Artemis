@@ -35,10 +35,10 @@ Artemis
 Artemis supports scaling to provide high availability as well as improved performance.
 This is especially important if you plan to conduct exams using Artemis.
 
-A Single Server Setup offers a simple installation and can be used for testing purposes and a small to medium number of concurrent users.
+A Single Server Setup offers a simple installation and can be used for testing purposes and a small (100) to medium (500) number of concurrent users.
 
 A Multi Server Setup uses a load balancer to distribute requests between the different instances of the Artemis Application Server.
-Environments can easily be scaled to support more than 1000 students.
+Environments can easily be scaled to support more than 1000 concurrent users.
 All instances share the same database (and filesystem) and can be added/removed from the environment during runtime.
 Details regarding the scaling of Artemis can be found in the `corresponding section of the documentation </dev/setup/distributed>`_.
 
