@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
+
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutionException;
@@ -101,8 +103,8 @@ public class StudentExamService {
      * and if it was submitted after exam startDate and before individual endDate + gracePeriod
      *
      * @param existingStudentExam the existing student exam object in the database
-     * @param studentExam the student exam object from the client which will be submitted (final submission)
-     * @param currentUser the current user
+     * @param studentExam         the student exam object from the client which will be submitted (final submission)
+     * @param currentUser         the current user
      * @return ResponseEntity.ok() on success or HTTP error with a custom error message on failure
      */
     public ResponseEntity<StudentExam> submitStudentExam(StudentExam existingStudentExam, StudentExam studentExam, User currentUser) {
@@ -119,7 +121,11 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
-        if (!studentExam.isTestRun()) {
+        if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
+            // immediately evaluate quiz participations for test runs and test exams
+            examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
+        }
+        else if (!studentExam.isTestRun()) {
             try {
                 // lock the programming exercise repository access (important in case of early exam submissions)
                 lockStudentRepositories(currentUser, existingStudentExam);
@@ -127,10 +133,6 @@ public class StudentExamService {
             catch (Exception e) {
                 log.error("lockStudentRepositories threw an exception", e);
             }
-        }
-        else {
-            // immediately evaluate quiz participations for test runs
-            examQuizService.evaluateQuizParticipationsForTestRun(studentExam);
         }
 
         return ResponseEntity.ok(studentExam);
@@ -242,7 +244,7 @@ public class StudentExamService {
     /**
      * Assess all exercises, except quiz exercises, of student exams of an exam which are not submitted with 0 points.
      *
-     * @param exam the exam
+     * @param exam     the exam
      * @param assessor the assessor should be the instructor making the call.
      * @return returns the set of unsubmitted StudentExams, the participations of which were assessed
      */
@@ -274,8 +276,8 @@ public class StudentExamService {
      * Also create automatic submissions and assessments for programming exercises without submissions.
      * Also sets the state of all participations for all student exams which were submitted to FINISHED
      *
-     * @param exam the exam
-     * @param assessor the assessor should be the instructor making the call
+     * @param exam                the exam
+     * @param assessor            the assessor should be the instructor making the call
      * @param excludeStudentExams studentExams which should be excluded. This is used to exclude unsubmitted student exams because they are already assessed, see {@link StudentExamService#assessUnsubmittedStudentExams}
      * @return returns the set of StudentExams of which the empty submissions were assessed
      */
@@ -333,7 +335,7 @@ public class StudentExamService {
      * When it is the participation of a programming exercise and the manual assessment is enabled, but there is no submission,
      * a new submission for the programming participation needs to be created.
      *
-     * @param latestSubmission the optional latest submission of the participation
+     * @param latestSubmission     the optional latest submission of the participation
      * @param studentParticipation the provided ProgrammingStudentParticipation
      * @return the latestSubmission
      */
@@ -369,6 +371,7 @@ public class StudentExamService {
     /**
      * Generates a Student Exam marked as a testRun for the instructor to test the exam as a student would experience it.
      * Calls {@link StudentExamService#generateTestRun and {@link ExamService#setUpTestRunExerciseParticipationsAndSubmissions}}
+     *
      * @param testRunConfiguration the configured studentExam
      * @return the created testRun studentExam
      */
@@ -399,7 +402,6 @@ public class StudentExamService {
     /**
      * Sets up the participations and submissions for all the exercises of the test run.
      * Calls {@link StudentExamService#setUpExerciseParticipationsAndSubmissions} to set up the exercise participations.
-     *
      */
     private void setUpTestRunExerciseParticipationsAndSubmissions(Long testRunId) {
         StudentExam testRun = studentExamRepository.findWithExercisesParticipationsSubmissionsById(testRunId, true)
@@ -412,6 +414,70 @@ public class StudentExamService {
     }
 
     /**
+     * Method to set up new participations for a StudentExam of a test exam.
+     *
+     * @param studentExam the studentExam for which the new participations should be set up
+     * @param startedDate the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
+     */
+    public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
+        List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
+        setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
+        studentParticipationRepository.saveAll(generatedParticipations);
+    }
+
+    /**
+     * Helper-Method for the Set up process of an StudentExam with a given startedDate. The method forces a new participation for every exercise,
+     * unlocks the Repository in case the StudentExam starts in less than 5mins and returns the generated participations
+     *
+     * @param studentExam             the studentExam for which the new participations should be set up
+     * @param generatedParticipations the list where the newly generated participations should be added
+     * @param startedDate             the Date to which the InitializationDate should be set, in order to link StudentExam <-> participation
+     */
+    private void setUpExerciseParticipationsAndSubmissionsWithInitializationDate(StudentExam studentExam, List<StudentParticipation> generatedParticipations,
+            ZonedDateTime startedDate) {
+        User student = studentExam.getUser();
+
+        for (Exercise exercise : studentExam.getExercises()) {
+            SecurityUtils.setAuthorizationObject();
+            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
+            // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
+            // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
+            // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
+            var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
+            // we start the exercise if no participation was found that was already fully initialized
+            if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
+                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
+                try {
+                    // Load lazy property
+                    if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
+                        final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
+                        programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
+                    }
+                    // this will also create initial (empty) submissions for quiz, text, modeling and file upload
+                    // If the startedDate is provided, the InitializationDate is set to the startedDate
+                    StudentParticipation participation;
+                    if (startedDate != null) {
+                        participation = participationService.startExerciseWithInitializationDate(exercise, student, true, startedDate);
+                    }
+                    else {
+                        participation = participationService.startExercise(exercise, student, true);
+                    }
+                    generatedParticipations.add(participation);
+                    // Unlock Repositories if the exam starts within 5 minutes
+                    if (exercise instanceof ProgrammingExercise programmingExercise
+                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
+                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+                    }
+                }
+                catch (Exception ex) {
+                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                            ex.getMessage(), ex);
+                }
+            }
+        }
+    }
+
+    /**
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
@@ -419,6 +485,10 @@ public class StudentExamService {
      */
     public int startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
+        }
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
@@ -451,44 +521,13 @@ public class StudentExamService {
      * @param generatedParticipations List of generated participations to track how many participations have been generated
      */
     public void setUpExerciseParticipationsAndSubmissions(StudentExam studentExam, List<StudentParticipation> generatedParticipations) {
-        User student = studentExam.getUser();
-
-        for (Exercise exercise : studentExam.getExercises()) {
-            SecurityUtils.setAuthorizationObject();
-            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
-            // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
-            // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
-            // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
-            var studentParticipations = participationService.findByExerciseAndStudentId(exercise, student.getId());
-            // we start the exercise if no participation was found that was already fully initialized
-            if (studentParticipations.stream().noneMatch(studentParticipation -> studentParticipation.getParticipant().equals(student)
-                    && studentParticipation.getInitializationState() != null && studentParticipation.getInitializationState().hasCompletedState(InitializationState.INITIALIZED))) {
-                try {
-                    // Load lazy property
-                    if (exercise instanceof ProgrammingExercise programmingExercise && !Hibernate.isInitialized(programmingExercise.getTemplateParticipation())) {
-                        final var programmingExerciseReloaded = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-                        programmingExercise.setTemplateParticipation(programmingExerciseReloaded.getTemplateParticipation());
-                    }
-                    // this will also create initial (empty) submissions for quiz, text, modeling and file upload
-                    var participation = participationService.startExercise(exercise, student, true);
-                    generatedParticipations.add(participation);
-                    // Unlock Repositories if the exam starts within 5 minutes
-                    if (exercise instanceof ProgrammingExercise programmingExercise
-                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
-                    }
-                }
-                catch (Exception ex) {
-                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
-                            ex.getMessage(), ex);
-                }
-            }
-        }
+        setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, null);
     }
 
     /**
      * Deletes a test run.
      * In case the participation is not referenced by other test runs, the participation, submission, build plans and repositories are deleted as well.
+     *
      * @param testRunId the id of the test run
      * @return the deleted test run
      */
@@ -527,5 +566,45 @@ public class StudentExamService {
         // Delete the test run student exam
         studentExamRepository.deleteById(testRunId);
         return testRun;
+    }
+
+    /**
+     * Generates a new test exam for the student and stores it in the database
+     *
+     * @param examId  the exam for which the StudentExam should be fetched / created
+     * @param student the corresponding student
+     * @return a StudentExam for the student and exam
+     */
+    public StudentExam generateTestExam(Long examId, User student) {
+        // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
+        Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
+
+        if (!examWithExerciseGroupsAndExercises.isTestExam()) {
+            throw new AccessForbiddenException("The requested Exam is no TestExam and thus no StudentExam can be created");
+        }
+        long start = System.nanoTime();
+        StudentExam studentExam = generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+        // we need to break a cycle for the serialization
+        studentExam.getExam().setExerciseGroups(null);
+        studentExam.getExam().setStudentExams(null);
+
+        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), examId);
+
+        return studentExam;
+
+    }
+
+    /**
+     * Generates an individual StudentExam
+     *
+     * @param exam    with eagerly loaded users, exerciseGroups and exercises loaded
+     * @param student the student for which the StudentExam should be created
+     * @return the generated StudentExam
+     */
+    private StudentExam generateIndividualStudentExam(Exam exam, User student) {
+        // StudentExams are saved in the called method
+        HashSet<User> userHashSet = new HashSet<>();
+        userHashSet.add(student);
+        return studentExamRepository.createRandomStudentExams(exam, userHashSet).get(0);
     }
 }
