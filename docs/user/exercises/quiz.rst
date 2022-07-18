@@ -25,7 +25,7 @@ Create new quiz exercise
 
 - In the Artemis home page, click on Course Management button |CourseManagementButton|.
 
-- Navigate into **Exercises** of a specific course clicking in the exercise button.
+- Navigate into **Exercises** of a specific course by clicking on the exercise button.
 
     .. figure:: quiz/course-dashboard.png
             :align: center
@@ -219,7 +219,7 @@ Create new quiz exercise
 
             - Apply filter button
 
-            - List of questions with the title, short title, and Type. In the Add column is possible to select all questions to be imported.
+            - List of questions with the title, short title, and Type. In the Add column it is possible to select all questions to be imported.
 
             - At the end of the list, click the Add selected Questions Button |AddSelectedQuestionsButton| to import all selected questions.
 
@@ -378,9 +378,9 @@ Resolve a quiz exercise
 
         - Options:
 
-            - Options with circles means one choice could be correct.
+            - Options with circles mean one choice could be correct.
 
-            - Options with squares means multiple options could be correct.
+            - Options with squares mean multiple options could be correct.
 
         - In the footer:
 
@@ -392,9 +392,9 @@ Resolve a quiz exercise
 
             - Connection status.
 
-            - Submit button: To allow student submit the quiz before the time ends.
+            - Submit button: To allow the student to submit the quiz before the time ends.
 
-        - In case of Drag and Drop questions, the items to be drag and drop in the option spots will be available in the right side.
+        - In the case of Drag and Drop questions, the items to be dragged and dropped in the spots will be available in the right side.
 
         .. figure:: quiz/drag-and-drop-view.png
             :align: center
