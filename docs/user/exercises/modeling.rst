@@ -12,7 +12,7 @@ Conducting a Modeling exercise consists of 3 steps:
 
 1. **Instructor prepares exercise:** Creates and configures the modeling exercise in Artemis.
 2. **Student solves exercise:** Student works on the exercise and submits the solution.
-3. **Instructor assesses submissions:** Reviews the submitted exercises and creates results for the students.
+3. **Tutors assesses submissions:** Reviews the submitted exercises and creates results for the students.
 
 Setup
 -----
