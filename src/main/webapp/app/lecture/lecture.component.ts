@@ -144,10 +144,10 @@ export class LectureComponent implements OnInit, OnDestroy {
         let filteredLectures: Array<Lecture> = [];
 
         // update filteredLectures based on the selected filter option checkboxes
-        const pastLectures = this.lectures.filter((lecture) => lecture.startDate !== undefined && lecture.endDate?.isBefore(dayjs(currentTime)));
-        const currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(dayjs(currentTime)) && lecture.endDate?.isAfter(dayjs(currentTime)));
-        const futureLectures = this.lectures.filter((lecture) => lecture.endDate !== undefined && lecture.startDate?.isAfter(dayjs(currentTime)));
-        const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined || lecture.endDate === undefined);
+        const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(dayjs(currentTime)));
+        const currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(dayjs(currentTime)) && lecture.endDate?.isSameOrAfter(dayjs(currentTime)));
+        const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(dayjs(currentTime)));
+        const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
 
         filteredLectures = this.activeFilters.has(LectureDateFilter.PAST) ? filteredLectures.concat(pastLectures) : filteredLectures;
         filteredLectures = this.activeFilters.has(LectureDateFilter.CURRENT) ? filteredLectures.concat(currentLectures) : filteredLectures;
