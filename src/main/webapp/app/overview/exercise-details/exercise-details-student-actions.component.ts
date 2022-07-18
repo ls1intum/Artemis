@@ -1,5 +1,5 @@
 import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
@@ -52,7 +52,13 @@ export class ExerciseDetailsStudentActionsComponent {
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
 
-    constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
+    constructor(
+        private alertService: AlertService,
+        private courseExerciseService: CourseExerciseService,
+        private httpClient: HttpClient,
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+    ) {}
 
     /**
      * check if practiceMode is available
@@ -138,6 +144,7 @@ export class ExerciseDetailsStudentActionsComponent {
                     } else {
                         this.alertService.success('artemisApp.exercise.personalRepositoryOnline');
                     }
+                    this.togglePracticeMode(true);
                 },
                 error: () => {
                     this.alertService.warning('artemisApp.exercise.startError');
@@ -167,6 +174,14 @@ export class ExerciseDetailsStudentActionsComponent {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
+    }
+
+    togglePracticeMode(toggle: boolean) {
+        this.router.navigate([], {
+            relativeTo: this.activatedRoute,
+            queryParams: { 'practice-mode': toggle },
+            queryParamsHandling: 'merge',
+        });
     }
 
     /**
@@ -199,7 +214,7 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
-        return participations && participations.length > 0 ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
+        return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
     }
 
     repositoryUrl(participation: Participation) {
@@ -216,11 +231,6 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     buildPlanActive() {
-        return (
-            !!this.exercise &&
-            this.exercise.studentParticipations &&
-            this.exercise.studentParticipations.length > 0 &&
-            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
-        );
+        return this.exercise?.studentParticipations?.length && this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE;
     }
 }

@@ -194,13 +194,7 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
  * - test run after due date is deactivated and manual grading is deactivated
  */
 export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean => {
-    return (
-        exercise.dueDate == undefined ||
-        dayjs() <= exercise.dueDate! ||
-        (exercise.buildAndTestStudentSubmissionsAfterDueDate == undefined &&
-            exercise.assessmentType === AssessmentType.AUTOMATIC &&
-            !exercise.allowComplaintsForAutomaticAssessments)
-    );
+    return exercise.dueDate == undefined || dayjs().isBefore(exercise.dueDate!);
 };
 
 /**

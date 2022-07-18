@@ -14,6 +14,7 @@
             "openCodeEditor": "Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",
             "startPracticeMode": "Übungsmodus aktivieren",
+            "enterPracticeMode": "Übungsmodus betreten",
             "importIntoIntelliJ": "In IntelliJ öffnen",
             "cloneRepository": "Repository klonen",
             "clonePersonalRepository": "Klone dein persönliches Repository für diese Übung:",

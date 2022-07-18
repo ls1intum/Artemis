@@ -299,7 +299,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const filteredParticipations = participations.filter((participation: StudentParticipation) => {
             const personal = participation.student?.id === this.currentUser.id;
             const team = participation.team?.students?.map((s) => s.id).includes(this.currentUser.id);
-            const practiceParticipation = participation.testRun === this.practiceMode;
+            const practiceParticipation = (participation.testRun && this.practiceMode) || (!participation.testRun && !this.practiceMode);
             return (personal || team) && practiceParticipation;
         });
         filteredParticipations.forEach((participation: Participation) => {
@@ -317,7 +317,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Note, that this function directly operates on the array passed as argument and does not return anything.
      */
     private sortParticipationsFinishedFirst(participations: StudentParticipation[]) {
-        if (participations && participations.length > 1) {
+        if (participations?.length > 1) {
             participations.sort((a, b) => (b.initializationState === InitializationState.FINISHED ? 1 : -1));
         }
     }
