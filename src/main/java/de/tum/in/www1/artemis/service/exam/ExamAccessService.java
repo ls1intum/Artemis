@@ -87,7 +87,7 @@ public class ExamAccessService {
         checkExamBelongsToCourseElseThrow(courseId, exam);
 
         if (!examId.equals(exam.getId())) {
-            throw new BadRequestAlertException("The provided examId does not match with the examId of the studentExam", ENTITY_NAME, "idMismatch");
+            throw new BadRequestAlertException("The provided examId does not match with the examId of the studentExam", ENTITY_NAME, "examIdMismatch");
         }
 
         // Check that the exam is visible
