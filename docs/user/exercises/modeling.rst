@@ -80,7 +80,7 @@ The following screenshot illustrates the last section of the form. It consists o
 
 - **Example Solution**: Example solution of an exercise.
 - **Example Solution Explanation**: Explanation of the example solution.
-- **Example Solution Publication Date**: Date after which the example solution is accessible for students. If you leave this field empty, the solution will not be published.
+- **Example Solution Publication Date**: Date after which the example solution is accessible for students. If you leave this field empty, the solution will only be published to tutors.
 
     .. figure:: modeling/create-modeling-exercise-form-3.png
               :align: center
