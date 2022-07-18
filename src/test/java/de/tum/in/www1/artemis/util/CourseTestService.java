@@ -1772,6 +1772,43 @@ public class CourseTestService {
         assertThat(statisticsOptional).isEmpty();
     }
 
+    public void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        var course = database.createCourse();
+
+        course.setStartDate(now.plusWeeks(3));
+
+        var student1 = ModelFactory.generateActivatedUser("user1");
+        var student2 = ModelFactory.generateActivatedUser("user2");
+        // Fetch and update an instructor
+        var instructor1 = database.getUserByLogin("instructor1");
+        var instructor2 = database.getUserByLogin("instructor2");
+        var groups = new HashSet<String>();
+        groups.add("instructor");
+        instructor1.setGroups(groups);
+        instructor2.setGroups(groups);
+
+        userRepo.save(instructor1);
+        userRepo.save(instructor2);
+        userRepo.save(student1);
+        userRepo.save(student2);
+
+        courseRepo.save(course);
+
+        // API call
+        var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        // Check results
+        assertThat(courseDTO).isNotNull();
+
+        assertThat(courseDTO.getActiveStudents()).hasSize(0);
+
+        // number of users in course
+        assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
+        assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
+        assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(2);
+    }
+
     // Test
     public void testGetCourseManagementDetailData() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();

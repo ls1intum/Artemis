@@ -35,7 +35,7 @@
             "text": "<b>Benachrichtigungen:</b> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
         },
         "teamExercises": {
-            "text": "<b>Gruppenaufgaben</b> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
+            "text": "<a href={{ teamExercisesUrl }}>Gruppenaufgaben</a> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
         },
         "lectures": {
             "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
