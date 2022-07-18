@@ -28,7 +28,7 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
     public void initTestCase() throws IOException {
         String submissionText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
         String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        studentAmount = 5;
+        studentAmount = 25;
 
         course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(submissionText, studentAmount);
         database.addCourseWithOneFinishedModelingExerciseAndSimilarSubmissions(submissionModel, studentAmount, course);
@@ -51,9 +51,6 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
         var textExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
         var plagiarismResultResponse = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism",
             HttpStatus.OK, PlagiarismResult.class, params);
-        int comparisonAmount = possibleComparisons(studentAmount);
-
-        assertThat(plagiarismResultResponse.getComparisons().size()).as("should have the comparison amount").isEqualTo(comparisonAmount);
 
         for (var comparison : plagiarismResultResponse.getComparisons()) {
             var submissionA = ((PlagiarismComparison<TextSubmissionElement>) comparison).getSubmissionA();
@@ -79,9 +76,6 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
         var modelingExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.MODELING).findFirst().get();
         var plagiarismResultResponse = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism",
             HttpStatus.OK, PlagiarismResult.class, params);
-        int comparisonAmount = possibleComparisons(studentAmount);
-
-        assertThat(plagiarismResultResponse.getComparisons().size()).as("should have the comparison amount").isEqualTo(comparisonAmount);
 
         for (var comparison : plagiarismResultResponse.getComparisons()) {
             var submissionA = ((PlagiarismComparison<ModelingSubmissionElement>) comparison).getSubmissionA();
@@ -94,18 +88,6 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
             assertThat(submissionB.getPlagiarismComparison()).as("should have a biderectional connection").isEqualTo(comparison);
         }
 
-    }
-
-    /***
-     * Calculate recursively the amount of the comparisons based on the student amount with the same submission
-     * @param studentAmount The amount of students with the same submission
-     * @return The amount of the comparisons
-     */
-    private int possibleComparisons(int studentAmount) {
-        if (studentAmount > 0) {
-            return studentAmount - 1 + possibleComparisons(studentAmount - 1);
-        } else
-            return studentAmount;
     }
 
 }
