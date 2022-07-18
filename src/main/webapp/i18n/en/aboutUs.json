@@ -56,7 +56,7 @@
             "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
-            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
+            "text": "<a href={{ customizableUrl }}>Customizable:</a> It supports multiple Instructors, Editors, and Tutors per course and allows Instructors to customize many course settings."
         },
         "openSource": {
             "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
