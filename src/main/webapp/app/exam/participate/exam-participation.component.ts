@@ -66,14 +66,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     courseId: number;
     examId: number;
     testRunId: number;
-    testRunStartTime?: dayjs.Dayjs;
+    testExam = false;
+    studentExamId: number;
+    testStartTime?: dayjs.Dayjs;
 
     // determines if component was once drawn visited
     pageComponentVisited: boolean[];
 
     // needed, because studentExam is downloaded only when exam is started
     exam: Exam;
-    examTitle = '';
     studentExam: StudentExam;
 
     individualStudentEndDate: dayjs.Dayjs;
@@ -151,7 +152,14 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.courseId = parseInt(params['courseId'], 10);
             this.examId = parseInt(params['examId'], 10);
             this.testRunId = parseInt(params['testRunId'], 10);
-
+            // As a student can have multiple test exams, the studentExamId is passed as a parameter.
+            if (params['studentExamId']) {
+                // If a new StudentExam should be created, the keyword new is used (and no StudentExam exists)
+                this.testExam = true;
+                if (params['studentExamId'] !== 'new') {
+                    this.studentExamId = parseInt(params['studentExamId'], 10);
+                }
+            }
             this.loadingExam = true;
             if (!!this.testRunId) {
                 this.examParticipationService.loadTestRunWithExercisesForConduction(this.courseId, this.examId, this.testRunId).subscribe({
@@ -160,8 +168,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         this.studentExam.exam!.course = new Course();
                         this.studentExam.exam!.course.id = this.courseId;
                         this.exam = studentExam.exam!;
-                        this.testRunStartTime = dayjs();
-                        this.initIndividualEndDates(this.testRunStartTime);
+                        this.testStartTime = dayjs();
+                        this.initIndividualEndDates(this.testStartTime);
                         this.loadingExam = false;
                     },
                     error: () => (this.loadingExam = false),
@@ -171,7 +179,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     next: (studentExam) => {
                         this.studentExam = studentExam;
                         this.exam = studentExam.exam!;
-                        this.initIndividualEndDates(this.exam.startDate!);
+                        if (this.exam.testExam) {
+                            // For TestExams, we either set the StartTime to the current time or the startedDate of the studentExam, if existent
+                            this.testStartTime = this.studentExam.startedDate ? this.studentExam.startedDate! : dayjs();
+                            this.initIndividualEndDates(this.testStartTime);
+                        } else {
+                            this.initIndividualEndDates(this.exam.startDate!);
+                        }
 
                         // Listen to exam monitoring updates to disable monitoring
                         try {
@@ -185,7 +199,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         // only show the summary if the student was able to submit on time.
                         if (this.isOver() && this.studentExam.submitted) {
                             this.examParticipationService
-                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId)
+                                .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, this.studentExam.id!)
                                 .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
                         }
 
@@ -264,8 +278,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             const exerciseIds = exercises.map((exercise) => exercise.id).filter(Number) as number[];
             this.examParticipationService.setExamExerciseIds(exerciseIds);
             // set endDate with workingTime
-            if (!!this.testRunId) {
-                this.individualStudentEndDate = this.testRunStartTime!.add(this.studentExam.workingTime!, 'seconds');
+            if (!!this.testRunId || this.testExam) {
+                this.individualStudentEndDate = this.testStartTime!.add(this.studentExam.workingTime!, 'seconds');
             } else {
                 this.individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
             }
@@ -362,8 +376,19 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             )
             .subscribe({
                 next: (studentExam: StudentExam) => {
-                    this.studentExam = studentExam;
-                    this.alertService.addAlert({ type: AlertType.SUCCESS, message: 'artemisApp.studentExam.submitSuccessful', timeout: 20000 });
+                    if (studentExam.exam?.testExam) {
+                        // If we have a test exam, we reload the summary from the server.
+                        this.examParticipationService
+                            .loadStudentExamWithExercisesForSummary(this.courseId, this.examId, studentExam.id!)
+                            .subscribe((studentExamWithExercises: StudentExam) => (this.studentExam = studentExamWithExercises));
+                    } else {
+                        this.studentExam = studentExam;
+                    }
+                    this.alertService.addAlert({
+                        type: AlertType.SUCCESS,
+                        message: 'artemisApp.studentExam.submitSuccessful',
+                        timeout: 20000,
+                    });
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
