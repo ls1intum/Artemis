@@ -263,7 +263,7 @@ public class StudentExamResource {
 
         // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
         if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException("Students cannot download the student exams until 5 minutes before the exam start");
         }
 
         if (!user.getId().equals(studentExam.getUser().getId())) {
@@ -365,7 +365,7 @@ public class StudentExamResource {
 
         // 2nd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
         if (!studentExam.isSubmitted()) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException("You are not allowed to access the summary of a student exam which was NOT submitted!");
         }
 
         // 3rd fetch participations, submissions and results and connect them to the studentExam
@@ -412,7 +412,7 @@ public class StudentExamResource {
 
         // check that the studentExam has been submitted, otherwise /student-exams/conduction should be used
         if (!studentExam.isSubmitted() || !studentExam.areResultsPublishedYet()) {
-            throw new AccessForbiddenException();
+            throw new AccessForbiddenException("You are not allowed to access the grade summary of a student exam which was NOT submitted!");
         }
 
         loadExercisesForStudentExam(studentExam);
