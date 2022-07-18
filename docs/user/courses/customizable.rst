@@ -13,7 +13,7 @@ Creating courses
 
 Administrators can create new courses by clicking on |course_management| in the header and then clicking on |course_create|.
 
-Administrators can then specify options in the creation form, instructors can later change these values:
+Administrators can then specify options in the creation form, Instructors can later change these values:
 
 - **Title**: Name of the course that is shown to users e.g. in the |course_overview|. Can be changed later.
 - **Short Name**: Unique identifier of the course. Can **not** be changed later as it is included in resources of external systems such as build plans.
@@ -30,7 +30,7 @@ Administrators can then specify options in the creation form, instructors can la
 - **Customize group names**: Allows specifying custom group names that should be used in external user management systems. Default group names (based on the course short name) will be used if not specified. **Note**: Only administrators can change this setting. Instructors can not change it.
 - **Enable complaints**: Whether complaints should be enabled in this course. Details regarding complaints can be found `here </user/exercises/general#complaints>`_.
 - **Enable more feedback requests**: Whether more feedback requests should be enabled in this course. Details regarding more feedback requests can be found `here </user/exercises/general#more-feedback-requests>`_.
-- **Enable postings by students**: Whether the posting sections should be enabled for lectures and exercises. More details regarding this can be found in the `here </user/communication>`_.
+- **Enable postings by students**: Whether the posting sections should be enabled for lectures and exercises. More details regarding this can be found `here </user/communication>`_.
 - **Online Course**: Whether this course should be part of an external online course using the LTI interface (e.g. on edX). This requires additional setup by administrators. **Note:** Online Course and Student Course Registration Enabled are mutually exclusive.
 - **Student Course Registration Enabled**: Whether students should be able to register themselves. If enabled, students can register for the course by clicking |course_register| in their |course_overview|. An optional confirmation message can be specified, it will be shown to students during the registration and can be used e.g. to inform students about examination rules. **Note:** Online Course and Student Course Registration Enabled are mutually exclusive.
 - **Presentation Score**: Whether students have to hold presentations in this course, e.g. to be eligible for an exam bonus. The required minimum number of presentations can be defined if this option is enabled. Note that you can define for every exercise whether it should be eligible for the presentation score within the exercise settings.
@@ -44,7 +44,7 @@ Administrators can then specify options in the creation form, instructors can la
 Managing courses
 ----------------
 
-After a course has been created, it can be accessed within the |course_management|. Courses are grouped by the semesters (or in the `Semester: Unset` group if not semester is specified). Test Courses are also in a separate group.
+After a course has been created, it can be accessed within the |course_management|. Courses are grouped by the semesters (or in the `Semester: Unset` group if no semester is specified). Test Courses are also in a separate group.
 
 .. figure:: customizable/course_overview.png
     :align: center
