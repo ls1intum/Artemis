@@ -168,7 +168,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
             assertThat(listReceived.get(i)).isEqualTo(listExpected.get(i));
         }
         // The last 4
-        for (int i = 5; i <= 9; i++) {
+        for (int i = 5; i <= 8; i++) {
             assertThat(listReceived.get(i).getId()).isNotNull();
             assertThat(listReceived.get(i).getId()).isNotEqualTo(listExpected.get(i).getId());
             assertThat(listReceived.get(i).getTitle()).isEqualTo(listExpected.get(i).getTitle());
