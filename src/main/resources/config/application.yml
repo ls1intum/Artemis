@@ -206,6 +206,8 @@ sentry:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
+    sample-rate: 1
+    traces-sample-rate: 0.2
 
 # Properties to be exposed on the /info management endpoint
 info:
