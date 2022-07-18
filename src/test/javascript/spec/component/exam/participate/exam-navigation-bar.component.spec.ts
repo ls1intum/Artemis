@@ -20,11 +20,13 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { CommitState } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { TranslateService } from '@ngx-translate/core';
 import { faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 describe('Exam Navigation Bar Component', () => {
     let fixture: ComponentFixture<ExamNavigationBarComponent>;
     let comp: ExamNavigationBarComponent;
     let repositoryService: CodeEditorRepositoryService;
+    let artemisServerDateService: ArtemisServerDateService;
 
     const examExerciseIdForNavigationSourceMock = new BehaviorSubject<number>(-1);
     const mockExamExerciseUpdateService = {
@@ -37,6 +39,7 @@ describe('Exam Navigation Bar Component', () => {
             declarations: [ExamNavigationBarComponent, MockComponent(ExamTimerComponent), MockDirective(NgbTooltip)],
             providers: [
                 ExamParticipationService,
+                ArtemisServerDateService,
                 { provide: ExamExerciseUpdateService, useValue: mockExamExerciseUpdateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
@@ -48,6 +51,7 @@ describe('Exam Navigation Bar Component', () => {
         comp = fixture.componentInstance;
         repositoryService = fixture.debugElement.injector.get(CodeEditorRepositoryService);
         TestBed.inject(ExamParticipationService);
+        artemisServerDateService = TestBed.inject(ArtemisServerDateService);
 
         comp.endDate = dayjs();
         comp.exercises = [
@@ -122,7 +126,8 @@ describe('Exam Navigation Bar Component', () => {
     it('should change to overview page', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
         jest.spyOn(comp, 'setExerciseButtonStatus');
-
+        const timestamp = dayjs();
+        jest.spyOn(artemisServerDateService, 'now').mockReturnValue(timestamp);
         expect(comp.exerciseIndex).toEqual(0);
 
         const expectedExerciseIndex = -1;
@@ -136,6 +141,7 @@ describe('Exam Navigation Bar Component', () => {
             overViewChange: true,
             exercise: undefined,
             forceSave: force,
+            timestamp,
         });
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(expectedExerciseIndex);
     });

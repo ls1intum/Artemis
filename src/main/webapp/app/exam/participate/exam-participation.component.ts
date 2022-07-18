@@ -505,18 +505,24 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * update the current exercise from the navigation
      * @param exerciseChange
      */
-    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean }): void {
+    onPageChange(exerciseChange: { overViewChange: boolean; exercise?: Exercise; forceSave: boolean; timestamp?: dayjs.Dayjs }): void {
         const activeComponent = this.activePageComponent;
         if (activeComponent) {
             activeComponent.onDeactivate();
         }
         try {
-            this.triggerSave(exerciseChange.forceSave, false);
+            this.triggerSave(exerciseChange.forceSave, false, exerciseChange.timestamp);
         } catch (error) {
             // an error here should never lead to the wrong exercise being shown
             captureException(error);
         }
-        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id), this.connected);
+        this.examMonitoringService.handleAndSaveActionEvent(
+            this.exam,
+            this.studentExam,
+            new SwitchedExerciseAction(exerciseChange.exercise?.id),
+            this.connected,
+            exerciseChange.timestamp,
+        );
         if (!exerciseChange.overViewChange) {
             this.initializeExercise(exerciseChange.exercise!);
         } else {
@@ -606,8 +612,9 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      *
      * @param forceSave is set to true, when the current exercise should be saved (even if there are no changes)
      * @param automatically is set to true, when the current exercise should be saved automatically
+     * @param timestamp of the triggered save
      */
-    triggerSave(forceSave: boolean, automatically: boolean) {
+    triggerSave(forceSave: boolean, automatically: boolean, timestamp?: dayjs.Dayjs) {
         // before the request, we would mark the submission as isSynced = true
         // right after the response - in case it was successful - we mark the submission as isSynced = false
         this.autoSaveTimer = 0;
@@ -649,20 +656,20 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (forceSave || this.connected) {
             // Save collected actions
             this.examMonitoringService.saveActions(this.exam, this.studentExam, this.connected);
-            const timestamp = this.serverDateService.now();
+            const saveTimestamp = timestamp ?? this.serverDateService.now();
 
             submissionsToSync.forEach((submissionToSync: { exercise: Exercise; submission: Submission }) => {
                 switch (submissionToSync.exercise.type) {
                     case ExerciseType.TEXT:
                         this.textSubmissionService.update(submissionToSync.submission as TextSubmission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, saveTimestamp),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, saveTimestamp),
                         });
                         break;
                     case ExerciseType.MODELING:
                         this.modelingSubmissionService.update(submissionToSync.submission as ModelingSubmission, submissionToSync.exercise.id!).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, saveTimestamp),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, saveTimestamp),
                         });
                         break;
                     case ExerciseType.PROGRAMMING:
@@ -670,8 +677,8 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         break;
                     case ExerciseType.QUIZ:
                         this.examParticipationService.updateQuizSubmission(submissionToSync.exercise.id!, submissionToSync.submission as QuizSubmission).subscribe({
-                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
-                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, timestamp),
+                            next: () => this.onSaveSubmissionSuccess(submissionToSync.submission, submissionToSync.exercise.id!, forceSave, automatically, saveTimestamp),
+                            error: (error: HttpErrorResponse) => this.onSaveSubmissionError(error, submissionToSync.exercise.id!, forceSave, automatically, saveTimestamp),
                         });
                         break;
                     case ExerciseType.FILE_UPLOAD:

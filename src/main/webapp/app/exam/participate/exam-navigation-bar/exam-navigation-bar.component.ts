@@ -13,6 +13,7 @@ import { map } from 'rxjs/operators';
 import { CodeEditorConflictStateService } from 'app/exercises/programming/shared/code-editor/service/code-editor-conflict-state.service';
 import { ExamSession } from 'app/entities/exam-session.model';
 import { faBars, faCheck, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
 
 @Component({
     selector: 'jhi-exam-navigation-bar',
@@ -25,7 +26,7 @@ export class ExamNavigationBarComponent implements OnInit {
     @Input() endDate: dayjs.Dayjs;
     @Input() overviewPageOpen: boolean;
     @Input() examSessions?: ExamSession[] = [];
-    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean }>();
+    @Output() onPageChanged = new EventEmitter<{ overViewChange: boolean; exercise?: Exercise; forceSave: boolean; timestamp?: dayjs.Dayjs }>();
     @Output() examAboutToEnd = new EventEmitter<void>();
     @Output() onExamHandInEarly = new EventEmitter<void>();
 
@@ -48,6 +49,7 @@ export class ExamNavigationBarComponent implements OnInit {
         private examExerciseUpdateService: ExamExerciseUpdateService,
         private repositoryService: CodeEditorRepositoryService,
         private conflictService: CodeEditorConflictStateService,
+        private serverDateService: ArtemisServerDateService,
     ) {}
 
     ngOnInit(): void {
@@ -106,6 +108,7 @@ export class ExamNavigationBarComponent implements OnInit {
      * @param forceSave: true if forceSave shall be used.
      */
     changePage(overviewPage: boolean, exerciseIndex: number, forceSave?: boolean): void {
+        const timestamp = this.serverDateService.now();
         if (!overviewPage) {
             // out of index -> do nothing
             if (exerciseIndex > this.exercises.length - 1 || exerciseIndex < 0) {
@@ -113,12 +116,12 @@ export class ExamNavigationBarComponent implements OnInit {
             }
             // set index and emit event
             this.exerciseIndex = exerciseIndex;
-            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave });
+            this.onPageChanged.emit({ overViewChange: false, exercise: this.exercises[this.exerciseIndex], forceSave: !!forceSave, timestamp });
         } else if (overviewPage) {
             // set index and emit event
             this.exerciseIndex = -1;
             // save current exercise
-            this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false });
+            this.onPageChanged.emit({ overViewChange: true, exercise: undefined, forceSave: false, timestamp });
         }
         this.setExerciseButtonStatus(this.exerciseIndex);
     }

@@ -551,7 +551,7 @@ describe('ExamParticipationComponent', () => {
         const createParticipationForExerciseSpy = jest.spyOn(comp, 'createParticipationForExercise').mockReturnValue(of(new StudentParticipation()));
         comp.exam = new Exam();
         comp.onPageChange(exerciseChange);
-        expect(triggerSpy).toHaveBeenCalledWith(true, false);
+        expect(triggerSpy).toHaveBeenCalledWith(true, false, undefined);
         expect(comp.exerciseIndex).toEqual(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
