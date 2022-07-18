@@ -450,6 +450,8 @@ public class ModelingExerciseResource {
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
         for (var comparison : result.getComparisons()) {
             comparison.setPlagiarismResult(null);
+            comparison.getSubmissionA().setPlagiarismComparison(null);
+            comparison.getSubmissionB().setPlagiarismComparison(null);
         }
         return ResponseEntity.ok(result);
     }
