@@ -159,7 +159,7 @@ describe('Submission Service', () => {
         const result = submission.results![0];
         result.completionDate = dateStr as any; // String should be converted to proper type by the tested service.
 
-        service.convertResultsDateFromServer(submission.results);
+        service.convertResultArrayDatesFromServer(submission.results);
 
         expect(result.completionDate).toEqual(date);
     });

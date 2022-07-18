@@ -14,6 +14,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -210,5 +211,18 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertEquals(examAction.getStudentExamId(), receivedAction.getStudentExamId());
         assertEquals(examAction.getId(), receivedAction.getId());
         assertEquals(examAction.getType(), receivedAction.getType());
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    @ValueSource(booleans = { true, false })
+    public void testUpdateMonitoring(boolean monitoring) throws Exception {
+        exam.setMonitoring(!monitoring);
+        exam = examRepository.save(exam);
+
+        var result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
+
+        assertEquals(result, monitoring);
+        assertEquals(examRepository.findByIdElseThrow(exam.getId()).isMonitoring(), monitoring);
     }
 }

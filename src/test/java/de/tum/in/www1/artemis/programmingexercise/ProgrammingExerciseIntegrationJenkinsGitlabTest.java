@@ -313,6 +313,18 @@ class ProgrammingExerciseIntegrationJenkinsGitlabTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_updatingSCAEnabledOption_badRequest() throws Exception {
+        programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingSCAOption();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void updateProgrammingExercise_updatingCoverageOption_badRequest() throws Exception {
+        programmingExerciseIntegrationTestService.updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingCoverageOption();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         programmingExerciseIntegrationTestService.updateExerciseDueDateWithIndividualDueDateUpdate();
     }

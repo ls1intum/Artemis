@@ -481,6 +481,24 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
+    /**
+     * Tests that a submission without model (can happen for exam submissions) does not throw an exception and does
+     * not create an automatic result.
+     * @throws Exception any exception in the test
+     */
+    @Test
+    @WithMockUser(username = "student2")
+    void testAutomaticAssessmentUponModelSubmission_emptyModel() throws Exception {
+        database.createAndSaveParticipationForExercise(classExercise, "student2");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(null, true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
+        assertThat(automaticResult).as("automatic result is not created").isNull();
+    }
+
     @Test
     @WithMockUser(username = "student2")
     void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
@@ -1472,7 +1490,7 @@ class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+    void testCheckPlagiarismIdenticalLongModels() throws Exception {
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";

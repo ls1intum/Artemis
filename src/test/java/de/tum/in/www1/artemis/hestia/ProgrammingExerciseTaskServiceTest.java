@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -178,7 +177,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
     @Test
     void testParseTestCaseNames() {
-        List<String> testCaseNames = List.of("testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]");
+        String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
             var testCase = new ProgrammingExerciseTestCase();
             testCase.setExercise(programmingExercise);
@@ -194,7 +193,7 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTasks.get(0).getId());
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
-        assertThat(actualTestCaseNames).isEqualTo(testCaseNames);
+        assertThat(actualTestCaseNames).containsExactlyInAnyOrder(testCaseNames);
     }
 
     private boolean checkTaskEqual(ProgrammingExerciseTask task, String expectedName, String expectedTestName) {

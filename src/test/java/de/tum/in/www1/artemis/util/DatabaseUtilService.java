@@ -1141,6 +1141,7 @@ public class DatabaseUtilService {
         exam.setRandomizeExerciseOrder(true);
         exam.setStartDate(ZonedDateTime.now().plusHours(2));
         exam.setEndDate(ZonedDateTime.now().plusHours(4));
+        exam.setWorkingTime(2 * 60 * 60);
         exam.setMaxPoints(20);
         exam = examRepository.save(exam);
 
@@ -1213,6 +1214,21 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addTestExam(Course course) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        examRepository.save(exam);
+        return exam;
+    }
+
+    public Exam addTestExamWithRegisteredUser(Course course, User user) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        HashSet<User> userHashSet = new HashSet<>();
+        userHashSet.add(user);
+        exam.setRegisteredUsers(userHashSet);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course, User user, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam.addRegisteredUser(user);
@@ -1231,11 +1247,19 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addTestExamWithExerciseGroup(Course course, boolean mandatory) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        ModelFactory.generateExerciseGroup(mandatory, exam);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public Exam addExam(Course course, ZonedDateTime visibleDate, ZonedDateTime startDate, ZonedDateTime endDate) {
         Exam exam = ModelFactory.generateExam(course);
         exam.setVisibleDate(visibleDate);
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
+        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
         exam.setGracePeriod(180);
         examRepository.save(exam);
         return exam;
@@ -1247,6 +1271,7 @@ public class DatabaseUtilService {
         exam.setStartDate(startDate);
         exam.setEndDate(endDate);
         exam.setPublishResultsDate(publishResultDate);
+        exam.setWorkingTime((int) Duration.between(startDate, endDate).toSeconds());
         exam.setGracePeriod(180);
         examRepository.save(exam);
         return exam;
@@ -1256,7 +1281,9 @@ public class DatabaseUtilService {
         Exam exam = ModelFactory.generateExam(course);
         exam.setStartDate(ZonedDateTime.now().minusHours(1));
         exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
         exam.addRegisteredUser(user);
+        exam.setTestExam(false);
         examRepository.save(exam);
         var studentExam = new StudentExam();
         studentExam.setExam(exam);
@@ -1267,8 +1294,32 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addActiveTestExamWithRegisteredUserWithoutStudentExam(Course course, User user) {
+        Exam exam = ModelFactory.generateTestExam(course);
+        exam.setStartDate(ZonedDateTime.now().minusHours(1));
+        exam.setEndDate(ZonedDateTime.now().plusHours(1));
+        exam.setWorkingTime(2 * 60 * 60);
+        exam.addRegisteredUser(user);
+        examRepository.save(exam);
+        return exam;
+    }
+
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addStudentExamWithUser(Exam exam, User user) {
+        StudentExam studentExam = ModelFactory.generateStudentExam(exam);
+        studentExam.setUser(user);
+        studentExamRepository.save(studentExam);
+        return studentExam;
+    }
+
+    public StudentExam addStudentExamForTestExam(Exam exam, User user) {
+        StudentExam studentExam = ModelFactory.generateStudentExamForTestExam(exam);
+        studentExam.setUser(user);
         studentExamRepository.save(studentExam);
         return studentExam;
     }
@@ -3058,6 +3109,9 @@ public class DatabaseUtilService {
         ExerciseHint exerciseHint1 = new ExerciseHint().content("content 1").exercise(exercise).title("title 1");
         ExerciseHint exerciseHint2 = new ExerciseHint().content("content 2").exercise(exercise).title("title 2");
         ExerciseHint exerciseHint3 = new ExerciseHint().content("content 3").exercise(exercise).title("title 3");
+        exerciseHint1.setDisplayThreshold((short) 3);
+        exerciseHint2.setDisplayThreshold((short) 3);
+        exerciseHint3.setDisplayThreshold((short) 3);
         Set<ExerciseHint> hints = new HashSet<>();
         hints.add(exerciseHint1);
         hints.add(exerciseHint2);

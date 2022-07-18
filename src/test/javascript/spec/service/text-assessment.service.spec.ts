@@ -203,7 +203,7 @@ describe('TextAssessment Service', () => {
     it('should send feedback', async () => {
         textSubmission.atheneTextAssessmentTrackingToken = '12345';
         service.trackAssessment(textSubmission);
-        httpMock.expectOne({ url: `${SERVER_API_URL}/athene-tracking/text-exercise-assessment`, method: 'POST' });
+        httpMock.expectOne({ url: `${SERVER_API_URL}athene-tracking/text-exercise-assessment`, method: 'POST' });
     });
 
     it('should send assessment event to analytics', fakeAsync(() => {
@@ -211,7 +211,7 @@ describe('TextAssessment Service', () => {
         service.addTextAssessmentEvent(assessmentEvent).subscribe((response) => {
             expect(response.status).toBe(200);
         });
-        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}/api/analytics/text-assessment/events`, method: 'POST' });
+        const mockRequest = httpMock.expectOne({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
         mockRequest.flush(mockResponse);
         tick();
     }));
@@ -353,7 +353,7 @@ describe('TextAssessment Service', () => {
             .subscribe((resp) => expect(resp).toBe(responseNumberOfTutors));
 
         const req = httpMock.expectOne({
-            url: `/api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
+            url: `${SERVER_API_URL}api/analytics/text-assessment/courses/1/text-exercises/1/tutors-involved`,
             method: 'GET',
         });
         req.flush(responseNumberOfTutors);
