@@ -127,7 +127,6 @@ describe('CourseStatisticsComponent', () => {
                     results: [
                         {
                             id: 231,
-                            resultString: '11 of 12 points',
                             completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                             successful: false,
                             score: 92,
@@ -168,7 +167,6 @@ describe('CourseStatisticsComponent', () => {
                     results: [
                         {
                             id: 230,
-                            resultString: '9 of 12 points',
                             completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                             successful: false,
                             score: 75,
@@ -212,7 +210,6 @@ describe('CourseStatisticsComponent', () => {
                 results: [
                     {
                         id: 231,
-                        resultString: '9 of 12 points',
                         completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                         successful: false,
                         score: 75,
@@ -252,7 +249,6 @@ describe('CourseStatisticsComponent', () => {
                 results: [
                     {
                         id: 232,
-                        resultString: '1 of 3 points',
                         completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                         successful: false,
                         score: 33,
@@ -294,7 +290,6 @@ describe('CourseStatisticsComponent', () => {
                 results: [
                     {
                         id: 233,
-                        resultString: '17 of 17 points',
                         completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                         successful: false,
                         score: 100,
@@ -460,7 +455,6 @@ describe('CourseStatisticsComponent', () => {
                         results: [
                             {
                                 id: 222,
-                                resultString: '5.5 of 10 points',
                                 completionDate: dayjs('2019-06-17T09:30:17.761+02:00'),
                                 successful: false,
                                 score: 55,

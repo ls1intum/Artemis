@@ -1,6 +1,6 @@
 import { NgModule } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TeamsComponent } from 'app/exercises/shared/team/teams.component';
 import { teamRoute } from 'app/exercises/shared/team/team.route';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';

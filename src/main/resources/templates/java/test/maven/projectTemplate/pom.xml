@@ -8,6 +8,7 @@
     <name>${exerciseName} Tests</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-Dfile.encoding=UTF-8</argLine>
         <!--%static-code-analysis-start%-->
         <scaConfigDirectory>${project.basedir}/staticCodeAnalysisConfig</scaConfigDirectory>
         <analyzeTests>false</analyzeTests>
@@ -45,9 +46,6 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
-                <configuration>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -84,6 +82,14 @@
                                 <file>${project.build.outputDirectory}/sun/</file>
                                 <file>${project.build.outputDirectory}/org/gradle/</file>
                                 <file>${project.build.outputDirectory}/worker/org/gradle/</file>
+                                <!--%record-testwise-coverage-start%-->
+                                <file>${project.build.outputDirectory}/com/squareup/</file>
+                                <file>${project.build.outputDirectory}/com/teamscale/</file>
+                                <file>${project.build.outputDirectory}/okhttp3/</file>
+                                <file>${project.build.outputDirectory}/okio/</file>
+                                <file>${project.build.outputDirectory}/retrofit2/</file>
+                                <file>${project.build.outputDirectory}/shadow/</file>
+                                <!--%record-testwise-coverage-stop%-->
                             </files>
                         </requireFilesDontExist>
                     </rules>
@@ -170,4 +176,54 @@
             <!--%static-code-analysis-stop%-->
         </plugins>
     </build>
+    <!--%record-testwise-coverage-start%-->
+    <profiles>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.0.0-M5</version>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <ares.security.trustedpackages>okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio</ares.security.trustedpackages>
+                            </systemPropertyVariables>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.teamscale</groupId>
+                                <artifactId>teamscale-surefire-provider</artifactId>
+                                <version>24.1.1</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.teamscale</groupId>
+                        <artifactId>teamscale-maven-plugin</artifactId>
+                        <version>24.1.1</version>
+                        <configuration>
+                            <teamscaleUrl>http://localhost</teamscaleUrl>
+                            <accessToken>dummy</accessToken>
+                            <projectId>${exerciseNamePomXml}-Tests</projectId>
+                            <username>dummy</username>
+                            <partition>testwise</partition>
+                            <includes>
+                                <include>*${packageName}*</include>
+                            </includes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-tia-unit-test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    <!--%record-testwise-coverage-stop%-->
 </project>

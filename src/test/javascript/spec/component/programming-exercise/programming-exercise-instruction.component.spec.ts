@@ -28,7 +28,6 @@ import { ProgrammingExerciseParticipationService } from 'app/exercises/programmi
 // tslint:disable-next-line:max-line-length
 import { ProgrammingExerciseInstructionTaskStatusComponent } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-instruction-task-status.component';
 import { Result } from 'app/entities/result.model';
-import { Feedback } from 'app/entities/feedback.model';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ResultDetailComponent } from 'app/exercises/shared/result/result-detail.component';
@@ -101,13 +100,13 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should on participation change clear old subscription for participation results set up new one', () => {
-        const exercise = { id: 1 };
-        const oldParticipation = { id: 1 } as Participation;
-        const result = { id: 1 };
-        const participation = { id: 2, results: [result] } as Participation;
+        const exercise: ProgrammingExercise = { id: 1, numberOfAssessmentsOfCorrectionRounds: [], secondCorrectionEnabled: false, studentAssignedTeamIdComputed: false };
+        const oldParticipation: Participation = { id: 1 };
+        const result: Result = { id: 1 };
+        const participation: Participation = { id: 2, results: [result] };
         const oldSubscription = new Subscription();
         subscribeForLatestResultOfParticipationStub.mockReturnValue(of());
-        comp.exercise = exercise as ProgrammingExercise;
+        comp.exercise = exercise;
         comp.participation = participation;
         comp.participationSubscription = oldSubscription;
 
@@ -121,9 +120,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should try to fetch README.md from assignment repository if no problemStatement was provided', () => {
-        const result = { id: 1, feedbacks: [] as Feedback[] } as Result;
-        const participation = { id: 2 } as Participation;
-        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const result: Result = { id: 1, feedbacks: [] };
+        const participation: Participation = { id: 2 };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
         const getFileSubject = new Subject<{ fileContent: string; fileName: string }>();
         const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
@@ -155,10 +160,17 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should NOT try to fetch README.md from assignment repository if a problemStatement was provided', () => {
-        const result = { id: 1, feedbacks: [] as Feedback[] } as Result;
-        const participation = { id: 2 } as Participation;
+        const result: Result = { id: 1, feedbacks: [] };
+        const participation: Participation = { id: 2 };
         const problemstatement = 'lorem ipsum';
-        const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemstatement,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
         const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         comp.participation = participation;
@@ -182,9 +194,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should emit that no instructions are available if there is neither a problemStatement provided nor a README.md can be retrieved', () => {
-        const result = { id: 1, feedbacks: [] as Feedback[] } as Result;
-        const participation = { id: 2 } as Participation;
-        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const result: Result = { id: 1, feedbacks: [] };
+        const participation: Participation = { id: 2 };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
         const getFileSubject = new Subject<{ fileContent: string; fileName: string }>();
         const loadInitialResultStub = jest.spyOn(comp, 'loadInitialResult').mockReturnValue(of(result));
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
@@ -215,8 +233,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should NOT update markdown if the problemStatement is changed', () => {
-        const participation = { id: 2 } as Participation;
-        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const participation: Participation = { id: 2 };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
         const oldProblemStatement = 'lorem ipsum';
         const newProblemStatement = 'new lorem ipsum';
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
@@ -236,8 +260,14 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should NOT update the markdown if there is no participation and the exercise has changed', () => {
-        const participation = { id: 2 } as Participation;
-        const exercise = { id: 3, course: { id: 4 } } as ProgrammingExercise;
+        const participation: Participation = { id: 2 };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
         const newProblemStatement = 'new lorem ipsum';
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         const loadInitialResult = jest.spyOn(comp, 'loadInitialResult');
@@ -252,9 +282,16 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should still render the instructions if fetching the latest result fails', () => {
-        const participation = { id: 2 } as Participation;
+        const participation: Participation = { id: 2 };
         const problemstatement = 'lorem ipsum';
-        const exercise = { id: 3, course: { id: 4 }, problemStatement: problemstatement } as ProgrammingExercise;
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement: problemstatement,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
         const updateMarkdownStub = jest.spyOn(comp, 'updateMarkdown');
         getLatestResultWithFeedbacks.mockReturnValue(throwError(() => new Error('fatal error')));
         comp.participation = participation;
@@ -274,12 +311,20 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     });
 
     it('should create the steps task icons for the tasks in problem statement markdown (non legacy case)', fakeAsync(() => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-06-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testMergeSort', detail_text: 'lorem ipsum', positive: true }],
-        } as any;
-        const exercise = { id: 3, course: { id: 4 }, problemStatement, showTestNamesToStudents: true } as ProgrammingExercise;
+            feedbacks: [{ text: 'testMergeSort', detailText: 'lorem ipsum', positive: true }],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement,
+            showTestNamesToStudents: true,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
 
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;
@@ -329,12 +374,19 @@ describe('ProgrammingExerciseInstructionComponent', () => {
     }));
 
     it('should create the steps task icons for the tasks in problem statement markdown (legacy case)', fakeAsync(() => {
-        const result = {
+        const result: Result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
-            feedbacks: [{ text: 'testBubbleSort', detail_text: 'lorem ipsum' }],
-        } as any;
-        const exercise = { id: 3, course: { id: 4 }, problemStatement } as ProgrammingExercise;
+            feedbacks: [{ text: 'testBubbleSort', detailText: 'lorem ipsum' }],
+        };
+        const exercise: ProgrammingExercise = {
+            id: 3,
+            course: { id: 4 },
+            problemStatement,
+            numberOfAssessmentsOfCorrectionRounds: [],
+            secondCorrectionEnabled: false,
+            studentAssignedTeamIdComputed: false,
+        };
 
         comp.problemStatement = exercise.problemStatement!;
         comp.exercise = exercise;

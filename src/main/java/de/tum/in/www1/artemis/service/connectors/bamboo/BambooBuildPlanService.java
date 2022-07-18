@@ -318,7 +318,7 @@ public class BambooBuildPlanService {
     /**
      * Modify the lists containing default and final tasks for executing a non-sequential test run
      * @param isMavenProject whether the project is a Maven project (or implicitly a Gradle project)
-     * @param recordTestwiseCoverage whether the testwise coverage should be recorded (only available for Gradle projects)
+     * @param recordTestwiseCoverage whether the testwise coverage should be recorded
      * @param defaultTasks the list containing the default tasks for the build plan to be created
      * @param finalTasks the list containing the final tasks for the build plan to be created
      * @param artifacts the list containing all artifacts for the build plan to be created
@@ -326,7 +326,20 @@ public class BambooBuildPlanService {
     private void modifyBuildConfigurationForRegularTestsForJavaAndKotlinExercise(boolean isMavenProject, boolean recordTestwiseCoverage, List<Task<?, ?>> defaultTasks,
             List<Task<?, ?>> finalTasks, List<Artifact> artifacts) {
         if (isMavenProject) {
-            defaultTasks.add(new MavenTask().goal("clean test").jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
+            String goals = "clean test";
+            if (recordTestwiseCoverage) {
+                // If a testwise coverage should be performed, a custom profile is used for the execution
+                goals += " -Pcoverage";
+                artifacts.add(new Artifact().name("testwiseCoverageReport").location("target/tia/reports").copyPattern("tiaTests.json"));
+            }
+
+            defaultTasks.add(new MavenTask().goal(goals).jdk("JDK").executableLabel("Maven 3").description("Tests").hasTests(true));
+
+            // the report name of the artifact has to be renamed, since the name contains the latest timestamp and artifact pattern matching
+            // returns a folder of artifacts, instead of the individual artifact. The report has to be renamed after the build execution
+            if (recordTestwiseCoverage) {
+                defaultTasks.add(new ScriptTask().description("Move Report File").inlineBody("mv target/tia/reports/*/testwise-coverage-*.json target/tia/reports/tiaTests.json"));
+            }
         }
         else {
             // setting the permission as a final task is required as a workaround because the docker container runs as a root user
