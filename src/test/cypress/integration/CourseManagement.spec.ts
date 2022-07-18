@@ -27,12 +27,12 @@ describe('Course management', () => {
         const uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
-        cy.login(artemis.users.getAdmin(), '/');
         cy.login(artemis.users.getInstructor());
         cy.login(artemis.users.getTutor());
         cy.login(artemis.users.getStudentOne());
         cy.login(artemis.users.getStudentTwo());
         cy.login(artemis.users.getStudentThree());
+        cy.login(artemis.users.getAdmin(), '/');
     });
 
     describe('Manual student selection', () => {

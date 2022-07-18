@@ -771,6 +771,30 @@ public class ProgrammingExerciseIntegrationTestService {
         request.put(ROOT + PROGRAMMING_EXERCISES, newProgrammingExercise, HttpStatus.CONFLICT);
     }
 
+    /**
+     * This test checks that it is not allowed to change SCA enabled option
+     */
+    public void updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingSCAOption() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        ProgrammingExercise updatedExercise = programmingExercise;
+        updatedExercise.setStaticCodeAnalysisEnabled(true);
+
+        request.put(ROOT + PROGRAMMING_EXERCISES, updatedExercise, HttpStatus.BAD_REQUEST);
+    }
+
+    /**
+     * This test checks that it is not allowed to change coverage enabled option
+     */
+    public void updateProgrammingExerciseShouldFailWithBadRequestWhenUpdatingCoverageOption() throws Exception {
+        mockBuildPlanAndRepositoryCheck(programmingExercise);
+
+        ProgrammingExercise updatedExercise = programmingExercise;
+        updatedExercise.setTestwiseCoverageEnabled(true);
+
+        request.put(ROOT + PROGRAMMING_EXERCISES, updatedExercise, HttpStatus.BAD_REQUEST);
+    }
+
     public void updateExerciseDueDateWithIndividualDueDateUpdate() throws Exception {
         mockBuildPlanAndRepositoryCheck(programmingExercise);
 
