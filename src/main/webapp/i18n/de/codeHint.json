@@ -70,17 +70,17 @@
                     "updateHintsButton": {
                         "label": "Code-Hinweise aktualisieren",
                         "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungs Codeschnipsel neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
-                        "success": "Code-Hinweise erfolgreich aktualisiert"
+                        "success": "Code-Hinweise erfolgreich aktualisiert. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
                     },
                     "createHintsButton": {
                         "label": "Code-Hinweise erstellen",
                         "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungs Codeschnipseln.",
-                        "success": "Code-Hinweise erfolgreich erstellt"
+                        "success": "Code-Hinweise erfolgreich erstellt. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
                     },
                     "recreateHintsButton": {
                         "label": "Code-Hinweise neu erstellen",
                         "tooltip": "Erstellt Code-Hinweise aus den existierenden Fragmenten. Existierende Hinweise werden überschrieben.",
-                        "success": "Code-Hinweise erfolgreich neu erstellt"
+                        "success": "Code-Hinweise erfolgreich neu erstellt. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
                     }
                 }
             }

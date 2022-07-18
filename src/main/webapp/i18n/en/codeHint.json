@@ -70,17 +70,17 @@
                     "updateHintsButton": {
                         "label": "Update code hints",
                         "tooltip": "Create new code hints by re-assigning the existing Solution Code Snippets. The title, description, and content of the existing hint retain.",
-                        "success": "Code hints have been updated successfully"
+                        "success": "Code hints have been updated successfully. The hints will be visible immediately to participating students."
                     },
                     "createHintsButton": {
                         "label": "Create code hints",
                         "tooltip": "Creates code hints from the existing Solution Code Snippets.",
-                        "success": "Code hints have been created successfully"
+                        "success": "Code hints have been created successfully. The hints will be visible immediately to participating students."
                     },
                     "recreateHintsButton": {
                         "label": "Recreate code hints",
                         "tooltip": "Recreate code hints from the existing Solution Code Snippets. Existing hints will be overwritten.",
-                        "success": "Code hints have been recreated successfully"
+                        "success": "Code hints have been recreated successfully. The hints will be visible immediately to participating students."
                     }
                 }
             }
