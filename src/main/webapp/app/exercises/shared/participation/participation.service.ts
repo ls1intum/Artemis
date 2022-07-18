@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-import dayjs from 'dayjs/esm';
 import { createRequestOption } from 'app/shared/util/request.util';
 import { Exercise } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
@@ -11,6 +10,7 @@ import { Participation, ParticipationType } from 'app/entities/participation/par
 import { SubmissionService } from 'app/exercises/shared/submission/submission.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<StudentParticipation>;
 export type EntityArrayResponseType = HttpResponse<StudentParticipation[]>;
@@ -42,8 +42,8 @@ export class ParticipationService {
 
     private convertParticipationForServer(participation: StudentParticipation, exercise: Exercise): StudentParticipation {
         // make sure participation and exercise are connected, because this is expected by the server
-        participation.exercise = ExerciseService.convertExerciseForServer(exercise);
-        return this.convertDateFromClient(participation);
+        participation.exercise = ExerciseService.convertExerciseFromClient(exercise);
+        return this.convertParticipationDatesFromClient(participation);
     }
 
     find(participationId: number): Observable<EntityResponseType> {
@@ -88,10 +88,10 @@ export class ParticipationService {
     }
 
     cleanupBuildPlan(participation: StudentParticipation): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(participation);
+        const copy = this.convertParticipationDatesFromClient(participation);
         return this.http
             .put<StudentParticipation>(`${this.resourceUrl}/${participation.id}/cleanupBuildPlan`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertParticipationResponseDatesFromServer(res)));
     }
 
     downloadArtifact(participationId: number): Observable<BuildArtifact> {
@@ -104,25 +104,25 @@ export class ParticipationService {
         );
     }
 
-    protected convertDateFromClient(participation: StudentParticipation): StudentParticipation {
+    protected convertParticipationDatesFromClient(participation: StudentParticipation): StudentParticipation {
         // return a copy of the object
         return Object.assign({}, participation, {
-            initializationDate: participation.initializationDate && dayjs(participation.initializationDate).isValid() ? participation.initializationDate.toJSON() : undefined,
-            individualDueDate: participation.individualDueDate && dayjs(participation.individualDueDate).isValid() ? participation.individualDueDate.toJSON() : undefined,
+            initializationDate: convertDateFromClient(participation.initializationDate),
+            individualDueDate: convertDateFromClient(participation.individualDueDate),
         });
     }
 
-    protected convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    protected convertParticipationResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             ParticipationService.convertParticipationDatesFromServer(res.body);
-            res.body.results = this.submissionService.convertResultsDateFromServer(res.body.results);
-            res.body.submissions = this.submissionService.convertSubmissionsDateFromServer(res.body.submissions);
-            res.body.exercise = ExerciseService.convertExerciseDateFromServer(res.body.exercise);
+            res.body.results = this.submissionService.convertResultArrayDatesFromServer(res.body.results);
+            res.body.submissions = this.submissionService.convertSubmissionArrayDatesFromServer(res.body.submissions);
+            res.body.exercise = ExerciseService.convertExerciseDatesFromServer(res.body.exercise);
         }
         return res;
     }
 
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    protected convertParticipationResponseArrayDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
             res.body.forEach((participation: StudentParticipation) => {
                 ParticipationService.convertParticipationDatesFromServer(participation);
@@ -139,13 +139,13 @@ export class ParticipationService {
      */
     public static convertParticipationDatesFromServer(participation?: Participation) {
         if (participation) {
-            participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
-            participation.individualDueDate = participation.individualDueDate ? dayjs(participation.individualDueDate) : undefined;
+            participation.initializationDate = convertDateFromServer(participation.initializationDate);
+            participation.individualDueDate = convertDateFromServer(participation.individualDueDate);
         }
         return participation;
     }
 
-    public static convertParticipationsDateFromServer(participations?: StudentParticipation[]) {
+    public static convertParticipationArrayDatesFromServer(participations?: StudentParticipation[]) {
         const convertedParticipations: StudentParticipation[] = [];
         if (participations?.length) {
             participations.forEach((participation: StudentParticipation) => {
@@ -231,7 +231,7 @@ export class ParticipationService {
      * @private
      */
     private processParticipationEntityArrayResponseType(participationRes: EntityArrayResponseType): EntityArrayResponseType {
-        this.convertDateArrayFromServer(participationRes);
+        this.convertParticipationResponseArrayDatesFromServer(participationRes);
         this.setAccessRightsParticipationEntityArrayResponseType(participationRes);
         return participationRes;
     }
@@ -242,7 +242,7 @@ export class ParticipationService {
      * @private
      */
     private processParticipationEntityResponseType(participationRes: EntityResponseType): EntityResponseType {
-        this.convertDateFromServer(participationRes);
+        this.convertParticipationResponseDatesFromServer(participationRes);
         this.setAccessRightsParticipationEntityResponseType(participationRes);
         return participationRes;
     }

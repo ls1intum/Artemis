@@ -8,6 +8,7 @@ import { Participation } from 'app/entities/participation/participation.model';
 import { roundScorePercentSpecifiedByCourseSettings, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 export enum ScoreType {
     ABSOLUTE_SCORE = 'absoluteScore',
@@ -95,7 +96,7 @@ export class CourseScoreCalculationService {
     getParticipationForExercise(exercise: Exercise) {
         if (exercise.studentParticipations != undefined && exercise.studentParticipations.length > 0) {
             const exerciseParticipation: StudentParticipation = exercise.studentParticipations[0];
-            return CourseScoreCalculationService.convertDateForParticipationFromServer(exerciseParticipation);
+            return CourseScoreCalculationService.convertParticipationDatesFromServer(exerciseParticipation);
         }
     }
 
@@ -109,7 +110,7 @@ export class CourseScoreCalculationService {
 
         if (results) {
             for (let i = 0; i < results.length; i++) {
-                resultsArray.push(CourseScoreCalculationService.convertDateForResultFromServer(results[i]));
+                resultsArray.push(CourseScoreCalculationService.convertResultDatesFromServer(results[i]));
             }
 
             if (resultsArray.length <= 0) {
@@ -153,13 +154,13 @@ export class CourseScoreCalculationService {
         return chosenResult;
     }
 
-    private static convertDateForResultFromServer(result: Result): Result {
-        result.completionDate = result.completionDate ? dayjs(result.completionDate) : undefined;
+    private static convertResultDatesFromServer(result: Result): Result {
+        result.completionDate = convertDateFromServer(result.completionDate);
         return result;
     }
 
-    private static convertDateForParticipationFromServer(participation: Participation): Participation {
-        participation.initializationDate = participation.initializationDate ? dayjs(participation.initializationDate) : undefined;
+    private static convertParticipationDatesFromServer(participation: Participation): Participation {
+        participation.initializationDate = convertDateFromServer(participation.initializationDate);
         return participation;
     }
 

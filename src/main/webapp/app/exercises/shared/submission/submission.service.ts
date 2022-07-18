@@ -12,6 +12,7 @@ import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
+import { convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Submission>;
 export type EntityArrayResponseType = HttpResponse<Submission[]>;
@@ -44,7 +45,7 @@ export class SubmissionService {
      */
     findAllSubmissionsOfParticipation(participationId: number): Observable<EntityArrayResponseType> {
         return this.http.get<Submission[]>(`${this.resourceUrlParticipation}/${participationId}/submissions`, { observe: 'response' }).pipe(
-            map((res) => this.convertDateArrayFromServer(res)),
+            map((res) => this.convertSubmissionArrayResponseDatesFromServer(res)),
             filter((res) => !!res.body),
             tap((res) =>
                 res.body!.forEach((submission) => {
@@ -79,7 +80,7 @@ export class SubmissionService {
         if (res.body) {
             res.body.forEach((dto) => {
                 dto.submission = this.convertSubmissionDateFromServer(dto.submission);
-                dto.complaint = this.convertDateFromServerComplaint(dto.complaint);
+                dto.complaint = this.convertComplaintDatesFromServer(dto.complaint);
                 this.setSubmissionAccessRights(dto.submission);
             });
         }
@@ -92,10 +93,10 @@ export class SubmissionService {
         return submission;
     }
 
-    convertDateFromServerComplaint(complaint: Complaint) {
-        complaint.submittedTime = complaint.submittedTime ? dayjs(complaint.submittedTime) : undefined;
+    convertComplaintDatesFromServer(complaint: Complaint) {
+        complaint.submittedTime = convertDateFromServer(complaint.submittedTime);
         if (complaint.complaintResponse) {
-            this.complaintResponseService.convertDatesToDayjs(complaint.complaintResponse);
+            this.complaintResponseService.convertComplaintResponseDatesFromServer(complaint.complaintResponse);
         }
         return complaint;
     }
@@ -112,7 +113,7 @@ export class SubmissionService {
         }
     }
 
-    convertResultsDateFromServer(results?: Result[]) {
+    convertResultArrayDatesFromServer(results?: Result[]) {
         const convertedResults: Result[] = [];
         if (results != undefined && results.length > 0) {
             results.forEach((result: Result) => {
@@ -123,7 +124,7 @@ export class SubmissionService {
         return convertedResults;
     }
 
-    convertSubmissionsDateFromServer(submissions?: Submission[]) {
+    convertSubmissionArrayDatesFromServer(submissions?: Submission[]) {
         const convertedSubmissions: Submission[] = [];
         if (submissions != undefined && submissions.length > 0) {
             submissions.forEach((submission: Submission) => {
@@ -137,9 +138,9 @@ export class SubmissionService {
         return convertedSubmissions;
     }
 
-    protected convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    protected convertSubmissionArrayResponseDatesFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            this.convertSubmissionsDateFromServer(res.body);
+            this.convertSubmissionArrayDatesFromServer(res.body);
         }
         return res;
     }
