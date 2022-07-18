@@ -1,4 +1,4 @@
-import { ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
@@ -20,6 +20,8 @@ import dayjs from 'dayjs/esm';
 import './config/dayjs';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { TraceService } from '@sentry/angular';
+import { Router } from '@angular/router';
 
 @NgModule({
     imports: [
@@ -44,9 +46,16 @@ import { JhiLanguageHelper } from 'app/core/language/language.helper';
             useValue: 'en',
         },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
+        { provide: TraceService, deps: [Router] },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: () => () => {},
+            deps: [TraceService],
+            multi: true,
+        },
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.

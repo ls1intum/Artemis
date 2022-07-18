@@ -407,13 +407,7 @@ public class ModelingExerciseResource {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdWithStudentParticipationsSubmissionsResultsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, modelingExercise, null);
         var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(modelingExercise.getId());
-        if (plagiarismResult != null) {
-            for (var comparison : plagiarismResult.getComparisons()) {
-                comparison.setPlagiarismResult(null);
-                comparison.getSubmissionA().setPlagiarismComparison(null);
-                comparison.getSubmissionB().setPlagiarismComparison(null);
-            }
-        }
+        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
         return ResponseEntity.ok((ModelingPlagiarismResult) plagiarismResult);
     }
 
@@ -439,21 +433,17 @@ public class ModelingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, modelingExercise, null);
         long start = System.nanoTime();
         log.info("Start modelingPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
-        ModelingPlagiarismResult result = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
-        log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", result.getComparisons().size(),
+        var plagiarismResult = modelingPlagiarismDetectionService.checkPlagiarism(modelingExercise, similarityThreshold / 100, minimumSize, minimumScore);
+        log.info("Finished modelingPlagiarismDetectionService.checkPlagiarism call for {} comparisons in {}", plagiarismResult.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
         // TODO: limit the amount temporarily because of database issues
-        result.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
+        plagiarismResult.sortAndLimit(100);
+        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", plagiarismResult.getComparisons().size());
         start = System.nanoTime();
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
+        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-        for (var comparison : result.getComparisons()) {
-            comparison.setPlagiarismResult(null);
-            comparison.getSubmissionA().setPlagiarismComparison(null);
-            comparison.getSubmissionB().setPlagiarismComparison(null);
-        }
-        return ResponseEntity.ok(result);
+        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        return ResponseEntity.ok(plagiarismResult);
     }
 
     /**

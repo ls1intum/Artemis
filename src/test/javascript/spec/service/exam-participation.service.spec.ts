@@ -49,17 +49,39 @@ describe('Exam Participation Service', () => {
     it('should load a StudentExam with exercises for conduction', async () => {
         const returnedFromService = Object.assign({ started: true }, studentExam);
         service
-            .loadStudentExamWithExercisesForConduction(1, 1)
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
+
+    it('should load a StudentExam with exercises for conduction of TestExam', async () => {
+        const returnedFromService = Object.assign({ started: true }, studentExam);
+        service
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
     it('should load a StudentExam with exercises for summary', async () => {
         const returnedFromService = Object.assign({}, studentExam);
         service
-            .loadStudentExamWithExercisesForSummary(1, 1)
+            .loadStudentExamWithExercisesForSummary(1, 1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
+    it('should load a StudentExam with exercises for summary', async () => {
+        const returnedFromService = Object.assign({}, studentExam);
+        service
+            .loadStudentExamWithExercisesForSummary(1, 1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -112,6 +134,61 @@ describe('Exam Participation Service', () => {
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
     });
+
+    it('should load a StudentExam for a TestExam', async () => {
+        const sendExam = Object.assign(
+            {
+                visibleDate: dayjs(),
+                startDate: dayjs(),
+                endDate: dayjs(),
+                publishResultDate: dayjs(),
+                examStudentReviewStart: dayjs(),
+                examStudentReviewEnd: dayjs(),
+            },
+            exam,
+        );
+        const returnedFromService = Object.assign(
+            {
+                exam: sendExam,
+            },
+            studentExam,
+        );
+        service
+            .loadStudentExam(1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
+    it('should load a StudentExam for a TestExam by Id', async () => {
+        const sendExam = Object.assign(
+            {
+                visibleDate: dayjs(),
+                startDate: dayjs(),
+                endDate: dayjs(),
+                publishResultDate: dayjs(),
+                examStudentReviewStart: dayjs(),
+                examStudentReviewEnd: dayjs(),
+            },
+            exam,
+        );
+        const returnedFromService = Object.assign(
+            {
+                exam: sendExam,
+            },
+            studentExam,
+        );
+        service
+            .loadStudentExamWithExercisesForConduction(1, 1, 1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
+
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
+    });
+
     it('should load a StudentExam in the version of server', async () => {
         /*configure exercises of this student Exam*/
         const exercise = new TextExercise(new Course(), undefined);
@@ -191,5 +268,15 @@ describe('Exam Participation Service', () => {
         service.loadStudentExamWithExercisesForConductionFromLocalStorage(1, 1).subscribe((localExam: StudentExam) => {
             expect(localExam).toEqual(studentExam);
         });
+    });
+
+    it('should load a List of StudentExams for a user and course', async () => {
+        const returnedFromService = Object.assign({}, [studentExam]);
+        service
+            .loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(1)
+            .pipe(take(1))
+            .subscribe((resp) => expect(resp).toMatchObject({ body: [studentExam] }));
+        const req = httpMock.expectOne({ method: 'GET' });
+        req.flush(returnedFromService);
     });
 });
