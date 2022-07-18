@@ -38,7 +38,7 @@
             "text": "<b>Gruppenaufgaben</b> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
         },
         "lectures": {
-            "text": "<b>Vorlesungen:</b> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
+            "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
         },
         "integratedMarkdownEditor": {
             "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren und zudem Bilder und Links integrieren."
@@ -53,15 +53,17 @@
             "text": "<b>Skalierbar</b> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."
         },
         "highUserSatisfaction": {
-            "text": "<b>Hohe Benutzerzufriedenheit:</b> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
+            "text": "<a href={{ userExperienceUrl }}>Hohe Benutzerzufriedenheit:</a> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
         },
         "customizable": {
             "text": "<a href={{ customizableUrl }}>Anpassbar:</a> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
+            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
         },
         "getInTouch": "Kontakt",
-        "contributors": "Mitwirkende"
+        "contributors": "Mitwirkende",
+        "projectManager": "Projekt Manager",
+        "website": "Webseite"
     }
 }

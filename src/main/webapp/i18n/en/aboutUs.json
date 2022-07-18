@@ -32,13 +32,13 @@
             "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
         },
         "notifications": {
-            "text": "<b>Notifications:</b> Customizable for web and email. Users can enable and disable different notification types."
+            "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."
         },
         "teamExercises": {
             "text": "<b>Team exercises</b> with real time collaboration and dedicated tutors per team."
         },
         "lectures": {
-            "text": "<b>Lectures:</b> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
+            "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
         },
         "integratedMarkdownEditor": {
             "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links."
@@ -53,15 +53,17 @@
             "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
         },
         "highUserSatisfaction": {
-            "text": "<b>High user satisfaction:</b> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
+            "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
             "text": "<a href={{ customizableUrl }}>Customizable:</a> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
+            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
-        "contributors": "Individual contributors"
+        "contributors": "Individual contributors",
+        "projectManager": "Project Manager",
+        "website": "Website"
     }
 }
