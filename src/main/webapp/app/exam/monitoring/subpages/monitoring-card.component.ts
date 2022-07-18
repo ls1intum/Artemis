@@ -8,9 +8,9 @@ import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
 })
 export class MonitoringCardComponent {
     @Input() title: string;
-    @Input() linkTo: string;
-    @Input() courseId: number;
-    @Input() examId: number;
+    @Input() linkTo?: string;
+    @Input() courseId?: number;
+    @Input() examId?: number;
     @Input() description: string;
 
     faArrowRight = faArrowRight;
