@@ -200,7 +200,6 @@ describe('Exam Management Component', () => {
     });
 
     it('should open the import modal for exercise groups', fakeAsync(() => {
-        // const exam = { id: 1 } as Exam;
         const mockReturnValue = {
             componentInstance: {
                 subsequentExerciseGroupSelection: undefined,
