@@ -17,7 +17,7 @@ import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortaw
 import { SessionStorageService } from 'ngx-webstorage';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
-const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
+export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
 
 @Component({
     selector: 'jhi-notification-sidebar',

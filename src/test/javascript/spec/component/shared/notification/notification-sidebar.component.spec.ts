@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -36,6 +36,7 @@ describe('Notification Sidebar Component', () => {
     let accountService: AccountService;
     let userService: UserService;
     let userSettingsService: UserSettingsService;
+    let sessionStorageService: SessionStorageService;
 
     const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
     const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
@@ -88,6 +89,7 @@ describe('Notification Sidebar Component', () => {
                 accountService = TestBed.inject(AccountService);
                 userService = TestBed.inject(UserService);
                 userSettingsService = TestBed.inject(UserSettingsService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
 
                 const loadSettingsStub = jest.spyOn(userSettingsService, 'loadSettings');
                 loadSettingsStub.mockReturnValue(of(new HttpResponse({ body: receivedNotificationSettings })));
@@ -95,14 +97,31 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('Initialization', () => {
-        it('should set last notification read', () => {
-            const lastNotificationRead = dayjs();
-            const getAuthenticationStateStub = jest.spyOn(accountService, 'getAuthenticationState');
-            getAuthenticationStateStub.mockReturnValue(of({ lastNotificationRead } as User));
+        const referenceDate = dayjs();
+
+        it.each([
+            { userDate: referenceDate, storageDate: undefined, expectedDate: referenceDate },
+            { userDate: undefined, storageDate: referenceDate, expectedDate: referenceDate },
+            { userDate: referenceDate, storageDate: referenceDate.add(5, 'minutes'), expectedDate: referenceDate.add(5, 'minutes') },
+            { userDate: referenceDate, storageDate: referenceDate.subtract(5, 'minutes'), expectedDate: referenceDate },
+        ])('should set the correct last notification read', ({ userDate, storageDate, expectedDate }) => {
+            const getAuthenticationStateStub = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of({ lastNotificationRead: userDate } as User));
+            const sessionStorageSub = jest.spyOn(sessionStorageService, 'retrieve').mockReturnValue((storageDate as dayjs.Dayjs | undefined)?.toISOString());
 
             notificationSidebarComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).toHaveBeenCalledOnce();
-            expect(notificationSidebarComponent.lastNotificationRead).toBe(lastNotificationRead);
+            expect(getAuthenticationStateStub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledWith(LAST_READ_STORAGE_KEY);
+            expect(notificationSidebarComponent.lastNotificationRead).toEqual(expectedDate);
+        });
+
+        it('should clear the session storage last notification read date if the user logs out', () => {
+            const getAuthenticationStateStub = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(undefined));
+            const sessionStorageSub = jest.spyOn(sessionStorageService, 'clear');
+            notificationSidebarComponent.ngOnInit();
+            expect(getAuthenticationStateStub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledWith(LAST_READ_STORAGE_KEY);
         });
 
         it('should query notifications', () => {
