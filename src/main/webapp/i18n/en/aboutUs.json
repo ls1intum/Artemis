@@ -20,7 +20,7 @@
             }
         },
         "exam": {
-            "text": "<b>Exam mode:</b> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
+            "text": "<a href={{ examModeUrl }}>Exam mode:</a> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
         },
         "grading": {
             "text": "<b>Grading:</b> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
