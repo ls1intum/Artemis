@@ -531,39 +531,34 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(recreateBuildPlans));
 
         // Import the exercise and load all referenced entities
-        if (programmingLanguage == C || !recreateBuildPlans) {
-            request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported, ProgrammingExercise.class, params,
-                    HttpStatus.INTERNAL_SERVER_ERROR);
+        var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
+                ProgrammingExercise.class, params, HttpStatus.OK);
+        importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
+
+        if (staticCodeAnalysisEnabled) {
+            // Assert correct creation of static code analysis categories
+            var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+            var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+            assertThat(importedCategoryIds).doesNotContainAnyElementsOf(sourceCategoryIds);
+            assertThat(importedExercise.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
+                    .containsExactlyInAnyOrderElementsOf(sourceExercise.getStaticCodeAnalysisCategories());
         }
-        else {
-            var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                    ProgrammingExercise.class, params, HttpStatus.OK);
-            importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
-            if (staticCodeAnalysisEnabled) {
-                // Assert correct creation of static code analysis categories
-                var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
-                var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
-                assertThat(importedCategoryIds).doesNotContainAnyElementsOf(sourceCategoryIds);
-                assertThat(importedExercise.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
-                        .containsExactlyInAnyOrderElementsOf(sourceExercise.getStaticCodeAnalysisCategories());
-            }
+        // Assert correct creation of test cases
+        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
+        assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
+                .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
-            // Assert correct creation of test cases
-            var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
-            var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
-            assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
-            assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
-                    .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
-                    .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+        // Assert correct creation of hints
+        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
+        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
 
-            // Assert correct creation of hints
-            var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
-            var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
-            assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
-            assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
-                    .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
-        }
     }
 
     // TEST
