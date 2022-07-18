@@ -47,7 +47,7 @@ public class SentryConfiguration {
                 options.setSendDefaultPii(true);
                 options.setEnvironment(getEnvironment());
                 options.setRelease(artemisVersion);
-                options.setTracesSampleRate(getTracesSampleRace());
+                options.setTracesSampleRate(getTracesSampleRate());
             });
         }
         catch (Exception ex) {
@@ -74,7 +74,7 @@ public class SentryConfiguration {
      * Get the traces sample rate based on the environment.
      * @return 0% for local, 100% for test, 20% for production environments
      */
-    private double getTracesSampleRace() {
+    private double getTracesSampleRate() {
         return switch (getEnvironment()) {
             case "test" -> 1.0;
             case "prod" -> 0.2;
