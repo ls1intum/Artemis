@@ -22,7 +22,7 @@ Build system
 
 The build system is responsible for providing feedback to students when they work on programming exercises.
 Especially during lectures and before deadlines, a lot of students work simultaneously on their submissions, causing high load on the build system.
-The build system must be scaled adequately in order to provide the feedback within a reasonable time.
+The build system must be scaled adequately in order to provide feedback within a reasonable time.
 
 More build agents can be added to the build system, guides can be found `here for Bamboo <https://confluence.atlassian.com/bamboo/bamboo-remote-agent-installation-guide-289276832.html>`_ and `here for Jenkins </dev/setup/jenkins-gitlab#build-agents>`_.
 
@@ -37,7 +37,13 @@ Artemis supports scaling to provide high availability as well as improved perfor
 This is especially important if you plan to conduct exams using Artemis.
 Details regarding the scaling of Artemis can be found in the `corresponding section of the documentation </dev/setup/distributed>`_.
 
-Depending on your setup and the number of users, you might be required to also scale/optimize other parts of the Artemis infrastructure, e.g. the database or used third-party systems.
+A scaled environment uses a load balancer to distribute requests between the different instances of the Artemis Application Server.
+All instances share the same database (and filesystem) and can be added/removed from the environment during runtime.
+
+   .. figure:: /dev/setup/distributed/deployment_after_simple.drawio.png
+      :align: center
+
+Depending on your setup and the number of users, you might also be required to scale/optimize other parts of the Artemis infrastructure, e.g. the database or used third-party systems.
 Please refer to the corresponding documentations for detailed information.
 
 Note that support for Kubernetes is currently being added.
