@@ -5,6 +5,13 @@
                 "title": "Vorlesungen",
                 "createLabel": "Vorlesung erstellen",
                 "importLabel": "Vorlesung importieren",
+                "filterLabel": "Filter",
+                "filterOptions": {
+                    "filterPast": "Vergangenheit",
+                    "filterCurrent": "Gegenwart",
+                    "filterFuture": "Zukunft",
+                    "filterUnspecifiedDates": "Unbestimmter Zeitpunkt"
+                },
                 "createOrEditLabel": "Vorlesung erstellen oder bearbeiten"
             },
             "created": "Vorlesung erstellt mit ID {{ param }}",

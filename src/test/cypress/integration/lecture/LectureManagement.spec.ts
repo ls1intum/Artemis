@@ -90,4 +90,50 @@ describe('Lecture management', () => {
             });
         });
     });
+
+    describe('Filter lectures', () => {
+        beforeEach('Create 3 lectures in the past, present and future', () => {
+            cy.login(instructor, '/course-management/' + course.id + '/lectures');
+            // create a lecture that started 2 hours ago and ended 1 hour ago
+            courseManagementRequests.createLecture(course, 'lecture-in-the-past', dayjs().subtract(120, 'minutes'), dayjs().subtract(60, 'minutes')).then((lectureResponse) => {
+                lecture = lectureResponse.body;
+            });
+            // create a lecture that starts now and ends 60 minutes from now, i.e. lecture is currently in progress
+            courseManagementRequests.createLecture(course, 'lecture-in-progress', dayjs(), dayjs().add(60, 'minutes')).then((lectureResponse) => {
+                lecture = lectureResponse.body;
+            });
+            // create a lecture the starts and ends in the future
+            courseManagementRequests.createLecture(course, 'lecture-in-the-future', dayjs().add(60, 'minutes'), dayjs().add(120, 'minutes')).then((lectureResponse) => {
+                lecture = lectureResponse.body;
+            });
+        });
+
+        it('Only shows the past lecture when filtering for Past lectures', () => {
+            // deselect checkboxes for Current, Future and Unspecified Dates lectures
+            // filterPast lecture should then be the only checkbox ticked.
+            cy.get('#filterCurrent').click();
+            cy.get('#filterFuture').click();
+            cy.get('#filterUnspecifiedDates').click();
+            lectureManagement.getLectureContainer().children().should('have.length', 1);
+            cy.contains('lecture-in-the-past').should('be.visible');
+        });
+
+        it('Only shows the current lecture when filtering for Current lectures', () => {
+            // deselect checkbox for Past lectures
+            cy.get('#filterPast').click();
+            // select checkbox for Current lectures. Current lectures should then be the only checkbox ticked.
+            cy.get('#filterCurrent').click();
+            lectureManagement.getLectureContainer().children().should('have.length', 1);
+            cy.contains('lecture-in-progress').should('be.visible');
+        });
+
+        it('Only shows the Future lecture when filtering for Future lectures', () => {
+            // deselect checkbox for Current lectures
+            cy.get('#filterCurrent').click();
+            // select checkbox for Future lectures. Future lectures should then be the only checkbox ticked.
+            cy.get('#filterFuture').click();
+            lectureManagement.getLectureContainer().children().should('have.length', 1);
+            cy.contains('lecture-in-the-future').should('be.visible');
+        });
+    });
 });
