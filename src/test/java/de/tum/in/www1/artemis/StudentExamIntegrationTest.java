@@ -2130,10 +2130,10 @@ public class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooB
         final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
                 exercisesOfUser.get(student1));
         for (StudentParticipation studentParticipation : studentParticipations) {
-            // Acceptance range, initializationDate is to be set to now()
+            // Acceptance range, initialization Date is to be set to now()
             assertThat(ZonedDateTime.now().minusSeconds(10).isBefore(studentParticipation.getInitializationDate())).isTrue();
             assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentParticipation.getInitializationDate())).isTrue();
-
+            // Compare started date and initialization Date
             studentExamForConduction
                     .setStartedDate(ZonedDateTime.ofInstant(studentExamForConduction.getStartedDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
             studentParticipation
