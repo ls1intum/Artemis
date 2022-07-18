@@ -747,6 +747,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (programmingSubmissionObj.submission) {
                         // delete backwards reference so that it is still serializable
                         const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+
+                        this.examMonitoringService.handleAndSaveActionEvent(
+                            this.exam,
+                            this.studentExam,
+                            new SavedExerciseAction(false, submissionCopy.id, exerciseId, submissionCopy.buildFailed ?? false, false),
+                            this.connected,
+                            submissionCopy.submissionDate,
+                        );
+
                         /**
                          * Syncs the navigation bar correctly when the student only uses an IDE or the code editor.
                          * In case a student uses both, un-submitted changes in the code editor take precedence.
