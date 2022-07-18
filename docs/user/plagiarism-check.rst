@@ -18,7 +18,7 @@ Next, we explain the plagiarism check workflows from the perspective of various 
 
 Plagiarism Check Overview
 --------------------------
-In this section we give an overview of available features of plagiarism check. We explain different configuration settings, possible user actions and present the plagiarism result views, which are accessible after plagiarism check run.
+In this section we give an overview of available features of plagiarism check. We explain different configuration settings, possible user actions and present the plagiarism result views, which are accessible after plagiarism checks run.
 
 .. _settings:
 
@@ -119,10 +119,10 @@ The process is visualized in the following diagram.
 4. Select one confirmed case and navigate to the case detail view.
  |selected-confirmed-case|
 
-5. Notify the student about the potential plagiarism case and ask him or her for statement.
+5. Notify the student about the potential plagiarism case and ask him or her for a statement.
  |student-notification|
 
-6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking ok in the dialog.
+6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
  |verdict-dialog|
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.

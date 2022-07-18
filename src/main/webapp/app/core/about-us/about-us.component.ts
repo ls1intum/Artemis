@@ -37,7 +37,7 @@ export class AboutUsComponent implements OnInit {
         ['teamExercises', {}],
         ['lectures', {}],
         ['integratedMarkdownEditor', {}],
-        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.ase.in.tum.de/user/plagiarism-check/' }],
         ['learningAnalytics', {}],
         ['scalable', {}],
         ['highUserSatisfaction', {}],
