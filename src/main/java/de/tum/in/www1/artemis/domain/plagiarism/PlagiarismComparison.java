@@ -10,6 +10,8 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import de.jplag.JPlagComparison;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
@@ -28,19 +30,25 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     private PlagiarismResult<E> plagiarismResult;
 
     /**
-     * First submission compared.
+     * First submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
      * <p>
      * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
+    @JsonIgnoreProperties("plagiarismComparison")
     @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_a_id")
     private PlagiarismSubmission<E> submissionA;
 
     /**
-     * Second submission compared.
+     * Second submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
+     * <p>
+     * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
+     * which would leave empty references from other plagiarism comparisons. Comparisons are
+     * always deleted all at once, so we can also cascade deletion.
      */
+    @JsonIgnoreProperties("plagiarismComparison")
     @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_b_id")
     private PlagiarismSubmission<E> submissionB;

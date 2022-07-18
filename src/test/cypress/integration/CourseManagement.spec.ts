@@ -11,7 +11,7 @@ import { Course } from 'app/entities/course.model';
 // Requests
 const artemisRequests: ArtemisRequests = new ArtemisRequests();
 
-// PagegObjects
+// PageObjects
 const courseManagementPage: CourseManagementPage = new CourseManagementPage();
 const navigationBar: NavigationBar = new NavigationBar();
 
@@ -27,6 +27,11 @@ describe('Course management', () => {
         const uid = generateUUID();
         courseName = 'Cypress course' + uid;
         courseShortName = 'cypress' + uid;
+        cy.login(artemis.users.getInstructor());
+        cy.login(artemis.users.getTutor());
+        cy.login(artemis.users.getStudentOne());
+        cy.login(artemis.users.getStudentTwo());
+        cy.login(artemis.users.getStudentThree());
         cy.login(artemis.users.getAdmin(), '/');
     });
 
