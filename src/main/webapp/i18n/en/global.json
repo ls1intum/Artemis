@@ -244,7 +244,8 @@
             "addAuxiliaryRepository": "Add Auxiliary Repository",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted",
-            "endNow": "End Now"
+            "endNow": "End Now",
+            "ldap": "Sync from LDAP"
         },
         "detail": {
             "field": "Field",

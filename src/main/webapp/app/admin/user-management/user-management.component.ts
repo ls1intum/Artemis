@@ -21,6 +21,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { TemplateRef, ViewChild } from '@angular/core';
 import { HttpParams } from '@angular/common/http';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -123,6 +124,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
+    isLdapProfileActive = false;
 
     // filters
     filters: UserFilter = new UserFilter();
@@ -157,6 +159,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private localStorage: LocalStorageService,
         private courseManagementService: CourseManagementService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -170,7 +173,6 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             }
             this.initFilters();
         });
-
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
@@ -207,6 +209,11 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.currentAccount = user!;
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
+        });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            if (profileInfo && profileInfo.activeProfiles.includes('ldap')) {
+                this.isLdapProfileActive = true;
+            }
         });
     }
 
@@ -571,7 +578,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     ldapSync(login: string) {
-        this.userService.ldapSync(login).subscribe(() => {
+        this.userService.syncLdap(login).subscribe(() => {
             this.loadAll();
         });
     }

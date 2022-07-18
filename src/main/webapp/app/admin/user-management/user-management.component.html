@@ -176,9 +176,7 @@
                                 <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
-                            <a class="btn btn-success btn-sm" (click)="ldapSync(user.login!)">
-                                <span class="d-none d-md-inline">LDAP</span>
-                            </a>
+                            <button class="btn btn-success btn-sm" [disabled]="!isLdapProfileActive" (click)="ldapSync(user.login!)" jhiTranslate="entity.action.ldap"></button>
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"

@@ -12,6 +12,7 @@ import javax.validation.Valid;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
@@ -202,9 +203,10 @@ public class UserResource {
      * @param login of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
-    @PutMapping("users/{login:" + Constants.LOGIN_REGEX + "}/ldap-sync")
+    @PutMapping("users/{login:" + Constants.LOGIN_REGEX + "}/sync-ldap")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<UserDTO> ldapUserSync(@PathVariable String login) {
+    @Profile("ldap")
+    public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable String login) {
         log.debug("REST request to update ldap information User : {}", login);
 
         var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);

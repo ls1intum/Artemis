@@ -243,7 +243,8 @@
             "addAuxiliaryRepository": "Hilfsrepository anlegen",
             "toggleToUnsubmitted": "Setze Studierenden-Klausur auf nicht abgegeben",
             "toggleToSubmitted": "Setze Studierenden-Klausur auf abgegeben",
-            "endNow": "Jetzt Beenden"
+            "endNow": "Jetzt Beenden",
+            "ldap": "von LDAP synchronisieren"
         },
         "detail": {
             "field": "Feld",
