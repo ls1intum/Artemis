@@ -53,7 +53,6 @@ public class FileUploadImportService extends ExerciseImportService {
     private FileUploadExercise copyFileUploadExerciseBasis(FileUploadExercise importedExercise) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         FileUploadExercise newExercise = new FileUploadExercise();
-
         super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
         newExercise.setFilePattern(importedExercise.getFilePattern());
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
