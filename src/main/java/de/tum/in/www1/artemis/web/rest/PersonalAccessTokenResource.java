@@ -32,8 +32,8 @@ public class PersonalAccessTokenResource {
 
     private final UserRepository userRepository;
 
-    @Value("${artemis.personal-access-token.max-lifetime-in-seconds}")
-    private long personalAccessTokenMaxLifetimeSeconds;
+    @Value("${artemis.personal-access-token.max-lifetime-in-days}")
+    private long personalAccessTokenMaxLifetimeDays;
 
     public PersonalAccessTokenResource(TokenProvider tokenProvider, UserRepository userRepository) {
         this.tokenProvider = tokenProvider;
@@ -43,36 +43,37 @@ public class PersonalAccessTokenResource {
     /**
      * Generates a personal access token (JWT token) for the current user.
      *
-     * @param lifetimeSeconds the lifetime for the JWT token in seconds
+     * @param lifetimeDays the lifetime for the JWT token in days
      * @return a JWT Token
      */
     @PreAuthorize("hasRole('USER')")
     @PostMapping("/personal-access-token")
-    public ResponseEntity<UserJWTController.JWTToken> getPersonalAccessToken(@RequestBody Long lifetimeSeconds) {
+    public ResponseEntity<UserJWTController.JWTToken> getPersonalAccessToken(@RequestBody Long lifetimeDays) {
         User user = userRepository.getUser();
 
         if (!user.getActivated()) {
             throw new UserNotActivatedException("User was disabled!");
         }
 
-        if (lifetimeSeconds > this.personalAccessTokenMaxLifetimeSeconds) {
-            long difference = this.personalAccessTokenMaxLifetimeSeconds - lifetimeSeconds;
+        if (lifetimeDays > this.personalAccessTokenMaxLifetimeDays) {
+            long difference = this.personalAccessTokenMaxLifetimeDays - lifetimeDays;
             return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPersonalAccessTokenLifetime",
-                    "Requested token lifetime exceeds the maximum lifetime for personal access tokens by " + difference + " s")).build();
+                    "Requested token lifetime exceeds the maximum lifetime for personal access tokens by " + difference + " days")).build();
         }
 
         // Automatically returns 401 if not fully authorized
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        final String jwt = tokenProvider.createTokenWithCustomDuration(authentication, 1000 * lifetimeSeconds);
+        final long daysToMillis = 24 * 60 * 60 * 1000;
+        final String jwt = tokenProvider.createTokenWithCustomDuration(authentication, daysToMillis * lifetimeDays);
         return new ResponseEntity<>(new UserJWTController.JWTToken(jwt), HttpStatus.OK);
     }
 
     /**
      * Returns the maximum lifetime for personal access tokens.
-     * @return the maximum lifetime for personal access tokens in seconds
+     * @return the maximum lifetime for personal access tokens in days
      */
     @GetMapping("/personal-access-token/maximum-lifetime")
     public ResponseEntity<Long> getPersonalAccessTokenMaxLifetime() {
-        return new ResponseEntity<>(this.personalAccessTokenMaxLifetimeSeconds, HttpStatus.OK);
+        return new ResponseEntity<>(this.personalAccessTokenMaxLifetimeDays, HttpStatus.OK);
     }
 }

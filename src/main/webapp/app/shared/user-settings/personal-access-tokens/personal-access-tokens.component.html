@@ -16,7 +16,6 @@
             name="lifetime"
             id="field_lifetime_days"
             [(ngModel)]="newTokenLifetimeDays"
-            (change)="convertTokenLifetimeFromDaysToSeconds()"
             #lifetime="ngModel"
         />
         <button [disabled]="!lifetime.valid || token" class="btn btn-primary btn-sm me-2 pat-button input-group-append" type="button" (click)="generateNewToken()">

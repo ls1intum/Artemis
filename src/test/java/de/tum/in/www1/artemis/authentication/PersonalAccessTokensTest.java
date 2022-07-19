@@ -21,8 +21,8 @@ public class PersonalAccessTokensTest extends AbstractSpringIntegrationJenkinsGi
 
     private static final String NOT_ACTIVATE_NAME = "student2";
 
-    @Value("${artemis.personal-access-token.max-lifetime-in-seconds}")
-    private long personalAccessTokenMaxLifetimeSeconds;
+    @Value("${artemis.personal-access-token.max-lifetime-in-days}")
+    private long personalAccessTokenMaxLifetimeDays;
 
     @Autowired
     private UserRepository userRepository;
@@ -44,25 +44,25 @@ public class PersonalAccessTokensTest extends AbstractSpringIntegrationJenkinsGi
     @Test
     @WithAnonymousUser
     public void testNotFullyAuthorized() throws Exception {
-        request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeSeconds, HttpStatus.UNAUTHORIZED);
+        request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays, HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     @WithMockUser(username = NOT_ACTIVATE_NAME, roles = "ADMIN")
     public void testNotActivated() throws Exception {
-        request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeSeconds, HttpStatus.UNAUTHORIZED);
+        request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays, HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     @WithMockUser(username = ACTIVATE_NAME, roles = "ADMIN")
     public void testFullyAuthorized() throws Exception {
-        request.postWithoutLocation(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeSeconds, HttpStatus.OK, null);
+        request.postWithoutLocation(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays, HttpStatus.OK, null);
     }
 
     @Test
     @WithMockUser(username = ACTIVATE_NAME, roles = "ADMIN")
     public void testInvalidLifetime() throws Exception {
-        request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeSeconds + 1, HttpStatus.BAD_REQUEST);
+        request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays + 1, HttpStatus.BAD_REQUEST);
     }
 
     @Test
