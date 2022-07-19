@@ -116,7 +116,7 @@ public interface ContinuousIntegrationService {
     String getPlanKey(Object requestBody) throws ContinuousIntegrationException;
 
     /**
-     * converts the object from the CI system (Bamboo, Jenkins or GitLabCI) into a proper Java DTO
+     * converts the object from the CI system (Bamboo, Jenkins, or GitLabCI) into a proper Java DTO
      * @param requestBody the object sent from the CI system to Artemis
      * @return the DTO with all information in Java Object form
      */

@@ -73,7 +73,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             gitlab.getProjectApi().updateProject(project);
         }
         catch (GitLabApiException e) {
-            throw new GitLabCIException("Error getting project from repository path for " + repositoryURL.toString());
+            throw new GitLabCIException("Error getting project from repository path for " + repositoryURL.toString(), e);
         }
     }
 
