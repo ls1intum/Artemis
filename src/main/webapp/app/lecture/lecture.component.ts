@@ -75,6 +75,7 @@ export class LectureComponent implements OnInit {
                     .subscribe({
                         next: (res: Lecture) => {
                             this.lectures.push(res);
+                            this.activeFilters.clear();
                             this.applyFilters();
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
