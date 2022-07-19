@@ -19,13 +19,10 @@ public class BuildLogStatisticsEntryService {
      * Generate a BuildLogStatisticsEntry from the given ZonedDateTime (and other parameters) and persist it.
      *
      * @param programmingSubmission the submission for which the BuildLogStatisticsEntry should be generated
-     * @param jobStarted the ZonedDateTime when the CI server started the build (does not include queueing time), or null
-     * @param agentSetupCompleted the ZonedDateTime when the CI server completed the setup of the build agent (e.g. pulling the docker images is completed), or null
-     * @param testsStarted the ZonedDateTime when the tests have been started, or null
-     * @param testsFinished the ZonedDateTime when the tests have been finished, or null
-     * @param scaStarted the ZonedDateTime when the static code analysis has been started, or null
-     * @param scaFinished the ZonedDateTime when the static code analysis has been finished, or null
-     * @param jobFinished the ZonedDateTime when the CI server completed the build, or null
+     * @param agentSetupDuration the BuildJobPartDuration between the start of the build on the CI server and the completion of the agent setup. This includes e.g. pulling the docker images
+     * @param testDuration the BuildJobPartDuration of the test execution
+     * @param scaDuration the BuildJobPartDuration of the SCA execution
+     * @param totalJobDuration the BuildJobPartDuration of the complete job
      * @param dependenciesDownloadedCount the number of dependencies downloaded during the build, or null (if it is not exposed through the logs)
      * @return the already persisted BuildLogStatisticsEntry
      */

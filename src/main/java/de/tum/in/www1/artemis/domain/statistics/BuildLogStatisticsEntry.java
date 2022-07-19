@@ -111,6 +111,11 @@ public class BuildLogStatisticsEntry extends DomainObject {
 
     public record BuildJobPartDuration(ZonedDateTime from, ZonedDateTime to) {
 
+        /**
+         * Calculate the duration in seconds for the BuildJobPartDuration.
+         *
+         * @return the duration in second between the from and to arguments, or null if at least one of them is null
+         */
         public Long durationInSeconds() {
             if (from == null || to == null) {
                 return null;
