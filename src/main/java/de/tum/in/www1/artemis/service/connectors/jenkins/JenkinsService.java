@@ -172,25 +172,23 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         Long dependenciesDownloadedCount = null;
 
         if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN)) {
-            jobStarted = buildLogEntries.stream().findFirst().map(BuildLogEntry::getTime).orElse(null);
-            agentSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("docker exec")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Scanning for projects...")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Total time:")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Scanning for projects...")).skip(1).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Total time:")).skip(1).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime();
-            dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from")).count();
+            jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry
+            agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+            scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
         if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
-            jobStarted = buildLogEntries.stream().findFirst().map(BuildLogEntry::getTime).orElse(null);
+            jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry
             // agentSetupCompleted is not supported
-            testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting a Gradle Daemon")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in")).findFirst()
-                    .map(BuildLogEntry::getTime).orElse(null);
-            scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Task :checkstyleMain")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in")).skip(1).findFirst()
-                    .map(BuildLogEntry::getTime).orElse(null);
-            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime();
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"));
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Task :checkstyleMain");
+            scaFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"), 1);
+            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
             // dependenciesDownloadedCount is not supported
         }
 

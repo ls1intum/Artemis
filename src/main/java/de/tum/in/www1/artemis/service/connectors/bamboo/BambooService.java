@@ -359,17 +359,17 @@ public class BambooService extends AbstractContinuousIntegrationService {
         Long dependenciesDownloadedCount = null;
 
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            jobStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("started building on agent")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            agentSetupCompleted = buildLogEntries.stream().filter(b -> b.getLog().contains("Executing build")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            testsStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Tests'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            testsFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Tests' with result")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            scaStarted = buildLogEntries.stream().filter(b -> b.getLog().contains("Starting task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            scaFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished task 'Static Code Analysis'")).findFirst().map(BuildLogEntry::getTime).orElse(null);
-            jobFinished = buildLogEntries.stream().filter(b -> b.getLog().contains("Finished building")).findFirst().map(BuildLogEntry::getTime).orElse(null);
+            jobStarted = getTimestampForLogEntry(buildLogEntries, "started build on agent");
+            agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
+            scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
+            jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
 
             if (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN) {
                 // Not supported for GRADLE projects
-                dependenciesDownloadedCount = buildLogEntries.stream().filter(b -> b.getLog().contains("Downloaded from")).count();
+                dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
             }
         }
 

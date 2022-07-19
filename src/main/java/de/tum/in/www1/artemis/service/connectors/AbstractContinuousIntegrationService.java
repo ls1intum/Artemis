@@ -1,12 +1,16 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.net.URL;
+import java.time.ZonedDateTime;
+import java.util.List;
+import java.util.function.Predicate;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.client.RestTemplate;
 
+import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -66,4 +70,63 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @param buildResult The build result
      */
     protected abstract void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult);
+
+    /**
+     * Find the ZonedDateTime of the first BuildLogEntry that contains the searchString in the log message.
+     *
+     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param searchString the text that must be contained in the log message
+     * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
+     */
+    protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, String searchString) {
+        return getTimestampForLogEntry(buildLogEntries, searchString, 0);
+    }
+
+    /**
+     * Find the ZonedDateTime of the nth BuildLogEntry that contains the searchString in the log message.
+     * This method does not return the first entry that matches the searchString but skips skipEntries matching BuildLogEntries.
+     *
+     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param searchString the text that must be contained in the log message
+     * @param skipEntries the number of matching BuildLogEntries that should be skipped
+     * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
+     */
+    protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, String searchString, int skipEntries) {
+        return getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains(searchString), skipEntries);
+    }
+
+    /**
+     * Find the ZonedDateTime of the first BuildLogEntry that matches the given predicate.
+     *
+     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param matchingPredicate the predicate that must be true for the BuildLogEntry
+     * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
+     */
+    protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, Predicate<BuildLogEntry> matchingPredicate) {
+        return getTimestampForLogEntry(buildLogEntries, matchingPredicate, 0);
+    }
+
+    /**
+     * Find the ZonedDateTime of the nth BuildLogEntry that matches the given predicate.
+     * This method does not return the first entry that matches the given predicate but skips skipEntries matching BuildLogEntries.
+     *
+     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param matchingPredicate the predicate that must be true for the BuildLogEntry
+     * @param skipEntries the number of matching BuildLogEntries that should be skipped
+     * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
+     */
+    protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, Predicate<BuildLogEntry> matchingPredicate, int skipEntries) {
+        return buildLogEntries.stream().filter(matchingPredicate).skip(skipEntries).findFirst().map(BuildLogEntry::getTime).orElse(null);
+    }
+
+    /**
+     * Count the number of log entries that contain the searchString in the log message.
+     *
+     * @param buildLogEntries the BuildLogEntries that should be searched
+     * @param searchString the text that must be contained in the log message
+     * @return the number of matching log entries
+     */
+    protected long countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {
+        return buildLogEntries.stream().filter(b -> b.getLog().contains(searchString)).count();
+    }
 }
