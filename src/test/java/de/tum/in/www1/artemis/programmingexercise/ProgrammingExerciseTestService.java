@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -440,7 +439,7 @@ public class ProgrammingExerciseTestService {
         // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws URISyntaxException {
+    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
@@ -483,7 +482,7 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(true));
         params.add("updateTemplate", String.valueOf(true));
 
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
 
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
@@ -522,7 +521,7 @@ public class ProgrammingExerciseTestService {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
         }
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -626,7 +625,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -665,7 +664,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -690,7 +689,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -717,7 +716,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMaxStaticCodeAnalysisPenalty(80);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -763,7 +762,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setId(sourceExercise.getId());
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
         doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
@@ -1723,7 +1722,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 

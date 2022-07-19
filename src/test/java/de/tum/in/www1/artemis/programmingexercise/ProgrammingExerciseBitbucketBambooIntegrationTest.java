@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
@@ -103,14 +104,17 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
-        return Arrays.stream(ProgrammingLanguage.values()).flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));
+        // TODO: sync with BambooProgrammingLanguageFeatureService
+        var supportedLanguages = ProgrammingLanguage.values();
+        return Arrays.stream(supportedLanguages).flatMap(language -> Stream.of(Arguments.of(language, true, true), Arguments.of(language, false, true),
+                Arguments.of(language, false, false), Arguments.of(language, true, false)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, true);
+    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, addAuxRepos);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
