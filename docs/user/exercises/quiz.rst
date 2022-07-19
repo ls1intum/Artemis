@@ -11,7 +11,7 @@ Overview
 
 - Resolve a Quiz Exercise: Students can solve quiz exercises.
 
-Prepare a quiz exercise
+Prepare a Quiz Exercise
 --------
 This section describes the process to:
 
@@ -20,7 +20,7 @@ This section describes the process to:
     - Import Quiz Exercises from other courses
     - Export Quiz Exercises
 
-Create new quiz exercise
+Create new Quiz Exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 - In the Artemis home page, click on Course Management button |CourseManagementButton|.
@@ -30,7 +30,7 @@ Create new quiz exercise
     .. figure:: quiz/course-dashboard.png
             :align: center
 
-- In the quiz exercises section, click on the Create Quiz button |CreateAQuizButton| to open the following form to create the new Quiz Exercise.
+- In the quiz exercises section, click on the Create Quiz button |CreateAQuizButton| to open the following form to create the new quiz exercise.
 
     .. figure:: quiz/create-a-quiz-form.png
             :align: center
@@ -41,7 +41,7 @@ Create new quiz exercise
 
     - **Difficulty**: Select the difficult level among Easy, Medium and Hard. It is possible to select No level.
 
-    - **Duration**: Provide the time in minutes and seconds for students solve of the Quiz Exercise.
+    - **Duration**: Provide the time in minutes and seconds for students solve of the quiz exercise.
 
     - **Options**: Chose between present the questions in Random order or not.
 
@@ -67,7 +67,7 @@ Create new quiz exercise
 
         - Bonus: the points will be considered as bonus points.
 
-    - **Questions**: There are four ways to add questions to a Quiz Exercise
+    - **Questions**: There are four ways to add questions to a quiz exercise.
 
         - **Add Multiple-Choice Question**
 
@@ -88,13 +88,13 @@ Create new quiz exercise
 
             - Present answer Options in Random order.
 
-            - Single Choice Mode: When there is just one correct option. This disable the Scoring type.
+            - Single Choice Mode: When there is just one correct option. This disables the Scoring type.
 
             - Delete icon: To delete the current question.
 
             - Edit View: Enables the text editor to write the quiz statement and its options, hints and explanations.
 
-            - Edit bar: When the edit view is enable, the format bar allows to provide.
+            - Edit bar: When the edit view is enabled, the format bar provides:
 
                 - Style to the statement text
 
@@ -129,13 +129,13 @@ Create new quiz exercise
 
                 - Proportional without Penalty
 
-            - Present Drag Items in Ransom order.
+            - Present Drag Items in Random order.
 
             - Delete icon: To delete the current question.
 
             - Edit View: Enables the text editor to write the question statement with explanations and hints.
 
-            - Edit bar: When the edit view is enable, the format bar allows to provide.
+            - Edit bar: When the edit view is enabled, the format bar provides:
 
                 - Style to the statement text
 
@@ -157,7 +157,7 @@ Create new quiz exercise
 
         - **Add Short-Answer Question**
 
-            This kind of question is composed by a statement and spots to fill them out by tipping the answers.
+            This kind of question is composed by a statement and spots to fill them out by typing the answers.
 
             .. figure:: quiz/short-answer-question.png
                 :align: center
@@ -180,7 +180,7 @@ Create new quiz exercise
 
             - Delete icon: To delete the current question.
 
-            - Add Spot Option: To add the spot between the text to be fill out.
+            - Add Spot Option: To add the spot between the text to be filled out.
 
             - Add Answer Option: To provide the answer for each spot.
 
@@ -188,11 +188,11 @@ Create new quiz exercise
 
             - Text view button: Enables the text editor to write and edit the question statement.
 
-            - Preview View Button: Enables the student view.
+            - Preview View button: Enables the student view.
 
         - **Add Existing Questions**
 
-            This is a option that allows to import existing questions in other quiz exercises, courses, exams and from files.
+            This is an option that allows to import existing questions from other quiz exercises, courses, exams and files.
 
             .. figure:: quiz/existing-question.png
                 :align: center
@@ -205,23 +205,23 @@ Create new quiz exercise
 
                 - From a file
 
-            - List picker to select specific course, exam or file.
+            - List picker to select a specific course, exam or file.
 
             - Searching bar: to look for the question providing its name or part of it.
 
-            - Filter options according the type of questions
+            - Filter options according to the type of questions:
 
-                - Drag and Drop Questions
+                - Drag and Drop Question
 
-                - Multiple Choice Questions
+                - Multiple Choice Question
 
-                - Short answer Questions
+                - Short answer Question
 
             - Apply filter button
 
             - List of questions with the title, short title, and Type. In the Add column it is possible to select all questions to be imported.
 
-            - At the end of the list, click the Add selected Questions Button |AddSelectedQuestionsButton| to import all selected questions.
+            - At the end of the list, click the Add selected Questions button |AddSelectedQuestionsButton| to import all selected questions.
 
     - **Footer**: In the creation quiz page there is a footer with the following fields:
 
@@ -233,9 +233,9 @@ Create new quiz exercise
 
         - Warning messages
 
-        - Cancel Button
+        - Cancel button
 
-        - Save Button
+        - Save button
 
 Create Drag and Drop Model Quiz Exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -245,20 +245,20 @@ Create Drag and Drop Model Quiz Exercise
         .. figure:: quiz/apollon-diagrams.png
             :align: center
 
-    - In the Apollon Diagrams page is possible to see the list of Apollon Diagrams and the possible actions to perform with them
+    - In the Apollon Diagrams page it is possible to see the list of Apollon Diagrams and the possible actions to perform with them.
 
         - Open
         - Delete
 
-    - Clicking in the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form
+    - Clicking in the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form:
 
         .. figure:: quiz/Apollon-form.png
             :align: center
             :scale: 50
 
-        - Title: provide the title of the Drag and Drop Model Quiz
+        - Title: provide the title of the Drag-and-Drop Model Quiz
 
-        - Diagram Type: List picker that allows to select among several diagrams
+        - Diagram Type: List picker that allows to select among several diagrams:
 
             - Class Diagram
 
@@ -280,9 +280,9 @@ Create Drag and Drop Model Quiz Exercise
 
             - Flowchart
 
-        - Save Button
+        - Save button
 
-        - Cancel Button
+        - Cancel button
 
     - Click the save button to open Apollon editor
 
@@ -293,11 +293,11 @@ Create Drag and Drop Model Quiz Exercise
 
         - Crop image to selection: Allows to download the current selection.
 
-        - Download Button: To download the selection.
+        - Download button: To download the selection.
 
-        - Generate a Quiz Exercise Button.
+        - Generate a quiz exercise button.
 
-        - Save Button.
+        - Save button.
 
         - Modeling field: The items for modeling the diagram will be displayed here.
 
@@ -314,11 +314,11 @@ Import a Quiz
             :align: center
             :scale: 50
 
-        - The searching bar: Allows to look for a specific quiz by tipping its name or part of it.
+        - The searching bar: Allows to look for a specific quiz by typing its name or part of it.
 
-        - The list of quizzes: Whit their ID, title, course and and indicator if they are exam questions.
+        - The list of quizzes: Whit their ID, title, course and indicator if they are exam questions.
 
-        - By clicking the Import Button |ImportButton| opens the quiz editor with the existing questions. Here is possible to edit all parameter such as in the **Create new quiz exercise**.
+        - Clicking the Import button |ImportButton| opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in **Create new quiz exercise**.
 
 Export a Quiz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -329,14 +329,14 @@ Export a Quiz
             :align: center
             :scale: 50
 
-        - Select te quizzes for being exported in the Export Column.
+        - Select the quizzes for being exported in the Export Column.
 
-        - The Export Button |ExportButton| will download the quiz in a JSON file.
+        - The Export button |ExportButton| will download the quiz in a JSON file.
 
-Resolve a quiz exercise
+Resolve a Quiz Exercise
 --------
 
-    - In the Artemis Homepage, if there is a quiz exercise as a current exercise, will be possible to see it from the course overview or inside any course.
+    - If a quiz exercise is available on the Artemis Homepage as current exercise, it will be possible to see it in the course overview or inside the course where it belongs.
 
         .. figure:: quiz/current-quiz-exercise.png
             :align: center
@@ -356,7 +356,7 @@ Resolve a quiz exercise
 
     - To start the quiz, the student must press the Open quiz button |OpenQuizButton|.
 
-    - If the quiz is set to start in a specific hour and the student open it before, he/she will se a message asking to wait until the quiz starts and the remaining time.
+    - If the quiz is set to start in a specific hour and the student opens it before, he/she will see a message asking to wait until the quiz starts and displaying the remaining time.
 
         .. figure:: quiz/please-wait-message.png
             :align: center
@@ -368,7 +368,7 @@ Resolve a quiz exercise
             :align: center
             :scale: 50
 
-    - The quiz page is compose by:
+    - The quiz page is composed by:
 
         - Number and title of the question
 
@@ -400,7 +400,7 @@ Resolve a quiz exercise
             :align: center
             :scale: 40
 
-        - To submit and finish the quiz, the student must be press the submit button |SubmitButton|. However, when the quiz time's up, the answers will be submitted automatically.
+        - To submit and finish the quiz, the student must press the submit button |SubmitButton|. However, when the quiz time's up, the answers will be submitted automatically.
 
     - The assessment is automatic and the student can see the result of the overall quiz and of specific questions. In the case of MC questions, the solution will be displayed.
 
