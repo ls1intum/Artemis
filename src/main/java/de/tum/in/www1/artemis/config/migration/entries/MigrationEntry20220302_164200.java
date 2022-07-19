@@ -63,7 +63,7 @@ public class MigrationEntry20220302_164200 extends MigrationEntry {
             return;
         }
 
-        LOGGER.info("Process internal user " + user.getLogin() + " for password migration");
+        LOGGER.info("Process internal user {} for password migration", user.getLogin());
         // In a previous migration we encrypted all relevant password so we don't need a fallback here
         String password = legacyPasswordService.decryptPassword(user);
 

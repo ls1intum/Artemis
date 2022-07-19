@@ -7,7 +7,6 @@ import java.util.stream.Collectors;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Feedback;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.User;
@@ -165,6 +164,8 @@ public class ExerciseHintService {
         var subsequentNumberOfSuccessfulSubmissionsByTask = tasks.stream()
                 .collect(Collectors.toMap(task -> task, task -> subsequentNumberOfSubmissionsForTaskWithStatus(submissions, task, true)));
 
+        var availableHints = new HashSet<ExerciseHint>();
+
         for (int i = 0; i < tasks.size(); i++) {
             var task = tasks.get(i);
             int subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask = subsequentNumberOfUnsuccessfulSubmissionsByTask.get(task);
@@ -198,10 +199,13 @@ public class ExerciseHintService {
             var availableHintsForCurrentTask = getAvailableExerciseHintsForTask(subsequentNumberSuccessfulSubmissionsForPreviousTask,
                     subsequentNumberOfUnsuccessfulSubmissionsForCurrentTask, hintsInTask);
             if (!availableHintsForCurrentTask.isEmpty()) {
-                return availableHintsForCurrentTask;
+                availableHints.addAll(availableHintsForCurrentTask);
+                break;
             }
         }
-        return new HashSet<>();
+        // Hints with a threshold of 0 will always be displayed
+        availableHints.addAll(exerciseHints.stream().filter(hint -> hint.getDisplayThreshold() == 0).toList());
+        return availableHints;
     }
 
     private boolean isTaskSuccessfulInSubmission(ProgrammingExerciseTask task, Submission submission) {
@@ -211,8 +215,9 @@ public class ExerciseHintService {
         }
         var testCasesInTask = task.getTestCases();
         var feedbacks = result.getFeedbacks();
-        return feedbacks.stream().filter(feedback -> testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText())))
-                .allMatch(Feedback::isPositive);
+        // the feedback can either not exist (e.g. for skipped test cases), or the attribute positive may not be set
+        return feedbacks.stream().filter(feedback -> feedback != null && testCasesInTask.stream().anyMatch(testCase -> Objects.equals(testCase.getTestName(), feedback.getText())))
+                .allMatch(feedback -> Boolean.TRUE.equals(feedback.isPositive()));
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {

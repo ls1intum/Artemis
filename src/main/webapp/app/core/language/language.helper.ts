@@ -6,13 +6,22 @@ import { TranslateService } from '@ngx-translate/core';
 import { LANGUAGES } from './language.constants';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { captureException } from '@sentry/browser';
+import { SessionStorageService } from 'ngx-webstorage';
+import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 
 @Injectable({ providedIn: 'root' })
 export class JhiLanguageHelper {
     private renderer: Renderer2;
     private _language: BehaviorSubject<string>;
 
-    constructor(private translateService: TranslateService, private titleService: Title, private router: Router, rootRenderer: RendererFactory2) {
+    constructor(
+        private translateService: TranslateService,
+        private localeConversionService: LocaleConversionService,
+        private titleService: Title,
+        private router: Router,
+        rootRenderer: RendererFactory2,
+        private sessionStorage: SessionStorageService,
+    ) {
         this._language = new BehaviorSubject<string>(this.translateService.currentLang);
         this.renderer = rootRenderer.createRenderer(document.querySelector('html'), null);
         this.init();
@@ -51,7 +60,10 @@ export class JhiLanguageHelper {
 
     private init() {
         this.translateService.onLangChange.subscribe(() => {
-            this._language.next(this.translateService.currentLang);
+            const languageKey = this.translateService.currentLang;
+            this._language.next(languageKey);
+            this.localeConversionService.locale = languageKey;
+            this.sessionStorage.store('locale', languageKey);
             this.renderer.setAttribute(document.querySelector('html'), 'lang', this.translateService.currentLang);
             this.updateTitle();
         });
@@ -68,5 +80,25 @@ export class JhiLanguageHelper {
             title = this.getPageTitle(routeSnapshot.firstChild) || title;
         }
         return title;
+    }
+
+    public determinePreferredLanguage(): string {
+        const navigator = this.getNavigatorReference();
+        // In the languages array the languages are ordered by preference with the most preferred language first.
+        for (let i = 0; i < navigator.languages.length; i++) {
+            // return the language with the highest preference
+            if (navigator.languages[i].startsWith('en')) {
+                return 'en';
+            }
+            if (navigator.languages[i].startsWith('de')) {
+                return 'de';
+            }
+        }
+        // english as fallback
+        return 'en';
+    }
+
+    public getNavigatorReference(): any {
+        return navigator;
     }
 }

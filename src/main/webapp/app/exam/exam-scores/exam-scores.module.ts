@@ -3,11 +3,11 @@ import { ExamScoresComponent } from './exam-scores.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { ArtemisExamScoresRoutingModule } from 'app/exam/exam-scores/exam-scores.route';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ExamScoresAverageScoresGraphComponent } from 'app/exam/exam-scores/exam-scores-average-scores-graph.component';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 import { ArtemisParticipantScoresModule } from 'app/shared/participant-scores/participant-scores.module';
 import { ExportModule } from 'app/shared/export/export.module';
 
@@ -20,7 +20,7 @@ import { ExportModule } from 'app/shared/export/export.module';
         NgxDatatableModule,
         ArtemisResultModule,
         ArtemisSharedComponentModule,
-        NgxChartsModule,
+        BarChartModule,
         ArtemisParticipantScoresModule,
         ExportModule,
     ],

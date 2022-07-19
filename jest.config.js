@@ -2,7 +2,7 @@ const esModules = ['lodash-es', 'franc-min', 'trigram-utils', 'n-gram', 'collaps
     '@angular/compiler', '@angular/core', '@angular/forms', '@angular/localize', '@angular/platform-browser', '@angular/platform-browser-dynamic', '@angular/router',
     '@ngx-translate/core', '@ngx-translate/http-loader', '@fortawesome/angular-fontawesome', '@angular/cdk', '@angular/material', '@angular/cdk', 'dayjs/esm',
     'rxjs/operators', '@ng-bootstrap/ng-bootstrap', 'ngx-webstorage', '@ctrl/ngx-emoji-mart', 'ngx-device-detector', '@swimlane/ngx-charts',
-    '@angular/service-worker', '@danielmoncada/angular-datetime-picker'].join('|');
+    '@angular/service-worker', '@danielmoncada/angular-datetime-picker', '@flaviosantoro92/ngx-datatable'].join('|');
 
 const {
     compilerOptions: { baseUrl = './' },
@@ -83,6 +83,7 @@ module.exports = {
         '<rootDir>/src/test/javascript/spec/util/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/interceptor/**/*.spec.ts',
         '<rootDir>/src/test/javascript/spec/config/**/*.spec.ts',
+        '<rootDir>/src/test/javascript/spec/core/**/*.spec.ts'
     ],
     moduleNameMapper: {
         '^app/(.*)': '<rootDir>/src/main/webapp/app/$1',

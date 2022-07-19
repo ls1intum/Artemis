@@ -155,8 +155,8 @@ public class CourseService {
             }
         }
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        int noOfIndividualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of()).size();
-        int noOfTeamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of()).size();
+        int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
+        int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
         log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
                 System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
@@ -395,6 +395,13 @@ public class CourseService {
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
+        /*
+         * If the course did not start yet, the length of the chart will be negative (as the time difference between the start date end the current date is passed). In this case,
+         * we return an empty list.
+         */
+        if (length < 0) {
+            return new ArrayList<>(0);
+        }
         LocalDateTime localStartDate = date.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = date.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = date.getZone();

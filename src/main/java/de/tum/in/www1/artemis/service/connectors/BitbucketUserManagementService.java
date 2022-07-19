@@ -156,7 +156,7 @@ public class BitbucketUserManagementService implements VcsUserManagementService 
         }
 
         final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
-        log.info("Update Bitbucket permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Bitbucket permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
 
         for (ProgrammingExercise programmingExercise : programmingExercises) {
             if (!oldInstructorGroup.equals(updatedCourse.getInstructorGroupName())) {
