@@ -4,6 +4,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
@@ -45,6 +46,7 @@ public class PersonalAccessTokenResource {
      * @param lifetimeSeconds the lifetime for the JWT token in seconds
      * @return a JWT Token
      */
+    @PreAuthorize("hasRole('USER')")
     @PostMapping("/personal-access-token")
     public ResponseEntity<UserJWTController.JWTToken> getPersonalAccessToken(@RequestBody Long lifetimeSeconds) {
         User user = userRepository.getUser();
