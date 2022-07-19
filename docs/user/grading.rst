@@ -16,7 +16,7 @@ It is also possible to create or modify grading keys after an exam or course is 
 In that case student grades will be adjusted automatically.
 
     .. note::
-        You can check `how to create grading keys for courses and exams</user/exams/instructors_guide/#grading-key>`__ for more detailed information.
+        You can check `how to create grading keys for courses and exams </user/exams/instructors_guide/#grading-key>`__ for more detailed information.
 
     .. figure:: grading/grade_key_bonus.png
        :alt: Course Grading Key with Bonus type
@@ -29,7 +29,7 @@ Attainable points are the sum of the maximum points for all exercises assessed s
 This means the students can track their relative performance during the semester without having to wait until all the exercises are conducted and assessed.
 
     .. note::
-        `Grades section</user/exams/students_guide/#grades>`__ has more detailed information on how to read the boundaries of the grading keys.
+        `Grades section </user/exams/students_guide/#grades>`__ has more detailed information on how to read the boundaries of the grading keys.
 
     .. figure:: grading/course_statistics_attainable.png
        :alt: Bonus Grade in Course Statistics Page
