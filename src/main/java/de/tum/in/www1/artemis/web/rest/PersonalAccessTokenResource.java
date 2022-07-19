@@ -32,7 +32,7 @@ public class PersonalAccessTokenResource {
 
     private final UserRepository userRepository;
 
-    @Value("${artemis.personal-access-token.max-lifetime-in-days}")
+    @Value("${artemis.personal-access-token.max-lifetime-in-days:30}")
     private long personalAccessTokenMaxLifetimeDays;
 
     public PersonalAccessTokenResource(TokenProvider tokenProvider, UserRepository userRepository) {
