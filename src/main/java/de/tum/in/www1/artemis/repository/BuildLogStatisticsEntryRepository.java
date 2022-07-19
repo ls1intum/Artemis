@@ -16,13 +16,15 @@ import de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO;
 public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLogStatisticsEntry, Long> {
 
     @Query("""
-                select new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(count(b.id), avg(b.agentSetupDuration), avg(b.testDuration), avg(b.scaDuration), avg(b.totalJobDuration), avg(b.dependenciesDownloadedCount))
-                from BuildLogStatisticsEntry b, Submission s, Participation p
-                where b.programmingSubmission = s
-                and s.participation = p and
-               (p.exercise = :#{#exercise} or
-                :#{#exercise.solutionParticipation != null ? #exercise.solutionParticipation.id : #exercise.solutionParticipation} = p.id or
-                :#{#exercise.templateParticipation != null ? #exercise.templateParticipation.id : #exercise.templateParticipation} = p.id)
+                SELECT new de.tum.in.www1.artemis.web.rest.dto.BuildLogStatisticsDTO(count(b.id), avg(b.agentSetupDuration), avg(b.testDuration), avg(b.scaDuration), avg(b.totalJobDuration), avg(b.dependenciesDownloadedCount))
+                FROM BuildLogStatisticsEntry b, Submission s, Participation p
+                WHERE b.programmingSubmission = s
+                    AND s.participation = p
+                    AND (
+                        p.exercise = :#{#exercise}
+                        OR :#{#exercise.solutionParticipation != null ? #exercise.solutionParticipation.id : #exercise.solutionParticipation} = p.id
+                        OR :#{#exercise.templateParticipation != null ? #exercise.templateParticipation.id : #exercise.templateParticipation} = p.id
+                    )
             """)
     BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 
