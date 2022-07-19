@@ -181,6 +181,7 @@ public class ProgrammingExerciseExportImportResource {
 
         }
         catch (Exception ex) {
+            log.error(ex.getMessage(), ex);
             return ResponseEntity.internalServerError()
                     .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "importExerciseTriggerPlanFail", "Unable to import programming exercise")).build();
         }
