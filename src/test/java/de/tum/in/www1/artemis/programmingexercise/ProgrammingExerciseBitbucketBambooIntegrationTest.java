@@ -104,7 +104,7 @@ public class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractS
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
-        // TODO: sync with BambooProgrammingLanguageFeatureService
+        // TODO: sync with BambooProgrammingLanguageFeatureService (as this is a static method here, not possible automatically, so we have to do it manually)
         var supportedLanguages = ProgrammingLanguage.values();
         return Arrays.stream(supportedLanguages).flatMap(language -> Stream.of(Arguments.of(language, true, true), Arguments.of(language, false, true),
                 Arguments.of(language, false, false), Arguments.of(language, true, false)));

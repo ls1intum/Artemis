@@ -2171,6 +2171,9 @@ public class DatabaseUtilService {
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setProjectType(ProjectType.PLAIN);
         }
+        else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExercise.setProjectType(ProjectType.GCC);
+        }
         else {
             programmingExercise.setProjectType(null);
         }

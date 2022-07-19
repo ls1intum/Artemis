@@ -104,7 +104,7 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
-        // TODO: sync with JenkinsProgrammingLanguageFeatureService
+        // TODO: sync with JenkinsProgrammingLanguageFeatureService (as this is a static method here, not possible automatically, so we have to do it manually)
         var supportedLanguages = new ProgrammingLanguage[] { JAVA, PYTHON, C, HASKELL, KOTLIN, SWIFT, EMPTY };
         return Arrays.stream(supportedLanguages).flatMap(language -> Stream.of(Arguments.of(language, true, true), Arguments.of(language, false, true),
                 Arguments.of(language, false, false), Arguments.of(language, true, false)));
