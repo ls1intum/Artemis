@@ -20,7 +20,7 @@
             }
         },
         "exam": {
-            "text": "<b>Exam mode:</b> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
+            "text": "<a href={{ examModeUrl }}>Exam mode:</a> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
         },
         "grading": {
             "text": "<b>Grading:</b> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
@@ -56,7 +56,7 @@
             "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
-            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
+            "text": "<a href={{ customizableUrl }}>Customizable:</a> It supports multiple Instructors, Editors, and Tutors per course and allows Instructors to customize many course settings."
         },
         "openSource": {
             "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."

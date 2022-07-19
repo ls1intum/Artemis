@@ -20,7 +20,7 @@
             }
         },
         "exam": {
-            "text": "<b>Prüfungsmodus:</b> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
+            "text": "<a href={{ examModeUrl }}>Prüfungsmodus:</a> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
         },
         "grading": {
             "text": "<b>Benotung:</b> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
@@ -32,7 +32,7 @@
             "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
         },
         "notifications": {
-            "text": "<b>Benachrichtigungen:</b> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
+            "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
         },
         "teamExercises": {
             "text": "<a href={{ teamExercisesUrl }}>Gruppenaufgaben</a> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
@@ -56,7 +56,7 @@
             "text": "<a href={{ userExperienceUrl }}>Hohe Benutzerzufriedenheit:</a> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
         },
         "customizable": {
-            "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
+            "text": "<a href={{ customizableUrl }}>Anpassbar:</a> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
         },
         "openSource": {
             "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
