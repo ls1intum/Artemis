@@ -55,7 +55,7 @@ public class PersonalAccessTokenResource {
 
         if (lifetimeSeconds > this.personalAccessTokenMaxLifetimeSeconds) {
             long difference = this.personalAccessTokenMaxLifetimeSeconds - lifetimeSeconds;
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPATLifetime",
+            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidPersonalAccessTokenLifetime",
                     "Requested token lifetime exceeds the maximum lifetime for personal access tokens by " + difference + " s")).build();
         }
 

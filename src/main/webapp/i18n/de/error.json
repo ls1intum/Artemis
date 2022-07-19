@@ -48,6 +48,6 @@
         "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
         "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
         "oneActivePlagiarismCheck": "Bitte warte bis die aktuelle Plagiatskontrolle in diesem Kurs abgeschlossen ist, bevor du eine weitere startest.",
-        "invalidPATLifetime": "Die angeforderte Tokenlebensdauer überschreitet die maximale Lebensdauer für persönliche Zugriffstoken."
+        "invalidPersonalAccessTokenLifetime": "Die angeforderte Tokenlebensdauer überschreitet die maximale Lebensdauer für persönliche Zugriffstoken."
     }
 }
