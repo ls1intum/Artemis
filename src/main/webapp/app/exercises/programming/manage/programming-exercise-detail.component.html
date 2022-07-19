@@ -163,7 +163,8 @@
                             <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
                         </button>
                     </span>
-                    <span *ngIf="programmingExercise.testwiseCoverageEnabled" class="me-1">
+                    <!-- The generation is currently only supported for Java exercises with the option enabled to perform a testwise coverage analysis -->
+                    <span *ngIf="programmingExercise.testwiseCoverageEnabled && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" class="me-1">
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
@@ -198,7 +199,13 @@
                             <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
                         </button>
                     </span>
-                    <span class="me-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                    <span
+                        class="me-1"
+                        *ngIf="
+                            (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
+                            programmingExercise.testwiseCoverageEnabled
+                        "
+                    >
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"

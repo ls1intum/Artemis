@@ -211,6 +211,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
         this.submission = submission;
         this.manualResult = getLatestSubmissionResult(this.submission);
+        if (!this.manualResult?.submission) {
+            this.manualResult!.submission = this.submission;
+        }
         this.participation = submission.participation!;
         this.exercise = this.participation.exercise as ProgrammingExercise;
         /**

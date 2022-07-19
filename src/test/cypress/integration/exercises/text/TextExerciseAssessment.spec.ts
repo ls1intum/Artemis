@@ -88,9 +88,9 @@ describe('Text exercise assessment', () => {
         cy.login(admin);
         return courseManagement.createCourse().then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id!, student.username);
+            courseManagement.addStudentToCourse(course, student);
             courseManagement.addTutorToCourse(course, tutor);
-            courseManagement.addInstructorToCourse(course.id!, instructor);
+            courseManagement.addInstructorToCourse(course, instructor);
             courseManagement.createTextExercise({ course }).then((textResponse) => {
                 exercise = textResponse.body;
             });

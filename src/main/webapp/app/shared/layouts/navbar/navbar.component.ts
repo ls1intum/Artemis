@@ -17,7 +17,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -53,6 +53,7 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { onError } from 'app/shared/util/global.utils';
 
 @Component({
     selector: 'jhi-navbar',
@@ -75,6 +76,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     breadcrumbs: Breadcrumb[];
     breadcrumbSubscriptions: Subscription[];
     isCollapsed: boolean;
+    iconsMovedToMenu: boolean;
+    isNavbarNavVertical: boolean;
 
     // Icons
     faBars = faBars;
@@ -138,7 +141,34 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     @HostListener('window:resize')
     onResize() {
-        this.isCollapsed = window.innerWidth < 1200;
+        // Figure out breakpoints depending on available menu options and length of login
+        let neededWidthToNotRequireCollapse: number;
+        let neededWidthToDisplayCollapsedOptionsHorizontally = 150;
+        let neededWidthForIconOptionsToBeInMainNavBar: number;
+        if (this.currAccount) {
+            const nameLength = (this.currAccount.login?.length ?? 0) * 8;
+            neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
+            neededWidthToNotRequireCollapse = 700 + nameLength;
+
+            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN]);
+            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect([Authority.TA, Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN]);
+            if (hasCourseManageOption) {
+                neededWidthToNotRequireCollapse += 200;
+                neededWidthToDisplayCollapsedOptionsHorizontally += 200;
+            }
+            if (hasServerAdminOption) {
+                neededWidthToNotRequireCollapse += 225;
+                neededWidthToDisplayCollapsedOptionsHorizontally += 225;
+            }
+        } else {
+            // For login screen, we only see language and theme selectors which are smaller
+            neededWidthToNotRequireCollapse = 510;
+            neededWidthForIconOptionsToBeInMainNavBar = 430;
+        }
+
+        this.isCollapsed = window.innerWidth < neededWidthToNotRequireCollapse;
+        this.isNavbarNavVertical = window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480);
+        this.iconsMovedToMenu = window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar;
     }
 
     ngOnInit() {
@@ -158,6 +188,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 tap((user: User) => {
                     this.currAccount = user;
                     this.passwordResetEnabled = user?.internal || false;
+                    this.onResize();
                 }),
             )
             .subscribe();
@@ -610,9 +641,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     changeLanguage(languageKey: string) {
-        this.sessionStorage.store('locale', languageKey);
-        this.translateService.use(languageKey);
-        this.localeConversionService.locale = languageKey;
+        if (this.currAccount) {
+            this.accountService.updateLanguage(languageKey).subscribe({
+                next: () => {
+                    this.translateService.use(languageKey);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        } else {
+            this.translateService.use(languageKey);
+        }
     }
 
     collapseNavbar() {
