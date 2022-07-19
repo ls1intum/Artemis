@@ -43,7 +43,7 @@ Create new Quiz Exercise
 
     - **Duration**: Provide the time in minutes and seconds for students solve of the quiz exercise.
 
-    - **Options**: Chose between present the questions in Random order or not.
+    - **Options**: Choose between present the questions in Random order or not.
 
     - **Batch Mode**: Batch Mode controls how students can participate in the quiz.
 
