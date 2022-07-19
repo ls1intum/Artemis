@@ -2606,7 +2606,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     public void testGetAllExamsOnPage_WithoutExercises_instructor_successful() throws Exception {
         final PageableSearchDTO<String> search = database.configureSearch("");
         final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(2);
+        assertThat(result.getResultsOnPage()).hasSize(3);
     }
 
     @Test
@@ -2626,7 +2626,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.addExamWithExerciseGroup(course3, true);
         final PageableSearchDTO<String> search = database.configureSearch("");
         final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(2);
+        assertThat(result.getResultsOnPage()).hasSize(3);
     }
 
     @Test
@@ -2638,7 +2638,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         database.addExamWithExerciseGroup(course3, true);
         final PageableSearchDTO<String> search = database.configureSearch("");
         final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
-        assertThat(result.getResultsOnPage()).hasSize(3);
+        assertThat(result.getResultsOnPage()).hasSize(4);
     }
 
     @Test
