@@ -261,9 +261,9 @@ public class StudentExamResource {
 
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
 
-        // students can not fetch the exam until 5 minutes before the exam start, we use the same constant in the client
+        // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
         if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
-            throw new AccessForbiddenException("Students cannot download the student exams until 5 minutes before the exam start");
+            throw new AccessForbiddenException("Students cannot download the student exams until " + EXAM_START_WAIT_TIME_MINUTES + " minutes before the exam start");
         }
 
         if (!user.getId().equals(studentExam.getUser().getId())) {
