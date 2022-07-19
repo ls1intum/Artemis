@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.statistics;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
 import javax.annotation.Nullable;
 import javax.persistence.Entity;
 import javax.persistence.OneToOne;
@@ -104,5 +107,17 @@ public class BuildLogStatisticsEntry extends DomainObject {
 
     public void setDependenciesDownloadedCount(@Nullable Long dependenciesDownloadedCount) {
         this.dependenciesDownloadedCount = dependenciesDownloadedCount;
+    }
+
+    public record BuildJobPartDuration(ZonedDateTime from, ZonedDateTime to) {
+
+        public Long durationInSeconds() {
+            if (from == null || to == null) {
+                return null;
+            }
+            else {
+                return ChronoUnit.SECONDS.between(from, to);
+            }
+        }
     }
 }

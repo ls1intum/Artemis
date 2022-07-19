@@ -1,8 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
-
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -32,28 +29,12 @@ public class BuildLogStatisticsEntryService {
      * @param dependenciesDownloadedCount the number of dependencies downloaded during the build, or null (if it is not exposed through the logs)
      * @return the already persisted BuildLogStatisticsEntry
      */
-    public BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, ZonedDateTime jobStarted, ZonedDateTime agentSetupCompleted,
-            ZonedDateTime testsStarted, ZonedDateTime testsFinished, ZonedDateTime scaStarted, ZonedDateTime scaFinished, ZonedDateTime jobFinished,
-            Long dependenciesDownloadedCount) {
-        Long agentSetupDuration = null;
-        if (jobStarted != null && agentSetupCompleted != null) {
-            agentSetupDuration = ChronoUnit.SECONDS.between(jobStarted, agentSetupCompleted);
-        }
-        Long testDuration = null;
-        if (testsStarted != null && testsFinished != null) {
-            testDuration = ChronoUnit.SECONDS.between(testsStarted, testsFinished);
-        }
-        Long scaDuration = null;
-        if (scaStarted != null && scaFinished != null) {
-            scaDuration = ChronoUnit.SECONDS.between(scaStarted, scaFinished);
-        }
-        Long totalJobDuration = null;
-        if (jobStarted != null && jobFinished != null) {
-            totalJobDuration = ChronoUnit.SECONDS.between(jobStarted, jobFinished);
-        }
+    public BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, BuildLogStatisticsEntry.BuildJobPartDuration agentSetupDuration,
+            BuildLogStatisticsEntry.BuildJobPartDuration testDuration, BuildLogStatisticsEntry.BuildJobPartDuration scaDuration,
+            BuildLogStatisticsEntry.BuildJobPartDuration totalJobDuration, Long dependenciesDownloadedCount) {
 
-        BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
-                dependenciesDownloadedCount);
+        BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration.durationInSeconds(),
+                testDuration.durationInSeconds(), scaDuration.durationInSeconds(), totalJobDuration.durationInSeconds(), dependenciesDownloadedCount);
         return buildLogStatisticsEntryRepository.save(buildLogStatisticsEntry);
     }
 }
