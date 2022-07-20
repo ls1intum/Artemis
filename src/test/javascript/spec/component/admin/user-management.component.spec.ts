@@ -29,9 +29,10 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
-import { LocalStorageService } from 'ngx-webstorage';
+import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/entities/course.model';
+import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -76,6 +77,7 @@ describe('UserManagementComponent', () => {
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
+                { provide: SessionStorageService, useClass: MockSyncStorage },
                 {
                     provide: ActivatedRoute,
                     useValue: {
