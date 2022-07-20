@@ -83,17 +83,8 @@ public class ComplaintResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
-        if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
-        }
 
-        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
-        }
-
-        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
-        }
+        validateNewComplaint(complaint);
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
 
@@ -129,17 +120,8 @@ public class ComplaintResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
-        if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
-        }
 
-        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
-        }
-
-        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
-        }
+        validateNewComplaint(complaint);
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
 
@@ -159,6 +141,20 @@ public class ComplaintResource {
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
+    }
+
+    private void validateNewComplaint(Complaint complaint) {
+        if (complaint.getId() != null) {
+            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
+        }
+
+        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
+            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
+        }
+
+        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
+            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
+        }
     }
 
     /**

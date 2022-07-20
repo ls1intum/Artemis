@@ -49,6 +49,9 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     private CourseRepository courseRepository;
 
     @Autowired
+    private ExamRepository examRepository;
+
+    @Autowired
     private ObjectMapper mapper;
 
     private ModelingExercise modelingExercise;
@@ -353,6 +356,30 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    public void getComplaintsByCourseId_tutor_allComplaintsForTutor() throws Exception {
+        complaint.getResult().setAssessor(database.getUserByLogin("instructor1"));
+        resultRepo.save(complaint.getResult());
+        complaintRepo.save(complaint);
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+
+        final var tutorComplaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK,
+                Complaint.class, params);
+        assertThat(tutorComplaints).isEmpty();
+
+        params.add("allComplaintsForTutor", "true");
+        final var allComplaints = request.getList("/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints", HttpStatus.OK,
+                Complaint.class, params);
+
+        assertThat(allComplaints).hasSize(1);
+        allComplaints.forEach(c -> checkComplaintContainsNoSensitiveData(c, true));
+
+        // Check assessor is filtered out if the user was not the assessor.
+        allComplaints.forEach(c -> assertThat(c.getResult().getAssessor()).isNull());
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     public void getComplaintsForAssessmentDashboardTutorIsNotTutorForCourse() throws Exception {
         complaint.setParticipant(database.getUserByLogin("student1"));
         complaintRepo.save(complaint);
@@ -422,6 +449,16 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
             assertThat(compl.getResult()).isEqualTo(complaint.getResult());
             assertThat(compl.getParticipant()).as("No student information").isNull();
         });
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getComplaintsForAssessmentDashboard_testRun_emptyComplaints() throws Exception {
+
+        final var params = new LinkedMultiValueMap<String, String>();
+        params.add("complaintType", ComplaintType.COMPLAINT.name());
+        final var complaints = request.getList("/api/exercises/" + modelingExercise.getId() + "/complaints-for-test-run-dashboard", HttpStatus.OK, Complaint.class, params);
+        assertThat(complaints).hasSize(0);
     }
 
     @Test
@@ -728,21 +765,10 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void submitComplaintForExamExerciseOutsideOfStudentReviewTime_badRequest() throws Exception {
-        final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
-        final long examId = examExercise.getExerciseGroup().getExam().getId();
-        final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
-        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
-        final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
-        request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
     public void submitComplaintForCourseExerciseUsingTheExamExerciseCall_badRequest() throws Exception {
         // "Mock Exam" which id is used to call the wrong REST-Call
         final Exam exam = ModelFactory.generateExam(course);
+        examRepository.save(exam);
         // The complaint is about a course exercise, not an exam exercise
         request.post("/api/complaints/exam/" + exam.getId(), complaint, HttpStatus.BAD_REQUEST);
     }
@@ -757,6 +783,18 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         final var examExerciseComplaint = new Complaint().result(textSubmission.getLatestResult()).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         // The complaint is about an exam exercise, but the REST-Call for course exercises is used
         request.post("/api/complaints", examExerciseComplaint, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void submitComplaintForExamExerciseOutsideOfStudentReviewTime_badRequest() throws Exception {
+        final TextExercise examExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
+        final long examId = examExercise.getExerciseGroup().getExam().getId();
+        final TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is my submission", Language.ENGLISH, true);
+        database.saveTextSubmissionWithResultAndAssessor(examExercise, textSubmission, "student1", "tutor1");
+        final var examExerciseComplaint = new Complaint().result(null).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
+        final String url = "/api/complaints/exam/{examId}".replace("{examId}", String.valueOf(examId));
+        request.post(url, examExerciseComplaint, HttpStatus.BAD_REQUEST);
     }
 
     @Test
