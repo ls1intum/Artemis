@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../test.module';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { of } from 'rxjs';
+import { BehaviorSubject, of } from 'rxjs';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { FileUploadAssessmentDashboardComponent } from 'app/exercises/file-upload/assess/file-upload-assessment-dashboard.component';
@@ -87,6 +87,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
                                 exerciseId: fileUploadExercise2.id,
                             }),
                         },
+                        queryParams: new BehaviorSubject({}),
                     },
                 },
             ],
@@ -112,7 +113,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         // test for init values
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
-        expect(component.reverse).toEqual(false);
+        expect(component.reverse).toBeFalse();
         expect(component.predicate).toEqual('id');
         expect(component.filteredSubmissions).toEqual([]);
 
@@ -166,7 +167,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
         // setup
         component.ngOnInit();
-        component.updateFilteredSubmissions([fileUploadSubmission1]);
+        component.applyChartFilter([fileUploadSubmission1]);
         // check
         expect(component.filteredSubmissions).toEqual([fileUploadSubmission1]);
     });

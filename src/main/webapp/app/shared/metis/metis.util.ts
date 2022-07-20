@@ -34,6 +34,8 @@ export enum SortDirection {
 
 export enum PostSortCriterion {
     CREATION_DATE = 'CREATION_DATE',
+    VOTES = 'VOTES',
+    ANSWER_COUNT = 'ANSWER_COUNT',
 }
 
 export enum MetisPostAction {

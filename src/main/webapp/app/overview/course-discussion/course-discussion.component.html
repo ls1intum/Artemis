@@ -145,5 +145,9 @@
         <div class="col-12" infinite-scroll (scrolled)="fetchNextPage()">
             <jhi-posting-thread *ngFor="let post of posts; trackBy: postsTrackByFn" [post]="post" [showAnswers]="posts.length === 1"></jhi-posting-thread>
         </div>
+        <!-- spinner while loading posts -->
+        <div class="text-center">
+            <div *ngIf="isLoading" class="spinner-border mt-3" role="status"></div>
+        </div>
     </div>
 </div>

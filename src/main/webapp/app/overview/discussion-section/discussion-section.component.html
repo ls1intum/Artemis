@@ -6,10 +6,10 @@
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.discussion.hide' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header text-white" [ngbTooltip]="'artemisApp.metis.communication.hide' | artemisTranslate" (click)="collapsed = true">
                 <div class="row flex-grow-1">
                     <div class="col">
-                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.discussion.label">Discussion</h5>
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.metis.communication.label">Communication</h5>
                     </div>
                     <div class="col-auto">
                         <fa-icon [icon]="faChevronRight"></fa-icon>
@@ -129,9 +129,9 @@
     </div>
     <!-- collapsed posts -->
     <ng-template #collapsedPosts>
-        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.discussion.show' | artemisTranslate">
+        <div class="postings-container collapsed-discussion text-white" (click)="collapsed = false" [ngbTooltip]="'artemisApp.metis.communication.show' | artemisTranslate">
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
-            <span class="h5" jhiTranslate="artemisApp.metis.discussion.label"></span>
+            <span class="h5" jhiTranslate="artemisApp.metis.communication.label"></span>
             <fa-icon class="expand-postings-icon" [icon]="faChevronLeft"></fa-icon>
         </div>
     </ng-template>

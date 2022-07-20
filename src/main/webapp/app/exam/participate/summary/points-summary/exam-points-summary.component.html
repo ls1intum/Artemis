@@ -8,12 +8,12 @@
                 <th scope="col">{{ 'artemisApp.exercise.includedInOverallScore' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.yourPoints' | artemisTranslate }}</th>
                 <th scope="col">{{ 'artemisApp.exam.examSummary.points.maxPoints' | artemisTranslate }}</th>
-                <th scope="col" *ngIf="calculateMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.bonus' | artemisTranslate }}</th>
+                <th scope="col" *ngIf="getMaxBonusPointsSum() != 0">{{ 'artemisApp.exam.examSummary.points.bonus' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
             <tr
-                *ngFor="let exercise of exercises; let i = index"
+                *ngFor="let exercise of studentExamWithGrade?.studentExam?.exercises; let i = index"
                 [ngClass]="{
                     'font-italic text-danger font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.NOT_INCLUDED,
                     'font-italic text-warning font-weight-bold': exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS
@@ -25,12 +25,12 @@
                 </td>
                 <td>{{ exerciseService.isIncludedInScore(exercise) }}</td>
                 <td>
-                    {{ calculateAchievedPoints(exercise) }}
+                    {{ getAchievedPoints(exercise) }}
                 </td>
                 <td>
                     <span *ngIf="exercise.maxPoints != undefined">{{ exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? 0 : exercise.maxPoints }}</span>
                 </td>
-                <td *ngIf="calculateMaxBonusPointsSum() != 0">
+                <td *ngIf="getMaxBonusPointsSum() != 0">
                     <span *ngIf="exercise.bonusPoints != undefined">{{
                         exercise.includedInOverallScore === IncludedInOverallScore.INCLUDED_AS_BONUS ? exercise.maxPoints : exercise.bonusPoints
                     }}</span>
@@ -38,24 +38,24 @@
             </tr>
         </tbody>
     </table>
-    <h5 *ngIf="calculateMaxBonusPointsSum() != 0">
+    <h5 *ngIf="getMaxBonusPointsSum() != 0">
         {{
             'artemisApp.exam.examSummary.points.youAchievedWithBonus'
                 | artemisTranslate
                     : {
-                          achievedPoints: calculatePointsSum(),
-                          normalPoints: calculateMaxPointsSum(),
-                          bonusPoints: calculateMaxBonusPointsSum()
+                          achievedPoints: getAchievedPointsSum(),
+                          normalPoints: getMaxPointsSum(),
+                          bonusPoints: getMaxBonusPointsSum()
                       }
         }}
     </h5>
-    <h5 *ngIf="calculateMaxBonusPointsSum() == 0">
+    <h5 *ngIf="getMaxBonusPointsSum() == 0">
         {{
             'artemisApp.exam.examSummary.points.youAchieved'
                 | artemisTranslate
                     : {
-                          achievedPoints: calculatePointsSum(),
-                          normalPoints: calculateMaxPointsSum()
+                          achievedPoints: getAchievedPointsSum(),
+                          normalPoints: getMaxPointsSum()
                       }
         }}
     </h5>

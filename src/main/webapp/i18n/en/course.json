@@ -199,7 +199,7 @@
             "activeStudents": "Active students",
             "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
             "average": "Average: ",
-            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "meanReferenceLineCheckboxLabel": "Show mean as reference line",
             "exerciseType": "Exercise type",
             "programming": "Programming",
             "quiz": "Quiz",

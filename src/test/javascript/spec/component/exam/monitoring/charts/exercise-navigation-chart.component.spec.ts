@@ -11,9 +11,9 @@ import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { Exam } from 'app/entities/exam.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
-import { SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { ExamAction, ExamActionType, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
 import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-template-chart.component';
-import { createTestExercises } from '../exam-monitoring-helper';
+import { createActions, createExamActionBasedOnType, createTestExercises } from '../exam-monitoring-helper';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ExerciseNavigationChartComponent } from 'app/exam/monitoring/charts/exercises/exercise-navigation-chart.component';
 import { Course } from 'app/entities/course.model';
@@ -63,6 +63,7 @@ describe('Exercise Navigation Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -102,5 +103,24 @@ describe('Exercise Navigation Chart Component', () => {
             { name: exercises[1].title!, value: param.expect[1] },
         ]);
         expect(comp.ngxColor.domain).toEqual(param.color);
+    });
+
+    // Evaluate and add action
+    it('should evaluate and add action', () => {
+        const action = createExamActionBasedOnType(ExamActionType.SWITCHED_EXERCISE);
+        expect(comp.filteredExamActions).toEqual([]);
+
+        comp.evaluateAndAddAction(action);
+
+        const expectedMap = new Map();
+        expectedMap.set(action.examActivityId, new Set([0]));
+
+        expect(comp.filteredExamActions).toEqual([action]);
+        expect(comp.navigatedToPerStudent).toEqual(expectedMap);
+    });
+
+    // Filter actions
+    it.each(createActions())('should filter action', (action: ExamAction) => {
+        expect(comp.filterRenderedData(action)).toBe(action.type === ExamActionType.SWITCHED_EXERCISE);
     });
 });
