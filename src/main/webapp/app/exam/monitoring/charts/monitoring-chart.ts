@@ -83,28 +83,61 @@ export function getSwitchedExerciseActionsGroupedByActivityId(examActions: ExamA
 }
 
 /**
- * Returns the current amount of students per exercise.
- * @param examActions array of actions
- * @return amount of students per exercise as map
+ * Returns the current exercise of student.
+ * @param lastActionPerStudent last actions per student
+ * @return current exercise of student as map
  */
-export function getCurrentAmountOfStudentsPerExercises(examActions: ExamAction[]) {
-    const exerciseAmountMap: Map<number, number> = new Map();
-    const groupedByActivityId = getLastActionGroupedByActivityId(examActions);
+export function getCurrentExercisePerStudent(lastActionPerStudent: Map<number, ExamAction>) {
+    const currentExercisePerStudent: Map<number, number | undefined> = new Map();
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    for (const [_, action] of groupedByActivityId) {
+    for (const [_, action] of lastActionPerStudent) {
         let typedAction = undefined;
         if (action.type === ExamActionType.SWITCHED_EXERCISE) {
             typedAction = action as SwitchedExerciseAction;
         } else if (action.type === ExamActionType.SAVED_EXERCISE) {
             typedAction = action as SavedExerciseAction;
         }
-        if (typedAction) {
-            if (typedAction.exerciseId !== undefined) {
-                exerciseAmountMap.set(typedAction.exerciseId, (exerciseAmountMap.get(typedAction.exerciseId) ?? 0) + 1);
-            }
+        if (typedAction && typedAction.exerciseId !== undefined) {
+            currentExercisePerStudent.set(typedAction.examActivityId!, typedAction.exerciseId);
+        } else {
+            currentExercisePerStudent.set(action.examActivityId!, undefined);
         }
     }
-    return exerciseAmountMap;
+    return currentExercisePerStudent;
+}
+
+/**
+ * Updates the current exercise of student.
+ * @param examAction received action
+ * @param currentExercisePerStudent current exercise per student
+ */
+export function updateCurrentExerciseOfStudent(examAction: ExamAction, currentExercisePerStudent: Map<number, number | undefined>) {
+    let typedAction = undefined;
+    if (examAction.type === ExamActionType.SWITCHED_EXERCISE) {
+        typedAction = examAction as SwitchedExerciseAction;
+    } else if (examAction.type === ExamActionType.SAVED_EXERCISE) {
+        typedAction = examAction as SavedExerciseAction;
+    }
+    if (typedAction && typedAction.exerciseId !== undefined) {
+        currentExercisePerStudent.set(typedAction.examActivityId!, typedAction.exerciseId);
+    } else {
+        currentExercisePerStudent.set(examAction.examActivityId!, undefined);
+    }
+}
+
+/**
+ * Converts the current exercise per student map to amount of students per exercise
+ * @param currentExercisePerStudent current exercise of student as map
+ * @return students per exercise as map
+ */
+export function convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap(currentExercisePerStudent: Map<number, number | undefined>) {
+    const numberOfStudentsPerExercise: Map<number, number> = new Map();
+    for (const exercise of currentExercisePerStudent.values()) {
+        if (exercise !== undefined) {
+            numberOfStudentsPerExercise.set(exercise, (numberOfStudentsPerExercise.get(exercise) ?? 0) + 1);
+        }
+    }
+    return numberOfStudentsPerExercise;
 }
 
 /**
@@ -130,4 +163,12 @@ export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exer
  */
 export function ceilDayjsSeconds(timestamp: dayjs.Dayjs, seconds: number) {
     return timestamp.add(seconds - (timestamp.get('seconds') % seconds), 'seconds').startOf('seconds');
+}
+
+export function getEmptyCategories() {
+    const categories = new Map<string, number>();
+    Object.keys(ExamActionType).forEach((type) => {
+        categories!.set(type, 0);
+    });
+    return categories;
 }

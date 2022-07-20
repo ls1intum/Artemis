@@ -763,7 +763,7 @@ public class GitService {
             pullCommand(git).call();
         }
         catch (GitAPIException ex) {
-            log.error("Cannot pull the repo " + repo.getLocalPath(), ex);
+            log.error("Cannot pull the repo {}", repo.getLocalPath(), ex);
             // TODO: we should send this error to the client and let the user handle it there, e.g. by choosing to reset the repository
         }
     }
@@ -976,7 +976,8 @@ public class GitService {
 
             // Get list of all student commits, that is all commits up to the last template commit
             Iterable<RevCommit> commits = studentGit.log().add(copyBranch.getObjectId()).call();
-            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestHash)).collect(Collectors.toList());
+            List<RevCommit> commitList = StreamSupport.stream(commits.spliterator(), false).takeWhile(ref -> !ref.equals(latestHash))
+                    .collect(Collectors.toCollection(ArrayList::new));
             // Sort them oldest to newest
             Collections.reverse(commitList);
             // Cherry-Pick all commits back into the main branch and immediately commit amend anonymized author information
@@ -1223,7 +1224,7 @@ public class GitService {
         var participation = (ProgrammingExerciseStudentParticipation) repo.getParticipation();
 
         // The zip filename is either the student login, team short name or some default string.
-        var studentTeamOrDefault = Optional.ofNullable(participation.getParticipantIdentifier()).orElse("student-submission" + repo.getParticipation().getId());
+        var studentTeamOrDefault = Objects.requireNonNullElse(participation.getParticipantIdentifier(), "student-submission" + repo.getParticipation().getId());
 
         String zipRepoName = fileService.removeIllegalCharacters(courseShortName + "-" + exercise.getTitle() + "-" + participation.getId());
         if (hideStudentName) {

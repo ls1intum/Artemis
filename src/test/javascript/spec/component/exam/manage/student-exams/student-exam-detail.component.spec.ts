@@ -11,7 +11,7 @@ import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
 import { ActivatedRoute, convertToParamMap, Params } from '@angular/router';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { FontAwesomeTestingModule } from '@fortawesome/angular-fontawesome/testing';
 import { TranslateModule } from '@ngx-translate/core';
 import { RouterTestingModule } from '@angular/router/testing';
@@ -27,12 +27,13 @@ import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { StudentExamDetailTableRowComponent } from 'app/exam/manage/student-exams/student-exam-detail-table-row/student-exam-detail-table-row.component';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateValuesDirective } from '../../../../helpers/mocks/directive/mock-translate-values.directive';
 import { StudentExamWorkingTimeComponent } from 'app/exam/shared/student-exam-working-time.component';
+import { GradeType } from 'app/entities/grading-scale.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 describe('StudentExamDetailComponent', () => {
     let studentExamDetailComponentFixture: ComponentFixture<StudentExamDetailComponent>;
@@ -41,13 +42,13 @@ describe('StudentExamDetailComponent', () => {
     let student: User;
     let studentExam: StudentExam;
     let studentExam2: StudentExam;
+    let studentExamWithGrade: StudentExamWithGradeDTO;
     let exercise: Exercise;
     let exam: Exam;
     let studentParticipation: StudentParticipation;
     let result: Result;
 
     let studentExamService: any;
-    let gradingSystemService: GradingSystemService;
 
     beforeEach(() => {
         course = { id: 1 };
@@ -94,6 +95,23 @@ describe('StudentExamDetailComponent', () => {
             submissionDate: dayjs(),
             exercises: [exercise],
         };
+
+        studentExamWithGrade = {
+            studentExam,
+            maxPoints: 100,
+            gradeType: GradeType.NONE,
+            studentResult: {
+                userId: 1,
+                name: 'user1',
+                login: 'user1',
+                eMail: 'user1@tum.de',
+                registrationNumber: '111',
+                overallPointsAchieved: 40,
+                overallScoreAchieved: 40,
+                overallPointsAchievedInFirstCorrection: 90,
+                submitted: true,
+            },
+        } as StudentExamWithGradeDTO;
 
         return TestBed.configureTestingModule({
             imports: [
@@ -149,10 +167,7 @@ describe('StudentExamDetailComponent', () => {
                                 }),
                         },
                         data: {
-                            subscribe: (fn: (value: any) => void) =>
-                                fn({
-                                    studentExam,
-                                }),
+                            subscribe: (fn: (value: any) => void) => fn({ studentExam: studentExamWithGrade }),
                         },
                         snapshot: {
                             paramMap: convertToParamMap({
@@ -169,7 +184,6 @@ describe('StudentExamDetailComponent', () => {
                 studentExamDetailComponentFixture = TestBed.createComponent(StudentExamDetailComponent);
                 studentExamDetailComponent = studentExamDetailComponentFixture.componentInstance;
                 studentExamService = TestBed.inject(StudentExamService);
-                gradingSystemService = TestBed.inject(GradingSystemService);
             });
     });
 
@@ -184,10 +198,8 @@ describe('StudentExamDetailComponent', () => {
     };
 
     it('initialize', () => {
-        const gradeSpy = jest.spyOn(gradingSystemService, 'matchPercentageToGradeStepForExam');
         studentExamDetailComponentFixture.detectChanges();
 
-        expect(gradeSpy).toHaveBeenCalledOnce();
         expect(course.id).toBe(1);
         expect(studentExamDetailComponent.achievedTotalPoints).toBe(40);
 

@@ -244,7 +244,7 @@ describe('QuizExercise Point Statistic Component', () => {
 
             comp.loadNewData(testData);
 
-            expect(routerMock).toHaveBeenCalledTimes(1);
+            expect(routerMock).toHaveBeenCalledOnce();
             expect(routerMock).toHaveBeenCalledWith(['courses']);
         });
     });
@@ -258,9 +258,9 @@ describe('QuizExercise Point Statistic Component', () => {
             comp.recalculate();
             tick();
 
-            expect(recalculateMock).toHaveBeenCalledTimes(1);
+            expect(recalculateMock).toHaveBeenCalledOnce();
             expect(recalculateMock).toHaveBeenCalledWith(42);
-            expect(loadQuizSucessMock).toHaveBeenCalledTimes(1);
+            expect(loadQuizSucessMock).toHaveBeenCalledOnce();
             expect(loadQuizSucessMock).toHaveBeenCalledWith(quizExercise);
         }));
     });

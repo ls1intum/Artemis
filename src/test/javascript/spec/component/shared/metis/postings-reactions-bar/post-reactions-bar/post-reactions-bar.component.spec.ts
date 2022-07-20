@@ -209,8 +209,8 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.sortedAnswerPosts = [];
         fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.query(By.css('.start-discussion-btn')).nativeElement;
-        expect(startDiscussion.innerHTML).toContain('startDiscussion');
+        const startDiscussion = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
+        expect(startDiscussion.innerHTML).toContain('reply');
     });
 
     it('should display button to show single answer', () => {

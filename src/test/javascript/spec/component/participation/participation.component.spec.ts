@@ -1,7 +1,7 @@
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { NgModel } from '@angular/forms';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 import { ParticipationComponent } from 'app/exercises/shared/participation/participation.component';

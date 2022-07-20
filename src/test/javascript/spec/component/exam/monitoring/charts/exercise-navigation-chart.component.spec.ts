@@ -2,10 +2,10 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../../../../test.module';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MockPipe } from 'ng-mocks';
+import { MockModule, MockPipe } from 'ng-mocks';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { BarChartModule } from '@swimlane/ngx-charts';
 import { ChartTitleComponent } from 'app/exam/monitoring/charts/chart-title.component';
 import { getColor } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
@@ -21,10 +21,12 @@ import { of } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 
 describe('Exercise Navigation Chart Component', () => {
     let comp: ExerciseNavigationChartComponent;
     let fixture: ComponentFixture<ExerciseNavigationChartComponent>;
+    let examActionService: ExamActionService;
 
     // Course
     const course = new Course();
@@ -42,7 +44,7 @@ describe('Exercise Navigation Chart Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, NgxChartsModule, ArtemisSharedComponentModule],
+            imports: [ArtemisTestModule, MockModule(BarChartModule), ArtemisSharedComponentModule],
             declarations: [ExerciseNavigationChartComponent, ChartTitleComponent, ExerciseTemplateChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -55,6 +57,7 @@ describe('Exercise Navigation Chart Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(ExerciseNavigationChartComponent);
                 comp = fixture.componentInstance;
+                examActionService = TestBed.inject(ExamActionService);
             });
     });
 
@@ -63,6 +66,7 @@ describe('Exercise Navigation Chart Component', () => {
         jest.restoreAllMocks();
     });
 
+    // On init
     it('should call initData on init without actions', () => {
         expect(comp.ngxData).toEqual([]);
 
@@ -83,15 +87,24 @@ describe('Exercise Navigation Chart Component', () => {
         ${[-1, -1, -1]} | ${[1, 2, 3]} | ${[0, 0]} | ${[getColor(0), getColor(0)]}
     `('should call initData on init with actions', (param: { input: number[]; activity: number[]; expect: number[]; color: [GraphColors] }) => {
         // GIVEN
+        const navigationsPerStudent = new Map();
         const action1 = new SwitchedExerciseAction(param.input[0]);
         action1.examActivityId = param.activity[0];
+        let navigations = navigationsPerStudent.get(action1.examActivityId) ?? new Set();
+        navigations.add(param.input[0]);
+        navigationsPerStudent.set(action1.examActivityId, navigations);
         const action2 = new SwitchedExerciseAction(param.input[1]);
         action2.examActivityId = param.activity[1];
+        navigations = navigationsPerStudent.get(action2.examActivityId) ?? new Set();
+        navigations.add(param.input[1]);
+        navigationsPerStudent.set(action2.examActivityId, navigations);
         const action3 = new SwitchedExerciseAction(param.input[2]);
         action3.examActivityId = param.activity[2];
-
+        navigations = navigationsPerStudent.get(action3.examActivityId) ?? new Set();
+        navigations.add(param.input[2]);
+        navigationsPerStudent.set(action3.examActivityId, navigations);
         comp.exam = exam;
-        comp.filteredExamActions = [action1, action2, action3];
+        examActionService.cachedNavigationsPerStudent.set(exam.id!, navigationsPerStudent);
 
         // WHEN
         comp.ngOnInit();

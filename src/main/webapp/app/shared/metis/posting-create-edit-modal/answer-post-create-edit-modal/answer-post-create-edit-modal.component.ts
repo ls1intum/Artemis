@@ -5,6 +5,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
+import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-answer-post-create-edit-modal',
@@ -42,7 +43,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
     }
 

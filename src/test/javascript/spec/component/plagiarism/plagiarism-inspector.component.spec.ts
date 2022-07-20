@@ -7,6 +7,7 @@ import { PlagiarismCheckState, PlagiarismInspectorComponent } from 'app/exercise
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisTestModule } from '../../test.module';
 import { downloadFile } from 'app/shared/util/download.util';
+import { Range } from 'app/shared/util/utils';
 import { ModelingPlagiarismResult } from 'app/exercises/shared/plagiarism/types/modeling/ModelingPlagiarismResult';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
 import { TextExerciseService } from 'app/exercises/text/manage/text-exercise/text-exercise.service';
@@ -293,7 +294,7 @@ describe('Plagiarism Inspector Component', () => {
     describe('test chart interactivity', () => {
         it('should apply filter and reset it', () => {
             const filterComparisonsMock = jest.spyOn(inspectorService, 'filterComparisons').mockReturnValue([]);
-            const range = { minimumSimilarity: 20, maximumSimilarity: 30 };
+            const range = new Range(20, 30);
             comp.plagiarismResult = textPlagiarismResult;
 
             comp.filterByChart(range);
@@ -340,7 +341,7 @@ describe('Plagiarism Inspector Component', () => {
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, false);
         expect(getLatestPlagiarismResultSpy).toHaveBeenCalledOnce();
-        expect(comp.deleteAllPlagiarismComparisons).toBe(false);
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
     }));
 
     it('should clean up plagiarism and delete all plagiarism comparisons', fakeAsync(() => {
@@ -354,7 +355,7 @@ describe('Plagiarism Inspector Component', () => {
         tick();
 
         expect(cleanUpPlagiarismSpy).toHaveBeenCalledWith(textExercise.id, textPlagiarismResult.id, true);
-        expect(comp.deleteAllPlagiarismComparisons).toBe(false);
+        expect(comp.deleteAllPlagiarismComparisons).toBeFalse();
         expect(comp.plagiarismResult).toBe(undefined);
     }));
 

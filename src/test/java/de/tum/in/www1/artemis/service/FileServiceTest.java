@@ -170,13 +170,13 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
 
     @Test
     public void testMergePdf_nullInput_shouldReturnEmptyOptional() {
-        Optional<byte[]> result = fileService.mergePdfFiles(null);
+        Optional<byte[]> result = fileService.mergePdfFiles(null, "");
         assertThat(result).isEmpty();
     }
 
     @Test
     public void testMergePdf_emptyList_shouldReturnEmptyOptional() {
-        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>());
+        Optional<byte[]> result = fileService.mergePdfFiles(new ArrayList<>(), "list_of_pdfs");
         assertThat(result).isEmpty();
     }
 
@@ -204,7 +204,7 @@ public class FileServiceTest extends AbstractSpringIntegrationBambooBitbucketJir
         paths.add(Path.of(".", "exportTest", "testfile1.pdf").toString());
         paths.add(Path.of(".", "exportTest", "testfile2.pdf").toString());
 
-        Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths);
+        Optional<byte[]> mergedFile = fileService.mergePdfFiles(paths, "list_of_pdfs");
         assertThat(mergedFile).isPresent();
         assertThat(mergedFile.get()).isNotEmpty();
         PDDocument mergedDoc = PDDocument.load(mergedFile.get());

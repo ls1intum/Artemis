@@ -1,5 +1,4 @@
-assignment/src/
-assignment/resources/
+assignment/
 
 *.class
 .idea

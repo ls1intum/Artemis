@@ -35,7 +35,6 @@ export class ExamTimerComponent implements OnInit, OnDestroy {
     displayTime$ = this.timer.pipe(
         map((timeLeft: plugin.Duration) => this.updateDisplayTime(timeLeft)),
         distinctUntilChanged(),
-        takeUntil(this.destroy$),
     );
 
     timePipe: ArtemisDurationFromSecondsPipe = new ArtemisDurationFromSecondsPipe();

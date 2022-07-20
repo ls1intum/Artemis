@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.time.Duration;
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -74,19 +75,6 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
-     * Used to set the exam activity fort a specific student exam in the cache.
-     *
-     * @param examId        identifies the cache
-     * @param studentExamId identifies the exam activity
-     * @param examActivity  new or updated exam activity in the cache
-     */
-    public void updateExamActivity(Long examId, long studentExamId, ExamActivity examActivity) {
-        if (examActivity != null) {
-            ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().put(studentExamId, examActivity);
-        }
-    }
-
-    /**
      * Used to handle the received actions.
      *
      * @param examId    identifies the cache
@@ -96,26 +84,53 @@ public class ExamMonitoringScheduleService {
         if (action != null && action.getStudentExamId() != null) {
             Long studentExamId = action.getStudentExamId();
 
-            // Retrieve the activity from the cache
-            ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
+            ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).updateActivity(studentExamId, activity -> {
+                if (activity == null) {
+                    activity = new ExamActivity();
+                    activity.setStudentExamId(studentExamId);
+                    // Since we don't store the activity in the database at the moment, we reuse the student exam id
+                    activity.setId(studentExamId);
+                    // TODO: Save Activity
+                }
 
-            if (examActivity == null) {
-                examActivity = new ExamActivity();
-                examActivity.setStudentExamId(studentExamId);
-                // Since we don't store the activity in the database at the moment, we reuse the student exam id
-                examActivity.setId(studentExamId);
-                // TODO: Save Activity
-            }
+                // Connect action and activity
+                action.setExamActivityId(activity.getId());
 
-            // Connect action and activity
-            action.setExamActivityId(examActivity.getId());
+                activity.addExamAction(action);
 
-            examActivity.addExamAction(action);
-            updateExamActivity(examId, studentExamId, examActivity);
+                return activity;
+            });
 
             // send message to subscribers
             messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", action);
         }
+    }
+
+    /**
+     * Used to update monitoring during the exam.
+     *
+     * @param examId        identifies the cache
+     * @param monitoring    new exam action
+     */
+    public void notifyMonitoringUpdate(Long examId, boolean monitoring) {
+        messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/update", monitoring);
+    }
+
+    /**
+     * Returns all exam actions.
+     *
+     * @param examId identifies the cache
+     * @return all exam actions of the exam
+     */
+    public List<ExamAction> getAllExamActions(Long examId) {
+        var examActivities = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities();
+        var examActions = new ArrayList<ExamAction>();
+
+        for (var examActivity : examActivities.values()) {
+            examActions.addAll(examActivity.getExamActions());
+        }
+
+        return examActions;
     }
 
     /**
@@ -211,6 +226,8 @@ public class ExamMonitoringScheduleService {
             ((ExamMonitoringCache) cachedMonitoring).setExamActivitySaveHandler(ExamMonitoringCache.getEmptyExamActivitySaveHandler());
             return cachedMonitoring;
         });
+        // We want to clear the activities from the cache
+        executeExamActivitySaveTask(examId);
     }
 
     /**
@@ -229,7 +246,10 @@ public class ExamMonitoringScheduleService {
 
         // TODO: Save actions in future PR in database
         // examActivityService.saveAll(cache.getActivities().values());
-        cache.getActivities().clear();
+        examCache.performCacheWriteIfPresent(examId, cachedMonitoring -> {
+            ((ExamMonitoringCache) cachedMonitoring).getActivities().clear();
+            return cachedMonitoring;
+        });
     }
 
     /**

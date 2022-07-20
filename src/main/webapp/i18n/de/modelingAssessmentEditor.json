@@ -10,7 +10,7 @@
         },
         "messages": {
             "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
-            "noModel": "Kein Modell für Abgabe gefunden.",
+            "noModel": "Diese Abgabe enthält kein Modell.",
             "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
             "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
             "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",

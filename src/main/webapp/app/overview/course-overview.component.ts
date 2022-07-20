@@ -5,7 +5,6 @@ import { ActivatedRoute } from '@angular/router';
 import { forkJoin, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
@@ -16,11 +15,8 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ARTEMIS_DEFAULT_COLOR } from 'app/app.constants';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
 import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
-
-const DESCRIPTION_READ = 'isDescriptionRead';
 
 @Component({
     selector: 'jhi-course-overview',
@@ -28,16 +24,10 @@ const DESCRIPTION_READ = 'isDescriptionRead';
     styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
-    readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
-
-    CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
     public course?: Course;
     public refreshingCourse = false;
-    public courseDescription: string | undefined;
-    public enableShowMore = false;
-    public longDescriptionShown = false;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
 
@@ -85,7 +75,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             // If the course is present but without learning goals (e.g. loaded in Artemis overview), we only need to fetch those
             this.loadLearningGoals();
         }
-        this.adjustCourseDescription();
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
     }
@@ -159,7 +148,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             next: (res: HttpResponse<Course>) => {
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.adjustCourseDescription();
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: (error: HttpErrorResponse) => {
@@ -192,7 +180,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
             this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
-                quizExercise = this.courseExerciseService.convertDateFromServer(quizExercise);
+                quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {
                     this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
@@ -213,32 +201,6 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             },
             error: () => {},
         });
-    }
-
-    /**
-     * Adjusts the course description and shows toggle buttons (if it is too long)
-     * This also depends on whether the user has already seen the full description (stored in local storage)
-     */
-    adjustCourseDescription() {
-        if (this.course && this.course.description) {
-            this.enableShowMore = this.course.description.length > 50;
-            if (this.enableShowMore && !this.longDescriptionShown && localStorage.getItem(DESCRIPTION_READ + this.course.shortName)) {
-                this.courseDescription = this.course.description.slice(0, 50) + '…';
-                this.longDescriptionShown = false;
-            } else {
-                this.courseDescription = this.course.description;
-                this.longDescriptionShown = true;
-                localStorage.setItem(DESCRIPTION_READ + this.course.shortName, 'true');
-            }
-        }
-    }
-
-    /**
-     * Toggle between showing the long and abbreviated course description
-     */
-    toggleCourseDescription() {
-        this.longDescriptionShown = !this.longDescriptionShown;
-        this.adjustCourseDescription();
     }
 
     /**

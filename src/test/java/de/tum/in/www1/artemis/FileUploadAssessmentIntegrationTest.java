@@ -94,7 +94,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
 
         assertThat(result).as("submitted result found").isNotNull();
         assertThat(result.isRated()).isTrue();
-        assertThat(result.getResultString()).isEqualTo("3 of 5 points"); // total score 3P because gradingInstructionWithLimit was applied twice but only counts once
+        assertThat(result.getScore()).isEqualTo(60); // total score 3P (60%) because gradingInstructionWithLimit was applied twice but only counts once
         assertThat(result.getFeedbacks()).hasSize(4);
         assertThat(result.getFeedbacks().get(0).getCredits()).isEqualTo(feedbacks.get(0).getCredits());
         assertThat(result.getFeedbacks().get(1).getCredits()).isEqualTo(feedbacks.get(1).getCredits());
@@ -437,7 +437,6 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(assessedFileUploadExercise, fileUploadSubmission, "student1", "tutor1");
         Result result = request.get("/api/file-upload-submissions/" + fileUploadSubmission.getId() + "/result", HttpStatus.OK, Result.class);
-        assertThat(result.getResultString()).isNotNull();
         assertThat(result.getScore()).isEqualTo(100D);
     }
 
@@ -506,7 +505,8 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final Result firstSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback",
@@ -579,7 +579,7 @@ public class FileUploadAssessmentIntegrationTest extends AbstractSpringIntegrati
         assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         // assess submission and submit
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(API_FILE_UPLOAD_SUBMISSIONS + submissionWithoutFirstAssessment.getId() + "/feedback",

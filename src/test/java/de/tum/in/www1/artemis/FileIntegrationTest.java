@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.Comparator;
@@ -18,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -206,7 +209,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         fileResource.addRemoveFileExtension("exotic");
     }
 
-    public String createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
+    private String createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
@@ -233,6 +236,58 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
         return attachmentPath;
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureAttachmentUnitAttachment() throws Exception {
+        AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
+        String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
+        String requestPath = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + filename;
+
+        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("access_token", accessToken);
+
+        File receivedFile = request.getFile(requestPath, HttpStatus.OK, params);
+        assertThat(receivedFile.getName()).isEqualTo(filename);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureAttachmentUnitAttachment_badRequest() throws Exception {
+        AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
+        String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
+        String requestPath = "/api/files/attachments/attachment-unit/" + 9 + "/" + filename; // id 9 does not exist
+
+        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("access_token", accessToken);
+
+        request.getFile(requestPath, HttpStatus.BAD_REQUEST, params);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGetLectureAttachmentUnitAttachment_forbidden() throws Exception {
+        AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
+        String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
+        String requestPath = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + filename;
+
+        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("access_token", "random_non_valid_token");
+
+        request.getFile(requestPath, HttpStatus.FORBIDDEN, params);
+    }
+
+    private AttachmentUnit createLectureWithAttachmentUnit() {
+        Lecture lecture = database.createCourseWithLecture(true);
+
+        AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
+        lecture.addLectureUnit(attachmentUnit);
+
+        lectureRepo.save(lecture);
+        return attachmentUnit;
     }
 
     @Test
@@ -402,7 +457,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private AttachmentUnit uploadAttachmentUnit(MockMultipartFile file, Long lectureId, HttpStatus expectedStatus) throws Exception {
-        Lecture lecture = lectureRepo.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId).get();
+        Lecture lecture = lectureRepo.findByIdWithLectureUnits(lectureId).get();
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(false);
 

@@ -1,5 +1,13 @@
 {
     "userManagement": {
+        "batch": {
+            "all": "Alle",
+            "delete": {
+                "question": "Sollen diese <strong>{{ title }}</strong> Nutzer:innen wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!",
+                "typeNumberToConfirm": "Bitte gib die Anzahl der Nutzer:innen zur Bestätigung ein."
+            },
+            "deleted": "{{ param }} Nutzer:innen wurden gelöscht"
+        },
         "filter": {
             "modal": {
                 "open": "Filter ({{ num }})",

@@ -225,6 +225,10 @@ public final class Constants {
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
+    public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
+
+    public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
+
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
     public static final String USE_EXTERNAL = "useExternal";
@@ -234,6 +238,11 @@ public final class Constants {
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
+
+    /**
+     * Size of an unsigned tinyInt in SQL, that is used in the database
+     */
+    public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
 
     private Constants() {
     }

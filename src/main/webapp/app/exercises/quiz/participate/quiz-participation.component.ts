@@ -1,5 +1,6 @@
 import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import dayjs from 'dayjs/esm';
+import isMobile from 'ismobilejs-es5';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Subscription } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
@@ -13,7 +14,6 @@ import { ShortAnswerQuestionComponent } from 'app/exercises/quiz/shared/question
 import { TranslateService } from '@ngx-translate/core';
 import * as smoothscroll from 'smoothscroll-polyfill';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ShortAnswerSubmittedAnswer } from 'app/entities/quiz/short-answer-submitted-answer.model';
@@ -84,7 +84,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     disconnected = false;
     unsavedChanges = false;
 
-    sendWebsocket: (submission: QuizSubmission) => void;
+    sendWebsocket?: (submission: QuizSubmission) => void;
     showingResult = false;
     userScore: number;
 
@@ -106,6 +106,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     endDate: dayjs.Dayjs | undefined;
     password = '';
     previousRunning = false;
+    isMobile = false;
 
     /**
      * Websocket channels
@@ -137,7 +138,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
         private alertService: AlertService,
         private quizParticipationService: QuizParticipationService,
         private translateService: TranslateService,
-        private deviceService: DeviceDetectorService,
         private quizService: ArtemisQuizService,
         private serverDateService: ArtemisServerDateService,
     ) {
@@ -145,6 +145,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit() {
+        this.isMobile = isMobile(window.navigator.userAgent).any;
         // set correct mode
         this.subscriptionData = this.route.data.subscribe((data) => {
             this.mode = data.mode;
@@ -601,7 +602,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
             // show submission answers in UI
             this.applySubmission();
 
-            if (participation.results[0].resultString && this.quizExercise.quizEnded) {
+            if (participation.results[0].score !== undefined && this.quizExercise.quizEnded) {
                 // quiz has ended and results are available
                 this.showResult(participation.results[0]);
             }
@@ -658,7 +659,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
      */
     showQuizResultAfterQuizEnd(participation: StudentParticipation) {
         const quizExercise = participation.exercise as QuizExercise;
-        if (participation.results?.length && participation.results[0].resultString && quizExercise.quizEnded) {
+        if (participation.results?.first()?.submission !== undefined && quizExercise.quizEnded) {
             // quiz has ended and results are available
             this.submission = participation.results[0].submission as QuizSubmission;
 
@@ -748,8 +749,8 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
 
             // create dictionary with scores for each question
             this.questionScores = {};
-            this.submission.submittedAnswers!.forEach((submittedAnswer) => {
-                // limit decimal places to 2
+            this.submission.submittedAnswers?.forEach((submittedAnswer) => {
+                // limit decimal places
                 this.questionScores[submittedAnswer.quizQuestion!.id!] = roundValueSpecifiedByCourseSettings(submittedAnswer.scoreInPoints!, course);
             }, this);
         }
@@ -931,13 +932,6 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Determines if the current device is a mobile device
-     */
-    isMobile(): boolean {
-        return this.deviceService.isMobile();
-    }
-
-    /**
      * Refresh quiz
      */
     refreshQuiz(refresh = false) {
@@ -951,6 +945,7 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                         this.endDate = dayjs();
                     }
                     this.quizExercise = quizExercise;
+                    this.initQuiz();
                     this.initLiveMode();
                 }
                 setTimeout(() => (this.refreshingQuiz = false), 500); // ensure min animation duration
@@ -973,7 +968,14 @@ export class QuizParticipationComponent implements OnInit, OnDestroy {
                     }
                 }
             },
-            error: () => this.alertService.error('artemisApp.quizExercise.joinFailed'),
+            error: (error: HttpErrorResponse) => {
+                const errorMessage = 'Joining the quiz was not possible: ' + error.headers?.get('X-artemisApp-message') || error.message;
+                this.alertService.addAlert({
+                    type: AlertType.DANGER,
+                    message: errorMessage,
+                    disableTranslation: true,
+                });
+            },
         });
     }
 }

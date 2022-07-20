@@ -8,7 +8,6 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 
 export class Result implements BaseEntity {
     public id?: number;
-    public resultString?: string;
     public completionDate?: dayjs.Dayjs;
     public successful?: boolean;
     public hasFeedback?: boolean;
@@ -17,6 +16,9 @@ export class Result implements BaseEntity {
     public rated?: boolean;
     public hasComplaint?: boolean;
     public exampleResult?: boolean;
+    public testCaseCount?: number;
+    public passedTestCaseCount?: number;
+    public codeIssueCount?: number;
 
     public submission?: Submission;
     public assessor?: User;

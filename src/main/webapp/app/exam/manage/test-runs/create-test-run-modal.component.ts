@@ -105,11 +105,11 @@ export class CreateTestRunModalComponent implements OnInit {
         const workingTime = this.artemisDurationFromSecondsPipe.transform(defaultWorkingTime ?? 0);
         const workingTimeParts = workingTime.split(':');
         this.workingTimeForm = new FormGroup({
-            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: this.exam.visible }, [
+            minutes: new FormControl({ value: parseInt(workingTimeParts[0] ? workingTimeParts[0] : '0', 10), disabled: !!this.exam.visible }, [
                 Validators.min(0),
                 Validators.required,
             ]),
-            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: this.exam.visible }, [
+            seconds: new FormControl({ value: parseInt(workingTimeParts[1] ? workingTimeParts[1] : '0', 10), disabled: !!this.exam.visible }, [
                 Validators.min(0),
                 Validators.max(59),
                 Validators.required,

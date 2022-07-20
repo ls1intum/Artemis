@@ -10,7 +10,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -783,7 +782,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(results).hasSize(1);
         var result = results.get(0);
 
-        assertThat(result.getResultString()).isEqualTo("1 of 9 points");
+        assertThat(result.getScore()).isEqualTo(11.1);
 
         var submittedAnswers = ((QuizSubmission) result.getSubmission()).getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {
@@ -807,7 +806,7 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         Course course = database.createCourse();
         QuizExercise quizExercise = database.createQuiz(course, ZonedDateTime.now().minusMinutes(1), null, QuizMode.SYNCHRONIZED);
         quizExercise.duration(60);
-        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).collect(Collectors.toList()));
+        quizExercise.setQuizQuestions(quizExercise.getQuizQuestions().stream().peek(quizQuestion -> quizQuestion.setScoringType(scoringType)).toList());
         quizExercise = quizExerciseService.save(quizExercise);
 
         QuizSubmission quizSubmission = new QuizSubmission();
@@ -833,11 +832,11 @@ public class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(results).hasSize(1);
         var result = results.get(0);
 
-        var resultString = switch (scoringType) {
-            case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> "0 of 9 points";
-            case PROPORTIONAL_WITHOUT_PENALTY -> "4 of 9 points";
+        double expectedScore = switch (scoringType) {
+            case ALL_OR_NOTHING, PROPORTIONAL_WITH_PENALTY -> 0;
+            case PROPORTIONAL_WITHOUT_PENALTY -> 44.4;
         };
-        assertThat(result.getResultString()).isEqualTo(resultString);
+        assertThat(result.getScore()).isEqualTo(expectedScore);
     }
 
     private void checkQuizNotStarted(String path) {

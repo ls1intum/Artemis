@@ -91,6 +91,8 @@ public class CourseService {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final LearningGoalService learningGoalService;
+
     private final LearningGoalRepository learningGoalRepository;
 
     private final GradingScaleRepository gradingScaleRepository;
@@ -103,7 +105,7 @@ public class CourseService {
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
-            ExamRepository examRepository, CourseExamExportService courseExamExportService, GradingScaleRepository gradingScaleRepository,
+            ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
             StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
@@ -122,6 +124,7 @@ public class CourseService {
         this.examService = examService;
         this.examRepository = examRepository;
         this.courseExamExportService = courseExamExportService;
+        this.learningGoalService = learningGoalService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
@@ -152,8 +155,8 @@ public class CourseService {
             }
         }
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
-        int noOfIndividualExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL)).orElse(List.of()).size();
-        int noOfTeamExercises = Optional.ofNullable(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM)).orElse(List.of()).size();
+        int noOfIndividualExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.INDIVIDUAL), List.of()).size();
+        int noOfTeamExercises = Objects.requireNonNullElse(exercisesGroupedByExerciseMode.get(ExerciseMode.TEAM), List.of()).size();
         log.info("/courses/for-dashboard.done in {}ms for {} courses with {} individual exercises and {} team exercises for user {}",
                 System.currentTimeMillis() - startTimeInMillis, courses.size(), noOfIndividualExercises, noOfTeamExercises, user.getLogin());
     }
@@ -166,12 +169,14 @@ public class CourseService {
      * @return the course including exercises, lectures and exams for the user
      */
     public Course findOneWithExercisesAndLecturesAndExamsAndLearningGoalsForUser(Long courseId, User user) {
-        Course course = courseRepository.findByIdWithLecturesAndExamsAndLearningGoalsElseThrow(courseId);
+        Course course = courseRepository.findByIdWithLecturesAndExamsElseThrow(courseId);
         if (!authCheckService.isAtLeastStudentInCourse(course, user)) {
             throw new AccessForbiddenException();
         }
         course.setExercises(exerciseService.findAllForCourse(course, user));
         course.setLectures(lectureService.filterActiveAttachments(course.getLectures(), user));
+        course.setLearningGoals(learningGoalService.findAllForCourse(course, user));
+        course.setPrerequisites(learningGoalService.findAllPrerequisitesForCourse(course, user));
         if (authCheckService.isOnlyStudentInCourse(course, user)) {
             course.setExams(examRepository.filterVisibleExams(course.getExams()));
         }
@@ -182,18 +187,18 @@ public class CourseService {
      * Get all courses for the given user
      *
      * @param user the user entity
-     * @return the list of all courses for the user
+     * @return an unmodifiable list of all courses for the user
      */
     public List<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toList());
+                .filter(course -> isCourseVisibleForUser(user, course)).toList();
     }
 
     /**
      * Get all courses with exercises, lectures  and exams (filtered for given user)
      *
      * @param user the user entity
-     * @return the list of all courses including exercises, lectures and exams for the user
+     * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         return courseRepository.findAllActiveWithLecturesAndExams().stream()
@@ -206,7 +211,7 @@ public class CourseService {
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
                         course.setExams(examRepository.filterVisibleExams(course.getExams()));
                     }
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     private boolean isCourseVisibleForUser(User user, Course course) {
@@ -390,6 +395,13 @@ public class CourseService {
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
+        /*
+         * If the course did not start yet, the length of the chart will be negative (as the time difference between the start date end the current date is passed). In this case,
+         * we return an empty list.
+         */
+        if (length < 0) {
+            return new ArrayList<>(0);
+        }
         LocalDateTime localStartDate = date.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = date.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = date.getZone();

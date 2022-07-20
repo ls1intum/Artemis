@@ -10,14 +10,13 @@ import { ArtemisExerciseAssessmentDashboardModule } from 'app/exercises/shared/d
 import { AssessmentDashboardInformationComponent } from 'app/course/dashboards/assessment-dashboard/assessment-dashboard-information.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisSidePanelModule } from 'app/shared/side-panel/side-panel.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { PieChartModule } from '@swimlane/ngx-charts';
 import { ExamAssessmentButtonsComponent } from './exam-assessment-buttons/exam-assessment-buttons.component';
 
 const ENTITY_STATES = [...assessmentDashboardRoute];
 
 @NgModule({
     imports: [
-        NgxChartsModule,
         ArtemisSharedModule,
         ArtemisSidePanelModule,
         ArtemisResultModule,
@@ -26,6 +25,7 @@ const ENTITY_STATES = [...assessmentDashboardRoute];
         ArtemisTutorParticipationGraphModule,
         ArtemisExerciseAssessmentDashboardModule,
         ArtemisSharedComponentModule,
+        PieChartModule,
     ],
     declarations: [AssessmentDashboardComponent, AssessmentDashboardInformationComponent, ExamAssessmentButtonsComponent],
 })

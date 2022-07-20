@@ -25,24 +25,24 @@
    * **Multiple diagram types**: Artemis supports 7 UML diagram types (e.g. class diagrams) and 4 additional diagrams (e.g. flow charts)
    * **Easy to use**: Students can create models easily using drag and drop, they can explain the models using additional text.
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the model elements.
-4. **[Text exercises](https://docs.artemis.ase.in.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athene](https://github.com/ls1intum/Athene)
+4. **[Text exercises](https://docs.artemis.ase.in.tum.de/user/exercises/textual/)** with manual, semi-automatic assessment based on supervised machine learning and natural language processing (NLP) using [Athena](https://github.com/ls1intum/Athena)
    * **Integrated feedback**: Reviews can provide feedback and points directly next to the text segments.
    * **Language detection**: Artemis detects the language of the submission and shows the word and character count. 
 5. **[File upload exercises](https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/)** with manual assessment
-6. **Exam mode**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/features/instructors).
-7. **Grading**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online)
+6. **[Exam mode](https://docs.artemis.ase.in.tum.de/user/exam_mode/)**: Instructors can create online exams with exercise variants, integrated plagiarism checks, test runs and student reviews. You can find more information on [Exam mode student features](https://artemis.ase.in.tum.de/features/students) and on [Exam mode instructor features](https://artemis.ase.in.tum.de/features/instructors).
+7. **[Grading](https://docs.artemis.ase.in.tum.de/user/grading/)**: Instructors can configure grade keys for courses and exams to automatically calculate grades and display them to students. Grades can be easily exported as csv files to upload them into university systems (such as Campus online)
 8. **Assessment**: Artemis uses double-blind grading and structured grading criteria to improve consistency and fairness. It integrates an assessment training process (based on example submissions and example assessments defined by the instructor), has a grading leader board, and allows students to rate the assessments. Students can complain or ask for more feedback.   
-9. **[Discussion](https://docs.artemis.ase.in.tum.de/user/discussion/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
-10. **Notifications**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
-11. **Team exercises**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
-12. **Lectures**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
+9. **[Communication](https://docs.artemis.ase.in.tum.de/user/communication/)**: Instructors can post announcements. Students can ask questions, post comments, and react to other posts. Tutors can filter unanswered questions.
+10. **[Notifications](https://docs.artemis.ase.in.tum.de/user/notifications)**: Artemis supports customizable web and email notifications. Users can enable and disable different notification types.
+11. **[Team Exercises](https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/)**: Instructors can configure team exercises with real time collaboration and dedicated tutors per team.
+12. **[Lectures](https://docs.artemis.ase.in.tum.de/user/lectures/)**: Instructors can upload lecture slides, divide lectures into units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals.
 13. **Integrated markdown editor**: Instructors define problem statements using Markdown to easily format the text and integrate images and links.
 14. **Plagiarism checks**: Artemis integrates plagiarism checks for programming exercises (based on [JPlag](https://github.com/jplag/JPlag)), text exercises, and modeling exercises. It allows notifying students about identified plagiarism. Students can review and comment on the allegation. 
-15. **Learning analytics**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.
-16. **Scalable**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
-17. **High user satisfaction**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
+15. **[Learning analytics](https://docs.artemis.ase.in.tum.de/user/learning-analytics/)**: Artemis integrated different statistics for students to compare themselves to the course average. It allows instructors to evaluate the average student performance based on exercises and learning goals.
+16. **[Scalable](https://docs.artemis.ase.in.tum.de/user/scaling/)**: Artemis scales to multiple courses with thousands of students. In fact, the largest course had 2,400 students. Administrators can easily scale Artemis with additional build agents in the continuous integration environment.
+17. **[High user satisfaction](https://docs.artemis.ase.in.tum.de/user/user-experience/)**: Artemis is easy to use, provides guided tutorials. Developers focus on usability, user experience, and performance.
 18. **Customizable**: It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings
-19. **Open-source**: Free to use with a large community and many active maintainers.
+19. **[Open-source](https://docs.artemis.ase.in.tum.de/dev/open-source/)**: Free to use with a large community and many active maintainers.
 
 ## Roadmap
 

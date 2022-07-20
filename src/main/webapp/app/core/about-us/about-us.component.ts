@@ -17,14 +17,33 @@ export class AboutUsComponent implements OnInit {
     private readonly issueBaseUrl = 'https://github.com/ls1intum/Artemis/issues/new?projects=ls1intum/1';
     readonly bugReportUrl = `${this.issueBaseUrl}&labels=bug&template=bug-report.yml`;
     readonly featureRequestUrl = `${this.issueBaseUrl}&labels=feature&template=feature-request.yml`;
-    readonly examFeatureOverviewUrlStudents = '../features/students/';
-    readonly examFeatureOverviewUrlInstructors = '../features/instructors/';
-    readonly examInstructionsUrlStudents = 'https://docs.artemis.ase.in.tum.de/user/exams/students_guide/';
-    readonly examInstructionsUrlInstructors = 'https://docs.artemis.ase.in.tum.de/user/exams/instructors_guide/';
     readonly releaseNotesUrl = `https://github.com/ls1intum/Artemis/releases/tag/${VERSION}`;
 
     email: string;
     data: AboutUsModel;
+
+    // Array of tuple containing translation keys and translation values
+    readonly sections: [string, { [key: string]: string }][] = [
+        ['exercises.programming', { programmingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/programming/' }],
+        ['exercises.quiz', { quizUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/quiz/' }],
+        ['exercises.modeling', { modelingUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/modeling/', apollonUrl: 'https://apollon.ase.in.tum.de/' }],
+        ['exercises.text', { textUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/textual/', athenaUrl: 'https://github.com/ls1intum/Athena' }],
+        ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/' }],
+        ['exam', { examModeUrl: 'https://docs.artemis.ase.in.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
+        ['grading', { gradingUrl: 'https://docs.artemis.ase.in.tum.de/user/grading/' }],
+        ['assessment', {}],
+        ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
+        ['notifications', { notificationsURL: 'https://docs.artemis.ase.in.tum.de/user/notifications' }],
+        ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/' }],
+        ['lectures', { lecturesUrl: 'https://docs.artemis.ase.in.tum.de/user/lectures/' }],
+        ['integratedMarkdownEditor', {}],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag' }],
+        ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.ase.in.tum.de/user/learning-analytics/' }],
+        ['scalable', { scalingUrl: 'https://docs.artemis.ase.in.tum.de/user/scaling/' }],
+        ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.ase.in.tum.de/user/user-experience/' }],
+        ['customizable', { customizableUrl: 'https://docs.artemis.ase.in.tum.de/user/courses/customizable' }],
+        ['openSource', { openSourceUrl: 'https://docs.artemis.ase.in.tum.de/dev/open-source/' }],
+    ];
 
     readonly SERVER_API_URL = SERVER_API_URL;
 

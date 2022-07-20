@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
@@ -474,6 +473,24 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         database.createAndSaveParticipationForExercise(classExercise, "student2");
 
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
+        assertThat(automaticResult).as("automatic result is not created").isNull();
+    }
+
+    /**
+     * Tests that a submission without model (can happen for exam submissions) does not throw an exception and does
+     * not create an automatic result.
+     * @throws Exception any exception in the test
+     */
+    @Test
+    @WithMockUser(username = "student2")
+    public void testAutomaticAssessmentUponModelSubmission_emptyModel() throws Exception {
+        database.createAndSaveParticipationForExercise(classExercise, "student2");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(null, true);
         ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
                 ModelingSubmission.class, HttpStatus.OK);
 
@@ -1029,7 +1046,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
-        assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
     }
 
@@ -1037,7 +1053,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.isRated()).as("rated has been set").isTrue();
         assertThat(storedResult.getScore()).as("score has been calculated").isNotNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
-        assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
         assertThat(storedResult.getCompletionDate()).as("completion date has been set").isNotNull();
     }
 
@@ -1045,7 +1060,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("assessor has not been set").isNull();
-        assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
         assertThat(storedResult.getAssessmentType()).as("result type is SEMI AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
     }
@@ -1249,7 +1263,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var firstSubmittedManualResult = request.putWithResponseBodyAndParams(
@@ -1323,7 +1337,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         // assess submission and submit
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(
@@ -1382,7 +1396,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
 
-        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("tutor2"), null, null, true, null).getLatestResult();
+        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("tutor2"), null, true, null).getLatestResult();
 
         resultRepo.save(submission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
@@ -1475,7 +1489,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+    public void testCheckPlagiarismIdenticalLongModels() throws Exception {
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";

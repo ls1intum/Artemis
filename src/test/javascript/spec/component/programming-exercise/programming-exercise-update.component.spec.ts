@@ -22,7 +22,7 @@ import {
     ProgrammingLanguageFeatureService,
 } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { CustomMinDirective } from 'app/shared/validators/custom-min-validator.directive';
 import { ButtonComponent } from 'app/shared/components/button.component';
@@ -50,6 +50,7 @@ import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/subm
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { By } from '@angular/platform-browser';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -683,8 +684,34 @@ describe('ProgrammingExercise Management Update Component', () => {
             }
         });
     });
-});
 
+    it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
+        const entity = new ProgrammingExercise(new Course(), undefined);
+        entity.id = 123;
+        comp.programmingExercise = entity;
+        comp.programmingExercise.course = course;
+        comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise: entity });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const scaCheckbox = debugElement.query(By.css('#field_staticCodeAnalysisEnabled'));
+        expect(scaCheckbox).toBeTruthy();
+        expect(scaCheckbox.nativeElement.disabled).toBeTrue();
+
+        const coverageCheckbox = debugElement.query(By.css('#field_testwiseCoverageEnabled'));
+        expect(coverageCheckbox).toBeTruthy();
+        expect(coverageCheckbox.nativeElement.disabled).toBeTrue();
+    }));
+});
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {
         case ProgrammingLanguage.SWIFT:

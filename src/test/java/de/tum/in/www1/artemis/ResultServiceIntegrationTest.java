@@ -125,8 +125,8 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         this.modelingExerciseRepository.save(this.examModelingExercise);
         this.examRepository.save(exam);
 
-        Result result = ModelFactory.generateResult(true, 200D).resultString("Good effort!").participation(programmingExerciseStudentParticipation);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        Result result = ModelFactory.generateResult(true, 200D).participation(programmingExerciseStudentParticipation);
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
@@ -376,7 +376,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
@@ -398,7 +398,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
@@ -545,7 +545,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
@@ -792,13 +792,13 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         textSubmission = submissionRepository.save(textSubmission);
 
         // result 1
-        var result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 1", "instructor1", new ArrayList<>());
+        var result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "instructor1", new ArrayList<>());
         result1.setRated(true);
         result1 = database.addFeedbackToResults(result1);
         result1.setSubmission(textSubmission);
 
         // result 2
-        var result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "text result string 2", "tutor1", new ArrayList<>());
+        var result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), studentParticipation, "tutor1", new ArrayList<>());
         result2.setRated(true);
         result2 = database.addFeedbackToResults(result2);
         result2.setSubmission(textSubmission);
@@ -836,23 +836,21 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
         // result 1
-        Result r1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "text result string 1", "instructor1",
-                new ArrayList<>());
-        r1.setRated(true);
-        r1 = database.addFeedbackToResults(r1);
-        r1.setSubmission(programmingSubmission);
+        Result result1 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "instructor1", new ArrayList<>());
+        result1.setRated(true);
+        result1 = database.addFeedbackToResults(result1);
+        result1.setSubmission(programmingSubmission);
 
         // result 2
-        Result r2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "text result string 2", "tutor1",
-                new ArrayList<>());
-        r2.setRated(true);
-        r2 = database.addFeedbackToResults(r2);
-        r2.setSubmission(programmingSubmission);
+        Result result2 = database.addResultToParticipation(AssessmentType.MANUAL, ZonedDateTime.now(), programmingExerciseStudentParticipation, "tutor1", new ArrayList<>());
+        result2.setRated(true);
+        result2 = database.addFeedbackToResults(result2);
+        result2.setSubmission(programmingSubmission);
 
-        programmingSubmission.addResult(r1);
+        programmingSubmission.addResult(result1);
         programmingSubmission = submissionRepository.save(programmingSubmission);
 
-        programmingSubmission.addResult(r2);
+        programmingSubmission.addResult(result2);
         submissionRepository.save(programmingSubmission);
 
         var assessments = resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(programmingExercise, 2);

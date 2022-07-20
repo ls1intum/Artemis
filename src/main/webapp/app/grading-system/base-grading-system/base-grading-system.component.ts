@@ -13,7 +13,6 @@ import { Exam } from 'app/entities/exam.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { ExportToCsv } from 'export-to-csv';
-import { parse } from 'papaparse';
 import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 
 const csvColumnsGrade = Object.freeze({
@@ -30,7 +29,7 @@ const csvColumnsBonus = Object.freeze({
 });
 
 // needed to map from csv object to grade step
-type CsvGradeStep = object;
+export type CsvGradeStep = object;
 
 export enum GradeEditMode {
     POINTS,
@@ -407,6 +406,7 @@ export abstract class BaseGradingSystemComponent implements OnInit {
      * Called before a post/put request
      *
      * @param gradeSteps the grade steps which will be adjusted
+     * @abstract
      */
     abstract setInclusivity(): void;
 
@@ -695,20 +695,12 @@ export abstract class BaseGradingSystemComponent implements OnInit {
 
     /**
      * Parse CSV file to a list of CsvGradeStep objects
+     * This method uses the 'papaparse' dependency, but Angular can not lazy load it in an abstract class.
+     * Therefore, the implementation is moved to the concrete classes (code duplication for the benefit of reducing main bundle size).
      * @param csvFile the read csv file
-     * @private
+     * @abstract
      */
-    private parseCSVFile(csvFile: File): Promise<CsvGradeStep[]> {
-        return new Promise(async (resolve, reject) => {
-            parse(csvFile, {
-                header: true,
-                skipEmptyLines: true,
-                dynamicTyping: false,
-                complete: (results) => resolve(results.data as CsvGradeStep[]),
-                error: (error) => reject(error),
-            });
-        });
-    }
+    abstract parseCSVFile(csvFile: File): Promise<CsvGradeStep[]>;
 
     /**
      * Download the current grade steps to a csv file to the client

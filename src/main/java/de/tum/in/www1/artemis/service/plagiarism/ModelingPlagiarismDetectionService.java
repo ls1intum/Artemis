@@ -5,7 +5,6 @@ import static com.google.gson.JsonParser.parseString;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +22,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
+import de.tum.in.www1.artemis.service.plagiarism.cache.PlagiarismCacheService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class ModelingPlagiarismDetectionService {
@@ -31,8 +32,11 @@ public class ModelingPlagiarismDetectionService {
 
     private final PlagiarismWebsocketService plagiarismWebsocketService;
 
-    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService) {
+    private final PlagiarismCacheService plagiarismCacheService;
+
+    public ModelingPlagiarismDetectionService(PlagiarismWebsocketService plagiarismWebsocketService, PlagiarismCacheService plagiarismCacheService) {
         this.plagiarismWebsocketService = plagiarismWebsocketService;
+        this.plagiarismCacheService = plagiarismCacheService;
     }
 
     /**
@@ -46,16 +50,28 @@ public class ModelingPlagiarismDetectionService {
      */
     public ModelingPlagiarismResult checkPlagiarism(ModelingExercise exerciseWithParticipationsSubmissionsResults, double minimumSimilarity, int minimumModelSize,
             int minimumScore) {
-        final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
+        var courseId = exerciseWithParticipationsSubmissionsResults.getCourseViaExerciseGroupOrCourseMember().getId();
 
-        log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
+        try {
+            if (plagiarismCacheService.isActivePlagiarismCheck(courseId)) {
+                throw new BadRequestAlertException("Only one active plagiarism check per course allowed", "PlagiarismCheck", "oneActivePlagiarismCheck");
+            }
+            plagiarismCacheService.setActivePlagiarismCheck(courseId);
 
-        Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
-        ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
+            final List<ModelingSubmission> modelingSubmissions = modelingSubmissionsForComparison(exerciseWithParticipationsSubmissionsResults);
 
-        result.setExercise(exerciseWithParticipationsSubmissionsResults);
+            log.info("Found {} modeling submissions in exercise {}", modelingSubmissions.size(), exerciseWithParticipationsSubmissionsResults.getId());
 
-        return result;
+            Long exerciseId = exerciseWithParticipationsSubmissionsResults.getId();
+            ModelingPlagiarismResult result = checkPlagiarism(modelingSubmissions, minimumSimilarity, minimumModelSize, minimumScore, exerciseId);
+
+            result.setExercise(exerciseWithParticipationsSubmissionsResults);
+
+            return result;
+        }
+        finally {
+            plagiarismCacheService.setInactivePlagiarismCheck(courseId);
+        }
     }
 
     /**
@@ -107,7 +123,7 @@ public class ModelingPlagiarismDetectionService {
                         }
                     }
                     catch (IOException e) {
-                        log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
+                        log.error("Parsing the modeling submission {} did throw an exception:", modelingSubmission.getId(), e);
                     }
 
                     processedSubmissionCount.getAndIncrement();
@@ -146,11 +162,11 @@ public class ModelingPlagiarismDetectionService {
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionA = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionA);
                 submissionA.setSize(model1.getAllModelElements().size());
-                submissionA.setElements(model1.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).collect(Collectors.toList()));
+                submissionA.setElements(model1.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).toList());
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionB = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionB);
                 submissionB.setSize(model2.getAllModelElements().size());
-                submissionB.setElements(model2.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).collect(Collectors.toList()));
+                submissionB.setElements(model2.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).toList());
 
                 PlagiarismComparison<ModelingSubmissionElement> comparison = new PlagiarismComparison<>();
 

@@ -1,11 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details
-        [exercise]="exercise"
-        [studentParticipation]="studentParticipation"
-        [onBackClick]="backToCourse.bind(this)"
-        [submissionPolicy]="submissionPolicy"
-    >
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="studentParticipation" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -18,18 +13,6 @@
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
-        <!-- These buttons will be only shown in dev environment and if the programming exercise has no
-        connection to the VCS and CI
-        This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">Submission</button>
-        <button
-            class="dev-button"
-            [disabled]="!wasSubmissionSimulated"
-            *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable"
-            (click)="simulateResult()"
-        >
-            Result
-        </button>
         <a *ngIf="plagiarismCase" class="btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
@@ -151,7 +134,7 @@
             </div>
             <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult && sortedHistoryResult!.length > 1">
                 <div class="col-12 col-md-12">
-                    <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxPoints"></jhi-result-history>
+                    <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"></jhi-result-history>
                 </div>
             </div>
             <div

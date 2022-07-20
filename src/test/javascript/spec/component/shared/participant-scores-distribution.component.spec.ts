@@ -177,8 +177,8 @@ describe('ParticipantScoresDistributionComponent', () => {
         window['innerWidth'] = 700;
         window.dispatchEvent(new Event('resize'));
 
-        expect(realignChartSpy).toHaveBeenCalledTimes(1);
-        expect(component.showYAxisLabel).toBe(true);
+        expect(realignChartSpy).toHaveBeenCalledOnce();
+        expect(component.showYAxisLabel).toBeTrue();
 
         window['innerWidth'] = 699;
         window.dispatchEvent(new Event('resize'));

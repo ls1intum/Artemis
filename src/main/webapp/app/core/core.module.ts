@@ -1,4 +1,4 @@
-import { ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
+import { APP_INITIALIZER, ErrorHandler, LOCALE_ID, NgModule } from '@angular/core';
 import { DatePipe, registerLocaleData } from '@angular/common';
 import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
 import { Title } from '@angular/platform-browser';
@@ -19,6 +19,9 @@ import { missingTranslationHandler, translatePartialLoader } from './config/tran
 import dayjs from 'dayjs/esm';
 import './config/dayjs';
 import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
+import { TraceService } from '@sentry/angular';
+import { Router } from '@angular/router';
 
 @NgModule({
     imports: [
@@ -43,9 +46,16 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
             useValue: 'en',
         },
         { provide: NgbDateAdapter, useClass: NgbDateDayjsAdapter },
+        { provide: TraceService, deps: [Router] },
         { provide: ErrorHandler, useClass: SentryErrorHandler },
         { provide: WINDOW_INJECTOR_TOKEN, useValue: window },
         DatePipe,
+        {
+            provide: APP_INITIALIZER,
+            useFactory: () => () => {},
+            deps: [TraceService],
+            multi: true,
+        },
         /**
          * @description Interceptor declarations:
          * Interceptors are located at 'blocks/interceptor/.
@@ -98,11 +108,11 @@ import { NgbDateDayjsAdapter } from 'app/core/config/datepicker-adapter';
     ],
 })
 export class ArtemisCoreModule {
-    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, sessionStorageService: SessionStorageService) {
+    constructor(dpConfig: NgbDatepickerConfig, translateService: TranslateService, languageHelper: JhiLanguageHelper, sessionStorageService: SessionStorageService) {
         registerLocaleData(locale);
         dpConfig.minDate = { year: dayjs().subtract(100, 'year').year(), month: 1, day: 1 };
         translateService.setDefaultLang('en');
-        const langKey = sessionStorageService.retrieve('locale') ?? 'en';
-        translateService.use(langKey);
+        const languageKey = sessionStorageService.retrieve('locale') || languageHelper.determinePreferredLanguage();
+        translateService.use(languageKey);
     }
 }

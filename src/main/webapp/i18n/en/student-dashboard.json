@@ -31,7 +31,7 @@
                 "lectures": "Lectures",
                 "learningGoals": "Learning Goals",
                 "exams": "Exams",
-                "discussion": "Discussion",
+                "communication": "Communication",
                 "plagiarismCases": "Plagiarism Cases"
             },
             "exerciseList": {
@@ -155,7 +155,7 @@
                 "notReleased": "Not released",
                 "version": "Version",
                 "isDownloading": "Is downloading...",
-                "downloadPdf": "Download PDF"
+                "downloadMergedPdf": "Download Complete PDF"
             },
             "exerciseDetails": {
                 "dueDate": "Due date:",

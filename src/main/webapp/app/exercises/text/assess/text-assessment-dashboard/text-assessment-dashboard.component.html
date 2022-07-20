@@ -1,9 +1,17 @@
 <div *ngIf="exercise">
     <h4 [translateValues]="{ exerciseTitle: exercise.title }" jhiTranslate="artemisApp.textAssessment.dashboard.heading"></h4>
-    <jhi-assessment-filters (filterChange)="updateFilteredSubmissions($event)" [submissions]="submissions"></jhi-assessment-filters>
+    <h4 *ngIf="translationString" class="d-flex align-items-center">
+        <span class="me-2">
+            <strong class="text-primary"> {{ 'artemisApp.assessment.dashboard.activeFilter' | artemisTranslate }}: </strong>
+            <span> {{ 'artemisApp.assessment.dashboard.' + translationString | artemisTranslate }} </span>
+        </span>
+        <button type="button" class="btn btn-primary" (click)="resetFilterOptions()" jhiTranslate="artemisApp.assessment.dashboard.resetFilter">Reset submission filter</button>
+    </h4>
+    <jhi-assessment-filters (filterChange)="applyChartFilter($event)" [submissions]="submissions" [resetFilter]="resetFilter"></jhi-assessment-filters>
     <ng-container *ngIf="!busy"></ng-container>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
-    <div *ngIf="submissions && submissions.length > 0; else emptyTable" class="table-responsive">
+    <jhi-assessment-progress-label *ngIf="submissions" [submissions]="submissions"></jhi-assessment-progress-label>
+    <div *ngIf="submissions?.length" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>
                 <tr [(ascending)]="reverse" [(predicate)]="predicate" (sortChange)="sortRows()" jhiSort>
@@ -211,7 +219,3 @@
         </table>
     </div>
 </div>
-
-<ng-template #emptyTable>
-    <p jhiTranslate="artemisApp.assessment.dashboard.empty">No Submissions for this exercise!</p>
-</ng-template>
