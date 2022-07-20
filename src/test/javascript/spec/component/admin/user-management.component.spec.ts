@@ -131,6 +131,10 @@ describe('UserManagementComponent', () => {
         expect(comp.users[0].id).toBe(1);
         expect(comp.totalItems).toBe(1);
         expect(comp.loadingSearchResult).toBeFalse();
+
+        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
+        reqD.flush([]);
+        jest.restoreAllMocks();
     }));
 
     describe('setActive', () => {
@@ -159,6 +163,10 @@ describe('UserManagementComponent', () => {
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
                 expect(userService.query).toHaveBeenCalledOnce();
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
+
+                let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
+                reqD.flush([]);
+                jest.restoreAllMocks();
             }),
         ));
     });
@@ -184,6 +192,10 @@ describe('UserManagementComponent', () => {
         expect(comp.ascending).toBeTrue();
 
         expect(querySpy).toHaveBeenCalledOnce();
+
+        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
+        reqD.flush([]);
+        jest.restoreAllMocks();
     }));
 
     it('should destroy the user list subscription on destroy', () => {
@@ -247,6 +259,10 @@ describe('UserManagementComponent', () => {
 
         expect(spy).toHaveBeenCalledOnce();
         expect(comp.courses).toEqual(courses.sort((c1, c2) => c1.title!.localeCompare(c2.title!)));
+
+        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
+        reqD.flush([]);
+        jest.restoreAllMocks();
     });
 
     it('should call initFilters', () => {
@@ -255,6 +271,10 @@ describe('UserManagementComponent', () => {
         comp.ngOnInit();
 
         expect(spy).toHaveBeenCalledOnce();
+
+        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
+        reqD.flush([]);
+        jest.restoreAllMocks();
     });
 
     it.each`
