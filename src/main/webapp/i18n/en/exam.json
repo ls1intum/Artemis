@@ -566,7 +566,12 @@
                     "studentExamId": "Exam-ID",
                     "timestamp": "Timestamp",
                     "type": "Category",
-                    "detail": "Detail"
+                    "detail": "Detail",
+                    "forced": "Forced",
+                    "failed": "Failed",
+                    "automatically": "Automatically",
+                    "connected": "Connected",
+                    "notConnected": "Not connected"
                 }
             },
             "charts": {

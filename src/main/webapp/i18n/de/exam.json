@@ -565,7 +565,12 @@
                     "studentExamId": "Klausur-ID",
                     "timestamp": "Zeitpunkt",
                     "type": "Kategorie",
-                    "detail": "Detail"
+                    "detail": "Detail",
+                    "forced": "Erzwungen",
+                    "failed": "Fehlgeschlagen",
+                    "automatically": "Automatisch",
+                    "connected": "Verbunden",
+                    "notConnected": "Nicht verbunden"
                 }
             },
             "charts": {
