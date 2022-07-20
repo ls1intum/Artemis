@@ -69,9 +69,16 @@
                                         </span>
                                     </ng-template>
                                     <ng-template let-expanded="expanded" let-value="value" ngx-datatable-cell-template>
-                                        <span *ngIf="column.prop !== 'collapse'">{{ value }}</span>
-                                        <ng-container *ngIf="column.prop === 'collapse'">
-                                            <div [class.datatable-icon-right]="!expanded" [class.datatable-icon-down]="expanded"></div>
+                                        <ng-container *ngIf="!column.template">
+                                            <span *ngIf="column.prop !== 'collapse'">{{ value }}</span>
+                                            <ng-container *ngIf="column.prop === 'collapse'">
+                                                <div [class.datatable-icon-right]="!expanded" [class.datatable-icon-down]="expanded"></div>
+                                            </ng-container>
+                                        </ng-container>
+                                        <ng-container *ngIf="column.template" [ngSwitch]="column.template">
+                                            <ng-container *ngSwitchCase="'typeRef'">
+                                                <ng-template *ngTemplateOutlet="typeRef; context: { type: value }"></ng-template>
+                                            </ng-container>
                                         </ng-container>
                                     </ng-template>
                                 </ngx-datatable-column>
@@ -83,3 +90,7 @@
         </ng-container>
     </jhi-monitoring-box>
 </div>
+
+<ng-template #typeRef let-type="type">
+    <fa-icon [icon]="getIcon(type)" placement="right" [ngbTooltip]="getIconTooltip(type) | artemisTranslate" container="body"></fa-icon>
+</ng-template>

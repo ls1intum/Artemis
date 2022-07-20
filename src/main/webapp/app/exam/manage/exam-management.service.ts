@@ -53,6 +53,28 @@ export class ExamManagementService {
     }
 
     /**
+     * Imports an exam on the server using a PUT request.
+     * @param courseId The course id into which the exam should be imported
+     * @param exam The exam with exercises to import.
+     */
+    import(courseId: number, exam: Exam): Observable<EntityResponseType> {
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
+        return this.http
+            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)));
+    }
+
+    /**
+     * Imports an exam on the server using a PUT request.
+     * @param courseId The course id into which the exercise groups should be imported
+     * @param examId The exam id to which the exercise groups should be added
+     * @param exerciseGroups the exercise groups to be added to the exam
+     */
+    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
+        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
+    }
+
+    /**
      * Find an exam on the server using a GET request.
      * @param courseId The course id.
      * @param examId The id of the exam to get.
@@ -70,6 +92,23 @@ export class ExamManagementService {
                         this.accountService.setAccessRightsForCourse(res.body.course);
                     }
                     this.sendTitlesToEntityTitleService(res?.body);
+                }),
+            );
+    }
+
+    /**
+     * Find an exam on the server using a GET request with exercises for the exam import
+     * @param examId The id of the exam to get.
+     */
+    findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
+        return this.http
+            .get<Exam>(`${SERVER_API_URL}api/exams/${examId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)))
+            .pipe(
+                tap((res: EntityResponseType) => {
+                    if (res.body?.course) {
+                        this.accountService.setAccessRightsForCourse(res.body.course);
+                    }
                 }),
             );
     }

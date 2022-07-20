@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -157,7 +156,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             final String idString = textSubmission.getId() + ";0-30;" + textSubmission.getText().substring(0, 30);
             return Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
                     .setText(textSubmission.getText().substring(0, 30)).build();
-        }).collect(toList());
+        }).toList();
     }
 
     /**

@@ -95,7 +95,8 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
     }
 
     @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
+            throws Exception {
         mockImportRepositories(exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
 
@@ -105,6 +106,11 @@ public abstract class AbstractSpringIntegrationJenkinsGitlabTest extends Abstrac
         }
         else {
             mockSetupBuildPlansForNewExercise(exerciseToBeImported);
+        }
+        if (addAuxRepos) {
+            // we basically mock the same requests for template and solution, in reality they would include a different payload (job.xml)
+            mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + TEMPLATE.getName(), null, null, List.of());
+            mockUpdatePlanRepository(exerciseToBeImported, exerciseToBeImported.getProjectKey() + "-" + SOLUTION.getName(), null, null, List.of());
         }
     }
 
