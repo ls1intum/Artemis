@@ -1,0 +1,71 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="Dominik-Weinzierl" id="20220720161500">
+        <!-- Exam Activity -->
+        <createTable tableName="exam_activity">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="student_exam_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="student_exam_id" baseTableName="exam_activity"
+                                 constraintName="fk_exam_activity_student_exam" deferrable="false" onDelete="CASCADE"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="student_exam"/>
+
+        <!-- Exam Action -->
+        <createTable tableName="exam_action">
+            <column name="id" type="BIGINT" autoIncrement="${autoIncrement}">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="exam_activity_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="timestamp" type="datetime">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="session_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="exercise_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="submission_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+            <column name="forced" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+            <column name="failed" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+            <column name="automatically" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+            <column name="connected" type="boolean">
+                <constraints nullable="true"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="session_id" baseTableName="exam_action"
+                                 constraintName="fk_exam_action_exam_session" deferrable="false" onDelete="CASCADE"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="exam_session"/>
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="exam_action"
+                                 constraintName="fk_exam_action_exercise" deferrable="false" onDelete="CASCADE"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="exercise"/>
+        <addForeignKeyConstraint baseColumnNames="submission_id" baseTableName="exam_action"
+                                 constraintName="fk_exam_action_submission" deferrable="false" onDelete="CASCADE"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="submission"/>
+        <addForeignKeyConstraint baseColumnNames="exam_activity_id" baseTableName="exam_action"
+                                 constraintName="fk_exam_action_exam_activity" deferrable="false" onDelete="CASCADE"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="exam_activity"/>
+    </changeSet>
+</databaseChangeLog>

@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
-import java.time.Duration;
-import java.time.ZonedDateTime;
+import java.time.*;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -23,9 +21,9 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 
 /**
@@ -44,17 +42,17 @@ public class ExamMonitoringScheduleService {
 
     private final ExamRepository examRepository;
 
-    private final StudentExamRepository studentExamRepository;
-
     private final WebsocketMessagingService messagingService;
 
-    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, StudentExamRepository studentExamRepository,
-            WebsocketMessagingService messagingService) {
+    private final ExamActivityService examActivityService;
+
+    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, WebsocketMessagingService messagingService,
+            ExamActivityService examActivityService) {
         this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
         this.examCache = new ExamCache(hazelcastInstance);
         this.examRepository = examRepository;
-        this.studentExamRepository = studentExamRepository;
         this.messagingService = messagingService;
+        this.examActivityService = examActivityService;
     }
 
     /**
@@ -88,14 +86,12 @@ public class ExamMonitoringScheduleService {
                 if (activity == null) {
                     activity = new ExamActivity();
                     activity.setStudentExamId(studentExamId);
-                    // Since we don't store the activity in the database at the moment, we reuse the student exam id
-                    activity.setId(studentExamId);
-                    // TODO: Save Activity
+                    activity = examActivityService.save(activity);
                 }
 
                 // Connect action and activity
                 action.setExamActivityId(activity.getId());
-
+                action.setExamActivity(activity);
                 activity.addExamAction(action);
 
                 return activity;
@@ -170,21 +166,12 @@ public class ExamMonitoringScheduleService {
         // reload from database to make sure there are no proxy objects
         final var exam = examRepository.findByIdElseThrow(examId);
         try {
-            // Check if there is a student exam with longer working time
-            var studentExams = studentExamRepository.findByExamId(examId);
-            var studentExam = studentExams.stream().max(Comparator.comparingLong(StudentExam::getWorkingTime));
-            var duration = Duration.between(ZonedDateTime.now(), exam.getEndDate());
-            long delay = duration.toMillis();
-            if (studentExam.isPresent()) {
-                var durationWithTimeExtension = Duration.between(ZonedDateTime.now(), exam.getStartDate()).toSeconds() + studentExam.get().getWorkingTime();
-                if (duration.toSeconds() < durationWithTimeExtension) {
-                    delay = durationWithTimeExtension * 1000;
-                }
-            }
+            // 3 am after the end of the exam
+            ZonedDateTime endOfExamDay = exam.getEndDate().toLocalDate().atTime(LocalTime.MAX).atZone(ZoneId.systemDefault());
 
-            delay += Constants.MONITORING_CACHE_RESET_DELAY;
+            var saveTimeDelay = Duration.between(ZonedDateTime.now(), endOfExamDay).toSeconds() + 3600 * 3;
 
-            var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), delay, TimeUnit.MILLISECONDS);
+            var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), saveTimeDelay, TimeUnit.MILLISECONDS);
             // save scheduled future in HashMap
             examCache.performCacheWrite(examId, examMonitoringCache -> {
                 ((ExamMonitoringCache) examMonitoringCache).setExamActivitySaveHandler(List.of(scheduledFuture.getHandler()));
@@ -239,16 +226,11 @@ public class ExamMonitoringScheduleService {
         examCache.performCacheWriteIfPresent(examId, examMonitoringCache -> {
             ((ExamMonitoringCache) examMonitoringCache).getExamActivitySaveHandler().clear();
             logger.debug("Removed exam {} monitoring save tasks", examId);
+
+            // Save actions in database
+            examActivityService.saveAll(((ExamMonitoringCache) examMonitoringCache).getActivities().values());
+            ((ExamMonitoringCache) examMonitoringCache).getActivities().clear();
             return examMonitoringCache;
-        });
-
-        ExamMonitoringCache cache = (ExamMonitoringCache) examCache.getReadCacheFor(examId);
-
-        // TODO: Save actions in future PR in database
-        // examActivityService.saveAll(cache.getActivities().values());
-        examCache.performCacheWriteIfPresent(examId, cachedMonitoring -> {
-            ((ExamMonitoringCache) cachedMonitoring).getActivities().clear();
-            return cachedMonitoring;
         });
     }
 

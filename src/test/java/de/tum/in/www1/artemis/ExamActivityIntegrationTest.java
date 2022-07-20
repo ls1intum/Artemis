@@ -28,6 +28,8 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
@@ -48,6 +50,12 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ExamActivityResource examActivityResource;
+
+    @Autowired
+    private ExamActivityService examActivityService;
+
+    @Autowired
+    private ExamActionService examActionService;
 
     private Course course;
 
@@ -224,5 +232,35 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
         assertEquals(result, monitoring);
         assertEquals(examRepository.findByIdElseThrow(exam.getId()).isMonitoring(), monitoring);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testExamActionSavedInDatabase(ExamActionType examActionType) throws Exception {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+
+        var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+
+        assertThat(savedActions.size()).isEqualTo(1);
+        assertThat(savedActions.get(0).getType()).isEqualTo(examActionType);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @WithMockUser(username = "student1", roles = "USER")
+    @EnumSource(ExamActionType.class)
+    public void testExamActionNotSavedInDatabase(ExamActionType examActionType) throws Exception {
+        ExamAction examAction = createExamActionBasedOnType(examActionType);
+
+        examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
+
+        var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
+        var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+
+        assertThat(savedActions.size()).isEqualTo(0);
     }
 }
