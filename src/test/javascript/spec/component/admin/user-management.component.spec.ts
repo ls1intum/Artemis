@@ -128,7 +128,7 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
-        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of({ ldap: 'false' } as any));
 
         comp.ngOnInit();
         // 1 sec of pause, because of the debounce time
@@ -161,7 +161,7 @@ describe('UserManagementComponent', () => {
 
                 comp.ngOnInit();
 
-                jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
+                const profileSpy = jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
                 // WHEN
                 comp.setActive(user, true);
                 tick(1000); // simulate async
@@ -170,7 +170,7 @@ describe('UserManagementComponent', () => {
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
                 expect(userService.query).toHaveBeenCalledOnce();
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
-                expect(profileService.getProfileInfo()).toHaveBeenCalledOnce();
+                expect(profileSpy).toHaveBeenCalledOnce();
             }),
         ));
     });
