@@ -209,7 +209,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         fileResource.addRemoveFileExtension("exotic");
     }
 
-    public String createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
+    private String createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
@@ -240,7 +240,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetLectureAttachmentUnitAttachment() throws Exception {
+    void testGetLectureAttachmentUnitAttachment() throws Exception {
         AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
         String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
         String requestPath = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + filename;
@@ -255,7 +255,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetLectureAttachmentUnitAttachment_badRequest() throws Exception {
+    void testGetLectureAttachmentUnitAttachment_badRequest() throws Exception {
         AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
         String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
         String requestPath = "/api/files/attachments/attachment-unit/" + 9 + "/" + filename; // id 9 does not exist
@@ -269,7 +269,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetLectureAttachmentUnitAttachment_forbidden() throws Exception {
+    void testGetLectureAttachmentUnitAttachment_forbidden() throws Exception {
         AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
         String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
         String requestPath = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + filename;
@@ -280,7 +280,7 @@ public class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.getFile(requestPath, HttpStatus.FORBIDDEN, params);
     }
 
-    public AttachmentUnit createLectureWithAttachmentUnit() {
+    private AttachmentUnit createLectureWithAttachmentUnit() {
         Lecture lecture = database.createCourseWithLecture(true);
 
         AttachmentUnit attachmentUnit = database.createAttachmentUnit(true);
