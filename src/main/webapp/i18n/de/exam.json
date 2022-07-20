@@ -535,6 +535,13 @@
                     "_title": "Titel",
                     "type": "Typ"
                 },
+                "students": {
+                    "title": "Studierenden",
+                    "description": "Zeigt die aktuelle Teilnahme der Studierenden in der Prüfung an",
+                    "studentsPerPage": "{{number}} Studierenden pro Seite",
+                    "showAllStudents": "Zeige alle Studierenden",
+                    "id": "Studierenden-ID"
+                },
                 "activity-log": {
                     "title": "Aktivitäten",
                     "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden",
@@ -586,6 +593,14 @@
                 "exercise-detail-submission-chart": {
                     "name": "Anzahl der Ersteinreichungen",
                     "tooltip": "Zeigt die aktuelle Anzahl an Ersteinreichungen"
+                },
+                "students-started-chart": {
+                    "name": "Anzahl der Starts",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Starts der Klausur an"
+                },
+                "students-active-chart": {
+                    "name": "Anzahl der aktiven Studierenden",
+                    "tooltip": "Zeigt die aktuelle Anzahl an aktiven Studierenden an"
                 },
                 "average-actions-chart": {
                     "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",

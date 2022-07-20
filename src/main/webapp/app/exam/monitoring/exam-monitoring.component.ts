@@ -28,7 +28,7 @@ export class TableContent {
 })
 export class ExamMonitoringComponent implements OnInit, OnDestroy {
     // 'overview', 'exercises', 'students', 'submissions', 'sessions', 'activity-log', 'summary'
-    readonly sections: string[] = ['overview', 'exercises', 'activity-log'];
+    readonly sections: string[] = ['overview', 'exercises', 'students', 'activity-log'];
 
     // table
     table: TableContent[] = [];
@@ -57,7 +57,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
             this.courseId = Number(params['courseId']);
         });
 
-        this.examManagementService.find(this.courseId, this.examId, false, true).subscribe((examResponse: HttpResponse<Exam>) => {
+        this.examManagementService.find(this.courseId, this.examId, true, true).subscribe((examResponse: HttpResponse<Exam>) => {
             this.exam = examResponse.body!;
             this.examMonitoringService.notifyExamSubscribers(this.exam);
 

@@ -4,11 +4,11 @@ import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { round } from 'app/shared/util/utils';
 
 @Component({
-    selector: 'jhi-exercise-detail-template-chart',
-    templateUrl: './exercise-detail-template-chart.component.html',
+    selector: 'jhi-detail-template-chart',
+    templateUrl: './detail-template-chart.component.html',
     styleUrls: ['../monitoring-chart.scss'],
 })
-export class ExerciseDetailTemplateChartComponent {
+export class DetailTemplateChartComponent {
     @Input()
     ngxData: NgxChartsEntry[];
     @Input()

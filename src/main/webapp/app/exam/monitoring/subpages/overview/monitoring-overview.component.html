@@ -44,6 +44,28 @@
         </div>
         <div class="mt-3">
             <jhi-monitoring-box
+                title="{{ 'artemisApp.examMonitoring.menu.students.title' | artemisTranslate }}"
+                description="{{ 'artemisApp.examMonitoring.menu.students.description' | artemisTranslate }}"
+                linkTo="students"
+                [courseId]="this.courseId"
+                [examId]="this.examId"
+            >
+                <ng-container content>
+                    <div class="container-fluid">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <jhi-students-started-chart [registeredStudents]="this.exam.numberOfRegisteredUsers!"></jhi-students-started-chart>
+                            </div>
+                            <div class="col-lg-6">
+                                <jhi-students-active-chart [registeredStudents]="this.exam.numberOfRegisteredUsers!"></jhi-students-active-chart>
+                            </div>
+                        </div>
+                    </div>
+                </ng-container>
+            </jhi-monitoring-box>
+        </div>
+        <div class="mt-3">
+            <jhi-monitoring-box
                 title="{{ 'artemisApp.examMonitoring.menu.activity-log.title' | artemisTranslate }}"
                 description="{{ 'artemisApp.examMonitoring.menu.activity-log.description' | artemisTranslate }}"
                 linkTo="activity-log"

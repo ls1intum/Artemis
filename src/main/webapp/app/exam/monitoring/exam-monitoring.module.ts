@@ -23,10 +23,13 @@ import { ExerciseTemplateChartComponent } from 'app/exam/monitoring/charts/exerc
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { MonitoringExerciseDetailComponent } from 'app/exam/monitoring/subpages/exercise/monitoring-exercise-detail.component';
-import { ExerciseDetailTemplateChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-template-chart.component';
+import { DetailTemplateChartComponent } from 'app/exam/monitoring/charts/detail-chart/detail-template-chart.component';
 import { ExerciseDetailSubmissionChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-submission-chart.component';
 import { ExerciseDetailNavigationChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-navigation-chart.component';
 import { ExerciseDetailCurrentChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-current-chart.component';
+import { StudentsStartedChartComponent } from 'app/exam/monitoring/charts/students/students-started-chart.component';
+import { StudentsActiveChartComponent } from 'app/exam/monitoring/charts/students/students-active-chart.component';
+import { MonitoringStudentsComponent } from 'app/exam/monitoring/subpages/students/monitoring-students.component';
 
 const ENTITY_STATES = [...examMonitoringState];
 
@@ -59,10 +62,13 @@ const ENTITY_STATES = [...examMonitoringState];
         CategoryActionsChartComponent,
         ChartTitleComponent,
         MonitoringExerciseDetailComponent,
-        ExerciseDetailTemplateChartComponent,
+        DetailTemplateChartComponent,
         ExerciseDetailSubmissionChartComponent,
         ExerciseDetailNavigationChartComponent,
         ExerciseDetailCurrentChartComponent,
+        StudentsStartedChartComponent,
+        StudentsActiveChartComponent,
+        MonitoringStudentsComponent,
     ],
 })
 export class ArtemisExamMonitoringModule {}

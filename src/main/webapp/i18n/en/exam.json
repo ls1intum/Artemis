@@ -536,6 +536,13 @@
                     "_title": "Title",
                     "type": "Type"
                 },
+                "students": {
+                    "title": "Students",
+                    "description": "Shows the current participation of the students in the exam",
+                    "studentsPerPage": "{{number}} students per page",
+                    "showAllStudents": "Show all students",
+                    "id": "Student-ID"
+                },
                 "activity-log": {
                     "title": "Activity log",
                     "description": "Shows the past and current activities of active students",
@@ -587,6 +594,14 @@
                 "exercise-detail-submission-chart": {
                     "name": "Number of first submissions",
                     "tooltip": "Shows the number of first submissions"
+                },
+                "students-started-chart": {
+                    "name": "Number of starts",
+                    "tooltip": "Shows the current number of starts of the exam"
+                },
+                "students-active-chart": {
+                    "name": "Number of active students",
+                    "tooltip": "Shows the current number of active students"
                 },
                 "average-actions-chart": {
                     "name": "Average number of actions per student",

@@ -19,7 +19,7 @@ import { ActivatedRoute } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
-import { ExerciseDetailTemplateChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-template-chart.component';
+import { DetailTemplateChartComponent } from 'app/exam/monitoring/charts/detail-chart/detail-template-chart.component';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { ExerciseDetailCurrentChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-current-chart.component';
 
@@ -45,7 +45,7 @@ describe('Exercise Detail Current Chart Component', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, MockModule(PieChartModule), ArtemisSharedComponentModule],
-            declarations: [ExerciseDetailCurrentChartComponent, ChartTitleComponent, ExerciseDetailTemplateChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
+            declarations: [ExerciseDetailCurrentChartComponent, ChartTitleComponent, DetailTemplateChartComponent, ArtemisDatePipe, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
                 { provide: ActivatedRoute, useValue: route },

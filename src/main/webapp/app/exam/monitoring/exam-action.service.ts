@@ -21,6 +21,8 @@ export class ExamActionService implements IExamActionService {
     cachedLastActionPerStudent: Map<number, Map<number, ExamAction>> = new Map<number, Map<number, ExamAction>>();
     cachedNavigationsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
     cachedSubmissionsPerStudent: Map<number, Map<number, Set<number | undefined>>> = new Map<number, Map<number, Set<number | undefined>>>();
+    cachedStartedPerStudent: Map<number, Set<number>> = new Map<number, Set<number>>();
+    cachedActionsPerStudent: Map<number, Map<number, Set<ExamAction>>> = new Map<number, Map<number, Set<ExamAction>>>();
     initialActionsLoaded: Map<number, boolean> = new Map<number, boolean>();
     openExamMonitoringWebsocketSubscriptions: Map<number, string> = new Map<number, string>();
     examMonitoringStatusObservables: Map<number, BehaviorSubject<boolean>> = new Map<number, BehaviorSubject<boolean>>();
@@ -40,6 +42,8 @@ export class ExamActionService implements IExamActionService {
         const lastActionPerStudent = this.cachedLastActionPerStudent.get(exam.id!) ?? new Map();
         const navigatedToPerStudent = this.cachedNavigationsPerStudent.get(exam.id!) ?? new Map();
         const submittedPerStudent = this.cachedSubmissionsPerStudent.get(exam.id!) ?? new Map();
+        const startedPerStudent = this.cachedStartedPerStudent.get(exam.id!) ?? new Set();
+        const actionsPerStudent = this.cachedActionsPerStudent.get(exam.id!) ?? new Map();
 
         for (const action of examActions) {
             this.prepareAction(action);
@@ -50,6 +54,8 @@ export class ExamActionService implements IExamActionService {
             this.updateLastActionPerStudent(action, lastActionPerStudent);
             this.updateNavigationsPerStudent(action, navigatedToPerStudent);
             this.updateSubmissionsPerStudent(action, submittedPerStudent);
+            this.updateStartedPerStudent(action, startedPerStudent);
+            this.updateActionsPerStudent(action, actionsPerStudent);
         }
 
         this.cachedExamActions.set(exam.id!, [...(this.cachedExamActions.get(exam.id!) ?? []), ...examActions]);
@@ -58,6 +64,8 @@ export class ExamActionService implements IExamActionService {
         this.cachedLastActionPerStudent.set(exam.id!, lastActionPerStudent);
         this.cachedNavigationsPerStudent.set(exam.id!, navigatedToPerStudent);
         this.cachedSubmissionsPerStudent.set(exam.id!, submittedPerStudent);
+        this.cachedStartedPerStudent.set(exam.id!, startedPerStudent);
+        this.cachedActionsPerStudent.set(exam.id!, actionsPerStudent);
     };
 
     /**
@@ -122,6 +130,30 @@ export class ExamActionService implements IExamActionService {
             submitted.add((action as SavedExerciseAction).exerciseId);
             submittedPerStudent.set(action.examActivityId!, submitted);
         }
+    }
+
+    /**
+     * Updates the first starts per student.
+     * @param action received action
+     * @param startedPerStudent started per student
+     * @private
+     */
+    public updateStartedPerStudent(action: ExamAction, startedPerStudent: Set<number>) {
+        if (action.type === ExamActionType.STARTED_EXAM) {
+            startedPerStudent.add(action.examActivityId!);
+        }
+    }
+
+    /**
+     * Updates the actions per student.
+     * @param action received action
+     * @param actionsPerStudent actions per student
+     * @private
+     */
+    public updateActionsPerStudent(action: ExamAction, actionsPerStudent: Map<number, Set<ExamAction>>) {
+        const actions = actionsPerStudent.get(action.examActivityId!) ?? new Set();
+        actions.add(action);
+        actionsPerStudent.set(action.examActivityId!, actions);
     }
 
     /**

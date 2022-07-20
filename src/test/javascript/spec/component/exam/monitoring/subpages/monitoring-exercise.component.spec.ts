@@ -27,7 +27,7 @@ import { HttpClient } from '@angular/common/http';
 import { ExerciseDetailSubmissionChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-submission-chart.component';
 import { ExerciseDetailNavigationChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-navigation-chart.component';
 import { ExerciseDetailCurrentChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-current-chart.component';
-import { ExerciseDetailTemplateChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-template-chart.component';
+import { DetailTemplateChartComponent } from 'app/exam/monitoring/charts/detail-chart/detail-template-chart.component';
 import { PieChartModule } from '@swimlane/ngx-charts';
 
 describe('Monitoring Exercise Component', () => {
@@ -62,7 +62,7 @@ describe('Monitoring Exercise Component', () => {
                 ExerciseDetailSubmissionChartComponent,
                 ExerciseDetailNavigationChartComponent,
                 ExerciseDetailCurrentChartComponent,
-                ExerciseDetailTemplateChartComponent,
+                DetailTemplateChartComponent,
                 DataTableComponent,
                 MockPipe(ArtemisTranslatePipe),
             ],
