@@ -60,7 +60,7 @@
             "rules": { "@typescript-eslint/no-unused-vars": "off" }
         }, {
             "files": ["src/test/javascript/**"],
-            "plugins": ["jest", "jest-extended"],
+            "plugins": ["jest"], // todo: add "jest-extended"
             "extends": ["plugin:jest/recommended"], // todo: add "plugin:jest-extended/all"
             "rules": { "jest/expect-expect": "off", "jest/no-conditional-expect": "off" }
         }
