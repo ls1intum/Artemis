@@ -55,7 +55,7 @@ Create new Quiz Exercise
 
     - **Visible from**: The date and hour when the quiz becomes visible to students.
 
-    - **Schedule Quiz Start**: To establish the date and hour that the quiz will be available to solve it.
+    - **Schedule Quiz Start**: To establish the date and hour at which the quiz will be available to solve be solved.
 
         - **Start of working time**: Set the time when the students are able to see the questions and start answering. Students can start working on the quiz from this time until the duration ends.
 
