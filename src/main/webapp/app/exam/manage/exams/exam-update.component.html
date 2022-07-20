@@ -25,17 +25,14 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
-            <!-- Changing to test exams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
-            <div class="form-group" *ngIf="isAdmin">
+            <div class="form-group">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined"></jhi-exam-mode-picker>
             </div>
-            <!-- Enabling exam monitoring is currently hidden for all non-admins, as the feature is not yet fully implemented -->
-            <div class="form-group" *ngIf="isAdmin">
-                <!--*ngIf="isAdmin"-->
+            <div class="form-group">
                 <div class="form-check">
                     <input type="checkbox" class="form-check-input" [checked]="exam.monitoring" (change)="exam.monitoring = !exam.monitoring" />
                     <label class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
