@@ -550,7 +550,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.canOverride).toBeFalse();
         });
 
-        it('should not be able to override if tutor is assessor and result has a complaint', () => {
+        it('should not be able to override if tutor is assessor and assessmentDueDate has passed', () => {
             comp.exercise!.assessmentDueDate = dayjs().add(-100, 'seconds');
             expect(comp.canOverride).toBeFalse();
         });

@@ -70,7 +70,7 @@ describe('ComplaintsFormComponent', () => {
         expect(component.maxComplaintsPerCourse).toStrictEqual(studentComplaints);
     }));
 
-    it('should initialize with correct values for course complaints', fakeAsync(() => {
+    it('should initialize with correct values for course complaints for team exercises', fakeAsync(() => {
         component.exercise = courseTeamExercise;
         fixture.detectChanges();
         tick(100);

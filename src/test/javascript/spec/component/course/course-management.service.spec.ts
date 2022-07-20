@@ -352,7 +352,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should find all users of course group', fakeAsync(() => {
+    it('should download course archive', fakeAsync(() => {
         const expectedBlob = new Blob(['abc', 'cfe']);
         courseManagementService.downloadCourseArchive(course.id!).subscribe((resp) => {
             expect(resp.body).toEqual(expectedBlob);

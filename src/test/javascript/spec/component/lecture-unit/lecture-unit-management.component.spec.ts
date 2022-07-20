@@ -139,7 +139,7 @@ describe('LectureUnitManagementComponent', () => {
         // not moved as first one
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[0].id);
         const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
-        expect(downButton).toBeDefined;
+        expect(downButton).toBeDefined();
         downButton.nativeElement.click();
         expect(moveDownSpy).toHaveBeenCalledOnce();
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
@@ -159,7 +159,7 @@ describe('LectureUnitManagementComponent', () => {
 
         expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition].id);
         const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
-        expect(upButton).toBeDefined;
+        expect(upButton).toBeDefined();
         upButton.nativeElement.click();
         expect(moveUpSpy).toHaveBeenCalledOnce();
         expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition - 1].id);

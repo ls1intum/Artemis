@@ -18,7 +18,7 @@ import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helper
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
-export class MockMarkdownEditorDirective {
+class MockMarkdownEditorDirective {
     @Input() markdown?: string;
     @Output() markdownChange = new EventEmitter<string>();
 }

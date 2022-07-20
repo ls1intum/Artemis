@@ -14,7 +14,7 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[sortableData]' })
-export class MockSortableDataDirective {
+class MockSortableDataDirective {
     @Input('sortableData') data: any;
 }
 

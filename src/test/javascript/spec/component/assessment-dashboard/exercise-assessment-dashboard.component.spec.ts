@@ -829,17 +829,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests, expect.any(Function), false);
     });
 
-    it('should check if complaint locked', () => {
-        comp.exercise = exercise;
-        const complaintService = TestBed.inject(ComplaintService);
-        const complaintServiceSpy = jest.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
-
-        const complaint: Complaint = { id: 20 };
-        comp.isComplaintLocked(complaint);
-
-        expect(complaintServiceSpy).toHaveBeenCalledWith(complaint, exercise);
-    });
-
     it('should return submission language', () => {
         expect(comp.language(textSubmission)).toBe(textSubmission.language);
         const unkownLanguage = 'UNKNOWN';

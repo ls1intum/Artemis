@@ -271,28 +271,31 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
         });
 
-        afterEach(() => {
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(1);
-            expect(comp.submissions![0].results![0]).toEqual(result1);
-        });
-
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should delete result of modelingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should delete result of programmingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should delete result of textSubmission', fakeAsync(() => {
@@ -305,6 +308,9 @@ describe('ParticipationSubmissionComponent', () => {
             tick();
             fixture.destroy();
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });
 
@@ -319,36 +325,42 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
         });
 
-        afterEach(() => {
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
-            expect(comp.submissions![0].results![0]).toEqual(result1);
-        });
-
         it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
             const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
             deleteFileUploadAssessmentStub.mockReturnValue(throwError(() => error2));
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of fileUploadSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of modelingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of programmingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of textSubmission', fakeAsync(() => {
@@ -361,6 +373,9 @@ describe('ParticipationSubmissionComponent', () => {
             tick();
             fixture.destroy();
             flush();
+            expect(comp.submissions?.length).toBe(1);
+            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });
 

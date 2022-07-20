@@ -133,7 +133,7 @@ describe('QuizExercise Service', () => {
         expect(req.request.url).toEndWith(urlSuffix);
         req.flush(response);
         const resp = await result;
-        expect(resp.ok);
+        expect(resp.ok).toBe(true);
         expect(resp.body).toEqual(response);
     });
 

@@ -46,7 +46,7 @@ describe('Structured Grading Criteria Service', () => {
             expect(totalScore).toEqual(5.0);
             tick();
         }));
-        it('should calculate the total score', fakeAsync(() => {
+        it('should calculate the total score too', fakeAsync(() => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
             limitedSGI.id = 1;

@@ -91,7 +91,7 @@ describe('CodeEditorAceComponent', () => {
         expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
-    it('should not load the file from server on selected file change if the file is already in session', () => {
+    it('should correctly init editor after file change', () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();

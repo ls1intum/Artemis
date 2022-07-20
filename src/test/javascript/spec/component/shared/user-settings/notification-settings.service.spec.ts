@@ -6,18 +6,18 @@ import { GroupNotification } from 'app/entities/group-notification.model';
 import { ATTACHMENT_CHANGE_TITLE, COURSE_ARCHIVE_STARTED_TITLE, EXAM_ARCHIVE_STARTED_TITLE, EXERCISE_PRACTICE_TITLE, NotificationType } from 'app/entities/notification.model';
 import { SettingId } from 'app/shared/constants/user-settings.constants';
 
-export const notificationSettingA: NotificationSetting = {
+const notificationSettingA: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
     webapp: false,
     email: false,
 };
-export const notificationSettingB: NotificationSetting = {
+const notificationSettingB: NotificationSetting = {
     settingId: SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED,
     webapp: true,
     email: false,
 };
 
-export const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
+const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
 describe('User Settings Service', () => {
     let notificationSettingsService: NotificationSettingsService;

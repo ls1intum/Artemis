@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -247,15 +247,14 @@ describe('CodeEditorContainerIntegration', () => {
         container.fileBrowser.selectedFile = fileName;
     };
 
-    it('should initialize all components correctly if all server calls are successful', (done) => {
+    it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
         cleanInitialize();
-        setTimeout(() => {
-            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-            done();
-        }, 0);
-    });
+        flush();
+        discardPeriodicTasks();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+    }));
 
-    it('should not load files and render other components correctly if the repository status cannot be retrieved', (done) => {
+    it('should not load files and render other components correctly if the repository status cannot be retrieved', fakeAsync(() => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
         const isCleanSubject = new Subject();
@@ -317,12 +316,10 @@ describe('CodeEditorContainerIntegration', () => {
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0].id);
 
-        setTimeout(() => {
-            // called by build output
-            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
-            done();
-        }, 0);
-    });
+        flush();
+        discardPeriodicTasks();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+    }));
 
     it('should update the file browser and ace editor on file selection', () => {
         cleanInitialize();

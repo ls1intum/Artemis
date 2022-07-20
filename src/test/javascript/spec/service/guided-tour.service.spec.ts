@@ -657,11 +657,6 @@ describe('GuidedTourService', () => {
                 expect(enableTourSpy).toHaveBeenCalledOnce();
                 expect(startTourSpy).toHaveBeenCalledTimes(0);
             }));
-            it('should enableTourForExercise for text exercise', fakeAsync(() => {
-                expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toEqual(exerciseText);
-                expect(enableTourSpy).toHaveBeenCalledOnce();
-                expect(startTourSpy).toHaveBeenCalledTimes(0);
-            }));
             it('should enableTourForExercise for programming exercise', fakeAsync(() => {
                 expect(guidedTourService.enableTourForExercise(exerciseProgramming, tour, true)).toEqual(exerciseProgramming);
                 expect(enableTourSpy).toHaveBeenCalledOnce();

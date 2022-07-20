@@ -93,7 +93,7 @@ describe('Submission Policy Update Form Component', () => {
         expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
     }));
 
-    it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+    it('Should display correct input fields when penalty policy (lock repo) is already set', fakeAsync(() => {
         expectedProgrammingExercise.submissionPolicy = lockRepositoryPolicy;
         component.ngOnInit();
         fixture.detectChanges();

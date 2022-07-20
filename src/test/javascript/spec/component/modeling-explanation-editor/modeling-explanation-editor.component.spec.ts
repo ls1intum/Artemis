@@ -32,7 +32,7 @@ describe('ModelingExplanationEditorComponent', () => {
     it('should change explanation value bidirectionally between component and template', () => {
         comp.explanation = 'Initial Explanation';
         fixture.detectChanges();
-        fixture.whenStable().then(() => {
+        return fixture.whenStable().then(() => {
             const textareaDebugElement = fixture.debugElement.query(By.css('textarea'));
             expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;

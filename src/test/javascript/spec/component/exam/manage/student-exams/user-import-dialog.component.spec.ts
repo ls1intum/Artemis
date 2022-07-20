@@ -221,7 +221,7 @@ describe('UsersImportButtonComponent', () => {
         fixture.detectChanges();
 
         const finishButton = fixture.debugElement.query(By.css('#finish-button'));
-        expect(finishButton).not.toBeNull;
+        expect(finishButton).not.toBeNull();
 
         finishButton.nativeElement.click();
         expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();

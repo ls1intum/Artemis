@@ -46,9 +46,6 @@ describe('AccountService', () => {
         // @ts-ignore
         accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = jest.spyOn(httpService, 'get');
-
-        expect(accountService.userIdentity).toBe(undefined);
-        expect(accountService.isAuthenticated()).toBeFalse();
     });
 
     afterEach(() => {
@@ -97,7 +94,8 @@ describe('AccountService', () => {
     });
 
     it('should authenticate a user', () => {
-        accountService.userIdentity = undefined;
+        expect(accountService.userIdentity).toBe(undefined);
+        expect(accountService.isAuthenticated()).toBeFalse();
 
         accountService.authenticate(user);
 

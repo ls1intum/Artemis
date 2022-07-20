@@ -198,8 +198,6 @@ describe('QuizExercise Re-evaluate Component', () => {
         afterEach(() => {
             comp.resetAll();
             comp.onQuestionUpdated();
-
-            expect(comp.quizIsValid).toBeTrue();
         });
 
         describe('Quiz mc question validation', () => {

@@ -247,7 +247,7 @@ describe('CodeEditorActionsComponent', () => {
         commitButton.nativeElement.click();
 
         expect(commitStub).not.toHaveBeenCalled();
-        expect(saveChangedFilesStub).toHaveBeenCalled;
+        expect(saveChangedFilesStub).toHaveBeenCalledOnce();
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         // save + commit completed

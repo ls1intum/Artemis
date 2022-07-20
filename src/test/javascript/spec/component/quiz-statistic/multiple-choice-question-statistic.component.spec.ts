@@ -169,7 +169,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             const result = comp.loadQuizCommon(emptyQuizExercise);
 
-            expect(navigateByUrlMock).toHaveBeenCalledOnce;
+            expect(navigateByUrlMock).toHaveBeenCalledOnce();
             expect(navigateByUrlMock).toHaveBeenCalledWith('courses');
             expect(result).toBeUndefined();
         });

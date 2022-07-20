@@ -81,14 +81,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
         component.posting = metisResolvingAnswerPostUser1;
         component.ngOnChanges();
         component.confirm();
-        expect(updatePostingMock).toHaveBeenCalled;
+        expect(updatePostingMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke createPosting when confirming without posting id', () => {
         component.posting = metisResolvingAnswerPostUser1;
         component.ngOnChanges();
         component.confirm();
-        expect(updatePostingMock).toHaveBeenCalled;
+        expect(updatePostingMock).toHaveBeenCalledOnce();
     });
 
     it('should invoke metis service with created answer post', fakeAsync(() => {

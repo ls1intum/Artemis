@@ -852,7 +852,6 @@ describe('QuizExercise Management Detail Component', () => {
                 const questionToDelete = comp.quizExercise.quizQuestions![amountQuizQuestions - 1];
                 comp.deleteQuestion(questionToDelete);
                 expect(comp.quizExercise.quizQuestions).toHaveLength(amountQuizQuestions - 1);
-                expect(comp.quizExercise.quizQuestions?.filter((question) => question === questionToDelete));
             };
 
             // setup
@@ -1303,7 +1302,7 @@ describe('QuizExercise Management Detail Component', () => {
                 saveAndExpectAlertService();
             });
 
-            it('should call alert service if response has no body on create', () => {
+            it('should call alert service if response is 404', () => {
                 comp.quizExercise.id = undefined;
                 quizExerciseServiceCreateStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 saveAndExpectAlertService();
@@ -1328,7 +1327,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(routerSpy).toBeCalledWith(['/course-management', comp.courseId, 'quiz-exercises']);
             });
 
-            it('should go back to quiz exercise page on cancel', () => {
+            it('should go back to quiz exercise groups page on cancel', () => {
                 comp.isExamMode = true;
                 comp.cancel();
                 expect(routerSpy).toBeCalledWith(['/course-management', comp.courseId, 'exams', comp.examId, 'exercise-groups']);
@@ -1854,7 +1853,7 @@ describe('QuizExercise Management Detail Component', () => {
                     checkForInvalidFlaggedQuestionAndReason();
                 });
 
-                it('should put reason and flag as invalid if a spot is invalid', () => {
+                it('should put reason and flag as invalid if a answer mapping is invalid', () => {
                     shortAnswerMapping1.invalid = true;
                     checkForInvalidFlaggedQuestionAndReason();
                 });

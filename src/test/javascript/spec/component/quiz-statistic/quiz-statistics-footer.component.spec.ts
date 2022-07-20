@@ -235,7 +235,7 @@ describe('QuizExercise Statistic Footer Component', () => {
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-statistic`);
         });
 
-        it('should go to quiz-statistic', () => {
+        it('should go to quiz-statistic with points', () => {
             // setup
             quizExercise.quizQuestions = [];
             comp.quizExercise = quizExercise;
@@ -290,7 +290,7 @@ describe('QuizExercise Statistic Footer Component', () => {
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-statistic`);
         });
 
-        it('should go to quiz-statistic for exam', () => {
+        it('should go to quiz-statistic with points for exam', () => {
             // setup
             examQuizExercise.quizQuestions = [];
             comp.quizExercise = examQuizExercise;

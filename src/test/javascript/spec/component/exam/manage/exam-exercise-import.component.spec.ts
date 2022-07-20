@@ -215,7 +215,7 @@ describe('Exam Exercise Import Component', () => {
         expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBeTrue();
     });
 
-    it('should correctly return an empty string when titleAndShortNameOfProgrammingExercises do not contain exercise ', () => {
+    it('should correctly return an empty string when titleAndShortNameOfProgrammingExercises do not contain exercise', () => {
         expect(component.getPlaceholderTitleOfProgrammingExercise(55)).toEqual('');
         expect(component.getPlaceholderShortNameOfProgrammingExercise(55)).toEqual('');
     });

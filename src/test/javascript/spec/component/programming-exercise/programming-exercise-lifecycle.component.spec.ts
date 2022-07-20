@@ -175,7 +175,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
 
-    it('should alert each distinct string only once ', () => {
+    it('should alert each distinct string only once', () => {
         const alertSpy = jest.spyOn(window, 'alert');
 
         const newExercise = { ...exercise, includedInOverallScore: IncludedInOverallScore.INCLUDED_COMPLETELY };

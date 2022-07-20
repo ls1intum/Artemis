@@ -49,7 +49,7 @@ describe('OnlineUnitFormComponent', () => {
         const submitButton = onlineUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        onlineUnitFormComponentFixture.whenStable().then(() => {
+        return onlineUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).not.toHaveBeenCalled();
             expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
@@ -73,7 +73,7 @@ describe('OnlineUnitFormComponent', () => {
         const submitButton = onlineUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        onlineUnitFormComponentFixture.whenStable().then(() => {
+        return onlineUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).not.toHaveBeenCalled();
             expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
@@ -98,7 +98,7 @@ describe('OnlineUnitFormComponent', () => {
         const submitButton = onlineUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        onlineUnitFormComponentFixture.whenStable().then(() => {
+        return onlineUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: exampleName,

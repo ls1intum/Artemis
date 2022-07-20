@@ -82,7 +82,14 @@ describe('TeamsImportFromFileFormComponent', () => {
             getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
 
-        afterEach(() => {
+        it('should parse json file and send converted teams', () => {
+            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
+            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
+            comp.importFileName = 'file.json';
+            expect(control.value).toBe('test');
+
+            comp.onFileLoadImport(reader);
+
             expect(convertTeamsStub).toHaveBeenCalledOnce();
             expect(comp.importedTeams).toEqual(mockFileStudents);
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
@@ -92,14 +99,6 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();
             expect(control.value).toBe('');
-        });
-
-        it('should parse json file and send converted teams', () => {
-            reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
-            comp.importFile = new File([''], 'file.json', { type: 'application/json' });
-            comp.importFileName = 'file.json';
-            expect(control.value).toBe('test');
-            comp.onFileLoadImport(reader);
         });
 
         it('should parse csv file and send converted teams', async () => {
@@ -133,7 +132,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(changeDetectorDetectChangesSpy).toHaveBeenCalledOnce();
         });
 
-        it('should set import file correctly', () => {
+        it('should set import file correctly for empty file', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
             expect(comp.importFile).toBe(undefined);

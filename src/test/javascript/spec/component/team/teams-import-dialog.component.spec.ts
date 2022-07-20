@@ -130,7 +130,7 @@ describe('TeamsImportDialogComponent', () => {
         });
     });
 
-    describe('loadSourceTeams', () => {
+    describe('loadSourceStub and initImportStrategy', () => {
         let loadSourceStub: jest.SpyInstance;
         let initImportStrategyStub: jest.SpyInstance;
 
@@ -401,7 +401,7 @@ describe('TeamsImportDialogComponent', () => {
             });
         });
 
-        describe('import from exercise', () => {
+        describe('import from exercise without showing', () => {
             beforeEach(() => {
                 resetComponent();
                 comp.sourceExercise = undefined;

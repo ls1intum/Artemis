@@ -42,27 +42,27 @@ describe('GuidedTourUtils', () => {
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 1000, 1000, 1000)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for bottom left', () => {
             const topleft = Orientation.BOTTOMLEFT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 1000, 1000, 1000)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for left', () => {
             const topleft = Orientation.LEFT;
             expect(isElementInViewPortHorizontally(topleft, 100, 0, 50)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 100, 0, 150)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for top right', () => {
             const topleft = Orientation.TOPRIGHT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 300)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for bottom right', () => {
             const topleft = Orientation.BOTTOMRIGHT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 300)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for right', () => {
             const topleft = Orientation.RIGHT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 1000, 1000, 1000)).toBeFalse();

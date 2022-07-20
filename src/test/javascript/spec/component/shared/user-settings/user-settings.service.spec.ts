@@ -3,13 +3,25 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { UserSettingsService } from 'app/shared/user-settings/user-settings.service';
-import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
+import { SettingId, UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { MockWebsocketService } from '../../../helpers/mocks/service/mock-websocket.service';
 import { MockAccountService } from '../../../helpers/mocks/service/mock-account.service';
 import { TranslateTestingModule } from '../../../helpers/mocks/service/mock-translate.service';
 import { Setting, UserSettingsStructure } from 'app/shared/user-settings/user-settings.model';
 import { notificationSettingsStructure, NotificationSetting } from 'app/shared/user-settings/notification-settings/notification-settings-structure';
-import { notificationSettingsForTesting } from './notification-settings.service.spec';
+
+const notificationSettingA: NotificationSetting = {
+    settingId: SettingId.NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE,
+    webapp: false,
+    email: false,
+};
+const notificationSettingB: NotificationSetting = {
+    settingId: SettingId.NOTIFICATION__INSTRUCTOR_NOTIFICATION__COURSE_AND_EXAM_ARCHIVING_STARTED,
+    webapp: true,
+    email: false,
+};
+
+const notificationSettingsForTesting: NotificationSetting[] = [notificationSettingA, notificationSettingB];
 
 describe('User Settings Service', () => {
     // general & common
@@ -151,7 +163,7 @@ describe('User Settings Service', () => {
                 compareSettingsStructure(expectedUserSettings, resultingUserSettings);
             });
 
-            it('should correctly update and return settings based on received settings', () => {
+            it('should correctly update and return settings based on extracted settings', () => {
                 const expectedNotificationSettings: NotificationSetting[] = userSettingsService.extractIndividualSettingsFromSettingsStructure(
                     notificationSettingsStructure,
                 ) as NotificationSetting[];

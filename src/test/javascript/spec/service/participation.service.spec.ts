@@ -107,7 +107,7 @@ describe('Participation Service', () => {
         httpMock.expectOne({ method: 'PUT' });
     }));
 
-    it('should merge student participations', fakeAsync(() => {
+    it('should merge student participations for programming exercises', fakeAsync(() => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             id: 1,
             type: ParticipationType.PROGRAMMING,
