@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import java.util.HashSet;
 import java.util.Set;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
@@ -17,28 +18,32 @@ public class DropRemovedGitDiffEntriesTest {
 
     private BehavioralBlackboard blackboard;
 
+    private ProgrammingExerciseGitDiffReport gitDiffReport;
+
     private DropRemovedGitDiffEntries dropRemovedGitDiffEntries;
+
+    @BeforeEach
+    public void setup() {
+        gitDiffReport = new ProgrammingExerciseGitDiffReport();
+        gitDiffReport.setEntries(new HashSet<>());
+
+        blackboard = new BehavioralBlackboard(gitDiffReport, null, null);
+        dropRemovedGitDiffEntries = new DropRemovedGitDiffEntries(blackboard);
+
+    }
 
     @Test
     public void testNoAction() {
-        var gitDiffReport = new ProgrammingExerciseGitDiffReport();
-        gitDiffReport.setEntries(new HashSet<>());
-        blackboard = new BehavioralBlackboard(gitDiffReport, null, null);
-        dropRemovedGitDiffEntries = new DropRemovedGitDiffEntries(blackboard);
         assertThat(dropRemovedGitDiffEntries.executeCondition()).isFalse();
     }
 
     @Test
     public void testExecuteCondition() throws BehavioralSolutionEntryGenerationException {
-        var gitDiffReport = new ProgrammingExerciseGitDiffReport();
         var removedEntry = new ProgrammingExerciseGitDiffEntry();
         var addedEntry = new ProgrammingExerciseGitDiffEntry();
         addedEntry.setStartLine(1);
         addedEntry.setLineCount(2);
         gitDiffReport.setEntries(Set.of(removedEntry, addedEntry));
-
-        blackboard = new BehavioralBlackboard(gitDiffReport, null, null);
-        dropRemovedGitDiffEntries = new DropRemovedGitDiffEntries(blackboard);
 
         assertThat(dropRemovedGitDiffEntries.executeCondition()).isTrue();
         assertThat(dropRemovedGitDiffEntries.executeAction()).isTrue();

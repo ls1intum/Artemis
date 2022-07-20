@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryG
 /**
  * Remove all {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry} from the
  * {@link de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport} of the {@link BehavioralBlackboard}
- * that represents removed consecutive blocks of code.
+ * that represents consecutive blocks of removed code.
  * Entries cannot be generated for removed code, therefore we have to drop them from the git diff report of the blackboard.
  */
 public class DropRemovedGitDiffEntries extends BehavioralKnowledgeSource {
