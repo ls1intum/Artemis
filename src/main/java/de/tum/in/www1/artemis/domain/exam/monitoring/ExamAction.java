@@ -84,7 +84,7 @@ public class ExamAction extends DomainObject {
         this.type = type;
     }
 
-    @JsonGetter(value = "studentExamId")
+    @JsonGetter("studentExamId")
     public Long getStudentExamId() {
         return studentExamId;
     }
