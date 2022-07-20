@@ -18,7 +18,7 @@
             </ngx-charts-pie-chart>
         </div>
     </div>
-    <div class="col-12 col-md-6 col-lg-5 overflow-scroll">
+    <div class="col-12 col-md-6 col-lg-5 overflow-auto">
         <jhi-side-panel
             style="min-width: 360px"
             class="d-block"
@@ -26,7 +26,7 @@
             [panelDescriptionHeader]="'artemisApp.exerciseAssessmentDashboard.totalYours' | artemisTranslate"
         >
             <div *ngIf="!isExamMode">
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
                     </div>
@@ -34,7 +34,7 @@
                         {{ totalNumberOfAssessments.total }} / {{ numberOfSubmissions.total }} ({{ totalAssessmentPercentage }}%) | {{ numberOfTutorAssessments }}
                     </div>
                 </div>
-                <div class="row mb-1" *ngIf="complaintsEnabled">
+                <div class="row g-0 mb-1" *ngIf="complaintsEnabled">
                     <div class="col-7">{{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}</div>
                     <div class="col-5">
                         <div *ngIf="isAtLeastInstructor">
@@ -52,7 +52,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row mb-1" *ngIf="feedbackRequestEnabled">
+                <div class="row g-0 mb-1" *ngIf="feedbackRequestEnabled">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.moreFeedbackRequests' | artemisTranslate }}
                     </div>
@@ -74,7 +74,7 @@
                         </div>
                     </div>
                 </div>
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.assessmentLocks' | artemisTranslate }}
                     </div>
@@ -85,7 +85,7 @@
                         </a>
                     </div>
                 </div>
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">{{ 'artemisApp.exerciseAssessmentDashboard.ratings' | artemisTranslate }}</div>
                     <div class="col-5">
                         <a *ngIf="isAtLeastInstructor" [routerLink]="ratingsLink"> {{ ratings.total }} </a>
@@ -95,7 +95,7 @@
                 </div>
             </div>
             <div *ngIf="isExamMode">
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.assessments' | artemisTranslate }}
                     </div>
@@ -104,7 +104,7 @@
                         {{ numberOfTutorAssessments }}
                     </div>
                 </div>
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.complaints' | artemisTranslate }}
                     </div>
@@ -120,7 +120,7 @@
                         <div *ngIf="!isAtLeastInstructor">{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
                     </div>
                 </div>
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.assessmentLocks' | artemisTranslate }}
                     </div>
@@ -132,7 +132,7 @@
                         </a>
                     </div>
                 </div>
-                <div class="row mb-1">
+                <div class="row g-0 mb-1">
                     <div class="col-7">
                         {{ 'artemisApp.assessmentDashboard.totalAssessmentsForCorrectionrounds' | artemisTranslate }}
                     </div>

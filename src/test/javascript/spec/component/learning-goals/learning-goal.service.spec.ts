@@ -25,10 +25,10 @@ describe('LearningGoalService', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 MockProvider(LectureUnitService, {
-                    convertDateArrayFromServerEntity<T extends LectureUnit>(res: T[]): T[] {
+                    convertLectureUnitArrayDatesFromServer<T extends LectureUnit>(res: T[]): T[] {
                         return res;
                     },
-                    convertDateArrayFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
+                    convertLectureUnitArrayDatesFromClient<T extends LectureUnit>(lectureUnits: T[]): T[] {
                         return lectureUnits;
                     },
                 }),

@@ -45,7 +45,7 @@ describe('Exam Management Service Tests', () => {
     it('should create an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
 
         // WHEN
         service.create(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -62,7 +62,7 @@ describe('Exam Management Service Tests', () => {
     it('should update an exam', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient({ id: 1 });
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
 
         // WHEN
         service.update(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
@@ -76,11 +76,65 @@ describe('Exam Management Service Tests', () => {
         tick();
     }));
 
+    it('should import an exam', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient({ id: 1 });
+
+        // WHEN
+        service.import(course.id!, mockExam).subscribe((res) => expect(res.body).toEqual(mockExam));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exam-import` });
+        expect(req.request.body).toEqual(mockCopyExam);
+
+        // CLEANUP
+        req.flush(mockExam);
+        tick();
+    }));
+
+    it('should import an exercise group', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1 };
+        const mockExerciseGroup = [{ id: 2 } as ExerciseGroup];
+
+        // WHEN
+        service.importExerciseGroup(course.id!, mockExam.id!, mockExerciseGroup).subscribe((res) => expect(res.body).toEqual(mockExerciseGroup));
+
+        // THEN
+        const req = httpMock.expectOne({ method: 'POST', url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/import-exercise-group` });
+        expect(req.request.body).toEqual(mockExerciseGroup);
+
+        // CLEANUP
+        req.flush(mockExerciseGroup);
+        tick();
+    }));
+
+    it('should find an exam with exercises and without course id', fakeAsync(() => {
+        // GIVEN
+        const mockExam: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
+        const expected: Exam = { id: 1, exerciseGroups: [{ id: 2 } as ExerciseGroup] };
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
+        // WHEN
+        service.findWithExercisesAndWithoutCourseId(mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
+
+        // THEN
+        const req = httpMock.expectOne({
+            method: 'GET',
+            url: `api/exams/${mockExam.id}`,
+        });
+        expect(req.request.url).toEqual(`api/exams/${mockExam.id}`);
+
+        // CLEANUP
+        req.flush(expected);
+        tick();
+    }));
+
     it('should find an exam with no students and no exercise groups', fakeAsync(() => {
         // GIVEN
         const mockExam: Exam = { id: 1 };
         const expected: Exam = { id: 1 };
-        const mockCopyExam = ExamManagementService.convertDateFromClient(expected);
+        const mockCopyExam = ExamManagementService.convertExamDatesFromClient(expected);
         // WHEN
         service.find(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockCopyExam));
 
@@ -95,20 +149,6 @@ describe('Exam Management Service Tests', () => {
 
         // CLEANUP
         req.flush(expected);
-        tick();
-    }));
-
-    it('should get the exam title', fakeAsync(() => {
-        // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const expectedTitle = 'expectedTitle';
-
-        // WHEN
-        service.getTitle(mockExam.id!).subscribe((res) => expect(res.body).toEqual(expectedTitle));
-
-        // THEN
-        const req = httpMock.expectOne({ method: 'GET', url: `api/exams/${mockExam.id!}/title` });
-        req.flush(expectedTitle);
         tick();
     }));
 

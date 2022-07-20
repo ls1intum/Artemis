@@ -625,7 +625,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a RealExam with student review dates set
+     * Generates a real exam with student review dates set
      *
      * @param course the associated course
      * @return the created exam
@@ -641,7 +641,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a RealExam without student review dates set
+     * Generates a real exam without student review dates set
      *
      * @param course the associated course
      * @return the created exam
@@ -651,7 +651,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a TestExam (TestExams have no student review dates)
+     * Generates a test eam (test exams have no student review dates)
      *
      * @param course the associated course
      * @return the created exam
@@ -664,7 +664,7 @@ public class ModelFactory {
      * Helper method to create an exam
      *
      * @param course the associated course
-     * @param testExam Boolean flag to determine whether it is a TestExam
+     * @param testExam Boolean flag to determine whether it is a test exam
      * @return the created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
@@ -683,6 +683,7 @@ public class ModelFactory {
         exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
         exam.setCourse(course);
         return exam;
     }
@@ -698,6 +699,20 @@ public class ModelFactory {
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
+        return studentExam;
+    }
+
+    /**
+     * Helper Method to generate a studentExam for a test exam
+     *
+     * @param exam the exam to be linked to the studentExam
+     * @return a StudentExam for a test exam
+     */
+    public static StudentExam generateStudentExamForTestExam(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setWorkingTime(exam.getWorkingTime());
         studentExam.setTestRun(false);
         return studentExam;
     }

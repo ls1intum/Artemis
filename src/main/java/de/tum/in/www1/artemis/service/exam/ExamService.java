@@ -17,6 +17,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -41,8 +42,10 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service Implementation for managing exams.
@@ -93,12 +96,14 @@ public class ExamService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     public ExamService(ExerciseDeletionService exerciseDeletionService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository) {
+            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authorizationCheckService) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -118,6 +123,7 @@ public class ExamService {
         this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
@@ -645,10 +651,12 @@ public class ExamService {
 
             log.debug("StatsTimeLog: number of complaints finished done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
             // number of assessments done
-            numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
-                    .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRoundsInExam));
+            if (numberOfCorrectionRoundsInExam > 0) {
+                numberOfAssessmentsFinishedOfCorrectionRoundsByExercise
+                        .add(resultRepository.countNumberOfFinishedAssessmentsForExamExerciseForCorrectionRounds(exercise, numberOfCorrectionRoundsInExam));
 
-            log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+                log.debug("StatsTimeLog: number of assessments done in {} for exercise {}", TimeLogUtil.formatDurationFrom(start), exercise.getId());
+            }
 
             // get number of all generated participations
             numberOfParticipationsGeneratedByExercise.add(studentParticipationRepository.countParticipationsIgnoreTestRunsByExerciseId(exercise.getId()));
@@ -733,6 +741,10 @@ public class ExamService {
      */
     public Integer evaluateQuizExercises(Long examId) {
         var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+        }
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
@@ -922,7 +934,7 @@ public class ExamService {
                 log.debug("Finished combination of template commits for programming exercise {}", programmingExerciseWithTemplateParticipation);
             }
             catch (GitAPIException e) {
-                log.error("An error occurred when trying to combine template commits for exam " + exam.getId() + ".", e);
+                log.error("An error occurred when trying to combine template commits for exam {}.", exam.getId(), e);
             }
         }));
     }
@@ -937,5 +949,38 @@ public class ExamService {
         // for all modeling exercises in the exam, send their ids for scheduling
         exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
                 .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
+    }
+
+    /**
+     * Search for all exams fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exams if there are that many in Artemis.
+     *
+     * @param search        The search query defining the search term and the size of the returned page
+     * @param user          The user for whom to fetch all available exercises
+     * @param withExercises If only exams with exercises should be searched
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user, final boolean withExercises) {
+        final var pageable = PageUtil.createExamPageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<Exam> examPage;
+        if (authorizationCheckService.isAdmin(user)) {
+            if (withExercises) {
+                examPage = examRepository.findByTitleInExamOrCourseWithAtLeastOneExerciseGroup(searchTerm, searchTerm, pageable);
+            }
+            else {
+                examPage = examRepository.findByTitleInExamOrCourse(searchTerm, searchTerm, pageable);
+            }
+        }
+        else {
+            if (withExercises) {
+                examPage = examRepository.findByTitleInExamOrCourseAndAtLeastOneExerciseGroupAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            }
+            else {
+                examPage = examRepository.findByTitleInExamOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            }
+        }
+        return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
     }
 }

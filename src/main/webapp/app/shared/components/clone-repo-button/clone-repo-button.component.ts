@@ -105,18 +105,15 @@ export class CloneRepoButtonComponent implements OnInit {
             return url;
         }
 
-        // repositoryUrl must be in format https://USERNAME@HOST to insert token
-        const repositoryUrlParts = url.split('@');
-        if (repositoryUrlParts.length !== 2) {
-            return url;
-        }
-
         const token = insertPlaceholder ? '**********' : vcsAccessToken;
-
-        const protocolAndUsername = repositoryUrlParts[0];
-        const host = repositoryUrlParts[1];
-
-        return protocolAndUsername + ':' + token + '@' + host;
+        const urlUserInfoPart = `://${this.user.login}:${token}@`;
+        if (!url.includes('@')) {
+            // the url has the format https://vcs-server.com
+            return url.replace('://', urlUserInfoPart);
+        } else {
+            // the url has the format https://username@vcs-server.com -> replace ://username@
+            return url.replace(/:\/\/.*@/, urlUserInfoPart);
+        }
     }
 
     /**

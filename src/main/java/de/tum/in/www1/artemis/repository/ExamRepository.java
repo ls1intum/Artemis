@@ -9,6 +9,9 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -67,6 +70,71 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             """)
     List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
 
+    /**
+     * Query which fetches all the exams for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param partialTitle     exam title search term
+     * @param partialExamTitle course title search term
+     * @param groups           user groups
+     * @param pageable         Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE e.course.instructorGroupName IN :groups
+                    AND (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+              """)
+    Page<Exam> findByTitleInExamOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialExamTitle") String partialExamTitle,
+            @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams with at least one exercise group for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param partialTitle     exam title search term
+     * @param partialExamTitle course title search term
+     * @param groups           user groups
+     * @param pageable         Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE e.course.instructorGroupName IN :groups
+                    AND (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    AND e.exerciseGroups IS NOT EMPTY
+              """)
+    Page<Exam> findByTitleInExamOrCourseAndAtLeastOneExerciseGroupAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
+            @Param("partialExamTitle") String partialExamTitle, @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams for an admin and matching the search criteria.
+     *
+     * @param partialTitle     exam title search term
+     * @param partialExamTitle course title search term
+     * @param pageable         Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+              """)
+    Page<Exam> findByTitleInExamOrCourse(@Param("partialTitle") String partialTitle, @Param("partialExamTitle") String partialExamTitle, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams with at least one exercise Group for an admin and matching the search criteria.
+     *
+     * @param partialTitle     exam title search term
+     * @param partialExamTitle course title search term
+     * @param pageable         Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    AND e.exerciseGroups IS NOT EMPTY
+              """)
+    Page<Exam> findByTitleInExamOrCourseWithAtLeastOneExerciseGroup(@Param("partialTitle") String partialTitle, @Param("partialExamTitle") String partialExamTitle,
+            Pageable pageable);
+
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
     // @EntityGraph(type = LOAD, attributePaths = { "studentExams", "studentExams.exercises", "studentExams.exercises.participations" })
@@ -91,7 +159,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     long countGeneratedStudentExamsByExamWithoutTestRuns(@Param("examId") long examId);
 
     /**
-     * Returns the title of the exam with the given id
+     * Returns the title of the exam with the given id.
      *
      * @param examId the id of the exam
      * @return the name/title of the exam or null if the exam does not exist
@@ -101,6 +169,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             FROM Exam e
             WHERE e.id = :examId
             """)
+    @Cacheable(cacheNames = "examTitle", key = "#examId", unless = "#result == null")
     String getExamTitle(@Param("examId") Long examId);
 
     @NotNull

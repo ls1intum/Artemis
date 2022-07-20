@@ -285,7 +285,7 @@ public class UserService {
                 vcsUserManagementService.deactivateUser(savedNonActivatedUser.getLogin());
             }
             catch (VersionControlException e) {
-                log.error("An error occurred while registering GitLab user " + savedNonActivatedUser.getLogin() + ":", e);
+                log.error("An error occurred while registering GitLab user {}:", savedNonActivatedUser.getLogin(), e);
                 deleteUser(savedNonActivatedUser);
                 throw e;
             }
@@ -678,12 +678,16 @@ public class UserService {
             log.warn("User with registration number '{}' and login '{}' not found in Artemis user database nor found in (TUM) LDAP", registrationNumber, login);
         }
         catch (Exception ex) {
-            log.warn("Error while processing user with registration number " + registrationNumber, ex);
+            log.warn("Error while processing user with registration number {}", registrationNumber, ex);
         }
         return Optional.empty();
     }
 
     public void updateUserNotificationVisibility(Long userId, ZonedDateTime hideUntil) {
         userRepository.updateUserNotificationVisibility(userId, hideUntil);
+    }
+
+    public void updateUserLanguageKey(Long userId, String languageKey) {
+        userRepository.updateUserLanguageKey(userId, languageKey);
     }
 }

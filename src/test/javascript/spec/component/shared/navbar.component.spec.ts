@@ -4,13 +4,8 @@ import { Router, UrlSerializer } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { GuidedTourComponent } from 'app/guided-tour/guided-tour.component';
-import { LectureService } from 'app/lecture/lecture.service';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
 import { FindLanguageFromKeyPipe } from 'app/shared/language/find-language-from-key.pipe';
 import { TranslateDirective } from 'app/shared/language/translate.directive';
@@ -25,10 +20,15 @@ import { of } from 'rxjs';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ArtemisTestModule } from '../../test.module';
-import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { User } from 'app/core/user/user.model';
 
 class MockBreadcrumb {
     label: string;
@@ -39,9 +39,9 @@ class MockBreadcrumb {
 describe('NavbarComponent', () => {
     let fixture: ComponentFixture<NavbarComponent>;
     let component: NavbarComponent;
-    let courseManagementStub: jest.SpyInstance;
-    let exerciseTitleStub: jest.SpyInstance;
+    let entityTitleServiceStub: jest.SpyInstance;
     let exerciseService: ExerciseService;
+    let entityTitleService: EntityTitleService;
 
     const router = new MockRouter();
     router.setUrl('');
@@ -82,9 +82,11 @@ describe('NavbarComponent', () => {
                 MockComponent(GuidedTourComponent),
                 MockComponent(LoadingNotificationComponent),
                 MockComponent(JhiConnectionWarningComponent),
+                MockComponent(ThemeSwitchComponent),
             ],
             providers: [
                 MockProvider(UrlSerializer),
+                MockProvider(MockAccountService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -96,11 +98,12 @@ describe('NavbarComponent', () => {
                 fixture = TestBed.createComponent(NavbarComponent);
                 component = fixture.componentInstance;
 
-                const courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
-                courseManagementStub = jest.spyOn(courseManagementService, 'getTitle').mockReturnValue(of({ body: 'Test Course' } as HttpResponse<string>));
+                entityTitleService = fixture.debugElement.injector.get(EntityTitleService);
+                entityTitleServiceStub = jest
+                    .spyOn(entityTitleService, 'getTitle')
+                    .mockImplementation((type) => of('Test ' + type.substring(0, 1) + type.substring(1).toLowerCase()));
 
                 exerciseService = fixture.debugElement.injector.get(ExerciseService);
-                exerciseTitleStub = jest.spyOn(exerciseService, 'getTitle').mockReturnValue(of({ body: 'Test Exercise' } as HttpResponse<string>));
             });
     });
 
@@ -113,13 +116,40 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
+    it('should make api call when logged in user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledWith('elvish');
+    });
+
+    it('should not make api call when anonymous user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.currAccount = undefined;
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
+    });
+
     it('should not build breadcrumbs for students', () => {
         const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(0);
+        expect(component.breadcrumbs).toHaveLength(3);
     });
 
     it('should build breadcrumbs for course management', () => {
@@ -128,7 +158,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(1);
+        expect(component.breadcrumbs).toHaveLength(1);
         expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
     });
 
@@ -138,7 +168,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(1);
+        expect(component.breadcrumbs).toHaveLength(1);
         expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
     });
 
@@ -148,7 +178,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(3);
+        expect(component.breadcrumbs).toHaveLength(3);
 
         const systemBreadcrumb = { label: 'artemisApp.systemNotification.systemNotifications', translate: true, uri: '/admin/system-notification-management/' } as MockBreadcrumb;
         expect(component.breadcrumbs[0]).toEqual(systemBreadcrumb);
@@ -162,7 +192,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(2);
+        expect(component.breadcrumbs).toHaveLength(2);
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'userManagement.home.title', translate: true, uri: '/admin/user-management/' } as MockBreadcrumb);
         expect(component.breadcrumbs[1]).toEqual({ label: 'test_user', translate: false, uri: '/admin/user-management/test_user/' } as MockBreadcrumb);
@@ -172,16 +202,14 @@ describe('NavbarComponent', () => {
         const testUrl = '/admin/organization-management/1';
         router.setUrl(testUrl);
 
-        const organizationService = fixture.debugElement.injector.get(OrganizationManagementService);
-        const organizationStub = jest.spyOn(organizationService, 'getTitle').mockReturnValue(of({ body: 'Organization Name' } as HttpResponse<string>));
-
         fixture.detectChanges();
 
-        expect(organizationStub).toHaveBeenCalledWith(1);
-        expect(component.breadcrumbs.length).toEqual(2);
+        expect(entityTitleServiceStub).toHaveBeenCalledOnce();
+        expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.ORGANIZATION, [1]);
+        expect(component.breadcrumbs).toHaveLength(2);
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'organizationManagement.title', translate: true, uri: '/admin/organization-management/' } as MockBreadcrumb);
-        expect(component.breadcrumbs[1]).toEqual({ label: 'Organization Name', translate: false, uri: '/admin/organization-management/1/' } as MockBreadcrumb);
+        expect(component.breadcrumbs[1]).toEqual({ label: 'Test Organization', translate: false, uri: '/admin/organization-management/1/' } as MockBreadcrumb);
     });
 
     it('should not error without translation', () => {
@@ -190,7 +218,7 @@ describe('NavbarComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.breadcrumbs.length).toEqual(1);
+        expect(component.breadcrumbs).toHaveLength(1);
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
@@ -202,7 +230,8 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(entityTitleServiceStub).toHaveBeenCalledOnce();
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
 
             const importCrumb = {
                 label: 'artemisApp.exercise.import.table.doImport',
@@ -210,7 +239,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/import/2/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(4);
+            expect(component.breadcrumbs).toHaveLength(4);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -224,8 +253,9 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
             const gradingCrumb = {
                 label: 'artemisApp.programmingExercise.configureGrading.shortTitle',
@@ -233,7 +263,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/grading/test-cases/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(5);
+            expect(component.breadcrumbs).toHaveLength(5);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -248,8 +278,9 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
             const assessmentCrumb = {
                 label: 'artemisApp.assessment.assessment',
@@ -257,7 +288,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/programming-exercises/2/code-editor/new/assessment/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(5);
+            expect(component.breadcrumbs).toHaveLength(5);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -270,17 +301,17 @@ describe('NavbarComponent', () => {
             const testUrl = '/course-management/1/exercises/2/exercise-hints/3';
             router.setUrl(testUrl);
 
-            const hintService = fixture.debugElement.injector.get(ExerciseHintService);
-            const hintsStub = jest.spyOn(hintService, 'getTitle').mockReturnValue(of({ body: 'Exercise Hint' } as HttpResponse<string>));
             const findStub = jest
                 .spyOn(exerciseService, 'find')
                 .mockReturnValue(of({ body: { title: 'Test Exercise', type: ExerciseType.PROGRAMMING } } as HttpResponse<Exercise>));
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.HINT, [3, 2]);
+            expect(findStub).toHaveBeenCalledOnce();
             expect(findStub).toHaveBeenCalledWith(2);
-            expect(hintsStub).toHaveBeenCalledWith(2, 3);
 
             const hintsCrumb = {
                 label: 'artemisApp.exerciseHint.home.title',
@@ -289,12 +320,12 @@ describe('NavbarComponent', () => {
             } as MockBreadcrumb;
 
             const hintCrumb = {
-                label: 'Exercise Hint',
+                label: 'Test Hint',
                 translate: false,
                 uri: '/course-management/1/exercises/2/exercise-hints/3/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(6);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -310,8 +341,9 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
             const submissionsCrumb = {
                 label: 'artemisApp.exercise.submissions',
@@ -325,7 +357,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/text-exercises/2/submissions/3/text-feedback-conflict/4/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(6);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -343,10 +375,11 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(courseId);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(exerciseId);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [courseId]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [exerciseId]);
 
-            expect(component.breadcrumbs.length).toEqual(4);
+            expect(component.breadcrumbs).toHaveLength(4);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -368,8 +401,9 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
@@ -383,7 +417,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/new/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(6);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -403,8 +437,9 @@ describe('NavbarComponent', () => {
 
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
 
             const submissionCrumb = {
                 label: 'artemisApp.exampleSubmission.home.title',
@@ -418,7 +453,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/modeling-exercises/2/example-submissions/3/',
             } as MockBreadcrumb;
 
-            expect(component.breadcrumbs.length).toEqual(6);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -436,13 +471,11 @@ describe('NavbarComponent', () => {
             const testUrl = '/course-management/1/lectures/2/unit-management/text-units/create';
             router.setUrl(testUrl);
 
-            const lectureService = fixture.debugElement.injector.get(LectureService);
-            const lectureStub = jest.spyOn(lectureService, 'getTitle').mockReturnValue(of({ body: 'Test Lecture' } as HttpResponse<string>));
-
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(lectureStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.LECTURE, [2]);
 
             const unitManagementCrumb = {
                 label: 'artemisApp.lectureUnit.home.title',
@@ -456,7 +489,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/lectures/2/unit-management/text-units/create/',
             };
 
-            expect(component.breadcrumbs.length).toEqual(6);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -470,15 +503,13 @@ describe('NavbarComponent', () => {
             const testUrl = '/course-management/1/apollon-diagrams/2';
             router.setUrl(testUrl);
 
-            const apollonDiagramService = fixture.debugElement.injector.get(ApollonDiagramService);
-            const apollonStub = jest.spyOn(apollonDiagramService, 'getTitle').mockReturnValue(of({ body: 'Apollon Diagram' } as HttpResponse<string>));
-
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(apollonStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.DIAGRAM, [2]);
 
-            expect(component.breadcrumbs.length).toEqual(4);
+            expect(component.breadcrumbs).toHaveLength(4);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -487,20 +518,18 @@ describe('NavbarComponent', () => {
                 translate: true,
                 uri: '/course-management/1/apollon-diagrams/',
             } as MockBreadcrumb);
-            expect(component.breadcrumbs[3]).toEqual({ label: 'Apollon Diagram', translate: false, uri: '/course-management/1/apollon-diagrams/2/' } as MockBreadcrumb);
+            expect(component.breadcrumbs[3]).toEqual({ label: 'Test Diagram', translate: false, uri: '/course-management/1/apollon-diagrams/2/' } as MockBreadcrumb);
         });
 
         it('exam exercise groups', () => {
             const testUrl = '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new';
             router.setUrl(testUrl);
 
-            const examService = fixture.debugElement.injector.get(ExamManagementService);
-            const examStub = jest.spyOn(examService, 'getTitle').mockReturnValue(of({ body: 'Test Exam' } as HttpResponse<string>));
-
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(examStub).toHaveBeenCalledWith(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXAM, [2]);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
@@ -513,7 +542,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/new/',
             };
 
-            expect(component.breadcrumbs.length).toEqual(6);
+            expect(component.breadcrumbs).toHaveLength(6);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -527,14 +556,12 @@ describe('NavbarComponent', () => {
             const testUrl = '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/plagiarism';
             router.setUrl(testUrl);
 
-            const examService = fixture.debugElement.injector.get(ExamManagementService);
-            const examStub = jest.spyOn(examService, 'getTitle').mockReturnValue(of({ body: 'Test Exam' } as HttpResponse<string>));
-
             fixture.detectChanges();
 
-            expect(courseManagementStub).toHaveBeenCalledWith(1);
-            expect(examStub).toHaveBeenCalledWith(2);
-            expect(exerciseTitleStub).toHaveBeenCalledWith(4);
+            expect(entityTitleServiceStub).toHaveBeenCalledTimes(3);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXAM, [2]);
+            expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [4]);
 
             const exerciseGroupsCrumb = {
                 label: 'artemisApp.examManagement.exerciseGroups',
@@ -552,7 +579,7 @@ describe('NavbarComponent', () => {
                 uri: '/course-management/1/exams/2/exercise-groups/3/quiz-exercises/4/plagiarism/',
             };
 
-            expect(component.breadcrumbs.length).toEqual(7);
+            expect(component.breadcrumbs).toHaveLength(7);
 
             expect(component.breadcrumbs[0]).toEqual(courseManagementCrumb);
             expect(component.breadcrumbs[1]).toEqual(testCourseCrumb);
@@ -562,5 +589,56 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[5]).toEqual(exerciseCrumb);
             expect(component.breadcrumbs[6]).toEqual(plagiarismCrumb);
         });
+    });
+
+    describe('Special student route breadcrumb cases', () => {
+        it.each(['programming-exercises', 'modeling-exercises', 'text-exercises'])(
+            'should replace exercise types in URI with just "exercise" on backlinking breadcrumbs',
+            (exType: string) => {
+                const testUrl = `/courses/1/${exType}/2`;
+                router.setUrl(testUrl);
+
+                fixture.detectChanges();
+
+                expect(entityTitleServiceStub).toHaveBeenCalledTimes(2);
+                expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.COURSE, [1]);
+                expect(entityTitleServiceStub).toHaveBeenCalledWith(EntityType.EXERCISE, [2]);
+
+                expect(component.breadcrumbs).toHaveLength(4);
+                expect(component.breadcrumbs[0]).toMatchObject({ uri: '/courses/', label: 'artemisApp.course.home.title' });
+                expect(component.breadcrumbs[1]).toMatchObject({ uri: '/courses/1/', label: 'Test Course' });
+                expect(component.breadcrumbs[2]).toMatchObject({ uri: '/courses/1/exercises/', label: 'artemisApp.courseOverview.menu.exercises' });
+                expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
+            },
+        );
+    });
+
+    it.each([
+        { width: 1200, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 1100, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 600, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true } },
+        { width: 550, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+        { width: 1000, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 850, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 600, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true } },
+        { width: 470, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+        { width: 800, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 650, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 600, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true } },
+        { width: 470, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+        { width: 520, account: undefined, roles: [], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 500, account: undefined, roles: [], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 450, account: undefined, roles: [], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: false } },
+        { width: 400, account: undefined, roles: [], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+    ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
+        const accountService = TestBed.inject(AccountService);
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as string[]).includes(auth)));
+
+        component.currAccount = account as User;
+        window['innerWidth'] = width;
+
+        component.onResize();
+
+        expect({ isCollapsed: component.isCollapsed, isNavbarNavVertical: component.isNavbarNavVertical, iconsMovedToMenu: component.iconsMovedToMenu }).toEqual(expected);
     });
 });

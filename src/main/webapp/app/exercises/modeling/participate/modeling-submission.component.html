@@ -6,6 +6,7 @@
         submitbutton
         class="guided-tour submission-button"
         id="submit-modeling-submission"
+        *ngIf="isOwnerOfParticipation"
         [disabled]="(!isActive && !isLate) || !submission || !!result || (isLate && !!submission.submitted)"
         [title]="!isLate ? 'entity.action.submit' : 'entity.action.submitDeadlineMissed'"
         (onClick)="submit()"
@@ -33,6 +34,7 @@
             <div class="row flex-grow-1">
                 <div *ngIf="submission && (isActive || isLate) && !result && (!isLate || !submission.submitted)" class="col-12 editor-large">
                     <jhi-modeling-editor
+                        [readOnly]="!isOwnerOfParticipation"
                         [umlModel]="umlModel"
                         [diagramType]="modelingExercise.diagramType!"
                         [withExplanation]="true"

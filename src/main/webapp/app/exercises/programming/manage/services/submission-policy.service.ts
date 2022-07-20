@@ -14,7 +14,7 @@ export interface ISubmissionPolicyService {
 
 @Injectable({ providedIn: 'root' })
 export class SubmissionPolicyService implements ISubmissionPolicyService {
-    public baseResourceUrl = SERVER_API_URL + '/api/programming-exercises/{exerciseId}/submission-policy';
+    public baseResourceUrl = SERVER_API_URL + 'api/programming-exercises/{exerciseId}/submission-policy';
 
     constructor(private http: HttpClient) {}
 

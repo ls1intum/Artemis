@@ -89,6 +89,13 @@ public class CompassService {
             List<Feedback> feedbacksForSuggestion = new ArrayList<>();
             ModelClusterFactory clusterBuilder = new ModelClusterFactory();
             List<UMLElement> elements = clusterBuilder.getModelElements(modelingSubmission);
+
+            // elements can be null if the modeling submission does not contain a model
+            // this can happen for empty submissions in exams
+            if (elements == null) {
+                return null;
+            }
+
             List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).collect(Collectors.toList()));
             List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).collect(Collectors.toList());
             List<ModelCluster> modelClusters = modelClusterRepository.findAllByIdInWithEagerElements(clusterIds);

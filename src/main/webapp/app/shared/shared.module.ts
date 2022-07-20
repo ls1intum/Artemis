@@ -44,7 +44,6 @@ import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/con
         ConsistencyCheckComponent,
         AssessmentWarningComponent,
     ],
-    entryComponents: [DeleteDialogComponent],
     exports: [
         ArtemisSharedLibsModule,
         ArtemisSharedCommonModule,

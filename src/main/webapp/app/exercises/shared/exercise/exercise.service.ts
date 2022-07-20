@@ -13,6 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { User } from 'app/core/user/user.model';
 import { getExerciseDueDate } from 'app/exercises/shared/exercise/exercise.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 export type EntityResponseType = HttpResponse<Exercise>;
 export type EntityArrayResponseType = HttpResponse<Exercise[]>;
@@ -31,7 +33,13 @@ export interface ExerciseServicable<T extends Exercise> {
 export class ExerciseService {
     public resourceUrl = SERVER_API_URL + 'api/exercises';
 
-    constructor(private http: HttpClient, private participationService: ParticipationService, private accountService: AccountService, private translateService: TranslateService) {}
+    constructor(
+        private http: HttpClient,
+        private participationService: ParticipationService,
+        private accountService: AccountService,
+        private translateService: TranslateService,
+        private entityTitleService: EntityTitleService,
+    ) {}
 
     /**
      * Persist a new exercise
@@ -39,7 +47,7 @@ export class ExerciseService {
      * return
      */
     create(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertDateFromClient(exercise);
+        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http.post<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
@@ -49,7 +57,7 @@ export class ExerciseService {
      * @param { Exercise } exercise - Exercise that will be updated
      */
     update(exercise: Exercise): Observable<EntityResponseType> {
-        const copy = ExerciseService.convertDateFromClient(exercise);
+        const copy = ExerciseService.convertExerciseDatesFromClient(exercise);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http.put<Exercise>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
     }
@@ -115,16 +123,6 @@ export class ExerciseService {
         return this.http
             .get<Exercise>(`${this.resourceUrl}/${exerciseId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.processExerciseEntityResponse(res)));
-    }
-
-    /**
-     * Fetches the title of the exercise with the given id
-     *
-     * @param exerciseId the id of the exercise
-     * @return the title of the exercise in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(exerciseId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/title`, { observe: 'response', responseType: 'text' });
     }
 
     /**
@@ -239,12 +237,12 @@ export class ExerciseService {
      * @param { Exercise } exercise - Exercise from server whose date is adjusted
      * @returns { Exercise } - Exercise with adjusted times
      */
-    static convertExerciseDateFromServer(exercise?: Exercise) {
+    static convertExerciseDatesFromServer(exercise?: Exercise) {
         if (exercise) {
-            exercise.releaseDate = exercise.releaseDate ? dayjs(exercise.releaseDate) : undefined;
-            exercise.dueDate = exercise.dueDate ? dayjs(exercise.dueDate) : undefined;
-            exercise.assessmentDueDate = exercise.assessmentDueDate ? dayjs(exercise.assessmentDueDate) : undefined;
-            exercise.studentParticipations = ParticipationService.convertParticipationsDateFromServer(exercise.studentParticipations);
+            exercise.releaseDate = convertDateFromServer(exercise.releaseDate);
+            exercise.dueDate = convertDateFromServer(exercise.dueDate);
+            exercise.assessmentDueDate = convertDateFromServer(exercise.assessmentDueDate);
+            exercise.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(exercise.studentParticipations);
         }
         return exercise;
     }
@@ -258,7 +256,7 @@ export class ExerciseService {
         const convertedExercises: Exercise[] = [];
         if (exercises && exercises.length > 0) {
             exercises.forEach((exercise: Exercise) => {
-                const convertedExercise = ExerciseService.convertExerciseDateFromServer(exercise);
+                const convertedExercise = ExerciseService.convertExerciseDatesFromServer(exercise);
                 if (convertedExercise) {
                     convertedExercises.push(convertedExercise);
                 }
@@ -271,25 +269,26 @@ export class ExerciseService {
      * Converts all dates of a client-exercise to the server timezone
      * @param { Exercise } exercise - Exercise from client whose date is adjusted
      */
-    static convertDateFromClient<E extends Exercise>(exercise: E): E {
+    static convertExerciseDatesFromClient<E extends Exercise>(exercise: E): E {
         return Object.assign({}, exercise, {
-            releaseDate: exercise.releaseDate && dayjs(exercise.releaseDate).isValid() ? dayjs(exercise.releaseDate).toJSON() : undefined,
-            dueDate: exercise.dueDate && dayjs(exercise.dueDate).isValid() ? dayjs(exercise.dueDate).toJSON() : undefined,
-            assessmentDueDate: exercise.assessmentDueDate && dayjs(exercise.assessmentDueDate).isValid() ? dayjs(exercise.assessmentDueDate).toJSON() : undefined,
+            releaseDate: convertDateFromClient(exercise.releaseDate),
+            dueDate: convertDateFromClient(exercise.dueDate),
+            assessmentDueDate: convertDateFromClient(exercise.assessmentDueDate),
+            exampleSolutionPublicationDate: convertDateFromClient(exercise.exampleSolutionPublicationDate),
         });
     }
 
     /**
-     * Replace dates in http-response including an exercise with the corresponding client time
+     * Replace dates in http-response including an exercise with the corresponding client time.
      * @param res - Response from server including one exercise
      */
-    static convertDateFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
+    static convertExerciseResponseDatesFromServer<ERT extends EntityResponseType>(res: ERT): ERT {
         if (res.body) {
-            res.body.releaseDate = res.body.releaseDate ? dayjs(res.body.releaseDate) : undefined;
-            res.body.dueDate = res.body.dueDate ? dayjs(res.body.dueDate) : undefined;
-            res.body.assessmentDueDate = res.body.assessmentDueDate ? dayjs(res.body.assessmentDueDate) : undefined;
-            res.body.exampleSolutionPublicationDate = res.body.exampleSolutionPublicationDate ? dayjs(res.body.exampleSolutionPublicationDate) : undefined;
-            res.body.studentParticipations = ParticipationService.convertParticipationsDateFromServer(res.body.studentParticipations);
+            res.body.releaseDate = convertDateFromServer(res.body.releaseDate);
+            res.body.dueDate = convertDateFromServer(res.body.dueDate);
+            res.body.assessmentDueDate = convertDateFromServer(res.body.assessmentDueDate);
+            res.body.exampleSolutionPublicationDate = convertDateFromServer(res.body.exampleSolutionPublicationDate);
+            res.body.studentParticipations = ParticipationService.convertParticipationArrayDatesFromServer(res.body.studentParticipations);
         }
         return res;
     }
@@ -298,10 +297,10 @@ export class ExerciseService {
      * Replace dates in http-response including an array of exercises with the corresponding client time
      * @param res - Response from server including an array of exercise
      */
-    static convertDateArrayFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
+    static convertExerciseArrayDatesFromServer<E extends Exercise, EART extends EntityArrayResponseType>(res: EART): EART {
         if (res.body) {
             res.body.forEach((exercise: E) => {
-                ExerciseService.convertExerciseDateFromServer(exercise);
+                ExerciseService.convertExerciseDatesFromServer(exercise);
             });
         }
         return res;
@@ -359,9 +358,9 @@ export class ExerciseService {
      * Prepare client-exercise to be uploaded to the server
      * @param { Exercise } exercise - Exercise that will be modified
      */
-    static convertExerciseForServer<E extends Exercise>(exercise: E): Exercise {
+    static convertExerciseFromClient<E extends Exercise>(exercise: E): Exercise {
         let copy = Object.assign(exercise, {});
-        copy = ExerciseService.convertDateFromClient(copy);
+        copy = ExerciseService.convertExerciseDatesFromClient(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         if (copy.course) {
             copy.course.exercises = [];
@@ -423,9 +422,10 @@ export class ExerciseService {
      * @param exerciseRes
      */
     public processExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
-        ExerciseService.convertDateFromServer(exerciseRes);
+        ExerciseService.convertExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.setAccessRightsExerciseEntityResponseType(exerciseRes);
+        this.sendExerciseTitleToTitleService(exerciseRes?.body);
         return exerciseRes;
     }
 
@@ -434,9 +434,10 @@ export class ExerciseService {
      * @param exerciseResArray
      */
     public processExerciseEntityArrayResponse(exerciseResArray: EntityArrayResponseType): EntityArrayResponseType {
-        ExerciseService.convertDateArrayFromServer(exerciseResArray);
+        ExerciseService.convertExerciseArrayDatesFromServer(exerciseResArray);
         ExerciseService.convertExerciseCategoryArrayFromServer(exerciseResArray);
         this.setAccessRightsExerciseEntityArrayResponseType(exerciseResArray);
+        exerciseResArray?.body?.forEach(this.sendExerciseTitleToTitleService.bind(this));
         return exerciseResArray;
     }
 
@@ -454,6 +455,13 @@ export class ExerciseService {
             this.accountService.setAccessRightsForExerciseAndReferencedCourse(res.body as Exercise);
         }
         return res;
+    }
+
+    public sendExerciseTitleToTitleService(exercise: Exercise | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.EXERCISE, [exercise?.id], exercise?.title);
+        if (exercise?.course) {
+            this.entityTitleService.setTitle(EntityType.COURSE, [exercise.course.id], exercise.course.title);
+        }
     }
 
     public getLatestDueDate(exerciseId: number): Observable<dayjs.Dayjs | undefined> {

@@ -321,7 +321,7 @@
         "exerciseIdMismatch": "Die Aufgaben-IDs stimmen nicht überein.",
         "solutionEntryError": "Fehler beim Laden der extrahierten Aufgaben aus der Aufgabenstellung."
     },
-    "aboutUs": "Über uns",
+    "aboutUs": "Über",
     "contact": "Kontaktiere uns",
     "bug": "Melde einen Fehler",
     "feature": "Beantrage ein Feature",
@@ -331,7 +331,7 @@
     "pendingChanges": "WARNUNG: Du hast nicht gespeicherte Änderungen. Klicke Abbrechen, um zurück zu gehen und deine Änderungen zu speichern oder klicke OK, um die Änderungen zu verwerfen.",
     "overview": {
         "title": "Kursübersicht",
-        "aboutUs": "Über uns",
+        "aboutUs": "Über",
         "course": "Kursdetails",
         "exercise": "Aufgabendetails",
         "lectures": "Vorlesungen",
