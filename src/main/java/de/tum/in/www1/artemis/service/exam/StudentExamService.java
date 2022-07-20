@@ -145,7 +145,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
