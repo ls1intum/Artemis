@@ -8,12 +8,14 @@ import java.util.stream.Stream;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
+import de.tum.in.www1.artemis.service.connectors.bamboo.dto.TestwiseCoverageReportDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsBuildLogParseUtils;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
@@ -37,6 +39,10 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
     private List<TestsuiteDTO> results = new ArrayList<>();
 
     private List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports = new ArrayList<>();
+
+    // For an unknown reason, the deserialization only works with this annotation
+    @JsonProperty("testwiseCoverageReport")
+    private List<TestwiseCoverageReportDTO> testwiseCoverageReport = new ArrayList<>();
 
     private ZonedDateTime runDate;
 
@@ -169,6 +175,14 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
     public void setStaticCodeAnalysisReports(List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports) {
         this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+    }
+
+    public List<TestwiseCoverageReportDTO> getTestwiseCoverageReport() {
+        return testwiseCoverageReport;
+    }
+
+    public void setTestwiseCoverageReport(List<TestwiseCoverageReportDTO> testwiseCoverageReport) {
+        this.testwiseCoverageReport = testwiseCoverageReport;
     }
 
     @Override

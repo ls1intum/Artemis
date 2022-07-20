@@ -41,7 +41,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout | Testwise Coverage Analysis                 |
   +======================+======================+======================+==================+==============+==============+==============================+============================================+
-  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes (only for Gradle on Atlassian Setup)   |
+  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes                                        |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | Python               | yes                  | no                   | yes              | no           | no           | no                           | no                                         |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
@@ -51,7 +51,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | Haskell              | yes                  | no                   | no               | no           | no           | yes                          | no                                         |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           | no                                         |
+  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           | yes                                        |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | VHDL                 | no                   | no                   | no               | no           | no           | no                           | no                                         |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
@@ -260,7 +260,7 @@ Exercise Creation
     - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
     - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
     - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
-      This option is only available for Java-Gradle-projects with non-sequential test runs.
+      This option is only available for Java/Kotlin-exercises with non-sequential test runs.
 
       .. note::
         At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active

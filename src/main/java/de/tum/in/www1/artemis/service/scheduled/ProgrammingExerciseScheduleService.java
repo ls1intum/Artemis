@@ -221,7 +221,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             }
         }
         catch (Exception e) {
-            log.error("Failed to schedule exercise " + exercise.getId(), e);
+            log.error("Failed to schedule exercise {}", exercise.getId(), e);
         }
     }
 
@@ -409,7 +409,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
                 log.debug("Combined template repository commits of programming exercise {}.", programmingExerciseWithTemplateParticipation.getId());
             }
             catch (GitAPIException e) {
-                log.error("Failed to communicate with GitAPI for combining template commits of exercise " + exercise.getId(), e);
+                log.error("Failed to communicate with GitAPI for combining template commits of exercise {}", exercise.getId(), e);
             }
         };
     }

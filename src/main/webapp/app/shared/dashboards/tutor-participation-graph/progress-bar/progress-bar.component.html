@@ -2,14 +2,12 @@
     <div
         class="progress-bar"
         role="progressbar"
-        [ngClass]="calculateProgressBarClass(percentage)"
+        [ngClass]="backgroundColorClass"
         [style.width]="percentage + '%'"
         attr.aria-valuenow="{{ percentage }}"
         aria-valuemin="0"
         aria-valuemax="100"
     >
-        <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="chooseProgressBarTextColor(percentage)">
-            {{ numerator }} / {{ denominator }} ({{ percentage + '%' }})
-        </span>
+        <span class="justify-content-center d-flex position-absolute w-100" [ngClass]="foregroundColorClass"> {{ numerator }} / {{ denominator }} ({{ percentage + '%' }}) </span>
     </div>
 </div>

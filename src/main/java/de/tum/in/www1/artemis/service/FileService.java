@@ -788,7 +788,7 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
+                log.error("Deleting the file {} did not work", path, e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 
@@ -811,7 +811,7 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the directory " + path + " did not work", e);
+                log.error("Deleting the directory {} did not work", path, e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 

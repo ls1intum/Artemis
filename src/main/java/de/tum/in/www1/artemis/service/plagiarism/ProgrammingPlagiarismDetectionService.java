@@ -9,7 +9,6 @@ import java.util.List;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
@@ -347,7 +346,7 @@ public class ProgrammingPlagiarismDetectionService {
      *
      * @param programmingExercise ProgrammingExercise to fetch the participations for
      * @param minimumScore        consider only submissions whose score is greater or equal to this value
-     * @return List containing the latest text submission for every participation
+     * @return an unmodifiable list containing the latest text submission for every participation
      */
     public List<ProgrammingExerciseParticipation> filterStudentParticipationsForComparison(ProgrammingExercise programmingExercise, int minimumScore) {
         // TODO: when no minimum score is specified, filtering participations with empty submissions could be done directly in the database to improve performance
@@ -363,7 +362,7 @@ public class ProgrammingPlagiarismDetectionService {
                     }
                     return minimumScore == 0
                             || submission.getLatestResult() != null && submission.getLatestResult().getScore() != null && submission.getLatestResult().getScore() >= minimumScore;
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     private List<Repository> downloadRepositories(ProgrammingExercise programmingExercise, List<ProgrammingExerciseParticipation> participations, String targetPath) {

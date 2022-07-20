@@ -108,14 +108,16 @@ export class CoursesComponent implements OnInit, OnChanges, OnDestroy {
         const relevantExercises = new Array<Exercise>();
         let relevantExercise: Exercise | undefined;
         if (this.courses) {
-            this.courses.forEach((course) => {
-                const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises || []);
-                if (relevantExerciseForCourse) {
-                    relevantExerciseForCourse.course = course;
-                    relevantExercises.push(relevantExerciseForCourse);
-                }
-            });
-            if (relevantExercises.length === 0) {
+            this.courses
+                .filter((course) => !course.testCourse)
+                .forEach((course) => {
+                    const relevantExerciseForCourse = this.exerciseService.getNextExerciseForHours(course.exercises || []);
+                    if (relevantExerciseForCourse) {
+                        relevantExerciseForCourse.course = course;
+                        relevantExercises.push(relevantExerciseForCourse);
+                    }
+                });
+            if (!relevantExercises.length) {
                 return undefined;
             } else if (relevantExercises.length === 1) {
                 relevantExercise = relevantExercises[0];

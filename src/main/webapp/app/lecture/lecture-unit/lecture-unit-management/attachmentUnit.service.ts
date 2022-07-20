@@ -18,18 +18,18 @@ export class AttachmentUnitService {
     findById(attachmentUnitId: number, lectureId: number) {
         return this.httpClient
             .get<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units/${attachmentUnitId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     create(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     update(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .put<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 }

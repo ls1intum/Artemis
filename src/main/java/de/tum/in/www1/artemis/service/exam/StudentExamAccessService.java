@@ -100,24 +100,36 @@ public class StudentExamAccessService {
         if (isTestRun) {
             // Check that the current user is at least instructor in the course.
             if (!authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
-                throw new AccessForbiddenException();
+                throw new AccessForbiddenException("Only instructors can access test runs!");
             }
         }
         else {
             // Check that the current user is at least student in the course.
             if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
-                throw new AccessForbiddenException();
+                throw new AccessForbiddenException("Only students of the course can access an exam!");
             }
 
             // Check that the exam is already visible. After the exam, we directly show the summary!
             if (exam.getVisibleDate() != null && (exam.getVisibleDate().isAfter(ZonedDateTime.now()))) {
-                throw new AccessForbiddenException();
+                throw new AccessForbiddenException("You can only access exams when they are visible!");
             }
 
             // Check that the current user is registered for the exam
             if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
-                throw new AccessForbiddenException();
+                throw new AccessForbiddenException("You can only access an exam if you are registered for it!");
             }
+        }
+    }
+
+    /**
+     * Checks if the user is allowed to access the course
+     * @param courseId the corresponding courseId
+     * @param currentUser the user for which the access should be checked
+     */
+    public void checkCourseAccessForStudentElseThrow(Long courseId, User currentUser) {
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        if (!authorizationCheckService.isAtLeastStudentInCourse(course, currentUser)) {
+            throw new AccessForbiddenException("You are not allowed to access exams in this course!");
         }
     }
 }
