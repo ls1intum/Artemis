@@ -1331,7 +1331,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         // assess submission and submit
         List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> {
             feedback.setDetailText("Good work here");
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toCollection(ArrayList::new));
         TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
         textAssessmentDTO.setFeedbacks(feedbacks);
         Result firstSubmittedManualResult = request.postWithResponseBody("/api/participations/" + submissionWithoutFirstAssessment.getParticipation().getId() + "/results/"

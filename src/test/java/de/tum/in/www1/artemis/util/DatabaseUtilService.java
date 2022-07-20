@@ -360,7 +360,7 @@ public class DatabaseUtilService {
 
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
         List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         return teamRepo.saveAll(teams);
     }
 
@@ -374,7 +374,7 @@ public class DatabaseUtilService {
 
     public List<Team> addTeamsForExerciseFixedTeamSize(Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
         List<Team> teams = ModelFactory.generateTeamsForExerciseFixedTeamSize(exercise, "team", "student", numberOfTeams, owner, null, "R", noOfStudentsPerTeam);
-        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).collect(Collectors.toList()));
+        userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         return teamRepo.saveAll(teams);
     }
 

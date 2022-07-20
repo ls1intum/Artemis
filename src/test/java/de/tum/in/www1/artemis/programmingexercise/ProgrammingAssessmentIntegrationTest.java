@@ -100,7 +100,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Set submission of newResult
         database.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
@@ -565,7 +566,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         var result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();
         result.setScore(75D);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         result.setCompletionDate(ZonedDateTime.now());
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
@@ -659,7 +661,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
         manualResultLockedFirstRound.setHasFeedback(true);
