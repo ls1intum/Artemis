@@ -11,7 +11,6 @@ import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { faBan, faCheckDouble, faExclamationTriangle, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
-import { AccountService } from 'app/core/auth/account.service';
 import { tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -28,8 +27,6 @@ export class ExamUpdateComponent implements OnInit {
     workingTimeInMinutes: number;
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
-    // Interims-boolean to hide test exams and exam monitoring, as they are not yet fully implemented
-    isAdmin: boolean;
     isImport = false;
     // Expose enums to the template
     exerciseType = ExerciseType;
@@ -49,7 +46,6 @@ export class ExamUpdateComponent implements OnInit {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {
@@ -84,7 +80,6 @@ export class ExamUpdateComponent implements OnInit {
         // Initialize helper attributes
         this.workingTimeInMinutes = this.exam.workingTime! / 60;
         this.calculateMaxWorkingTime();
-        this.isAdmin = this.accountService.isAdmin();
     }
 
     /**

@@ -195,9 +195,12 @@ public class ProgrammingExercise extends Exercise {
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
+    /**
+     * @return an unmodifiable list of auxiliary repositories used in the build plan
+     */
     @JsonIgnore
     public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
-        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toList());
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).toList();
     }
 
     public void addAuxiliaryRepository(AuxiliaryRepository repository) {

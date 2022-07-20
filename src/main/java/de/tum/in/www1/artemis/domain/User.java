@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -22,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -347,9 +345,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         return Set.of(this);
     }
 
+    /**
+     * @return an unmodifiable list of all granted authorities
+     */
     @JsonIgnore
-    public List<GrantedAuthority> getGrantedAuthorities() {
-        return getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
+    public List<SimpleGrantedAuthority> getGrantedAuthorities() {
+        return getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).toList();
     }
 
     @Override

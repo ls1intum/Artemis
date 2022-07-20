@@ -359,8 +359,7 @@ public class ProgrammingExerciseExportImportResource {
 
         // Select the participations that should be exported
         List<ProgrammingExerciseStudentParticipation> exportedStudentParticipations = programmingExercise.getStudentParticipations().stream()
-                .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation)
-                .collect(Collectors.toList());
+                .filter(participation -> participationIdSet.contains(participation.getId())).map(participation -> (ProgrammingExerciseStudentParticipation) participation).toList();
         return provideZipForParticipations(exportedStudentParticipations, programmingExercise, repositoryExportOptions);
     }
 
