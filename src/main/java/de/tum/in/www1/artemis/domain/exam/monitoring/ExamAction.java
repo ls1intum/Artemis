@@ -7,10 +7,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
-import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
@@ -43,7 +40,6 @@ public class ExamAction extends DomainObject {
      * In order to avoid DTOs, we use this value to create and identify the correct exam activity.
      * This value is used for this purpose only. There is no guarantee that this value is always correct in other cases.
      */
-    @JsonInclude
     @Transient
     protected Long studentExamId;
 
@@ -88,6 +84,7 @@ public class ExamAction extends DomainObject {
         this.type = type;
     }
 
+    @JsonGetter(value = "studentExamId")
     public Long getStudentExamId() {
         return studentExamId;
     }

@@ -78,9 +78,9 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @AfterEach
     public void tearDown() throws Exception {
-        database.resetDatabase();
         examMonitoringScheduleService.stopSchedule();
         examMonitoringScheduleService.clearAllExamMonitoringData();
+        database.resetDatabase();
     }
 
     private ExamAction createExamActionBasedOnType(ExamActionType examActionType) {
@@ -237,7 +237,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamActionSavedInDatabase(ExamActionType examActionType) throws Exception {
+    public void testExamActionSavedInDatabase(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
@@ -253,7 +253,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamActionNotSavedInDatabase(ExamActionType examActionType) throws Exception {
+    public void testExamActionNotSavedInDatabase(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);

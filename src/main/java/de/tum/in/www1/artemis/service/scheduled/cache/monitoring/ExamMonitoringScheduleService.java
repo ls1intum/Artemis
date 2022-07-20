@@ -123,7 +123,9 @@ public class ExamMonitoringScheduleService {
         var examActions = new ArrayList<ExamAction>();
 
         for (var examActivity : examActivities.values()) {
-            examActions.addAll(examActivity.getExamActions());
+            var actions = examActivity.getExamActions();
+            actions.forEach(examAction -> examAction.setStudentExamId(examActivity.getStudentExamId()));
+            examActions.addAll(actions);
         }
 
         return examActions;
