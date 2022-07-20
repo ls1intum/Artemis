@@ -209,7 +209,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.handleNavigation();
         });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo && profileInfo.activeProfiles.includes('ldap')) {
+            if (profileInfo.activeProfiles && profileInfo.activeProfiles?.includes('ldap')) {
                 this.isLdapProfileActive = true;
             }
         });
