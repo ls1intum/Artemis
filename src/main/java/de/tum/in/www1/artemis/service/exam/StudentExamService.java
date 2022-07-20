@@ -230,7 +230,7 @@ public class StudentExamService {
 
                         // versioning of submission
                         try {
-                            submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
+                            submissionVersionService.saveVersionForIndividual(submission, currentUser);
                         }
                         catch (Exception ex) {
                             log.error("Submission version could not be saved", ex);
