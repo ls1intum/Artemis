@@ -655,7 +655,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param correctionRound - the correctionRound for which the submissions should be fetched for
      * @param tutor           - the tutor we are interested in
      * @param examMode        - flag should be set to ignore the test run submissions
-     * @return a list of programming submissions
+     * @return an unmodifiable list of programming submissions
      */
     public List<ProgrammingSubmission> getAllProgrammingSubmissionsAssessedByTutorForCorrectionRoundAndExercise(long exerciseId, User tutor, boolean examMode,
             int correctionRound) {
@@ -665,7 +665,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             // Latest submission might be illegal
             submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     // filter out the submissions that don't have a result (but a null value) for the correctionRound
-                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).collect(Collectors.toList());
+                    .filter(submission -> submission.hasResultForCorrectionRound(correctionRound)).toList();
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -680,7 +680,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
                 latestResult.setSubmission(null);
             }
         });
-        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).collect(Collectors.toList());
+        List<ProgrammingSubmission> programmingSubmissions = submissions.stream().map(submission -> (ProgrammingSubmission) submission).toList();
         // In Exam-Mode, the Submissions are retrieved from the studentParticipationRepository, for which the Set<Submission> is appended
         // In non-Exam Mode, the Submissions are retrieved from the submissionRepository, for which no Set<submission> is appended
         return removeExerciseAndSubmissionSet(programmingSubmissions, examMode);
@@ -819,7 +819,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
             Result existingResult = optionalExistingResult.get();
-            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toList());
+            automaticFeedbacks = existingResult.getFeedbacks().stream().map(Feedback::copyFeedback).collect(Collectors.toCollection(ArrayList::new));
             for (Feedback feedback : automaticFeedbacks) {
                 feedback = feedbackRepository.save(feedback);
                 feedback.setResult(newResult);

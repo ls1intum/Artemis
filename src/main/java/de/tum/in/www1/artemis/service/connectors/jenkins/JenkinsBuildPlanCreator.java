@@ -166,10 +166,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
             projectTypeName = Optional.empty();
         }
 
-        if (projectTypeName.isPresent()) {
-            return new String[] { "templates", "jenkins", programmingLanguageName, projectTypeName.get(), regularOrSequentialDir, pipelineScriptFilename };
-        }
-        return new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename };
+        return projectTypeName.map(name -> new String[] { "templates", "jenkins", programmingLanguageName, name, regularOrSequentialDir, pipelineScriptFilename })
+                .orElseGet(() -> new String[] { "templates", "jenkins", programmingLanguageName, regularOrSequentialDir, pipelineScriptFilename });
     }
 
     @Override

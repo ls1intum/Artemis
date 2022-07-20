@@ -1983,7 +1983,7 @@ public class CourseTestService {
         // API call for the lifetime overview
         var lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toList());
+        var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toCollection(ArrayList::new));
         expectedLifetimeOverviewStats.set(18, 1);
         expectedLifetimeOverviewStats.set(20, 1);
         assertThat(lifetimeOverviewStats).as("should depict 21 weeks in total").isEqualTo(expectedLifetimeOverviewStats);
@@ -1993,7 +1993,7 @@ public class CourseTestService {
 
         lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toList());
+        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
         expectedLifetimeOverviewStats.set(18, 1);
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 

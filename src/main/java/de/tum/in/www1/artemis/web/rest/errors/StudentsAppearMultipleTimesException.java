@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.springframework.data.util.Pair;
 
@@ -29,7 +28,7 @@ public class StudentsAppearMultipleTimesException extends BadRequestAlertExcepti
 
     private static Map<String, Object> getParameters(List<User> students) {
         Map<String, List<Pair<String, String>>> params = new HashMap<>();
-        params.put("students", students.stream().map(student -> Pair.of(student.getLogin(), student.getRegistrationNumber())).collect(Collectors.toList()));
+        params.put("students", students.stream().map(student -> Pair.of(student.getLogin(), student.getRegistrationNumber())).toList());
         Map<String, Object> parameters = new HashMap<>();
         parameters.put("skipAlert", true);
         parameters.put("message", "team.errors." + ERROR_KEY);

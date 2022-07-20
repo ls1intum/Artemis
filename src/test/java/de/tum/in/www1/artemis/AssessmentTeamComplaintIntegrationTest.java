@@ -209,7 +209,6 @@ public class AssessmentTeamComplaintIntegrationTest extends AbstractSpringIntegr
         modelingAssessment.setCompletionDate(ZonedDateTime.ofInstant(modelingAssessment.getCompletionDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(resultOfComplaint.getAssessor()).isEqualTo(modelingAssessment.getAssessor());
         assertThat(resultOfComplaint).isEqualTo(modelingAssessment);
-        String[] ignoringFields = { "participation", "submission", "feedbacks", "assessor" };
         Submission submission = submissionRepository.findOneWithEagerResultAndFeedback(modelingAssessment.getSubmission().getId());
         assertThat(submission.getLatestResult()).isNotNull();
         assertThat(submission.getFirstResult()).isNotNull();

@@ -950,7 +950,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // Remove category penalty limits
         var updatedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()).stream().peek(category -> category.setMaxPenalty(null))
-                .collect(Collectors.toList());
+                .toList();
         staticCodeAnalysisCategoryRepository.saveAll(updatedCategories);
 
         // create results for tests without category penalty limits
@@ -1058,7 +1058,7 @@ public abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpri
 
         // Remove category penalty limits
         var updatedCategories = staticCodeAnalysisCategoryRepository.findByExerciseId(programmingExerciseSCAEnabled.getId()).stream().peek(category -> category.setMaxPenalty(null))
-                .collect(Collectors.toList());
+                .toList();
         staticCodeAnalysisCategoryRepository.saveAll(updatedCategories);
 
         // create result without limits

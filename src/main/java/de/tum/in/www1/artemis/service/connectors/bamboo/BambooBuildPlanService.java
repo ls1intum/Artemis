@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.Charset;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -479,8 +478,8 @@ public class BambooBuildPlanService {
                 String fileName = resource.getFilename();
                 if (fileName != null) {
                     final var descriptionElements = Arrays.stream(fileName.split("\\.")[0] // cut .sh suffix
-                            .split("_")).collect(Collectors.toList());
-                    descriptionElements.remove(0); // Remove the index prefix: 1 some description --> some description
+                            .split("_")).skip(1) // Remove the index prefix: 1 some description --> some description
+                            .toList();
                     final var scriptDescription = String.join(" ", descriptionElements);
                     try (final var inputStream = resource.getInputStream()) {
                         var inlineBody = IOUtils.toString(inputStream, Charset.defaultCharset());

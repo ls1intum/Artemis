@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.programming;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +31,10 @@ public abstract class ProgrammingLanguageFeatureService {
             throw new IllegalArgumentException("ProgrammingLanguage " + programmingLanguage + " does not have ProgrammingLanguageFeature");
         }
         return programmingLanguageFeature;
+    }
+
+    public Set<ProgrammingLanguage> getSupportedLanguages() {
+        return programmingLanguageFeatures.keySet();
     }
 
     public Map<ProgrammingLanguage, ProgrammingLanguageFeature> getProgrammingLanguageFeatures() {
