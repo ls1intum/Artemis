@@ -84,7 +84,7 @@ This process is visualized in the following diagram.
 
 |tutor-workflow|
 
-1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".
+1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise.
 2. Access the plagiarism tool as seen in the picture
  |exercise-page|
 
