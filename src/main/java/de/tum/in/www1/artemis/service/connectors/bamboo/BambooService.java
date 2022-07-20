@@ -360,7 +360,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         Long dependenciesDownloadedCount = null;
 
         if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            jobStarted = getTimestampForLogEntry(buildLogEntries, "started build on agent");
+            jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
             agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");

@@ -177,8 +177,8 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
-            scaStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
-            scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...", 1);
+            scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:", 1);
             jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
