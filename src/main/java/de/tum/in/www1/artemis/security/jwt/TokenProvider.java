@@ -5,7 +5,6 @@ import java.security.Key;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -166,18 +165,19 @@ public class TokenProvider {
         }
 
         Claims tokenClaims = parseClaims(authToken);
-        boolean allRequiredClaimsInToken = false;
 
-        for (Map.Entry<String, Object> requiredClaim : requiredClaims.entrySet()) {
+        for (var requiredClaim : requiredClaims.entrySet()) {
             try {
-                allRequiredClaimsInToken = tokenClaims.get(requiredClaim.getKey()).equals(requiredClaim.getValue());
+                if (!tokenClaims.get(requiredClaim.getKey()).equals(requiredClaim.getValue())) {
+                    return false;
+                }
             }
-            catch (Exception e) {
-                log.warn("Invalid action validateTokenForAuthorityAndFile: ", e);
+            catch (NullPointerException e) {
+                log.warn("Received a null value as key of requiredClaim in validateTokenForAuthorityAndFile: ", e);
                 return false;
             }
         }
-        return allRequiredClaimsInToken;
+        return true;
     }
 
     /**

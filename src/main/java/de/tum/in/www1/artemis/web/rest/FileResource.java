@@ -77,6 +77,8 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
+    private static final int FILE_ACCESS_TOKEN_VALIDITY = 30;
+
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
 
@@ -241,8 +243,8 @@ public class FileResource {
         log.debug("REST request to get file : {}", filename);
 
         Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.EXERCISE_ID_KEY, exerciseId);
-        requiredClaims.put(TokenProvider.SUBMISSION_ID_KEY, submissionId);
+        requiredClaims.put(TokenProvider.EXERCISE_ID_KEY, exerciseId.intValue());
+        requiredClaims.put(TokenProvider.SUBMISSION_ID_KEY, submissionId.intValue());
         requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
 
         if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
@@ -287,6 +289,7 @@ public class FileResource {
             @PathVariable String filename) {
         log.debug("REST request to get an access_token for a file upload exercise submission with exerciseId: {} and submissionId {}", exerciseId, submissionId);
 
+        // todo findbyidelsethrow
         Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
         Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
         if (optionalSubmission.isEmpty() || optionalFileUploadExercise.isEmpty()) {
@@ -294,15 +297,20 @@ public class FileResource {
         }
 
         FileUploadSubmission submission = optionalSubmission.get();
-        // user that submitted the exercise
-        Optional<User> userOfTheSubmission = ((StudentParticipation) submission.getParticipation()).getStudent();
-        if (userOfTheSubmission.isEmpty()) {
+
+        // check if the participation is a StudentParticipation before the following cast
+        if (!(submission.getParticipation() instanceof StudentParticipation)) {
+            return ResponseEntity.badRequest().build();
+        }
+        // user or team members that submitted the exercise
+        Set<User> usersOfTheSubmission = ((StudentParticipation) submission.getParticipation()).getStudents();
+        if (usersOfTheSubmission.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        User requestingUser = userRepository.getUser();
+        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
-        if (!(Objects.equals(requestingUser, userOfTheSubmission.get())) && !authCheckService.isAtLeastTeachingAssistantForExercise(optionalFileUploadExercise)) {
+        if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(optionalFileUploadExercise)) {
             throw new AccessForbiddenException();
         }
 
@@ -312,8 +320,7 @@ public class FileResource {
         claims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claims);
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, claims);
         return ResponseEntity.ok(temporaryAccessToken);
     }
 
@@ -330,7 +337,7 @@ public class FileResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
 
         try {
-            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, 30, courseId);
+            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, courseId);
             return ResponseEntity.ok(temporaryAccessToken);
         }
         catch (IllegalAccessException e) {
@@ -374,7 +381,7 @@ public class FileResource {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claims);
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, claims);
         return ResponseEntity.ok(temporaryAccessToken);
     }
 
@@ -396,7 +403,7 @@ public class FileResource {
         }
 
         Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.LECTURE_ID_KEY, lectureId);
+        requiredClaims.put(TokenProvider.LECTURE_ID_KEY, lectureId.intValue());
         requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
 
         if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
@@ -484,7 +491,7 @@ public class FileResource {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, claims);
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, claims);
         return ResponseEntity.ok(temporaryAccessToken);
     }
 
@@ -507,7 +514,7 @@ public class FileResource {
         }
 
         Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnitId);
+        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnitId.intValue());
         requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
 
         if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
