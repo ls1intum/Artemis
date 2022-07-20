@@ -1,0 +1,94 @@
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title" *ngIf="!subsequentExerciseGroupSelection">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
+        <h4 class="modal-title" *ngIf="subsequentExerciseGroupSelection">{{ 'artemisApp.examManagement.exerciseGroup.import' | artemisTranslate }}</h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <!-- State 1: Selection of an exam for import -->
+    <div *ngIf="!exam" class="modal-body">
+        <div class="form-group form-inline">
+            <span jhiTranslate="artemisApp.examManagement.import.search">Search for exercise</span>:
+            <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
+        </div>
+        <table class="table table-striped flex">
+            <thead class="thead-dark">
+                <tr jhiSort [(predicate)]="sortedColumn" [(ascending)]="listSorting" (sortChange)="sortRows()" class="flex-row">
+                    <th jhiSortBy="{{ column.ID }}" class="col-1">
+                        <span>#</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="{{ column.TITLE }}" class="col-4">
+                        <span jhiTranslate="artemisApp.exercise.import.table.title">Title</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
+                        <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th jhiSortBy="{{ column.EXAM_MODE }}" class="col-4">
+                        <span jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</span>
+                        <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
+                    <th class="col-1"></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let exam of content.resultsOnPage; trackBy: trackId" class="flex-row">
+                    <td class="col-1">
+                        <span>{{ exam.id }}</span>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="exam.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="text-break col-4">
+                        <ngb-highlight [result]="exam.course!.title" [term]="searchTerm"></ngb-highlight>
+                    </td>
+                    <td class="text-break col-2">
+                        <span class="badge bg-success" *ngIf="!exam.testExam">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</span>
+                        <span class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
+                    </td>
+                    <td class="col-1">
+                        <jhi-button
+                            *ngIf="!subsequentExerciseGroupSelection"
+                            (onClick)="forwardSelectedExam(exam)"
+                            [title]="'artemisApp.exercise.import.table.doImport'"
+                        ></jhi-button>
+                        <jhi-button
+                            *ngIf="subsequentExerciseGroupSelection"
+                            (onClick)="openExerciseSelection(exam)"
+                            [title]="'artemisApp.examManagement.exerciseGroup.selectExerciseGroup'"
+                        ></jhi-button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="d-flex justify-content-between p-2">
+            <ngb-pagination [maxSize]="10" [rotate]="true" [collectionSize]="total" [(page)]="state.page" [pageSize]="state.pageSize" (pageChange)="onPageChange($event)">
+            </ngb-pagination>
+        </div>
+    </div>
+    <!-- State 2: Selection of exercises to be imported after an exam was selected -->
+    <ng-container *ngIf="exam && subsequentExerciseGroupSelection">
+        <div class="modal-body">
+            <div class="form-group form-inline">
+                <p *ngIf="!isImportingExercises" jhiTranslate="artemisApp.examManagement.exerciseGroup.selectExerciseGroupExplanation">
+                    Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it
+                </p>
+                <p *ngIf="isImportingExercises" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.isImporting">
+                    The import of the exercise groups and the exercises is currently done on the server. This may take some time
+                </p>
+            </div>
+            <jhi-exam-exercise-import [exam]="exam!"></jhi-exam-exercise-import>
+        </div>
+        <div class="modal-footer">
+            <jhi-button
+                (onClick)="performImportOfExerciseGroups()"
+                [title]="'artemisApp.exercise.import.table.doImport'"
+                [disabled]="isImportingExercises"
+                [isLoading]="isImportingExercises"
+            ></jhi-button>
+        </div>
+    </ng-container>
+</form>

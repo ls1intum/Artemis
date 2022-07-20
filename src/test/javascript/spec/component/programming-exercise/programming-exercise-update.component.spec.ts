@@ -686,9 +686,6 @@ describe('ProgrammingExercise Management Update Component', () => {
     });
 
     it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
-        // can be removed after https://github.com/ls1intum/Artemis/pull/5238 has been merged
-        comp.isBamboo = true;
-
         const entity = new ProgrammingExercise(new Course(), undefined);
         entity.id = 123;
         comp.programmingExercise = entity;

@@ -137,7 +137,6 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
 
         // Prevent multiple submissions (currently only for exam submissions)
         textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission, user);
-
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(textExercise, textSubmission, user);
 
