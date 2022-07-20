@@ -1021,7 +1021,7 @@ public class ModelFactory {
             testcase.setName(name);
             testcase.setClassname("Class");
             return testcase;
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toCollection(ArrayList::new)));
         testSuite.getTestCases().addAll(failedTestNames.stream().map(name -> {
             var testcase = new TestCaseDTO();
             testcase.setName(name);
@@ -1137,8 +1137,8 @@ public class ModelFactory {
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
         final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO();
         final var job = new BambooBuildResultNotificationDTO.BambooJobDTO();
-        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).collect(Collectors.toList());
-        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).collect(Collectors.toList());
+        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).toList();
+        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
         final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO();
         final var plan = new BambooBuildPlanDTO("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
@@ -1318,7 +1318,7 @@ public class ModelFactory {
     }
 
     public static List<StaticCodeAnalysisReportDTO> generateStaticCodeAnalysisReports(ProgrammingLanguage language) {
-        return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).collect(Collectors.toList());
+        return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).toList();
     }
 
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {

@@ -222,7 +222,7 @@ public class ProgrammingExerciseImportBasicService {
             programmingExerciseTaskRepository.save(copy);
             newIdByOldId.put(task.getId(), copy.getId());
             return copy;
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toCollection(ArrayList::new)));
         return newIdByOldId;
     }
 

@@ -5,7 +5,6 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -550,13 +549,12 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
         if (useParticipantScoreTable) {
             statisticForIndividualExercises = this
-                    .calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
-            statisticTeamExercises = this
-                    .calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+                    .calculateExerciseStatisticsForIndividualCourseUsingParticipationTable(individualExercises.stream().map(Exercise::getId).toList());
+            statisticTeamExercises = this.calculateExerciseStatisticsForTeamCourseExercisesUsingParticipationTable(teamExercises.stream().map(Exercise::getId).toList());
         }
         else {
-            statisticForIndividualExercises = this.calculateStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
-            statisticTeamExercises = this.calculateStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).collect(Collectors.toList()));
+            statisticForIndividualExercises = this.calculateStatisticsForIndividualCourseExercises(individualExercises.stream().map(Exercise::getId).toList());
+            statisticTeamExercises = this.calculateStatisticsForTeamCourseExercises(teamExercises.stream().map(Exercise::getId).toList());
         }
 
         List<Object[]> combinedStatistics = new ArrayList<>();
