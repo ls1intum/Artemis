@@ -100,12 +100,14 @@ export class ExamUpdateComponent implements OnInit {
         this.isSaving = true;
         if (this.isImport) {
             // We validate the user input for the exercise group selection here, so it is only called once the user desires to import the exam
-            if (!this.examExerciseImportComponent.validateUserInput()) {
-                this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
-                this.isSaving = false;
-                return;
+            if (this.exam?.exerciseGroups) {
+                if (!this.examExerciseImportComponent.validateUserInput()) {
+                    this.alertService.error('artemisApp.examManagement.exerciseGroup.importModal.invalidExerciseConfiguration');
+                    this.isSaving = false;
+                    return;
+                }
+                this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
             }
-            this.exam.exerciseGroups = this.examExerciseImportComponent.mapSelectedExercisesToExerciseGroups();
             this.subscribeToSaveResponse(this.examManagementService.import(this.course.id!, this.exam));
         } else if (this.exam.id !== undefined) {
             this.subscribeToSaveResponse(this.examManagementService.update(this.course.id!, this.exam));
