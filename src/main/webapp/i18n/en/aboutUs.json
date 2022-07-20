@@ -47,7 +47,7 @@
             "text": "<b>Plagiarism checks</b> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
         },
         "learningAnalytics": {
-            "text": "<b>Learning analytics:</b> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
+            "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
         },
         "scalable": {
             "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
@@ -56,7 +56,7 @@
             "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
-            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
+            "text": "<a href={{ customizableUrl }}>Customizable:</a> It supports multiple Instructors, Editors, and Tutors per course and allows Instructors to customize many course settings."
         },
         "openSource": {
             "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."

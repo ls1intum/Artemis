@@ -47,7 +47,7 @@
             "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
         },
         "learningAnalytics": {
-            "text": "<b>Lernanalytik:</b> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."
+            "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."
         },
         "scalable": {
             "text": "<b>Skalierbar</b> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."
@@ -56,7 +56,7 @@
             "text": "<a href={{ userExperienceUrl }}>Hohe Benutzerzufriedenheit:</a> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
         },
         "customizable": {
-            "text": "<b>Anpassbar:</b> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
+            "text": "<a href={{ customizableUrl }}>Anpassbar:</a> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
         },
         "openSource": {
             "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
