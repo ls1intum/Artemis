@@ -23,7 +23,7 @@
             "text": "<a href={{ examModeUrl }}>Prüfungsmodus:</a> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
         },
         "grading": {
-            "text": "<b>Benotung:</b> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
+            "text": "<a href={{ gradingUrl }}>Benotung:</a> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
         },
         "assessment": {
             "text": "<b>Bewertung:</b> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."

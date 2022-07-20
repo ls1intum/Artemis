@@ -87,6 +87,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
             "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
@@ -304,6 +305,7 @@
             },
             "title": "Exam Management",
             "createExam": "Create a new exam",
+            "importExam": "Import an exam",
             "editExam": "Edit an existing exam",
             "courseTitle": "Course Title",
             "examId": "Exam ID",
@@ -350,6 +352,9 @@
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
+            },
+            "import": {
+                "search": "Search for exam"
             },
             "monitoring": {
                 "enable": {
@@ -401,7 +406,11 @@
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
+                "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "selectExerciseGroup": "Select Exercise Groups",
+                "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
+                "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
                 "type": "Type",
                 "title": "Title",
                 "points": "Points",
@@ -417,7 +426,20 @@
                 "addFileUploadExercise": "Add File Upload Exercise",
                 "addModelingExercise": "Add Modeling Exercise",
                 "addProgrammingExercise": "Add Programming Exercise",
-                "orderCouldNotBeSaved": "The order could not be saved"
+                "orderCouldNotBeSaved": "The order could not be saved",
+                "importModal": {
+                    "title": "Import Exam Exercises",
+                    "explanation": "Select the individual exercises, which should be imported alongside the exam, by clicking on it",
+                    "selected": "Selected",
+                    "exerciseGroupTooltip": "The title of an exercise group can be changed before the import",
+                    "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
+                    "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! The short name must begin with a letter, must not contain any special characters and must be at least 3 characters long",
+                    "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
+                    "invalidExerciseConfiguration": "One or more of the values specified are invalid. Please change them before importing",
+                    "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
+                    "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the tasks individually into the exercise groups."
+                },
+                "importSuccessful": "Exercise Groups successfully imported!"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
@@ -544,7 +566,12 @@
                     "studentExamId": "Exam-ID",
                     "timestamp": "Timestamp",
                     "type": "Category",
-                    "detail": "Detail"
+                    "detail": "Detail",
+                    "forced": "Forced",
+                    "failed": "Failed",
+                    "automatically": "Automatically",
+                    "connected": "Connected",
+                    "notConnected": "Not connected"
                 }
             },
             "charts": {

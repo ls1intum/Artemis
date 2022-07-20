@@ -126,9 +126,12 @@ public abstract class Submission extends DomainObject {
         return null;
     }
 
+    /**
+     * @return an unmodifiable list or all non-automatic results
+     */
     @NotNull
     private List<Result> filterNonAutomaticResults() {
-        return results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
+        return results.stream().filter(result -> result == null || !result.isAutomatic()).toList();
     }
 
     /**
@@ -154,7 +157,7 @@ public abstract class Submission extends DomainObject {
      */
     @JsonIgnore
     public void removeAutomaticResults() {
-        this.results = this.results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toList());
+        this.results = this.results.stream().filter(result -> result == null || !result.isAutomatic()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -169,7 +172,7 @@ public abstract class Submission extends DomainObject {
      */
     @JsonIgnore
     public void removeNullResults() {
-        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        this.results = this.results.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
     }
 
     @JsonProperty(value = "results", access = JsonProperty.Access.READ_ONLY)
@@ -179,7 +182,7 @@ public abstract class Submission extends DomainObject {
 
     @JsonIgnore
     public List<Result> getManualResults() {
-        return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toList());
+        return results.stream().filter(result -> result != null && !result.isAutomatic()).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

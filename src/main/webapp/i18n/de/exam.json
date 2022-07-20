@@ -86,6 +86,7 @@
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
@@ -302,6 +303,7 @@
             },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
+            "importExam": "Importiere eine Klausur",
             "editExam": "Bearbeite eine existierende Klausur",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
@@ -349,6 +351,9 @@
                 "startDate": "Beginn Bearbeitungsfenster",
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
+            },
+            "import": {
+                "search": "Suche nach einer Klausur"
             },
             "monitoring": {
                 "enable": {
@@ -400,6 +405,10 @@
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
                 "create": "Neue Aufgabengruppe erstellen",
+                "import": "Aufgabengruppe importieren",
+                "selectExerciseGroup": "Aufgabengruppen auswählen",
+                "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",
+                "noExerciseGroup": "Die ausgewählte Klausur {{examTitle}} hat keine Aufgabengruppen",
                 "update": "Aufgabengruppe bearbeiten",
                 "type": "Typ",
                 "title": "Titel",
@@ -416,7 +425,20 @@
                 "addFileUploadExercise": "Datei-Upload-Aufgabe hinzufügen",
                 "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
-                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden."
+                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
+                "importModal": {
+                    "title": "Import von Klausuraufgaben",
+                    "explanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit der Klausur importiert werden sollen",
+                    "selected": "Ausgewählt",
+                    "exerciseGroupTooltip": "Der Titel der Aufgabengruppe kann vor dem Import angepasst werden",
+                    "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
+                    "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Der Kurzname muss mit einem Buchstaben beginnen, darf keine speziellen Zeichen enthalten und muss mindestens 3 Zeichen lang sein!",
+                    "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
+                    "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
+                    "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
+                    "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtline, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu erstellen der Build-Pläne kann diese Import Funktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
+                },
+                "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -543,7 +565,12 @@
                     "studentExamId": "Klausur-ID",
                     "timestamp": "Zeitpunkt",
                     "type": "Kategorie",
-                    "detail": "Detail"
+                    "detail": "Detail",
+                    "forced": "Erzwungen",
+                    "failed": "Fehlgeschlagen",
+                    "automatically": "Automatisch",
+                    "connected": "Verbunden",
+                    "notConnected": "Nicht verbunden"
                 }
             },
             "charts": {
