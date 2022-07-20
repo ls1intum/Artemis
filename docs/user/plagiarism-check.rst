@@ -126,7 +126,7 @@ The process is visualized in the following diagram.
  |verdict-dialog|
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
- b. Warning. The instructor can write a warning message to the student and confirm the verdict by in the dialog.
+ b. Warning. The instructor can write a warning message to the student and confirm the verdict in the dialog.
  c. Plagiarism. Next steps must be made manually by contacting responsible persons in the university to mark the student grade as "Unterschleif".
 
 Students
