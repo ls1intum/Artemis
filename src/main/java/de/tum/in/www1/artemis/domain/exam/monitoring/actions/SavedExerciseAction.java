@@ -41,7 +41,6 @@ public class SavedExerciseAction extends ExamAction {
      * The corresponding exercise id.
      */
     @Column(name = "exercise_id")
-
     private Long exerciseId;
 
     public boolean isForced() {
