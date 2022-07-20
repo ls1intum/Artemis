@@ -29,7 +29,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -258,11 +257,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
         else {
             // If the exam is prepared only 5 minutes before the release date, the repositories of the students are unlocked as well.
-            examStartDate = ZonedDateTime.now().plusMinutes(1 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
-            examEndDate = ZonedDateTime.now().plusMinutes(3 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
+            examStartDate = ZonedDateTime.now().plusMinutes(6);
+            examEndDate = ZonedDateTime.now().plusMinutes(8);
         }
 
-        examVisibleDate = ZonedDateTime.now().minusMinutes(10 + Constants.SECONDS_AFTER_RELEASE_DATE_FOR_UNLOCKING_STUDENT_EXAM_REPOS);
+        examVisibleDate = ZonedDateTime.now().minusMinutes(15);
         // --> 2 min = 120s working time
 
         course2 = database.addEmptyCourse();
@@ -669,8 +668,15 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSubmitExamOtherUser_forbidden() throws Exception {
         List<StudentExam> studentExamList = prepareStudentExamsForConduction(false);
+
+        // make sure the exam is generally accessible
+        exam2.setStartDate(ZonedDateTime.now().plusMinutes(4));
+        exam2 = examRepository.save(exam2);
+
         database.changeUser("student1");
-        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExamList.get(0).getId() + "/conduction",
+        // Important: we have to retrieve the specific exam, because the order in the list is not guaranteed, otherwise the test will be flaky
+        var studentExam1 = studentExamList.stream().filter(s -> s.getUser().getLogin().equals("student1")).findFirst().get();
+        var studentExamResponse = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam1.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
         studentExamResponse.setExercises(null);
         // use a different user
