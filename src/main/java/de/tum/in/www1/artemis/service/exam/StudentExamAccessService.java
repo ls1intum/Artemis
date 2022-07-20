@@ -47,10 +47,10 @@ public class StudentExamAccessService {
      * @param courseId      the if of the course
      * @param examId        the id of the exam
      * @param studentExamId the id of the student exam
-     * @param isTestRun     flag to determine if it is a test run or not
      */
-    public void checkStudentExamAccessElseThrow(Long courseId, Long examId, Long studentExamId, boolean isTestRun) {
-        checkStudentExamAccessElseThrow(courseId, examId, studentExamId, userRepository.getUserWithGroupsAndAuthorities(), isTestRun);
+    public void checkStudentExamAccessElseThrow(Long courseId, Long examId, Long studentExamId) {
+        StudentExam studentExam = studentExamRepository.findByIdElseThrow(studentExamId);
+        checkStudentExamAccessElseThrow(courseId, examId, studentExam, userRepository.getUserWithGroupsAndAuthorities());
     }
 
     /**
@@ -58,19 +58,15 @@ public class StudentExamAccessService {
      *
      * @param courseId      the if of the course
      * @param examId        the id of the exam
-     * @param studentExamId the id of the student exam
+     * @param studentExam   the student exam
      * @param currentUser   the current user
-     * @param isTestRun     flag to determine if this is a test run or not
      */
-    public void checkStudentExamAccessElseThrow(Long courseId, Long examId, Long studentExamId, User currentUser, boolean isTestRun) {
-        checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, isTestRun);
-
-        // Check that the student exam exists
-        StudentExam studentExam = studentExamRepository.findByIdElseThrow(studentExamId);
+    public void checkStudentExamAccessElseThrow(Long courseId, Long examId, StudentExam studentExam, User currentUser) {
+        checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, studentExam.isTestRun(), false);
 
         // Check that the examId equals the id of the exam of the student exam
         if (!studentExam.getExam().getId().equals(examId)) {
-            throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
+            throw new AccessForbiddenException("The student exam does not belong to the exam");
         }
 
         // Check that the student of the required student exam (from the database) is the current user
@@ -82,12 +78,13 @@ public class StudentExamAccessService {
     /**
      * Checks if the current user is allowed to access the requested exam.
      *
-     * @param courseId      the if of the course
-     * @param examId        the id of the exam
-     * @param currentUser   the user
-     * @param isTestRun     flag to determine if this is a testRun
+     * @param courseId        the if of the course
+     * @param examId          the id of the exam
+     * @param currentUser     the user
+     * @param isTestRun       flag to determine if this is a testRun
+     * @param checkRegistered if the method should check that the user is registered for the exam; can be set to false for example if it has been verified that a student exam exists
      */
-    public void checkCourseAndExamAccessElseThrow(Long courseId, Long examId, User currentUser, boolean isTestRun) {
+    public void checkCourseAndExamAccessElseThrow(Long courseId, Long examId, User currentUser, boolean isTestRun, boolean checkRegistered) {
         // Check that the exam exists
         Exam exam = examRepository.findByIdElseThrow(examId);
 
@@ -115,7 +112,7 @@ public class StudentExamAccessService {
             }
 
             // Check that the current user is registered for the exam
-            if (!examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
+            if (checkRegistered && !examRepository.isUserRegisteredForExam(examId, currentUser.getId())) {
                 throw new AccessForbiddenException("You can only access an exam if you are registered for it!");
             }
         }

@@ -213,22 +213,23 @@ public class StudentExamResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> submitStudentExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody StudentExam studentExam) {
         log.debug("REST request to mark the studentExam as submitted : {}", studentExam.getId());
+
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
-        boolean isTestRun = studentExam.isTestRun();
-        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, studentExam.getId(), currentUser, isTestRun);
         // prevent manipulation of the user object that is attached to the student exam in the request body (which is saved later on into the database as part of this request)
         if (!Objects.equals(studentExam.getUser().getId(), currentUser.getId())) {
             throw new AccessForbiddenException();
         }
 
         StudentExam existingStudentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExam.getId());
+        this.studentExamAccessService.checkStudentExamAccessElseThrow(courseId, examId, existingStudentExam, currentUser);
+
         if (Boolean.TRUE.equals(studentExam.isSubmitted()) || Boolean.TRUE.equals(existingStudentExam.isSubmitted())) {
             log.error("Student exam with id {} for user {} is already submitted.", studentExam.getId(), currentUser.getLogin());
             throw new ConflictException("You have already submitted.", "studentExam", "alreadySubmitted");
         }
 
         // checks if student exam is live (after start date, before end date + grace period)
-        if (!isTestRun && (existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate())
+        if (!existingStudentExam.isTestRun() && (existingStudentExam.getExam().getStartDate() != null && !ZonedDateTime.now().isAfter(existingStudentExam.getExam().getStartDate())
                 || existingStudentExam.getIndividualEndDate() != null && !ZonedDateTime.now().isBefore(existingStudentExam.getIndividualEndDateWithGracePeriod()))) {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
@@ -258,7 +259,7 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
         if (ZonedDateTime.now().plusMinutes(EXAM_START_WAIT_TIME_MINUTES).isBefore(studentExam.getExam().getStartDate())) {
@@ -307,7 +308,7 @@ public class StudentExamResource {
             throw new ConflictException("Current user is not the user of the test run", "StudentExam", "userMismatch");
         }
 
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true);
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, currentUser, true, false);
         prepareStudentExamForConduction(request, currentUser, testRun);
 
         log.info("getTestRunForConduction done in {}ms for {} exercises for user {}", System.currentTimeMillis() - start, testRun.getExercises().size(), currentUser.getLogin());
@@ -318,7 +319,7 @@ public class StudentExamResource {
     private StudentExam findStudentExamWithExercisesElseThrow(User user, Long examId, Long courseId) {
         StudentExam studentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), examId)
                 .orElseThrow(() -> new EntityNotFoundException("No student exam found for examId " + examId + " and userId " + user.getId()));
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
         return studentExam;
     }
 
@@ -360,7 +361,7 @@ public class StudentExamResource {
 
         // 1st: Get the studentExam from the database
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
-        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun());
+        studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
 
         // 2nd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
         if (!studentExam.isSubmitted()) {
