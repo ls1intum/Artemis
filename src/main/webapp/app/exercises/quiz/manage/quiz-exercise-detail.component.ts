@@ -8,7 +8,7 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { Duration, Option } from './quiz-exercise-interfaces';
+import { Duration } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
@@ -230,9 +230,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             resetDates(this.quizExercise);
         }
 
-        // Assign savedEntity to identify local changes
-        this.savedEntity = this.entity.id && !this.isImport ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
-
         if (this.isExamMode) {
             this.quizExercise.course = undefined;
             if (!this.quizExercise.exerciseGroup || this.isImport) {
@@ -260,8 +257,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         this.scheduleQuizStart = (this.quizExercise.quizBatches?.length ?? 0) > 0;
         this.updateDuration();
-        this.cacheValidation();
         this.initCompleted = true;
+
+        this.cacheValidation();
+        // Assign savedEntity to identify local changes
+        this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
     }
 
     /**
@@ -1044,7 +1044,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         return super.computeInvalidReasons().concat(invalidReasons);
     }
 
-    hasErrorInQuizBatches() {
-        return this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
+    isSaveDisabled(): boolean {
+        // tslint:disable-next-line:max-line-length
+        return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
+    }
+
+    hasErrorInQuizBatches(): boolean {
+        return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 }
