@@ -20,7 +20,7 @@ public class DropRemovedGitDiffEntries extends BehavioralKnowledgeSource {
 
     @Override
     public boolean executeCondition() {
-        return blackboard.getGitDiffReport() != null;
+        return blackboard.getGitDiffReport().getEntries().stream().anyMatch(entry -> entry.getStartLine() == null || entry.getLineCount() == null);
     }
 
     @Override
