@@ -40,6 +40,8 @@ public final class ErrorConstants {
 
     public static final URI COMPLAINT_LOCKED = URI.create(PROBLEM_BASE_URL + "/complaint");
 
+    public static final URI EXAM_PROGRAMMING_EXERCISE_SHORT_NAME_INVALID = URI.create(PROBLEM_BASE_URL + "/exam-programming-exercise-short-name-invalid");
+
     private ErrorConstants() {
     }
 }

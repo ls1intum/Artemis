@@ -203,6 +203,26 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
+    public void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
+        // create result with feedbacks with "null" for attribute "positive"
+        addResultWithSuccessfulTestCases(exercise.getTestCases());
+        var results = resultRepository.findAll();
+        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.get(0).getId());
+        assertThat(optionalResult).isPresent();
+
+        var result = optionalResult.get();
+        result.getFeedbacks().forEach(feedback -> feedback.setPositive(null));
+        resultRepository.save(result);
+
+        // create results with feedbacks with "false" for attribute "positive"
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+
+        var availableHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableHints).containsExactly(hints.get(0));
+    }
+
+    @Test
     public void testActivateExerciseHint1() {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());

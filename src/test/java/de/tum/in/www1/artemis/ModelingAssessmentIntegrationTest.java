@@ -1489,7 +1489,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+    public void testCheckPlagiarismIdenticalLongModels() throws Exception {
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";

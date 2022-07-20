@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.security.SecureRandom;
-import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -159,7 +158,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     Set<User> findUsersWithStudentExamsForExam(@Param("examId") Long examId);
 
     @Query("""
-            SELECT se FROM StudentExam se
+            SELECT DISTINCT se FROM StudentExam se
             LEFT JOIN FETCH se.exercises exercises
             WHERE se.exam.id = :#{#examId}
             	AND se.submitted = FALSE
@@ -169,6 +168,26 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
 
     List<StudentExam> findAllByExamId_AndTestRunIsTrue(@Param("examId") Long examId);
 
+    @Query("""
+            SELECT DISTINCT se FROM StudentExam se
+             WHERE se.user.id = :#{#userId}
+             AND se.exam.course.id = :#{#courseId}
+             AND se.exam.testExam = TRUE
+             AND se.testRun = FALSE
+            """)
+    List<StudentExam> findStudentExamForTestExamsByUserIdAndCourseId(@Param("userId") Long userId, @Param("courseId") Long courseId);
+
+    @Query("""
+            SELECT DISTINCT se FROM StudentExam se
+                        LEFT JOIN FETCH se.exercises exercises
+                        WHERE se.exam.id = :#{#examId}
+                        AND se.user.id = :#{#userId}
+                        	AND se.submitted = FALSE
+                        	AND se.testRun = FALSE
+                        	AND se.exam.testExam = TRUE
+            """)
+    List<StudentExam> findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(@Param("examId") Long examId, @Param("userId") Long userId);
+
     @NotNull
     default StudentExam findByIdElseThrow(Long studentExamId) throws EntityNotFoundException {
         return findById(studentExamId).orElseThrow(() -> new EntityNotFoundException("Student Exam", studentExamId));
@@ -177,7 +196,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     /**
      * Return the StudentExam of the participation's user, if possible
      *
-     * @param exercise that is possibly part of an exam
+     * @param exercise      that is possibly part of an exam
      * @param participation the participation of the student
      * @return an optional StudentExam, which is empty if the exercise is not part of an exam or the student exam hasn't been created
      */
@@ -194,7 +213,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * <p>
      * For exam exercises, this depends on the StudentExam's working time
      *
-     * @param exercise that is possibly part of an exam
+     * @param exercise      that is possibly part of an exam
      * @param participation the participation of the student
      * @return the time from which on submissions are not allowed, for exercises that are not part of an exam, this is just the due date.
      */
@@ -241,17 +260,17 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
     /**
      * Generates random exams for each user in the given users set and saves them.
      *
-     * @param exam                      exam for which the individual student exams will be generated
-     * @param users                     users for which the individual exams will be generated
-     * @param numberOfOptionalExercises number of optional exercises in the exam
+     * @param exam  exam for which the individual student exams will be generated
+     * @param users users for which the individual exams will be generated
      * @return List of StudentExams generated for the given users
      */
-    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users, long numberOfOptionalExercises) {
+    default List<StudentExam> createRandomStudentExams(Exam exam, Set<User> users) {
         List<StudentExam> studentExams = new ArrayList<>();
         SecureRandom random = new SecureRandom();
+        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Determine the default working time by computing the duration between start and end date of the exam
-        Integer defaultWorkingTime = Math.toIntExact(Duration.between(exam.getStartDate(), exam.getEndDate()).toSeconds());
+        int defaultWorkingTime = exam.getWorkingTime();
 
         // Prepare indices of mandatory and optional exercise groups to preserve order of exercise groups
         List<Integer> indicesOfMandatoryExerciseGroups = new ArrayList<>();
@@ -268,6 +287,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         for (User user : users) {
             // Create one student exam per user
             StudentExam studentExam = new StudentExam();
+
             studentExam.setWorkingTime(defaultWorkingTime);
             studentExam.setExam(exam);
             studentExam.setUser(user);
@@ -325,10 +345,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         // https://jira.spring.io/browse/DATAJPA-1367 deleteInBatch does not work, because it does not cascade the deletion of existing exam sessions, therefore use deleteAll
         deleteAll(existingStudentExams);
 
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
-
         // StudentExams are saved in the called method
-        return createRandomStudentExams(exam, exam.getRegisteredUsers(), numberOfOptionalExercises);
+        return createRandomStudentExams(exam, exam.getRegisteredUsers());
     }
 
     /**
@@ -341,7 +359,6 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
      * @return the list of student exams with their corresponding users
      */
     default List<StudentExam> generateMissingStudentExams(Exam exam) {
-        long numberOfOptionalExercises = exam.getNumberOfExercisesInExam() - exam.getExerciseGroups().stream().filter(ExerciseGroup::getIsMandatory).count();
 
         // Get all users who already have an individual exam
         Set<User> usersWithStudentExam = findUsersWithStudentExamsForExam(exam.getId());
@@ -354,6 +371,7 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
         missingUsers.removeAll(usersWithStudentExam);
 
         // StudentExams are saved in the called method
-        return createRandomStudentExams(exam, missingUsers, numberOfOptionalExercises);
+        return createRandomStudentExams(exam, missingUsers);
     }
+
 }

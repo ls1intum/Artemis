@@ -22,7 +22,7 @@ pipeline {
             stage('Build') {
                 steps {
                     timestamps {
-                        sh './gradlew clean test'
+                        sh './gradlew clean test #testwiseCoverageGradleTask'
                     }
                 }
             }
@@ -33,6 +33,7 @@ pipeline {
                 #staticCodeAnalysisScript
                 '''
             }
+            #testwiseCoverageScript
             cleanup {
                 sh 'rm -rf results'
                 sh 'mkdir results'

@@ -1,0 +1,47 @@
+<div *ngIf="studentExam" (click)="openStudentExam()">
+    <!-- To clearly indicate a StudentExam within the working time, which can be resumed, the card should be displayed in blue -->
+    <div
+        [ngClass]="{
+            'row card-body justify-content-center card-general-settings': true,
+            'bg-primary text-white': withinWorkingTime,
+            clickable: withinWorkingTime || studentExam.submitted
+        }"
+    >
+        <div class="row">
+            <!-- Two variants: Play-Icon, if the studentExam is still within the working time and thus can be resumed.
+            Magnifying Class for finished StudentExams, to indicate the possibility to review the exam -->
+            <h4 class="col-sm-auto icon-settings">
+                <fa-icon *ngIf="withinWorkingTime" [icon]="faCirclePlay" size="2x"></fa-icon>
+                <fa-icon *ngIf="!withinWorkingTime && studentExam.submitted" [icon]="faMagnifyingGlass" size="2x"></fa-icon>
+                <fa-icon *ngIf="!withinWorkingTime && !studentExam.submitted" [icon]="faFileCircleXmark" size="2x"></fa-icon>
+            </h4>
+            <div class="col-sm">
+                <div class="row">
+                    <div class="col">
+                        <h5 class="text-start">
+                            {{ 'artemisApp.exam.overview.testExam.' + (withinWorkingTime ? 'resumeAttempt' : 'reviewAttempt') | artemisTranslate: { attempt: index } }}
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <div *ngIf="withinWorkingTime" class="text-end">
+                            {{ 'artemisApp.exam.overview.testExam.workingTimeLeft' | artemisTranslate }} {{ workingTimeLeftInSeconds() | artemisDurationFromSeconds: true }}
+                        </div>
+                        <div *ngIf="studentExam.submitted">
+                            <div *ngIf="studentExam.submissionDate" class="text-end">
+                                {{ 'artemisApp.exam.overview.testExam.submissionDate' | artemisTranslate }} {{ studentExam.submissionDate | artemisDate }}
+                            </div>
+                            <div *ngIf="studentExam.submissionDate && studentExam.startedDate" class="text-end">
+                                {{ 'artemisApp.exam.overview.testExam.workingTimeCalculated' | artemisTranslate }}
+                                <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
+                            </div>
+                        </div>
+                        <!-- test exams have to be submitted by the students, just as it is the case with real exams -->
+                        <div *ngIf="!withinWorkingTime && !studentExam.submitted">
+                            <div class="text-end">{{ 'artemisApp.exam.overview.testExam.notSubmitted' | artemisTranslate }}</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

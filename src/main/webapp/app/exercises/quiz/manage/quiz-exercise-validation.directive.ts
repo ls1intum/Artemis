@@ -38,6 +38,7 @@ export abstract class QuizExerciseValidationDirective {
 
     savedEntity: QuizExercise;
     isExamMode: boolean;
+    isImport: boolean;
 
     invalidReasons: ValidationReason[];
     invalidWarnings: ValidationReason[];
@@ -135,17 +136,24 @@ export abstract class QuizExerciseValidationDirective {
         }, this);
         const maxPointsReachableInQuiz = this.quizExercise.quizQuestions?.map((quizQuestion) => quizQuestion.points ?? 0).reduce((a, b) => a + b, 0);
 
-        const noTestRunExists = !this.isExamMode || !this.quizExercise.testRunParticipationsExist;
-
         return (
             isGenerallyValid &&
             areAllQuestionsValid === true &&
             this.isEmpty(this.invalidFlaggedQuestions) &&
             maxPointsReachableInQuiz !== undefined &&
             maxPointsReachableInQuiz > 0 &&
-            noTestRunExists
+            !this.testRunExistsAndShouldNotBeIgnored()
         );
     }
+
+    /**
+     * Checks if the test runs for the quiz exist and should be ignored
+     * @returns {boolean} true if a test run exists for the quiz and should not be ignored
+     */
+    testRunExistsAndShouldNotBeIgnored(): boolean {
+        return !this.isImport && this.isExamMode && !!this.quizExercise.testRunParticipationsExist;
+    }
+
     /**
      * Get the reasons, why the quiz needs warnings
      * @returns {Array} array of objects with fields 'translateKey' and 'translateValues'
@@ -201,7 +209,7 @@ export abstract class QuizExerciseValidationDirective {
                 translateValues: {},
             });
         }
-        if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+        if (this.testRunExistsAndShouldNotBeIgnored()) {
             invalidReasons.push({
                 translateKey: 'artemisApp.quizExercise.edit.testRunSubmissionsExist',
                 translateValues: {},
@@ -383,6 +391,7 @@ export abstract class QuizExerciseValidationDirective {
         }
         return JSON.stringify(this.quizExercise) !== JSON.stringify(this.savedEntity);
     }
+
     checkForInvalidFlaggedQuestions(questions: QuizQuestion[] = []) {
         if (!this.quizExercise) {
             return;

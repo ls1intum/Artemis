@@ -395,6 +395,13 @@ public class CourseService {
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
+        /*
+         * If the course did not start yet, the length of the chart will be negative (as the time difference between the start date end the current date is passed). In this case,
+         * we return an empty list.
+         */
+        if (length < 0) {
+            return new ArrayList<>(0);
+        }
         LocalDateTime localStartDate = date.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = date.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = date.getZone();
