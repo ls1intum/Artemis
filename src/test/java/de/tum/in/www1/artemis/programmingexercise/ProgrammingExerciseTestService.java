@@ -11,7 +11,6 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
@@ -44,6 +43,7 @@ import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.participation.Participant;
@@ -437,7 +437,7 @@ public class ProgrammingExerciseTestService {
         // TODO: make sure that the local and remote repos of the origin exercise include the correct files so that the template upgrade service is invoked correctly
     }
 
-    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) throws URISyntaxException {
+    private void addAuxiliaryRepositoryToProgrammingExercise(ProgrammingExercise sourceExercise) {
         AuxiliaryRepository repository = database.addAuxiliaryRepositoryToExercise(sourceExercise);
         var url = versionControlService.getCloneRepositoryUrl(sourceExercise.getProjectKey(), new MockFileRepositoryUrl(sourceAuxRepo.originRepoFile).toString());
         repository.setRepositoryUrl(url.toString());
@@ -480,7 +480,7 @@ public class ProgrammingExerciseTestService {
         params.add("recreateBuildPlans", String.valueOf(true));
         params.add("updateTemplate", String.valueOf(true));
 
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
 
         // Import the exercise and load all referenced entities
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
@@ -519,7 +519,7 @@ public class ProgrammingExerciseTestService {
             addAuxiliaryRepositoryToProgrammingExercise(sourceExercise);
         }
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, recreateBuildPlans, addAuxRepos);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -555,6 +555,7 @@ public class ProgrammingExerciseTestService {
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
+
     }
 
     // TEST
@@ -575,10 +576,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
-
-        assertThat(exerciseToBeImported).isNotNull();
+        request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported, ProgrammingExercise.class, params,
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // TEST
@@ -599,10 +598,8 @@ public class ProgrammingExerciseTestService {
         var params = new LinkedMultiValueMap<String, String>();
         params.add("recreateBuildPlans", "false");
         params.add("updateTemplate", "true");
-        exerciseToBeImported = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
-                ProgrammingExercise.class, params, HttpStatus.OK);
-
-        assertThat(exerciseToBeImported).isNotNull();
+        request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported, ProgrammingExercise.class, params,
+                HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     // TEST
@@ -626,7 +623,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setTeamAssignmentConfig(teamAssignmentConfig);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -665,7 +662,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -690,7 +687,7 @@ public class ProgrammingExerciseTestService {
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -717,7 +714,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setMaxStaticCodeAnalysisPenalty(80);
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, true, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
@@ -734,6 +731,72 @@ public class ProgrammingExerciseTestService {
         assertThat(staticCodeAnalysisCategories).usingRecursiveFieldByFieldElementComparator().usingElementComparatorOnFields("name", "state", "penalty", "maxPenalty")
                 .isEqualTo(staticCodeAnalysisDefaultConfigurations.get(exercise.getProgrammingLanguage()));
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isEqualTo(80);
+    }
+
+    /**
+     * Method to test the correct import of a programming exercise into an exam during an exam import
+     * For more Information see {@link de.tum.in.www1.artemis.service.exam.ExamImportService}
+     */
+    public void importProgrammingExerciseAsPartOfExamImport() throws Exception {
+        // Setup existing exam and exercise
+        Exam sourceExam = database.addExamWithExerciseGroup(course, true);
+
+        ProgrammingExercise sourceExercise = database.addProgrammingExerciseToExam(sourceExam, 0);
+        sourceExercise.setStaticCodeAnalysisEnabled(false);
+        database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addHintsToExercise(sourceExercise);
+        sourceExercise = database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
+
+        // Setup to be imported exam and exercise
+        Exam targetExam = ModelFactory.generateExam(course);
+        ExerciseGroup targetExerciseGroup = ModelFactory.generateExerciseGroup(true, targetExam);
+        ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, course);
+        // Exam Exercise has no course
+        exerciseToBeImported.setCourse(null);
+        exerciseToBeImported.setExerciseGroup(targetExerciseGroup);
+        targetExerciseGroup.addExercise(exerciseToBeImported);
+        exerciseToBeImported.forceNewProjectKey();
+        // The Id of the sourceExercise is used to retrieve it from the database
+        exerciseToBeImported.setId(sourceExercise.getId());
+
+        // Mock requests
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
+        setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
+        setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
+        doReturn(false).when(versionControlService).checkIfProjectExists(any(), any());
+        // Import the exam
+        final Exam received = request.postWithResponseBody("/api/courses/" + course.getId() + "/exam-import", targetExam, Exam.class, HttpStatus.CREATED);
+
+        // Extract the programming exercise from the exam
+        Exercise exerciseReceived = received.getExerciseGroups().get(0).getExercises().stream().findFirst().get();
+        // Additionally, get the programming exercise from the server
+        var importedExercise = database.loadProgrammingExerciseWithEagerReferences((ProgrammingExercise) exerciseReceived);
+
+        assertThat(importedExercise.getId()).isNotNull();
+        assertThat(importedExercise.getTitle()).isEqualTo(exerciseReceived.getTitle());
+        // Check server-exercise
+        assertThat(importedExercise.getTitle()).isEqualTo(exerciseToBeImported.getTitle());
+        assertThat(importedExercise.getShortName()).isEqualTo(exerciseToBeImported.getShortName());
+        assertThat(importedExercise.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
+        // Check exercise send to client after importing
+        assertThat(exerciseReceived.getTitle()).isEqualTo(exerciseToBeImported.getTitle());
+        assertThat(exerciseReceived.getShortName()).isEqualTo(exerciseToBeImported.getShortName());
+        assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
+
+        // Assert correct creation of test cases
+        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
+        assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
+                .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
+
+        // Assert correct creation of hints
+        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
+        assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
+                .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     // TEST
@@ -1657,7 +1720,7 @@ public class ProgrammingExerciseTestService {
         exerciseToBeImported.setExampleSolutionPublicationDate(sourceExercise.getDueDate().plusDays(1));
 
         // Mock requests
-        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false);
+        mockDelegate.mockConnectorRequestsForImport(sourceExercise, exerciseToBeImported, false, false);
         setupRepositoryMocks(sourceExercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         setupRepositoryMocks(exerciseToBeImported, exerciseRepo, solutionRepo, testRepo, auxRepo);
 

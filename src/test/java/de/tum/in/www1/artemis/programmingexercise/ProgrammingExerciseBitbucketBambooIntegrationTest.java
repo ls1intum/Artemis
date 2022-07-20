@@ -1,9 +1,10 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage.*;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingExerciseTestService.studentLogin;
 import static de.tum.in.www1.artemis.programmingexercise.ProgrammingSubmissionConstants.BITBUCKET_PUSH_EVENT_REQUEST;
 import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.*;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -103,14 +104,17 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     }
 
     private static Stream<Arguments> generateArgumentsForImportExercise() {
-        return Arrays.stream(ProgrammingLanguage.values()).flatMap(language -> Stream.of(Arguments.of(language, true), Arguments.of(language, false)));
+        // TODO: sync with BambooProgrammingLanguageFeatureService (as this is a static method here, not possible automatically, so we have to do it manually)
+        var supportedLanguages = ProgrammingLanguage.values();
+        return Arrays.stream(supportedLanguages).flatMap(language -> Stream.of(Arguments.of(language, true, true), Arguments.of(language, false, true),
+                Arguments.of(language, false, false), Arguments.of(language, true, false)));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("generateArgumentsForImportExercise")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans) throws Exception {
-        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, true);
+    void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
+        programmingExerciseTestService.importExercise_created(programmingLanguage, recreateBuildPlans, addAuxRepos);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -271,6 +275,13 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void importProgrammingExercise_mode_changedToTeam() throws Exception {
         programmingExerciseTestService.testImportProgrammingExercise_team_modeChange();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void importProgrammingExercise_asPartOfExamImport() throws Exception {
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+        programmingExerciseTestService.importProgrammingExerciseAsPartOfExamImport();
     }
 
     @Test

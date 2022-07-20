@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
@@ -34,7 +34,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
     ProgrammingExerciseService programmingExerciseService;
 
     @Autowired
-    ProgrammingExerciseImportService programmingExerciseImportService;
+    ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
@@ -186,7 +186,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
-        return programmingExerciseImportService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise createToBeImported() {
