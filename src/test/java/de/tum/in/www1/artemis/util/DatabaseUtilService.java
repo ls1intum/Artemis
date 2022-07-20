@@ -1304,6 +1304,38 @@ public class DatabaseUtilService {
         return exam;
     }
 
+    public Exam addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(Course course) {
+        Exam exam = addExam(course);
+        for (int i = 0; i <= 4; i++) {
+            ModelFactory.generateExerciseGroup(true, exam);
+        }
+        exam.setNumberOfExercisesInExam(5);
+        exam.setMaxPoints(5 * 5);
+        exam = examRepository.save(exam);
+
+        ExerciseGroup modellingGroup = exam.getExerciseGroups().get(0);
+        Exercise modelling = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, modellingGroup);
+        modellingGroup.addExercise(modelling);
+        exerciseRepo.save(modelling);
+
+        ExerciseGroup textGroup = exam.getExerciseGroups().get(1);
+        Exercise text = ModelFactory.generateTextExerciseForExam(textGroup);
+        textGroup.addExercise(text);
+        exerciseRepo.save(text);
+
+        ExerciseGroup fileUploadGroup = exam.getExerciseGroups().get(2);
+        Exercise fileUpload = ModelFactory.generateFileUploadExerciseForExam("png", fileUploadGroup);
+        fileUploadGroup.addExercise(fileUpload);
+        exerciseRepo.save(fileUpload);
+
+        ExerciseGroup quizGroup = exam.getExerciseGroups().get(3);
+        Exercise quiz = ModelFactory.generateQuizExerciseForExam(quizGroup);
+        quizGroup.addExercise(quiz);
+        exerciseRepo.save(quiz);
+
+        return exam;
+    }
+
     public StudentExam addStudentExam(Exam exam) {
         StudentExam studentExam = ModelFactory.generateStudentExam(exam);
         studentExamRepository.save(studentExam);
@@ -1810,6 +1842,21 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
+    public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
+        ProgrammingExercise programmingExercise = new ProgrammingExercise();
+        programmingExercise.setExerciseGroup(exam.getExerciseGroups().get(0));
+        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
+        programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
+
+        exam.getExerciseGroups().get(exerciseGroupNumber).addExercise(programmingExercise);
+        examRepository.save(exam);
+
+        return programmingExercise;
+    }
+
     public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
@@ -2123,6 +2170,9 @@ public class DatabaseUtilService {
         }
         else if (programmingLanguage == ProgrammingLanguage.SWIFT) {
             programmingExercise.setProjectType(ProjectType.PLAIN);
+        }
+        else if (programmingLanguage == ProgrammingLanguage.C) {
+            programmingExercise.setProjectType(ProjectType.GCC);
         }
         else {
             programmingExercise.setProjectType(null);
