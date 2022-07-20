@@ -96,11 +96,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     isSaving = false;
     scheduleQuizStart = false;
 
-    /** Status Options **/
-    statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
-    statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
-    statusOptionsActive: Option[] = [new Option(true, 'Active')];
-
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
