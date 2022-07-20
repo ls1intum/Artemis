@@ -126,7 +126,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         this.examRepository.save(exam);
 
         Result result = ModelFactory.generateResult(true, 200D).participation(programmingExerciseStudentParticipation);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setText("Good work here")).collect(Collectors.toCollection(ArrayList::new));
         result.setFeedbacks(feedbacks);
         result.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
 
@@ -376,7 +376,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
@@ -398,7 +398,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
@@ -545,7 +545,7 @@ public class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambo
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).collect(Collectors.toList());
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints

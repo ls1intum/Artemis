@@ -1,0 +1,15 @@
+.hover-blue:hover {
+    box-shadow: 0 2px 4px 0 var(--primary);
+}
+
+.hover-green:hover {
+    box-shadow: 0 2px 4px 0 var(--success);
+}
+
+.btn-disabled {
+    pointer-events: none;
+}
+
+.btn-group-disabled {
+    cursor: not-allowed;
+}

@@ -18,7 +18,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipFile;
 
@@ -356,8 +355,7 @@ public class ProgrammingExerciseIntegrationTestService {
         doReturn(repository1).when(gitService).getOrCheckoutRepository(eq(participation1.getVcsRepositoryUrl()), anyString(), anyBoolean());
         doReturn(repository2).when(gitService).getOrCheckoutRepository(eq(participation2.getVcsRepositoryUrl()), anyString(), anyBoolean());
 
-        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
-                .collect(Collectors.toList());
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
                 String.join(",", participationIds));
         // all options false by default, only test if export works at all
@@ -429,8 +427,7 @@ public class ProgrammingExerciseIntegrationTestService {
 
     public void testExportSubmissionsByParticipationIds_instructorNotInCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "instructoralt");
-        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString())
-                .collect(Collectors.toList());
+        var participationIds = programmingExerciseStudentParticipationRepository.findAll().stream().map(participation -> participation.getId().toString()).toList();
         final var path = ROOT + EXPORT_SUBMISSIONS_BY_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId())).replace("{participationIds}",
                 String.join(",", participationIds));
         request.postWithResponseBodyFile(path, getOptions(), HttpStatus.FORBIDDEN);
@@ -1344,7 +1341,7 @@ public class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
-        }).collect(Collectors.toList());
+        }).toList();
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
@@ -1376,7 +1373,7 @@ public class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
-        }).collect(Collectors.toList());
+        }).toList();
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
@@ -1409,7 +1406,7 @@ public class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusMultiplier(testCase.getId() + 1.0);
             testCaseUpdate.setBonusPoints(testCase.getId() + 2.0);
             return testCaseUpdate;
-        }).collect(Collectors.toList());
+        }).toList();
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.UPDATE_TEST_CASES.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
 
         request.patchWithResponseBody(ROOT + endpoint, updates, String.class, HttpStatus.BAD_REQUEST);
@@ -1463,7 +1460,7 @@ public class ProgrammingExerciseIntegrationTestService {
             testCaseUpdate.setBonusMultiplier(testCase.getBonusMultiplier());
             testCaseUpdate.setBonusPoints(testCase.getBonusPoints());
             return testCaseUpdate;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     public void resetTestCaseWeights_asInstructor() throws Exception {

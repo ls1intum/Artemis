@@ -1,0 +1,23 @@
+.icon-settings {
+    display: flex;
+    justify-content: left;
+    align-items: center;
+    min-height: 50px;
+}
+
+.card-general-settings {
+    padding: 5px 0;
+    border: 1px;
+    border-color: var(--primary);
+    border-radius: 3px;
+    transition: box-shadow 0.1s linear;
+
+    .row {
+        min-height: 35px;
+        align-items: center;
+    }
+
+    &:hover {
+        box-shadow: 0 2px 4px 0 var(--primary);
+    }
+}

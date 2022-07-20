@@ -2,13 +2,17 @@ package de.tum.in.www1.artemis;
 
 import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.awaitility.Awaitility.await;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -18,13 +22,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
+import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -36,14 +44,13 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.user.PasswordService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -105,6 +112,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Autowired
     private ZipFileTestUtilService zipFileTestUtilService;
 
+    @Autowired
+    private ExamAccessService examAccessService;
+
+    @Autowired
+    private ObjectMapper objectMapper;
+
     private List<User> users;
 
     private Course course1;
@@ -115,6 +128,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private Exam exam2;
 
+    private Exam testExam1;
+
+    private StudentExam studentExam1;
+
     private final int numberOfStudents = 10;
 
     private User instructor;
@@ -124,8 +141,15 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         users = database.addUsers(numberOfStudents, 5, 0, 1);
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();
+
+        User student1 = users.get(0);
+        student1.setGroups(Set.of(course1.getStudentGroupName()));
+        userRepo.save(student1);
+
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
+        testExam1 = database.addTestExam(course1);
+        studentExam1 = database.addStudentExamForTestExam(testExam1, users.get(0));
 
         instructor = users.get(users.size() - 1);
 
@@ -156,6 +180,19 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         List<User> studentsInCourseAfter = userRepo.findAllInGroupWithAuthorities(course1.getStudentGroupName());
         studentsInCourseBefore.add(student42);
         assertThat(studentsInCourseBefore).containsExactlyInAnyOrderElementsOf(studentsInCourseAfter);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddStudentToExam_testExam() throws Exception {
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/student42", null, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveStudentToExam_testExam() throws Exception {
+
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/student42", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -305,6 +342,26 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testAddStudentsToExam_testExam() throws Exception {
+        User student1 = database.getUserByLogin("student1");
+        String registrationNumber1 = "1111111";
+        student1.setRegistrationNumber(registrationNumber1);
+        userRepo.save(student1);
+
+        StudentDTO studentDto1 = new StudentDTO().registrationNumber(registrationNumber1);
+        List<StudentDTO> studentDTOS = List.of(studentDto1);
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", studentDTOS, StudentDTO.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRemoveAllStudentsFromExam_testExam() throws Exception {
+
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testStartExercisesWithTextExercise() throws Exception {
 
         // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
@@ -445,6 +502,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateStudentExams_testExam() throws Exception {
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGenerateStudentExamsNoExerciseGroups_badRequest() throws Exception {
         Exam exam = database.addExamWithExerciseGroup(course1, true);
         exam.setStartDate(now());
@@ -526,6 +591,21 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGenerateMissingStudentExams_testExam() throws Exception {
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testEvaluateQuizExercises_testExam() throws Exception {
+
+        request.post("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -722,7 +802,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestExam_asInstructor() throws Exception {
-        // Test the creation of a test eam
+        // Test the creation of a test exam
         Exam examA = ModelFactory.generateTestExam(course1);
         request.post("/api/courses/" + course1.getId() + "/exams", examA, HttpStatus.CREATED);
 
@@ -732,7 +812,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testCreateTestExam_asInstructor_withVisibleDateEqualsStartDate() throws Exception {
-        // Test the creation of a test eam, where visibleDate equals StartDate
+        // Test the creation of a test exam, where visibleDate equals StartDate
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setVisibleDate(examB.getStartDate());
         request.post("/api/courses/" + course1.getId() + "/exams", examB, HttpStatus.CREATED);
@@ -783,14 +863,14 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testUpdateTestExam_asInstructor_withExamModeChanged() throws Exception {
         // The Exam-Mode should not be changeable with a PUT / update operation, a CONFLICT should be returned instead
-        // Case 1: test eam should be updated to real exam
+        // Case 1: test exam should be updated to real exam
         Exam examA = ModelFactory.generateTestExam(course1);
         Exam createdExamA = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams", examA, Exam.class, HttpStatus.CREATED);
         createdExamA.setNumberOfCorrectionRoundsInExam(1);
         createdExamA.setTestExam(false);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", createdExamA, Exam.class, HttpStatus.CONFLICT);
 
-        // Case 2: real exam should be updated to test eam
+        // Case 2: real exam should be updated to test exam
         Exam examB = ModelFactory.generateTestExam(course1);
         examB.setNumberOfCorrectionRoundsInExam(1);
         examB.setTestExam(false);
@@ -1205,7 +1285,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         exam = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.OK, Exam.class);
-        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).collect(Collectors.toList())).isNotEmpty();
+        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).toList()).isNotEmpty();
     }
 
     @Test
@@ -1255,6 +1335,12 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(exam.getRegisteredUsers()).hasSize(this.numberOfStudents + 1);
         assertThat(exam.getRegisteredUsers()).contains(student99);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testRegisterCourseStudents_testExam() throws Exception {
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.FORBIDDEN, null);
     }
 
     @Test
@@ -1559,7 +1645,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size());
+        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 1); // We create one studentExam in the before Method
 
         // start exercises
 
@@ -1681,9 +1767,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(response.examId).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
-        List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
-        List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
-        assertThat(exerciseGroupIdsInExam).containsExactlyInAnyOrderElementsOf(exerciseGroupIdsInDTO);
+        Set<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toSet());
+        Set<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
+        assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
 
         // Compare exerciseGroups in DTO to exam exerciseGroups
         // Tolerated absolute difference for floating-point number comparisons
@@ -1715,9 +1801,9 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         }
 
         // Ensure that all registered students have a StudentResult
-        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.userId).collect(Collectors.toList());
-        List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(DomainObject::getId).collect(Collectors.toList());
-        assertThat(studentIdsWithStudentResults).containsExactlyInAnyOrderElementsOf(registeredUsersIds);
+        Set<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.userId).collect(Collectors.toSet());
+        Set<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
 
         // Compare StudentResult with the generated results
         for (var studentResult : response.studentResults) {
@@ -1745,10 +1831,10 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(studentResult.hasPassed).isNotNull();
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
-            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
-                    .collect(Collectors.toList());
-            List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(DomainObject::getId).collect(Collectors.toList());
-            assertThat(exerciseIdsOfStudentResult).containsExactlyInAnyOrderElementsOf(exerciseIdsInStudentExam);
+            Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
+                    .collect(Collectors.toSet());
+            Set<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(DomainObject::getId).collect(Collectors.toSet());
+            assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
             for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
                 var exerciseResult = entry.getValue();
 
@@ -2168,7 +2254,7 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
-        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>(participations));
@@ -2425,5 +2511,331 @@ public class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
 
         verify(this.websocketMessagingService).sendMessage("/topic/exam-monitoring/" + exam1.getId() + "/update", false);
+    }
+
+    // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckRegistrationOrRegisterStudentToTestExam_noTestExam() {
+        assertThatThrownBy(() -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), database.getUserByLogin("student1")))
+                .isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void testCheckRegistrationOrRegisterStudentToTestExam_studentNotPartOfCourse() {
+        assertThatThrownBy(() -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), database.getUserByLogin("student42")))
+                .isInstanceOf(AccessForbiddenException.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCheckRegistrationOrRegisterStudentToTestExam_successfulRegistration() {
+        Exam testExam = ModelFactory.generateTestExam(course1);
+        testExam.addRegisteredUser(users.get(0));
+        testExam = examRepository.save(testExam);
+        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), users.get(0));
+        Exam testExamReladed = examRepository.findByIdWithRegisteredUsersElseThrow(testExam.getId());
+        assertTrue(testExamReladed.getRegisteredUsers().contains(users.get(0)));
+    }
+
+    // ExamResource - getStudentExamForTestExamForStart
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_notRegisteredInCourse() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_notVisible() throws Exception {
+        testExam1.setVisibleDate(now().plusMinutes(60));
+        testExam1 = examRepository.save(testExam1);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.FORBIDDEN, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_ExamDoesNotBelongToCourse() throws Exception {
+        Exam testExam = database.addTestExam(course2);
+
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam.getId() + "/start", HttpStatus.CONFLICT, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_fetchExam() throws Exception {
+        StudentExam studentExamReceived = request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.OK, StudentExam.class);
+        assertEquals(studentExam1, studentExamReceived);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetStudentExamForTestExamForStart_successful() throws Exception {
+        request.get("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/start", HttpStatus.OK, StudentExam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetExamForImportWithExercises_successful() throws Exception {
+        Exam received = request.get("/api/exams/" + exam2.getId(), HttpStatus.OK, Exam.class);
+        assertEquals(exam2, received);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
+    public void testGetExamForImportWithExercises_noInstructorAccess() throws Exception {
+        request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testGetExamForImportWithExercises_noTutorAccess() throws Exception {
+        request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    public void testGetExamForImportWithExercises_noEditorAccess() throws Exception {
+        request.get("/api/exams/" + exam2.getId(), HttpStatus.FORBIDDEN, Exam.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllExamsOnPage_WithoutExercises_instructor_successful() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllExamsOnPage_WithExercises_instructor_successful() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams?withExercises=true", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_instructor_successful() throws Exception {
+        Course course3 = database.addEmptyCourse();
+        course3.setInstructorGroupName("non-instructors");
+        courseRepo.save(course3);
+        database.addExamWithExerciseGroup(course3, true);
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(3);
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    public void testGetAllExamsOnPage_WithoutExercisesAndExamsNotLinkedToCourse_admin_successful() throws Exception {
+        Course course3 = database.addEmptyCourse();
+        course3.setInstructorGroupName("non-instructors");
+        courseRepo.save(course3);
+        database.addExamWithExerciseGroup(course3, true);
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        final var result = request.get("/api/exams", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
+        assertThat(result.getResultsOnPage()).hasSize(4);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testGetAllExamsOnPage_tutor() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        request.get("/api/exams", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testGetAllExamsOnPage_student() throws Exception {
+        final PageableSearchDTO<String> search = database.configureSearch("");
+        request.get("/api/exams", HttpStatus.FORBIDDEN, SearchResultPageDTO.class, database.searchMapping(search));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testImportExamWithExercises_student() throws Exception {
+        final Exam exam = new Exam();
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TUTOR")
+    public void testImportExamWithExercises_tutor() throws Exception {
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_idExists() throws Exception {
+        final Exam exam = ModelFactory.generateExam(course1);
+        exam.setId(2L);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_courseMismatch() throws Exception {
+        // No Course
+        final Exam examA = ModelFactory.generateExam(course1);
+        examA.setCourse(null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+
+        // Exam Course and REST-Course mismatch
+        final Exam examB = ModelFactory.generateExam(course1);
+        examB.setCourse(course2);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_dateConflict() throws Exception {
+        // Visible Date after Started Date
+        final Exam examA = ModelFactory.generateExam(course1);
+        examA.setVisibleDate(ZonedDateTime.now().plusHours(2));
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+
+        // Visible Date missing
+        final Exam examB = ModelFactory.generateExam(course1);
+        examB.setVisibleDate(null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+
+        // Started Date after End Date
+        final Exam examC = ModelFactory.generateExam(course1);
+        examC.setStartDate(ZonedDateTime.now().plusHours(2));
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
+
+        // Started Date missing
+        final Exam examD = ModelFactory.generateExam(course1);
+        examD.setStartDate(null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examD, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_dateConflictTestExam() throws Exception {
+        // Working Time larger than Working window
+        final Exam examA = ModelFactory.generateTestExam(course1);
+        examA.setWorkingTime(3 * 60 * 60);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+
+        // Working Time larger than Working window
+        final Exam examB = ModelFactory.generateTestExam(course1);
+        examB.setWorkingTime(0);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_pointConflict() throws Exception {
+        final Exam examA = ModelFactory.generateExam(course1);
+        examA.setMaxPoints(-5);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_correctionRoundConflict() throws Exception {
+        // Correction round <= 0
+        final Exam examA = ModelFactory.generateExam(course1);
+        examA.setNumberOfCorrectionRoundsInExam(0);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examA, HttpStatus.BAD_REQUEST, null);
+
+        // Correction round >= 2
+        final Exam examB = ModelFactory.generateExam(course1);
+        examB.setNumberOfCorrectionRoundsInExam(3);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examB, HttpStatus.BAD_REQUEST, null);
+
+        // Correction round != 0 for test exam
+        final Exam examC = ModelFactory.generateTestExam(course1);
+        examC.setNumberOfCorrectionRoundsInExam(1);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", examC, HttpStatus.BAD_REQUEST, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_successfulWithoutExercises() throws Exception {
+        Exam exam = database.addExam(course1);
+        exam.setId(null);
+
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
+        assertThat(received.getId()).isNotNull();
+        assertThat(received.getTitle()).isEqualTo(exam.getTitle());
+        assertThat(received.isTestExam()).isFalse();
+        assertThat(received.getWorkingTime()).isEqualTo(3000);
+        assertThat(received.getStartText()).isEqualTo("Start Text");
+        assertThat(received.getEndText()).isEqualTo("End Text");
+        assertThat(received.getConfirmationStartText()).isEqualTo("Confirmation Start Text");
+        assertThat(received.getConfirmationEndText()).isEqualTo("Confirmation End Text");
+        assertThat(received.getMaxPoints()).isEqualTo(90);
+        assertThat(received.getNumberOfExercisesInExam()).isEqualTo(1);
+        assertThat(received.getRandomizeExerciseOrder()).isFalse();
+        assertThat(received.getNumberOfCorrectionRoundsInExam()).isEqualTo(1);
+        assertThat(received.getCourse().getId()).isEqualTo(course1.getId());
+
+        exam.setVisibleDate(ZonedDateTime.ofInstant(exam.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        received.setVisibleDate(ZonedDateTime.ofInstant(received.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        assertThat(received.getVisibleDate()).isEqualTo(exam.getVisibleDate());
+        exam.setStartDate(ZonedDateTime.ofInstant(exam.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        received.setStartDate(ZonedDateTime.ofInstant(received.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        assertThat(received.getStartDate()).isEqualTo(exam.getStartDate());
+        exam.setEndDate(ZonedDateTime.ofInstant(exam.getEndDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        received.setEndDate(ZonedDateTime.ofInstant(received.getEndDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
+        assertThat(received.getEndDate()).isEqualTo(exam.getEndDate());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_successfulWithExercises() throws Exception {
+        Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
+        exam.setId(null);
+
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
+        assertThat(received.getId()).isNotNull();
+        assertThat(received.getTitle()).isEqualTo(exam.getTitle());
+        assertThat(received.getCourse()).isEqualTo(course1);
+        assertThat(received.getCourse()).isEqualTo(exam.getCourse());
+        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_successfulWithImportToOtherCourse() throws Exception {
+        Exam exam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
+        exam.setCourse(course1);
+        exam.setId(null);
+
+        final Exam received = request.postWithResponseBody("/api/courses/" + course1.getId() + "/exam-import", exam, Exam.class, HttpStatus.CREATED);
+        assertThat(received.getExerciseGroups().size()).isEqualTo(4);
+
+        for (int i = 0; i <= 3; i++) {
+            Exercise expected = exam.getExerciseGroups().get(i).getExercises().stream().findFirst().get();
+            Exercise exerciseReceived = received.getExerciseGroups().get(i).getExercises().stream().findFirst().get();
+            assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(expected.getExerciseGroup());
+            assertThat(exerciseReceived.getTitle()).isEqualTo(expected.getTitle());
+            assertThat(exerciseReceived.getId()).isNotEqualTo(expected.getId());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testImportExamWithExercises_preCheckFailed() throws Exception {
+        Exam exam = ModelFactory.generateExam(course1);
+        ExerciseGroup programmingGroup = ModelFactory.generateExerciseGroup(false, exam);
+        exam = examRepository.save(exam);
+        exam.setId(null);
+        ProgrammingExercise programming = ModelFactory.generateProgrammingExerciseForExam(programmingGroup, ProgrammingLanguage.JAVA);
+        programmingGroup.addExercise(programming);
+        exerciseRepo.save(programming);
+
+        doReturn(true).when(versionControlService).checkIfProjectExists(any(), any());
+        doReturn(null).when(continuousIntegrationService).checkIfProjectExists(any(), any());
+
+        request.getMvc().perform(post("/api/courses/" + course1.getId() + "/exam-import").contentType(MediaType.APPLICATION_JSON).content(objectMapper.writeValueAsString(exam)))
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertThat(result.getResolvedException().getMessage()).isEqualTo("Exam contains programming exercise(s) with invalid short name."));
     }
 }
