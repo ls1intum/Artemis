@@ -33,6 +33,8 @@ import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -43,6 +45,7 @@ describe('UserManagementComponent', () => {
     let courseManagementService: CourseManagementService;
     let localStorageService: LocalStorageService;
     let httpMock: HttpTestingController;
+    let profileService: ProfileService;
 
     const course1 = new Course();
     course1.id = 1;
@@ -104,6 +107,7 @@ describe('UserManagementComponent', () => {
                 courseManagementService = TestBed.inject(CourseManagementService);
                 localStorageService = TestBed.inject(LocalStorageService);
                 httpMock = TestBed.inject(HttpTestingController);
+                profileService = TestBed.inject(ProfileService);
             });
     });
 
@@ -122,6 +126,7 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
+        jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
 
         comp.ngOnInit();
         // 1 sec of pause, because of the debounce time
@@ -131,10 +136,7 @@ describe('UserManagementComponent', () => {
         expect(comp.users[0].id).toBe(1);
         expect(comp.totalItems).toBe(1);
         expect(comp.loadingSearchResult).toBeFalse();
-
-        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
-        reqD.flush([]);
-        jest.restoreAllMocks();
+        expect(comp.isLdapProfileActive).toBeFalse();
     }));
 
     describe('setActive', () => {
@@ -152,6 +154,9 @@ describe('UserManagementComponent', () => {
                         }),
                     ),
                 );
+
+                jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+
                 comp.ngOnInit();
 
                 jest.spyOn(userService, 'update').mockReturnValue(of(new HttpResponse<User>({ status: 200 })));
@@ -163,10 +168,7 @@ describe('UserManagementComponent', () => {
                 expect(userService.update).toHaveBeenCalledWith({ ...user, activated: true });
                 expect(userService.query).toHaveBeenCalledOnce();
                 expect(comp.users && comp.users[0]).toEqual(expect.objectContaining({ id: 123 }));
-
-                let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
-                reqD.flush([]);
-                jest.restoreAllMocks();
+                expect(profileService.getProfileInfo()).toHaveBeenCalledOnce();
             }),
         ));
     });
@@ -181,10 +183,14 @@ describe('UserManagementComponent', () => {
                 }),
             ),
         );
+
+        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+
         comp.ngOnInit();
         tick(1000);
 
         expect(identitySpy).toHaveBeenCalledOnce();
+        expect(profileSpy).toHaveBeenCalledOnce();
         expect(comp.currentAccount).toEqual({ id: 99 });
 
         expect(comp.page).toBe(1);
@@ -192,10 +198,6 @@ describe('UserManagementComponent', () => {
         expect(comp.ascending).toBeTrue();
 
         expect(querySpy).toHaveBeenCalledOnce();
-
-        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
-        reqD.flush([]);
-        jest.restoreAllMocks();
     }));
 
     it('should destroy the user list subscription on destroy', () => {
@@ -255,26 +257,23 @@ describe('UserManagementComponent', () => {
             ),
         );
 
+        const profileSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
+
         comp.ngOnInit();
 
         expect(spy).toHaveBeenCalledOnce();
+        expect(profileSpy).toHaveBeenCalledOnce();
         expect(comp.courses).toEqual(courses.sort((c1, c2) => c1.title!.localeCompare(c2.title!)));
-
-        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
-        reqD.flush([]);
-        jest.restoreAllMocks();
     });
 
     it('should call initFilters', () => {
         const spy = jest.spyOn(comp, 'initFilters');
+        const initSpy = jest.spyOn(profileService, 'getProfileInfo').mockReturnValue(of(new ProfileInfo()));
 
         comp.ngOnInit();
 
         expect(spy).toHaveBeenCalledOnce();
-
-        let reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
-        reqD.flush([]);
-        jest.restoreAllMocks();
+        expect(initSpy).toHaveBeenCalledOnce();
     });
 
     it.each`
