@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -106,7 +107,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
 
         submission.setStudentLogin(studentLogin);
         submission.setElements(StreamSupport.stream(jplagSubmission.getTokenList().allTokens().spliterator(), false).filter(Objects::nonNull)
-                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission)).collect(Collectors.toList()));
+                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission)).collect(Collectors.toCollection(ArrayList::new)));
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO

@@ -132,6 +132,18 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
+    void testCreateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
+        // Create team that contains student "student1"
+        Team team1 = new Team().name("Team 1").shortName("team1").exercise(exercise).students(Set.of(userRepo.findOneByLogin("student1").orElseThrow()));
+        teamRepo.save(team1);
+
+        // Try to create team with a student that is already assigned to another team
+        Team team2 = new Team().name("Team 2").shortName("team2").exercise(exercise).students(students);
+        request.postWithResponseBody(resourceUrl(), team2, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
     void testCreateTeam_BadRequest() throws Exception {
         // Try creating a team that already has an id set
         Team team1 = new Team();
@@ -192,6 +204,24 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Try updating a team with an exercise specified that does not match the exercise id param in the route
         request.putWithResponseBody(resourceUrlWithWrongExerciseId() + "/" + team2.getId(), team2, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testUpdateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
+        User student1 = userRepo.findOneByLogin("student1").orElseThrow();
+        User student2 = userRepo.findOneByLogin("student2").orElseThrow();
+        User student3 = userRepo.findOneByLogin("student3").orElseThrow();
+
+        Team team1 = new Team().name("Team 1").shortName("team1").exercise(exercise).students(Set.of(student1, student2));
+        team1.setOwner(tutor);
+        teamRepo.save(team1);
+        Team team2 = new Team().name("Team 2").shortName("team2").exercise(exercise).students(Set.of(student3));
+        teamRepo.save(team2);
+
+        // Try to update team with a student that is already assigned to another team
+        team1.setStudents(students);
+        request.putWithResponseBody(resourceUrl() + "/" + team1.getId(), team1, Team.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test

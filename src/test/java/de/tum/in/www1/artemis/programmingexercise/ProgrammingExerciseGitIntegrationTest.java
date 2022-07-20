@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
@@ -143,6 +142,6 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     private List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
-        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
+        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).toList();
     }
 }

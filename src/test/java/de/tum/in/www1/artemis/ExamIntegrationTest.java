@@ -1280,7 +1280,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam = database.addTextModelingProgrammingExercisesToExam(exam, false, false);
         database.setupTestRunForExamWithExerciseGroupsForInstructor(exam, instructor, exam.getExerciseGroups());
         exam = request.get("/api/courses/" + exam.getCourse().getId() + "/exams/" + exam.getId() + "/exam-for-test-run-assessment-dashboard", HttpStatus.OK, Exam.class);
-        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).collect(Collectors.toList())).isNotEmpty();
+        assertThat(exam.getExerciseGroups().stream().flatMap(exerciseGroup -> exerciseGroup.getExercises().stream()).toList()).isNotEmpty();
     }
 
     @Test
@@ -1762,9 +1762,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(response.examId).isEqualTo(exam.getId());
 
         // Ensure that all exerciseGroups of the exam are present in the DTO
-        List<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toList());
-        List<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toList());
-        assertThat(exerciseGroupIdsInExam).containsExactlyInAnyOrderElementsOf(exerciseGroupIdsInDTO);
+        Set<Long> exerciseGroupIdsInDTO = response.exerciseGroups.stream().map(exerciseGroup -> exerciseGroup.id).collect(Collectors.toSet());
+        Set<Long> exerciseGroupIdsInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getId).collect(Collectors.toSet());
+        assertThat(exerciseGroupIdsInExam).isEqualTo(exerciseGroupIdsInDTO);
 
         // Compare exerciseGroups in DTO to exam exerciseGroups
         // Tolerated absolute difference for floating-point number comparisons
@@ -1796,9 +1796,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         }
 
         // Ensure that all registered students have a StudentResult
-        List<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.userId).collect(Collectors.toList());
-        List<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(DomainObject::getId).collect(Collectors.toList());
-        assertThat(studentIdsWithStudentResults).containsExactlyInAnyOrderElementsOf(registeredUsersIds);
+        Set<Long> studentIdsWithStudentResults = response.studentResults.stream().map(studentResult -> studentResult.userId).collect(Collectors.toSet());
+        Set<Long> registeredUsersIds = exam.getRegisteredUsers().stream().map(DomainObject::getId).collect(Collectors.toSet());
+        assertThat(studentIdsWithStudentResults).isEqualTo(registeredUsersIds);
 
         // Compare StudentResult with the generated results
         for (var studentResult : response.studentResults) {
@@ -1826,10 +1826,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             assertThat(studentResult.hasPassed).isNotNull();
 
             // Ensure that the exercise ids of the student exam are the same as the exercise ids in the students exercise results
-            List<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
-                    .collect(Collectors.toList());
-            List<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(DomainObject::getId).collect(Collectors.toList());
-            assertThat(exerciseIdsOfStudentResult).containsExactlyInAnyOrderElementsOf(exerciseIdsInStudentExam);
+            Set<Long> exerciseIdsOfStudentResult = studentResult.exerciseGroupIdToExerciseResult.values().stream().map(exerciseResult -> exerciseResult.exerciseId)
+                    .collect(Collectors.toSet());
+            Set<Long> exerciseIdsInStudentExam = studentExamOfUser.getExercises().stream().map(DomainObject::getId).collect(Collectors.toSet());
+            assertThat(exerciseIdsOfStudentResult).isEqualTo(exerciseIdsInStudentExam);
             for (Map.Entry<Long, ExamScoresDTO.ExerciseResult> entry : studentResult.exerciseGroupIdToExerciseResult.entrySet()) {
                 var exerciseResult = entry.getValue();
 
@@ -2249,7 +2249,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Fetch the created participations and assign them to the exercises
         int participationCounter = 0;
-        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).collect(Collectors.toList());
+        List<Exercise> exercisesInExam = exam.getExerciseGroups().stream().map(ExerciseGroup::getExercises).flatMap(Collection::stream).toList();
         for (var exercise : exercisesInExam) {
             List<StudentParticipation> participations = studentParticipationRepository.findByExerciseIdWithEagerLegalSubmissionsResult(exercise.getId());
             exercise.setStudentParticipations(new HashSet<>(participations));

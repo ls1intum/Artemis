@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -91,8 +90,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
-                .collect(Collectors.toList());
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl()))).toList();
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
                 urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
     }
@@ -464,7 +462,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void giveProjectPermissions(String projectKey, List<String> groupNames, List<CIPermission> permissions) {
-        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
+        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).toList();
         final var entity = new HttpEntity<>(permissionData, null);
 
         groupNames.forEach(group -> {
@@ -649,8 +647,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
             if (buildResult != null && buildResult.getArtifacts() != null) {
                 List<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
                 artifactLabelFilter.add("Build log");
-                buildResult.getArtifacts().setArtifacts(
-                        buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).collect(Collectors.toList()));
+                buildResult.getArtifacts()
+                        .setArtifacts(buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).toList());
             }
             return buildResult;
         }
