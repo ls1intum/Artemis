@@ -97,7 +97,7 @@ export class UnreferencedFeedbackComponent {
     createAssessmentOnDrop(event: Event) {
         this.addUnreferencedFeedback();
         const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
-        if (newFeedback !== undefined) {
+        if (newFeedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
             this.updateAssessment(newFeedback);
         }
