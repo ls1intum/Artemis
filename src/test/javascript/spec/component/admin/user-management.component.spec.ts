@@ -35,6 +35,7 @@ import { Course } from 'app/entities/course.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
+import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
@@ -81,6 +82,7 @@ describe('UserManagementComponent', () => {
                 { provide: CourseManagementService, useClass: MockCourseManagementService },
                 { provide: Router, useClass: MockRouter },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
+                { provide: ProfileService, useClass: MockProfileService },
                 {
                     provide: ActivatedRoute,
                     useValue: {
