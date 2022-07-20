@@ -68,9 +68,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     isImport = false;
 
-    // TODO: why do we have entity, savedEntity and quizExercise?
-    entity: QuizExercise;
-
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
     showExistingQuestionsFromCourse = true;
@@ -209,22 +206,28 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
+     * Initializes and returns a new quiz exercise
+     */
+    initializeNewQuizExercise(): QuizExercise {
+        const newQuiz = new QuizExercise(undefined, undefined);
+        newQuiz.title = '';
+        newQuiz.duration = 600;
+        newQuiz.isOpenForPractice = false;
+        newQuiz.releaseDate = dayjs();
+        newQuiz.randomizeQuestionOrder = true;
+        newQuiz.quizQuestions = [];
+        newQuiz.quizMode = QuizMode.SYNCHRONIZED;
+        newQuiz.allowedNumberOfAttempts = 1;
+        this.prepareEntity(newQuiz);
+        return newQuiz;
+    }
+
+    /**
      * Initializes local constants and prepares the QuizExercise entity
      */
     init(): void {
-        if (this.quizExercise) {
-            this.entity = this.quizExercise;
-        } else {
-            this.entity = new QuizExercise(undefined, undefined);
-            this.entity.title = '';
-            this.entity.duration = 600;
-            this.entity.isOpenForPractice = false;
-            this.entity.releaseDate = dayjs();
-            this.entity.randomizeQuestionOrder = true;
-            this.entity.quizQuestions = [];
-            this.entity.quizMode = QuizMode.SYNCHRONIZED;
-            this.entity.allowedNumberOfAttempts = 1;
-            this.quizExercise = this.entity;
+        if (!this.quizExercise) {
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         if (this.isImport || this.isExamMode) {
@@ -232,7 +235,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             resetDates(this.quizExercise);
         }
 
-        this.prepareEntity(this.entity);
         // Assign savedEntity to identify local changes
         this.savedEntity = this.entity.id && !this.isImport ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
 
@@ -386,7 +388,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     addMultipleChoiceQuestion() {
         if (this.quizExercise == undefined) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         const mcQuestion = new MultipleChoiceQuestion();
@@ -417,7 +419,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     addDragAndDropQuestion(): void {
         if (this.quizExercise == undefined) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         const dndQuestion = new DragAndDropQuestion();
@@ -439,7 +441,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     addShortAnswerQuestion(): void {
         if (this.quizExercise == undefined) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         const shortAnswerQuestion = new ShortAnswerQuestion();
@@ -476,7 +478,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     showHideExistingQuestions(): void {
         if (!this.quizExercise) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         // If courses are not populated, then populate list of courses
