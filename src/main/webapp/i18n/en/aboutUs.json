@@ -23,7 +23,7 @@
             "text": "<a href={{ examModeUrl }}>Exam mode:</a> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
         },
         "grading": {
-            "text": "<b>Grading:</b> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
+            "text": "<a href={{ gradingUrl }}>Grading:</a> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
         },
         "assessment": {
             "text": "<b>Assessment:</b> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
@@ -47,7 +47,7 @@
             "text": "<b>Plagiarism checks</b> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
         },
         "learningAnalytics": {
-            "text": "<b>Learning analytics:</b> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
+            "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
         },
         "scalable": {
             "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."

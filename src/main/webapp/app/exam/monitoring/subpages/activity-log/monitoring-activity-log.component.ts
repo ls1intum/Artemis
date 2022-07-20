@@ -24,7 +24,7 @@ export class MonitoringActivityLogComponent implements OnInit, OnDestroy {
     readonly columns = [
         { prop: 'studentExamId', minWidth: 150, width: 200, maxWidth: 200 },
         { prop: 'timestamp', minWidth: 150, width: 200, template: 'timestampRef' },
-        { prop: 'type', minWidth: 150, width: 200 },
+        { prop: 'type', minWidth: 150, width: 200, template: 'typeRef' },
         { prop: 'detail', minWidth: 250, width: 300, template: 'detailRef' },
     ];
 

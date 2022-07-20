@@ -4,10 +4,8 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.validation.ConstraintViolation;
 import javax.validation.Validation;
@@ -89,19 +87,19 @@ public class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         // 1 plagiarism case and 3 with course-wide context - initialized): 12 posts in total
         existingPosts = database.createPostsWithinCourse();
 
-        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).collect(Collectors.toCollection(ArrayList::new));
+        existingCoursePosts = existingPosts.stream().filter(post -> post.getPlagiarismCase() == null).toList();
 
         // filter existing posts with exercise context
-        existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> coursePost.getExercise() != null).collect(Collectors.toCollection(ArrayList::new));
+        existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
 
         // filter existing posts with lecture context
-        existingLecturePosts = existingCoursePosts.stream().filter(coursePost -> coursePost.getLecture() != null).collect(Collectors.toCollection(ArrayList::new));
+        existingLecturePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
 
         // filter existing posts with plagiarism context
-        existingPlagiarismPosts = existingPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).collect(Collectors.toCollection(ArrayList::new));
+        existingPlagiarismPosts = existingPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).toList();
 
         // filter existing posts with course-wide context
-        existingCourseWidePosts = existingCoursePosts.stream().filter(coursePost -> coursePost.getCourseWideContext() != null).collect(Collectors.toCollection(ArrayList::new));
+        existingCourseWidePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList();
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 

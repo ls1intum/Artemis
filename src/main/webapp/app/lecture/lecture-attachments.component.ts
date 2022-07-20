@@ -13,20 +13,7 @@ import { faPaperclip, faPencilAlt, faSpinner, faTimes } from '@fortawesome/free-
 @Component({
     selector: 'jhi-lecture-attachments',
     templateUrl: './lecture-attachments.component.html',
-    styles: [
-        `
-            .edit-overlay {
-                position: absolute;
-                left: 0;
-                right: 0;
-                display: flex;
-                justify-content: center;
-                background-color: rgba(255, 255, 255, 0.9);
-                z-index: 9;
-                font-size: 18px;
-            }
-        `,
-    ],
+    styleUrls: ['./lecture-attachments.component.scss'],
 })
 export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     @ViewChild('fileInput', { static: false }) fileInput: ElementRef;
