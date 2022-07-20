@@ -36,16 +36,10 @@ import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.exam.ExamAccessService;
-import de.tum.in.www1.artemis.service.exam.ExamDateService;
-import de.tum.in.www1.artemis.service.exam.ExamRegistrationService;
-import de.tum.in.www1.artemis.service.exam.ExamService;
+import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
-import de.tum.in.www1.artemis.web.rest.dto.ExamChecklistDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamInformationDTO;
-import de.tum.in.www1.artemis.web.rest.dto.ExamScoresDTO;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.*;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -94,10 +88,13 @@ public class ExamResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
+    private final ExamImportService examImportService;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamMonitoringScheduleService examMonitoringScheduleService) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamMonitoringScheduleService examMonitoringScheduleService,
+            ExamImportService examImportService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -112,6 +109,7 @@ public class ExamResource {
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.examImportService = examImportService;
     }
 
     /**
@@ -214,6 +212,41 @@ public class ExamResource {
     }
 
     /**
+     * POST /courses/{courseId}/exam-import : Imports a new exam with exercises.
+     *
+     * @param courseId         the course to which the exam belongs
+     * @param examToBeImported the exam to import / create
+     * @return the ResponseEntity with status 201 (Created) and with body the newly imported exam, or with status 400 (Bad Request) if the exam has already an ID
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/exam-import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Exam> importExamWithExercises(@PathVariable Long courseId, @RequestBody Exam examToBeImported) throws URISyntaxException {
+        log.debug("REST request to import an exam : {}", examToBeImported);
+
+        // Step 1: Check if Exam has an ID
+        if (examToBeImported.getId() != null) {
+            throw new BadRequestAlertException("A imported exam cannot already have an ID", ENTITY_NAME, "idexists");
+        }
+
+        examAccessService.checkCourseAccessForInstructorElseThrow(courseId);
+
+        // Step 3: Validate the Exam dates
+        checkForExamConflictsElseThrow(courseId, examToBeImported);
+
+        // Step 4: Import Exam with Exercises
+        Exam examCopied = examImportService.importExamWithExercises(examToBeImported, courseId);
+
+        // Step 5: Set Exam Monitoring
+        if (examCopied.isMonitoring()) {
+            examMonitoringScheduleService.scheduleExamActivitySave(examCopied.getId());
+        }
+
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examCopied.getId()))
+                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, examCopied.getTitle())).body(examCopied);
+    }
+
+    /**
      * Checks if the input values are set correctly. More details in the corresponding methods
      *
      * @param courseId the exam should belong to.
@@ -310,6 +343,37 @@ public class ExamResource {
         if (!exam.isTestExam() && (exam.getNumberOfCorrectionRoundsInExam() <= 0 || exam.getNumberOfCorrectionRoundsInExam() > 2)) {
             throw new BadRequestAlertException("A realExam has to have either 1 or 2 correction rounds", ENTITY_NAME, "correctionRoundViolation");
         }
+    }
+
+    /**
+     * GET /exams : Find all exams the user is allowed to access
+     *
+     * @param withExercises if only exams with at least one exercise Groups should be considered
+     * @param search Pagable with all relevant information
+     * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
+     */
+    @GetMapping("/exams")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<SearchResultPageDTO<Exam>> getAllExamsOnPage(@RequestParam(defaultValue = "false") boolean withExercises, PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(examService.getAllOnPageWithSize(search, user, withExercises));
+    }
+
+    /**
+     * GET /exams/{examId} : Find an exam by id with exercises for the exam import
+     *
+     * @param examId the exam to find
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body
+     */
+    @GetMapping("/exams/{examId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Exam> getExamForImportWithExercises(@PathVariable Long examId) {
+        log.debug("REST request to get exam : {} for import with exercises", examId);
+
+        Exam exam = examService.findByIdWithExerciseGroupsAndExercisesElseThrow(examId);
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(exam.getCourse().getId(), examId);
+
+        return ResponseEntity.ok(exam);
     }
 
     /**
@@ -510,14 +574,14 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams-for-user : Find all exams the user is allowed to access (Is at least Instructor)
+     * GET /courses/{courseId}/exams-for-user : Find all exams with quiz-questions the user is allowed to access (Is at least Instructor)
      *
      * @param courseId the course to which the exam belongs
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/courses/{courseId}/exams-for-user")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<List<Exam>> getExamsForUser(@PathVariable Long courseId) {
+    public ResponseEntity<List<Exam>> getExamsWithQuizExercisesForUser(@PathVariable Long courseId) {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (authCheckService.isAdmin(user)) {
             return ResponseEntity.ok(examRepository.findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises());
