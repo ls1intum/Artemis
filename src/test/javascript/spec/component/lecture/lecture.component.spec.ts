@@ -26,30 +26,40 @@ describe('Lecture', () => {
     let lectureService: LectureService;
     let modalService: NgbModal;
 
-    let lecture1: Lecture;
-    let lecture2: Lecture;
-    let lecture3: Lecture;
-    let lecture4: Lecture;
+    let pastLecture: Lecture;
+    let currentLecture: Lecture;
+    let currentLecture2: Lecture;
+    let currentLecture3: Lecture;
+    let futureLecture: Lecture;
+    let unspecifiedLecture: Lecture;
 
     beforeEach(() => {
         const tomorrow = dayjs().add(1, 'day');
         const yesterday = dayjs().subtract(1, 'day');
 
-        lecture1 = new Lecture();
-        lecture1.id = 1;
-        lecture1.endDate = yesterday;
+        pastLecture = new Lecture();
+        pastLecture.id = 6;
+        pastLecture.endDate = yesterday;
 
-        lecture2 = new Lecture();
-        lecture2.id = 2;
-        lecture2.startDate = yesterday;
-        lecture2.endDate = tomorrow;
+        currentLecture = new Lecture();
+        currentLecture.id = 4;
+        currentLecture.startDate = yesterday;
+        currentLecture.endDate = tomorrow;
 
-        lecture3 = new Lecture();
-        lecture3.id = 3;
-        lecture3.startDate = tomorrow;
+        currentLecture2 = new Lecture();
+        currentLecture2.id = 5;
+        currentLecture2.startDate = yesterday;
 
-        lecture4 = new Lecture();
-        lecture4.id = 4;
+        currentLecture3 = new Lecture();
+        currentLecture3.id = 3;
+        currentLecture3.endDate = tomorrow;
+
+        futureLecture = new Lecture();
+        futureLecture.id = 2;
+        futureLecture.startDate = tomorrow;
+
+        unspecifiedLecture = new Lecture();
+        unspecifiedLecture.id = 1;
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -79,7 +89,7 @@ describe('Lecture', () => {
                     findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
-                                body: [lecture2, lecture3, lecture1, lecture4],
+                                body: [pastLecture, currentLecture, currentLecture2, currentLecture3, futureLecture, unspecifiedLecture],
                                 status: 200,
                             }),
                         );
@@ -119,19 +129,19 @@ describe('Lecture', () => {
 
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
-        expect(lectureComponent.lectures).toBeArrayOfSize(4);
+        expect(lectureComponent.lectures).toBeArrayOfSize(6);
     });
 
     it('should delete lecture', () => {
         const deleteSpy = jest.spyOn(lectureService, 'delete');
 
         lectureComponentFixture.detectChanges();
-        lectureComponent.deleteLecture(lecture1.id!);
+        lectureComponent.deleteLecture(pastLecture.id!);
 
         expect(deleteSpy).toHaveBeenCalledOnce();
-        expect(deleteSpy).toHaveBeenCalledWith(1);
-        expect(lectureComponent.lectures).toBeArrayOfSize(3);
-        expect(lectureComponent.lectures).not.toContain(lecture1);
+        expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!);
+        expect(lectureComponent.lectures).toBeArrayOfSize(5);
+        expect(lectureComponent.lectures).not.toContain(pastLecture);
         expect(lectureComponent.filteredLectures).toEqual(lectureComponent.lectures);
     });
 
@@ -153,7 +163,7 @@ describe('Lecture', () => {
             .then(() => {
                 expect(importSpy).toHaveBeenCalledOnce();
                 expect(importSpy).toHaveBeenCalledWith(1, 123);
-                expect(lectureComponent.lectures).toBeArrayOfSize(5);
+                expect(lectureComponent.lectures).toBeArrayOfSize(7);
             });
     });
 
@@ -165,7 +175,7 @@ describe('Lecture', () => {
 
         const filteredLectures = lectureComponent.filteredLectures;
         expect(lectureComponent.filteredLectures).toContainAllValues(lectureComponent.lectures);
-        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([1, 2, 3, 4]);
+        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6]);
 
         // Apply all filters
         lectureComponent.toggleFilters([LectureDateFilter.PAST, LectureDateFilter.CURRENT, LectureDateFilter.FUTURE, LectureDateFilter.UNSPECIFIED]);
@@ -179,24 +189,28 @@ describe('Lecture', () => {
     it('should filter for past lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.PAST]);
-        expect(lectureComponent.filteredLectures).toContainEqual(lecture1);
+        expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
+        expect(lectureComponent.filteredLectures).toContainEqual(pastLecture);
     });
 
     it('should filter for current lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.CURRENT]);
-        expect(lectureComponent.filteredLectures).toContainEqual(lecture2);
+        expect(lectureComponent.filteredLectures).toBeArrayOfSize(3);
+        expect(lectureComponent.filteredLectures).toContainAllValues([currentLecture, currentLecture2, currentLecture3]);
     });
 
     it('should filter for past lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.FUTURE]);
-        expect(lectureComponent.filteredLectures).toContainEqual(lecture3);
+        expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
+        expect(lectureComponent.filteredLectures).toContainEqual(futureLecture);
     });
 
     it('should filter for lectures without dates', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.UNSPECIFIED]);
-        expect(lectureComponent.filteredLectures).toContain(lecture4);
+        expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
+        expect(lectureComponent.filteredLectures).toContain(unspecifiedLecture);
     });
 });

@@ -134,14 +134,14 @@ export class LectureComponent implements OnInit {
             this.filteredLectures = this.lectures;
         } else {
             // Get the current system time
-            const currentTime = dayjs();
+            const now = dayjs();
             // Initialize empty arrays for filtered Lectures
             let filteredLectures: Array<Lecture> = [];
 
             // update filteredLectures based on the selected filter option checkboxes
-            const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(dayjs(currentTime)));
-            const currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(dayjs(currentTime)) && lecture.endDate?.isSameOrAfter(dayjs(currentTime)));
-            const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(dayjs(currentTime)));
+            const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(now));
+            const currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(now) || lecture.endDate?.isSameOrAfter(now));
+            const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(now));
             const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
 
             filteredLectures = this.activeFilters.has(LectureDateFilter.PAST) ? filteredLectures.concat(pastLectures) : filteredLectures;
