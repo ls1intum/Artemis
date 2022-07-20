@@ -47,12 +47,12 @@ public class ProgrammingExerciseGitDiffReportResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the diff report
      */
     @GetMapping("programming-exercises/{exerciseId}/diff-report")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExerciseGitDiffReport> gitDiffReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get a ProgrammingExerciseGitDiffReport for exercise {}", exerciseId);
 
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var report = gitDiffReportService.getReportOfExercise(exercise);
 
@@ -67,12 +67,12 @@ public class ProgrammingExerciseGitDiffReportResource {
      * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the full diff report,
      */
     @GetMapping("programming-exercises/{exerciseId}/full-diff-report")
-    @PreAuthorize("hasRole('EDITOR')")
+    @PreAuthorize("hasRole('TA')")
     public ResponseEntity<ProgrammingExerciseFullGitDiffReportDTO> getFullGitDiffReport(@PathVariable Long exerciseId) {
         log.debug("REST request to get a ProgrammingExerciseFullGitDiffReport for exercise {}", exerciseId);
 
         var exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var fullReport = gitDiffReportService.getFullReport(exercise);
         if (fullReport == null) {

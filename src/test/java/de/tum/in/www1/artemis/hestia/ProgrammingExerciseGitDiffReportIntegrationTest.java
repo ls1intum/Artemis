@@ -65,7 +65,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.FORBIDDEN, ProgrammingExerciseGitDiffReport.class);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/diff-report", HttpStatus.OK, ProgrammingExerciseGitDiffReport.class);
     }
 
     @Test
@@ -101,7 +101,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
-        request.get("/api/programming-exercises/" + exercise.getId() + "/full-diff-report", HttpStatus.FORBIDDEN, ProgrammingExerciseFullGitDiffReportDTO.class);
+        request.get("/api/programming-exercises/" + exercise.getId() + "/full-diff-report", HttpStatus.OK, ProgrammingExerciseFullGitDiffReportDTO.class);
     }
 
     @Test
