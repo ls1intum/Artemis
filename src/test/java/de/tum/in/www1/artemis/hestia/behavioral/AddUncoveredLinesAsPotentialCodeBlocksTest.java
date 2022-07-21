@@ -12,14 +12,14 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.AddUncoveredLinesAsPotentialCodeBlocks;
 
-public class AddUncoveredLinesAsPotentialCodeBlocksTest {
+class AddUncoveredLinesAsPotentialCodeBlocksTest {
 
     private AddUncoveredLinesAsPotentialCodeBlocks addPotentialCodeBlocks;
 
     private GroupedFile groupedFile;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -31,12 +31,12 @@ public class AddUncoveredLinesAsPotentialCodeBlocksTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         assertThat(addPotentialCodeBlocks.executeCondition()).isFalse();
     }
 
     @Test
-    public void testAddNoBlocks() {
+    void testAddNoBlocks() {
         groupedFile.setFileContent("""
                 A
                 B
@@ -52,7 +52,7 @@ public class AddUncoveredLinesAsPotentialCodeBlocksTest {
     }
 
     @Test
-    public void testAddPrefix() {
+    void testAddPrefix() {
         groupedFile.setFileContent("""
 
 
@@ -69,7 +69,7 @@ public class AddUncoveredLinesAsPotentialCodeBlocksTest {
     }
 
     @Test
-    public void testAddPostfix() {
+    void testAddPostfix() {
         groupedFile.setFileContent("""
                 A
                 B
@@ -87,7 +87,7 @@ public class AddUncoveredLinesAsPotentialCodeBlocksTest {
     }
 
     @Test
-    public void testIncludesCurlyBraces() {
+    void testIncludesCurlyBraces() {
         groupedFile.setFileContent("""
                 A
                 }
@@ -104,7 +104,7 @@ public class AddUncoveredLinesAsPotentialCodeBlocksTest {
     }
 
     @Test
-    public void testIncludesElseStatements() {
+    void testIncludesElseStatements() {
         groupedFile.setFileContent("""
                 else
                 } else {

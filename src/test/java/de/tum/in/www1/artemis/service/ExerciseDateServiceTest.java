@@ -51,7 +51,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void latestDueDateShouldNotExistIfNoExerciseDueDate() {
+    void latestDueDateShouldNotExistIfNoExerciseDueDate() {
         exercise.setDueDate(null);
         exercise = exerciseRepository.save(exercise);
 
@@ -65,7 +65,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void latestDueDateShouldBeExerciseDueDateIfNoIndividualDueDate() {
+    void latestDueDateShouldBeExerciseDueDateIfNoIndividualDueDate() {
         final var dueDate = ZonedDateTime.now().plusHours(4);
         exercise.setDueDate(dueDate);
         exercise = exerciseRepository.save(exercise);
@@ -76,7 +76,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void latestDueDateShouldBeLatestIndividualDueDate() {
+    void latestDueDateShouldBeLatestIndividualDueDate() {
         final var now = ZonedDateTime.now();
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
@@ -89,7 +89,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void participationDueDateShouldBeExerciseDueDateIfNoIndividualDueDate() {
+    void participationDueDateShouldBeExerciseDueDateIfNoIndividualDueDate() {
         final var now = ZonedDateTime.now();
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
@@ -99,7 +99,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void participationDueDateShouldBeIndividualDueDate() {
+    void participationDueDateShouldBeIndividualDueDate() {
         final var now = ZonedDateTime.now();
         exercise.setDueDate(now.plusHours(4));
         exercise = exerciseRepository.save(exercise);
@@ -112,7 +112,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void nowShouldBeBeforeADueDateInTheFuture() {
+    void nowShouldBeBeforeADueDateInTheFuture() {
         final var now = ZonedDateTime.now();
         var participation = exercise.getStudentParticipations().stream().findAny().get();
         participation.setIndividualDueDate(now.plusHours(20));
@@ -123,7 +123,7 @@ class ExerciseDateServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     }
 
     @Test
-    public void itShouldAlwaysBeBeforeANonExistingDueDate() {
+    void itShouldAlwaysBeBeforeANonExistingDueDate() {
         exercise.setDueDate(null);
         exercise = exerciseRepository.save(exercise);
         var participation = exercise.getStudentParticipations().stream().findAny().get();

@@ -16,22 +16,22 @@ import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
  *
  * @see ClientForwardResource
  */
-public class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ClientForwardTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testManagementEndpoint() throws Exception {
+    void testManagementEndpoint() throws Exception {
         request.getList("/management/logs", HttpStatus.OK, LoggerVM.class);
     }
 
     @Test
-    public void testClientEndpoint() throws Exception {
+    void testClientEndpoint() throws Exception {
         ResultActions perform = request.getMvc().perform(get("/non-existent-mapping"));
         perform.andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 
     @Test
-    public void testNestedClientEndpoint() throws Exception {
+    void testNestedClientEndpoint() throws Exception {
         request.getMvc().perform(get("/admin/user-management")).andExpect(status().isOk()).andExpect(forwardedUrl("/"));
     }
 

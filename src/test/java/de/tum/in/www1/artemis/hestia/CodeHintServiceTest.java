@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CodeHintService codeHintService;
@@ -48,14 +48,14 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
         database.addCourseWithOneProgrammingExercise();
         exercise = programmingExerciseRepository.findAll().get(0);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -107,7 +107,7 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGenerationWithNoSolutionEntry() {
+    void testGenerationWithNoSolutionEntry() {
         var testCase = addTestCaseToExercise("TestCase1");
         addTaskToExercise("Task1", Arrays.asList(testCase));
 
@@ -117,7 +117,7 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGenerationWithOneSolutionEntry() {
+    void testGenerationWithOneSolutionEntry() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
         var task = addTaskToExercise("Task1", Arrays.asList(testCase));
@@ -130,7 +130,7 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGenerationTwiceShouldDeleteOldHint() {
+    void testGenerationTwiceShouldDeleteOldHint() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
         var task = addTaskToExercise("Task1", Arrays.asList(testCase));
@@ -150,7 +150,7 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGenerationTwiceShouldNotDeleteOldHint() {
+    void testGenerationTwiceShouldNotDeleteOldHint() {
         var testCase = addTestCaseToExercise("TestCase1");
         var solutionEntry = addSolutionEntryToTestCase(testCase);
         var task = addTaskToExercise("Task1", Arrays.asList(testCase));

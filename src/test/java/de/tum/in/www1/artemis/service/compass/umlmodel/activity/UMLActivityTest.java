@@ -14,7 +14,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
 @ExtendWith(MockitoExtension.class)
-public class UMLActivityTest {
+class UMLActivityTest {
 
     private UMLActivity activity;
 
