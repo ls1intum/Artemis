@@ -6,7 +6,7 @@
         <ng-container *ngIf="!busy">
             <div class="row mt-4">
                 <h4 class="col-12" jhiTranslate="artemisApp.assessment.detail.feedback">Feedback</h4>
-                <div *ngIf="!unreferencedFeedback || unreferencedFeedback.length == 0" class="col-12 col-lg-8 col-xl-6">
+                <div *ngIf="!unreferencedFeedback || unreferencedFeedback.length === 0" class="col-12 col-lg-8 col-xl-6">
                     <div class="alert alert-secondary text-center" role="alert">
                         <p>{{ 'artemisApp.fileUploadAssessment.assessInstructionWithDropOption' | artemisTranslate }}</p>
                     </div>
