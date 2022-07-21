@@ -120,7 +120,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateSolutionEntriesOnSaving() throws Exception {
+    void updateSolutionEntriesOnSaving() throws Exception {
         addCodeHints();
         var solutionEntries = codeHint.getSolutionEntries().stream().toList();
 
@@ -152,7 +152,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetAllCodeHints() throws Exception {
+    void testGetAllCodeHints() throws Exception {
         addCodeHints();
 
         var actualCodeHints = request.getList("/api/programming-exercises/" + exercise.getId() + "/code-hints", HttpStatus.OK, CodeHint.class);
