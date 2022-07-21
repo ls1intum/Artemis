@@ -75,6 +75,7 @@ public class BehavioralTestCaseService {
         if (gitDiffReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Git-Diff Report has not been generated");
         }
+
         var coverageReport = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise).orElse(null);
         if (coverageReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Testwise coverage report has not been generated");
@@ -121,6 +122,7 @@ public class BehavioralTestCaseService {
         // Create knowledge sources (Turning the formatter off to make the code more readable)
         // @formatter:off
         List<BehavioralKnowledgeSource> behavioralKnowledgeSources = Arrays.asList(
+            new DropRemovedGitDiffEntries(blackboard),
             new GroupGitDiffAndCoverageEntriesByFilePathAndTestCase(blackboard),
             new ExtractCoveredLines(blackboard),
             new ExtractChangedLines(blackboard),

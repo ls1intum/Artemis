@@ -18,7 +18,7 @@ import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AttachmentRepository attachmentRepository;
@@ -39,7 +39,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     private AttachmentUnit attachmentUnit;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
         this.attachment = ModelFactory.generateAttachment(null);
         this.attachment.setLink("files/temp/example.txt");
@@ -60,25 +60,25 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
+    void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
@@ -92,13 +92,13 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void createAttachmentUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void createAttachmentUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
+    void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
         persistAttachmentUnitWithLecture();
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
@@ -114,7 +114,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
+    void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistAttachmentUnitWithLecture();
 
         // Add a second lecture unit
@@ -141,7 +141,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
+    void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         persistAttachmentUnitWithLecture();
         this.attachment.setAttachmentUnit(this.attachmentUnit);
         this.attachment = attachmentRepository.save(attachment);
@@ -152,7 +152,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateAttachmentUnit_noId_shouldReturnBadRequest() throws Exception {
+    void updateAttachmentUnit_noId_shouldReturnBadRequest() throws Exception {
         persistAttachmentUnitWithLecture();
 
         this.attachment.setAttachmentUnit(this.attachmentUnit);
@@ -165,7 +165,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
+    void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
         persistAttachmentUnitWithLecture();
 
         this.attachmentUnit.setAttachment(this.attachment);
@@ -184,7 +184,7 @@ public class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
+    void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();

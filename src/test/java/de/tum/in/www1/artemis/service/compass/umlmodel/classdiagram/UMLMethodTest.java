@@ -13,7 +13,7 @@ import org.mockito.MockitoAnnotations;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-public class UMLMethodTest {
+class UMLMethodTest {
 
     private UMLMethod method;
 

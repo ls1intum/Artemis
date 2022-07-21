@@ -32,6 +32,7 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/user-experience
    user/grading
    user/courses/customizable
+   user/scaling
 
 
 .. toctree::
