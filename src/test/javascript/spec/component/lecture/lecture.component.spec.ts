@@ -121,11 +121,10 @@ describe('Lecture', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    it('should fetch lectures when initialized', () => {
         const findAllSpy = jest.spyOn(lectureService, 'findAllByCourseId');
 
         lectureComponentFixture.detectChanges();
-        expect(lectureComponent).not.toBe(null);
 
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
@@ -200,7 +199,7 @@ describe('Lecture', () => {
         expect(lectureComponent.filteredLectures).toContainAllValues([currentLecture, currentLecture2, currentLecture3]);
     });
 
-    it('should filter for past lectures', () => {
+    it('should filter for future lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.FUTURE]);
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
@@ -211,6 +210,6 @@ describe('Lecture', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.UNSPECIFIED]);
         expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
-        expect(lectureComponent.filteredLectures).toContain(unspecifiedLecture);
+        expect(lectureComponent.filteredLectures).toContainEqual(unspecifiedLecture);
     });
 });
