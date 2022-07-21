@@ -559,7 +559,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getSubmittedComplaintsForProgrammingExercise() throws Exception {
+    void getSubmittedComplaintsForProgrammingExercise() throws Exception {
         var programmingExercise = database.addProgrammingExerciseToCourse(course, false);
         var programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
 
@@ -583,7 +583,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getSubmittedComplaintsForFileUploadExercise() throws Exception {
+    void getSubmittedComplaintsForFileUploadExercise() throws Exception {
         var fileUploadExercise = (FileUploadExercise) course.getExercises().stream().filter(e -> e instanceof FileUploadExercise).findAny().orElseThrow();
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
 
