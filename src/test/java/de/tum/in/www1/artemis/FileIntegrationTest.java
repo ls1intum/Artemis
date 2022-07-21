@@ -217,13 +217,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         fileUploadSubmission.setFilePath(filePath);
 
         // invalid exercise id
-        request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + fileUploadSubmission.getId() + "/file.png/access-token", HttpStatus.BAD_REQUEST,
+        request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + fileUploadSubmission.getId() + "/file.png/access-token", HttpStatus.NOT_FOUND,
                 String.class);
         // invalid submission id
-        request.get("/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + 999999999 + "/file.png/access-token", HttpStatus.BAD_REQUEST,
-                String.class);
+        request.get("/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + 999999999 + "/file.png/access-token", HttpStatus.NOT_FOUND, String.class);
         // invalid exercise and submission id
-        request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + 999999999 + "/file.png/access-token", HttpStatus.BAD_REQUEST, String.class);
+        request.get("/api/files/file-upload-exercises/" + 999999999 + "/submissions/" + 999999999 + "/file.png/access-token", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -319,8 +318,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetLectureAttachment_InvalidLectureId() throws Exception {
         String invalidLectureAttachmentPath = "/api/files/attachments/lecture/999999999/testfile.pdf";
-        request.get(invalidLectureAttachmentPath + "/access-token", HttpStatus.BAD_REQUEST, String.class);
-        request.get(invalidLectureAttachmentPath + "?access_token=random_non_valid_token", HttpStatus.BAD_REQUEST, String.class);
+        request.get(invalidLectureAttachmentPath + "/access-token", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test
@@ -440,37 +438,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAttachmentUnit_InvalidAttachmentUnitId() throws Exception {
         String invalidAttachmentUnitPath = "/api/files/attachments/attachment-unit/999999999/testfile.pdf";
-        request.get(invalidAttachmentUnitPath + "/access-token", HttpStatus.BAD_REQUEST, String.class);
-        request.get(invalidAttachmentUnitPath + "?access_token=random_non_valid_token", HttpStatus.BAD_REQUEST, String.class);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetLectureAttachmentUnitAttachment() throws Exception {
-        AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
-        String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
-        String requestPath = "/api/files/attachments/attachment-unit/" + attachmentUnit.getId() + "/" + filename;
-
-        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("access_token", accessToken);
-
-        File receivedFile = request.getFile(requestPath, HttpStatus.OK, params);
-        assertThat(receivedFile.getName()).isEqualTo(filename);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetLectureAttachmentUnitAttachment_badRequest() throws Exception {
-        AttachmentUnit attachmentUnit = createLectureWithAttachmentUnit();
-        String filename = new File(attachmentUnit.getAttachment().getLink()).getName();
-        String requestPath = "/api/files/attachments/attachment-unit/" + 9 + "/" + filename; // id 9 does not exist
-
-        String accessToken = request.get("/api/files/attachments/access-token/" + filename, HttpStatus.OK, String.class);
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("access_token", accessToken);
-
-        request.getFile(requestPath, HttpStatus.BAD_REQUEST, params);
+        request.get(invalidAttachmentUnitPath + "/access-token", HttpStatus.NOT_FOUND, String.class);
     }
 
     @Test

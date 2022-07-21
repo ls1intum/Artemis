@@ -43,6 +43,7 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 
@@ -253,12 +254,9 @@ public class FileResource {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
 
-        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
-        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (optionalSubmission.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        return buildFileResponse(FileUploadSubmission.buildFilePath(optionalFileUploadExercise.get().getId(), optionalSubmission.get().getId()), filename);
+        FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
+        FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+        return buildFileResponse(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), filename);
     }
 
     /**
@@ -289,14 +287,8 @@ public class FileResource {
             @PathVariable String filename) {
         log.debug("REST request to get an access_token for a file upload exercise submission with exerciseId: {} and submissionId {}", exerciseId, submissionId);
 
-        // todo findbyidelsethrow
-        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
-        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (optionalSubmission.isEmpty() || optionalFileUploadExercise.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
-        FileUploadSubmission submission = optionalSubmission.get();
+        FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
+        FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
 
         // check if the participation is a StudentParticipation before the following cast
         if (!(submission.getParticipation() instanceof StudentParticipation)) {
@@ -310,7 +302,7 @@ public class FileResource {
 
         User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
         // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
-        if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(optionalFileUploadExercise)) {
+        if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
 
@@ -358,15 +350,10 @@ public class FileResource {
         log.debug("REST request to get an access-token for lecture attachment file : {}", filename);
 
         List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
-        Optional<Attachment> optionalLectureAttachment = lectureAttachments.stream().filter(attachment -> filename.equals(Path.of(attachment.getLink()).getFileName().toString()))
-                .findAny();
-
-        if (optionalLectureAttachment.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
+                .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
 
         // get the course for a lecture attachment
-        Attachment attachment = optionalLectureAttachment.get();
         Lecture lecture = attachment.getLecture();
         Course course = lecture.getCourse();
 
@@ -397,11 +384,7 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
-        Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
-        if (optionalLecture.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-
+        // required claims to access this resource
         Claims requiredClaims = Jwts.claims();
         requiredClaims.put(TokenProvider.LECTURE_ID_KEY, lectureId.intValue());
         requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
@@ -411,7 +394,9 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
+        // if the token is valid and includes the required claims, fetch the lecture and build the response
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
     }
 
     /**
@@ -470,13 +455,9 @@ public class FileResource {
     public ResponseEntity<String> getTemporaryAccessTokenForAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
         log.debug("REST request to get an access-token for attachment unit file : {}", filename);
 
-        Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
-        if (optionalAttachmentUnit.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
 
         // get the course for a lecture's attachment unit
-        AttachmentUnit attachmentUnit = optionalAttachmentUnit.get();
         Attachment attachment = attachmentUnit.getAttachment();
         Course course = attachmentUnit.getLecture().getCourse();
 
@@ -508,11 +489,8 @@ public class FileResource {
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
-        Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
-        if (optionalAttachmentUnit.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
 
+        // required claims to access this resource
         Claims requiredClaims = Jwts.claims();
         requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnitId.intValue());
         requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
@@ -522,7 +500,9 @@ public class FileResource {
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(optionalAttachmentUnit.get().getId())).toString(), filename);
+        // if the token is valid and includes the required claims, fetch the attachment unit and build the response
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
     }
 
     /**

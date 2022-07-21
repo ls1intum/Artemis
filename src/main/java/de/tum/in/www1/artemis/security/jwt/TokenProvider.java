@@ -159,7 +159,7 @@ public class TokenProvider {
      * @param requiredClaims The claims that should be included in the token
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthorityAndFile(String authToken, Claims requiredClaims) {
+    public boolean validateTokenForAuthorityAndFile(String authToken, Map<String, Object> requiredClaims) {
         if (!validateJwsToken(authToken) || requiredClaims.isEmpty()) {
             return false;
         }
@@ -167,13 +167,7 @@ public class TokenProvider {
         Claims tokenClaims = parseClaims(authToken);
 
         for (var requiredClaim : requiredClaims.entrySet()) {
-            try {
-                if (!tokenClaims.get(requiredClaim.getKey()).equals(requiredClaim.getValue())) {
-                    return false;
-                }
-            }
-            catch (NullPointerException e) {
-                log.warn("Received a null value as key of requiredClaim in validateTokenForAuthorityAndFile: ", e);
+            if (!Objects.equals(tokenClaims.get(requiredClaim.getKey()), requiredClaim.getValue())) {
                 return false;
             }
         }
