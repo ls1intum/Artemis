@@ -14,7 +14,7 @@ import org.mockito.MockitoAnnotations;
 import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 
-public class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
+class UMLActivityDiagramTest extends AbstractUMLDiagramTest {
 
     private UMLActivityDiagram activityDiagram;
 

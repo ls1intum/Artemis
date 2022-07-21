@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.util.ConfigUtil;
 import de.tum.in.www1.artemis.web.rest.LtiResource;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
-public class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
