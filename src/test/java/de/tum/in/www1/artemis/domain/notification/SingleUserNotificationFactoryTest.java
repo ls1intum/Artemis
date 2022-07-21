@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 
-public class SingleUserNotificationFactoryTest {
+class SingleUserNotificationFactoryTest {
 
     private static Lecture lecture;
 
@@ -80,7 +80,7 @@ public class SingleUserNotificationFactoryTest {
      * sets up all needed mocks and their wanted behavior once for all test cases.
      */
     @BeforeAll
-    public static void setUp() {
+    static void setUp() {
         course = new Course();
         course.setId(COURSE_ID);
 
@@ -165,7 +165,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate from a new reply for an exercise post.
      */
     @Test
-    public void createNotification_withNotificationType_NewReplyForExercisePost() {
+    void createNotification_withNotificationType_NewReplyForExercisePost() {
         notificationType = NEW_REPLY_FOR_EXERCISE_POST;
         expectedTitle = NEW_REPLY_FOR_EXERCISE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
@@ -179,7 +179,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate from a new reply for a lecture post.
      */
     @Test
-    public void createNotification_withNotificationType_NewReplyForLecturePost() {
+    void createNotification_withNotificationType_NewReplyForLecturePost() {
         notificationType = NEW_REPLY_FOR_LECTURE_POST;
         expectedTitle = NEW_REPLY_FOR_LECTURE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
@@ -193,7 +193,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate from a new reply for a course post.
      */
     @Test
-    public void createNotification_withNotificationType_NewReplyForCoursePost() {
+    void createNotification_withNotificationType_NewReplyForCoursePost() {
         notificationType = NEW_REPLY_FOR_COURSE_POST;
         expectedTitle = NEW_REPLY_FOR_COURSE_POST_TITLE;
         expectedText = POST_NOTIFICATION_TEXT;
@@ -209,7 +209,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate when a user successfully submitted a file upload exercise.
      */
     @Test
-    public void createNotification_withNotificationType_FileSubmitSuccessful() {
+    void createNotification_withNotificationType_FileSubmitSuccessful() {
         notificationType = FILE_SUBMISSION_SUCCESSFUL;
         expectedTitle = FILE_SUBMISSION_SUCCESSFUL_TITLE;
         expectedText = "Your file for the exercise \"" + exercise.getTitle() + "\" was successfully submitted.";
@@ -223,7 +223,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate when a user's exercise submission has been assessed.
      */
     @Test
-    public void createNotification_withNotificationType_() {
+    void createNotification_withNotificationType_() {
         notificationType = EXERCISE_SUBMISSION_ASSESSED;
         expectedTitle = EXERCISE_SUBMISSION_ASSESSED_TITLE;
         expectedText = "Your submission for the " + exercise.getExerciseType().getExerciseTypeAsReadableString() + " exercise \"" + exercise.getTitle() + "\" has been assessed.";
@@ -239,7 +239,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate when an instructor sets his statement concerning the plagiarism case for the student.
      */
     @Test
-    public void createNotification_withNotificationType_NewPlagiarismCaseStudent() {
+    void createNotification_withNotificationType_NewPlagiarismCaseStudent() {
         notificationType = NEW_PLAGIARISM_CASE_STUDENT;
         expectedTitle = NEW_PLAGIARISM_CASE_STUDENT_TITLE;
         expectedText = "New plagiarism case concerning the " + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
@@ -254,7 +254,7 @@ public class SingleUserNotificationFactoryTest {
      * I.e. notifications that originate when an instructor sets the verdict of a plagiarism case.
      */
     @Test
-    public void createNotification_withNotificationType_PlagiarismCaseVerdictStudent() {
+    void createNotification_withNotificationType_PlagiarismCaseVerdictStudent() {
         notificationType = PLAGIARISM_CASE_VERDICT_STUDENT;
         expectedTitle = PLAGIARISM_CASE_VERDICT_STUDENT_TITLE;
         expectedText = "Your plagiarism case concerning the " + plagiarismCase.getExercise().getExerciseType().toString().toLowerCase() + " exercise \""
