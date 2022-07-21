@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.validation.InetSocketAddressValidator;
 
-public class InetSocketAddressValidatorTest {
+class InetSocketAddressValidatorTest {
 
     @Test
-    public void shouldAllowCorrectAddress() {
+    void shouldAllowCorrectAddress() {
         assertThat(InetSocketAddressValidator.getValidAddress("localhost:8080")).isPresent();
         assertThat(InetSocketAddressValidator.getValidAddress("127.0.0.1:8080")).isPresent();
         assertThat(InetSocketAddressValidator.getValidAddress("[::1]:8080")).isPresent();
@@ -17,7 +17,7 @@ public class InetSocketAddressValidatorTest {
     }
 
     @Test
-    public void shouldDenyIncorrectAddress() {
+    void shouldDenyIncorrectAddress() {
         assertThat(InetSocketAddressValidator.getValidAddress("localhost:8080A")).isEmpty();
         assertThat(InetSocketAddressValidator.getValidAddress("A127.0.0.1:8080")).isEmpty();
         assertThat(InetSocketAddressValidator.getValidAddress("A[::1]:8080")).isEmpty();

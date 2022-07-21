@@ -13,20 +13,20 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 
-public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private FeatureToggleService featureToggleService;
 
     @AfterEach
-    public void checkReset() {
+    void checkReset() {
         // Verify that the test has reset the state
         // Must be extended if additional features are added
         assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
     }
 
     @Test
-    public void testSetFeaturesEnabled() {
+    void testSetFeaturesEnabled() {
         Map<Feature, Boolean> featureStates = new HashMap<>();
         featureStates.put(Feature.ProgrammingExercises, true);
         featureToggleService.updateFeatureToggles(featureStates);
@@ -34,7 +34,7 @@ public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    public void testSetFeaturesDisabled() {
+    void testSetFeaturesDisabled() {
         assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
 
         Map<Feature, Boolean> featureStates = new HashMap<>();
@@ -47,7 +47,7 @@ public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    public void testEnableDisableFeature() {
+    void testEnableDisableFeature() {
         assertTrue(featureToggleService.isFeatureEnabled(Feature.ProgrammingExercises));
 
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
@@ -58,7 +58,7 @@ public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    public void testShouldNotEnableTwice() {
+    void testShouldNotEnableTwice() {
         assertEquals(Feature.values().length, featureToggleService.enabledFeatures().size());
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
 
@@ -67,7 +67,7 @@ public class FeatureToggleServiceTest extends AbstractSpringIntegrationBambooBit
     }
 
     @Test
-    public void testShouldNotDisableTwice() {
+    void testShouldNotDisableTwice() {
         featureToggleService.disableFeature(Feature.ProgrammingExercises);
 
         assertEquals(1, featureToggleService.disabledFeatures().size());

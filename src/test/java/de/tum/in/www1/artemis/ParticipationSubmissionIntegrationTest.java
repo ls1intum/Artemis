@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
-public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private SubmissionRepository submissionRepository;
@@ -26,20 +26,20 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
     private TextExercise textExercise;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(2, 2, 0, 2);
         Course course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteSubmissionOfParticipation() throws Exception {
+    void deleteSubmissionOfParticipation() throws Exception {
         Submission submissionWithResult = database.addSubmission(textExercise, new TextSubmission(), "student1");
         submissionWithResult = database.addResultToSubmission(submissionWithResult, null);
         Long participationId = submissionWithResult.getParticipation().getId();
@@ -61,19 +61,19 @@ public class ParticipationSubmissionIntegrationTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void deleteParticipation_forbidden_student() throws Exception {
+    void deleteParticipation_forbidden_student() throws Exception {
         request.delete("/api/submissions/" + 1, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void deleteParticipation_forbidden_tutor() throws Exception {
+    void deleteParticipation_forbidden_tutor() throws Exception {
         request.delete("/api/submissions/" + 1, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteParticipation_notFound() throws Exception {
+    void deleteParticipation_notFound() throws Exception {
         request.delete("/api/submissions/" + 1, HttpStatus.NOT_FOUND);
     }
 }
