@@ -118,7 +118,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
-     * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
+     * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date

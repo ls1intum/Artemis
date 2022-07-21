@@ -432,7 +432,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
