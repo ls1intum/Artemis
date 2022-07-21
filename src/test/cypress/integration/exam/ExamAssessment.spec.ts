@@ -46,7 +46,7 @@ describe('Exam assessment', () => {
         cy.login(admin);
         courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id!, artemis.users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course, artemis.users.getStudentOne());
             courseManagementRequests.addTutorToCourse(course, artemis.users.getTutor());
         });
     });

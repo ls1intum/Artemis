@@ -137,7 +137,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         final List<ProgrammingExercise> programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
-        log.info("Update Gitlab permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Gitlab permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
 
         final List<User> allUsers = userRepository.findAllInGroupWithAuthorities(oldInstructorGroup);
@@ -348,7 +348,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         }
 
         List<ProgrammingExercise> exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Gitlab permissions for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
         for (var exercise : exercises) {
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -380,7 +380,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
      */
     private void addUserToGroup(String groupName, Long gitlabUserId, AccessLevel accessLevel) throws GitLabException {
         try {
-            log.info("Add member " + gitlabUserId + " to Gitlab group " + groupName);
+            log.info("Add member {} to Gitlab group {}", gitlabUserId, groupName);
             gitlabApi.getGroupApi().addMember(groupName, gitlabUserId, accessLevel);
         }
         catch (GitLabApiException e) {
@@ -410,7 +410,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
 
         // Gitlab groups are identified by the project key of the programming exercise
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groupsToRemove);
-        log.info("Update Gitlab permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Gitlab permissions for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         for (var exercise : exercises) {
             // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
             Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
@@ -467,7 +467,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
         catch (GitLabApiException ex) {
             // If user membership to group is missing on Gitlab, ignore the exception.
             if (ex.getHttpStatus() != 404) {
-                log.error("Gitlab Exception when removing a user " + gitlabUserId + " to a group " + group, ex);
+                log.error("Gitlab Exception when removing a user {} to a group {}", gitlabUserId, group, ex);
                 throw ex;
             }
         }
@@ -518,7 +518,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
             generateVersionControlAccessTokenIfNecessary(gitlabUser, user);
         }
         catch (GitLabApiException e) {
-            log.error("Could not generate a Gitlab access token for user " + user.getLogin(), e);
+            log.error("Could not generate a Gitlab access token for user {}", user.getLogin(), e);
         }
     }
 
@@ -594,7 +594,7 @@ public class GitLabUserManagementService implements VcsUserManagementService {
                     GitLabPersonalAccessTokenResponseDTO.class);
             GitLabPersonalAccessTokenResponseDTO responseBody = response.getBody();
             if (responseBody == null || responseBody.getToken() == null) {
-                log.error("Could not create Gitlab personal access token for user with id " + userId + ", response is null");
+                log.error("Could not create Gitlab personal access token for user with id {}, response is null", userId);
                 throw new GitLabException("Error while creating personal access token");
             }
             return responseBody.getToken();

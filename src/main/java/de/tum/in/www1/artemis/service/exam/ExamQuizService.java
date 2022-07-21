@@ -71,11 +71,12 @@ public class ExamQuizService {
     /**
      * This method is intended to be called after a user submits a test run. We calculate the achieved score in the quiz exercises immediately and attach a result.
      * Note: We do not insert the result of this test run quiz participation into the quiz statistics.
-     * @param testRun The test run containing the users participations in all exam exercises
+     * @param studentExam The test run or test exam containing the users participations in all exam exercises
      */
-    public void evaluateQuizParticipationsForTestRun(StudentExam testRun) {
-        final var participations = testRun.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream().filter(StudentParticipation::isTestRun)
-                .filter(participation -> participation.getExercise() instanceof QuizExercise)).collect(Collectors.toSet());
+    public void evaluateQuizParticipationsForTestRunAndTestExam(StudentExam studentExam) {
+        final var participations = studentExam.getExercises().stream()
+                .flatMap(exercise -> exercise.getStudentParticipations().stream().filter(participation -> participation.getExercise() instanceof QuizExercise))
+                .collect(Collectors.toSet());
         for (final var participation : participations) {
             var quizExercise = (QuizExercise) participation.getExercise();
             final var optionalExistingSubmission = participation.findLatestSubmission();
@@ -96,6 +97,9 @@ public class ExamQuizService {
                     result.evaluateQuizSubmission();
                     // remove submission to follow save order for ordered collections
                     result.setSubmission(null);
+                    if (studentExam.getExam().isTestExam()) {
+                        result.rated(true);
+                    }
                     result = resultRepository.save(result);
                     participation.setResults(Set.of(result));
                     studentParticipationRepository.save(participation);
@@ -111,7 +115,15 @@ public class ExamQuizService {
                     // prevent a lazy exception in the evaluateQuizSubmission method
                     result.setParticipation(participation);
                     result.evaluateQuizSubmission();
+                    if (studentExam.getExam().isTestExam()) {
+                        result.rated(true);
+                    }
                     resultRepository.save(result);
+                }
+                if (studentExam.getExam().isTestExam()) {
+                    // In case of an test exam, the quiz statistic should also be updated
+                    var quizExercise1 = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExercise.getId());
+                    quizStatisticService.updateStatistics(Set.of(result), quizExercise1);
                 }
                 submissionRepository.save(submission);
             }

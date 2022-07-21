@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.repository;
 
 import static de.tum.in.www1.artemis.config.Constants.FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS;
-import static java.util.stream.Collectors.*;
 
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -79,9 +79,10 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      * @return Map<TextBlockId, Feedback>
      */
     default Map<String, Feedback> getFeedbackForTextExerciseInCluster(TextCluster cluster) {
-        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).collect(toList());
+        final List<String> references = cluster.getBlocks().stream().map(TextBlock::getId).toList();
         final TextExercise exercise = cluster.getExercise();
-        return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream().collect(toMap(Feedback::getReference, feedback -> feedback));
+        return findByReferenceInAndResult_Submission_Participation_Exercise(references, exercise).parallelStream()
+                .collect(Collectors.toMap(Feedback::getReference, feedback -> feedback));
     }
 
     /**
@@ -149,7 +150,8 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
         feedback.setText(testName);
 
         if (!successful) {
-            String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(programmingLanguage, projectType, errorString)).collect(joining("\n\n"));
+            String errorMessageString = testMessages.stream().map(errorString -> processResultErrorMessage(programmingLanguage, projectType, errorString))
+                    .collect(Collectors.joining("\n\n"));
             feedback.setDetailText(errorMessageString);
         }
         else if (!testMessages.isEmpty()) {
@@ -174,7 +176,7 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
      */
     default List<Feedback> findFeedbackByExerciseGradingCriteria(List<GradingCriterion> gradingCriteria) {
         List<Long> gradingInstructionsIds = gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream())
-                .map(GradingInstruction::getId).collect(toList());
+                .map(GradingInstruction::getId).toList();
         return findFeedbackByGradingInstructionIds(gradingInstructionsIds);
     }
 
@@ -211,12 +213,12 @@ public interface FeedbackRepository extends JpaRepository<Feedback, Long> {
 
         // Filter out unneeded Exception classnames
         if (programmingLanguage == ProgrammingLanguage.JAVA || programmingLanguage == ProgrammingLanguage.KOTLIN) {
-            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(joining("\n")).trim();
+            var messageWithoutStackTrace = message.lines().takeWhile(IS_NOT_STACK_TRACE_LINE).collect(Collectors.joining("\n")).trim();
 
             // the feedback from gradle test result is duplicated therefore it's cut in half
             if (projectType != null && projectType.isGradle()) {
                 long numberOfLines = messageWithoutStackTrace.lines().count();
-                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(joining("\n")).trim();
+                messageWithoutStackTrace = messageWithoutStackTrace.lines().skip(numberOfLines / 2).collect(Collectors.joining("\n")).trim();
             }
             return JVM_RESULT_MESSAGE_MATCHER.matcher(messageWithoutStackTrace).replaceAll("");
         }

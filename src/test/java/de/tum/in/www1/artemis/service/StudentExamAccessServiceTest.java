@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
@@ -158,4 +159,12 @@ public class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambo
         assertThrows(AccessForbiddenException.class,
                 () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamWithOtherUser.getId(), users.get(0), false));
     }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    public void testCurrentUserHasCourseAccess() {
+        assertDoesNotThrow(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course1.getId(), users.get(0)));
+        assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course2.getId(), users.get(0)));
+    }
+
 }

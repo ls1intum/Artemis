@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -508,7 +509,7 @@ public class PostService extends PostingService {
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setCourseId(courseId);
-        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toList());
+        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toCollection(ArrayList::new));
 
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));

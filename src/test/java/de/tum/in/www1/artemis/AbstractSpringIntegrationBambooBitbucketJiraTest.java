@@ -149,6 +149,7 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
 
         final var bambooRepositoryAssignment = new BambooRepositoryDTO(296200357L, ASSIGNMENT_REPO_NAME);
         final var bambooRepositoryTests = new BambooRepositoryDTO(296200356L, TEST_REPO_NAME);
+        final var bambooRepositoryAuxRepo = new BambooRepositoryDTO(296200358L, "auxrepo");
         final var bitbucketRepository = new BitbucketRepositoryDTO("id", repoNameInVcs, projectKey, "ssh:cloneUrl");
 
         bambooRequestMockProvider.mockGetBuildPlanRepositoryList(buildPlanKey);
@@ -162,8 +163,11 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         if (ASSIGNMENT_REPO_NAME.equals(repoNameInCI)) {
             bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAssignment, bitbucketRepository, applicationLink, defaultBranch);
         }
-        else {
+        else if (TEST_REPO_NAME.equals(repoNameInCI)) {
             bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryTests, bitbucketRepository, applicationLink, defaultBranch);
+        }
+        else if ("auxrepo".equals(repoNameInCI)) {
+            bambooRequestMockProvider.mockUpdateRepository(buildPlanKey, bambooRepositoryAuxRepo, bitbucketRepository, applicationLink, defaultBranch);
         }
 
         if (!triggeredBy.isEmpty()) {
@@ -216,7 +220,8 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
     }
 
     @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
+            throws Exception {
 
         mockImportRepositories(sourceExercise, exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
@@ -228,6 +233,9 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         else {
             // Mocks for recreating the build plans
             mockBambooBuildPlanCreation(exerciseToBeImported, false);
+        }
+        if (addAuxRepos) {
+            mockUpdatePlanRepository(exerciseToBeImported, "auxrepo", "auxrepo", "auxrepo", List.of());
         }
     }
 

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
@@ -39,7 +38,7 @@ public class ModelClusterFactory {
      *
      * @param modelingSubmissions the submissions to build the clusters from
      * @param exercise the exercise that submissions belong to
-     * @return the clusters that have more than one element in them
+     * @return an unmodifiable list of clusters that have more than one element in them
      */
     public List<ModelCluster> buildClusters(List<ModelingSubmission> modelingSubmissions, ModelingExercise exercise) {
         // The elements that has no other similar elements or are the first of their kind
@@ -62,7 +61,7 @@ public class ModelClusterFactory {
             }
         }
 
-        return clusters.values().stream().filter(modelCluster -> modelCluster.getModelElements().size() > 1).collect(Collectors.toList());
+        return clusters.values().stream().filter(modelCluster -> modelCluster.getModelElements().size() > 1).toList();
     }
 
     /**

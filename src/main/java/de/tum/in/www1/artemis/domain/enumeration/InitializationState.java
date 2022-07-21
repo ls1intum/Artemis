@@ -2,6 +2,9 @@ package de.tum.in.www1.artemis.domain.enumeration;
 
 /**
  * The InitializationState enumeration.
+ * UNINITIALIZED:
+ * INITIALIZED: The participation is set up for submissions from the student
+ * FINISHED: Text- / Modelling: At least one submission is done. Quiz: No further submissions should be possible
  */
 public enum InitializationState {
 
