@@ -174,6 +174,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.init();
                         } else if (this.quizExercise) {
                             this.quizExercise.exerciseGroup = this.exerciseGroup;
+                            this.savedEntity.exerciseGroup = this.exerciseGroup;
                         }
                     });
                 } else {
@@ -182,6 +183,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.init();
                     } else if (this.quizExercise) {
                         this.quizExercise.course = this.course;
+                        this.savedEntity.course = this.course;
                     }
                 }
             });
