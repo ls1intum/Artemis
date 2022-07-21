@@ -103,21 +103,21 @@
                                 />
                                 <input
                                     *ngIf="exercise.type === exerciseType.PROGRAMMING"
-                                    [class]="{ 'form-control': true, 'is-invalid': !validateTitleInput(exercise) }"
+                                    [class]="{ 'form-control': true, 'is-invalid': !validateTitleOfProgrammingExercise(exercise) }"
                                     type="text"
                                     [id]="'exercise-' + exercise.id + '-title'"
                                     [name]="'exercise-' + exercise.id + '-title'"
-                                    [placeholder]="getPlaceholderTitleOfProgrammingExercise(exercise.id!)"
+                                    [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.title"
                                 />
                             </td>
                             <td *ngIf="exercise.type! === exerciseType.PROGRAMMING">
                                 <input
-                                    [ngClass]="{ 'form-control': true, 'is-invalid': !validateShortNameInput(exercise) }"
+                                    [ngClass]="{ 'form-control': true, 'is-invalid': !validateShortNameOfProgrammingExercise(exercise) }"
                                     type="text"
                                     [id]="'programming-exercise-' + exercise.id + '-shortName'"
                                     [name]="'programming-exercise-' + exercise.id + '-shortName'"
-                                    [placeholder]="getPlaceholderShortNameOfProgrammingExercise(exercise.id!)"
+                                    [placeholder]="getBlocklistShortNameOfProgrammingExercise(exercise.id!)"
                                     [(ngModel)]="exercise.shortName"
                                 />
                             </td>

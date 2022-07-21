@@ -16,7 +16,7 @@ export class ExamExerciseImportComponent implements OnInit {
     @Input() importInSameCourse = false;
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
     selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
-    // Map with the title and shortName of the programming exercises to be displayed as a placeholder in case of a rejected import
+    // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server or must be changed because the exam is imported into the same course
     titleAndShortNameOfProgrammingExercises = new Map<number, String[]>();
     // Expose enums to the template
     exerciseType = ExerciseType;
@@ -80,7 +80,7 @@ export class ExamExerciseImportComponent implements OnInit {
     }
 
     /**
-     * Method to update the Map titleAndShortNameOfProgrammingExercises for the import in the same course
+     * Method to initialize the Map titleAndShortNameOfProgrammingExercises for the import
      * Case rejected Import: In the selected exercises, all the (previously) selected exercises are stored. All programming exercises are added to the Map,
      * which functions as a blocklist.
      * Case import in same course: The selected exercises are already initialized and all programming exercises are added to the
@@ -144,7 +144,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * Returns the placeholder title (i.e. the one rejected by the server) for the programming exercise
      * @param exerciseId the corresponding exercise
      */
-    getPlaceholderTitleOfProgrammingExercise(exerciseId: number): String {
+    getBlocklistTitleOfProgrammingExercise(exerciseId: number): String {
         const title = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.first();
         return title ? title! : ``;
     }
@@ -153,7 +153,7 @@ export class ExamExerciseImportComponent implements OnInit {
      * Returns the placeholder shortName (i.e. the one rejected by the server) for the programming exercise
      * @param exerciseId the corresponding exercise
      */
-    getPlaceholderShortNameOfProgrammingExercise(exerciseId: number): String {
+    getBlocklistShortNameOfProgrammingExercise(exerciseId: number): String {
         const shortName = this.titleAndShortNameOfProgrammingExercises.get(exerciseId)?.last();
         return shortName ? shortName! : ``;
     }
@@ -177,19 +177,19 @@ export class ExamExerciseImportComponent implements OnInit {
      * Validates the Title for Programming Exercises based on the user's input
      * @param exercise the exercise to be checked
      */
-    validateTitleInput(exercise: Exercise): boolean {
-        return exercise.title?.length! > 0 && this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getPlaceholderTitleOfProgrammingExercise(exercise.id!);
+    validateTitleOfProgrammingExercise(exercise: Exercise): boolean {
+        return exercise.title?.length! > 0 && this.titleNamePattern.test(exercise.title!) && exercise.title !== this.getBlocklistTitleOfProgrammingExercise(exercise.id!);
     }
 
     /**
      * Validates the Title for Programming Exercises based on the user's input
      * @param exercise the exercise to be checked
      */
-    validateShortNameInput(exercise: Exercise): boolean {
+    validateShortNameOfProgrammingExercise(exercise: Exercise): boolean {
         return (
             exercise.shortName?.length! > 2 &&
             this.shortNamePattern.test(exercise.shortName!) &&
-            exercise.shortName !== this.getPlaceholderShortNameOfProgrammingExercise(exercise.id!)
+            exercise.shortName !== this.getBlocklistShortNameOfProgrammingExercise(exercise.id!)
         );
     }
 
@@ -208,7 +208,7 @@ export class ExamExerciseImportComponent implements OnInit {
                         return false;
                     }
                     if (exercise.type === ExerciseType.PROGRAMMING) {
-                        validConfiguration = this.validateTitleInput(exercise) && this.validateShortNameInput(exercise);
+                        validConfiguration = this.validateTitleOfProgrammingExercise(exercise) && this.validateShortNameOfProgrammingExercise(exercise);
                     } else {
                         validConfiguration = exercise.title?.length! > 0;
                     }
