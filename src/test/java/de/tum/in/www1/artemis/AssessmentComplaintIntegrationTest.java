@@ -19,6 +19,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.domain.enumeration.FeedbackType;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
@@ -71,8 +72,8 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         database.addUsers(2, 2, 0, 1);
 
         // Initialize with 3 max complaints and 7 days max complaint deadline
-        course = database.addCourseWithOneModelingExercise();
-        modelingExercise = (ModelingExercise) course.getExercises().iterator().next();
+        course = database.addCourseWithModelingAndTextAndFileUploadExercise();
+        modelingExercise = (ModelingExercise) course.getExercises().stream().filter(e -> e instanceof ModelingExercise).findAny().orElseThrow();
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
         // complaint.setParticipant(students.get(0));
@@ -159,7 +160,10 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "student1")
     public void submitComplaintAboutModelingAssessment_validDeadline() throws Exception {
-        // Mock object initialized with 2 weeks deadline. One week after result date is fine.
+        // Set deadline for mock course to 2 weeks. Complaint created one week after result date is fine.
+        course.setMaxComplaintTimeDays(14);
+        courseRepository.save(course);
+
         database.updateAssessmentDueDate(modelingExercise.getId(), ZonedDateTime.now().minusWeeks(1));
         database.updateResultCompletionDate(modelingAssessment.getId(), ZonedDateTime.now().minusWeeks(1));
 
@@ -543,14 +547,61 @@ public class AssessmentComplaintIntegrationTest extends AbstractSpringIntegratio
         String coursesUrl = "/api/courses/" + modelingExercise.getCourseViaExerciseGroupOrCourseMember().getId() + "/complaints";
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("complaintType", ComplaintType.COMPLAINT.toString());
-        List<ComplaintResponse> complaintResponsesByCourse = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        List<ComplaintResponse> complaintResponsesByExercise = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponsesByExercise).hasSameSizeAs(complaintResponsesByCourse).hasSize(1);
+        List<Complaint> complaintsByCourse = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
+        List<Complaint> complaintsByExercise = request.getList(exercisesUrl, HttpStatus.OK, Complaint.class, params);
+        assertThat(complaintsByExercise).hasSameSizeAs(complaintsByCourse).hasSize(1);
 
         params.set("complaintType", ComplaintType.MORE_FEEDBACK.toString());
-        complaintResponsesByCourse = request.getList(exercisesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        complaintResponsesByExercise = request.getList(coursesUrl, HttpStatus.OK, ComplaintResponse.class, params);
-        assertThat(complaintResponsesByCourse).hasSameSizeAs(complaintResponsesByExercise).hasSize(2);
+        complaintsByCourse = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
+        complaintsByExercise = request.getList(exercisesUrl, HttpStatus.OK, Complaint.class, params);
+        assertThat(complaintsByCourse).hasSameSizeAs(complaintsByExercise).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getSubmittedComplaintsForProgrammingExercise() throws Exception {
+        var programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+        var programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
+
+        database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1", AssessmentType.MANUAL, false);
+        courseRepository.save(course);
+        database.addComplaintToSubmission(programmingSubmission, "student1", ComplaintType.COMPLAINT);
+        var programmingComplaint = complaintRepo.findByResultId(programmingSubmission.getResultWithComplaint().getId()).orElseThrow();
+        programmingComplaint.setComplaintText("Programming exercise complaint");
+        complaintRepo.save(programmingComplaint);
+
+        String coursesUrl = "/api/courses/" + course.getId() + "/complaints";
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        List<Complaint> complaints = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
+        assertThat(complaints).hasSize(1);
+        Complaint complaintFromServer = complaints.get(0);
+        assertThat(complaintFromServer.getId()).isEqualTo(programmingComplaint.getId());
+        assertThat(complaintFromServer.getComplaintText()).isEqualTo(programmingComplaint.getComplaintText());
+
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    public void getSubmittedComplaintsForFileUploadExercise() throws Exception {
+        var fileUploadExercise = (FileUploadExercise) course.getExercises().stream().filter(e -> e instanceof FileUploadExercise).findAny().orElseThrow();
+        var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+
+        fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");
+        courseRepository.save(course);
+        database.addComplaintToSubmission(fileUploadSubmission, "student1", ComplaintType.COMPLAINT);
+        var fileUploadComplaint = complaintRepo.findByResultId(fileUploadSubmission.getResultWithComplaint().getId()).orElseThrow();
+        fileUploadComplaint.setComplaintText("File upload complaint");
+        complaintRepo.save(fileUploadComplaint);
+
+        String coursesUrl = "/api/courses/" + course.getId() + "/complaints";
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("complaintType", ComplaintType.COMPLAINT.toString());
+        List<Complaint> complaints = request.getList(coursesUrl, HttpStatus.OK, Complaint.class, params);
+        assertThat(complaints).hasSize(1);
+        Complaint complaintFromServer = complaints.get(0);
+        assertThat(complaintFromServer.getId()).isEqualTo(fileUploadComplaint.getId());
+        assertThat(complaintFromServer.getComplaintText()).isEqualTo(fileUploadComplaint.getComplaintText());
     }
 
     @Test
