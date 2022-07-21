@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -52,7 +52,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     private TextExercise textExercise1;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(1, 1, 1, 1);
         course1 = database.addEmptyCourse();
         exam1 = database.addExamWithExerciseGroup(course1, true);
@@ -64,19 +64,19 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
@@ -93,7 +93,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testCreateExerciseGroup_asEditor() throws Exception {
+    void testCreateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setId(55L);
         request.post("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.BAD_REQUEST);
@@ -107,7 +107,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testUpdateExerciseGroup_asEditor() throws Exception {
+    void testUpdateExerciseGroup_asEditor() throws Exception {
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(true, exam1);
         exerciseGroup.setExam(null);
         request.put("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", exerciseGroup, HttpStatus.CONFLICT);
@@ -117,7 +117,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testGetExerciseGroup_asEditor() throws Exception {
+    void testGetExerciseGroup_asEditor() throws Exception {
         ExerciseGroup result = request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK,
                 ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.EDITOR, course1.getId(), exam1.getId(), exerciseGroup1);
@@ -126,7 +126,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testGetExerciseGroupsForExam_asEditor() throws Exception {
+    void testGetExerciseGroupsForExam_asEditor() throws Exception {
         List<ExerciseGroup> result = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups", HttpStatus.OK, ExerciseGroup.class);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForEditorElseThrow(course1.getId(), exam1.getId());
         assertThat(result).hasSize(1);
@@ -137,7 +137,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteExerciseGroup_asInstructor() throws Exception {
+    void testDeleteExerciseGroup_asInstructor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.OK);
         verify(examAccessService, times(1)).checkCourseAndExamAndExerciseGroupAccessElseThrow(Role.INSTRUCTOR, course1.getId(), exam1.getId(), exerciseGroup1);
         assertThat(textExerciseRepository.findById(textExercise1.getId())).isEmpty();
@@ -145,13 +145,13 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testDeleteExerciseGroup_asEditor() throws Exception {
+    void testDeleteExerciseGroup_asEditor() throws Exception {
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/exerciseGroups/" + exerciseGroup1.getId(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
+    void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
         final List<ExerciseGroup> listExpected = targetExam.getExerciseGroups();
@@ -178,7 +178,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
+    void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
         Exam secondExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
@@ -204,7 +204,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
+    void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
         Course course2 = database.addEmptyCourse();
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
 
@@ -237,7 +237,7 @@ public class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExerciseGroup_preCheckFailed() throws Exception {
+    void importExerciseGroup_preCheckFailed() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ModelFactory.generateExerciseGroup(false, exam);
         exam = examRepository.save(exam);

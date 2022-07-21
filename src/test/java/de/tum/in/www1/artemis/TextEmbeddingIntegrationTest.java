@@ -6,10 +6,10 @@ import org.junit.jupiter.api.Test;
 
 import de.tum.in.www1.artemis.domain.TextEmbedding;
 
-public class TextEmbeddingIntegrationTest {
+class TextEmbeddingIntegrationTest {
 
     @Test
-    public void testTextEmbedding() {
+    void testTextEmbedding() {
         var vector = new float[] { 1.5f, 2.5f };
 
         TextEmbedding textEmbedding = new TextEmbedding();
