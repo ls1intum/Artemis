@@ -216,7 +216,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "admin", roles = "ADMIN")
     @ValueSource(booleans = { true, false })
-    public void testUpdateMonitoring(boolean monitoring) throws Exception {
+    void testUpdateMonitoring(boolean monitoring) throws Exception {
         exam.setMonitoring(!monitoring);
         exam = examRepository.save(exam);
 
