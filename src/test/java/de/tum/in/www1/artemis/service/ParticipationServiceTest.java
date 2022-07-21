@@ -83,7 +83,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testStartExerciseWithInitializationDate_newParticipation() {
+    void testStartExerciseWithInitializationDate_newParticipation() {
         Course course = database.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
         Participant participant = database.getUserByLogin("student1");
@@ -100,7 +100,7 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testStartExercise_newParticipation() {
+    void testStartExercise_newParticipation() {
         Course course = database.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
         Participant participant = database.getUserByLogin("student1");

@@ -162,7 +162,7 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCurrentUserHasCourseAccess() {
+    void testCurrentUserHasCourseAccess() {
         assertDoesNotThrow(() -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course1.getId(), users.get(0)));
         assertThrows(AccessForbiddenException.class, () -> studentExamAccessService.checkCourseAccessForStudentElseThrow(course2.getId(), users.get(0)));
     }

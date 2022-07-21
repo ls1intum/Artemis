@@ -151,7 +151,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
+    void importExerciseGroup_successfulWithExercisesIntoSameExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
         final List<ExerciseGroup> listExpected = targetExam.getExerciseGroups();
@@ -178,7 +178,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
+    void importExerciseGroup_successfulIntoDifferentExam() throws Exception {
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
 
         Exam secondExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course1);
@@ -204,7 +204,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
+    void importExerciseGroup_successfulWithImportToOtherCourse() throws Exception {
         Course course2 = database.addEmptyCourse();
         Exam targetExam = database.addExamWithModellingAndTextAndFileUploadAndQuizAndEmptyGroup(course2);
 
@@ -237,7 +237,7 @@ class ExerciseGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importExerciseGroup_preCheckFailed() throws Exception {
+    void importExerciseGroup_preCheckFailed() throws Exception {
         Exam exam = ModelFactory.generateExam(course1);
         ExerciseGroup programmingGroup = ModelFactory.generateExerciseGroup(false, exam);
         exam = examRepository.save(exam);

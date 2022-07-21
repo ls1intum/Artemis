@@ -14,7 +14,7 @@ import org.mockito.Spy;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.activity.UMLActivityDiagram;
 
-public class UMLDiagramTest {
+class UMLDiagramTest {
 
     @Spy
     private UMLDiagram umlDiagram;
