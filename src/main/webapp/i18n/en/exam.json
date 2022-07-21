@@ -262,7 +262,7 @@
             "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
             "startExerciseSuccess": "{{number}} exercises successfully prepared!",
             "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
-            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated. Note that existing participations and submissions will also be removed!",
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",

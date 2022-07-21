@@ -500,6 +500,41 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.OK);
+
+        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).hasSize(0);
+
+        // invoke start exercises
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+
+        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).hasSize(16);
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.OK);
+
+        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).hasSize(0);
+
+        // invoke start exercises
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+
+        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).hasSize(16);
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExams_testExam() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.FORBIDDEN);

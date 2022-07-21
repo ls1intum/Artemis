@@ -734,6 +734,9 @@ public class ExamResource {
 
         examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
+        // Reset existing participations
+        examService.reset(exam.getId());
+
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
