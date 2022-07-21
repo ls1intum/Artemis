@@ -10,6 +10,8 @@ import { SubmissionType } from 'app/entities/submission.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { faAngleDown, faAngleRight, faFolderOpen, faInfoCircle, faPrint } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 
 @Component({
     selector: 'jhi-exam-participation-summary',
@@ -27,8 +29,27 @@ export class ExamParticipationSummaryComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
     readonly SUBMISSION_TYPE_ILLEGAL = SubmissionType.ILLEGAL;
 
+    /**
+     * Current student's exam.
+     */
+    private _studentExam: StudentExam;
+
+    get studentExam(): StudentExam {
+        return this._studentExam;
+    }
+
     @Input()
-    studentExam: StudentExam;
+    set studentExam(studentExam: StudentExam) {
+        this._studentExam = studentExam;
+        if (this.studentExamGradeInfoDTO) {
+            this.studentExamGradeInfoDTO.studentExam = studentExam;
+        }
+    }
+
+    /**
+     * Grade info for current student's exam.
+     */
+    studentExamGradeInfoDTO: StudentExamWithGradeDTO;
 
     @Input()
     instructorView = false;
@@ -38,8 +59,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
     private courseId: number;
 
     isTestRun = false;
+    isTestExam = false;
 
     testRunConduction = false;
+    testExamConduction = false;
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
@@ -50,7 +73,12 @@ export class ExamParticipationSummaryComponent implements OnInit {
     faAngleRight = faAngleRight;
     faAngleDown = faAngleDown;
 
-    constructor(private route: ActivatedRoute, private serverDateService: ArtemisServerDateService, private themeService: ThemeService) {}
+    constructor(
+        private route: ActivatedRoute,
+        private serverDateService: ArtemisServerDateService,
+        private themeService: ThemeService,
+        private examParticipationService: ExamParticipationService,
+    ) {}
 
     /**
      * Initialise the courseId from the current url
@@ -58,9 +86,32 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ngOnInit(): void {
         // flags required to display test runs correctly
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+        this.isTestExam = this.studentExam.exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
+        this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
+        if (!this.studentExam?.exam?.id) {
+            throw new Error('studentExam.exam.id should be present to fetch grade info');
+        }
+        if (!this.studentExam?.user?.id) {
+            throw new Error('studentExam.user.id should be present to fetch grade info');
+        }
+
+        if (this.isExamResultPublished()) {
+            this.examParticipationService
+                .loadStudentExamGradeInfoForSummary(this.courseId, this.studentExam.exam.id, this.studentExam.user.id)
+                .subscribe((studentExamWithGrade: StudentExamWithGradeDTO) => {
+                    studentExamWithGrade.studentExam = this.studentExam;
+                    this.studentExamGradeInfoDTO = studentExamWithGrade;
+                });
+        }
+
         this.setExamWithOnlyIdAndStudentReviewPeriod();
+    }
+
+    private isExamResultPublished() {
+        const exam = this.studentExam.exam;
+        return exam && exam.publishResultsDate && dayjs(exam.publishResultsDate).isBefore(this.serverDateService.now());
     }
 
     getIcon(exerciseType: ExerciseType) {
@@ -72,9 +123,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     get resultsPublished() {
-        if (this.testRunConduction) {
+        if (this.testRunConduction || this.testExamConduction) {
             return false;
-        } else if (this.isTestRun) {
+        } else if (this.isTestRun || this.isTestExam) {
             return true;
         }
         return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
@@ -90,9 +141,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     public generateLink(exercise: Exercise) {
-        if (exercise && exercise.studentParticipations && exercise.studentParticipations.length > 0) {
+        if (exercise?.studentParticipations?.length) {
             return ['/courses', this.courseId, `${exercise.type}-exercises`, exercise.id, 'participate', exercise.studentParticipations[0].id];
         }
+        return undefined;
     }
 
     /**
@@ -100,15 +152,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getSubmissionForExercise(exercise: Exercise) {
-        if (
-            exercise &&
-            exercise.studentParticipations &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].submissions &&
-            exercise.studentParticipations[0].submissions.length > 0
-        ) {
-            return exercise.studentParticipations[0].submissions[0];
-        }
+        return exercise?.studentParticipations?.[0]?.submissions?.[0];
     }
 
     /**
@@ -116,9 +160,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * returns the students' submission for the exercise, undefined if no participation could be found
      */
     getParticipationForExercise(exercise: Exercise) {
-        if (exercise.studentParticipations && exercise.studentParticipations[0]) {
-            return exercise.studentParticipations[0];
-        }
+        return exercise.studentParticipations?.[0] || undefined;
     }
 
     /**
@@ -160,7 +202,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * the review dates are set and the review start date has passed.
      */
     isAfterStudentReviewStart() {
-        if (this.isTestRun) {
+        if (this.isTestRun || this.isTestExam) {
             return true;
         }
         if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
@@ -170,7 +212,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     isBeforeStudentReviewEnd() {
-        if (this.isTestRun) {
+        if (this.isTestRun || this.isTestExam) {
             return true;
         }
         if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {

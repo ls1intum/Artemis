@@ -78,11 +78,11 @@ describe('Exam Navigation Bar Component', () => {
         jest.spyOn(repositoryService, 'getStatus').mockReturnValue(of({ repositoryStatus: CommitState.UNCOMMITTED_CHANGES }));
 
         // When
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(true);
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeTrue();
         comp.ngOnInit();
 
         // Then
-        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toEqual(false);
+        expect(ExamParticipationService.getSubmissionForExercise(exerciseToBeSynced)!.isSynced).toBeFalse();
     });
 
     it('trigger when the exam is about to end', () => {
@@ -164,12 +164,10 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should hand in the exam early', () => {
-        jest.spyOn(comp, 'saveExercise');
         jest.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
 
-        expect(comp.saveExercise).toHaveBeenCalled();
         expect(comp.onExamHandInEarly.emit).toHaveBeenCalled();
     });
 

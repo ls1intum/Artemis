@@ -1,5 +1,7 @@
-Exam Mode
-=========
+.. _exams:
+
+Exams
+=====
 
 Artemis now includes an online exam mode:
 

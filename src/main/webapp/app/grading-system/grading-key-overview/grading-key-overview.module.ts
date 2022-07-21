@@ -6,6 +6,5 @@ import { NgModule } from '@angular/core';
     declarations: [GradingKeyOverviewComponent],
     imports: [ArtemisSharedModule],
     exports: [GradingKeyOverviewComponent],
-    entryComponents: [GradingKeyOverviewComponent],
 })
 export class GradingKeyOverviewModule {}

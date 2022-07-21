@@ -1,9 +1,12 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { getCurrentAmountOfStudentsPerExercises, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, ExamActionType } from 'app/entities/exam-user-activity.model';
+import {
+    convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap,
+    getCurrentExercisePerStudent,
+    insertNgxDataAndColorForExerciseMap,
+} from 'app/exam/monitoring/charts/monitoring-chart';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -17,8 +20,8 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
 
     readonly renderRate = 5;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
-        super(route, examMonitoringWebsocketService, 'exercise-chart', false);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService) {
+        super(route, examActionService, 'exercise-chart', false);
     }
 
     ngOnInit() {
@@ -52,18 +55,9 @@ export class ExerciseChartComponent extends ChartComponent implements OnInit, On
     private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
-        const exerciseAmountMap = getCurrentAmountOfStudentsPerExercises(this.filteredExamActions);
-        insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
+        const currentExercisePerStudent = getCurrentExercisePerStudent(this.examActionService.cachedLastActionPerStudent.get(this.examId) ?? new Map());
+        insertNgxDataAndColorForExerciseMap(this.exam, convertCurrentExercisePerStudentMapToNumberOfStudentsPerExerciseMap(currentExercisePerStudent), this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-    }
-
-    filterRenderedData(examAction: ExamAction) {
-        return (
-            examAction.type === ExamActionType.SWITCHED_EXERCISE ||
-            examAction.type === ExamActionType.SAVED_EXERCISE ||
-            examAction.type === ExamActionType.ENDED_EXAM ||
-            examAction.type === ExamActionType.HANDED_IN_EARLY
-        );
     }
 }

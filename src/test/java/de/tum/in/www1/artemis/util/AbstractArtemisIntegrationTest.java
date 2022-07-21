@@ -108,7 +108,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected RequestUtilService request;
 
     @BeforeEach
-    public void mockMailService() {
+    void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 

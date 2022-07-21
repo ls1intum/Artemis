@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -35,7 +35,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     private OnlineUnit onlineUnit;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.onlineUnit = new OnlineUnit();
@@ -56,25 +56,25 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createOnlineUnit_asInstructor_shouldCreateOnlineUnit() throws Exception {
+    void createOnlineUnit_asInstructor_shouldCreateOnlineUnit() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedOnlineUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.CREATED);
         assertThat(persistedOnlineUnit.getId()).isNotNull();
@@ -82,17 +82,17 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void createOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/online-units", onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
+    void updateOnlineUnit_asInstructor_shouldUpdateOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.OK);
@@ -101,7 +101,7 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateOnlineUnit_asInstructor_shouldKeepOrdering() throws Exception {
+    void updateOnlineUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistOnlineUnitWithLecture();
 
         // Add a second lecture unit
@@ -122,15 +122,15 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
         this.onlineUnit = onlineUnitRepository.save(this.onlineUnit);
         lecture1.addLectureUnit(this.onlineUnit);
         lecture1 = lectureRepository.save(lecture1);
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
     }
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void updateOnlineUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         this.onlineUnit.setDescription("Changed");
         this.onlineUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.FORBIDDEN);
@@ -138,30 +138,30 @@ public class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
+    void updateOnlineUnit_noId_shouldReturnBadRequest() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         this.onlineUnit.setId(null);
         this.onlineUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/online-units", this.onlineUnit, OnlineUnit.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
+    void getOnlineUnit_correctId_shouldReturnOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         OnlineUnit onlineUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnit.class);
         assertThat(this.onlineUnit.getId()).isEqualTo(onlineUnitFromRequest.getId());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
+    void deleteOnlineUnit_correctId_shouldDeleteOnlineUnit() throws Exception {
         persistOnlineUnitWithLecture();
 
-        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
+        this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         assertThat(this.onlineUnit.getId()).isNotNull();
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + this.onlineUnit.getId(), HttpStatus.OK);
         request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.NOT_FOUND, OnlineUnit.class);

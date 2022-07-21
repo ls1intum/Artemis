@@ -8,8 +8,8 @@ import { HttpResponse } from '@angular/common/http';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Exam } from 'app/entities/exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
-import { StudentExam } from 'app/entities/student-exam.model';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 describe('Exam Resolve', () => {
     let resolve: ExamResolve;
@@ -69,6 +69,29 @@ describe('Exam Resolve', () => {
 
         expect(findSpy).not.toHaveBeenCalled();
         expect(receivedExam).toEqual(new Exam());
+    }));
+
+    it('should fetch the exam for an import', fakeAsync(() => {
+        const findSpy = jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+        const examObservable = resolve.resolve({
+            params: {
+                examId: 2,
+            },
+            url: of([{ path: 'import' }]),
+            data: {
+                requestOptions: {
+                    forImport: true,
+                },
+            },
+        } as any as ActivatedRouteSnapshot);
+
+        let receivedExam = undefined;
+        examObservable.subscribe((exam) => (receivedExam = exam));
+        tick();
+
+        expect(findSpy).toHaveBeenCalledOnce();
+        expect(findSpy).toHaveBeenCalledWith(2);
+        expect(receivedExam).toEqual({ id: 1 });
     }));
 });
 
@@ -139,7 +162,8 @@ describe('Student Exam Resolve', () => {
     afterEach(() => jest.restoreAllMocks());
 
     it('should fetch the student exam if courseId, examId and studentExamId are given', fakeAsync(() => {
-        const findSpy = jest.spyOn(studentExamService, 'find').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+        const response = { status: 200, body: { maxPoints: 10, studentExam: { id: 1 } } as StudentExamWithGradeDTO };
+        const findSpy = jest.spyOn(studentExamService, 'find').mockReturnValue(of(new HttpResponse(response)));
         const examObservable = resolve.resolve({
             params: {
                 courseId: 1,
@@ -148,13 +172,14 @@ describe('Student Exam Resolve', () => {
             },
         } as any as ActivatedRouteSnapshot);
 
-        let receivedExam = undefined;
-        examObservable.subscribe((exam) => (receivedExam = exam));
+        let receivedExamWithGrade: StudentExamWithGradeDTO | undefined = undefined;
+        examObservable.subscribe((examWithGrade) => (receivedExamWithGrade = examWithGrade));
         tick();
 
         expect(findSpy).toHaveBeenCalledOnce();
         expect(findSpy).toHaveBeenCalledWith(1, 2, 3);
-        expect(receivedExam).toEqual({ id: 1 });
+        expect(receivedExamWithGrade!.maxPoints).toBe(10);
+        expect(receivedExamWithGrade!.studentExam).toEqual({ id: 1 });
     }));
 
     it('should create a new student exam if courseId and/or examId and/or studentExamId are not given', fakeAsync(() => {
@@ -168,6 +193,6 @@ describe('Student Exam Resolve', () => {
         tick();
 
         expect(findSpy).not.toHaveBeenCalled();
-        expect(receivedExam).toEqual(new StudentExam());
+        expect(receivedExam).toEqual(new StudentExamWithGradeDTO());
     }));
 });

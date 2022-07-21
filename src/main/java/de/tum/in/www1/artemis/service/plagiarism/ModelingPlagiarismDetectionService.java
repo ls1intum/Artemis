@@ -5,7 +5,6 @@ import static com.google.gson.JsonParser.parseString;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -124,7 +123,7 @@ public class ModelingPlagiarismDetectionService {
                         }
                     }
                     catch (IOException e) {
-                        log.error("Parsing the modeling submission " + modelingSubmission.getId() + " did throw an exception:", e);
+                        log.error("Parsing the modeling submission {} did throw an exception:", modelingSubmission.getId(), e);
                     }
 
                     processedSubmissionCount.getAndIncrement();
@@ -163,11 +162,11 @@ public class ModelingPlagiarismDetectionService {
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionA = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionA);
                 submissionA.setSize(model1.getAllModelElements().size());
-                submissionA.setElements(model1.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).collect(Collectors.toList()));
+                submissionA.setElements(model1.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).toList());
 
                 PlagiarismSubmission<ModelingSubmissionElement> submissionB = PlagiarismSubmission.fromModelingSubmission(modelingSubmissionB);
                 submissionB.setSize(model2.getAllModelElements().size());
-                submissionB.setElements(model2.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).collect(Collectors.toList()));
+                submissionB.setElements(model2.getAllModelElements().stream().map(ModelingSubmissionElement::fromUMLElement).toList());
 
                 PlagiarismComparison<ModelingSubmissionElement> comparison = new PlagiarismComparison<>();
 

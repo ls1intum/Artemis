@@ -7,7 +7,7 @@ import { CourseDetailLineChartComponent } from 'app/course/manage/detail/course-
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { ArtemisTestModule } from '../../../test.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { LineChartModule } from '@swimlane/ngx-charts';
 import { MockCourseManagementService } from '../../../helpers/mocks/service/mock-course-management.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import dayjs from 'dayjs/esm';
@@ -21,7 +21,7 @@ describe('CourseDetailLineChartComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgxChartsModule)],
+            imports: [ArtemisTestModule, MockModule(LineChartModule)],
             declarations: [CourseDetailLineChartComponent, MockPipe(ArtemisTranslatePipe), MockComponent(HelpIconComponent)],
             providers: [MockCourseManagementService, { provide: TranslateService, useClass: MockTranslateService }],
         })
@@ -163,5 +163,20 @@ describe('CourseDetailLineChartComponent', () => {
         component.toggleAverageLine();
 
         expect(component.showAverage).toBeTrue();
+    });
+
+    it('should create an empty chart if no students are registered yet', () => {
+        const startDate = dayjs().subtract(4, 'weeks');
+        const endDate = startDate.add(32, 'weeks');
+        component.course = { id: 42, startDate, endDate };
+        component.numberOfStudentsInCourse = 0;
+        component.initialStats = initialStats;
+
+        component.ngOnChanges();
+
+        expect(component.data[0].series).toHaveLength(5);
+        for (let week = 0; week < 5; week++) {
+            expect(component.data[0].series[week].value).toBe(0);
+        }
     });
 });

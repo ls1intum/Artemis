@@ -1,9 +1,8 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { getSavedExerciseActionsGroupedByActivityId, insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
-import { ExamAction, ExamActionType, SavedExerciseAction } from 'app/entities/exam-user-activity.model';
+import { insertNgxDataAndColorForExerciseMap } from 'app/exam/monitoring/charts/monitoring-chart';
 import { ChartComponent } from 'app/exam/monitoring/charts/chart.component';
-import { ExamMonitoringWebsocketService } from '../../exam-monitoring-websocket.service';
+import { ExamActionService } from '../../exam-action.service';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
@@ -17,8 +16,8 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
 
     readonly renderRate = 5;
 
-    constructor(route: ActivatedRoute, examMonitoringWebsocketService: ExamMonitoringWebsocketService) {
-        super(route, examMonitoringWebsocketService, 'exercise-submission-chart', false);
+    constructor(route: ActivatedRoute, examActionService: ExamActionService) {
+        super(route, examActionService, 'exercise-submission-chart', false);
     }
 
     ngOnInit() {
@@ -52,22 +51,18 @@ export class ExerciseSubmissionChartComponent extends ChartComponent implements 
     private createChartData() {
         this.ngxData = [];
         this.ngxColor.domain = [];
-        const exerciseAmountMap: Map<number, number> = new Map();
-        const groupedByActivityId = getSavedExerciseActionsGroupedByActivityId(this.filteredExamActions);
 
-        for (const value of Object.values(groupedByActivityId)) {
-            const saved: Map<number, number> = new Map();
-            value.forEach((action: SavedExerciseAction) => saved.set(action.exerciseId!, 1));
-            for (const key of saved.keys()) {
-                exerciseAmountMap.set(key, (exerciseAmountMap.get(key) ?? 0) + 1);
-            }
+        const exerciseAmountMap: Map<number, number> = new Map();
+        const submittedPerStudent = this.examActionService.cachedSubmissionsPerStudent.get(this.examId!) ?? new Map();
+        for (const exercises of submittedPerStudent.values()) {
+            exercises.forEach((exercise: number | undefined) => {
+                if (exercise !== undefined) {
+                    exerciseAmountMap.set(exercise, (exerciseAmountMap.get(exercise) ?? 0) + 1);
+                }
+            });
         }
         insertNgxDataAndColorForExerciseMap(this.exam, exerciseAmountMap, this.ngxData, this.ngxColor);
         // Re-trigger change detection
         this.ngxData = [...this.ngxData];
-    }
-
-    filterRenderedData(examAction: ExamAction) {
-        return examAction.type === ExamActionType.SAVED_EXERCISE;
     }
 }

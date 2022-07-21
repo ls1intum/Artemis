@@ -41,8 +41,8 @@
                 "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
             },
             "postsEnabled": {
-                "title": "Enable postings by students",
-                "description": "Enable postings section on lecture and exercise page."
+                "title": "Enable communication features",
+                "description": "Enable communication section on lecture and exercise pages."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",
@@ -199,7 +199,7 @@
             "activeStudents": "Active students",
             "activeStudentsExplanation": "Active students are students that submitted at least once in the corresponding week.",
             "average": "Average: ",
-            "averageReferenceLineCheckboxLabel": "Show average as reference line",
+            "meanReferenceLineCheckboxLabel": "Show mean as reference line",
             "exerciseType": "Exercise type",
             "programming": "Programming",
             "quiz": "Quiz",

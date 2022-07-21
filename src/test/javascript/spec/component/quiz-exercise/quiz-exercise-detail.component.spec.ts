@@ -258,7 +258,8 @@ describe('QuizExercise Management Detail Component', () => {
                 jest.clearAllMocks();
             });
         });
-        describe('without exam id and  exercise id', () => {
+
+        describe('without exam id and exercise id', () => {
             const testRoute = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) } } as any as ActivatedRoute;
             beforeEach(waitForAsync(() => configureTestBed(testRoute)));
             beforeEach(configureFixtureAndServices);
@@ -270,6 +271,44 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(courseManagementServiceStub).toBeCalled();
                 expect(exerciseGroupServiceStub).not.toBeCalled();
                 expect(initStub).toBeCalled();
+            });
+
+            afterEach(() => {
+                jest.clearAllMocks();
+            });
+        });
+
+        describe('with exercise id and exam with test runs', () => {
+            const testRoute = {
+                snapshot: { paramMap: convertToParamMap({ courseId: course.id, exerciseId: quizExercise.id, examId: 1, exerciseGroupId: 2 }) },
+            } as any as ActivatedRoute;
+            beforeEach(waitForAsync(() => configureTestBed(testRoute)));
+            beforeEach(configureFixtureAndServices);
+
+            it('should not call alert service', () => {
+                configureStubs();
+                comp.course = course;
+                comp.isImport = true;
+                quizExercise.testRunParticipationsExist = true;
+
+                let alertServiceStub: jest.SpyInstance;
+                alertServiceStub = jest.spyOn(alertService, 'warning');
+                comp.ngOnInit();
+
+                expect(alertServiceStub).not.toBeCalled();
+            });
+
+            it('should call alert service', () => {
+                configureStubs();
+                comp.course = course;
+                comp.isImport = false;
+                quizExercise.testRunParticipationsExist = true;
+
+                let alertServiceStub: jest.SpyInstance;
+                alertServiceStub = jest.spyOn(alertService, 'warning');
+                comp.ngOnInit();
+
+                expect(alertServiceStub).toBeCalledTimes(1);
             });
 
             afterEach(() => {
@@ -1164,7 +1203,7 @@ describe('QuizExercise Management Detail Component', () => {
                 question.solutions[0].text = 'a'.repeat(250);
                 comp.quizExercise.quizQuestions = [question];
                 comp.cacheValidation();
-                expect(comp.quizIsValid).toEqual(false);
+                expect(comp.quizIsValid).toBeFalse();
             });
 
             it('should not be valid if SA question has no correct mapping', () => {

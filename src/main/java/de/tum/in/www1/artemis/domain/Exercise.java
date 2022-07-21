@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise {
+public abstract class Exercise extends BaseExercise implements Completable {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -172,6 +172,16 @@ public abstract class Exercise extends BaseExercise {
 
     @Transient
     private Long numberOfRatingsTransient;
+
+    @Override
+    public boolean isCompletedFor(User user) {
+        return this.getStudentParticipations().stream().anyMatch((participation) -> participation.getStudents().contains(user));
+    }
+
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
+    }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
         return allowComplaintsForAutomaticAssessments;

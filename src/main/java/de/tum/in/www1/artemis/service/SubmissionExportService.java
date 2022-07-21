@@ -122,7 +122,7 @@ public abstract class SubmissionExportService {
             List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).toList();
 
             exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
         }
 
         boolean enableFilterAfterDueDate = false;
@@ -207,7 +207,7 @@ public abstract class SubmissionExportService {
                 exportErrors.add(message);
                 return Optional.<Path>empty();
             }
-        }).flatMap(Optional::stream).collect(Collectors.toList());
+        }).flatMap(Optional::stream).toList();
 
         // Add report entry
         reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),

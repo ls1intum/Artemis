@@ -170,6 +170,7 @@ Additional notes on the controller methods:
 * Always qualify a static class member reference with its class name and not with a reference or expression of that class's type.
 * Prefer using primitive types to classes, e.g. ``long`` instead of ``Long``.
 * Use ``./gradlew spotlessCheck`` and ``./gradlew spotlessApply`` to check Java code style and to automatically fix it.
+* Don't use ``.collect(Collectors.toList())``. Instead use only ``.toList()`` for an unmodifiable list or ``.collect(Collectors.toCollection(ArrayList::new))`` to explicitly create a new ArrayList.
 
 16. Avoid service dependencies
 ==============================
@@ -283,8 +284,13 @@ you should use:
 
 Functionally both queries extract the same result set, but the first one is less efficient as the sub-query is calculated for each StudentParticipation.
 
+20. Criteria Builder
+==================================================
 
-20. REST endpoint best practices for authorization
+For more details, please visit the :doc:`./criteria-builder` page.
+
+
+21. REST endpoint best practices for authorization
 ==================================================
 
 To prevent unauthorized access to resources Artemis employs a two-step system:
@@ -331,7 +337,7 @@ To reduce duplication, do not add explicit checks for authorization or existence
 The course repository call takes care of throwing a ``404 Not Found`` exception if there exists no matching course. The ``AuthorizationCheckService`` throws a ``403 Forbidden`` exception if the user with the given role is unauthorized. Afterwards delegate to a service or repository method. The code becomes much shorter, cleaner and more maintainable.
 
 
-21. Assert using the most specific overload method
+22. Assert using the most specific overload method
 ==================================================
 
 When expecting results use ``assertThat`` for server tests. That call **must** be followed by another assertion statement like ``isTrue()``. It is best practice to use more specific assertion statement rather than always expecting boolean values.
@@ -363,7 +369,7 @@ Please read `the AssertJ documentation <https://assertj.github.io/doc/#assertj-c
 
 Some parts of these guidelines are adapted from https://medium.com/@madhupathy/ultimate-clean-code-guide-for-java-spring-based-applications-4d4c9095cc2a
 
-22. General Testing Tips
+23. General Testing Tips
 ========================
 
 Write meaningful comments for your tests.
@@ -375,7 +381,7 @@ These comments should contain information about what is tested specifically.
      * Tests that borrow() in Book successfully sets the available attribute to false
      */
     @Test
-    public void testBorrowInBook() {
+    void testBorrowInBook() {
         // Test Code
     }
 
@@ -385,7 +391,7 @@ This is the same reason why you should not name your variables int a, double b, 
 .. code-block:: java
 
     @Test
-    public void testBorrowInBook() {
+    void testBorrowInBook() {
         // Test Code
     }
 
@@ -413,7 +419,7 @@ https://www.baeldung.com/spring-tests
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
 
-23. Avoid using @MockBean
+24. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.
@@ -424,13 +430,13 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case
 
 .. code-block:: java
 
-    public class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+    class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         @SpyBean
         private FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        public void testExportAll_IOException() throws Exception {
+        void testExportAll_IOException() throws Exception {
             doThrow(IOException.class).when(fileUploadSubmissionExportService).export(any(), any());
             request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);
         }
@@ -442,11 +448,11 @@ Now, instead of mocking the whole Service, we can just mock the static method, l
 
 .. code-block:: java
 
-    public class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+    class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // No beans used anymore
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        public void testExportAll_IOException() throws Exception {
+        void testExportAll_IOException() throws Exception {
             MockedStatic<Files> mockedFiles = mockStatic(Files.class);
             mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
             request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);

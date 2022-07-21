@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExamSubmissionService examSubmissionService;
@@ -66,13 +66,13 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCheckSubmissionAllowance_passIfNonExamSubmission() {
+    void testCheckSubmissionAllowance_passIfNonExamSubmission() {
         Course tmpCourse = database.addEmptyCourse();
         Exercise nonExamExercise = ModelFactory.generateTextExercise(ZonedDateTime.now(), ZonedDateTime.now(), ZonedDateTime.now(), tmpCourse);
         // should not throw
@@ -83,7 +83,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCheckSubmissionAllowance_isSubmissionInTime() {
+    void testCheckSubmissionAllowance_isSubmissionInTime() {
         // Should fail when submission is made before start date
         exam.setStartDate(ZonedDateTime.now().plusMinutes(5));
         examRepository.save(exam);
@@ -116,7 +116,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCheckSubmissionAllowance_allowedToSubmitToExercise() {
+    void testCheckSubmissionAllowance_allowedToSubmitToExercise() {
         // Should fail if there is no student exam for user
         exam.setStartDate(ZonedDateTime.now().minusMinutes(90));
         examRepository.save(exam);
@@ -135,7 +135,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCheckSubmissionAllowance_testRun() {
+    void testCheckSubmissionAllowance_testRun() {
         final var instructor = userRepository.findOneWithGroupsAndAuthoritiesByLogin("instructor1").get();
         studentExam.setTestRun(true);
         studentExam.setUser(instructor);
@@ -145,7 +145,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCheckSubmissionAllowance_submittedStudentExam() {
+    void testCheckSubmissionAllowance_submittedStudentExam() {
         studentExam.setSubmitted(true);
         studentExamRepository.save(studentExam);
         assertThat(examSubmissionService.isAllowedToSubmitDuringExam(exercise, user, false)).isFalse();
@@ -153,7 +153,7 @@ public class ExamSubmissionServiceTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testPreventMultipleSubmissions() {
+    void testPreventMultipleSubmissions() {
         StudentParticipation participation = database.createAndSaveParticipationForExercise(exercise, "student1");
         Submission existingSubmission = ModelFactory.generateTextSubmission("The initial submission", Language.ENGLISH, true);
         existingSubmission = database.addSubmission(participation, existingSubmission);

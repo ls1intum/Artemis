@@ -36,6 +36,7 @@ describe('TextUnitFormComponent', () => {
             .then(() => {
                 textUnitComponentFixture = TestBed.createComponent(TextUnitComponent);
                 textUnitComponent = textUnitComponentFixture.componentInstance;
+                textUnitComponent.textUnit = textUnit;
             });
     });
 
@@ -43,13 +44,7 @@ describe('TextUnitFormComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        textUnitComponentFixture.detectChanges();
-        expect(textUnitComponent).not.toBeNull();
-    });
-
     it('should convert markdown to html and display it', fakeAsync(() => {
-        textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         textUnitComponentFixture.whenStable().then(() => {
             expect((textUnitComponent.formattedContent as any)?.changingThisBreaksApplicationSecurity).toEqual(exampleHTML);
@@ -60,7 +55,6 @@ describe('TextUnitFormComponent', () => {
     }));
 
     it('should collapse unit when header clicked', fakeAsync(() => {
-        textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         expect(textUnitComponent.isCollapsed).toBeTrue();
         const handleCollapseSpy = jest.spyOn(textUnitComponent, 'handleCollapse');
@@ -84,7 +78,6 @@ describe('TextUnitFormComponent', () => {
         const focusStub = jest.spyOn(window, 'focus').mockImplementation();
         const openStub = jest.spyOn(window, 'open').mockReturnValue(window);
 
-        textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         const popButton = textUnitComponentFixture.debugElement.nativeElement.querySelector('#popupButton');
         popButton.click();
@@ -96,4 +89,22 @@ describe('TextUnitFormComponent', () => {
         expect(window.document.body.innerHTML).toEqual(exampleHTML);
         window.document.body.innerHTML = innerHtmlCopy;
     }));
+
+    it('should call completion callback when uncollapsed', (done) => {
+        textUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(textUnit);
+            expect(event.completed).toBeTrue();
+            done();
+        });
+        textUnitComponent.handleCollapse(new Event('click'));
+    }, 1000);
+
+    it('should call completion callback when clicked', (done) => {
+        textUnitComponent.onCompletion.subscribe((event) => {
+            expect(event.lectureUnit).toEqual(textUnit);
+            expect(event.completed).toBeFalse();
+            done();
+        });
+        textUnitComponent.handleClick(new Event('click'), false);
+    }, 1000);
 });

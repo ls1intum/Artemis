@@ -1,4 +1,3 @@
-import { StudentExam } from 'app/entities/student-exam.model';
 import { StudentExamService } from 'app/exam/manage/student-exams/student-exam.service';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
@@ -8,6 +7,7 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import { filter, map, Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 @Injectable({ providedIn: 'root' })
 export class ExamResolve implements Resolve<Exam> {
@@ -23,7 +23,15 @@ export class ExamResolve implements Resolve<Exam> {
         const examId = route.params['examId'] ? route.params['examId'] : undefined;
         const withStudents = route.data['requestOptions'] ? route.data['requestOptions'].withStudents : false;
         const withExerciseGroups = route.data['requestOptions'] ? route.data['requestOptions'].withExerciseGroups : false;
-        if (courseId && examId) {
+        const isImport = route.data['requestOptions']?.forImport ?? false;
+        if (isImport && examId) {
+            // When importing an exam, the courseId cannot be used, as the exam.course.id may deviate from the target course id
+            // Additionally, the exercises are needed to select the exercises, that should be imported alongside the exam
+            return this.examManagementService.findWithExercisesAndWithoutCourseId(examId).pipe(
+                filter((response: HttpResponse<Exam>) => response.ok),
+                map((response: HttpResponse<Exam>) => response.body!),
+            );
+        } else if (courseId && examId) {
             return this.examManagementService.find(courseId, examId, withStudents, withExerciseGroups).pipe(
                 filter((response: HttpResponse<Exam>) => response.ok),
                 map((response: HttpResponse<Exam>) => response.body!),
@@ -57,7 +65,7 @@ export class ExerciseGroupResolve implements Resolve<ExerciseGroup> {
 }
 
 @Injectable({ providedIn: 'root' })
-export class StudentExamResolve implements Resolve<StudentExam> {
+export class StudentExamResolve implements Resolve<StudentExamWithGradeDTO> {
     constructor(private studentExamService: StudentExamService) {}
 
     /**
@@ -65,16 +73,16 @@ export class StudentExamResolve implements Resolve<StudentExam> {
      * or creates a new student exam otherwise.
      * @param route Contains the information about the route to be resolved
      */
-    resolve(route: ActivatedRouteSnapshot): Observable<StudentExam> {
+    resolve(route: ActivatedRouteSnapshot): Observable<StudentExamWithGradeDTO> {
         const courseId = route.params['courseId'] || undefined;
         const examId = route.params['examId'] || undefined;
         const studentExamId = route.params['studentExamId'] ? route.params['studentExamId'] : route.params['testRunId'];
         if (courseId && examId && studentExamId) {
             return this.studentExamService.find(courseId, examId, studentExamId).pipe(
-                filter((response: HttpResponse<StudentExam>) => response.ok),
-                map((response: HttpResponse<StudentExam>) => response.body!),
+                filter((response) => response.ok),
+                map((response) => response.body!),
             );
         }
-        return of(new StudentExam());
+        return of(new StudentExamWithGradeDTO());
     }
 }

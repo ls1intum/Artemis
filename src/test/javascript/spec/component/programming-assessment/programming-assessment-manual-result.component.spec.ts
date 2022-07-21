@@ -109,7 +109,6 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         hasComplaint: true,
         assessmentType: AssessmentType.SEMI_AUTOMATIC,
         id: 2,
-        resultString: '1 of 13 passed',
     };
     result.submission!.id = 1;
 
