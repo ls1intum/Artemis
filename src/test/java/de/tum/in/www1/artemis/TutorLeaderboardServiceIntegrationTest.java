@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
-public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TutorLeaderboardService tutorLeaderboardService;
@@ -36,7 +36,7 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
      * Prepares the testing suite by initializing variables and mocks
      */
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         var users = database.addUsers(10, TUTOR_COUNT, 0, 2);
         var student1 = users.get(0);
         var tutor1 = database.getUserByLogin("tutor1");
@@ -54,7 +54,7 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -74,7 +74,7 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testLeaderboardData_forCourseWithExercises() {
+    void testLeaderboardData_forCourseWithExercises() {
         Long[] exerciseIds = { exercise.getId() };
         var leaderboardData = tutorLeaderboardService.getCourseLeaderboard(course, new HashSet<>(Arrays.asList(exerciseIds)));
         assertLeaderboardData(leaderboardData);
@@ -82,7 +82,7 @@ public class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testLeaderboardData_forExercise() {
+    void testLeaderboardData_forExercise() {
         var leaderboardData = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         assertLeaderboardData(leaderboardData);
     }

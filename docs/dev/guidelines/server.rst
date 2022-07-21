@@ -381,7 +381,7 @@ These comments should contain information about what is tested specifically.
      * Tests that borrow() in Book successfully sets the available attribute to false
      */
     @Test
-    public void testBorrowInBook() {
+    void testBorrowInBook() {
         // Test Code
     }
 
@@ -391,7 +391,7 @@ This is the same reason why you should not name your variables int a, double b, 
 .. code-block:: java
 
     @Test
-    public void testBorrowInBook() {
+    void testBorrowInBook() {
         // Test Code
     }
 
@@ -430,13 +430,13 @@ Here is an example how to replace a ``@SpyBean``. We wanted to test an edge case
 
 .. code-block:: java
 
-    public class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+    class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         @SpyBean
         private FileUploadSubmissionExportService fileUploadSubmissionExportService;
 
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        public void testExportAll_IOException() throws Exception {
+        void testExportAll_IOException() throws Exception {
             doThrow(IOException.class).when(fileUploadSubmissionExportService).export(any(), any());
             request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);
         }
@@ -448,11 +448,11 @@ Now, instead of mocking the whole Service, we can just mock the static method, l
 
 .. code-block:: java
 
-    public class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+    class TestExport extends AbstractSpringIntegrationBambooBitbucketJiraTest {
         // No beans used anymore
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        public void testExportAll_IOException() throws Exception {
+        void testExportAll_IOException() throws Exception {
             MockedStatic<Files> mockedFiles = mockStatic(Files.class);
             mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
             request.postWithResponseBodyFile("/api/file-upload-export/" + fileUploadExercise.getId(), HttpStatus.BAD_REQUEST);

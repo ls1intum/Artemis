@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.TestResultsDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-value}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_VALUE;
@@ -84,7 +84,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         jenkinsRequestMockProvider.reset();
         gitlabRequestMockProvider.reset();
@@ -258,7 +258,7 @@ public class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends 
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
+    void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
         String userLogin = "student1";
         var pushJSON = (JSONObject) new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);

@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseRepository courseRepository;
@@ -58,7 +58,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
     private QuizExercise quizExercise;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         this.database.addUsers(10, 10, 0, 10);
         List<Course> courses = this.database.createCoursesWithExercisesAndLectures(true);
         this.course1 = this.courseRepository.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
@@ -77,7 +77,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -89,19 +89,19 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createExerciseUnit_asInstructor_shouldCreateExerciseUnit() throws Exception {
+    void createExerciseUnit_asInstructor_shouldCreateExerciseUnit() throws Exception {
         Set<Exercise> exercisesOfCourse = course1.getExercises();
         Set<ExerciseUnit> persistedExerciseUnits = new HashSet<>();
 
@@ -126,7 +126,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createExerciseUnit_withId_shouldReturnBadRequest() throws Exception {
+    void createExerciseUnit_withId_shouldReturnBadRequest() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
@@ -137,7 +137,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "INSTRUCTOR")
-    public void createExerciseUnit_asStudent_shouldForbidden() throws Exception {
+    void createExerciseUnit_asStudent_shouldForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
@@ -148,7 +148,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createExerciseUnit_notExistingLectureId_shouldReturnNotFound() throws Exception {
+    void createExerciseUnit_notExistingLectureId_shouldReturnNotFound() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
@@ -157,7 +157,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void createExerciseUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
+    void createExerciseUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         Exercise exercise = course1.getExercises().stream().findFirst().get();
         ExerciseUnit exerciseUnit = new ExerciseUnit();
         exerciseUnit.setExercise(exercise);
@@ -166,7 +166,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteExercise_exerciseConnectedWithExerciseUnit_shouldDeleteExerciseUnit() throws Exception {
+    void deleteExercise_exerciseConnectedWithExerciseUnit_shouldDeleteExerciseUnit() throws Exception {
         Set<Exercise> exercisesOfCourse = course1.getExercises();
         Set<ExerciseUnit> persistedExerciseUnits = new HashSet<>();
 
@@ -192,7 +192,7 @@ public class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteExerciseUnit_exerciseConnectedWithExerciseUnit_shouldNOTDeleteExercise() throws Exception {
+    void deleteExerciseUnit_exerciseConnectedWithExerciseUnit_shouldNOTDeleteExercise() throws Exception {
         Set<Exercise> exercisesOfCourse = course1.getExercises();
         Set<ExerciseUnit> persistedExerciseUnits = new HashSet<>();
 

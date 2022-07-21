@@ -53,7 +53,7 @@ import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
 import de.tum.in.www1.artemis.web.rest.repository.FileSubmission;
 
-public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final String studentRepoBaseUrl = "/api/repository/";
 
@@ -106,7 +106,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     private File studentFile;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         database.addUsers(1, 1, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -184,7 +184,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         database.resetDatabase();
         reset(gitService);
         studentRepository.resetLocalRepo();
@@ -192,7 +192,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetFiles() throws Exception {
+    void testGetFiles() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
         assertThat(files).isNotEmpty();
 
@@ -204,7 +204,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetFilesWithContent() throws Exception {
+    void testGetFilesWithContent() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-content", HttpStatus.OK, String.class, String.class);
         assertThat(files).isNotEmpty();
 
@@ -217,7 +217,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetFilesWithContent_shouldNotThrowException() throws Exception {
+    void testGetFilesWithContent_shouldNotThrowException() throws Exception {
         Map<de.tum.in.www1.artemis.domain.File, FileType> mockedFiles = new HashMap<>();
         mockedFiles.put(mock(de.tum.in.www1.artemis.domain.File.class), FileType.FILE);
         doReturn(mockedFiles).when(gitService).listFilesAndFolders(any(Repository.class));
@@ -232,7 +232,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetFilesWithInfoAboutChange_noChange() throws Exception {
+    void testGetFilesWithInfoAboutChange_noChange() throws Exception {
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
         assertThat(files).isNotEmpty();
 
@@ -245,7 +245,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetFilesWithInfoAboutChange_withChange() throws Exception {
+    void testGetFilesWithInfoAboutChange_withChange() throws Exception {
         FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
         var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files-change", HttpStatus.OK, String.class, Boolean.class);
@@ -260,7 +260,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
+    void testGetFilesWithInfoAboutChange_withNewFile() throws Exception {
         FileUtils.write(studentFile, "newContent123", Charset.defaultCharset());
 
         Path newPath = Path.of(studentRepository.localRepoFile + "/newFile");
@@ -280,7 +280,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetFiles_solutionParticipation() throws Exception {
+    void testGetFiles_solutionParticipation() throws Exception {
         // Create template repo
         var solutionRepository = new LocalRepository(defaultBranch);
         solutionRepository.configureRepos("solutionLocalRepo", "solutionOriginRepo");
@@ -312,7 +312,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetFile() throws Exception {
+    void testGetFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
         var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
@@ -322,7 +322,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetFile_shouldThrowException() throws Exception {
+    void testGetFile_shouldThrowException() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
 
@@ -333,7 +333,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateFile() throws Exception {
+    void testCreateFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", "newFile");
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/newFile"))).isFalse();
@@ -343,7 +343,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateFolder() throws Exception {
+    void testCreateFolder() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("folder", "newFolder");
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/newFolder"))).isFalse();
@@ -353,7 +353,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testRenameFile() throws Exception {
+    void testRenameFile() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
@@ -367,7 +367,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testRenameFolder() throws Exception {
+    void testRenameFolder() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
@@ -381,7 +381,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteFile() throws Exception {
+    void testDeleteFile() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
@@ -391,7 +391,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChanges() throws Exception {
+    void testCommitChanges() throws Exception {
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
         assertThat(receivedStatusBeforeCommit.repositoryStatus).hasToString("UNCOMMITTED_CHANGES");
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/commit", null, HttpStatus.OK, null);
@@ -404,7 +404,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSaveFiles() throws Exception {
+    void testSaveFiles() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         request.put(studentRepoBaseUrl + participation.getId() + "/files?commit=false", getFileSubmissions("updatedFileContent"), HttpStatus.OK);
         assertThat(FileUtils.readFileToString(studentFilePath.toFile(), Charset.defaultCharset())).isEqualTo("updatedFileContent");
@@ -412,7 +412,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSaveFilesAndCommit() throws Exception {
+    void testSaveFilesAndCommit() throws Exception {
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
 
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
@@ -433,7 +433,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "student1", roles = "USER")
-    public void testPullChanges() throws Exception {
+    void testPullChanges() throws Exception {
         String fileName = "remoteFile";
 
         // Create a commit for the local and the remote repository
@@ -467,7 +467,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
     @Test
     @DisabledOnOs(OS.WINDOWS) // git file locking issues
     @WithMockUser(username = "student1", roles = "USER")
-    public void testResetToLastCommit() throws Exception {
+    void testResetToLastCommit() throws Exception {
         String fileName = "testFile";
         var localRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.localRepoFile.toPath(), null);
         var remoteRepo = gitService.getExistingCheckedOutRepositoryByLocalPath(studentRepository.originRepoFile.toPath(), null);
@@ -520,7 +520,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetStatus() throws Exception {
+    void testGetStatus() throws Exception {
         var receivedStatusBeforeCommit = request.get(studentRepoBaseUrl + participation.getId(), HttpStatus.OK, RepositoryStatusDTO.class);
 
         // The current status is "uncommited changes", since we added files and folders, but we didn't commit yet
@@ -536,21 +536,21 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogsNoSubmission() throws Exception {
+    void testBuildLogsNoSubmission() throws Exception {
         var receivedLogs = request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isEmpty();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
+    void testBuildLogsWithSubmissionBuildSuccessful() throws Exception {
         database.createProgrammingSubmission(participation, false);
         request.get(studentRepoBaseUrl + participation.getId() + "/buildlogs", HttpStatus.FORBIDDEN, List.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogsWithManualResult() throws Exception {
+    void testBuildLogsWithManualResult() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
         doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
         database.addResultToSubmission(submission, AssessmentType.SEMI_AUTOMATIC);
@@ -563,7 +563,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogs() throws Exception {
+    void testBuildLogs() throws Exception {
         var submission = database.createProgrammingSubmission(participation, true);
 
         doReturn(logs).when(continuousIntegrationService).getLatestBuildLogs(submission);
@@ -578,7 +578,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogsFromDatabase() throws Exception {
+    void testBuildLogsFromDatabase() throws Exception {
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
         submission.setSubmitted(true);
@@ -599,7 +599,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
+    void testBuildLogsFromDatabaseForSpecificResults() throws Exception {
         // FIRST SUBMISSION
         var submission1 = new ProgrammingSubmission();
         submission1.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -649,7 +649,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
+    void testBuildLogsFromDatabaseForSpecificResults_otherParticipation() throws Exception {
         var result = database.addProgrammingParticipationWithResultForExercise(programmingExercise, "tutor1");
         database.addProgrammingSubmissionToResultAndParticipation(result, (StudentParticipation) result.getParticipation(), "xyz");
 
@@ -658,7 +658,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesAllowedForAutomaticallyAssessedAfterDueDate() throws Exception {
+    void testCommitChangesAllowedForAutomaticallyAssessedAfterDueDate() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
@@ -694,14 +694,14 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+    void testCommitChangesNotAllowedForBuildAndTestAfterDueDate() throws Exception {
         setBuildAndTestForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenCommit();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+    void testCommitChangesNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
         setManualAssessmentForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenCommit();
     }
@@ -716,21 +716,21 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
+    void testResetNotAllowedForBuildAndTestAfterDueDate() throws Exception {
         setBuildAndTestForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
+    void testResetNotAllowedForManuallyAssessedAfterDueDate() throws Exception {
         setManualAssessmentForProgrammingExercise();
         assertUnchangedRepositoryStatusForForbiddenReset();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testResetNotAllowedBeforeDueDate() throws Exception {
+    void testResetNotAllowedBeforeDueDate() throws Exception {
         programmingExercise.setReleaseDate(ZonedDateTime.now().minusHours(2));
         programmingExercise.setDueDate(ZonedDateTime.now().plusHours(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(null);
@@ -742,7 +742,7 @@ public class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testResetNotAllowedForExamBeforeDueDate() throws Exception {
+    void testResetNotAllowedForExamBeforeDueDate() throws Exception {
         // Create an exam programming exercise
         programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseRepository.save(programmingExercise);
