@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.hestia.CodeHintService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @SuppressWarnings("ArraysAsListWithZeroOrOneArgument")
-public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CodeHintService codeHintService;
@@ -48,14 +48,14 @@ public class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucke
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
         database.addCourseWithOneProgrammingExercise();
         exercise = programmingExerciseRepository.findAll().get(0);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 

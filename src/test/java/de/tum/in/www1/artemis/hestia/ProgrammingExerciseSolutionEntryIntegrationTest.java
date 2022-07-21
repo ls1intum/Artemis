@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 
-public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseSolutionEntryRepository programmingExerciseSolutionEntryRepository;
@@ -47,7 +47,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     private CodeHint codeHint;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(2, 2, 1, 2);
 
@@ -81,7 +81,7 @@ public class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpr
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 

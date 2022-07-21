@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private StudentExamService studentExamService;
@@ -69,7 +69,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     private final int numberOfParticipants = 12;
 
     @BeforeEach
-    public void init() {
+    void init() {
         users = database.addUsers(numberOfParticipants, 1, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);
@@ -87,31 +87,31 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void evaluateQuiz_asTutor_PreAuth_forbidden() throws Exception {
+    void evaluateQuiz_asTutor_PreAuth_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void evaluateQuiz_asStudent_PreAuth_forbidden() throws Exception {
+    void evaluateQuiz_asStudent_PreAuth_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
     @WithMockUser(username = "instructor6", roles = "INSTRUCTOR")
-    public void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
+    void evaluateQuiz_asInstructorNotInCourse_forbidden() throws Exception {
         evaluateQuiz_authorization_forbidden();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void evaluateQuiz_authorization_forbidden() throws Exception {
+    void evaluateQuiz_authorization_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -122,7 +122,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void evaluateQuiz_notOver_forbidden() throws Exception {
+    void evaluateQuiz_notOver_forbidden() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
@@ -133,7 +133,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void evaluateQuiz() throws Exception {
+    void evaluateQuiz() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
         }
@@ -180,7 +180,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void evaluateQuizWithNoSubmissions() throws Exception {
+    void evaluateQuizWithNoSubmissions() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
         }
@@ -229,7 +229,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void evaluateQuizWithMultipleSubmissions() throws Exception {
+    void evaluateQuizWithMultipleSubmissions() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
         }
@@ -283,7 +283,7 @@ public class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void evaluateQuiz_twice() throws Exception {
+    void evaluateQuiz_twice() throws Exception {
         for (int i = 0; i < numberOfParticipants; i++) {
             exam.addRegisteredUser(users.get(i));
         }
