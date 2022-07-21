@@ -23,7 +23,7 @@ This section describes the process to:
 Create new Quiz Exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- In the Artemis home page, click on Course Management button |CourseManagementButton|.
+- In the Artemis home page, click on the Course Management button |CourseManagementButton|.
 
 - Navigate into **Exercises** of a specific course by clicking on the exercise button.
 
@@ -39,11 +39,11 @@ Create new Quiz Exercise
 
     - **Categories**: Type the category for the quiz exercise.
 
-    - **Difficulty**: Select the difficult level among Easy, Medium and Hard. It is possible to select No level.
+    - **Difficulty**: Select the difficulty level among Easy, Medium and Hard. It is possible to select No level.
 
     - **Duration**: Provide the time in minutes and seconds for students solve of the quiz exercise.
 
-    - **Options**: Choose between present the questions in Random order or not.
+    - **Options**: Choose between presenting the questions in Random order or not.
 
     - **Batch Mode**: Batch Mode controls how students can participate in the quiz.
 
@@ -86,7 +86,7 @@ Create new Quiz Exercise
                 - Proportional with Penalty
                 - Proportional without Penalty
 
-            - Present answer Options in Random order.
+            - Present answer options in random order.
 
             - Single Choice Mode: When there is just one correct option. This disables the Scoring type.
 
@@ -250,7 +250,7 @@ Create Drag and Drop Model Quiz Exercise
         - Open
         - Delete
 
-    - Clicking in the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form:
+    - Clicking on the creation of a new Apollon Diagram button |CreateANewApollonDiagram| opens the following form:
 
         .. figure:: quiz/Apollon-form.png
             :align: center
