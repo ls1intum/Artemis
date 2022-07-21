@@ -979,7 +979,7 @@ class ProgrammingExerciseIntegrationBambooBitbucketJiraTest extends AbstractSpri
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetSolutionFilesShouldRedirect() throws Exception {
+    void testGetSolutionFilesShouldRedirect() throws Exception {
         programmingExerciseIntegrationTestService.test_redirectGetSolutionRepositoryFilesWithoutContent((exercise, files) -> {
             LocalRepository localRepository = new LocalRepository("main");
             assertDoesNotThrow(() -> hestiaUtilTestService.setupSolution(files, exercise, localRepository));
