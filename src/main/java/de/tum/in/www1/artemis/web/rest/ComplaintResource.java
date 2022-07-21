@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -396,9 +395,10 @@ public class ComplaintResource {
      *
      * @param complaints    list of complaints
      * @param complaintType the type of complaints we want to get
+     * @return an unmodifiable list of the complaints
      */
     private List<Complaint> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
-        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).collect(Collectors.toList());
+        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).toList();
     }
 
     private void filterOutStudentFromComplaint(Complaint complaint) {

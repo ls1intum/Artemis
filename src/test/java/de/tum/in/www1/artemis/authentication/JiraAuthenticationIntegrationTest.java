@@ -35,7 +35,7 @@ import de.tum.in.www1.artemis.web.rest.UserJWTController;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
 
-public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.user-management.external.admin-group-name}")
     private String ADMIN_GROUP_NAME;
@@ -82,7 +82,7 @@ public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegration
     protected LtiLaunchRequestDTO ltiLaunchRequest;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
@@ -97,19 +97,19 @@ public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void teardown() {
+    void teardown() {
         database.resetDatabase();
     }
 
     @Test
-    public void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
+    void analyzeApplicationContext_withExternalUserManagement_NoInternalAuthenticationBeanPresent() {
         assertThatExceptionOfType(NoSuchBeanDefinitionException.class).as("No bean of type ArtemisInternalAuthenticationProvider initialized")
                 .isThrownBy(() -> applicationContext.getBean(ArtemisInternalAuthenticationProvider.class));
     }
 
     @Test
     @WithAnonymousUser
-    public void launchLtiRequest_authViaEmail_success() throws Exception {
+    void launchLtiRequest_authViaEmail_success() throws Exception {
         final var username = "mrrobot";
         final var email = ltiLaunchRequest.getLis_person_contact_email_primary();
         final var firstName = "Elliot";
@@ -147,7 +147,7 @@ public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithAnonymousUser
-    public void testJWTAuthentication() throws Exception {
+    void testJWTAuthentication() throws Exception {
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
         loginVM.setPassword(USER_PASSWORD);
@@ -165,7 +165,7 @@ public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithAnonymousUser
-    public void testJWTAuthenticationCaptcha() throws Exception {
+    void testJWTAuthenticationCaptcha() throws Exception {
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
         loginVM.setPassword(USER_PASSWORD);
@@ -184,7 +184,7 @@ public class JiraAuthenticationIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithAnonymousUser
-    public void testEmptyPasswordAttempt() throws Exception {
+    void testEmptyPasswordAttempt() throws Exception {
         LoginVM loginVM = new LoginVM();
         loginVM.setUsername(USERNAME);
         loginVM.setPassword("");

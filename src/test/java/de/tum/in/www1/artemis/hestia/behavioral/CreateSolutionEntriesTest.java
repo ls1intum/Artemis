@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CreateSolutionEntries;
 
-public class CreateSolutionEntriesTest {
+class CreateSolutionEntriesTest {
 
     private BehavioralBlackboard blackboard;
 
@@ -23,7 +23,7 @@ public class CreateSolutionEntriesTest {
     private GroupedFile groupedFile;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -34,12 +34,12 @@ public class CreateSolutionEntriesTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         assertThat(createSolutionEntries.executeCondition()).isFalse();
     }
 
     @Test
-    public void testNoChangesOnSecondCall() {
+    void testNoChangesOnSecondCall() {
         groupedFile.setFileContent("A\nB\nC\nD");
         groupedFile.setCommonChanges(List.of(new GroupedFile.ChangeBlock(List.of(2, 3), false)));
 
@@ -51,7 +51,7 @@ public class CreateSolutionEntriesTest {
     }
 
     @Test
-    public void testCreateOneSolutionEntry() {
+    void testCreateOneSolutionEntry() {
         groupedFile.setFileContent("A\nB\nC\nD");
         groupedFile.setCommonChanges(List.of(new GroupedFile.ChangeBlock(List.of(2, 3), false)));
 
@@ -67,7 +67,7 @@ public class CreateSolutionEntriesTest {
     }
 
     @Test
-    public void testCreateOneSolutionEntryIgnoringPotential() {
+    void testCreateOneSolutionEntryIgnoringPotential() {
         groupedFile.setFileContent("A\nB\nC\nD\nE");
         groupedFile.setCommonChanges(List.of(new GroupedFile.ChangeBlock(List.of(2, 3), false), new GroupedFile.ChangeBlock(List.of(4, 5), true)));
 
@@ -83,7 +83,7 @@ public class CreateSolutionEntriesTest {
     }
 
     @Test
-    public void testCreateTwoSolutionEntries() {
+    void testCreateTwoSolutionEntries() {
         groupedFile.setFileContent("A\nB\nC\nD\nE");
         groupedFile.setCommonChanges(List.of(new GroupedFile.ChangeBlock(List.of(2, 3), false), new GroupedFile.ChangeBlock(List.of(4, 5), false)));
 

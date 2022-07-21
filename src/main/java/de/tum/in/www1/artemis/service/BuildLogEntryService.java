@@ -45,7 +45,7 @@ public class BuildLogEntryService {
             // restore the association to the parent object
             updatedBuildLogEntry.setProgrammingSubmission(programmingSubmission);
             return updatedBuildLogEntry;
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

@@ -6,7 +6,6 @@ import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,7 +181,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "other-instructor1", roles = "INSTRUCTOR")
-    public void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
+    void testResetCategories_instructorInWrongCourse_forbidden() throws Exception {
         database.addInstructor("other-instructors", "other-instructor");
         var endpoint = parameterizeEndpoint("/api" + StaticCodeAnalysisResource.Endpoints.RESET, programmingExerciseSCAEnabled);
         request.patch(endpoint, "{}", HttpStatus.FORBIDDEN);
@@ -191,7 +190,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(value = ProgrammingLanguage.class, names = { "JAVA", "SWIFT", "C" })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
+    void testResetCategories(ProgrammingLanguage programmingLanguage) throws Exception {
         // Create a programming exercise with real categories
         var course = database.addCourseWithOneProgrammingExercise(true, false, programmingLanguage);
         ProgrammingExercise exercise = programmingExerciseRepository
@@ -206,7 +205,7 @@ class StaticCodeAnalysisIntegrationTest extends AbstractSpringIntegrationBambooB
             category.setPenalty(5D);
             category.setMaxPenalty(15D);
             category.setState(CategoryState.GRADED);
-        }).collect(Collectors.toList());
+        }).toList();
         staticCodeAnalysisCategoryRepository.saveAll(alteredCategories);
 
         // Perform the request and assert that the original state was restored

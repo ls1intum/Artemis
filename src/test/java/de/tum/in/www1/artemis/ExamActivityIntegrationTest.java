@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringS
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
-public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExamMonitoringScheduleService examMonitoringScheduleService;
@@ -56,7 +56,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     private StudentExam studentExam;
 
     @BeforeEach
-    public void init() {
+    void init() {
         List<User> users = database.addUsers(15, 5, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addActiveExamWithRegisteredUser(course, users.get(0));
@@ -69,7 +69,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         database.resetDatabase();
         examMonitoringScheduleService.stopSchedule();
         examMonitoringScheduleService.clearAllExamMonitoringData();
@@ -116,7 +116,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testCreateExamActivityInCache(ExamActionType examActionType) {
+    void testCreateExamActivityInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
@@ -126,7 +126,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamActionPresentInCache(ExamActionType examActionType) {
+    void testExamActionPresentInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
@@ -141,7 +141,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamActionNotPresentInCache(ExamActionType examActionType) {
+    void testExamActionNotPresentInCache(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
@@ -155,7 +155,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testMultipleExamActions() {
+    void testMultipleExamActions() {
         List<ExamAction> examActions = Arrays.stream(ExamActionType.values()).map(this::createExamActionBasedOnType).toList();
 
         for (ExamAction examAction : examActions) {
@@ -174,7 +174,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    public void testExamWithMonitoringDisabled(ExamActionType examActionType) {
+    void testExamWithMonitoringDisabled(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         exam.setMonitoring(false);
@@ -194,7 +194,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "admin", roles = "ADMIN")
     @EnumSource(ExamActionType.class)
-    public void testGetInitialExamActions(ExamActionType examActionType) throws Exception {
+    void testGetInitialExamActions(ExamActionType examActionType) throws Exception {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
@@ -216,7 +216,7 @@ public class ExamActivityIntegrationTest extends AbstractSpringIntegrationBamboo
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "admin", roles = "ADMIN")
     @ValueSource(booleans = { true, false })
-    public void testUpdateMonitoring(boolean monitoring) throws Exception {
+    void testUpdateMonitoring(boolean monitoring) throws Exception {
         exam.setMonitoring(!monitoring);
         exam = examRepository.save(exam);
 

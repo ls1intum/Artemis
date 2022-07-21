@@ -108,6 +108,22 @@ export const examManagementRoute: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // Exam Import
+    {
+        path: 'import/:examId',
+        component: ExamUpdateComponent,
+        resolve: {
+            exam: ExamResolve,
+        },
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.examManagement.title',
+            requestOptions: {
+                forImport: true,
+            },
+        },
+        canActivate: [UserRouteAccessService],
+    },
     {
         path: ':examId/monitoring',
         loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),

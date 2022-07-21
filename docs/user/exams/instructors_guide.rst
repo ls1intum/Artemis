@@ -52,7 +52,23 @@ During the exam creation and configuration, you can create your exam and configu
 
    Create and Configure the Exam
 
+.. figure:: instructor/exam_conduction.png
+   :alt: Exam Conduction
+   :align: center
 
+   Exam Conduction
+
+.. figure:: instructor/exam_conduction.png
+   :alt: Exam Exercises
+   :align: center
+
+   Exam Exercises
+
+.. figure:: instructor/exam_assessment.png
+   :alt: Exam Assessment and Student Review
+   :align: center
+
+   Exam Assessment and Student Review
 
     .. _exercise_groups:
 

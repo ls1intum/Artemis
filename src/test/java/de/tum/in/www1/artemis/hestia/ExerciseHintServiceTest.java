@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
-public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -68,7 +68,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     private int timeOffset = 0;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(2, 2, 1, 2);
 
@@ -93,25 +93,25 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
-    public void testGetAvailableExerciseHintsEmpty1() {
+    void testGetAvailableExerciseHintsEmpty1() {
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).isEmpty();
     }
 
     @Test
-    public void testGetAvailableExerciseHintsEmpty2() {
+    void testGetAvailableExerciseHintsEmpty2() {
         addResultWithFailedTestCases(exercise.getTestCases());
         var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
         assertThat(availableExerciseHints).isEmpty();
     }
 
     @Test
-    public void testGetAvailableExerciseHintsEmpty3() {
+    void testGetAvailableExerciseHintsEmpty3() {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
@@ -120,7 +120,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHintsEmpty4() {
+    void testGetAvailableExerciseHintsEmpty4() {
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
@@ -130,7 +130,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints1() {
+    void testGetAvailableExerciseHints1() {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -139,7 +139,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints2() {
+    void testGetAvailableExerciseHints2() {
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
@@ -148,7 +148,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints3() {
+    void testGetAvailableExerciseHints3() {
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
@@ -157,7 +157,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints4() {
+    void testGetAvailableExerciseHints4() {
         addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
@@ -166,7 +166,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHints5() {
+    void testGetAvailableExerciseHints5() {
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(2).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(1).getTestCases());
@@ -175,7 +175,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHintsWithZeroThreshold1() {
+    void testGetAvailableExerciseHintsWithZeroThreshold1() {
         hints.get(0).setDisplayThreshold((short) 0);
         exerciseHintRepository.save(hints.get(0));
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -184,7 +184,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHintsWithZeroThreshold2() {
+    void testGetAvailableExerciseHintsWithZeroThreshold2() {
         hints.get(0).setDisplayThreshold((short) 0);
         exerciseHintRepository.save(hints.get(0));
         addResultWithSuccessfulTestCases(exercise.getTestCases());
@@ -193,7 +193,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testGetAvailableExerciseHintsWithZeroThreshold3() {
+    void testGetAvailableExerciseHintsWithZeroThreshold3() {
         hints.get(0).setDisplayThreshold((short) 0);
         exerciseHintRepository.save(hints.get(0));
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -203,7 +203,27 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testActivateExerciseHint1() {
+    void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
+        // create result with feedbacks with "null" for attribute "positive"
+        addResultWithSuccessfulTestCases(exercise.getTestCases());
+        var results = resultRepository.findAll();
+        var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.get(0).getId());
+        assertThat(optionalResult).isPresent();
+
+        var result = optionalResult.get();
+        result.getFeedbacks().forEach(feedback -> feedback.setPositive(null));
+        resultRepository.save(result);
+
+        // create results with feedbacks with "false" for attribute "positive"
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+
+        var availableHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableHints).containsExactly(hints.get(0));
+    }
+
+    @Test
+    void testActivateExerciseHint1() {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
@@ -215,7 +235,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testActivateExerciseHint2() {
+    void testActivateExerciseHint2() {
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
         addResultWithSuccessfulTestCases(sortedTasks.get(0).getTestCases());
@@ -227,7 +247,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testActivateExerciseHint3() {
+    void testActivateExerciseHint3() {
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
         addResultWithFailedTestCases(sortedTasks.get(2).getTestCases());
@@ -239,7 +259,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testActivateExerciseHint4() {
+    void testActivateExerciseHint4() {
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
         addResultWithSuccessfulTestCases(exercise.getTestCases());
@@ -251,7 +271,7 @@ public class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @Test
-    public void testActivateExerciseHintTwiceFails() {
+    void testActivateExerciseHintTwiceFails() {
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());
         addResultWithFailedTestCases(exercise.getTestCases());

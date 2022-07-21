@@ -37,7 +37,7 @@ class TokenProviderSecurityMetersTests {
     private TokenProvider tokenProvider;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         JHipsterProperties jHipsterProperties = new JHipsterProperties();
         String base64Secret = "fd54a45s65fds737b9aafcb3412e07ed99b267f33413274720ddbb7f6c5e64e9f14075f2d7ed041592f0b7657baf8";
         jHipsterProperties.getSecurity().getAuthentication().getJwt().setBase64Secret(base64Secret);
@@ -54,7 +54,7 @@ class TokenProviderSecurityMetersTests {
     }
 
     @Test
-    public void testValidTokenShouldNotCountAnything() {
+    void testValidTokenShouldNotCountAnything() {
         Collection<Counter> counters = meterRegistry.find(INVALID_TOKENS_METER_EXPECTED_NAME).counters();
 
         assertThat(aggregate(counters)).isZero();
@@ -67,7 +67,7 @@ class TokenProviderSecurityMetersTests {
     }
 
     @Test
-    public void testTokenExpiredCount() {
+    void testTokenExpiredCount() {
         assertThat(meterRegistry.get(INVALID_TOKENS_METER_EXPECTED_NAME).tag("cause", "expired").counter().count()).isZero();
 
         String expiredToken = createExpiredToken();
@@ -89,7 +89,7 @@ class TokenProviderSecurityMetersTests {
     }
 
     @Test
-    public void testTokenSignatureInvalidCount() {
+    void testTokenSignatureInvalidCount() {
         assertThat(meterRegistry.get(INVALID_TOKENS_METER_EXPECTED_NAME).tag("cause", "invalid-signature").counter().count()).isZero();
 
         String tokenWithDifferentSignature = createTokenWithDifferentSignature();
@@ -100,7 +100,7 @@ class TokenProviderSecurityMetersTests {
     }
 
     @Test
-    public void testTokenMalformedCount() {
+    void testTokenMalformedCount() {
         assertThat(meterRegistry.get(INVALID_TOKENS_METER_EXPECTED_NAME).tag("cause", "malformed").counter().count()).isZero();
 
         String malformedToken = createMalformedToken();
