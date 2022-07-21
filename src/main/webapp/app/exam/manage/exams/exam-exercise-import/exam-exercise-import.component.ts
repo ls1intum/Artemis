@@ -16,7 +16,8 @@ export class ExamExerciseImportComponent implements OnInit {
     @Input() importInSameCourse = false;
     // Map to determine, which exercises the user has selected and therefore should be imported alongside an exam
     selectedExercises = new Map<ExerciseGroup, Set<Exercise>>();
-    // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server or must be changed because the exam is imported into the same course
+    // Map / Blocklist with the title and shortName of the programming exercises, that have been either rejected by the server
+    // or must be changed because the exam is imported into the same course
     titleAndShortNameOfProgrammingExercises = new Map<number, String[]>();
     // Expose enums to the template
     exerciseType = ExerciseType;
