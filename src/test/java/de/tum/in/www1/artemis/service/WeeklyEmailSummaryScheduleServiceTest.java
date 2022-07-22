@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.scheduled.WeeklyEmailSummaryScheduleServic
 /**
  * Tests if the WeeklyEmailSummaryScheduleService correctly calls the EmailSummaryService with the expected times and intervals
  */
-public class WeeklyEmailSummaryScheduleServiceTest {
+class WeeklyEmailSummaryScheduleServiceTest {
 
     private static WeeklyEmailSummaryScheduleService weeklyEmailSummaryService;
 
@@ -40,7 +40,7 @@ public class WeeklyEmailSummaryScheduleServiceTest {
      * Prepares the needed values and objects for testing
      */
     @BeforeAll
-    public static void setUp() {
+    static void setUp() {
         environment = mock(Environment.class);
         when(environment.getActiveProfiles()).thenReturn(new String[] {});
 
@@ -56,7 +56,7 @@ public class WeeklyEmailSummaryScheduleServiceTest {
      * Tests if the main method scheduleWeeklySummariesOnStartUp uses the correct times.
      */
     @Test
-    public void testIfWeeklySummariesAreScheduledAtTheCorrectTimes() {
+    void testIfWeeklySummariesAreScheduledAtTheCorrectTimes() {
         // needed as a parameter for the task scheduler
         ZoneOffset zoneOffset = ZonedDateTime.now().getZone().getRules().getOffset(Instant.now());
         ArgumentCaptor<Instant> instantCaptor = ArgumentCaptor.forClass(Instant.class);

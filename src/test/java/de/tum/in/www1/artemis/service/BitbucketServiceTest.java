@@ -22,25 +22,25 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 
-public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.version-control.url}")
     private URL bitbucketServerUrl;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         bitbucketRequestMockProvider.reset();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthRunning() throws URISyntaxException, JsonProcessingException {
+    void testHealthRunning() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.OK);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo()).containsEntry("url", bitbucketServerUrl);
@@ -49,7 +49,7 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthNotRunning() throws URISyntaxException, JsonProcessingException {
+    void testHealthNotRunning() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("PAUSED", HttpStatus.OK);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo()).containsEntry("url", bitbucketServerUrl);
@@ -58,7 +58,7 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthException() throws URISyntaxException, JsonProcessingException {
+    void testHealthException() throws URISyntaxException, JsonProcessingException {
         bitbucketRequestMockProvider.mockHealth("RUNNING", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo()).containsEntry("url", bitbucketServerUrl);
@@ -68,14 +68,14 @@ public class BitbucketServiceTest extends AbstractSpringIntegrationBambooBitbuck
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testGetDefaultBranch(String defaultBranch) throws IOException, URISyntaxException {
+    void testGetDefaultBranch(String defaultBranch) throws IOException, URISyntaxException {
         bitbucketRequestMockProvider.mockDefaultBranch(defaultBranch, "PROJECTNAME");
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git"));
         assertThat(actualDefaultBranch).isEqualTo(defaultBranch);
     }
 
     @Test
-    public void testGetOrRetrieveDefaultBranch() throws IOException {
+    void testGetOrRetrieveDefaultBranch() throws IOException {
         Course course = database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);

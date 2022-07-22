@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiff
 /**
  * Tests for the ProgrammingExerciseGitDiffReportResource
  */
-public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final static String FILE_NAME = "test.java";
 
@@ -39,20 +39,20 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
     private ProgrammingExerciseGitDiffReportService reportService;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         Course course = database.addEmptyCourse();
         database.addUsers(1, 1, 1, 1);
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getGitDiffAsAStudent() throws Exception {
+    void getGitDiffAsAStudent() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -61,7 +61,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getGitDiffAsATutor() throws Exception {
+    void getGitDiffAsATutor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -70,7 +70,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void getGitDiffAsAnEditor() throws Exception {
+    void getGitDiffAsAnEditor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -79,7 +79,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getGitDiffAsAnInstructor() throws Exception {
+    void getGitDiffAsAnInstructor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -88,7 +88,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getFullGitDiffAsAStudent() throws Exception {
+    void getFullGitDiffAsAStudent() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -97,7 +97,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getFullGitDiffAsATutor() throws Exception {
+    void getFullGitDiffAsATutor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -106,7 +106,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void getFullGitDiffAsAnEditor() throws Exception {
+    void getFullGitDiffAsAnEditor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
@@ -115,7 +115,7 @@ public class ProgrammingExerciseGitDiffReportIntegrationTest extends AbstractSpr
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getFullGitDiffAsAnInstructor() throws Exception {
+    void getFullGitDiffAsAnInstructor() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "TEST", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "TEST", exercise, solutionRepo);
         reportService.updateReport(exercise);
