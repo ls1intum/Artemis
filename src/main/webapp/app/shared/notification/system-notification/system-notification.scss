@@ -37,13 +37,12 @@
             font-weight: bold;
             white-space: nowrap;
             margin: 0 10px;
-
             display: flex;
             justify-content: center;
             align-items: center;
             gap: 10px;
 
-            fa-icon {
+            .ng-fa-icon {
                 font-size: 20px;
                 animation-delay: 0.2s;
             }
