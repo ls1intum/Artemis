@@ -33,6 +33,7 @@ import {
     faCheckDouble,
     faEraser,
     faExclamationTriangle,
+    faEye,
     faListAlt,
     faPencilAlt,
     faTable,
@@ -45,6 +46,7 @@ import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hesti
 import { TestwiseCoverageReportModalComponent } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report-modal.component';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { ButtonSize } from 'app/shared/components/button.component';
 
 @Component({
     selector: 'jhi-programming-exercise-detail',
@@ -59,6 +61,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     readonly FeatureToggle = FeatureToggle;
     readonly ProgrammingLanguage = ProgrammingLanguage;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
+    readonly ButtonSize = ButtonSize;
     assessmentType = AssessmentType.SEMI_AUTOMATIC;
     programmingExercise: ProgrammingExercise;
     isExamExercise: boolean;
@@ -75,6 +78,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     isAdmin = false;
     addedLineCount: number;
     removedLineCount: number;
+    isLoadingDiffReport: boolean;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -92,6 +96,7 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faEraser = faEraser;
     faUsers = faUsers;
+    faEye = faEye;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -414,15 +419,17 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
      * Gets the full git-diff from the server and displays it in a modal.
      */
     getAndShowFullDiff() {
+        this.isLoadingDiffReport = true;
         this.programmingExerciseService.getFullDiffReport(this.programmingExercise.id!).subscribe({
             next: (gitDiffReport) => {
+                this.isLoadingDiffReport = false;
                 const modalRef = this.modalService.open(FullGitDiffReportModalComponent, {
                     size: 'xl',
-                    backdrop: 'static',
                 });
                 modalRef.componentInstance.report = gitDiffReport;
             },
             error: (err: HttpErrorResponse) => {
+                this.isLoadingDiffReport = false;
                 if (err.status === 404) {
                     this.alertService.error('artemisApp.programmingExercise.diffReport.404');
                 } else {

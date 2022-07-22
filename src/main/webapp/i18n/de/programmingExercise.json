@@ -390,8 +390,8 @@
                 }
             },
             "diffReport": {
-                "button": "Zeige den Unterschied zwischen Template und Lösung",
-                "tooltip": "Zeigt den Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "button": "Anzeigen",
+                "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
                 "title": "Template-Lösungs-Diff",
                 "template": "Template",
                 "solution": "Lösung",
