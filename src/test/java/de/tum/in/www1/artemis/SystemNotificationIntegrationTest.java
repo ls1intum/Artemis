@@ -28,6 +28,8 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private SystemNotification systemNotificationActive;
 
+    private SystemNotification systemNotificationFuture;
+
     @BeforeEach
     void initTestCase() {
         // Generate a system notification that has expired.
@@ -35,7 +37,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
         systemNotificationRepo.save(systemNotificationExpired);
 
         // Generate a system notification whose notification date is in the future.
-        SystemNotification systemNotificationFuture = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(8));
+        systemNotificationFuture = ModelFactory.generateSystemNotification(ZonedDateTime.now().plusMinutes(25), ZonedDateTime.now().plusDays(8));
         systemNotificationRepo.save(systemNotificationFuture);
 
         // Generate an active system notification
@@ -71,12 +73,15 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
 
     private void getActiveSystemNotification() throws Exception {
         // Do the actual request that is tested here.
-        SystemNotification notification = request.get("/api/system-notifications/active-notification", HttpStatus.OK, SystemNotification.class);
+        List<SystemNotification> notification = request.getList("/api/system-notifications/active", HttpStatus.OK, SystemNotification.class);
 
         // The returned notification must be an active notification.
-        assertThat(systemNotification.getExpireDate()).as("Returned notification has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
-        assertThat(systemNotification.getNotificationDate()).as("Returned notification is active.").isBeforeOrEqualTo(ZonedDateTime.now());
-        assertThat(notification).as("Returned notification is active system notification.").isEqualTo(systemNotificationActive);
+        assertThat(notification).hasSize(2);
+        assertThat(notification).as("Returned notification is active system notification.").isEqualTo(List.of(systemNotificationActive, systemNotificationFuture));
+        assertThat(systemNotificationActive.getExpireDate()).as("Returned notification 0 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotificationActive.getNotificationDate()).as("Returned notification 0 is active.").isBeforeOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotificationFuture.getExpireDate()).as("Returned notification 1 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
+        assertThat(systemNotificationFuture.getNotificationDate()).as("Returned notification 1 is not active.").isAfterOrEqualTo(ZonedDateTime.now());
     }
 
     @Test
