@@ -65,7 +65,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * Listens to updates of the system notifiation array on the websocket.
+     * Listens to updates of the system notification array on the websocket.
      * The server submits the entire list of relevant system notifications if they are updated
      * @private
      */
