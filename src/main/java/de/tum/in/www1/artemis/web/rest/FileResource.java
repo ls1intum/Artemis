@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -243,10 +244,8 @@ public class FileResource {
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
 
-        Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.EXERCISE_ID_KEY, exerciseId.intValue());
-        requiredClaims.put(TokenProvider.SUBMISSION_ID_KEY, submissionId.intValue());
-        requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+        var requiredClaims = Map.of(TokenProvider.EXERCISE_ID_KEY, exerciseId.intValue(), TokenProvider.SUBMISSION_ID_KEY, submissionId.intValue(), TokenProvider.FILENAME_KEY,
+                TokenProvider.DOWNLOAD_FILE + filename);
 
         if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
@@ -385,9 +384,7 @@ public class FileResource {
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
         // required claims to access this resource
-        Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.LECTURE_ID_KEY, lectureId.intValue());
-        requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+        var requiredClaims = Map.of(TokenProvider.LECTURE_ID_KEY, lectureId.intValue(), TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
 
         if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
@@ -491,9 +488,7 @@ public class FileResource {
         log.debug("REST request to get file : {}", filename);
 
         // required claims to access this resource
-        Claims requiredClaims = Jwts.claims();
-        requiredClaims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnitId.intValue());
-        requiredClaims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+        var requiredClaims = Map.of(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnitId.intValue(), TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
 
         if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
@@ -528,7 +523,7 @@ public class FileResource {
      * @param customClaims               the claims that the access token has to contain
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
-    private boolean validateTemporaryAccessToken(String temporaryAccessToken, Claims customClaims) {
+    private boolean validateTemporaryAccessToken(String temporaryAccessToken, Map<String, ? extends Serializable> customClaims) {
         if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, customClaims)) {
             log.info("Attachment with invalid token was accessed");
             return false;

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.security.jwt;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Arrays;
@@ -161,7 +162,7 @@ public class TokenProvider {
      * @param requiredClaims The claims that should be included in the token
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthorityAndFile(String authToken, Map<String, Object> requiredClaims) {
+    public boolean validateTokenForAuthorityAndFile(String authToken, Map<String, ? extends Serializable> requiredClaims) {
         if (!validateJwsToken(authToken) || requiredClaims.isEmpty()) {
             return false;
         }
