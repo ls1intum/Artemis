@@ -259,6 +259,9 @@ public class StudentExamResource {
 
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
 
+        if (!user.equals(studentExam.getUser())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
 
         // students can not fetch the exam until EXAM_START_WAIT_TIME_MINUTES minutes before the exam start, we use the same constant in the client
@@ -361,17 +364,22 @@ public class StudentExamResource {
 
         // 1st: Get the studentExam from the database
         StudentExam studentExam = studentExamRepository.findByIdWithExercisesElseThrow(studentExamId);
+
+        // 2nd: Check equal users and access permissions
+        if (!user.equals(studentExam.getUser())) {
+            throw new AccessForbiddenException("Current user is not the user of the requested student exam");
+        }
         studentExamAccessService.checkCourseAndExamAccessElseThrow(courseId, examId, user, studentExam.isTestRun(), false);
 
-        // 2nd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
+        // 3rd: check that the studentExam has been submitted, otherwise /student-exams/{studentExamId}/conduction should be used
         if (!studentExam.isSubmitted()) {
             throw new AccessForbiddenException("You are not allowed to access the summary of a student exam which was NOT submitted!");
         }
 
-        // 3rd: Reload the Quiz-Exercises
+        // 4th: Reload the Quiz-Exercises
         loadQuizExercisesForStudentExam(studentExam);
 
-        // 4th fetch participations, submissions and results and connect them to the studentExam
+        // 5th fetch participations, submissions and results and connect them to the studentExam
         if (studentExam.getExam().isTestExam()) {
             fetchParticipationsSubmissionsAndResultsForTestExam(studentExam, user);
         }
