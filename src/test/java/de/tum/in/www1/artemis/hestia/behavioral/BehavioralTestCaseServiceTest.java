@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralTestCaseServic
 import de.tum.in.www1.artemis.util.HestiaUtilTestService;
 import de.tum.in.www1.artemis.util.LocalRepository;
 
-public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final LocalRepository solutionRepo = new LocalRepository("main");
 
@@ -59,7 +59,7 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     private ProgrammingExercise exercise;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
         database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         exercise = programmingExerciseRepository.findAll().get(0);
@@ -67,7 +67,7 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -138,7 +138,7 @@ public class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBamb
     @Test
     @Timeout(1000)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGenerationForSimpleExample() throws Exception {
+    void testGenerationForSimpleExample() throws Exception {
         exercise = hestiaUtilTestService.setupSolution("Test.java", "A\nB\nC\nD\nE\nF\nG\nH", exercise, solutionRepo);
         var testCase = addTestCaseToExercise("testCase");
 

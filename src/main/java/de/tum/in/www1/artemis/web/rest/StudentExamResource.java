@@ -78,8 +78,8 @@ public class StudentExamResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
-    @Value("${info.browser-fingerprints-enabled:#{true}}")
-    private boolean fingerprintingEnabled;
+    @Value("${info.student-exam-store-session-data:#{true}}")
+    private boolean storeSessionDataInStudentExamSession;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
@@ -630,10 +630,10 @@ public class StudentExamResource {
      * @param studentExam the student exam to be prepared
      */
     private void createNewExamSession(HttpServletRequest request, StudentExam studentExam) {
-        final var ipAddress = HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
-        final String browserFingerprint = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Fingerprint");
-        final String instanceId = !fingerprintingEnabled ? null : request.getHeader("X-Artemis-Client-Instance-ID");
-        final String userAgent = request.getHeader("User-Agent");
+        final var ipAddress = !storeSessionDataInStudentExamSession ? null : HttpRequestUtils.getIpAddressFromRequest(request).orElse(null);
+        final String browserFingerprint = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Fingerprint");
+        final String instanceId = !storeSessionDataInStudentExamSession ? null : request.getHeader("X-Artemis-Client-Instance-ID");
+        final String userAgent = !storeSessionDataInStudentExamSession ? null : request.getHeader("User-Agent");
         ExamSession examSession = this.examSessionService.startExamSession(studentExam, browserFingerprint, userAgent, instanceId, ipAddress);
         examSession.hideDetails();
         examSession.setInitialSession(this.examSessionService.checkExamSessionIsInitial(studentExam.getId()));

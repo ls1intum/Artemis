@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLElement;
 import de.tum.in.www1.artemis.service.compass.utils.CompassConfiguration;
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-public class UMLClassTest {
+class UMLClassTest {
 
     private UMLClass umlClass;
 
