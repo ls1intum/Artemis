@@ -884,7 +884,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.quizExercise = quizExercise;
         this.exerciseService.validateDate(this.quizExercise);
         this.savedEntity = cloneDeep(quizExercise);
-        this.cacheValidation();
+        this.changeDetector.detectChanges();
 
         // Navigate back
         if (this.isImport) {
