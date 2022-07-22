@@ -10,7 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
+import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
 import { tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -48,7 +48,6 @@ export class ExamUpdateComponent implements OnInit {
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
         private router: Router,
-        private accountService: AccountService,
     ) {}
 
     ngOnInit(): void {

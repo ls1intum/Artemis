@@ -205,9 +205,7 @@ describe('Exam Update Component', () => {
         it('should update', fakeAsync(() => {
             fixture.detectChanges();
 
-            const updateSpy = jest.spyOn(examManagementService, 'update');
-
-            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...exam, id: 1 } })));
+            const updateSpy = jest.spyOn(examManagementService, 'update').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
 
             // trigger save
             component.save();
@@ -317,10 +315,8 @@ describe('Exam Update Component', () => {
             examWithoutExercises.id = undefined;
             fixture.detectChanges();
 
-            const createSpy = jest.spyOn(examManagementService, 'create');
+            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...examWithoutExercises, id: 1 } })));
 
-            const createSpy = jest.spyOn(examManagementService, 'create').mockReturnValue(of(new HttpResponse<Exam>({ body: { ...exam, id: 1 } })));
-            
             // trigger save
             component.save();
             tick();
@@ -345,24 +341,20 @@ describe('Exam Update Component', () => {
             createStub.mockRestore();
         }));
 
-        it('should correctly validate the number of correction rounds in a testExams', () => {
-            examWithoutExercises.testExam = true;
-            examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
-            fixture.detectChanges();
-
         it('should call the back method on the nav util service on previousState', () => {
             const navUtilService = TestBed.inject(ArtemisNavigationUtilService);
             const spy = jest.spyOn(navUtilService, 'navigateBackWithOptional').mockImplementation();
             component.course = course;
-            component.exam = exam;
-            exam.id = 1;
+            component.exam = examWithoutExercises;
+            examWithoutExercises.id = 1;
             component.previousState();
             expect(spy).toHaveBeenCalledOnce();
-            expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], exam.id!.toString());
+            expect(spy).toHaveBeenCalledWith(['course-management', course.id!.toString(), 'exams'], examWithoutExercises.id!.toString());
         });
+
         it('should correctly validate the number of correction rounds in a testExams', () => {
-            exam.testExam = true;
-            exam.numberOfCorrectionRoundsInExam = 1;
+            examWithoutExercises.testExam = true;
+            examWithoutExercises.numberOfCorrectionRoundsInExam = 1;
             fixture.detectChanges();
 
             examWithoutExercises.numberOfCorrectionRoundsInExam = 0;
