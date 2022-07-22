@@ -121,9 +121,8 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Exam examNotRegistered = database.addExam(course1, users.get(1), ZonedDateTime.now().minusHours(4), ZonedDateTime.now().minusHours(1), ZonedDateTime.now().plusHours(1));
         assertThrows(AccessForbiddenException.class,
                 () -> studentExamAccessService.checkCourseAndExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), users.get(0), false, true));
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1.getId()));
-        assertThrows(AccessForbiddenException.class,
+        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1.getId()));
+        assertThrows(ConflictException.class,
                 () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), examNotRegistered.getId(), studentExam1, users.get(0)));
     }
 
@@ -137,10 +136,9 @@ class StudentExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "student1", roles = "USER")
     void testExamIdEqualsExamOfStudentExam() {
         StudentExam studentExamNotRelatedToExam1 = database.addStudentExam(exam2);
-        assertThrows(AccessForbiddenException.class,
+        assertThrows(ConflictException.class,
                 () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1, users.get(0)));
-        assertThrows(AccessForbiddenException.class,
-                () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId()));
+        assertThrows(ConflictException.class, () -> studentExamAccessService.checkStudentExamAccessElseThrow(course1.getId(), exam1.getId(), studentExamNotRelatedToExam1.getId()));
     }
 
     @Test

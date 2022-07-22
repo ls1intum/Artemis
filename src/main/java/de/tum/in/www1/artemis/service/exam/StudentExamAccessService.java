@@ -67,7 +67,7 @@ public class StudentExamAccessService {
 
         // Check that the examId equals the id of the exam of the student exam
         if (!studentExam.getExam().getId().equals(examId)) {
-            throw new AccessForbiddenException("The student exam does not belong to the exam");
+            throw new ConflictException("The student exam does not belong to the exam", "StudentExam", "studentExamExamConflict");
         }
 
         // Check that the student of the required student exam (from the database) is the current user
