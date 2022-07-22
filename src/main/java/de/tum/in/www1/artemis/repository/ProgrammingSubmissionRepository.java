@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface ProgrammingSubmissionRepository extends JpaRepository<ProgrammingSubmission, Long> {
 
     @EntityGraph(type = LOAD, attributePaths = { "results.feedbacks" })
-    ProgrammingSubmission findFirstByParticipationIdAndCommitHash(Long participationId, String commitHash);
+    ProgrammingSubmission findLastByParticipationIdAndCommitHash(Long participationId, String commitHash);
 
     @Query("""
             SELECT s FROM ProgrammingSubmission s
