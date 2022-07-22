@@ -9,6 +9,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { MockActivatedRoute } from '../../../helpers/mocks/activated-route/mock-activated-route';
 import { EventManager } from 'app/core/util/event-manager.service';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('ExerciseHint Management Component', () => {
     let comp: ExerciseHintComponent;
@@ -16,11 +17,14 @@ describe('ExerciseHint Management Component', () => {
     let service: ExerciseHintService;
     let eventManager: EventManager;
 
+    const programmingExercise = new ProgrammingExercise(undefined, undefined);
+    programmingExercise.id = 15;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
             declarations: [ExerciseHintComponent],
-            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 15 }) }],
+            providers: [{ provide: ActivatedRoute, useValue: new MockActivatedRoute({ exerciseId: 15, exercise: programmingExercise }) }],
         })
             .compileComponents()
             .then(() => {
@@ -65,7 +69,7 @@ describe('ExerciseHint Management Component', () => {
         const exerciseHint = new ExerciseHint();
         exerciseHint.id = 123;
         comp.exerciseHints = [exerciseHint];
-        comp.exerciseId = 15;
+        comp.exercise = programmingExercise;
 
         comp.deleteExerciseHint(123);
 
