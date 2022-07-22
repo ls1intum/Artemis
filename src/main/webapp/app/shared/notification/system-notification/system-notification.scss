@@ -1,11 +1,9 @@
 .system-notification {
     width: 100%;
     padding: 5px 20px 5px 10px;
-
     display: flex;
     gap: 10px;
     align-items: center;
-
     animation: 0.25s ease init-max-height;
     animation-fill-mode: both;
     transform-origin: top;
@@ -14,7 +12,7 @@
         color: var(--artemis-alert-info-color);
         background: var(--artemis-alert-info-background);
 
-        fa-icon {
+        .ng-fa-icon {
             color: var(--artemis-alert-info-border);
         }
     }
@@ -23,7 +21,7 @@
         color: var(--artemis-alert-warning-color);
         background: var(--artemis-alert-warning-background);
 
-        fa-icon {
+        .ng-fa-icon {
             color: var(--artemis-alert-warning-border);
         }
     }
@@ -75,6 +73,7 @@
         opacity: 0;
         transform: translateX(-20px);
     }
+
     100% {
         opacity: 1;
         transform: translateX(0);
@@ -86,6 +85,7 @@
         opacity: 0;
         transform: scaleY(0);
     }
+
     100% {
         opacity: 1;
         transform: scaleY(1);
