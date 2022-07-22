@@ -1667,10 +1667,10 @@
         </createTable>
     </changeSet>
     <changeSet author="sleiss (generated)" id="1658429499154-107">
-        <addPrimaryKey columnNames="organization_id, course_id" constraintName="PRIMARY" tableName="course_organization"/>
+        <addPrimaryKey columnNames="organization_id, course_id" constraintName="course_organization_primary" tableName="course_organization"/>
     </changeSet>
     <changeSet author="sleiss (generated)" id="1658429499154-108">
-        <addPrimaryKey columnNames="organization_id, user_id" constraintName="PRIMARY" tableName="user_organization"/>
+        <addPrimaryKey columnNames="organization_id, user_id" constraintName="user_organization_primary" tableName="user_organization"/>
     </changeSet>
     <changeSet author="sleiss (generated)" id="1658429499154-109">
         <addUniqueConstraint columnNames="team_id, exercise_id, initialization_state" constraintName="UC_PARTICIPATION_TEAM_ID_EXERCISE_ID_INITIALIZATION_STATE_COLS" tableName="participation"/>
