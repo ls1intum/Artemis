@@ -77,6 +77,7 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
                 notification.expireDate = convertDateFromServer(notification.expireDate);
             });
             this.notifications = notifications;
+            this.closedIds = [];
             this.selectVisibleNotificationsAndScheduleUpdate();
         });
     }
