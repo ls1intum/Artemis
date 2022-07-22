@@ -58,7 +58,8 @@ public class StudentExamAccessService {
      *
      * @param courseId      the if of the course
      * @param examId        the id of the exam
-     * @param studentExam   the student exam
+     * @param studentExam   the student exam. NOTE: This must be fetched from the database and
+     *                      MUST NOT be taken from a client request as this could be a security issue
      * @param currentUser   the current user
      */
     public void checkStudentExamAccessElseThrow(Long courseId, Long examId, StudentExam studentExam, User currentUser) {
