@@ -3170,4 +3170,10 @@
     <changeSet author="sleiss (generated)" id="1658429499154-483">
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false" onDelete="NO ACTION" onUpdate="NO ACTION" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
     </changeSet>
+    <changeSet author="sleiss (generated)" id="1658429499154-authorities">
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/authorities.csv"
+                  separator=";"
+                  tableName="jhi_authority"/>
+    </changeSet>
 </databaseChangeLog>
