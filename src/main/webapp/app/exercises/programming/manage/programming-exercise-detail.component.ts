@@ -467,20 +467,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         });
     }
 
-    generateCodeHints() {
-        this.codeHintService.generateCodeHintsForExercise(this.programmingExercise.id!, true).subscribe({
-            next: () => {
-                this.alertService.addAlert({
-                    type: AlertType.SUCCESS,
-                    message: 'artemisApp.programmingExercise.generateCodeHintsSuccess',
-                });
-            },
-            error: (err) => {
-                this.onError(err);
-            },
-        });
-    }
-
     /**
      * Returns undefined if the last solution submission was not successful or no report exists yet
      */

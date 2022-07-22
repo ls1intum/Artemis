@@ -14,14 +14,14 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile.ChangeBlock;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.CombineChangeBlocks;
 
-public class CombineChangeBlocksTest {
+class CombineChangeBlocksTest {
 
     private CombineChangeBlocks combineChangeBlocks;
 
     private GroupedFile groupedFile;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -32,7 +32,7 @@ public class CombineChangeBlocksTest {
     }
 
     @Test
-    public void testNoCombining() throws BehavioralSolutionEntryGenerationException {
+    void testNoCombining() throws BehavioralSolutionEntryGenerationException {
         var changeBlocks = new ChangeBlock[] { new ChangeBlock(List.of(1)), new ChangeBlock(List.of(3)), new ChangeBlock(List.of(5)) };
         groupedFile.setCommonChanges(List.of(changeBlocks));
 
@@ -42,7 +42,7 @@ public class CombineChangeBlocksTest {
     }
 
     @Test
-    public void testOneCombination1() throws BehavioralSolutionEntryGenerationException {
+    void testOneCombination1() throws BehavioralSolutionEntryGenerationException {
         var changeBlocks = new ChangeBlock[] { new ChangeBlock(List.of(2)), new ChangeBlock(List.of(3)) };
         groupedFile.setCommonChanges(List.of(changeBlocks));
 
@@ -52,7 +52,7 @@ public class CombineChangeBlocksTest {
     }
 
     @Test
-    public void testOneCombination2() throws BehavioralSolutionEntryGenerationException {
+    void testOneCombination2() throws BehavioralSolutionEntryGenerationException {
         var changeBlocks = new ChangeBlock[] { new ChangeBlock(List.of(1, 2, 3, 4)), new ChangeBlock(List.of(3, 4, 5, 6, 7, 8)) };
         groupedFile.setCommonChanges(List.of(changeBlocks));
 
@@ -62,7 +62,7 @@ public class CombineChangeBlocksTest {
     }
 
     @Test
-    public void testCombineManyIntoOne1() throws BehavioralSolutionEntryGenerationException {
+    void testCombineManyIntoOne1() throws BehavioralSolutionEntryGenerationException {
         var changeBlocks = new ChangeBlock[] { new ChangeBlock(List.of(2)), new ChangeBlock(List.of(3)), new ChangeBlock(List.of(4)), new ChangeBlock(List.of(5)) };
         groupedFile.setCommonChanges(List.of(changeBlocks));
 
@@ -72,7 +72,7 @@ public class CombineChangeBlocksTest {
     }
 
     @Test
-    public void testCombineManyIntoOne2() throws BehavioralSolutionEntryGenerationException {
+    void testCombineManyIntoOne2() throws BehavioralSolutionEntryGenerationException {
         var changeBlocks = new ChangeBlock[] { new ChangeBlock(List.of(1, 2, 3)), new ChangeBlock(List.of(3, 4, 5)), new ChangeBlock(List.of(4, 5, 6)),
                 new ChangeBlock(List.of(7, 8, 9)) };
         groupedFile.setCommonChanges(List.of(changeBlocks));

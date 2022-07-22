@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
 
-public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -63,7 +63,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
             GraphType.CREATED_FEEDBACKS, GraphType.POSTS, GraphType.RESOLVED_POSTS);
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(12, 10, 0, 10);
 
         course = database.addCourseWithOneModelingExercise();
@@ -101,14 +101,14 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(SpanType.class)
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testDataRangeEachGraph(SpanType span) throws Exception {
+    void testDataRangeEachGraph(SpanType span) throws Exception {
         int expectedResultLength = expectedResultLength(span);
 
         for (GraphType graph : artemisGraphs) {
@@ -133,7 +133,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetChartDataForCourse() throws Exception {
+    void testGetChartDataForCourse() throws Exception {
         SpanType span = SpanType.WEEK;
         int periodIndex = 0;
         var view = StatisticsView.COURSE;
@@ -147,7 +147,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetChartDataForExercise() throws Exception {
+    void testGetChartDataForExercise() throws Exception {
         SpanType span = SpanType.WEEK;
         int periodIndex = 0;
         var view = StatisticsView.EXERCISE;
@@ -161,7 +161,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetCourseStatistics() throws Exception {
+    void testGetCourseStatistics() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise laterTextExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         TextExercise earlierTextExercise = database.createIndividualTextExercise(course, pastTimestamp.minusDays(1), pastTimestamp.minusDays(1), pastTimestamp.minusDays(1));
@@ -202,7 +202,7 @@ public class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetExerciseStatistics() throws Exception {
+    void testGetExerciseStatistics() throws Exception {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 

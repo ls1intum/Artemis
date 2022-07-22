@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private EmailSummaryService weeklyEmailSummaryService;
@@ -54,7 +54,7 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
      * Prepares the needed values and objects for testing
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         database.addUsers(2, 0, 0, 0);
 
         // preparation of the test data where a user deactivated weekly summaries
@@ -118,7 +118,7 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -126,7 +126,7 @@ public class EmailSummaryServiceTest extends AbstractSpringIntegrationBambooBitb
      * Tests if the method/runnable prepareEmailSummaries correctly selects exercises that are suited for weekly summaries
      */
     @Test
-    public void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
+    void testIfPrepareWeeklyEmailSummariesCorrectlySelectsExercisesAndCreatesEmail() {
         ArgumentCaptor<Set<Exercise>> exerciseSetCaptor = ArgumentCaptor.forClass((Class) Set.class);
 
         weeklyEmailSummaryService.prepareEmailSummaries();
