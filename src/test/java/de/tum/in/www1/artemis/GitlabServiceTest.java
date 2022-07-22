@@ -29,25 +29,25 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
-public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         gitlabRequestMockProvider.reset();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testCheckIfProjectExistsFails() throws GitLabApiException {
+    void testCheckIfProjectExistsFails() throws GitLabApiException {
         gitlabRequestMockProvider.mockFailToCheckIfProjectExists("project-key");
         try {
             versionControlService.checkIfProjectExists("project-key", "project-name");
@@ -59,7 +59,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthOk() throws URISyntaxException, JsonProcessingException {
+    void testHealthOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.OK);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl);
@@ -68,7 +68,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthNotOk() throws URISyntaxException, JsonProcessingException {
+    void testHealthNotOk() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("notok", HttpStatus.OK);
         var health = versionControlService.health();
         assertThat(health.getAdditionalInfo()).containsEntry("url", gitlabServerUrl).containsEntry("status", "notok");
@@ -77,7 +77,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthException() throws URISyntaxException, JsonProcessingException {
+    void testHealthException() throws URISyntaxException, JsonProcessingException {
         gitlabRequestMockProvider.mockHealth("ok", HttpStatus.INTERNAL_SERVER_ERROR);
         var health = versionControlService.health();
         assertThat(health.isUp()).isFalse();
@@ -86,7 +86,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(strings = { "master", "main", "someOtherName" })
-    public void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
+    void testGetDefaultBranch(String defaultBranch) throws URISyntaxException, GitLabApiException {
         VcsRepositoryUrl repoURL = new VcsRepositoryUrl("http://some.test.url/scm/PROJECTNAME/REPONAME-exercise.git");
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
         String actualDefaultBranch = versionControlService.getDefaultBranchOfRepository(repoURL);
@@ -94,7 +94,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    public void testGetOrRetrieveDefaultBranch() throws GitLabApiException {
+    void testGetOrRetrieveDefaultBranch() throws GitLabApiException {
         Course course = database.addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
@@ -107,7 +107,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    public void testGetLastCommitDetails() throws ParseException {
+    void testGetLastCommitDetails() throws ParseException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
         Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST);
         Commit commit = versionControlService.getLastCommitDetails(body);
@@ -119,7 +119,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    public void testGetLastCommitDetailsWrongCommitOrder() throws ParseException {
+    void testGetLastCommitDetailsWrongCommitOrder() throws ParseException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
         Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST_WRONG_COMMIT_ORDER);
         Commit commit = versionControlService.getLastCommitDetails(body);
@@ -131,7 +131,7 @@ public class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
     }
 
     @Test
-    public void testGetLastCommitDetailsWithoutCommits() throws ParseException {
+    void testGetLastCommitDetailsWithoutCommits() throws ParseException {
         String latestCommitHash = "11028e4104243d8cbae9175f2bc938cb8c2d7924";
         Object body = new JSONParser().parse(GITLAB_PUSH_EVENT_REQUEST_WITHOUT_COMMIT);
         Commit commit = versionControlService.getLastCommitDetails(body);

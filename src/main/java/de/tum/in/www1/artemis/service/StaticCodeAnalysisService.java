@@ -224,6 +224,6 @@ public class StaticCodeAnalysisService {
                 feedback.setText(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER + category.get().getName());
                 return true; // keep this feedback
             }
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toCollection(ArrayList::new));
     }
 }

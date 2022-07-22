@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntry
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
-public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -46,7 +46,7 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
     private Set<ProgrammingExerciseTestCase> testCases;
 
     @BeforeEach
-    public void initTestCases() {
+    void initTestCases() {
         database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         database.addUsers(2, 2, 1, 2);
 
@@ -66,31 +66,31 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeletionAsStudent() throws Exception {
+    void testDeletionAsStudent() throws Exception {
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeletionAsTutor() throws Exception {
+    void testDeletionAsTutor() throws Exception {
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testDeletionAsEditor() throws Exception {
+    void testDeletionAsEditor() throws Exception {
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.NO_CONTENT);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteAllTasksAndSolutionEntriesForProgrammingExercise() throws Exception {
+    void testDeleteAllTasksAndSolutionEntriesForProgrammingExercise() throws Exception {
         Set<Long> solutionEntryIdsBeforeDeleting = testCases.stream().map(ProgrammingExerciseTestCase::getSolutionEntries).flatMap(Collection::stream).map(DomainObject::getId)
                 .collect(Collectors.toSet());
 
@@ -107,13 +107,13 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testTaskExtractionAsStudent() throws Exception {
+    void testTaskExtractionAsStudent() throws Exception {
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.FORBIDDEN, Set.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTaskExtractionForProgrammingExercise() throws Exception {
+    void testTaskExtractionForProgrammingExercise() throws Exception {
         String taskName1 = "Implement Bubble Sort";
         String taskName2 = "Implement Policy and Context";
         programmingExercise.setProblemStatement(
@@ -144,7 +144,7 @@ public class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTaskExtractionForEmptyProblemStatement() throws Exception {
+    void testTaskExtractionForEmptyProblemStatement() throws Exception {
         programmingExercise.setProblemStatement("");
         programmingExerciseRepository.save(programmingExercise);
 

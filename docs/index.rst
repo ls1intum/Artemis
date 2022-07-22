@@ -30,7 +30,9 @@ All these exercises are supposed to be run either live in the lecture with insta
    user/learning-analytics
    user/notifications
    user/user-experience
+   user/grading
    user/courses/customizable
+   user/scaling
 
 
 .. toctree::

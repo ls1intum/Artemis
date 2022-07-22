@@ -43,7 +43,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import net.sourceforge.plantuml.Log;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestService programmingExerciseTestService;
@@ -66,7 +66,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     private final static String GRADLE_TEST_RESULTS_PATH = "build/test-results/test";
 
     @BeforeAll
-    public static void detectMavenHome() {
+    static void detectMavenHome() {
         /*
          * Maven invoker only looks for those two values and ignores maven, even if it is available over PATH. Because Maven reports the path when "-version" is used, we use that
          * to auto-detect the maven home and store it in the system properties.
@@ -99,7 +99,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
 
     @BeforeEach
     @SuppressWarnings("resource")
-    public void setup() throws Exception {
+    void setup() throws Exception {
         programmingExerciseTestService.setupTestUsers(1, 1, 0, 1);
         Course course = database.addEmptyCourse();
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course);
@@ -116,7 +116,7 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         database.resetDatabase();
         reset(gitService);
         reset(bambooServer);
@@ -153,14 +153,14 @@ public class ProgrammingExerciseTemplateIntegrationTest extends AbstractSpringIn
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    public void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+    void test_template_exercise(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, exerciseRepo, TestResult.FAILED);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     @MethodSource("languageTypeBuilder")
-    public void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
+    void test_template_solution(ProgrammingLanguage language, ProjectType projectType) throws Exception {
         runTests(language, projectType, solutionRepo, TestResult.SUCCESSFUL);
     }
 

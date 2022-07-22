@@ -14,16 +14,16 @@ import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 
 import de.tum.in.www1.artemis.config.ApiVersionFilter;
 
-public class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ContentVersionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(1, 0, 0, 0);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testContentVersionHeaderIsSetCorrectly() throws Exception {
+    void testContentVersionHeaderIsSetCorrectly() throws Exception {
         MvcResult res = request.getMvc().perform(MockMvcRequestBuilders.get(new URI("/api/account"))).andReturn();
         final MockHttpServletResponse response = res.getResponse();
         final String contentVersionHeader = response.getHeader(ApiVersionFilter.CONTENT_VERSION_HEADER);
@@ -31,7 +31,7 @@ public class ContentVersionIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 

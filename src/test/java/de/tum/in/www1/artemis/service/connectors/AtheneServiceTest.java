@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors;
 
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AtheneRequestMockProvider atheneRequestMockProvider;
@@ -48,7 +47,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Initializes atheneService and example exercise
      */
     @BeforeEach
-    public void init() {
+    void init() {
         // Create example exercise
         database.addUsers(10, 1, 0, 1);
         var course = database.addCourseWithOneReleasedTextExercise();
@@ -57,7 +56,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         atheneRequestMockProvider.reset();
         atheneService.finishTask(exercise1.getId());
         database.resetDatabase();
@@ -67,7 +66,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Submits a job to atheneService without any submissions
      */
     @Test
-    public void submitJobWithoutSubmissions() {
+    void submitJobWithoutSubmissions() {
         atheneService.submitJob(exercise1);
         assertThat(!atheneService.isTaskRunning(exercise1.getId())).isTrue();
     }
@@ -91,7 +90,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Submits a job to atheneService with less than 10 submissions (will use fallback segmentation without athene)
      */
     @Test
-    public void submitJobWithLessThan10Submissions() {
+    void submitJobWithLessThan10Submissions() {
         generateTextSubmissions(9);
         atheneService.submitJob(exercise1);
         assertThat(atheneService.isTaskRunning(exercise1.getId())).isFalse();
@@ -101,7 +100,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Submits a job to atheneService with 10 submissions (will trigger athene)
      */
     @Test
-    public void submitJobWith10Submissions() {
+    void submitJobWith10Submissions() {
         generateTextSubmissions(10);
 
         // Create mock server
@@ -115,7 +114,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * Tests parseTextBlocks of atheneService
      */
     @Test
-    public void parseTextBlocks() {
+    void parseTextBlocks() {
         int size = 10;
         var textSubmissions = generateTextSubmissions(size);
 
@@ -135,7 +134,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
 
     @Test
-    public void parseTextClusters() {
+    void parseTextClusters() {
         List<Cluster> clusters = generateClusters();
         List<TextCluster> textClusters = atheneService.parseTextClusters(clusters);
         for (TextCluster textCluster : textClusters) {
@@ -157,7 +156,7 @@ public class AtheneServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
             final String idString = textSubmission.getId() + ";0-30;" + textSubmission.getText().substring(0, 30);
             return Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
                     .setText(textSubmission.getText().substring(0, 30)).build();
-        }).collect(toList());
+        }).toList();
     }
 
     /**
