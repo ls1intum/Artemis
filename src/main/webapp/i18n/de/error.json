@@ -70,7 +70,7 @@
                 "id": "Die ID eines Hilfs-Repositories scheint gesetzt zu sein. Stelle bitte sicher, dass die ID nicht gesetzt ist.",
                 "name": "Der Name von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jeder Name gültig ist und es keine Duplikate gibt.",
                 "checkout.directory": "Das Checkout-Verzeichnis von mindestens einem Hilfs-Repository ist ungültig oder dupliziert. Stelle bitte sicher, dass jedes Checkout-Verzeichnis gültig ist und es keine Duplikate gibt.",
-                "description": "Die Beschreibung von mindestens einem Hilfs-Repository zu lang! Es sind maximal {{maxLength}} Zeichen erlaubt."
+                "description": "Die Beschreibung von mindestens einem Hilfs-Repository ist zu lang! Es sind maximal {{maxLength}} Zeichen erlaubt."
             },
             "testcases.weights": "Vor Deaktivierung der manuellen Bewertung muss für mindestens einen Testfall die Bewertungsgewichtung größer Null gesetzt werden.",
             "page.request": "Die Seitenanforderung scheint ungültig zu sein. Stelle bitte sicher, dass genügend {{entityName}}-Entitäten vorhanden sind, damit die Anforderungsseite erstellt werden kann."
