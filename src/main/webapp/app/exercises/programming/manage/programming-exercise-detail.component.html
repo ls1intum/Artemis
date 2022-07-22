@@ -26,11 +26,13 @@
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                        class="btn btn-warning btn-sm me-1"
+                        class="btn btn-warning btn-sm me-1 position-relative"
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
+                        <!-- New Badge -->
+                        <span class="position-absolute top-0 end-0 translate-middle-y badge rounded-pill bg-info">New</span>
                     </a>
 
                     <a
@@ -144,46 +146,6 @@
                             ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
-                        </button>
-                    </span>
-                </div>
-                <!--
-                At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
-                In the future, this feature will be available to editors and instructors as well.
-                -->
-                <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="createStructuralSolutionEntries()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.createStructuralSolutionEntriesTooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
-                        </button>
-                    </span>
-                    <!-- The generation is currently only supported for Java exercises with the option enabled to perform a testwise coverage analysis -->
-                    <span *ngIf="programmingExercise.testwiseCoverageEnabled && programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA" class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="createBehavioralSolutionEntries()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.createBehavioralSolutionEntriesTooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.createBehavioralSolutionEntriesTitle">Create Behavioral Solution Entries</span>
-                        </button>
-                    </span>
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="generateCodeHints()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.generateCodeHintsTooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
                         </button>
                     </span>
                 </div>
