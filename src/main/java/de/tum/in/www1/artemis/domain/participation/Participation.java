@@ -279,7 +279,8 @@ public abstract class Participation extends DomainObject implements Participatio
         }
 
         return (Optional<T>) submissions.stream().max((s1, s2) -> {
-            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null || s1.getSubmissionDate().equals(s2.getSubmissionDate())) {
+            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null
+                    || s1 instanceof ProgrammingSubmission pS1 && s2 instanceof ProgrammingSubmission pS2 && pS1.getCommitHash().equals(pS2.getCommitHash())) {
                 // this case should not happen, but in the rare case we can compare the ids
                 // newer ids are typically later
                 return s1.getId().compareTo(s2.getId());
