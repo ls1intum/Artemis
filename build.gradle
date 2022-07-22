@@ -253,6 +253,7 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.29"
+    implementation "org.postgresql:postgresql:42.4.0"
 
     implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:71.1"
