@@ -207,7 +207,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         switch (this.editType) {
             case EditType.CREATE:
             case EditType.IMPORT:
-                // Passing exerciseId since it is required for navigation to the example submission dashboard.
+                // Passing exercise since it is required for navigation to the example submission dashboard.
                 navigateToExampleSubmissions(this.router, exercise);
                 break;
             case EditType.UPDATE:
