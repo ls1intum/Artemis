@@ -67,8 +67,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     courseRepository: CourseManagementService;
     notificationText?: string;
 
-    isImport = false;
-
     // TODO: why do we have entity, savedEntity and quizExercise?
     entity: QuizExercise;
 
@@ -200,7 +198,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
-                if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+                if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
             });

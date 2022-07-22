@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 
 public class PageUtil {
@@ -29,6 +30,13 @@ public class PageUtil {
     @NotNull
     public static PageRequest createLearningGoalPageRequest(PageableSearchDTO<String> search) {
         var sortOptions = Sort.by(LearningGoal.LearningGoalSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
+        sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
+        return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
+    }
+
+    @NotNull
+    public static PageRequest createExamPageRequest(PageableSearchDTO<String> search) {
+        var sortOptions = Sort.by(Exam.ExamSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }

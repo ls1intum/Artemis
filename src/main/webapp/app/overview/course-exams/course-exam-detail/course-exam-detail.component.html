@@ -1,15 +1,93 @@
-<div *ngIf="exam" (click)="openExam()" id="exam-{{ exam.id }}">
-    <div class="row card-header text-white bg-secondary">
-        <h4 class="card-title text-center">{{ exam.title }}</h4>
+<div *ngIf="exam" [ngClass]="{ clickable: !maxAttemptsReached && !(exam.testExam && examState === 'CLOSED') }" (click)="openExam()" id="exam-{{ exam.id }}">
+    <!-- Signature colors for the header: Blue for test exams and Green for RedExams -->
+    <div
+        [ngClass]="{
+            'row card-header': true,
+            'bg-primary': exam.testExam,
+            'bg-success': !exam.testExam
+        }"
+    >
+        <h5 class="text-center text-white">{{ exam.title }}</h5>
     </div>
-    <div class="row card-body justify-content-center">
-        <h4 class="col-auto"><fa-icon [icon]="faPenAlt" size="3x"></fa-icon></h4>
+
+    <!-- Body of the Component. Content changes depending on the exam state-->
+    <div class="row card-body d-flex justify-content-center">
+        <h4 *ngIf="examState === 'UNDEFINED'; else nonUndefined" class="icon-settings">
+            <!-- Case 7: Undefined exam state. show Pencil without further information -->
+            <fa-icon [icon]="faPenAlt" size="3x"></fa-icon>
+        </h4>
+        <ng-template #nonUndefined [ngSwitch]="examState">
+            <h4 class="col-3 icon-settings">
+                <!-- Calender to indicate an upcoming exam -->
+                <fa-icon *ngSwitchCase="'UPCOMING'" [icon]="faCalendarDay" size="2x"></fa-icon>
+                <!-- Play Button without circle to indicate, the exam starts shortly -->
+                <fa-icon *ngSwitchCase="'IMMINENT'" [icon]="faPlay" size="2x"></fa-icon>
+                <!-- Play-Button to indicate, the exam can be started -->
+                <fa-icon *ngSwitchCase="'CONDUCTING'" [icon]="faCirclePlay" size="2x"></fa-icon>
+                <!-- User with a clock to indicate indivial time extensions -->
+                <fa-icon *ngSwitchCase="'TIMEEXTENSION'" [icon]="faUserClock" size="2x"></fa-icon>
+                <!-- Magnifying Glass to indicate, the exam can be reviewed -->
+                <fa-icon *ngSwitchCase="'STUDENTREVIEW'" [icon]="faMagnifyingGlass" size="2x"></fa-icon>
+                <!-- Book to indicate, the exam is closed -->
+                <fa-icon *ngSwitchCase="'CLOSED'" [icon]="faBook" size="2x"></fa-icon>
+                <!-- Stop to indicate, no more attemps are possible -->
+                <fa-icon *ngSwitchCase="'NO_MORE_ATTEMPTS'" [icon]="faCircleStop" size="2x"></fa-icon>
+            </h4>
+            <div class="col-9 row card-body justify-content-center">
+                <div *ngSwitchCase="'UPCOMING'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'upcoming' | artemisTranslate }}</h5>
+                    <div class="text-center">
+                        {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
+                        {{ timeLeftToStart | artemisDurationFromSeconds }}
+                    </div>
+                </div>
+                <div *ngSwitchCase="'IMMINENT'">
+                    <h5 class="text-center">
+                        {{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminent' | artemisTranslate }}
+                        {{ timeLeftToStart | artemisDurationFromSeconds }}
+                    </h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'imminentExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngSwitchCase="'CONDUCTING'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conducting' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'conductingExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngSwitchCase="'TIMEEXTENSION'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.timeExtension' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.timeExtensionExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngSwitchCase="'CLOSED'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closed' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.' + (exam.testExam ? 'testExam.' : '') + 'closedExplanation' | artemisTranslate }}</div>
+                </div>
+                <div *ngSwitchCase="'STUDENTREVIEW'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.review' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.reviewExplanation' | artemisTranslate }} {{ exam.examStudentReviewEnd | artemisDate }}</div>
+                </div>
+                <div *ngSwitchCase="'NO_MORE_ATTEMPTS'">
+                    <h5 class="text-center">{{ 'artemisApp.exam.overview.noMoreAttempts' | artemisTranslate }}</h5>
+                    <div class="text-center">{{ 'artemisApp.exam.overview.noMoreAttemptsExplanation' | artemisTranslate }}</div>
+                </div>
+            </div>
+        </ng-template>
     </div>
-    <div class="row card-footer">
-        <div *ngIf="exam.startDate" class="col-12">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
-        <div *ngIf="exam.startDate && exam.endDate" class="col-12">
-            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ examDuration | artemisDurationFromSeconds }}
+    <!-- Footer -->
+    <div class="card-footer row">
+        <!-- For real exams, the start date is shown. For test exams, the working window is shown to the students -->
+        <div *ngIf="!exam.testExam && exam.startDate" class="col-sm">{{ 'artemisApp.exam.overview.start' | artemisTranslate: { start: exam.startDate | artemisDate } }}</div>
+        <div *ngIf="exam.testExam && exam.startDate && exam.endDate" class="col-12">
+            {{
+                'artemisApp.exam.overview.testExam.available'
+                    | artemisTranslate
+                        : {
+                              startDate: exam.startDate | artemisDate,
+                              endDate: exam.endDate | artemisDate
+                          }
+            }}
         </div>
-        <div *ngIf="exam.maxPoints" class="col-12">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.maxPoints } }}</div>
+        <div *ngIf="exam.startDate && exam.endDate" class="col-12">
+            {{ 'artemisApp.exam.overview.duration' | artemisTranslate }} {{ exam.workingTime! | artemisDurationFromSeconds }}
+        </div>
+        <div *ngIf="exam.maxPoints" class="col-sm">{{ 'artemisApp.exam.overview.maxPoints' | artemisTranslate: { points: exam.maxPoints } }}</div>
     </div>
 </div>

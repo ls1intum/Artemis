@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -273,7 +271,7 @@ public class LectureResource {
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
             }
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
         return lecture;

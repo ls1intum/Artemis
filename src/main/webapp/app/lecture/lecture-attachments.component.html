@@ -48,11 +48,11 @@
                             </thead>
                             <tbody>
                                 <tr *ngFor="let attachment of attachments; trackBy: trackId" class="position-relative">
-                                    <td [ngClass]="{ 'edit-overlay': attachmentToBeCreated && attachmentToBeCreated.id === attachment.id }">
-                                        <span *ngIf="attachmentToBeCreated && attachmentToBeCreated.id === attachment.id">{{
-                                            'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate
-                                        }}</span>
-                                        <span *ngIf="!attachmentToBeCreated || attachmentToBeCreated.id !== attachment.id">{{ attachment.id }}</span>
+                                    <td>
+                                        {{ attachment.id }}
+                                        <div *ngIf="attachmentToBeCreated?.id === attachment?.id" class="edit-overlay">
+                                            {{ 'artemisApp.lecture.attachments.isBeingEdited' | artemisTranslate }}
+                                        </div>
                                     </td>
                                     <td>{{ attachment.name }}</td>
                                     <td>{{ attachment.attachmentType }}</td>

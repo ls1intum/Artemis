@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.service.connectors.athene.AtheneService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.athene.base64-secret}")
     private String atheneApiSecret;
@@ -42,7 +42,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     private TextClusterRepository textClusterRepository;
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -53,7 +53,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
      * @throws Exception might be thrown from Network Call to Artemis API
      */
     @Test
-    public void testProcessingClusterAddedDistances() throws Exception {
+    void testProcessingClusterAddedDistances() throws Exception {
         SecurityUtils.setAuthorizationObject();
         database.addUsers(10, 0, 0, 0);
         final var course = database.addCourseWithOneFinishedTextExercise();
@@ -71,7 +71,7 @@ public class AtheneIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         final var segments = textSubmissions.stream().map(textBlockService::splitSubmissionIntoBlocks).flatMap(Collection::stream)
                 .map(block -> Segment.newBuilder().setId(block.getId()).setSubmissionId(block.getSubmission().getId().intValue()).setText(block.getText())
                         .setStartIndex(block.getStartIndex()).setEndIndex(block.getEndIndex()).build())
-                .collect(Collectors.toList());
+                .collect(Collectors.toCollection(ArrayList::new));
         atheneResultBuilder.addAllSegments(segments);
 
         List.of(0, 1, 2).forEach(cid -> {

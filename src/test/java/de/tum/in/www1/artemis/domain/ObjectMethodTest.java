@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 import java.lang.reflect.Constructor;
 import java.util.*;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.DynamicNode;
@@ -51,7 +50,7 @@ class ObjectMethodTest {
      */
     Optional<DynamicNode> generateTestContainerForClasses(ClassPathNode classPathStructure) {
         return classPathStructure.mapTree(this::generateTestsForClass, (packageNode, dynamicNodes) -> {
-            var tests = dynamicNodes.filter(Optional::isPresent).map(Optional::get).collect(Collectors.toList());
+            var tests = dynamicNodes.filter(Optional::isPresent).map(Optional::get).toList();
             if (tests.isEmpty()) {
                 return Optional.empty();
             }

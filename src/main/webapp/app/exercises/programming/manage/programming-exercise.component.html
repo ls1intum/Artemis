@@ -110,17 +110,8 @@
                             <span *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
                                 <!--Checks if the programming exercise has a setup with VCS and CI, if this not the case
                                  the links are disabled--->
-                                <a
-                                    *ngIf="
-                                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation!.repositoryUrl!);
-                                        else noVersionControlAndContinuousIntegrationAvailableTemplate
-                                    "
-                                    href="{{ programmingExercise.templateParticipation!.repositoryUrl! }}"
-                                    target="_blank"
-                                    >Template</a
-                                ></span
+                                <a href="{{ programmingExercise.templateParticipation!.repositoryUrl! }}" target="_blank">Template</a></span
                             >
-                            <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.templateParticipation?.results?.length"
                                 [participationType]="templateParticipationType"
@@ -130,17 +121,8 @@
                         </div>
                         <div class="d-flex justify-content-between">
                             <span *ngIf="programmingExercise.solutionParticipation?.repositoryUrl"
-                                ><a
-                                    *ngIf="
-                                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation!.repositoryUrl!);
-                                        else noVersionControlAndContinuousIntegrationAvailableSolution
-                                    "
-                                    href="{{ programmingExercise.solutionParticipation!.repositoryUrl! }}"
-                                    target="_blank"
-                                    >Solution</a
-                                ></span
+                                ><a href="{{ programmingExercise.solutionParticipation!.repositoryUrl! }}" target="_blank">Solution</a></span
                             >
-                            <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template>
                             <jhi-programming-exercise-instructor-status
                                 *ngIf="programmingExercise.solutionParticipation?.results?.length"
                                 [participationType]="solutionParticipationType"
@@ -149,50 +131,17 @@
                             ></jhi-programming-exercise-instructor-status>
                         </div>
                         <div>
-                            <span *ngIf="programmingExercise.testRepositoryUrl"
-                                ><a
-                                    *ngIf="
-                                        !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.testRepositoryUrl);
-                                        else noVersionControlAndContinuousIntegrationAvailableTest
-                                    "
-                                    href="{{ programmingExercise.testRepositoryUrl }}"
-                                    target="_blank"
-                                    >Test</a
-                                ></span
-                            >
-                            <ng-template #noVersionControlAndContinuousIntegrationAvailableTest>Test</ng-template>
+                            <span *ngIf="programmingExercise.testRepositoryUrl"><a href="{{ programmingExercise.testRepositoryUrl }}" target="_blank">Test</a></span>
                         </div>
                     </td>
                     <td *jhiExtensionPoint="overrideRepositoryAndBuildPlan">
                         <!-- TODO get the correct URL from the server instead of hardcoding Bamboo here -->
                         <span *ngIf="programmingExercise.templateParticipation?.buildPlanId">
-                            <a
-                                *ngIf="
-                                    !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.templateParticipation!.repositoryUrl!) &&
-                                        programmingExercise.templateParticipation!.buildPlanUrl;
-                                    else noVersionControlAndContinuousIntegrationAvailableTemplate
-                                "
-                                target="_blank"
-                                rel="noreferrer"
-                                href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}"
-                                >Template</a
-                            >
+                            <a target="_blank" rel="noreferrer" href="{{ programmingExercise.templateParticipation!.buildPlanUrl }}">Template</a>
                         </span>
-                        <ng-template #noVersionControlAndContinuousIntegrationAvailableTemplate>Template</ng-template> <br />
                         <span *ngIf="programmingExercise.solutionParticipation && programmingExercise.solutionParticipation.buildPlanId">
-                            <a
-                                *ngIf="
-                                    !noVersionControlAndContinuousIntegrationAvailableCheck(programmingExercise.solutionParticipation!.repositoryUrl!) &&
-                                        programmingExercise.solutionParticipation!.buildPlanUrl;
-                                    else noVersionControlAndContinuousIntegrationAvailableSolution
-                                "
-                                target="_blank"
-                                rel="noreferrer"
-                                href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}"
-                                >Solution</a
-                            >
+                            <a target="_blank" rel="noreferrer" href="{{ programmingExercise.solutionParticipation!.buildPlanUrl }}">Solution</a>
                         </span>
-                        <ng-template #noVersionControlAndContinuousIntegrationAvailableSolution>Solution</ng-template><br />
                     </td>
 
                     <td class="d-md-table-cell">{{ programmingExercise.publishBuildPlanUrl }}</td>

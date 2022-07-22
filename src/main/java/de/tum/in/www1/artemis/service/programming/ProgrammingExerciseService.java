@@ -152,10 +152,11 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
-     * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
-     * @throws IOException          If the template files couldn't be read
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException If the template files couldn't be read
      */
-    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
+    @Transactional
+    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
@@ -470,7 +471,7 @@ public class ProgrammingExerciseService {
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
      * @param user                 The user that triggered the action (used as Git commit author)
-     * @throws Exception           An exception in case something went wrong
+     * @throws Exception An exception in case something went wrong
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
@@ -722,8 +723,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Updates the timeline attributes of the given programming exercise
+     *
      * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText optional text for a notification to all students about the update
+     * @param notificationText           optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
@@ -754,9 +756,9 @@ public class ProgrammingExerciseService {
     /**
      * Updates the problem statement of the given programming exercise.
      *
-     * @param programmingExercise   The ProgrammingExercise of which the problem statement is updated.
-     * @param problemStatement      markdown of the problem statement.
-     * @param notificationText      optional text for a notification to all students about the update
+     * @param programmingExercise The ProgrammingExercise of which the problem statement is updated.
+     * @param problemStatement    markdown of the problem statement.
+     * @param notificationText    optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      */
@@ -783,8 +785,8 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
-     * @throws GitAPIException      If the checkout fails
+     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
+     * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException {
@@ -1016,11 +1018,32 @@ public class ProgrammingExerciseService {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
-
         String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
         if (errorMessageCis != null) {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
+        // means the project does not exist in version control server and does not exist in continuous integration server
+    }
+
+    /**
+     * Pre-Checks if a project with the same ProjectKey or ProjectName already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
+     *
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @param courseShortName the shortName of the course the programming exercise should be imported in
+     * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
+     */
+    public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
+        String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
+        String projectName = courseShortName + " " + programmingExercise.getTitle();
+        log.debug("Project Key: " + projectKey);
+        log.debug("Project Name: " + projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return true;
+        }
+        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        return errorMessageCis != null;
         // means the project does not exist in version control server and does not exist in continuous integration server
     }
 
