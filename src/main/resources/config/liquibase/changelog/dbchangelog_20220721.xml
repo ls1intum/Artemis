@@ -2576,12 +2576,12 @@
         </createIndex>
     </changeSet>
     <changeSet author="sleiss (generated)" id="1658429499154-295">
-        <createIndex indexName="reference" tableName="model_cluster">
+        <createIndex indexName="model_cluster_model_element_type" tableName="model_cluster">
             <column name="model_element_type"/>
         </createIndex>
     </changeSet>
     <changeSet author="sleiss (generated)" id="1658429499154-296">
-        <createIndex indexName="reference" tableName="model_element">
+        <createIndex indexName="model_element_model_element_type" tableName="model_element">
             <column name="model_element_type"/>
         </createIndex>
     </changeSet>
