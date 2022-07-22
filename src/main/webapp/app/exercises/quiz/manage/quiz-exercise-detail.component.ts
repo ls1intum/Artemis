@@ -110,8 +110,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
 
     readonly QuizMode = QuizMode;
 
-    private initCompleted: boolean;
-
     constructor(
         private route: ActivatedRoute,
         private courseService: CourseManagementService,
@@ -259,24 +257,19 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         this.scheduleQuizStart = (this.quizExercise.quizBatches?.length ?? 0) > 0;
         this.updateDuration();
-        this.initCompleted = true;
+        this.exerciseService.validateDate(this.quizExercise);
 
-        this.cacheValidation();
         // Assign savedEntity to identify local changes
         this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
+
+        this.cacheValidation();
     }
 
     /**
      * Validates if the date is correct
      */
     validateDate() {
-        if (this.initCompleted) {
-            // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving.
-            // Currently initCompleted field is used to prevent marking the exercise dirty on initialization.
-            // However making a change and undoing it still has the issue.
-            // Additionally, quiz exercises are for some reason the only exercise type the has the unsaved changes warning.
-            this.exerciseService.validateDate(this.quizExercise);
-        }
+        this.exerciseService.validateDate(this.quizExercise);
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
@@ -888,9 +881,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.isSaving = false;
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
-        this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
-        this.changeDetector.detectChanges();
+        this.exerciseService.validateDate(this.quizExercise);
+        this.savedEntity = cloneDeep(quizExercise);
+        this.cacheValidation();
 
         // Navigate back
         if (this.isImport) {
