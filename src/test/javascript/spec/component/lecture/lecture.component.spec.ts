@@ -27,19 +27,28 @@ describe('Lecture', () => {
     let modalService: NgbModal;
 
     let pastLecture: Lecture;
+    let pastLecture2: Lecture;
     let currentLecture: Lecture;
     let currentLecture2: Lecture;
     let currentLecture3: Lecture;
     let futureLecture: Lecture;
+    let futureLecture2: Lecture;
     let unspecifiedLecture: Lecture;
 
     beforeEach(() => {
-        const tomorrow = dayjs().add(1, 'day');
+        const lastWeek = dayjs().subtract(1, 'week');
         const yesterday = dayjs().subtract(1, 'day');
+        const tomorrow = dayjs().add(1, 'day');
+        const nextWeek = dayjs().add(1, 'week');
 
         pastLecture = new Lecture();
         pastLecture.id = 6;
         pastLecture.endDate = yesterday;
+
+        pastLecture2 = new Lecture();
+        pastLecture2.id = 7;
+        pastLecture2.startDate = lastWeek;
+        pastLecture2.endDate = yesterday;
 
         currentLecture = new Lecture();
         currentLecture.id = 4;
@@ -57,6 +66,11 @@ describe('Lecture', () => {
         futureLecture = new Lecture();
         futureLecture.id = 2;
         futureLecture.startDate = tomorrow;
+
+        futureLecture2 = new Lecture();
+        futureLecture2.id = 8;
+        futureLecture2.startDate = tomorrow;
+        futureLecture2.endDate = nextWeek;
 
         unspecifiedLecture = new Lecture();
         unspecifiedLecture.id = 1;
@@ -89,7 +103,7 @@ describe('Lecture', () => {
                     findAllByCourseId: () => {
                         return of(
                             new HttpResponse({
-                                body: [pastLecture, currentLecture, currentLecture2, currentLecture3, futureLecture, unspecifiedLecture],
+                                body: [pastLecture, pastLecture2, currentLecture, currentLecture2, currentLecture3, futureLecture, futureLecture2, unspecifiedLecture],
                                 status: 200,
                             }),
                         );
@@ -128,7 +142,7 @@ describe('Lecture', () => {
 
         expect(findAllSpy).toHaveBeenCalledOnce();
         expect(findAllSpy).toHaveBeenCalledWith(1);
-        expect(lectureComponent.lectures).toBeArrayOfSize(6);
+        expect(lectureComponent.lectures).toBeArrayOfSize(8);
     });
 
     it('should delete lecture', () => {
@@ -139,7 +153,7 @@ describe('Lecture', () => {
 
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith(pastLecture.id!);
-        expect(lectureComponent.lectures).toBeArrayOfSize(5);
+        expect(lectureComponent.lectures).toBeArrayOfSize(7);
         expect(lectureComponent.lectures).not.toContain(pastLecture);
         expect(lectureComponent.filteredLectures).toEqual(lectureComponent.lectures);
     });
@@ -162,7 +176,7 @@ describe('Lecture', () => {
             .then(() => {
                 expect(importSpy).toHaveBeenCalledOnce();
                 expect(importSpy).toHaveBeenCalledWith(1, 123);
-                expect(lectureComponent.lectures).toBeArrayOfSize(7);
+                expect(lectureComponent.lectures).toBeArrayOfSize(9);
             });
     });
 
@@ -174,7 +188,7 @@ describe('Lecture', () => {
 
         const filteredLectures = lectureComponent.filteredLectures;
         expect(lectureComponent.filteredLectures).toContainAllValues(lectureComponent.lectures);
-        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6]);
+        expect(lectureComponent.filteredLectures.map((lecture) => lecture.id)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 
         // Apply all filters
         lectureComponent.toggleFilters([LectureDateFilter.PAST, LectureDateFilter.CURRENT, LectureDateFilter.FUTURE, LectureDateFilter.UNSPECIFIED]);
@@ -188,8 +202,8 @@ describe('Lecture', () => {
     it('should filter for past lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.PAST]);
-        expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
-        expect(lectureComponent.filteredLectures).toContainEqual(pastLecture);
+        expect(lectureComponent.filteredLectures).toBeArrayOfSize(2);
+        expect(lectureComponent.filteredLectures).toContainAllValues([pastLecture, pastLecture2]);
     });
 
     it('should filter for current lectures', () => {
@@ -202,8 +216,8 @@ describe('Lecture', () => {
     it('should filter for future lectures', () => {
         lectureComponentFixture.detectChanges();
         lectureComponent.toggleFilters([LectureDateFilter.FUTURE]);
-        expect(lectureComponent.filteredLectures).toBeArrayOfSize(1);
-        expect(lectureComponent.filteredLectures).toContainEqual(futureLecture);
+        expect(lectureComponent.filteredLectures).toBeArrayOfSize(2);
+        expect(lectureComponent.filteredLectures).toContainAllValues([futureLecture, futureLecture2]);
     });
 
     it('should filter for lectures without dates', () => {

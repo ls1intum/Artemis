@@ -140,7 +140,16 @@ export class LectureComponent implements OnInit {
 
             // update filteredLectures based on the selected filter option checkboxes
             const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(now));
-            const currentLectures = this.lectures.filter((lecture) => lecture.startDate?.isSameOrBefore(now) || lecture.endDate?.isSameOrAfter(now));
+            const currentLectures = this.lectures.filter((lecture) => {
+                if (lecture.startDate && lecture.endDate) {
+                    return lecture.startDate.isSameOrBefore(now) && lecture.endDate.isSameOrAfter(now);
+                } else if (lecture.startDate) {
+                    return lecture.startDate.isSameOrBefore(now);
+                } else if (lecture.endDate) {
+                    return lecture.endDate.isSameOrAfter(now);
+                }
+                return false;
+            });
             const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(now));
             const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
 
