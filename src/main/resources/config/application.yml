@@ -220,7 +220,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     text-assessment-analytics-enabled: false
-    browser-fingerprints-enabled: true
+    student-exam-store-session-data: true
 
 # ===================================================================
 # JHipster specific properties
