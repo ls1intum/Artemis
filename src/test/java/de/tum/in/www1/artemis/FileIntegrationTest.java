@@ -282,6 +282,28 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     @Test
+    @WithMockUser(username = "student1")
+    void testGetLectureAttachmentAsStudent() throws Exception {
+        Lecture lecture = database.createCourseWithLecture(true);
+        lecture.setTitle("Test title");
+        lecture.setDescription("Test");
+        lecture.setStartDate(ZonedDateTime.now().minusHours(1));
+
+        // generate attachment
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        attachment.setLecture(lecture);
+
+        String attachmentPath = "/api/files/attachments/lecture/" + lecture.getId() + "/test.pdf";
+        attachment.setLink(attachmentPath);
+        lecture.addAttachments(attachment);
+
+        lectureRepo.save(lecture);
+        attachmentRepo.save(attachment);
+
+        request.get(attachmentPath + "/access-token", HttpStatus.OK, String.class);
+    }
+
+    @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetUnreleasedLectureAttachmentAsTutor() throws Exception {
         Attachment attachment = createLectureWithAttachment("attachment.pdf", HttpStatus.CREATED);
@@ -302,11 +324,12 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         lecture.setStartDate(ZonedDateTime.now().minusHours(1));
 
         // generate attachment
-        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now());
+        Attachment attachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
         attachment.setLecture(lecture);
-        attachment.setReleaseDate(ZonedDateTime.now().plusDays(1));
+
         String attachmentPath = "/api/files/attachments/lecture/" + lecture.getId() + "/test.pdf";
         attachment.setLink(attachmentPath);
+        lecture.addAttachments(attachment);
 
         lectureRepo.save(lecture);
         attachmentRepo.save(attachment);
