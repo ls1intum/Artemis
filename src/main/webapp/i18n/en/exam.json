@@ -437,7 +437,7 @@
                     "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
                     "invalidExerciseConfiguration": "One or more of the values specified are invalid. Please change them before importing",
                     "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
-                    "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the tasks individually into the exercise groups."
+                    "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups."
                 },
                 "importSuccessful": "Exercise Groups successfully imported!"
             },
