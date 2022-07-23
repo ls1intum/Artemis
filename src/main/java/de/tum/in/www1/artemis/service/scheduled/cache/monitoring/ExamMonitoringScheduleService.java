@@ -85,6 +85,7 @@ public class ExamMonitoringScheduleService {
             if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
             }
 
             if (!activeProfiles.contains("scheduling")) {
