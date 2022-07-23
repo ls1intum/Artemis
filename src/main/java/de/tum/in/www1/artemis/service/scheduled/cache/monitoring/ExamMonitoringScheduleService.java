@@ -85,7 +85,6 @@ public class ExamMonitoringScheduleService {
             if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
                 // only execute this on production server, i.e. when the prod profile is active
                 // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
-                return;
             }
 
             if (!activeProfiles.contains("scheduling")) {
@@ -193,9 +192,9 @@ public class ExamMonitoringScheduleService {
         // reload from database to make sure there are no proxy objects
         final var exam = examRepository.findByIdElseThrow(examId);
         try {
-            if (!exam.isMonitoring())
+            if (!exam.isMonitoring()) {
                 return;
-
+            }
             // Check if there is a student exam with longer working time
             var studentExams = studentExamRepository.findByExamId(examId);
             var studentExam = studentExams.stream().max(Comparator.comparingLong(StudentExam::getWorkingTime));
@@ -204,8 +203,9 @@ public class ExamMonitoringScheduleService {
                 schedulingTime = exam.getStartDate().plus(studentExam.get().getWorkingTime(), ChronoUnit.SECONDS);
             }
 
-            var future = scheduler.schedule(new ExamActivitySaveTask(examId), schedulingTime.toInstant());
+            var future = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
             scheduledExamMonitoring.put(examId, future);
+            logger.debug("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
         }
         catch (@SuppressWarnings("unused") DuplicateTaskException e) {
             logger.debug("Exam {} monitoring save task already registered", examId);
