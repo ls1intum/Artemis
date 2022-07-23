@@ -23,7 +23,7 @@ This section describes the process to:
 Create new Quiz Exercise
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-- In the Artemis home page, click on the Course Management button |CourseManagementButton|.
+- On the Artemis home page, click on the Course Management button |CourseManagementButton|.
 
 - Navigate into **Exercises** of a specific course by clicking on the exercise button.
 
@@ -41,7 +41,7 @@ Create new Quiz Exercise
 
     - **Difficulty**: Select the difficulty level among Easy, Medium and Hard. It is possible to select No level.
 
-    - **Duration**: Provide the time in minutes and seconds for students solve of the quiz exercise.
+    - **Duration**: Provide the time in minutes and seconds for students to solve the quiz exercise.
 
     - **Options**: Choose between presenting the questions in Random order or not.
 
@@ -71,7 +71,7 @@ Create new Quiz Exercise
 
         - **Add Multiple-Choice Question**
 
-            This kind of question is composed by a problem statement with multiple options.
+            This kind of question is composed of a problem statement with multiple options.
 
             .. figure:: quiz/multiple-choice-question.png
                 :align: center
@@ -112,7 +112,7 @@ Create new Quiz Exercise
 
         - **Add Drag-And-Drop Question**
 
-            This kind of question is composed by a problem statement, a background image, and drag and drop options.
+            This kind of question is composed of a problem statement, a background image, and drag and drop options.
 
             .. figure:: quiz/drag-and-drop-question.png
                 :align: center
@@ -157,7 +157,7 @@ Create new Quiz Exercise
 
         - **Add Short-Answer Question**
 
-            This kind of question is composed by a statement and spots to fill them out by typing the answers.
+            This kind of question is composed of a statement and spots to fill them out by typing the answers.
 
             .. figure:: quiz/short-answer-question.png
                 :align: center
@@ -192,7 +192,7 @@ Create new Quiz Exercise
 
         - **Add Existing Questions**
 
-            This is an option that allows to import existing questions from other quiz exercises, courses, exams and files.
+            This option allows to import existing questions from other quiz exercises, courses, exams and files.
 
             .. figure:: quiz/existing-question.png
                 :align: center
@@ -215,15 +215,15 @@ Create new Quiz Exercise
 
                 - Multiple Choice Question
 
-                - Short answer Question
+                - Short Answer Question
 
             - Apply filter button
 
-            - List of questions with the title, short title, and Type. In the Add column it is possible to select all questions to be imported.
+            - List of questions with the title, short title, and Type. In the Add column, it is possible to select all questions to be imported.
 
             - At the end of the list, click the Add selected Questions button |AddSelectedQuestionsButton| to import all selected questions.
 
-    - **Footer**: In the creation quiz page there is a footer with the following fields:
+    - **Footer**: On the creation quiz page there is a footer with the following fields:
 
             .. figure:: quiz/footer.png
                 :align: center
@@ -245,7 +245,7 @@ Create Drag and Drop Model Quiz Exercise
         .. figure:: quiz/apollon-diagrams.png
             :align: center
 
-    - In the Apollon Diagrams page it is possible to see the list of Apollon Diagrams and the possible actions to perform with them.
+    - On the Apollon Diagrams page, it is possible to see the list of Apollon Diagrams and the possible actions to perform with them.
 
         - Open
         - Delete
@@ -258,7 +258,7 @@ Create Drag and Drop Model Quiz Exercise
 
         - Title: provide the title of the Drag-and-Drop Model Quiz
 
-        - Diagram Type: List picker that allows to select among several diagrams:
+        - Diagram Type: It is a list picker to select between several diagrams:
 
             - Class Diagram
 
@@ -284,7 +284,7 @@ Create Drag and Drop Model Quiz Exercise
 
         - Cancel button
 
-    - Click the save button to open Apollon editor
+    - Click the save button to open the Apollon editor
 
         .. figure:: quiz/apollon-editor.png
             :align: center
@@ -336,7 +336,7 @@ Export a Quiz
 Resolve a Quiz Exercise
 --------
 
-    - If a quiz exercise is available on the Artemis Homepage as current exercise, it will be possible to see it in the course overview or inside the course where it belongs.
+    - If a quiz exercise is available on the Artemis Homepage as a current exercise, it will be possible to see it in the course overview or inside the course where it belongs.
 
         .. figure:: quiz/current-quiz-exercise.png
             :align: center
@@ -356,7 +356,7 @@ Resolve a Quiz Exercise
 
     - To start the quiz, the student must press the Open quiz button |OpenQuizButton|.
 
-    - If the quiz is set to start in a specific hour and the student opens it before, he/she will see a message asking to wait until the quiz starts and displaying the remaining time.
+    - If the quiz is set to start at a specific time and the student opens it before, he/she will see a message asking to wait until the quiz starts and displaying the remaining time.
 
         .. figure:: quiz/please-wait-message.png
             :align: center
@@ -368,7 +368,7 @@ Resolve a Quiz Exercise
             :align: center
             :scale: 50
 
-    - The quiz page is composed by:
+    - The quiz page is composed of:
 
         - Number and title of the question
 
@@ -384,7 +384,7 @@ Resolve a Quiz Exercise
 
         - In the footer:
 
-            - Number of questions and overall points.
+            - The number of questions and overall points.
 
             - Time left to complete the quiz.
 
@@ -394,7 +394,7 @@ Resolve a Quiz Exercise
 
             - Submit button: To allow the student to submit the quiz before the time ends.
 
-        - In the case of Drag and Drop questions, the items to be dragged and dropped in the spots will be available in the right side.
+        - In the case of Drag and Drop questions, the items to be dragged and dropped in the spots will be available on the right side.
 
         .. figure:: quiz/drag-and-drop-view.png
             :align: center
