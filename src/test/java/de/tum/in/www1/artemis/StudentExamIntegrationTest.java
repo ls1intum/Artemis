@@ -2029,7 +2029,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @Test
-    @WithMockUser(username = "student2", roles = "USER")
+    @WithMockUser(username = "student1", roles = "USER")
     void testGetStudentExamForTestExamForSummary_realExam() throws Exception {
         studentExam1.setSubmitted(true);
         studentExamRepository.save(studentExam1);
