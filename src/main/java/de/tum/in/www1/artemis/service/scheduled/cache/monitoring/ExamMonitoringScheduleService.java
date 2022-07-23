@@ -96,9 +96,7 @@ public class ExamMonitoringScheduleService {
             List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
             logger.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
             for (Exam exam : exams) {
-                if (exam.isMonitoring()) {
-                    scheduleExamMonitoringTask(exam.getId());
-                }
+                scheduleExamMonitoringTask(exam.getId());
             }
         }
         catch (Exception e) {
