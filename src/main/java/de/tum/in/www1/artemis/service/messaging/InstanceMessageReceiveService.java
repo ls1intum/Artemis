@@ -123,11 +123,11 @@ public class InstanceMessageReceiveService {
         });
         hazelcastInstance.<Long>getTopic("exam-monitoring-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExercise((message.getMessageObject()));
+            processScheduleExamMonitoring((message.getMessageObject()));
         });
         hazelcastInstance.<Long>getTopic("exam-monitoring-schedule-cancel").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleProgrammingExerciseCancel(message.getMessageObject());
+            processScheduleExamMonitoringCancel(message.getMessageObject());
         });
     }
 
