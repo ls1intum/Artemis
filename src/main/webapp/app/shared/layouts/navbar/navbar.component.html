@@ -1,6 +1,6 @@
 <ng-template #iconMenu>
     <div id="navbar-icon-menu" [ngClass]="{ evenly: isNavbarNavVertical, 'in-menu': iconsMovedToMenu }">
-        <jhi-notification-sidebar *ngIf="currAccount && !examModeActive()"></jhi-notification-sidebar>
+        <jhi-notification-sidebar *ngIf="currAccount && !isExamActive"></jhi-notification-sidebar>
         <jhi-theme-switch [popoverPlacement]="iconsMovedToMenu ? 'bottom' : 'bottom-right'"></jhi-theme-switch>
         <div
             *ngIf="isAuthenticated()"
@@ -101,7 +101,7 @@
     </div>
     <div class="navbar-collapse collapse" id="navbarResponsive" [ngbCollapse]="isNavbarCollapsed">
         <ul class="navbar-nav ms-auto" [class.vertical]="isNavbarNavVertical">
-            <li *ngIf="currAccount && !examModeActive()" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
+            <li *ngIf="currAccount && !isExamActive" class="nav-item" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">
                 <a class="guided-tour-overview nav-link" routerLink="courses" (click)="collapseNavbar()" id="overview-menu">
                     <span>
                         <fa-icon [icon]="faThLarge"></fa-icon>
@@ -117,7 +117,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a *ngIf="!examModeActive()" class="guided-tour-course-admin nav-link" routerLink="course-management" (click)="collapseNavbar()" id="course-admin-menu">
+                <a *ngIf="!isExamActive" class="guided-tour-course-admin nav-link" routerLink="course-management" (click)="collapseNavbar()" id="course-admin-menu">
                     <span>
                         <fa-icon [icon]="faThList"></fa-icon>
                         <span jhiTranslate="global.menu.course">Course Management</span>
@@ -133,7 +133,7 @@
                 routerLinkActive="active"
                 [routerLinkActiveOptions]="{ exact: true }"
             >
-                <a *ngIf="!examModeActive()" class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
+                <a *ngIf="!isExamActive" class="guided-tour-admin nav-link dropdown-toggle" ngbDropdownToggle id="admin-menu">
                     <span>
                         <fa-icon [icon]="faUserPlus"></fa-icon>
                         <span jhiTranslate="global.menu.admin.main">Server Administration</span>
@@ -236,7 +236,7 @@
     </div>
 </nav>
 <div class="breadcrumb-container">
-    <div *ngIf="breadcrumbs && breadcrumbs.length > 0">
+    <div *ngIf="!isExamActive && breadcrumbs && breadcrumbs.length > 0">
         <ol class="breadcrumb">
             <li *ngFor="let breadcrumb of breadcrumbs; let i = index" class="breadcrumb-item">
                 <a
