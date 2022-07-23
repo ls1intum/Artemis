@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.hestia;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -15,6 +16,7 @@ import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class CodeHintService {
@@ -115,5 +117,67 @@ public class CodeHintService {
         }
         solutionEntryRepository.saveAll(solutionEntries);
         codeHintRepository.delete(codeHint);
+    }
+
+    /**
+     * Persists the updated solution entries for a code hint. The solution entries are loaded from the database and can result in three scenarios:
+     * 1. The code or test case for an existing entry is updated.
+     * 2. A new solution entry is created. The test case of the entry must be contained in hint related task.
+     * 3. An entry is removed from the code hint. This method does not delete the entry itself, but removes the reference to the corresponding hint.
+     *
+     * @param hint the code hint containing the solution entries to be updated
+     */
+    public void updateSolutionEntriesForCodeHint(CodeHint hint) {
+        var optionalTask = taskRepository.findByCodeHintIdWithTestCases(hint.getId());
+
+        if (optionalTask.isEmpty()) {
+            throw new BadRequestAlertException("No task has been assigned to the code hint.", "CodeHint", "codeHint");
+        }
+
+        var task = optionalTask.get();
+
+        var savedSolutionEntries = solutionEntryRepository.findByCodeHintId(hint.getId());
+
+        var newEntries = hint.getSolutionEntries().stream().filter(entry -> savedSolutionEntries.stream().noneMatch(savedEntry -> savedEntry.getId().equals(entry.getId())))
+                .peek(entry -> entry.setCodeHint(hint)).toList();
+
+        // check that the task of the hint contains all test cases of every solution entry to be saved
+        // we only assume changes on the test case of an entry, if the value is defined
+        boolean hasUnrelatedTestCaseEntries = newEntries.stream()
+                .anyMatch(entry -> task.getTestCases().stream().noneMatch(containedTestCase -> containedTestCase.getId().equals(entry.getTestCase().getId())));
+        if (hasUnrelatedTestCaseEntries) {
+            throw new BadRequestAlertException("There is at least one solution entry that references a test case" + "that does not belong to the task of the code hint.",
+                    "Code Hint", "codeHint");
+        }
+
+        var result = new HashSet<>(newEntries);
+
+        var updatedEntries = new HashSet<>(hint.getSolutionEntries());
+        newEntries.forEach(updatedEntries::remove);
+
+        var removedEntries = savedSolutionEntries.stream()
+                .filter(savedEntry -> hint.getSolutionEntries().stream().noneMatch(updatedEntry -> savedEntry.getId().equals(updatedEntry.getId())))
+                .peek(entryToRemove -> entryToRemove.setCodeHint(null)).toList();
+
+        updatedEntries.forEach(updatedEntry -> {
+            var optionalMatch = savedSolutionEntries.stream().filter(savedEntry -> savedEntry.getId().equals(updatedEntry.getId())).findFirst();
+            if (optionalMatch.isPresent()) {
+                var match = optionalMatch.get();
+                match.setLine(updatedEntry.getLine());
+                match.setPreviousLine(updatedEntry.getPreviousLine());
+                match.setFilePath(updatedEntry.getFilePath());
+                match.setCode(updatedEntry.getCode());
+                match.setPreviousCode(updatedEntry.getPreviousCode());
+
+                // update test case if defined
+                match.setTestCase(updatedEntry.getTestCase() != null ? updatedEntry.getTestCase() : match.getTestCase());
+                result.add(match);
+            }
+        });
+        hint.setSolutionEntries(result);
+        solutionEntryRepository.saveAll(result);
+        solutionEntryRepository.saveAll(removedEntries);
+
+        codeHintRepository.save(hint);
     }
 }
