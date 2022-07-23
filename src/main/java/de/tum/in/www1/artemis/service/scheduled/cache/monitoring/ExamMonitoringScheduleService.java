@@ -204,6 +204,8 @@ public class ExamMonitoringScheduleService {
                 schedulingTime = exam.getStartDate().plus(studentExam.get().getWorkingTime(), ChronoUnit.SECONDS);
             }
 
+            schedulingTime = schedulingTime.plus(Constants.MONITORING_CACHE_RESET_DELAY, ChronoUnit.SECONDS);
+
             var future = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
             scheduledExamMonitoring.put(examId, future);
             logger.debug("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
