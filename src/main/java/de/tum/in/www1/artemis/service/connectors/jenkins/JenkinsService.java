@@ -168,6 +168,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             return;
         }
 
+        buildLogEntries.forEach(l -> {
+            System.out.println("Received log " + l.getLog());
+        });
+
         ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
         ZonedDateTime agentSetupCompleted = null;
         ZonedDateTime testsStarted = null;
