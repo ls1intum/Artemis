@@ -28,7 +28,7 @@ export class UnreferencedFeedbackComponent {
 
     @Output() feedbacksChange = new EventEmitter<Feedback[]>();
 
-    constructor(public structuredGradingCriterionService: StructuredGradingCriterionService) {}
+    constructor(private structuredGradingCriterionService: StructuredGradingCriterionService) {}
 
     public deleteAssessment(assessmentToDelete: Feedback): void {
         const indexToDelete = this.unreferencedFeedback.indexOf(assessmentToDelete);
@@ -97,7 +97,7 @@ export class UnreferencedFeedbackComponent {
     createAssessmentOnDrop(event: Event) {
         this.addUnreferencedFeedback();
         const newFeedback: Feedback | undefined = this.unreferencedFeedback.last();
-        if (newFeedback !== undefined) {
+        if (newFeedback) {
             this.structuredGradingCriterionService.updateFeedbackWithStructuredGradingInstructionEvent(newFeedback, event);
             this.updateAssessment(newFeedback);
         }
