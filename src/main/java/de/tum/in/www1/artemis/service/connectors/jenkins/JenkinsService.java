@@ -186,7 +186,6 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
         else if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
-            jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry
             // agentSetupCompleted is not supported
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
             testsFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"));
