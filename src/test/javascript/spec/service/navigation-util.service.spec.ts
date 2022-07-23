@@ -10,7 +10,7 @@ describe('Navigation Util Service', () => {
     let service: ArtemisNavigationUtilService;
 
     const router = new MockRouter();
-    router.events = of(new NavigationEnd(1, 'a', 'b'), new NavigationEnd(1, 'a', 'b'));
+    router.setUrl('a');
 
     beforeEach(() => {
         TestBed.configureTestingModule({

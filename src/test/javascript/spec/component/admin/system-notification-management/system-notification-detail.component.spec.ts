@@ -23,7 +23,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.events = of({ id: 1, url: '' } as RouterEvent);
+        router.setUrl('');
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
