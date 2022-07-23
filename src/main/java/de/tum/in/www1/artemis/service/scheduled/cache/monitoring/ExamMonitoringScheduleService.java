@@ -208,10 +208,10 @@ public class ExamMonitoringScheduleService {
 
             var future = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
             scheduledExamMonitoring.put(examId, future);
-            logger.debug("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
+            logger.info("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
         }
         catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-            logger.debug("Exam {} monitoring save task already registered", examId);
+            logger.info("Exam {} monitoring save task already registered", examId);
             // this is expected if we run on multiple nodes
         }
     }
@@ -224,7 +224,7 @@ public class ExamMonitoringScheduleService {
     public void cancelExamMonitoringTask(final long examId) {
         ScheduledFuture<?> future = scheduledExamMonitoring.get(examId);
         if (future != null) {
-            logger.debug("Cancelling scheduled task for Exam Monitoring ({}).", examId);
+            logger.info("Cancelling scheduled task for Exam Monitoring ({}).", examId);
             future.cancel(true);
             scheduledExamMonitoring.remove(examId);
         }

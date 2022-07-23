@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 /**
  * This class represents the cache for a single exam monitoring.
  * <p>
- * This includes the exam activities and handlers for the save task {@link ExamActivitySaveTask}.
  */
 public class ExamMonitoringDistributedCache extends ExamMonitoringCache implements HazelcastInstanceAware {
 
