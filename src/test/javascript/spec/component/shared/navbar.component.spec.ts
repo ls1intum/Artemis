@@ -228,9 +228,6 @@ describe('NavbarComponent', () => {
     });
 
     it('should set the exam active state correctly', fakeAsync(() => {
-        // TODO inject exam part service, return fake exam
-        // Set examId through nav event
-        // Make sure that scheduled updates of the active state work
         const now = dayjs();
         const examParticipationService = TestBed.inject(ExamParticipationService);
         const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
