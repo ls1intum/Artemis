@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseRepository courseRepo;
@@ -48,18 +48,18 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     private final String creationFilePattern = "png, pdf, jPg      , r, DOCX";
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(2, 1, 0, 1);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseFails() throws Exception {
+    void createFileUploadExerciseFails() throws Exception {
         String filePattern = "Example file pattern";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
@@ -68,7 +68,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseFailsIfAlreadyCreated() throws Exception {
+    void createFileUploadExerciseFailsIfAlreadyCreated() throws Exception {
         String filePattern = "Example file pattern";
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(filePattern);
@@ -78,7 +78,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_InvalidMaxScore() throws Exception {
+    void createFileUploadExercise_InvalidMaxScore() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
         fileUploadExercise.setMaxPoints(0.0);
@@ -87,7 +87,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_InvalidInstructor() throws Exception {
+    void createFileUploadExercise_InvalidInstructor() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         // make sure the instructor is not instructor for this course anymore by changing the courses' instructor group name
         var course = fileUploadExercise.getCourseViaExerciseGroupOrCourseMember();
@@ -100,7 +100,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseFails_AlmostEmptyFilePattern() throws Exception {
+    void createFileUploadExerciseFails_AlmostEmptyFilePattern() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(" ");
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -109,7 +109,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseFails_EmptyFilePattern() throws Exception {
+    void createFileUploadExerciseFails_EmptyFilePattern() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern("");
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -118,7 +118,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
+    void createFileUploadExercise_IncludedAsBonusInvalidBonusPoints() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
         fileUploadExercise.setMaxPoints(10.0);
@@ -129,7 +129,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_NotIncludedInvalidBonusPoints() throws Exception {
+    void createFileUploadExercise_NotIncludedInvalidBonusPoints() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
         fileUploadExercise.setMaxPoints(10.0);
@@ -140,7 +140,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise() throws Exception {
+    void createFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise.setFilePattern(creationFilePattern);
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -165,7 +165,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseForExam() throws Exception {
+    void createFileUploadExerciseForExam() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
@@ -190,7 +190,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
+    void createFileUploadExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration invalidDates) throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
 
@@ -199,7 +199,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
+    void createFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam(creationFilePattern, exerciseGroup);
         fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
@@ -214,7 +214,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getFileUploadExercise() throws Exception {
+    void getFileUploadExercise() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
@@ -226,13 +226,13 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getExamFileUploadExercise_asStudent_forbidden() throws Exception {
+    void getExamFileUploadExercise_asStudent_forbidden() throws Exception {
         getExamFileUploadExercise();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getExamFileUploadExercise_asTutor_forbidden() throws Exception {
+    void getExamFileUploadExercise_asTutor_forbidden() throws Exception {
         getExamFileUploadExercise();
     }
 
@@ -243,7 +243,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getExamFileUploadExercise_asInstructor() throws Exception {
+    void getExamFileUploadExercise_asInstructor() throws Exception {
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
 
         FileUploadExercise receivedFileUploadExercise = request.get("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK, FileUploadExercise.class);
@@ -253,14 +253,14 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getFileUploadExerciseFails_wrongId() throws Exception {
+    void getFileUploadExerciseFails_wrongId() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         request.get("/api/file-upload-exercises/" + 555555, HttpStatus.NOT_FOUND, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getExamFileUploadExercise_InstructorNotInGroup() throws Exception {
+    void getExamFileUploadExercise_InstructorNotInGroup() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
@@ -271,7 +271,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
+    void testGetFileUploadExercise_setGradingInstructionFeedbackUsed() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -287,7 +287,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteFileUploadExercise_asInstructor() throws Exception {
+    void deleteFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
@@ -297,7 +297,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void deleteFileUploadExercise_asStudent() throws Exception {
+    void deleteFileUploadExercise_asStudent() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
@@ -308,14 +308,14 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteFileUploadExerciseFails_WithWrongId() throws Exception {
+    void deleteFileUploadExerciseFails_WithWrongId() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         request.delete("/api/file-upload-exercises/" + 5555555, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
+    void deleteFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
@@ -327,7 +327,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteExamFileUploadExercise() throws Exception {
+    void deleteExamFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
 
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
@@ -336,7 +336,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExercise_asInstructor() throws Exception {
+    void updateFileUploadExercise_asInstructor() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         final ZonedDateTime dueDate = ZonedDateTime.now().plusDays(10);
@@ -353,7 +353,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
+    void updateFileUploadExerciseFails_InstructorNotInGroup() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         fileUploadExercise.setDueDate(ZonedDateTime.now().plusDays(10));
@@ -366,7 +366,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExerciseForExam_asInstructor() throws Exception {
+    void updateFileUploadExerciseForExam_asInstructor() throws Exception {
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
         String newTitle = "New file upload exercise title";
         fileUploadExercise.setTitle(newTitle);
@@ -383,7 +383,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ArgumentsSource(InvalidExamExerciseDatesArgumentProvider.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExerciseForExam_invalid_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
+    void updateFileUploadExerciseForExam_invalid_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
 
         request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), dates.applyTo(fileUploadExercise), FileUploadExercise.class,
@@ -392,7 +392,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
+    void updateFileUploadExercise_setBothCourseAndExerciseGroupOrNeither_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
         fileUploadExercise.setCourse(fileUploadExercise.getExerciseGroup().getExam().getCourse());
 
@@ -406,7 +406,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateFileUploadExercise_conversionBetweenCourseAndExamExercise_badRequest() throws Exception {
+    void updateFileUploadExercise_conversionBetweenCourseAndExamExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExerciseWithCourse = database.createFileUploadExercisesWithCourse().get(0);
         FileUploadExercise fileUploadExerciseWithExerciseGroup = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
 
@@ -424,7 +424,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateModelingExerciseDueDate() throws Exception {
+    void updateModelingExerciseDueDate() throws Exception {
         FileUploadExercise fileUploadExercise = database.createFileUploadExercisesWithCourse().get(0);
         fileUploadExercise = fileUploadExerciseRepository.save(fileUploadExercise);
 
@@ -459,7 +459,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
+    void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
         database.addCourseWithThreeFileUploadExercise();
         long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
 
@@ -472,7 +472,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
+    void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
@@ -482,7 +482,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
+    void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
         database.addCourseWithThreeFileUploadExercise();
         long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
 
@@ -494,7 +494,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReEvaluateAndUpdateFileUploadExercise() throws Exception {
+    void testReEvaluateAndUpdateFileUploadExercise() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -517,7 +517,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReEvaluateAndUpdateFileUploadExercise_shouldDeleteFeedbacks() throws Exception {
+    void testReEvaluateAndUpdateFileUploadExercise_shouldDeleteFeedbacks() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -541,7 +541,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReEvaluateAndUpdateFileUploadExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
+    void testReEvaluateAndUpdateFileUploadExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         course.setInstructorGroupName("test");
@@ -553,7 +553,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
+    void testReEvaluateAndUpdateFileUploadExercise_isNotSameGivenExerciseIdInRequestBody_conflict() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadExercise fileUploadExerciseToBeConflicted = fileUploadExerciseRepository.findByIdElseThrow(fileUploadExercise.getId());
@@ -566,7 +566,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReEvaluateAndUpdateFileUploadExercise_notFound() throws Exception {
+    void testReEvaluateAndUpdateFileUploadExercise_notFound() throws Exception {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
 
@@ -575,7 +575,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+    void createFileUploadExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
         final Course course = database.addCourseWithFileUploadExercise();
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -598,7 +598,7 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadExercise_setValidExampleSolutionPublicationDate() throws Exception {
+    void createFileUploadExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
         final Course course = database.addCourseWithFileUploadExercise();
         FileUploadExercise fileUploadExercise = fileUploadExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
@@ -627,13 +627,13 @@ public class FileUploadExerciseIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetFileUploadExercise_asStudent_exampleSolutionVisibility() throws Exception {
+    void testGetFileUploadExercise_asStudent_exampleSolutionVisibility() throws Exception {
         testGetFileUploadExercise_exampleSolutionVisibility(true, "student1");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetFileUploadExercise_asInstructor_exampleSolutionVisibility() throws Exception {
+    void testGetFileUploadExercise_asInstructor_exampleSolutionVisibility() throws Exception {
         testGetFileUploadExercise_exampleSolutionVisibility(false, "instructor1");
     }
 

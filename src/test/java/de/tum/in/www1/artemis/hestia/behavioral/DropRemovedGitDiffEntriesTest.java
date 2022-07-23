@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryGenerationException;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.DropRemovedGitDiffEntries;
 
-public class DropRemovedGitDiffEntriesTest {
+class DropRemovedGitDiffEntriesTest {
 
     private BehavioralBlackboard blackboard;
 
@@ -23,7 +23,7 @@ public class DropRemovedGitDiffEntriesTest {
     private DropRemovedGitDiffEntries dropRemovedGitDiffEntries;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         gitDiffReport = new ProgrammingExerciseGitDiffReport();
         gitDiffReport.setEntries(new HashSet<>());
 
@@ -33,12 +33,12 @@ public class DropRemovedGitDiffEntriesTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         assertThat(dropRemovedGitDiffEntries.executeCondition()).isFalse();
     }
 
     @Test
-    public void testExecuteCondition() throws BehavioralSolutionEntryGenerationException {
+    void testExecuteCondition() throws BehavioralSolutionEntryGenerationException {
         var removedEntry = new ProgrammingExerciseGitDiffEntry();
         var addedEntry = new ProgrammingExerciseGitDiffEntry();
         addedEntry.setStartLine(1);

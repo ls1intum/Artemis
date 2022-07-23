@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.ContinuousIntegrationTestService;
 import de.tum.in.www1.artemis.domain.Repository;
 
-public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ContinuousIntegrationTestService continuousIntegrationTestService;
@@ -23,14 +23,14 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      * This method initializes the test case by setting up a local repo
      */
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         bambooRequestMockProvider.enableMockingOfRequests(true);
         bitbucketRequestMockProvider.enableMockingOfRequests(true);
         continuousIntegrationTestService.setup(this, continuousIntegrationService);
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         bitbucketRequestMockProvider.reset();
         bambooRequestMockProvider.reset();
         continuousIntegrationTestService.tearDown();
@@ -41,7 +41,7 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
      */
     @Test
     @WithMockUser(username = "student1")
-    public void performEmptySetupCommitWithNullExercise() {
+    void performEmptySetupCommitWithNullExercise() {
         // test performEmptyCommit() with empty exercise
         continuousIntegrationTestService.getParticipation().setProgrammingExercise(null);
         continuousIntegrationService.performEmptySetupCommit(continuousIntegrationTestService.getParticipation());
@@ -55,61 +55,61 @@ public class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusNotFound() throws Exception {
+    void testGetBuildStatusNotFound() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusNotFound();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusInactive1() throws Exception {
+    void testGetBuildStatusInactive1() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusInactive1();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusInactive2() throws Exception {
+    void testGetBuildStatusInactive2() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusInactive2();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusQueued() throws Exception {
+    void testGetBuildStatusQueued() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusQueued();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusBuilding() throws Exception {
+    void testGetBuildStatusBuilding() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusBuilding();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetBuildStatusFails() throws Exception {
+    void testGetBuildStatusFails() throws Exception {
         continuousIntegrationTestService.testGetBuildStatusFails();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthRunning() throws Exception {
+    void testHealthRunning() throws Exception {
         continuousIntegrationTestService.testHealthRunning();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthNotRunning() throws Exception {
+    void testHealthNotRunning() throws Exception {
         continuousIntegrationTestService.testHealthNotRunning();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testHealthException() throws Exception {
+    void testHealthException() throws Exception {
         continuousIntegrationTestService.testHealthException();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testConfigureBuildPlan() throws Exception {
+    void testConfigureBuildPlan() throws Exception {
         continuousIntegrationTestService.testConfigureBuildPlan();
     }
 }

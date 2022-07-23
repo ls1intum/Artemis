@@ -20,14 +20,14 @@ class SecurityMetersServiceTests {
     private SecurityMetersService securityMetersService;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         meterRegistry = new SimpleMeterRegistry();
 
         securityMetersService = new SecurityMetersService(meterRegistry);
     }
 
     @Test
-    public void testInvalidTokensCountersByCauseAreCreated() {
+    void testInvalidTokensCountersByCauseAreCreated() {
         meterRegistry.get(INVALID_TOKENS_METER_EXPECTED_NAME).counter();
 
         meterRegistry.get(INVALID_TOKENS_METER_EXPECTED_NAME).tag("cause", "expired").counter();
@@ -44,7 +44,7 @@ class SecurityMetersServiceTests {
     }
 
     @Test
-    public void testCountMethodsShouldBeBoundToCorrectCounters() {
+    void testCountMethodsShouldBeBoundToCorrectCounters() {
         assertThat(meterRegistry.get(INVALID_TOKENS_METER_EXPECTED_NAME).tag("cause", "expired").counter().count()).isZero();
 
         securityMetersService.trackTokenExpired();

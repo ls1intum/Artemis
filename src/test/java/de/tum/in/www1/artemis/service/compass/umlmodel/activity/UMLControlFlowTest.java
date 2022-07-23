@@ -10,7 +10,7 @@ import org.mockito.MockitoAnnotations;
 
 import de.tum.in.www1.artemis.service.compass.umlmodel.classdiagram.UMLRelationship;
 
-public class UMLControlFlowTest {
+class UMLControlFlowTest {
 
     private UMLControlFlow umlControlFlow;
 

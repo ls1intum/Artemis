@@ -1,0 +1,66 @@
+<h2>
+    <span jhiTranslate="artemisApp.codeHint.management.title"></span>
+</h2>
+<hr class="mb-4" />
+<div *ngIf="isPerformedByStep?.size && currentStep !== undefined && exercise">
+    <div class="row">
+        <div class="col">
+            <button
+                *ngIf="allowBehavioralEntryGeneration ? currentStep !== 0 : currentStep !== 2"
+                type="button"
+                class="btn btn-primary"
+                jhiTranslate="artemisApp.codeHint.management.previousButton.label"
+                (click)="onPreviousStep()"
+            >
+                Previous
+            </button>
+        </div>
+        <div class="col text-center status-wrapper">
+            <jhi-code-hint-generation-status
+                [currentStep]="currentStep.valueOf()"
+                [isPerformedByStep]="isPerformedByStep"
+                (onStepChange)="onStepChange($event)"
+            ></jhi-code-hint-generation-status>
+        </div>
+        <div class="col text-end">
+            <jhi-help-icon *ngIf="!isNextStepAvailable()" placement="auto" text="artemisApp.codeHint.management.nextButton.tooltip"></jhi-help-icon>
+            <button
+                *ngIf="currentStep !== 3"
+                type="button"
+                class="btn btn-primary"
+                jhiTranslate="artemisApp.codeHint.management.nextButton.label"
+                [disabled]="!isNextStepAvailable()"
+                (click)="onNextStep()"
+            >
+                Next
+            </button>
+        </div>
+    </div>
+
+    <hr />
+    <!-- Use CSS attribute "hidden" attribute instead of *ngIf, because we don't want the components to re-render (and remain in the DOM) when switching the index -->
+    <ng-container *ngIf="exercise">
+        <jhi-diff-generation-step
+            *ngIf="allowBehavioralEntryGeneration"
+            [hidden]="currentStep.valueOf() !== GenerationStep.GIT_DIFF.valueOf()"
+            [exercise]="exercise!"
+            (onGitDiffLoaded)="onDiffReportLoaded($event)"
+        ></jhi-diff-generation-step>
+        <jhi-coverage-generation-step
+            *ngIf="allowBehavioralEntryGeneration"
+            [hidden]="currentStep !== GenerationStep.COVERAGE"
+            [exercise]="exercise!"
+            (onCoverageLoaded)="onCoverageReportLoaded($event)"
+        ></jhi-coverage-generation-step>
+        <jhi-solution-entry-generation-step
+            [hidden]="currentStep !== GenerationStep.SOLUTION_ENTRIES"
+            [exercise]="exercise!"
+            (onEntryUpdate)="onSolutionEntryChanges($event)"
+        ></jhi-solution-entry-generation-step>
+        <jhi-code-hint-generation-step
+            [hidden]="currentStep !== GenerationStep.CODE_HINTS"
+            [exercise]="exercise!"
+            (onCodeHintsLoaded)="onCodeHintsLoaded($event)"
+        ></jhi-code-hint-generation-step>
+    </ng-container>
+</div>

@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiff
 /**
  * Tests for the ProgrammingExerciseGitDiffReportService
  */
-public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final static String FILE_NAME = "test.java";
 
@@ -48,20 +48,20 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(1, 1, 1, 1);
         database.addCourseWithOneProgrammingExercise();
         exercise = programmingExerciseRepository.findAll().get(0);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getFullDiffNonExistingDiffShouldGenerateDiff() throws Exception {
+    void getFullDiffNonExistingDiffShouldGenerateDiff() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.getFullReport(exercise);
@@ -70,7 +70,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffNoChanges() throws Exception {
+    void updateGitDiffNoChanges() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
@@ -82,7 +82,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffAppendLine1() throws Exception {
+    void updateGitDiffAppendLine1() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
@@ -104,7 +104,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffAppendLine2() throws Exception {
+    void updateGitDiffAppendLine2() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2\n", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
@@ -126,7 +126,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffAddToEmptyFile() throws Exception {
+    void updateGitDiffAddToEmptyFile() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
@@ -148,7 +148,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffClearFile() throws Exception {
+    void updateGitDiffClearFile() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
@@ -170,7 +170,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffDoubleModify() throws Exception {
+    void updateGitDiffDoubleModify() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "L1\nL2\nL3\nL4", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "L1\nL2a\nL3\nL4a", exercise, solutionRepo);
         var report = reportService.updateReport(exercise);
@@ -204,7 +204,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateGitDiffReuseExisting() throws Exception {
+    void updateGitDiffReuseExisting() throws Exception {
         exercise = hestiaUtilTestService.setupTemplate(FILE_NAME, "Line 1\nLine 2", exercise, templateRepo);
         exercise = hestiaUtilTestService.setupSolution(FILE_NAME, "Line 1\nLine 2\nLine 3\n", exercise, solutionRepo);
         var report1 = reportService.updateReport(exercise);
@@ -216,7 +216,7 @@ public class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void ensureDeletionOfDuplicateReports() {
+    void ensureDeletionOfDuplicateReports() {
         var report1 = new ProgrammingExerciseGitDiffReport();
         report1.setProgrammingExercise(exercise);
         report1.setTemplateRepositoryCommitHash("123");
