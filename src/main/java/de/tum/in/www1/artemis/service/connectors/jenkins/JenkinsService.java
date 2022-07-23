@@ -163,33 +163,35 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
             List<BuildLogEntry> buildLogEntries) {
-        ZonedDateTime jobStarted = null;
+        if (buildLogEntries.isEmpty()) {
+            // No logs received -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
         ZonedDateTime agentSetupCompleted = null;
         ZonedDateTime testsStarted = null;
         ZonedDateTime testsFinished = null;
         ZonedDateTime scaStarted = null;
         ZonedDateTime scaFinished = null;
-        ZonedDateTime jobFinished = null;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
         Long dependenciesDownloadedCount = null;
 
         if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN)) {
-            jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry
             agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
             scaStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...", 1);
             scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:", 1);
-            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
-        if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
+        else if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
             jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry
             // agentSetupCompleted is not supported
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
             testsFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"));
             scaStarted = getTimestampForLogEntry(buildLogEntries, "Task :checkstyleMain");
             scaFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"), 1);
-            jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
             // dependenciesDownloadedCount is not supported
         }
 
