@@ -507,7 +507,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 HttpStatus.OK);
 
         List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
-        assertThat(studentParticipations).hasSize(0);
+        assertThat(studentParticipations).isEmpty();
 
         // invoke start exercises
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
@@ -520,7 +520,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 HttpStatus.OK);
 
         studentParticipations = participationTestRepository.findAllWithSubmissions();
-        assertThat(studentParticipations).hasSize(0);
+        assertThat(studentParticipations).isEmpty();
 
         // invoke start exercises
         request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
