@@ -76,8 +76,7 @@ class SystemNotificationIntegrationTest extends AbstractSpringIntegrationBambooB
         List<SystemNotification> notification = request.getList("/api/system-notifications/active", HttpStatus.OK, SystemNotification.class);
 
         // The returned notification must be an active notification.
-        assertThat(notification).hasSize(2);
-        assertThat(notification).as("Returned notification is active system notification.").isEqualTo(List.of(systemNotificationActive, systemNotificationFuture));
+        assertThat(notification).hasSize(2).as("Returned notifications are active or scheduled.").containsExactly(systemNotificationActive, systemNotificationFuture);
         assertThat(systemNotificationActive.getExpireDate()).as("Returned notification 0 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
         assertThat(systemNotificationActive.getNotificationDate()).as("Returned notification 0 is active.").isBeforeOrEqualTo(ZonedDateTime.now());
         assertThat(systemNotificationFuture.getExpireDate()).as("Returned notification 1 has not expired yet.").isAfterOrEqualTo(ZonedDateTime.now());
