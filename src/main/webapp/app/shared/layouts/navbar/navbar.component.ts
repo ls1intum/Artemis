@@ -13,7 +13,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -54,6 +53,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -105,7 +105,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    private exam?: Exam;
+    private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
     private lastRouteUrlSegment: string;
@@ -196,7 +196,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .subscribe();
 
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
-            this.exam = studentExam.exam;
+            this.studentExam = studentExam;
             this.checkExamActive();
         });
 
@@ -722,12 +722,18 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.examActiveCheckFuture = undefined;
         }
 
-        if (this.exam && this.exam.id === this.examId && this.exam.startDate && this.exam.endDate) {
+        if (this.studentExam?.exam && this.studentExam.exam.id === this.examId && this.studentExam.exam.startDate && this.studentExam.exam.endDate && !this.studentExam.submitted) {
             const serverTime = this.serverDateService.now();
-            this.isExamActive = serverTime.isBetween(this.exam.startDate, this.exam.endDate);
+            // As end date, we use the working time of this student plus the grace period
+            const workingTime = this.studentExam.workingTime ?? this.studentExam.exam.workingTime;
+            const examEndWithGracePeriod = (workingTime ? this.studentExam.exam.startDate.add(workingTime, 'seconds') : this.studentExam.exam.endDate).add(
+                this.studentExam.exam.gracePeriod ?? 0,
+                'seconds',
+            );
+            this.isExamActive = serverTime.isBetween(this.studentExam.exam.startDate, examEndWithGracePeriod);
 
-            const timeUntilStart = this.exam.startDate.diff(serverTime);
-            const timeUntilEnd = this.exam.endDate.diff(serverTime);
+            const timeUntilStart = this.studentExam.exam.startDate.diff(serverTime);
+            const timeUntilEnd = examEndWithGracePeriod.diff(serverTime);
             const timeUntilNextChange = timeUntilStart >= 0 ? timeUntilStart : timeUntilEnd;
             if (timeUntilNextChange > 0) {
                 this.examActiveCheckFuture = setTimeout(this.checkExamActive.bind(this), timeUntilNextChange + 100);

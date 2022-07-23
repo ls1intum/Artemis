@@ -237,10 +237,12 @@ describe('NavbarComponent', () => {
         router.setUrl('/course/2/exams/1');
 
         examParticipationService.currentlyLoadedStudentExam.next({
+            workingTime: 60,
             exam: {
                 id: 1,
                 startDate: now.add(1, 'minute'),
                 endDate: now.add(2, 'minutes'),
+                gracePeriod: 180,
             },
         } as StudentExam);
 
@@ -248,6 +250,8 @@ describe('NavbarComponent', () => {
         tick(61000);
         expect(component.isExamActive).toBeTrue();
         tick(61000);
+        expect(component.isExamActive).toBeTrue();
+        tick(180000);
         expect(component.isExamActive).toBeFalse();
     }));
 
