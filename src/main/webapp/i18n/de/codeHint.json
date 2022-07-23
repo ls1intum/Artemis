@@ -1,0 +1,99 @@
+{
+    "artemisApp": {
+        "codeHint": {
+            "type": "Code-Hinweis",
+            "entry": "Eintrag",
+            "entryType": "Typ (V/S)",
+            "lineOfCode": "1 Code-Zeile",
+            "linesOfCode": "{{ lines }} Code-Zeilen",
+            "entryTypeTooltip": "Definiert, ob dieser Eintrag für einen strukturellen (S) oder verhaltensweisen (V) Test erstellt wurde.",
+            "entryAbbreviation": {
+                "structural": "S",
+                "behavioral": "V"
+            },
+            "entries": "Fragmente",
+            "removeEntryQuestion": "Soll dieses Fragment wirklich entfernt werden?",
+            "noEntries": "Dieser Code-Hinweis hat keine Fragmente.",
+            "deleted": "Exercise Hint gelöscht mit ID {{ param }}",
+            "management": {
+                "title": "Code-Hinweise verwalten",
+                "previousButton": {
+                    "label": "Zurück"
+                },
+                "nextButton": {
+                    "label": "Weiter",
+                    "tooltip": "Der aktuelle Schritt muss erfolgreich ausgeführt seien, damit fortgefahren werden kann."
+                },
+                "step1": {
+                    "name": "Git-Diff Report",
+                    "description": "Der Git-Diff Report wird automatisch für das Template- und Lösungs-Repository erstellt.",
+                    "notGenerated": "Git-Diff Report wurde noch nicht erzeugt."
+                },
+                "step2": {
+                    "name": "Code-Abdeckung",
+                    "description": "Der Code-Abdeckungs-Report wird automatisch für jede Einreichung in Lösungs-Repository erstellt.",
+                    "notGenerated": "Der Code-Abdeckungs-Report wurde noch nicht erzeugt."
+                },
+                "step3": {
+                    "name": "Lösungs-Fragmente",
+                    "description": "In diesem Schritt kannst du die einzelnen Fragment bearbeiten, aus denen Code-Hinweise erstellt werden.",
+                    "notGenerated": "Bisher wurden keine Fragmente generiert.",
+                    "createManualFragmentButton": {
+                        "label": "Erstelle manuelles Fragment",
+                        "tooltip": "Fragment manuell mit zugehörigem Test und Datei erstellen."
+                    },
+                    "structuralEntriesButton": {
+                        "label": "Strukturelle Fragmente generieren",
+                        "tooltip": "Erstellt Fragmente für strukturelle Tests. Bereits existierende strukturelle Fragmente werden überschrieben."
+                    },
+                    "behavioralEntriesButton": {
+                        "label": "Verhaltensweise Fragmente generieren",
+                        "tooltip": "Erstellt Fragmente für verhaltensweise Tests. Bereits existierende verhaltensweise Fragmente werden überschrieben."
+                    },
+                    "deleteAllEntriesButton": {
+                        "label": "Alle Fragmente löschen",
+                        "tooltip": "Löscht alle Fragmente für diese Aufgabe.",
+                        "question": "Bist du dir sicher, dass du alle Fragmente für diese Aufgabe löschen möchtest?",
+                        "title": "Alle Fragmente löschen",
+                        "success": "Alle Fragmente wurden erfolgreich gelöscht"
+                    },
+                    "deleteIndividualEntryButton": {
+                        "question": "Bist du dir sicher, dass du das Fragment mit ID {{ title }} löschen möchtest?"
+                    }
+                },
+                "step4": {
+                    "name": "Code-Hinweise",
+                    "description": "In diesem Schritt kannst du die Code-Hinweise generieren.",
+                    "title": "Titel",
+                    "task": "Aufgabe",
+                    "notGenerated": "Bisher wurden keine Code-Hinweise generiert.",
+                    "updateHintsButton": {
+                        "label": "Code-Hinweise aktualisieren",
+                        "tooltip": "Erstellt neue Code-Hinweise, indem die existierenden Lösungs Codeschnipsel neu zugewiesen werden. Titel, Beschreibung und Inhalt bleiben unverändert beim ursprünglichen Hinweis.",
+                        "success": "Code-Hinweise erfolgreich aktualisiert. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
+                    },
+                    "createHintsButton": {
+                        "label": "Code-Hinweise erstellen",
+                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Lösungs Codeschnipseln.",
+                        "success": "Code-Hinweise erfolgreich erstellt. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
+                    },
+                    "recreateHintsButton": {
+                        "label": "Code-Hinweise neu erstellen",
+                        "tooltip": "Erstellt Code-Hinweise aus den existierenden Fragmenten. Existierende Hinweise werden überschrieben.",
+                        "success": "Code-Hinweise erfolgreich neu erstellt. Die Hinweise sind direkt sichtbar für teilnehmende Studierende."
+                    }
+                }
+            }
+        },
+        "programmingExerciseSolutionEntry": {
+            "simplifiedName": "Lösungs Codeschnipsel",
+            "created": "Neues Lösungs Codeschnipsel erstellt mit ID {{ param }}",
+            "updated": "Lösungs Codeschnipsel aktualisiert mit ID {{ param }}",
+            "deleted": "Lösungs Codeschnipsel gelöscht mit ID {{ param }}",
+            "test": "Test",
+            "testOnlyForCurrentTask": "Du kannst nur Tests auswählen, die in der aktuellen Task enthalten sind.",
+            "file": "Datei",
+            "changeContentNote": "Hinweis: Änderungen an diesem Fragment werden für Hinweise mit diesem Fragment automatisch übernommen."
+        }
+    }
+}

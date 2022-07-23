@@ -7,9 +7,9 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -60,11 +60,11 @@ public class ProgrammingExerciseSolutionEntry extends DomainObject {
 
     // Fetched lazily, as we never need the code hint when fetching solution entries
     @ManyToOne(fetch = FetchType.LAZY)
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private CodeHint codeHint;
 
     @ManyToOne
-    @JsonIgnoreProperties("solutionEntries")
+    @JsonIgnoreProperties(value = "solutionEntries", allowSetters = true)
     private ProgrammingExerciseTestCase testCase;
 
     public String getFilePath() {
