@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.io.IOException;
-import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Map;
+import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,12 +13,10 @@ import com.hazelcast.config.Config;
 import com.hazelcast.config.SerializerConfig;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceAware;
-import com.hazelcast.internal.serialization.impl.SerializationServiceV1;
 import com.hazelcast.map.IMap;
 import com.hazelcast.nio.ObjectDataInput;
 import com.hazelcast.nio.ObjectDataOutput;
 import com.hazelcast.nio.serialization.StreamSerializer;
-import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
@@ -35,50 +33,19 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
     private static final String HAZELCAST_CACHE_ACTIVITIES = "-activities";
 
     /**
-     * All {@link List} classes that are supported by Hazelcast {@link SerializationServiceV1}
-     */
-    private static final Set<Class<?>> SUPPORTED_LIST_CLASSES = Set.of(ArrayList.class, LinkedList.class, CopyOnWriteArrayList.class);
-
-    /**
-     * Make sure this is a class of SUPPORTED_LIST_CLASSES to make easy serialization possible, see
-     * {@link SerializationServiceV1}
-     */
-    List<ScheduledTaskHandler> examActivitySaveHandler;
-
-    /**
      * This IMap is a distributed Hazelcast object and must not be (de-)serialized, it is set in the
      * setHazelcastInstance method.
      */
     private transient IMap<Long, ExamActivity> activities;
 
-    public ExamMonitoringDistributedCache(Long examId, List<ScheduledTaskHandler> examActivitySaveHandler) {
-        super(Objects.requireNonNull(examId, "examId must not be null"));
-        setExamActivitySaveHandler(examActivitySaveHandler);
-        logger.debug("Creating new ExamMonitoringDistributedCache, id {}", getExamId());
-    }
-
     public ExamMonitoringDistributedCache(Long examId) {
-        this(examId, getEmptyExamActivitySaveHandler());
+        super(Objects.requireNonNull(examId, "examId must not be null"));
+        logger.debug("Creating new ExamMonitoringDistributedCache, id {}", getExamId());
     }
 
     @Override
     Map<Long, ExamActivity> getActivities() {
         return activities;
-    }
-
-    @Override
-    List<ScheduledTaskHandler> getExamActivitySaveHandler() {
-        return examActivitySaveHandler;
-    }
-
-    @Override
-    void setExamActivitySaveHandler(List<ScheduledTaskHandler> examActivitySaveHandler) {
-        if (SUPPORTED_LIST_CLASSES.contains(examActivitySaveHandler.getClass())) {
-            this.examActivitySaveHandler = examActivitySaveHandler;
-        }
-        else {
-            this.examActivitySaveHandler = new ArrayList<>(examActivitySaveHandler);
-        }
     }
 
     @Override
@@ -109,15 +76,12 @@ public class ExamMonitoringDistributedCache extends ExamMonitoringCache implemen
         @Override
         public void write(ObjectDataOutput output, ExamMonitoringDistributedCache examMonitoringDistributedCache) throws IOException {
             output.writeLong(examMonitoringDistributedCache.getExamId());
-            output.writeObject(examMonitoringDistributedCache.examActivitySaveHandler);
         }
 
         @Override
         public @NotNull ExamMonitoringDistributedCache read(ObjectDataInput input) throws IOException {
             Long examId = input.readLong();
-            List<ScheduledTaskHandler> examActivitySaveHandler = input.readObject();
-
-            return new ExamMonitoringDistributedCache(examId, examActivitySaveHandler);
+            return new ExamMonitoringDistributedCache(examId);
         }
     }
 
