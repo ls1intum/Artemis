@@ -168,6 +168,11 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             return;
         }
 
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            // Not supported -> Do nothing
+            return;
+        }
+
         buildLogEntries.forEach(l -> {
             System.out.println("Received log " + l.getLog());
         });
@@ -181,7 +186,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
         Long dependenciesDownloadedCount = null;
 
-        if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN)) {
+        if (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN) {
             agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
@@ -189,7 +194,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:", 1);
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
-        else if (programmingLanguage == ProgrammingLanguage.JAVA && (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE)) {
+        else if (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE) {
             // agentSetupCompleted is not supported
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
             testsFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"));
