@@ -9,8 +9,6 @@ import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
@@ -106,13 +104,6 @@ public class ExamMonitoringScheduleService {
         catch (Exception e) {
             logger.error("Failed to start ExamMonitoringScheduleService", e);
         }
-    }
-
-    @EventListener(ApplicationReadyEvent.class)
-    public void applicationReady() {
-        // activate Exam Monitoring Service
-        SecurityUtils.setAuthorizationObject();
-        startSchedule();
     }
 
     /**
