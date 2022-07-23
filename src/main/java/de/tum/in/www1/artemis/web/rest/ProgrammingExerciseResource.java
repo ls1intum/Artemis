@@ -760,13 +760,33 @@ public class ProgrammingExerciseResource {
     }
 
     /**
-     * GET programming-exercise/:exerciseId/build-log-statistics
+     * GET programming-exercise/:exerciseId/solution-file-names
      *
-     * Returns the solution repository files with content for a given programming exercise.
+     * Returns the solution repository file names for a given programming exercise.
      * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
      * the solution participation id is not known for the client.
      * @param exerciseId the exercise for which the solution repository files should be retrieved
      * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping(SOLUTION_REPOSITORY_FILE_NAMES)
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest solution repository file names for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/build-log-statistics
+     *
+     * Returns the averaged build log statistics for a given programming exercise.
+     * @param exerciseId the exercise for which the build log statistics should be retrieved
+     * @return a DTO containing the average build log statistics
      */
     @GetMapping(BUILD_LOG_STATISTICS)
     @PreAuthorize("hasRole('EDITOR')")

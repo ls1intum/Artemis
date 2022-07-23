@@ -340,6 +340,8 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         CodeHint codeHint = new CodeHint();
         codeHint.setTitle("Hint 1");
         codeHint.setExercise(exerciseLite);
+        codeHint.setProgrammingExerciseTask(programmingExerciseTaskService.getSortedTasks(exercise).get(0));
+
         exerciseHintRepository.save(codeHint);
 
         codeHint.setTitle("New Title");
