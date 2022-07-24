@@ -714,7 +714,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     /**
      * Check if the student is currently working on an active exam.
      * If yes, hide some elements like notifications and breadcrumbs.
-     * Schedules a check for this at the next relevant timestamp (exam start or exam end, whichever comes next9)
+     * Schedules a check for this at the next relevant timestamp (exam start or exam end, whichever comes next)
      */
     checkExamActive() {
         if (this.examActiveCheckFuture) {
@@ -722,7 +722,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
             this.examActiveCheckFuture = undefined;
         }
 
-        if (this.studentExam?.exam && this.studentExam.exam.id === this.examId && this.studentExam.exam.startDate && this.studentExam.exam.endDate && !this.studentExam.submitted) {
+        if (
+            this.studentExam?.exam &&
+            this.studentExam.exam.id === this.examId &&
+            !this.studentExam.exam.testExam &&
+            !this.studentExam.testRun &&
+            this.studentExam.exam.startDate &&
+            this.studentExam.exam.endDate &&
+            !this.studentExam.submitted
+        ) {
             const serverTime = this.serverDateService.now();
             // As end date, we use the working time of this student plus the grace period
             const workingTime = this.studentExam.workingTime ?? this.studentExam.exam.workingTime;
