@@ -133,6 +133,15 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
+    void testGetAllSolutionEntries() throws Exception {
+        var existingEntries = programmingExerciseSolutionEntryRepository.findAll();
+        final var receivedEntries = request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/solution-entries", HttpStatus.OK,
+                ProgrammingExerciseSolutionEntry.class);
+        assertThat(receivedEntries).isEqualTo(existingEntries);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
     void testDeleteSolutionEntry() throws Exception {
         ProgrammingExerciseTestCase testCase = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId()).stream().findFirst()
                 .orElseThrow();
@@ -157,6 +166,13 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
                 .orElseThrow();
         Long entryId = testCase.getSolutionEntries().stream().findFirst().orElseThrow().getId();
         request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries/" + entryId, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void testDeleteAllSolutionEntriesForExercise() throws Exception {
+        request.delete("/api/programming-exercises/" + programmingExercise.getId() + "/solution-entries", HttpStatus.NO_CONTENT);
+        assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(0);
     }
 
     @Test
@@ -235,5 +251,28 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCreateStructuralSolutionEntriesAsInstructor() throws Exception {
         request.postWithoutLocation("/api/programming-exercises/" + programmingExercise.getId() + "/structural-solution-entries", null, HttpStatus.OK, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCreateManualSolutionEntry() throws Exception {
+        programmingExerciseSolutionEntryRepository.deleteAll();
+
+        var manualEntry = new ProgrammingExerciseSolutionEntry();
+        manualEntry.setCode("abc");
+        manualEntry.setLine(1);
+        manualEntry.setFilePath("src/de/tum/in/ase/BubbleSort.java");
+
+        var testCase = programmingExerciseTestCaseRepository.findAll().stream().findFirst().get();
+        manualEntry.setTestCase(testCase);
+
+        request.postWithoutLocation("/api/programming-exercises/" + programmingExercise.getId() + "/test-cases/" + testCase.getId() + "/solution-entries", manualEntry,
+                HttpStatus.CREATED, null);
+
+        var savedEntries = programmingExerciseSolutionEntryRepository.findAll();
+        assertThat(savedEntries).hasSize(1);
+        var createdEntry = savedEntries.get(0);
+        assertThat(createdEntry).usingRecursiveComparison().ignoringActualNullFields().isEqualTo(createdEntry);
+        assertThat(createdEntry.getTestCase().getId()).isEqualTo(testCase.getId());
     }
 }

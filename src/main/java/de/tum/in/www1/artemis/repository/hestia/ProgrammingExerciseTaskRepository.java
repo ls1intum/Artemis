@@ -119,4 +119,12 @@ public interface ProgrammingExerciseTaskRepository extends JpaRepository<Program
             WHERE t.id = :taskId
             """)
     String getTaskName(@Param("taskId") Long taskId);
+
+    @Query("""
+            SELECT pt FROM ProgrammingExerciseTask  pt
+            LEFT JOIN FETCH pt.exerciseHints h
+            LEFT JOIN FETCH pt.testCases tc
+            WHERE h.id = :codeHintId
+            """)
+    Optional<ProgrammingExerciseTask> findByCodeHintIdWithTestCases(@Param("codeHintId") Long codeHintId);
 }

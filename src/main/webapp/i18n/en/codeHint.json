@@ -1,0 +1,99 @@
+{
+    "artemisApp": {
+        "codeHint": {
+            "type": "Code Hint",
+            "entry": "Entry",
+            "entryType": "Type (S/B)",
+            "lineOfCode": "1 line of code",
+            "linesOfCode": "{{ lines }} lines of code",
+            "entryTypeTooltip": "Defines whether this entry has been generated for a structural (S) or behavioral (B) test case.",
+            "entryAbbreviation": {
+                "structural": "S",
+                "behavioral": "B"
+            },
+            "entries": "Entries",
+            "removeEntryQuestion": "Are you sure you want to remove this entry?",
+            "noEntries": "This code hint has no Solution Code Snippets.",
+            "deleted": "Deleted Code Hint with identifier {{ param }}",
+            "management": {
+                "title": "Code Hint Management",
+                "previousButton": {
+                    "label": "Back"
+                },
+                "nextButton": {
+                    "label": "Next",
+                    "tooltip": "The current step has to be performed to proceed."
+                },
+                "step1": {
+                    "name": "Git-Diff Report",
+                    "description": "The git-diff report is created automatically for the template and solution repositories for every submission to either of the repositories.",
+                    "notGenerated": "The Git-Diff report has not been generated yet."
+                },
+                "step2": {
+                    "name": "Coverage Report",
+                    "description": "The coverage report is created automatically for every submission to the solution repository.",
+                    "notGenerated": "The coverage report has not been generated yet."
+                },
+                "step3": {
+                    "name": "Solution Code Snippets",
+                    "description": "This steps allows to edit the individual Solution Code Snippets from which code hints are generated.",
+                    "notGenerated": "No Solution Code Snippets have been generated yet.",
+                    "createManualFragmentButton": {
+                        "label": "Create manual fragment",
+                        "tooltip": "Allows to create a manual Solution Code Snippets for a file and test case."
+                    },
+                    "structuralEntriesButton": {
+                        "label": "Generate structural snippets",
+                        "tooltip": "Generates fragments for structural test cases. Already existing structural fragments will be overwritten."
+                    },
+                    "behavioralEntriesButton": {
+                        "label": "Generate behavioral snippets",
+                        "tooltip": "Generates fragments for behavioral test cases. Already existing behavioral fragments will be overwritten."
+                    },
+                    "deleteAllEntriesButton": {
+                        "label": "Delete all snippets",
+                        "tooltip": "Deletes all Solution Code Snippets for this exercise.",
+                        "question": "Are you sure to delete all Solution Code Snippets for this exercise?",
+                        "title": "Delete all Solution Code Snippets",
+                        "success": "Successfully deleted all Solution Code Snippets"
+                    },
+                    "deleteIndividualEntryButton": {
+                        "question": "Are you sure to delete the Solution Code Snippets with ID {{ title }}?"
+                    }
+                },
+                "step4": {
+                    "name": "Code Hints",
+                    "description": "This step allows to generate the code hints.",
+                    "title": "Title",
+                    "task": "Task",
+                    "notGenerated": "No code hints have been generated yet.",
+                    "updateHintsButton": {
+                        "label": "Update code hints",
+                        "tooltip": "Create new code hints by re-assigning the existing Solution Code Snippets. The title, description, and content of the existing hint retain.",
+                        "success": "Code hints have been updated successfully. The hints will be visible immediately to participating students."
+                    },
+                    "createHintsButton": {
+                        "label": "Create code hints",
+                        "tooltip": "Creates code hints from the existing Solution Code Snippets.",
+                        "success": "Code hints have been created successfully. The hints will be visible immediately to participating students."
+                    },
+                    "recreateHintsButton": {
+                        "label": "Recreate code hints",
+                        "tooltip": "Recreate code hints from the existing Solution Code Snippets. Existing hints will be overwritten.",
+                        "success": "Code hints have been recreated successfully. The hints will be visible immediately to participating students."
+                    }
+                }
+            }
+        },
+        "programmingExerciseSolutionEntry": {
+            "simplifiedName": "Solution Code Snippets",
+            "created": "Created Solution Code Snippets with ID {{ param }}",
+            "updated": "Updated Solution Code Snippets with ID {{ param }}",
+            "deleted": "Deleted Solution Code Snippets with ID {{ param }}",
+            "test": "Test",
+            "testOnlyForCurrentTask": "You can only select a test case that the currently selected task contains.",
+            "file": "File",
+            "changeContentNote": "Note: Changes apply to the fragments in existing code hints that contain this fragment."
+        }
+    }
+}

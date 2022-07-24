@@ -1,30 +1,38 @@
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import dayjs from 'dayjs/esm';
+import { Component, OnInit } from '@angular/core';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Subject, Subscription } from 'rxjs';
 import { filter, map } from 'rxjs/operators';
-import { AccountService } from 'app/core/auth/account.service';
 import { LectureService } from './lecture.service';
 import { Lecture } from 'app/entities/lecture.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { EventManager } from 'app/core/util/event-manager.service';
-import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faFile, faPencilAlt, faPlus, faPuzzlePiece, faTimes, faFilter } from '@fortawesome/free-solid-svg-icons';
 import { LectureImportComponent } from 'app/lecture/lecture-import.component';
+import { Subject } from 'rxjs';
+
+export enum LectureDateFilter {
+    PAST = 'filterPast',
+    CURRENT = 'filterCurrent',
+    FUTURE = 'filterFuture',
+    UNSPECIFIED = 'filterUnspecifiedDates',
+}
 
 @Component({
     selector: 'jhi-lecture',
     templateUrl: './lecture.component.html',
 })
-export class LectureComponent implements OnInit, OnDestroy {
+export class LectureComponent implements OnInit {
     lectures: Lecture[];
-    currentAccount: any;
-    eventSubscriber: Subscription;
+    filteredLectures: Lecture[];
     courseId: number;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    activeFilters = new Set<LectureDateFilter>();
+    readonly filterType = LectureDateFilter;
 
     // Icons
     faPlus = faPlus;
@@ -32,54 +40,28 @@ export class LectureComponent implements OnInit, OnDestroy {
     faPencilAlt = faPencilAlt;
     faFile = faFile;
     faPuzzlePiece = faPuzzlePiece;
+    faFilter = faFilter;
 
     constructor(
         protected lectureService: LectureService,
         private route: ActivatedRoute,
         private router: Router,
         private alertService: AlertService,
-        protected eventManager: EventManager,
-        protected accountService: AccountService,
         private modalService: NgbModal,
     ) {}
-
-    loadAll() {
-        this.lectureService
-            .findAllByCourseId(this.courseId)
-            .pipe(
-                filter((res: HttpResponse<Lecture[]>) => res.ok),
-                map((res: HttpResponse<Lecture[]>) => res.body),
-            )
-            .subscribe({
-                next: (res: Lecture[]) => {
-                    this.lectures = res;
-                },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-    }
 
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.loadAll();
-        this.accountService.identity().then((account) => {
-            this.currentAccount = account;
-        });
-        this.registerChangeInLectures();
-    }
-
-    ngOnDestroy() {
-        this.eventManager.destroy(this.eventSubscriber);
-        this.dialogErrorSource.unsubscribe();
     }
 
     trackId(index: number, item: Lecture) {
         return item.id;
     }
 
-    registerChangeInLectures() {
-        this.eventSubscriber = this.eventManager.subscribe('lectureListModification', () => this.loadAll());
-    }
-
+    /**
+     * Opens the import modal and imports the selected lecture
+     */
     openImportModal() {
         const modalRef = this.modalService.open(LectureImportComponent, { size: 'lg', backdrop: 'static' });
         modalRef.result.then(
@@ -109,13 +91,74 @@ export class LectureComponent implements OnInit, OnDestroy {
     deleteLecture(lectureId: number) {
         this.lectureService.delete(lectureId).subscribe({
             next: () => {
-                this.eventManager.broadcast({
-                    name: 'lectureListModification',
-                    content: 'Deleted an lecture',
-                });
                 this.dialogErrorSource.next('');
+                this.lectures = this.lectures.filter((lecture) => lecture.id !== lectureId);
+                this.applyFilters();
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
+    }
+
+    /**
+     * Toggles some filters for the lectures
+     * @param filters: The filters which should be toggled (activated if not already activated, and vice versa)
+     */
+    toggleFilters(filters: LectureDateFilter[]) {
+        filters.forEach((f) => (this.activeFilters.has(f) ? this.activeFilters.delete(f) : this.activeFilters.add(f)));
+        this.applyFilters();
+    }
+
+    private loadAll() {
+        this.lectureService
+            .findAllByCourseId(this.courseId)
+            .pipe(
+                filter((res: HttpResponse<Lecture[]>) => res.ok),
+                map((res: HttpResponse<Lecture[]>) => res.body),
+            )
+            .subscribe({
+                next: (res: Lecture[]) => {
+                    this.lectures = res;
+                    this.applyFilters();
+                },
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            });
+    }
+
+    /**
+     * Updates the lectures to show by applying the filters and sorting them
+     */
+    private applyFilters(): void {
+        if (this.activeFilters.size === 0) {
+            // If no filters selected, show all lectures
+            this.filteredLectures = this.lectures;
+        } else {
+            // Get the current system time
+            const now = dayjs();
+            // Initialize empty arrays for filtered Lectures
+            let filteredLectures: Array<Lecture> = [];
+
+            // update filteredLectures based on the selected filter option checkboxes
+            const pastLectures = this.lectures.filter((lecture) => lecture.endDate?.isBefore(now));
+            const currentLectures = this.lectures.filter((lecture) => {
+                if (lecture.startDate && lecture.endDate) {
+                    return lecture.startDate.isSameOrBefore(now) && lecture.endDate.isSameOrAfter(now);
+                } else if (lecture.startDate) {
+                    return lecture.startDate.isSameOrBefore(now);
+                } else if (lecture.endDate) {
+                    return lecture.endDate.isSameOrAfter(now);
+                }
+                return false;
+            });
+            const futureLectures = this.lectures.filter((lecture) => lecture.startDate?.isAfter(now));
+            const unspecifiedDatesLectures = this.lectures.filter((lecture) => lecture.startDate === undefined && lecture.endDate === undefined);
+
+            filteredLectures = this.activeFilters.has(LectureDateFilter.PAST) ? filteredLectures.concat(pastLectures) : filteredLectures;
+            filteredLectures = this.activeFilters.has(LectureDateFilter.CURRENT) ? filteredLectures.concat(currentLectures) : filteredLectures;
+            filteredLectures = this.activeFilters.has(LectureDateFilter.FUTURE) ? filteredLectures.concat(futureLectures) : filteredLectures;
+            filteredLectures = this.activeFilters.has(LectureDateFilter.UNSPECIFIED) ? filteredLectures.concat(unspecifiedDatesLectures) : filteredLectures;
+            this.filteredLectures = filteredLectures;
+        }
+
+        this.filteredLectures.sort((first, second) => 0 - (first.id! < second.id! ? 1 : -1));
     }
 }

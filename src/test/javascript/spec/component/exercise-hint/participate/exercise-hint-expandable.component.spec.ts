@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { StarRatingComponent } from 'app/exercises/shared/rating/star-rating/star-rating.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
-import { CastToCodeHintPipe } from 'app/exercises/shared/exercise-hint/shared/code-hint-cast.pipe';
+import { CastToCodeHintPipe } from 'app/exercises/shared/exercise-hint/services/code-hint-cast.pipe';
 
 describe('Exercise Hint Expandable Component', () => {
     let comp: ExerciseHintExpandableComponent;
