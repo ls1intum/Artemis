@@ -544,6 +544,14 @@ public class StudentExamResource {
         log.info("REST request to start exercises for student exams of exam {}", examId);
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            // TODO: change to BadRequestAlertException
+            throw new AccessForbiddenException("Start exercises is only allowed for real exams");
+        }
+
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
         int numberOfGeneratedParticipations = studentExamService.startExercises(examId);
 

@@ -178,6 +178,7 @@ public class ExamRegistrationService {
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
+            // TODO: move to resource and change to BadRequestAlertException
             throw new AccessForbiddenException("Self-Registration is only allowed for test exams");
         }
 
@@ -203,6 +204,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
+            // TODO: move to resource and change to BadRequestAlertException
             throw new AccessForbiddenException("Deletion of users is only allowed for real exams");
         }
 
@@ -247,6 +249,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
+            // TODO: move to resource and change to BadRequestAlertException
             throw new AccessForbiddenException("Unregistration is only allowed for real exams");
         }
 
@@ -280,6 +283,7 @@ public class ExamRegistrationService {
         var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
+            // TODO: move to resource and change to BadRequestAlertException
             throw new AccessForbiddenException("Registration is only allowed for real exams");
         }
 

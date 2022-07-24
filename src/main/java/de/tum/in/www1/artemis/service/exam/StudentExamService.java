@@ -480,10 +480,6 @@ public class StudentExamService {
      */
     public int startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
-        }
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
@@ -575,7 +571,8 @@ public class StudentExamService {
         Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
 
         if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-            throw new AccessForbiddenException("The requested Exam is no TestExam and thus no StudentExam can be created");
+            // TODO: move to resource and change to BadRequestAlertException
+            throw new AccessForbiddenException("The requested Exam is no test exam and thus no student exam can be created");
         }
         long start = System.nanoTime();
         StudentExam studentExam = generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
