@@ -120,13 +120,13 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
     @Override
     public void deleteProject(String projectKey) {
         log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
-        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted seperatly.");
+        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
     }
 
     @Override
     public void deleteBuildPlan(String projectKey, String buildPlanId) {
         log.error("Unsupported action: GitLabCIService.deleteBuildPlan()");
-        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted seperatly.");
+        log.error("Please refer to the repository for deleting the project. The build plan can not be deleted separately.");
     }
 
     @Override
