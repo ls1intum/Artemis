@@ -25,7 +25,7 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
     private int studentAmount;
 
     @BeforeEach
-    public void initTestCase() throws IOException {
+    void initTestCase() throws IOException {
         String submissionText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
         String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
         studentAmount = 25;
@@ -36,13 +36,13 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testCheckPlagiarismResultForTextExercise() throws Exception {
+    void testCheckPlagiarismResultForTextExercise() throws Exception {
         var textExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
         String path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         createAndTestPlagiarismResult(path);
@@ -50,12 +50,16 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCheckPlagiarismResultForModelingExercise() throws Exception {
+    void testCheckPlagiarismResultForModelingExercise() throws Exception {
         var modelingExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.MODELING).findFirst().get();
         String path = "/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism";
         createAndTestPlagiarismResult(path);
     }
 
+    /***
+     * Create the plagiarism result response based on the provided path
+     * @param path The provided path to the rest endpoint
+     */
     private void createAndTestPlagiarismResult(String path) throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("similarityThreshold", "50");
