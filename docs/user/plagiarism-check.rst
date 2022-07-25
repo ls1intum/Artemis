@@ -10,11 +10,11 @@ Plagiarism checks
 Introduction
 --------------------------
 
-Artemis allows tutors and exercise instructors to check assignments submissions from students for plagiarism.
+Artemis allows tutors and exercise instructors to check assignment submissions from students for plagiarism.
 With this feature, different types of assignments can be checked in Artemis, including programming assignments, modeling assignments, and text assignments.
 To perform the plagiarism check, the responsible tutors must initiate the checking process for a specific exercise.
 First, we give an overview of different available features of the plagiarism check.
-Next, we explain the plagiarism check workflows from the perspective of various Artemis users, using a UML Activity Diagrams to visualize the process.
+Next, we explain the plagiarism check workflows from the perspective of various Artemis users, using UML Activity Diagrams to visualize the process.
 
 Plagiarism Check Overview
 --------------------------
@@ -47,21 +47,21 @@ Before starting the plagiarism check, the user can configure different settings 
 
 Actions
 ^^^^^^^
-The user can use different actions to run plagiarism check, inspect the results or improve the performance.
+The user can use different actions to run a plagiarism check, inspect the results or improve the performance.
 
 |plagiarism-actions1|
 
 .. note::
         Plagiarism detection can take a long time for large courses.
-1. Detect plagiarism. The user can execute the plagiarism check using this action.
+1. Detect plagiarism: The user can execute the plagiarism check using this action.
 
-2. Rerun plagiarism detection. The user can rerun the plagiarism check by executing this action. It can be helpful to check for plagiarism using the different settings as described in section :ref:`settings`.
+2. Rerun plagiarism detection: The user can rerun the plagiarism check by executing this action. It can be helpful to check for plagiarism using the different settings as described in section :ref:`settings`.
 
-3. Clean up. The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database slim and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action, the user must approve it by clicking ok on the dialog, as this action deletes all potentially approved or denied plagiarism cases.
+3. Clean up: The user can clean up the latest plagiarism check results for the selected exercise. It helps to keep the database slim and safe storage capacity. Moreover, it should improve the overall system performance. To execute the clean-up action, the user must approve it by clicking ok on the dialog, as this action deletes all potentially approved or denied plagiarism cases.
 
 |clean-up-dialog|
 
-4. Download. The user can download the plagiarism results in JSON or CSV format to open them in a selected editor for the further analysis.
+4. Download: The user can download the plagiarism results in JSON or CSV format to open them in a selected editor for the further analysis.
 
 Results
 ^^^^^^^
@@ -79,8 +79,8 @@ In this section, we explain the process of the plagiarism case detection process
 
 Tutors
 ^^^^^^
-The tutors are responsible for checking the plagiarism attempts of students. They execute the plagiarism checks and mark the potential plagiarism candidates to notify the instructors.
-This process is visualized in the following diagram.
+Tutors and instructors can execute plagiarism checks. They carefully review the automatically identified cases and provide a first decision whether to accept or deny the found case.
+We visualized the process in the following diagram.
 
 |tutor-workflow|
 
@@ -89,18 +89,18 @@ This process is visualized in the following diagram.
  |exercise-page|
 
 3. Run the Plagiarism Check.
- a. Tutor can adjust the similarity threshold and other settings as described in section :ref:`settings` if deemed necessary (most of the time not, depends on the exercise type).
- b. Checking big exercises can take a long time (sometimes multiple hours) and be very resource heavy → Start the checks at times when Artemis is less used
+ a. Tutors and instructors can adjust the similarity threshold and other settings as described in section :ref:`settings` if deemed necessary (most of the time not, depends on the formulation of the exercise and on the number of possible solution. A similarity of less than 50% typically means that students did not plagiarize).
+ b. Checking exercises with many students can take some time (sometimes multiple minutes) and might be resource intensive → We recommend to run plagiarism checks at times when only a few users actively use Artemis in such cases
 4. Start checking for plagiarism.
- a. Assess if the presented matches are real plagiarism or not.
- b. Depending on your assessment, either deny or confirm the match as plagiarism.
+ a. Review if the presented matches are actual plagiarism cases or not.
+ b. Depending on your decision, either deny or confirm the match as plagiarism.
  c. Continue until the matches start to get "too different".
 
 
 Instructors
 ^^^^^^^^^^^
 The instructors can execute the same actions as tutors, additionally they are able to make a final decision on the particular confirmed plagiarism case.
-The process is visualized in the following diagram.
+We visualized the process in the following diagram.
 
 |instructors-workflow|
 
