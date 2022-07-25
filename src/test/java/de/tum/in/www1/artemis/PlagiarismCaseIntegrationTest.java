@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -51,7 +52,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     private static PlagiarismCase plagiarismCase3;
 
-    private static ArrayList<PlagiarismCase> plagiarismCases;
+    private static List<PlagiarismCase> plagiarismCases;
 
     @BeforeEach
     void initTestCase() {
@@ -67,14 +68,8 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
      * @param numberOfPlagiarismCases The required number of cases
      * @return The list of generated plagiarism cases
      */
-    private ArrayList<PlagiarismCase> createPlagiarismCases(int numberOfPlagiarismCases) {
+    private List<PlagiarismCase> createPlagiarismCases(int numberOfPlagiarismCases) {
         var plagiarismCasesList = new ArrayList<PlagiarismCase>();
-        PlagiarismCase plagiarismCase = null;
-        User student = null;
-        PlagiarismResult<TextSubmissionElement> textPlagiarismResult = null;
-        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = null;
-        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = null;
-        PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = null;
 
         // Per case, we have always 2 students
         database.addUsers(numberOfPlagiarismCases * 2, 1, 1, 1);
@@ -82,13 +77,13 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
 
         for (int i = 0; i < numberOfPlagiarismCases; i++) {
-            plagiarismCase = new PlagiarismCase();
-            student = database.getUserByLogin("student" + (i + 1));
-            textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
-            plagiarismComparison = new PlagiarismComparison<>();
+            PlagiarismCase plagiarismCase = new PlagiarismCase();
+            User student = database.getUserByLogin("student" + (i + 1));
+            PlagiarismResult<TextSubmissionElement> textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+            PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
 
-            plagiarismSubmission1 = new PlagiarismSubmission<>();
-            plagiarismSubmission2 = new PlagiarismSubmission<>();
+            PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission1 = new PlagiarismSubmission<>();
+            PlagiarismSubmission<TextSubmissionElement> plagiarismSubmission2 = new PlagiarismSubmission<>();
 
             plagiarismCase.setExercise(textExercise);
             plagiarismCase.setStudent(student);
