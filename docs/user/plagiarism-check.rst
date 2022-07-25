@@ -84,7 +84,7 @@ We visualized the process in the following diagram.
 
 |tutor-workflow|
 
-1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise".
+1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise.
 2. Access the plagiarism tool as seen in the picture
  |exercise-page|
 
@@ -126,7 +126,7 @@ We visualized the process in the following diagram.
  |verdict-dialog|
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
- b. Warning. The instructor can write a warning message to the student and confirm the verdict by in the dialog.
+ b. Warning. The instructor can write a warning message to the student and confirm the verdict in the dialog.
  c. Plagiarism. Next steps must be made manually by contacting responsible persons in the university to mark the student grade as "Unterschleif".
 
 Students
