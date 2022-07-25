@@ -9,9 +9,9 @@ export enum Visibility {
 }
 
 export enum ProgrammingExerciseTestCaseType {
-    STRUCTURAL,
-    BEHAVIORAL,
-    DEFAULT,
+    STRUCTURAL = 'STRUCTURAL',
+    BEHAVIORAL = 'BEHAVIORAL',
+    DEFAULT = 'DEFAULT',
 }
 
 export class ProgrammingExerciseTestCase implements BaseEntity {

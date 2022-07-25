@@ -106,7 +106,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         comp.getAndShowFullDiff();
 
         expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl', backdrop: 'static' });
+        expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl' });
     });
 
     describe('OnInit for course exercise', () => {

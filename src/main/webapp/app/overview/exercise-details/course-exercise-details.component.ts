@@ -16,7 +16,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -24,10 +24,7 @@ import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } fro
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
@@ -111,7 +108,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-    public noVersionControlAndContinuousIntegrationServerAvailable = false;
     public wasSubmissionSimulated = false;
 
     // Icons
@@ -138,10 +134,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
-        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
-        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private alertService: AlertService,
-        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
@@ -236,12 +229,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
 
         this.showIfExampleSolutionPresent(newExercise);
-
-        // This is only needed in the local environment
-        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = true;
-        }
-
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
 
@@ -531,58 +518,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.activatedExerciseHints.push(exerciseHint);
     }
 
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * Triggers the simulation of a participation and submission for the currently logged-in user
-     * This method will fail if used in production
-     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    simulateSubmission() {
-        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe({
-            next: () => {
-                this.wasSubmissionSimulated = true;
-                this.alertService.success('artemisApp.exercise.submissionSuccessful');
-            },
-            error: () => {
-                this.alertService.error('artemisApp.exercise.submissionUnsuccessful');
-            },
-        });
-    }
-
-    /**
-     * Triggers the simulation of a result for the currently logged-in user
-     * This method will fail if used in production
-     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    simulateResult() {
-        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe({
-            next: (result) => {
-                // set the value to false in order to deactivate the result button
-                this.wasSubmissionSimulated = false;
-
-                // set these values in order to visualize the simulated result on the exercise details page
-                this.exercise!.participationStatus = ParticipationStatus.EXERCISE_SUBMITTED;
-                this.studentParticipation = <StudentParticipation>result.body!.participation;
-                this.studentParticipation.results = [];
-                this.studentParticipation.results[0] = result.body!;
-
-                this.alertService.success('artemisApp.exercise.resultCreationSuccessful');
-            },
-            error: () => {
-                this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
-            },
-        });
-    }
-
     /**
      * Used to change the boolean value for the example solution dropdown menu
      */
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

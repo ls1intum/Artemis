@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.hestia;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,11 +50,26 @@ public class CodeHintResource {
     }
 
     /**
+     * GET programming-exercises/{exerciseId}/code-hints: Retrieve all code hints for a programming exercise.
+     * @param exerciseId of the exercise
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the code hints for the exercise
+     */
+    @GetMapping("programming-exercises/{exerciseId}/code-hints")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Set<CodeHint>> getAllCodeHints(@PathVariable Long exerciseId) {
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exercise, null);
+
+        var result = codeHintRepository.findByExerciseId(exercise.getId());
+        return ResponseEntity.ok(result);
+    }
+
+    /**
      * {@code POST programming-exercises/:exerciseId/code-hints} : Create a new exerciseHint for an exercise.
      *
      * @param exerciseId the exerciseId of the exercise of which to create the exerciseHint
      * @param deleteOldCodeHints Whether old code hints should be deleted
-     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints,
+     * @return the {@link ResponseEntity} with status {@code 200 (Ok)} and with body the new code hints
      */
     @PostMapping("programming-exercises/{exerciseId}/code-hints")
     @PreAuthorize("hasRole('EDITOR')")

@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.ExtractChangedLines;
 
-public class ExtractChangedLinesTest {
+class ExtractChangedLinesTest {
 
     private ExtractChangedLines extractChangedLines;
 
@@ -24,7 +24,7 @@ public class ExtractChangedLinesTest {
     private Set<ProgrammingExerciseGitDiffEntry> gitDiffEntries;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, null);
         var groupedFiles = new ArrayList<GroupedFile>();
         blackboard.setGroupedFiles(groupedFiles);
@@ -36,13 +36,13 @@ public class ExtractChangedLinesTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         groupedFile.setChangedLines(Collections.emptySet());
         assertThat(extractChangedLines.executeCondition()).isFalse();
     }
 
     @Test
-    public void testExtractChangedLines1() {
+    void testExtractChangedLines1() {
         var gitDiffEntry = new ProgrammingExerciseGitDiffEntry();
         gitDiffEntry.setStartLine(3);
         gitDiffEntry.setLineCount(2);
@@ -54,7 +54,7 @@ public class ExtractChangedLinesTest {
     }
 
     @Test
-    public void testExtractChangedLines2() {
+    void testExtractChangedLines2() {
         var gitDiffEntry1 = new ProgrammingExerciseGitDiffEntry();
         gitDiffEntry1.setStartLine(3);
         gitDiffEntry1.setLineCount(2);

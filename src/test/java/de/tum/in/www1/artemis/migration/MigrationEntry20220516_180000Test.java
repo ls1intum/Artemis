@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
-public class MigrationEntry20220516_180000Test extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MigrationEntry20220516_180000Test extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private MigrationEntry20220516_180000 migrationEntry;
@@ -43,7 +43,7 @@ public class MigrationEntry20220516_180000Test extends AbstractSpringIntegration
     private ExerciseHint hint3;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(2, 2, 1, 2);
 
@@ -56,12 +56,12 @@ public class MigrationEntry20220516_180000Test extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
-    public void testOneTaskWithOneHint() {
+    void testOneTaskWithOneHint() {
         var problemStatement = """
                 [task][Task 1](test1){%s}
                 """;
@@ -86,7 +86,7 @@ public class MigrationEntry20220516_180000Test extends AbstractSpringIntegration
     }
 
     @Test
-    public void testOneTaskWithThreeHints() {
+    void testOneTaskWithThreeHints() {
         var problemStatement = """
                 [task][Task 1](test1){%s, %s, %s  }
                 """;
@@ -111,7 +111,7 @@ public class MigrationEntry20220516_180000Test extends AbstractSpringIntegration
     }
 
     @Test
-    public void testThreeTasksWithOneHintEach() {
+    void testThreeTasksWithOneHintEach() {
         var problemStatement = """
                 [task][Task 1](test1){%s}
                 [task][Task 2](test2){%s}

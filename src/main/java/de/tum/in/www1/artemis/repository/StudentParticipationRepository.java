@@ -105,7 +105,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results
-            WHERE p.exercise.id = :#{#exerciseId} AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     List<StudentParticipation> findByExerciseIdWithEagerLegalSubmissionsResult(@Param("exerciseId") Long exerciseId);
 
@@ -123,7 +124,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.assessor
-            WHERE p.exercise.id = :#{#exerciseId} AND p.testRun = false
+            WHERE p.exercise.id = :#{#exerciseId}
+            AND p.testRun = false
             """)
     List<StudentParticipation> findByExerciseIdWithEagerSubmissionsResultAssessorIgnoreTestRuns(@Param("exerciseId") Long exerciseId);
 
@@ -368,30 +370,30 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * @return a list of participations including their submitted submissions that do not have a manual result
      */
     @Query("""
-            SELECT DISTINCT p FROM StudentParticipation p
-            LEFT JOIN FETCH p.submissions submission
-            LEFT JOIN FETCH submission.results result
-            LEFT JOIN FETCH result.feedbacks feedbacks
-            LEFT JOIN FETCH result.assessor
-            WHERE p.exercise.id = :#{#exerciseId}
-            AND p.testRun = FALSE
-            AND 0L = (SELECT COUNT(r2)
-                             FROM Result r2 WHERE r2.assessor IS NOT NULL
-                                 AND (r2.rated IS NULL OR r2.rated = FALSE)
-                                 AND r2.submission = submission)
-            AND
-              :#{#correctionRound} = (SELECT COUNT(r)
-                             FROM Result r WHERE r.assessor IS NOT NULL
-                                 AND r.rated = TRUE
-                                 AND r.submission = submission
-                                 AND r.completionDate IS NOT NULL
-                                 AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
-                                 AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
-            AND :#{#correctionRound} = (SELECT COUNT (prs)
-                            FROM p.results prs
-                            WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
-            AND submission.submitted = true
-            AND submission.id = (SELECT max(id) FROM p.submissions)
+                SELECT DISTINCT p FROM StudentParticipation p
+                LEFT JOIN FETCH p.submissions submission
+                LEFT JOIN FETCH submission.results result
+                LEFT JOIN FETCH result.feedbacks feedbacks
+                LEFT JOIN FETCH result.assessor
+                WHERE p.exercise.id = :#{#exerciseId}
+                AND p.testRun = FALSE
+                AND 0L = (SELECT COUNT(r2)
+                                 FROM Result r2 WHERE r2.assessor IS NOT NULL
+                                     AND (r2.rated IS NULL OR r2.rated = FALSE)
+                                     AND r2.submission = submission)
+                AND
+                  :#{#correctionRound} = (SELECT COUNT(r)
+                                 FROM Result r WHERE r.assessor IS NOT NULL
+                                     AND r.rated = TRUE
+                                     AND r.submission = submission
+                                     AND r.completionDate IS NOT NULL
+                                     AND r.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC')
+                                     AND (p.exercise.dueDate IS NULL OR r.submission.submissionDate <= p.exercise.dueDate))
+                AND :#{#correctionRound} = (SELECT COUNT (prs)
+                                FROM p.results prs
+                                WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
+                AND submission.submitted = true
+                AND submission.id = (SELECT max(id) FROM p.submissions)
             """)
     List<StudentParticipation> findByExerciseIdWithLatestSubmissionWithoutManualResultsAndIgnoreTestRunParticipation(@Param("exerciseId") Long exerciseId,
             @Param("correctionRound") long correctionRound);
@@ -610,6 +612,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             LEFT JOIN FETCH s.results r
+            WHERE p.testRun = FALSE
+            AND p.initializationDate = :#{#initializationDate}
+                AND p.student.id = :#{#studentId}
+                AND p.exercise in :#{#exercises}
+            """)
+    List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(@Param("studentId") Long studentId,
+            @Param("exercises") List<Exercise> exercises, @Param("initializationDate") ZonedDateTime initializationDate);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH s.results r
             WHERE p.testRun = true
                 AND p.student.id = :#{#studentId}
                 AND p.exercise in :#{#exercises}
@@ -711,12 +725,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations belonging to exam with submissions and their relevant results.
      *
      * @param examId the id of the exam
-     * @return list of participations belonging to course
+     * @return an unmodifiable list of participations belonging to course
      */
     default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
         var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).toList();
         return filterParticipationsWithRelevantResults(participations, true);
     }
 
@@ -724,7 +738,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations belonging to course with relevant results.
      *
      * @param courseId the id of the course
-     * @return list of participations belonging to course
+     * @return an unmodifiable list of participations belonging to course
      */
     default List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
@@ -736,7 +750,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      *
      * @param participations     the participations to get filtered
      * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
-     * @return the filtered participations
+     * @return an unmodifiable list of filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
 
@@ -780,7 +794,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                         relevantResults.add(correctResult);
                     }
                     participation.setResults(new HashSet<>(relevantResults));
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     /**
@@ -803,6 +817,18 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 return findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises());
             }
         }
+    }
+
+    /**
+     * Gets all participation for the given studentExam for a test exam with their submissions and result.
+     * As multiple participations for a test exam can exists, the link is established with studentExam.startedDate <-> participation.InitializationDate
+     *
+     * @param studentExam studentExam with exercises loaded
+     * @return student's participations with submissions and results.
+     */
+    default List<StudentParticipation> findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultWithoutAssessor(StudentExam studentExam) {
+        return findParticipationsByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(studentExam.getUser().getId(), studentExam.getExercises(),
+                studentExam.getStartedDate());
     }
 
     /**
@@ -873,7 +899,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      *
      * @param user      the user to get the participations for
      * @param exercises the exercise to get the participations for
-     * @return the participations of the user in the exercises
+     * @return an unmodifiable list of participations of the user in the exercises
      */
     default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises) {
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
@@ -894,7 +920,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one list for further processing
-        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
+        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).toList();
     }
 
     /**

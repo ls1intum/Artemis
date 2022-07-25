@@ -15,14 +15,14 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralBlackboard;
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.GroupGitDiffAndCoverageEntriesByFilePathAndTestCase;
 
-public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCaseTest {
+class GroupGitDiffAndCoverageEntriesByFilePathAndTestCaseTest {
 
     private BehavioralBlackboard blackboard;
 
     private GroupGitDiffAndCoverageEntriesByFilePathAndTestCase grouper;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         blackboard = new BehavioralBlackboard(new ProgrammingExerciseGitDiffReport(), new CoverageReport(), null);
         blackboard.getGitDiffReport().setEntries(new HashSet<>());
         blackboard.getCoverageReport().setFileReports(new HashSet<>());
@@ -31,19 +31,19 @@ public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCaseTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         blackboard.setGroupedFiles(Collections.emptyList());
         assertThat(grouper.executeCondition()).isFalse();
     }
 
     @Test
-    public void testNoFiles() {
+    void testNoFiles() {
         assertThat(grouper.executeCondition()).isTrue();
         assertThat(grouper.executeAction()).isFalse();
     }
 
     @Test
-    public void testGroupSingleFileAndTest() {
+    void testGroupSingleFileAndTest() {
         var testCase = new ProgrammingExerciseTestCase();
         var gitDiffEntry1 = addGitDiffEntry("test.java", 1, 10);
         var gitDiffEntry2 = addGitDiffEntry("test.java", 12, 6);
@@ -57,7 +57,7 @@ public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCaseTest {
     }
 
     @Test
-    public void testGroupTwoFilesSingleTest() {
+    void testGroupTwoFilesSingleTest() {
         var testCase = new ProgrammingExerciseTestCase();
         var gitDiffEntry1 = addGitDiffEntry("test.java", 1, 20);
         var gitDiffEntry2 = addGitDiffEntry("test2.java", 1, 20);
@@ -72,7 +72,7 @@ public class GroupGitDiffAndCoverageEntriesByFilePathAndTestCaseTest {
     }
 
     @Test
-    public void testGroupSingleFileTwoTests() {
+    void testGroupSingleFileTwoTests() {
         var testCase1 = new ProgrammingExerciseTestCase();
         var testCase2 = new ProgrammingExerciseTestCase();
         var gitDiffEntry = addGitDiffEntry("test.java", 1, 20);
