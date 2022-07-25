@@ -1,0 +1,35 @@
+<div>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.simplifiedName"><span>Solution Code Snippets</span></h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="form-group">
+            <label class="label-narrow" for="field_test" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.test">Test Name</label>
+            <jhi-help-icon *ngIf="codeHint" placement="top" text="artemisApp.programmingExerciseSolutionEntry.testOnlyForCurrentTask"></jhi-help-icon>
+            <select *ngIf="testCases?.length" class="form-select" required name="test" [(ngModel)]="this.solutionEntry.testCase" id="field_test">
+                <option *ngFor="let testCase of testCases" [ngValue]="testCase">{{ testCase?.testName }}</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label class="label-narrow" for="field_path" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.file">File</label>
+            <select *ngIf="solutionRepositoryFileNames?.length" class="form-select" required name="path" [(ngModel)]="this.solutionEntry.filePath" id="field_path">
+                <option *ngFor="let fileName of solutionRepositoryFileNames" [ngValue]="fileName">{{ fileName }}</option>
+            </select>
+        </div>
+        <div class="d-flex flex-row">
+            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="true"></jhi-solution-entry>
+            <div class="ps-2 flex-grow-0">
+                <button
+                    type="button"
+                    class="btn btn-primary"
+                    jhiTranslate="entity.action.submit"
+                    (click)="onCreateEntry()"
+                    [disabled]="!(solutionEntry?.code && solutionEntry.testCase && solutionEntry.filePath)"
+                >
+                    Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

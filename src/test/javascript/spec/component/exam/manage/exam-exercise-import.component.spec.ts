@@ -121,8 +121,8 @@ describe('Exam Exercise Import Component', () => {
         // For importInSameCourse = true, this should be initialized
         expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(1);
         expect(component.titleAndShortNameOfProgrammingExercises.get(programmingExercise.id!)).toEqual([programmingExercise.title, programmingExercise.shortName]);
-        expect(component.getPlaceholderTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.title);
-        expect(component.getPlaceholderShortNameOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.shortName);
+        expect(component.getBlocklistTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.title);
+        expect(component.getBlocklistShortNameOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.shortName);
     });
 
     it('should initialize maps when updateMapsAfterRejectedImport is called', () => {
@@ -152,7 +152,7 @@ describe('Exam Exercise Import Component', () => {
 
         // Check if titleAndShortNameOfProgrammingExercises contains the rejected title + shortName
         expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(1);
-        expect(component.getPlaceholderTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(formerProgrammingExerciseTitle);
+        expect(component.getBlocklistTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(formerProgrammingExerciseTitle);
         expect(component.titleAndShortNameOfProgrammingExercises.get(programmingExercise.id!)).toEqual([formerProgrammingExerciseTitle, formerProgrammingExerciseShortName]);
 
         expect(component.selectedExercises.size).toEqual(5);
@@ -216,8 +216,8 @@ describe('Exam Exercise Import Component', () => {
     });
 
     it('should correctly return an empty string when titleAndShortNameOfProgrammingExercises do not contain exercise ', () => {
-        expect(component.getPlaceholderTitleOfProgrammingExercise(55)).toEqual('');
-        expect(component.getPlaceholderShortNameOfProgrammingExercise(55)).toEqual('');
+        expect(component.getBlocklistTitleOfProgrammingExercise(55)).toEqual('');
+        expect(component.getBlocklistShortNameOfProgrammingExercise(55)).toEqual('');
     });
 
     it('should correctly map selected Exercises To Exercise Groups', () => {

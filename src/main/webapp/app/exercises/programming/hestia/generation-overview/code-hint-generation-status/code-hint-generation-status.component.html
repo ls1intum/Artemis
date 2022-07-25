@@ -1,0 +1,51 @@
+<div class="code-hint-generation-wrapper">
+    <!-- 1. Step: Git-Diff Report -->
+    <jhi-code-hint-generation-status-step
+        *ngIf="isPerformedByStep.get(GenerationStep.GIT_DIFF) !== undefined"
+        [currentlySelected]="currentStep === GenerationStep.GIT_DIFF"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.GIT_DIFF)!"
+        [labelTranslationKey]="'artemisApp.codeHint.management.step1.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.management.step1.description'"
+        (click)="onSelectStep(GenerationStep.GIT_DIFF)"
+    ></jhi-code-hint-generation-status-step>
+
+    <div
+        class="connector"
+        *ngIf="isPerformedByStep.get(GenerationStep.GIT_DIFF) !== undefined"
+        [ngClass]="currentStep > 0 ? (!isPerformedByStep.get(GenerationStep.COVERAGE)! ? 'current' : 'check') : 'unset'"
+    ></div>
+
+    <!-- 2. Step: Testwise Coverage Report -->
+    <jhi-code-hint-generation-status-step
+        *ngIf="isPerformedByStep.get(GenerationStep.COVERAGE) !== undefined"
+        [currentlySelected]="currentStep === GenerationStep.COVERAGE"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.COVERAGE)!"
+        [labelTranslationKey]="'artemisApp.codeHint.management.step2.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.management.step2.description'"
+        (click)="onSelectStep(GenerationStep.COVERAGE)"
+    ></jhi-code-hint-generation-status-step>
+    <div
+        class="connector"
+        *ngIf="isPerformedByStep.get(GenerationStep.COVERAGE) !== undefined"
+        [ngClass]="currentStep > 1 ? (!isPerformedByStep.get(GenerationStep.SOLUTION_ENTRIES)! ? 'current' : 'check') : 'unset'"
+    ></div>
+
+    <!-- 3. Step: Solution Code Snippets -->
+    <jhi-code-hint-generation-status-step
+        [currentlySelected]="currentStep === GenerationStep.SOLUTION_ENTRIES"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.SOLUTION_ENTRIES)!"
+        [labelTranslationKey]="'artemisApp.codeHint.management.step3.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.management.step3.description'"
+        (click)="onSelectStep(GenerationStep.SOLUTION_ENTRIES)"
+    ></jhi-code-hint-generation-status-step>
+    <div class="connector" [ngClass]="currentStep > 2 ? (!isPerformedByStep.get(GenerationStep.CODE_HINTS)! ? 'current' : 'check') : 'unset'"></div>
+
+    <!-- 4. Step: Code Hints -->
+    <jhi-code-hint-generation-status-step
+        [currentlySelected]="currentStep === GenerationStep.CODE_HINTS"
+        [isPerformed]="isPerformedByStep.get(GenerationStep.CODE_HINTS)!"
+        [labelTranslationKey]="'artemisApp.codeHint.management.step4.name'"
+        [descriptionTranslationKey]="'artemisApp.codeHint.management.step4.description'"
+        (click)="onSelectStep(GenerationStep.CODE_HINTS)"
+    ></jhi-code-hint-generation-status-step>
+</div>

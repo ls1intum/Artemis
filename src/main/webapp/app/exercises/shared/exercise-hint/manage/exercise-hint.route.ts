@@ -11,6 +11,7 @@ import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { exerciseTypes } from 'app/entities/exercise.model';
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
+import { ProgrammingExerciseResolve } from 'app/exercises/programming/manage/programming-exercise-management-routing.module';
 
 @Injectable({ providedIn: 'root' })
 export class ExerciseHintResolve implements Resolve<ExerciseHint> {
@@ -39,6 +40,7 @@ export const exerciseHintRoute: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints/new',
             component: ExerciseHintUpdateComponent,
             resolve: {
+                exercise: ProgrammingExerciseResolve,
                 exerciseHint: ExerciseHintResolve,
             },
             data: {
@@ -67,6 +69,7 @@ export const exerciseHintRoute: Routes = [
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints/:hintId/edit',
             component: ExerciseHintUpdateComponent,
             resolve: {
+                exercise: ProgrammingExerciseResolve,
                 exerciseHint: ExerciseHintResolve,
             },
             data: {
@@ -80,6 +83,9 @@ export const exerciseHintRoute: Routes = [
         return {
             path: ':courseId/' + exerciseType + '-exercises/:exerciseId/exercise-hints',
             component: ExerciseHintComponent,
+            resolve: {
+                exercise: ProgrammingExerciseResolve,
+            },
             data: {
                 authorities: [Authority.EDITOR, Authority.INSTRUCTOR, Authority.ADMIN],
                 pageTitle: 'artemisApp.exerciseHint.home.title',
