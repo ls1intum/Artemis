@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -43,8 +44,8 @@ public class ExamSubmissionService {
     /**
      * Check if the submission is an exam submission and if so, check that the current user is allowed to submit.
      *
-     * @param exercise  the exercise for which a submission should be saved
-     * @param user      the user that wants to submit
+     * @param exercise the exercise for which a submission should be saved
+     * @param user     the user that wants to submit
      */
     public void checkSubmissionAllowanceElseThrow(Exercise exercise, User user) {
         if (!isAllowedToSubmitDuringExam(exercise, user, false)) {
@@ -56,19 +57,25 @@ public class ExamSubmissionService {
      * Check if the user is allowed to submit (submission is in time & user's student exam has the exercise or it is a test run).
      * Note: if the exercise is not an exam, this method will return true
      *
-     * @param exercise  the exercise for which a submission should be saved
-     * @param user      the user that wants to submit
+     * @param exercise        the exercise for which a submission should be saved
+     * @param user            the user that wants to submit
      * @param withGracePeriod whether the grace period should be taken into account or not
      * @return true if it is not an exam of if it is an exam and the submission is in time and the exercise is part of
-     *         the user's student exam
+     * the user's student exam
      */
     public boolean isAllowedToSubmitDuringExam(Exercise exercise, User user, boolean withGracePeriod) {
         if (isExamSubmission(exercise)) {
             // Get the student exam if it was not passed to the function
             Exam exam = exercise.getExerciseGroup().getExam();
+            // Step 1: Find real exam
             Optional<StudentExam> optionalStudentExam = studentExamRepository.findWithExercisesByUserIdAndExamId(user.getId(), exam.getId());
             if (optionalStudentExam.isEmpty()) {
-                // We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
+                // Step 2: Find latest (=the highest id) unsubmitted test exam
+                optionalStudentExam = studentExamRepository.findUnsubmittedStudentExamsForTestExamsWithExercisesByExamIdAndUserId(exam.getId(), user.getId()).stream()
+                        .max(Comparator.comparing(StudentExam::getId));
+            }
+            if (optionalStudentExam.isEmpty()) {
+                // Step 3: We check for test exams here for performance issues as this will not be the case for all students who are participating in the exam
                 // isAllowedToSubmitDuringExam is called everytime an exercise is saved (e.g. auto save every 30 seconds for every student) therefore it is best to limit
                 // unnecessary database calls
                 if (!isExamTestRunSubmission(exercise, user, exam)) {
@@ -96,9 +103,10 @@ public class ExamSubmissionService {
     /**
      * Check if the submission is made as part of a test run exam
      * Only Instructors have access to test runs.
+     *
      * @param exercise the exercise
-     * @param user the user
-     * @param exam the exam
+     * @param user     the user
+     * @param exam     the exam
      * @return returns whether the submission is part of a test run exam.
      */
     private boolean isExamTestRunSubmission(Exercise exercise, User user, Exam exam) {
@@ -117,14 +125,14 @@ public class ExamSubmissionService {
      * We want to prevent multiple submissions for text, modeling, file upload and quiz exercises. Therefore we check if
      * a submission for this exercise+student already exists.
      * - If a submission exists, we will always overwrite this submission, even if the id of the received submission
-     *   deviates from the one we've got from the database.
+     * deviates from the one we've got from the database.
      * - If no submission exists (on creation) we allow adding one (implicitly via repository.save()).
      *
      * TODO: we might want to move this to the SubmissionService
      *
-     * @param exercise      the exercise for which the submission should be saved
-     * @param submission    the submission
-     * @param user          the current user
+     * @param exercise   the exercise for which the submission should be saved
+     * @param submission the submission
+     * @param user       the current user
      * @return the submission. If a submission already exists for the exercise we will set the id
      */
     public Submission preventMultipleSubmissions(Exercise exercise, Submission submission, User user) {

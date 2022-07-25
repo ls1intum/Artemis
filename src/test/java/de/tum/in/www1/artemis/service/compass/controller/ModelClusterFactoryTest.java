@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -15,22 +14,17 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ModelClusterFactoryTest {
+class ModelClusterFactoryTest {
 
     private ModelClusterFactory modelClusterFactory;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         modelClusterFactory = new ModelClusterFactory();
     }
 
-    @AfterEach
-    public void tearDown() {
-
-    }
-
     @Test
-    public void testBuildingClustersWithSimilarElements() throws Exception {
+    void testBuildingClustersWithSimilarElements() throws Exception {
         ModelingSubmission submission1 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission1.setId(1L);
         ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);

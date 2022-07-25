@@ -146,7 +146,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
-    view: [number, number] = [350, 150];
+    view: [number, number] = [330, 150];
     legendPosition = LegendPosition.Below;
     assessments: any[];
     customColors: any[];

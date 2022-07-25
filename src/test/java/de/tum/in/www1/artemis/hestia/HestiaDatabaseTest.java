@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
  * This currently includes ProgrammingExerciseTask, ProgrammingExerciseSolutionEntry and CodeHint.
  * It tests if the addition and deletion of these models works as expected.
  */
-public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;

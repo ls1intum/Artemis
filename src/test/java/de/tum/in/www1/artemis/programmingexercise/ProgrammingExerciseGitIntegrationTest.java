@@ -9,7 +9,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
@@ -32,7 +31,7 @@ import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private GitUtilService gitUtilService;
@@ -92,7 +91,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "student3")
-    public void testRepositoryMethods() {
+    void testRepositoryMethods() {
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithAuxiliaryRepositoriesElseThrow(Long.MAX_VALUE));
         assertThrows(EntityNotFoundException.class, () -> programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(Long.MAX_VALUE));
@@ -142,7 +141,7 @@ public class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegra
         request.put(path, Void.class, HttpStatus.FORBIDDEN);
     }
 
-    public List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
-        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).collect(Collectors.toList());
+    private List<RevCommit> getAllCommits(Git gitRepo) throws Exception {
+        return StreamSupport.stream(gitRepo.log().call().spliterator(), false).toList();
     }
 }

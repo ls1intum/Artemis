@@ -43,7 +43,7 @@ describe('Static code analysis tests', () => {
         cy.login(users.getAdmin());
         courseManagement.createCourse(true).then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id!, users.getStudentOne().username);
+            courseManagement.addStudentToCourse(course, users.getStudentOne());
             courseManagement.createProgrammingExercise({ course }, 50).then((dto) => {
                 exercise = dto.body;
             });

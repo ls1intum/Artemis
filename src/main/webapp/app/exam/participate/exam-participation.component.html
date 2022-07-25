@@ -5,7 +5,7 @@
         [startView]="true"
         [exam]="exam"
         [studentExam]="studentExam"
-        [testRunStartTime]="testRunStartTime"
+        [testRunStartTime]="testStartTime"
         (onExamStarted)="examStarted($event)"
     ></jhi-exam-participation-cover>
 
@@ -132,6 +132,7 @@
         <jhi-exam-participation-summary *ngIf="isOver() && studentExam.submitted" [studentExam]="studentExam"></jhi-exam-participation-summary>
     </ng-container>
 </ng-container>
-<ng-container *ngIf="!loadingExam && !exam">
-    <p jhiTranslate="artemisApp.examParticipation.noStudentExam" [translateValues]="{ examTitle: examTitle }"></p>
-</ng-container>
+<div class="alert alert-danger" *ngIf="!loadingExam && !exam">
+    <h6 *ngIf="!testExam" jhiTranslate="artemisApp.examParticipation.noStudentExam"></h6>
+    <h6 *ngIf="testExam" jhiTranslate="artemisApp.examParticipation.noFurtherAttempts"></h6>
+</div>

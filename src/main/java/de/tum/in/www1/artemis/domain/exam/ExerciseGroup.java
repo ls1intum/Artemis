@@ -73,4 +73,5 @@ public class ExerciseGroup extends DomainObject {
     public void addExercise(Exercise exercise) {
         this.exercises.add(exercise);
     }
+
 }

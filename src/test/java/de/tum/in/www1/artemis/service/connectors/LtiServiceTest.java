@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 
-public class LtiServiceTest {
+class LtiServiceTest {
 
     @Mock
     private UserCreationService userCreationService;
@@ -68,7 +68,7 @@ public class LtiServiceTest {
     private LtiOutcomeUrl ltiOutcomeUrl;
 
     @BeforeEach
-    public void init() {
+    void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
         ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
@@ -92,7 +92,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_LTILaunchFromEdx() {
+    void handleLaunchRequest_LTILaunchFromEdx() {
         launchRequest.setUser_id("student");
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
         String expectedMessage = "Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.";
@@ -100,7 +100,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_InvalidContextLabel() {
+    void handleLaunchRequest_InvalidContextLabel() {
         launchRequest.setContext_label("randomLabel");
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
         String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest;
@@ -108,7 +108,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_NoContactEmail() {
+    void handleLaunchRequest_NoContactEmail() {
         String expectedMessage = "No email address sent by launch request. Please make sure the user has an accessible email address.";
         launchRequest.setLis_person_contact_email_primary(null);
         var exceptionNull = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
@@ -120,7 +120,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_existingMappingForLtiUserId() {
+    void handleLaunchRequest_existingMappingForLtiUserId() {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.of(ltiUserId));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         onSuccessfulAuthenticationSetup(user, ltiUserId);
@@ -129,7 +129,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_lookupWithLtiEmailAddress() {
+    void handleLaunchRequest_lookupWithLtiEmailAddress() {
         String username = "username";
         String email = launchRequest.getLis_person_contact_email_primary();
         launchRequest.setCustom_lookup_user_by_email(true);
@@ -144,7 +144,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_lookupWithLtiEmailAddressWithContextLabelTumx() {
+    void handleLaunchRequest_lookupWithLtiEmailAddressWithContextLabelTumx() {
         String username = "username";
         String email = launchRequest.getLis_person_contact_email_primary();
         launchRequest.setCustom_lookup_user_by_email(true);
@@ -160,7 +160,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_newUserIsNotRequired() {
+    void handleLaunchRequest_newUserIsNotRequired() {
         String username = launchRequest.getLis_person_sourcedid();
         Set<String> groups = new HashSet<>();
         groups.add("");
@@ -182,7 +182,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_newUserIsNotRequiredWithContextLabelTumx() {
+    void handleLaunchRequest_newUserIsNotRequiredWithContextLabelTumx() {
         String username = launchRequest.getLis_person_sourcedid();
         Set<String> groups = new HashSet<>();
         groups.add("");
@@ -205,7 +205,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_noAuthenticationWasSuccessful() {
+    void handleLaunchRequest_noAuthenticationWasSuccessful() {
         launchRequest.setCustom_require_existing_user(true);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(response.containsHeader("Set-Cookie")).thenReturn(true);
@@ -220,7 +220,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequest_alreadyAuthenticated() {
+    void handleLaunchRequest_alreadyAuthenticated() {
         launchRequest.setCustom_require_existing_user(true);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         SecurityUtils.setAuthorizationObject();
@@ -230,7 +230,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void onSuccessfulLtiAuthentication() {
+    void onSuccessfulLtiAuthentication() {
         ltiUserId.setLtiUserId("oldStudentId");
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.onSuccessfulLtiAuthentication(launchRequest, exercise);
@@ -238,7 +238,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void onSuccessfulLtiAuthenticationWithoutUrl() {
+    void onSuccessfulLtiAuthenticationWithoutUrl() {
         launchRequest.setLis_outcome_service_url(null);
         launchRequest.setUser_id(null);
         onSuccessfulAuthenticationSetup(user, ltiUserId);
@@ -268,7 +268,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void verifyRequest_oauthSecretNotSpecified() {
+    void verifyRequest_oauthSecretNotSpecified() {
         ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.empty());
         HttpServletRequest request = mock(HttpServletRequest.class);
         String message = ltiService.verifyRequest(request);
@@ -276,7 +276,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void verifyRequest_unsuccessfulVerification() {
+    void verifyRequest_unsuccessfulVerification() {
         ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.of("secret"));
         String url = "https://some.url.com";
         MockHttpServletRequest request = new MockHttpServletRequest();
@@ -287,7 +287,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void onNewResult() {
+    void onNewResult() {
         ReflectionTestUtils.setField(ltiService, "OAUTH_KEY", Optional.of("oauthKey"));
         ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.of("oauthSecret"));
 
@@ -305,7 +305,7 @@ public class LtiServiceTest {
     }
 
     @Test
-    public void handleLaunchRequestForSession() {
+    void handleLaunchRequestForSession() {
         String sessionId = "sessionId";
         ltiService.launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
         onSuccessfulAuthenticationSetup(user, ltiUserId);

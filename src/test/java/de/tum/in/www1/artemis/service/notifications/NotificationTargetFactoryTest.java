@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTarget;
 
-public class NotificationTargetFactoryTest {
+class NotificationTargetFactoryTest {
 
     private static Post post;
 
@@ -81,7 +81,7 @@ public class NotificationTargetFactoryTest {
      * Prepares the needed values and objects for testing
      */
     @BeforeAll
-    public static void setUp() {
+    static void setUp() {
         prepareOriginalTransientTargetWithProblemStatement();
 
         course = new Course();
@@ -120,37 +120,37 @@ public class NotificationTargetFactoryTest {
     /// extractNotificationUrl test (very important for e.g. MailService and Emails to contain valid Links)
 
     @Test
-    public void extractNotificationUrl_Posts_Announcement() { // e.g. used for announcementPostEmail.html
+    void extractNotificationUrl_Posts_Announcement() { // e.g. used for announcementPostEmail.html
         resultingURL = extractNotificationUrl(post, BASE_URL);
         assertThat(resultingURL).as("Resulting Post URL should be equal to expected one").isEqualTo(EXPECTED_POST_URL);
     }
 
     @Test
-    public void extractNotificationUrl_NotificationType_AttachmentChanged() { // e.g. used for attachmentChangedEmail.html
+    void extractNotificationUrl_NotificationType_AttachmentChanged() { // e.g. used for attachmentChangedEmail.html
         notificationTransientTarget = createAttachmentUpdatedTarget(lecture);
         mockExtractAndAssertNotificationTarget(EXPECTED_ATTACHMENT_CHANGED_URL);
     }
 
     @Test
-    public void extractNotificationUrl_NotificationType_DuplicateTestCases() { // e.g. used for duplicateTestCasesEmail.html
+    void extractNotificationUrl_NotificationType_DuplicateTestCases() { // e.g. used for duplicateTestCasesEmail.html
         notificationTransientTarget = createExamProgrammingExerciseOrTestCaseTarget(programmingExercise, DUPLICATE_TEST_CASE_TEXT);
         mockExtractAndAssertNotificationTarget(EXPECTED_DUPLICATE_TEST_CASES_URL);
     }
 
     @Test
-    public void extractNotificationUrl_NotificationType_ExerciseOpenForPractice() { // e.g. used for exerciseOpenForPracticeEmail.html
+    void extractNotificationUrl_NotificationType_ExerciseOpenForPractice() { // e.g. used for exerciseOpenForPracticeEmail.html
         notificationTransientTarget = createExerciseUpdatedTarget(exercise);
         mockExtractAndAssertNotificationTarget(EXPECTED_EXERCISE_URL);
     }
 
     @Test
-    public void extractNotificationUrl_NotificationType_ExerciseReleased() { // e.g. used for exerciseReleasedEmail.html
+    void extractNotificationUrl_NotificationType_ExerciseReleased() { // e.g. used for exerciseReleasedEmail.html
         notificationTransientTarget = createExerciseReleasedTarget(exercise);
         mockExtractAndAssertNotificationTarget(EXPECTED_EXERCISE_URL);
     }
 
     @Test
-    public void extractNotificationUrl_NotificationType_FileSubmissionSuccessful() { // e.g. used for fileSubmissionSuccessfulEmail.html
+    void extractNotificationUrl_NotificationType_FileSubmissionSuccessful() { // e.g. used for fileSubmissionSuccessfulEmail.html
         notificationTransientTarget = createExerciseTarget(exercise, FILE_SUBMISSION_SUCCESSFUL_TITLE);
         mockExtractAndAssertNotificationTarget(EXPECTED_EXERCISE_URL);
     }
