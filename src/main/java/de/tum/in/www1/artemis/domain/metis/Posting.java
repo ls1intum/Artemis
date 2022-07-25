@@ -13,6 +13,8 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.User;
@@ -44,8 +46,9 @@ public abstract class Posting extends DomainObject {
     @Column(name = "tokenized_content")
     private String tokenizedContent;
 
-    @JsonInclude()
     @Transient
+    @JsonSerialize
+    @JsonDeserialize
     private UserRole authorRole;
 
     public String getTokenizedContent() {

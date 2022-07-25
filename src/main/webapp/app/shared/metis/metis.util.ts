@@ -108,11 +108,10 @@ export enum ReferenceType {
     FILE_UPLOAD = 'file-upload',
 }
 
-//TODO: use enum
 export enum UserRole {
-    INSTRUCTOR = 'Instructor',
-    TUTOR = 'Tutor',
-    USER = 'User',
+    INSTRUCTOR = 'INSTRUCTOR',
+    TUTOR = 'TUTOR',
+    USER = 'USER',
 }
 
 /**

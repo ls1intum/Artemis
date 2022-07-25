@@ -15,8 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
-import { Authority } from 'app/shared/constants/authority.constants';
-import { HtmlForPostingMarkdownPipe } from 'app/shared/pipes/html-for-posting-markdown.pipe';
+import { UserRole } from 'app/shared/metis/metis.util';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -32,14 +31,13 @@ describe('PostHeaderComponent', () => {
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,
+                FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockComponent(PostCreateEditModalComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
-                HtmlForPostingMarkdownPipe, // we want to test against the rendered string, therefore we cannot mock the pipe
-                FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockComponent(ConfirmIconComponent),
             ],
         })
@@ -100,16 +98,20 @@ describe('PostHeaderComponent', () => {
         expect(getElement(debugElement, '.deleteIcon')).not.toBe(null);
     });
 
-    it('should display relevant icon and tooltip if author is an instructor', () => {
+    it.each`
+        input                  | expect
+        ${UserRole.INSTRUCTOR} | ${'fa fa-user-graduate'}
+        ${UserRole.TUTOR}      | ${'fa fa-user-check'}
+        ${UserRole.USER}       | ${'fa fa-user'}
+    `('should display relevant icon and tooltip for author authority', (param: { input: UserRole; expect: string }) => {
         component.posting = metisAnnouncement;
-        // @ts-ignore
-        component.posting.author = { id: 4, name: 'username4', login: 'login4', groups: ['metisInstructors'], authorities: [{ name: Authority.INSTRUCTOR }] };
+        component.posting.authorRole = param.input;
         component.ngOnInit();
         fixture.detectChanges();
 
         // should display relevant icon for author authority
         const icon = getElement(debugElement, 'fa-icon');
         expect(icon).not.toBe(null);
-        expect(icon.innerHTML).toInclude('fa fa-user-graduate');
+        expect(icon.innerHTML).toInclude(param.expect);
     });
 });

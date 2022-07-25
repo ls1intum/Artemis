@@ -17,20 +17,6 @@ import de.tum.in.www1.artemis.domain.metis.*;
 public class PostSpecs {
 
     /**
-     * Creates a specification to fetch groups and authorities of Post Authors Eagerly
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getGroupsAndAuthoritiesOfAuthorEagerFetchSpecification() {
-        return (root, query, criteriaBuilder) -> {
-            Fetch<Post, User> joinedAuthor = root.fetch(Post_.AUTHOR, JoinType.INNER);
-            joinedAuthor.fetch(User_.GROUPS, JoinType.INNER);
-            joinedAuthor.fetch(User_.AUTHORITIES, JoinType.INNER);
-
-            return null;
-        };
-    }
-
-    /**
      * Creates a specification to fetch Posts belonging to a Course
      *
      * @param courseId   id of course the posts belong to

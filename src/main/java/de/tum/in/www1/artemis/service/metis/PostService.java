@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -247,10 +246,12 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
-        // sets author roles to display relevant user authority icon next to author name on posting headers
+        // sets author roles to display user authority icon on posting headers
         postsInCourse.forEach(post -> {
-            setUserRolesForPostings(post);
-            post.getAnswers().forEach(answerPost -> setUserRolesForPostings(answerPost));
+            Course postingCourse = post.getCourse() != null ? post.getCourse()
+                    : post.getLecture() != null ? post.getLecture().getCourse() : post.getExercise() != null ? post.getExercise().getCourseViaExerciseGroupOrCourseMember() : null;
+            setUserRolesForPostings(post, postingCourse);
+            post.getAnswers().forEach(answerPost -> setUserRolesForPostings(answerPost, postingCourse));
         });
 
         return postsInCourse;
@@ -532,14 +533,16 @@ public class PostService extends PostingService {
         }
     }
 
-    private void setUserRolesForPostings(Posting posting) {
-        Set<Authority> authorities = posting.getAuthor().getAuthorities();
-        Set<String> groups = posting.getAuthor().getGroups(); // TODO: handle user groups
+    private void setUserRolesForPostings(Posting posting, Course postingCourse) {
+        User author = userRepository.findOneWithGroupsAndAuthoritiesById(posting.getAuthor().getId()).get();
 
-        if (authorities.stream().anyMatch(authority -> authority.equals(Authority.INSTRUCTOR_AUTHORITY) || authority.equals(Authority.ADMIN_AUTHORITY))) {
+        if (author.getAuthorities().stream().anyMatch(authority -> authority.equals(Authority.INSTRUCTOR_AUTHORITY) || authority.equals(Authority.ADMIN_AUTHORITY))
+                || (postingCourse != null && author.getGroups().stream().anyMatch(group -> group.equals(postingCourse.getInstructorGroupName())))) {
             posting.setAuthorRole(UserRole.INSTRUCTOR);
         }
-        else if (authorities.stream().anyMatch(authority -> authority.equals(Authority.TA_AUTHORITY) || authority.equals(Authority.EDITOR_AUTHORITY))) {
+        else if (author.getAuthorities().stream().anyMatch(authority -> authority.equals(Authority.TA_AUTHORITY) || authority.equals(Authority.EDITOR_AUTHORITY))
+                || (postingCourse != null && author.getGroups().stream()
+                        .anyMatch(group -> group.equals(postingCourse.getTeachingAssistantGroupName()) || group.equals(postingCourse.getEditorGroupName())))) {
             posting.setAuthorRole(UserRole.TUTOR);
         }
         else {

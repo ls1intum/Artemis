@@ -36,7 +36,7 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
      * @return  returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
      */
     default Page<Post> findPosts(PostContextFilter postContextFilter, Long userId, boolean pagingEnabled, Pageable pageable) {
-        Specification<Post> specification = Specification.where(distinct()).and(getGroupsAndAuthoritiesOfAuthorEagerFetchSpecification())
+        Specification<Post> specification = Specification.where(distinct())
                 .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
                         .and(getLectureSpecification(postContextFilter.getLectureId()).and(getExerciseSpecification(postContextFilter.getExerciseId()))
                                 .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getCourseWideContextSpecification(postContextFilter.getCourseWideContext()))

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -31,6 +32,7 @@ import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.UserRole;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -79,7 +81,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // used to test hibernate validation using custom PostContextConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-        database.addUsers(5, 5, 0, 1);
+        database.addUsers(5, 5, 4, 4);
 
         student1 = database.getUserByLogin("student1");
 
@@ -529,6 +531,11 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // get amount of posts with that certain
         database.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts).hasSameSizeAs(existingCoursePosts);
+
+        assertThat(returnedPosts.stream().filter(post -> Arrays.asList(1L, 2L, 3L, 4L).contains(post.getId())).allMatch(post -> post.getAuthorRole().equals(UserRole.USER)));
+        assertThat(returnedPosts.stream().filter(post -> Arrays.asList(5L, 6L, 7L, 8L, 10L, 11L, 12L, 13L).contains(post.getId()))
+                .allMatch(post -> post.getAuthorRole().equals(UserRole.TUTOR)));
+        assertThat(returnedPosts.stream().noneMatch(post -> post.getAuthorRole().equals(UserRole.INSTRUCTOR)));
     }
 
     @Test
@@ -583,6 +590,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         database.assertSensitiveInformationHidden(returnedPosts);
         // get amount of posts with certain plagiarism context
         assertThat(returnedPosts).hasSameSizeAs(existingPlagiarismPosts);
+        assertThat(returnedPosts.get(0).getAuthorRole()).isEqualTo(UserRole.INSTRUCTOR);
     }
 
     @Test

@@ -2,9 +2,9 @@ import { Posting } from 'app/entities/metis/posting.model';
 import { Directive, Input, OnInit } from '@angular/core';
 import dayjs from 'dayjs/esm';
 import { MetisService } from 'app/shared/metis/metis.service';
-import { Authority } from 'app/shared/constants/authority.constants';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { faUser, faUserCheck, faUserGraduate } from '@fortawesome/free-solid-svg-icons';
+import { UserRole } from 'app/shared/metis/metis.util';
 
 @Directive()
 export abstract class PostingHeaderDirective<T extends Posting> implements OnInit {
@@ -44,21 +44,17 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
 
     /**
      * assigns suitable icon and tooltip for the author's most privileged authority type
-     * @param authorities {[Authority]}
      */
     setUserAuthorityIconAndTooltip(): void {
-        // TODO
-        const authorities = this.posting.author!.authorities!.map((authority) => authority['name']);
-
-        if (authorities.includes(Authority.INSTRUCTOR) || authorities.includes(Authority.ADMIN)) {
-            this.userAuthorityIcon = faUserGraduate;
-            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.instructor';
-        } else if (authorities.includes(Authority.TA) || authorities.includes(Authority.EDITOR)) {
-            this.userAuthorityIcon = faUserCheck;
-            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.ta';
-        } else {
+        if (!this.posting.authorRole || this.posting.authorRole === UserRole.USER) {
             this.userAuthorityIcon = faUser;
             this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.user';
+        } else if (this.posting.authorRole === UserRole.INSTRUCTOR) {
+            this.userAuthorityIcon = faUserGraduate;
+            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.instructor';
+        } else if (this.posting.authorRole === UserRole.TUTOR) {
+            this.userAuthorityIcon = faUserCheck;
+            this.userAuthorityTooltip = 'artemisApp.metis.userAuthorityTooltips.ta';
         }
     }
 
