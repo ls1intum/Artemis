@@ -30,7 +30,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsAuthorizationInterceptor;
 
-public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Value("${artemis.continuous-integration.url}")
     private URL jenkinsServerUrl;
@@ -47,14 +47,14 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
      * This method initializes the test case by setting up a local repo
      */
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         mockRestServiceServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockRestServiceServer.reset();
@@ -62,7 +62,7 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testAuthorizationInterceptorSetCrumbCorrectly() throws Exception {
+    void testAuthorizationInterceptorSetCrumbCorrectly() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
 
@@ -84,7 +84,7 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testAuthorizationInterceptorCrumbNotSet() throws Exception {
+    void testAuthorizationInterceptorCrumbNotSet() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
 
@@ -101,7 +101,7 @@ public class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrati
 
     @Test
     @WithMockUser(roles = "INSTRUCTOR", username = "instructor1")
-    public void testAuthorizationInterceptorCrumbException() throws Exception {
+    void testAuthorizationInterceptorCrumbException() throws Exception {
         // Create a mocked request with a header which shouldn't be erased after the request is intercepted.
         var request = mockHttpRequestWithHeaders();
 

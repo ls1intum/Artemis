@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.dto.TeamSearchUserDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseRepository courseRepo;
@@ -70,7 +70,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(numberOfStudentsInCourse, 5, 0, 1);
         course = database.addCourseWithOneProgrammingExercise();
 
@@ -84,13 +84,13 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testTeamAssignmentConfig() {
+    void testTeamAssignmentConfig() {
         var teamAssignmentConfig = new TeamAssignmentConfig();
         teamAssignmentConfig.setExercise(exercise);
         assertThat(teamAssignmentConfig.getExercise()).isEqualTo(exercise);
@@ -107,7 +107,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateTeam() throws Exception {
+    void testCreateTeam() throws Exception {
         final String TEAM_NAME = "Team 1";
         final String TEAM_SHORT_NAME = "team1";
 
@@ -132,7 +132,19 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateTeam_BadRequest() throws Exception {
+    void testCreateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
+        // Create team that contains student "student1"
+        Team team1 = new Team().name("Team 1").shortName("team1").exercise(exercise).students(Set.of(userRepo.findOneByLogin("student1").orElseThrow()));
+        teamRepo.save(team1);
+
+        // Try to create team with a student that is already assigned to another team
+        Team team2 = new Team().name("Team 2").shortName("team2").exercise(exercise).students(students);
+        request.postWithResponseBody(resourceUrl(), team2, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testCreateTeam_BadRequest() throws Exception {
         // Try creating a team that already has an id set
         Team team1 = new Team();
         team1.setId(1L);
@@ -141,7 +153,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
+    void testCreateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to create a team for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepo.save(course);
@@ -156,7 +168,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateTeam_InvalidShortName_BadRequest() throws Exception {
+    void testCreateTeam_InvalidShortName_BadRequest() throws Exception {
         Team team = new Team();
         team.setName("1 Invalid Name");
         team.setShortName("1InvalidName");
@@ -167,7 +179,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeam() throws Exception {
+    void testUpdateTeam() throws Exception {
         final String TEAM_NAME_UPDATED = "Team Updated";
 
         Team team = database.addTeamForExercise(exercise, tutor);
@@ -181,7 +193,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeam_BadRequest() throws Exception {
+    void testUpdateTeam_BadRequest() throws Exception {
         // Try updating a team that has no id specified
         Team team1 = new Team();
         request.putWithResponseBody(resourceUrl() + "/1", team1, Team.class, HttpStatus.BAD_REQUEST);
@@ -196,7 +208,25 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeam_NotFound() throws Exception {
+    void testUpdateTeam_StudentsAlreadyAssigned_BadRequest() throws Exception {
+        User student1 = userRepo.findOneByLogin("student1").orElseThrow();
+        User student2 = userRepo.findOneByLogin("student2").orElseThrow();
+        User student3 = userRepo.findOneByLogin("student3").orElseThrow();
+
+        Team team1 = new Team().name("Team 1").shortName("team1").exercise(exercise).students(Set.of(student1, student2));
+        team1.setOwner(tutor);
+        teamRepo.save(team1);
+        Team team2 = new Team().name("Team 2").shortName("team2").exercise(exercise).students(Set.of(student3));
+        teamRepo.save(team2);
+
+        // Try to update team with a student that is already assigned to another team
+        team1.setStudents(students);
+        request.putWithResponseBody(resourceUrl() + "/" + team1.getId(), team1, Team.class, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testUpdateTeam_NotFound() throws Exception {
         // Try updating a non-existing team
         Team team4 = new Team();
         team4.setId(nonExistingId);
@@ -206,7 +236,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
+    void testUpdateTeam_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to update a team for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepo.save(course);
@@ -218,7 +248,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeam_Forbidden_ShortNameChanged() throws Exception {
+    void testUpdateTeam_Forbidden_ShortNameChanged() throws Exception {
         // It should not be allowed to change a team's short name (unique identifier) after creation
         Team team = database.addTeamForExercise(exercise, tutor);
         team.setShortName(team.getShortName() + " Updated");
@@ -227,7 +257,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateTeam_Forbidden_OwnerChanged() throws Exception {
+    void testUpdateTeam_Forbidden_OwnerChanged() throws Exception {
         // It should not be allowed to change a team's owner as a tutor
         Team team = database.addTeamForExercise(exercise, tutor);
         team.setOwner(userRepo.findOneByLogin("tutor2").orElseThrow());
@@ -236,7 +266,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTeam() throws Exception {
+    void testGetTeam() throws Exception {
         Team team = database.addTeamForExercise(exercise, tutor);
 
         Team serverTeam = request.get(resourceUrl() + "/" + team.getId(), HttpStatus.OK, Team.class);
@@ -247,7 +277,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTeam_BadRequest() throws Exception {
+    void testGetTeam_BadRequest() throws Exception {
         Course course = database.addCourseWithOneProgrammingExercise();
         Exercise wrongExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
@@ -258,13 +288,13 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTeam_NotFound() throws Exception {
+    void testGetTeam_NotFound() throws Exception {
         request.get(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND, Team.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTeamsForExercise() throws Exception {
+    void testGetTeamsForExercise() throws Exception {
         int numberOfTeams = 3;
 
         List<Team> teams = database.addTeamsForExercise(exercise, numberOfTeams, tutor);
@@ -277,7 +307,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetTeamsForExercise_Forbidden() throws Exception {
+    void testGetTeamsForExercise_Forbidden() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to get the teams for an exercise of that course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepo.save(course);
@@ -287,7 +317,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteTeam() throws Exception {
+    void testDeleteTeam() throws Exception {
         Team team = database.addTeamForExercise(exercise, tutor);
 
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.OK);
@@ -298,7 +328,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteTeam_Forbidden_AsTutor() throws Exception {
+    void testDeleteTeam_Forbidden_AsTutor() throws Exception {
         Team team = database.addTeamForExercise(exercise, tutor);
 
         request.delete(resourceUrl() + "/" + team.getId(), HttpStatus.FORBIDDEN);
@@ -306,7 +336,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteTeam_Forbidden_AsInstructorOfDifferentCourse() throws Exception {
+    void testDeleteTeam_Forbidden_AsInstructorOfDifferentCourse() throws Exception {
         // If the instructor is not part of the correct course instructor group anymore,
         // he should not be able to delete a team for an exercise of that course
         course.setInstructorGroupName("Different group name");
@@ -318,7 +348,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteTeam_BadRequest() throws Exception {
+    void testDeleteTeam_BadRequest() throws Exception {
         // Try deleting a team with an exercise specified that does not match the exercise id param in the route
         Team team = database.addTeamForExercise(exercise, tutor);
         request.delete(resourceUrlWithWrongExerciseId() + "/" + team.getId(), HttpStatus.BAD_REQUEST);
@@ -326,13 +356,13 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteTeam_NotFound() throws Exception {
+    void testDeleteTeam_NotFound() throws Exception {
         request.delete(resourceUrl() + "/" + nonExistingId, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testExistsTeamByShortName() throws Exception {
+    void testExistsTeamByShortName() throws Exception {
         Team team = database.addTeamForExercise(exercise, tutor);
 
         final String queryUrl = resourceUrlExistsTeamByShortName(team.getShortName());
@@ -346,7 +376,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSearchUsersInCourse() throws Exception {
+    void testSearchUsersInCourse() throws Exception {
         // Check that all students from course are found (since their logins are all prefixed by "student")
         List<TeamSearchUserDTO> users1 = request.getList(resourceUrlSearchUsersInCourse("student"), HttpStatus.OK, TeamSearchUserDTO.class);
         assertThat(users1).as("All users of course with 'student' in login were found").hasSize(numberOfStudentsInCourse);
@@ -371,14 +401,14 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSearchUsersInCourse_BadRequest() throws Exception {
+    void testSearchUsersInCourse_BadRequest() throws Exception {
         // Search terms that are shorter than 3 characters should lead to bad request
         request.getList(resourceUrlSearchUsersInCourse("ab"), HttpStatus.BAD_REQUEST, TeamSearchUserDTO.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
+    void testSearchUsersInCourse_Forbidden_AsTutorOfDifferentCourse() throws Exception {
         // If the TA is not part of the correct course TA group anymore, he should not be able to search for users in the course
         course.setTeachingAssistantGroupName("Different group name");
         courseRepo.save(course);
@@ -388,7 +418,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testTeamOperationsAsStudent() throws Exception {
+    void testTeamOperationsAsStudent() throws Exception {
         Team existingTeam = database.addTeamForExercise(exercise, tutor);
         Team unsavedTeam = ModelFactory.generateTeamForExercise(exercise, "Team Unsaved", "teamUnsaved", 2, tutor);
 
@@ -410,7 +440,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
+    void testAssignedTeamIdOnExerciseForCurrentUser() throws Exception {
         // Create team that contains student "student1" (Team shortName needs to be empty since it is used as a prefix for the generated student logins)
         Team team = new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow());
         team = teamRepo.save(team);
@@ -440,7 +470,7 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
+    void getCourseWithExercisesAndParticipationsForTeam_AsTutor() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
 
@@ -511,14 +541,14 @@ public class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
+    void getCourseWithExercisesAndParticipationsForTeam_AsStudentInTeam_Allowed() throws Exception {
         Team team = teamRepo.save(new Team().name("Team").shortName("team").exercise(exercise).students(userRepo.findOneByLogin("student1").map(Set::of).orElseThrow()));
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.OK, Course.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
+    void getCourseWithExercisesAndParticipationsForTeam_AsStudentNotInTeam_Forbidden() throws Exception {
         Team team = database.addTeamsForExercise(exercise, "team", "otherStudent", 1, tutor).get(0);
         request.get(resourceUrlCourseWithExercisesAndParticipationsForTeam(course, team), HttpStatus.FORBIDDEN, Course.class);
     }

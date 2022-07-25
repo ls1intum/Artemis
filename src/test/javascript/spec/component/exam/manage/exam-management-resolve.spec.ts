@@ -70,6 +70,29 @@ describe('Exam Resolve', () => {
         expect(findSpy).not.toHaveBeenCalled();
         expect(receivedExam).toEqual(new Exam());
     }));
+
+    it('should fetch the exam for an import', fakeAsync(() => {
+        const findSpy = jest.spyOn(examManagementService, 'findWithExercisesAndWithoutCourseId').mockReturnValue(of(new HttpResponse({ status: 200, body: { id: 1 } })));
+        const examObservable = resolve.resolve({
+            params: {
+                examId: 2,
+            },
+            url: of([{ path: 'import' }]),
+            data: {
+                requestOptions: {
+                    forImport: true,
+                },
+            },
+        } as any as ActivatedRouteSnapshot);
+
+        let receivedExam = undefined;
+        examObservable.subscribe((exam) => (receivedExam = exam));
+        tick();
+
+        expect(findSpy).toHaveBeenCalledOnce();
+        expect(findSpy).toHaveBeenCalledWith(2);
+        expect(receivedExam).toEqual({ id: 1 });
+    }));
 });
 
 describe('Exam Group Resolve', () => {

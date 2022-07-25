@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.ExerciseDeletionService;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.exam.ExamImportService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -52,14 +53,17 @@ public class ExerciseGroupResource {
 
     private final AuditEventRepository auditEventRepository;
 
+    private final ExamImportService examImportService;
+
     public ExerciseGroupResource(ExerciseGroupRepository exerciseGroupRepository, ExamAccessService examAccessService, UserRepository userRepository,
-            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository) {
+            ExerciseDeletionService exerciseDeletionService, AuditEventRepository auditEventRepository, ExamRepository examRepository, ExamImportService examImportService) {
         this.exerciseGroupRepository = exerciseGroupRepository;
         this.examRepository = examRepository;
         this.examAccessService = examAccessService;
         this.userRepository = userRepository;
         this.exerciseDeletionService = exerciseDeletionService;
         this.auditEventRepository = auditEventRepository;
+        this.examImportService = examImportService;
     }
 
     /**
@@ -127,6 +131,28 @@ public class ExerciseGroupResource {
 
         ExerciseGroup result = exerciseGroupRepository.save(updatedExerciseGroup);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+    }
+
+    /**
+     * POST /courses/{courseId}/exams/{examId}/import-exercise-group : Imports exercise groups to the specified exam
+     *
+     * @param courseId         the course to which the exam belongs
+     * @param examId the exam to which the exercise groups should be added
+     * @param updatedExerciseGroup the list of Exercise Groups to be imported
+     * @return the ResponseEntity with status 201 (Created) and with body the newly imported exercise groups, or with status 400 (Bad Request)
+     * @throws URISyntaxException if the Location URI syntax is incorrect
+     */
+    @PostMapping("/courses/{courseId}/exams/{examId}/import-exercise-group")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<List<ExerciseGroup>> importExerciseGroup(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody List<ExerciseGroup> updatedExerciseGroup)
+            throws URISyntaxException {
+        log.debug("REST request to import {} exercise group(s) to exam {}", updatedExerciseGroup.size(), examId);
+
+        examAccessService.checkCourseAndExamAccessForEditorElseThrow(courseId, examId);
+
+        List<ExerciseGroup> result = examImportService.importExerciseGroupsWithExercisesToExistingExam(updatedExerciseGroup, examId, courseId);
+
+        return ResponseEntity.ok(result);
     }
 
     /**

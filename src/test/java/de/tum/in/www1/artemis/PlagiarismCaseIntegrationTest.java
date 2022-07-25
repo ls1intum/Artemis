@@ -54,7 +54,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     private static ArrayList<PlagiarismCase> plagiarismCases;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         // We need at least 3 cases
         plagiarismCases = this.createPlagiarismCases(100);
         plagiarismCase1 = plagiarismCases.get(0);
@@ -113,32 +113,32 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPlagiarismCasesForCourseForInstructor_forbidden_student() throws Exception {
+    void testGetPlagiarismCasesForCourseForInstructor_forbidden_student() throws Exception {
         request.getList("/api/courses/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetPlagiarismCasesForCourseForInstructor_forbidden_tutor() throws Exception {
+    void testGetPlagiarismCasesForCourseForInstructor_forbidden_tutor() throws Exception {
         request.getList("/api/courses/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
 
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testGetPlagiarismCasesForCourseForInstructor_forbidden_editor() throws Exception {
+    void testGetPlagiarismCasesForCourseForInstructor_forbidden_editor() throws Exception {
         request.getList("/api/courses/1/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
+    void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
         var plagiarismCasesResponse = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
         var plagiarismCasesList = plagiarismCases;
         assertThat(plagiarismCasesResponse).as("should get plagiarism cases for instructor").isEqualTo(plagiarismCasesList);
@@ -151,25 +151,25 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPlagiarismCaseForInstructor_forbidden_student() throws Exception {
+    void testGetPlagiarismCaseForInstructor_forbidden_student() throws Exception {
         request.get("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetPlagiarismCaseForInstructor_forbidden_tutor() throws Exception {
+    void testGetPlagiarismCaseForInstructor_forbidden_tutor() throws Exception {
         request.get("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR ")
-    public void testGetPlagiarismCaseForInstructor_forbidden_editor() throws Exception {
+    void testGetPlagiarismCaseForInstructor_forbidden_editor() throws Exception {
         request.get("/api/courses/1/plagiarism-cases/1/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetPlagiarismCaseForInstructor() throws Exception {
+    void testGetPlagiarismCaseForInstructor() throws Exception {
         var plagiarismCase = request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-instructor", HttpStatus.OK,
                 PlagiarismCase.class);
         assertThat(plagiarismCase).as("should get plagiarism case for instructor").isEqualTo(plagiarismCase1);
@@ -177,25 +177,25 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testSavePlagiarismCaseVerdict_forbidden_student() throws Exception {
+    void testSavePlagiarismCaseVerdict_forbidden_student() throws Exception {
         request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSavePlagiarismCaseVerdict_forbidden_tutor() throws Exception {
+    void testSavePlagiarismCaseVerdict_forbidden_tutor() throws Exception {
         request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testSavePlagiarismCaseVerdict_forbidden_editor() throws Exception {
+    void testSavePlagiarismCaseVerdict_forbidden_editor() throws Exception {
         request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSavePlagiarismCaseVerdict_warning() throws Exception {
+    void testSavePlagiarismCaseVerdict_warning() throws Exception {
         var plagiarismVerdictDTO = new PlagiarismVerdictDTO();
         plagiarismVerdictDTO.setVerdict(PlagiarismVerdict.WARNING);
         plagiarismVerdictDTO.setVerdictMessage("This is a warning!");
@@ -208,7 +208,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSavePlagiarismCaseVerdict_pointDeduction() throws Exception {
+    void testSavePlagiarismCaseVerdict_pointDeduction() throws Exception {
         var plagiarismVerdictDTO = new PlagiarismVerdictDTO();
         plagiarismVerdictDTO.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
         plagiarismVerdictDTO.setVerdictPointDeduction(90);
@@ -221,7 +221,7 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPlagiarismCaseForExerciseForStudent() throws Exception {
+    void testGetPlagiarismCaseForExerciseForStudent() throws Exception {
         Post post = new Post();
         post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));
         post.setTitle("Title Plagiarism Case Post");
@@ -238,13 +238,13 @@ public class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testGetPlagiarismCaseForStudent_forbidden() throws Exception {
+    void testGetPlagiarismCaseForStudent_forbidden() throws Exception {
         request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.FORBIDDEN, PlagiarismCase.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPlagiarismCaseForStudent() throws Exception {
+    void testGetPlagiarismCaseForStudent() throws Exception {
         var plagiarismCase = request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.OK, PlagiarismCase.class);
         assertThat(plagiarismCase).as("should get plagiarism case for student").isEqualTo(plagiarismCase1);
         for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
