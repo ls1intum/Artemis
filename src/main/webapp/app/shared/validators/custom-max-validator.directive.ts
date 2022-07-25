@@ -14,7 +14,7 @@ export class CustomMaxDirective implements Validator {
     @Input()
     customMax: number;
 
-    validate(c: FormControl): { [key: string]: any } | null {
+    validate(c: FormControl<number | undefined | null>): { [key: string]: any } | null {
         const v = c.value;
         if (v === undefined || v === null) {
             return null;

@@ -23,7 +23,7 @@ describe('Quiz Exercise Assessment', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequest.addStudentToCourse(course.id!, student.username);
+            courseManagementRequest.addStudentToCourse(course, student);
             courseManagementRequest.addTutorToCourse(course, tutor);
         });
     });

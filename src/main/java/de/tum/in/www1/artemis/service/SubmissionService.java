@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
 import static de.tum.in.www1.artemis.config.Constants.MAX_NUMBER_OF_LOCKED_SUBMISSIONS_PER_TUTOR;
-import static java.util.stream.Collectors.toList;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
@@ -148,7 +147,7 @@ public class SubmissionService {
      * @param tutor - the tutor we are interested in
      * @param examMode - flag should be set to ignore the test run submissions
      * @param <T> the submission type
-     * @return a list of Submissions
+     * @return list of submissions
      */
     public <T extends Submission> List<T> getAllSubmissionsAssessedByTutorForCorrectionRoundAndExercise(Long exerciseId, User tutor, boolean examMode, int correctionRound) {
         List<T> submissions;
@@ -156,7 +155,8 @@ public class SubmissionService {
             var participations = this.studentParticipationRepository.findAllByParticipationExerciseIdAndResultAssessorAndCorrectionRoundIgnoreTestRuns(exerciseId, tutor);
             submissions = participations.stream().map(StudentParticipation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
                     .map(submission -> (T) submission)
-                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null).collect(toList());
+                    .filter(submission -> submission.getResults().size() - 1 >= correctionRound && submission.getResults().get(correctionRound) != null)
+                    .collect(Collectors.toCollection(ArrayList::new));
         }
         else {
             submissions = this.submissionRepository.findAllByParticipationExerciseIdAndResultAssessor(exerciseId, tutor);
@@ -194,13 +194,13 @@ public class SubmissionService {
         }
 
         List<Submission> submissionsWithoutResult = participations.stream().map(Participation::findLatestLegalOrIllegalSubmission).filter(Optional::isPresent).map(Optional::get)
-                .collect(toList());
+                .toList();
 
         if (correctionRound > 0) {
             // remove submission if user already assessed first correction round
             // if disabled, please switch tutorAssessUnique within the tests
             submissionsWithoutResult = submissionsWithoutResult.stream()
-                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).collect(Collectors.toList());
+                    .filter(submission -> !submission.getResultForCorrectionRound(correctionRound - 1).getAssessor().equals(userRepository.getUser())).toList();
         }
 
         if (exercise.getDueDate() != null) {
@@ -353,10 +353,10 @@ public class SubmissionService {
      * @return the newResult
      */
     private Result copyResultContentAndAddToSubmission(Submission submission, Result newResult, Result oldResult) {
-        newResult.setResultString(oldResult.getResultString());
         newResult.setScore(oldResult.getScore());
         newResult.setHasFeedback(oldResult.getHasFeedback());
         newResult.setRated(oldResult.isRated());
+        newResult.copyProgrammingExerciseCounters(oldResult);
         var savedResult = resultRepository.save(newResult);
         savedResult.setSubmission(submission);
         submission.addResult(savedResult);
@@ -403,7 +403,7 @@ public class SubmissionService {
                 result.setParticipation(studentParticipation);
                 result.setAssessor(assessor);
                 result.setCompletionDate(ZonedDateTime.now());
-                result.setScore(score);
+                result.setScore(score, studentParticipation.getExercise().getCourseViaExerciseGroupOrCourseMember());
                 result.rated(true);
                 // we set the assessment type to semi-automatic so that it does not appear to the tutors for manual assessment
                 // if we would use AssessmentType.AUTOMATIC, it would be eligible for manual assessment
@@ -460,7 +460,6 @@ public class SubmissionService {
         // copy feedback from automatic result
         if (existingAutomaticResult.isPresent()) {
             draftAssessment.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
-            draftAssessment.setResultString(existingAutomaticResult.get().getResultString());
             // also saves the draft assessment
             draftAssessment.setFeedbacks(copyFeedbackToNewResult(draftAssessment, existingAutomaticResult.get()));
         }
@@ -646,7 +645,7 @@ public class SubmissionService {
         if (!complaints.isEmpty()) {
             var complaintMap = complaints.stream().collect(Collectors.toMap(complaint -> complaint.getResult().getId(), value -> value));
             // get the ids of all results which have a complaint, and with those fetch all their submissions
-            List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).collect(toList());
+            List<Long> submissionIds = complaints.stream().map(complaint -> complaint.getResult().getSubmission().getId()).toList();
             List<Submission> submissions = submissionRepository.findBySubmissionIdsWithEagerResults(submissionIds);
 
             // add each submission with its complaint to the DTO

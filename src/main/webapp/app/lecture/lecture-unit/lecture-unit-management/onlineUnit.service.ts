@@ -19,19 +19,19 @@ export class OnlineUnitService {
     create(onlineUnit: OnlineUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<OnlineUnit>(`${this.resourceURL}/lectures/${lectureId}/online-units`, onlineUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     findById(onlineUnitId: number, lectureId: number) {
         return this.httpClient
             .get<OnlineUnit>(`${this.resourceURL}/lectures/${lectureId}/online-units/${onlineUnitId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     update(onlineUnit: OnlineUnit, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .put<OnlineUnit>(`${this.resourceURL}/lectures/${lectureId}/online-units`, onlineUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertDateFromServerResponse(res)));
+            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
     /**

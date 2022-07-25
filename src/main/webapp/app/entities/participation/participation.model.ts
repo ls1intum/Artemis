@@ -9,6 +9,11 @@ import { Submission } from 'app/entities/submission.model';
 import { Result } from 'app/entities/result.model';
 
 export const enum InitializationState {
+    /**
+     * The InitializationState enumeration.
+     * INITIALIZED: The participation is set up for submissions from the student
+     * FINISHED: Text- / Modelling: At least one submission is done. Quiz: No further submissions should be possible
+     */
     UNINITIALIZED = 'UNINITIALIZED',
     REPO_COPIED = 'REPO_COPIED',
     REPO_CONFIGURED = 'REPO_CONFIGURED',

@@ -2,22 +2,88 @@
 Main page styles
 ========================================================================== */
 
-.hipster {
-    display: inline-block;
-    width: 347px;
-    height: 497px;
-    background-size: contain;
+.login-col {
+    min-height: 150px;
+    width: 455px;
+    min-width: 455px;
+
+    .login-form {
+        max-width: 360px;
+        margin: auto;
+    }
 }
 
-/* wait autoprefixer update to allow simple generation of high pixel density media query */
-@media only screen and (-webkit-min-device-pixel-ratio: 2),
-    only screen and (min--moz-device-pixel-ratio: 2),
-    only screen and (-o-min-device-pixel-ratio: 2/1),
-    only screen and (min-device-pixel-ratio: 2),
-    only screen and (min-resolution: 192dpi),
-    only screen and (min-resolution: 2dppx) {
-    .hipster {
-        background-size: contain;
+.row-divided {
+    position: relative;
+}
+
+/* Inspired by https://bootsnipp.com/snippets/AVbzx */
+.vertical-divider {
+    position: absolute;
+    height: calc(50% - 0.5rem);
+    width: auto;
+    top: 50%;
+    left: 50%;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    text-align: center;
+    text-transform: uppercase;
+    transform: translateX(-50%);
+
+    &::before,
+    &::after {
+        content: '';
+        position: absolute;
+        left: 50%;
+        z-index: -1;
+        border-left: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        width: 0;
+        height: calc(100% - 1rem);
+    }
+
+    &::before {
+        top: -100%;
+    }
+
+    &::after {
+        top: auto;
+        bottom: 0;
+    }
+}
+
+/* Inspired by https://stackoverflow.com/a/26634224 */
+.horizontal-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 0;
+    padding: 0;
+    line-height: 0;
+    text-transform: uppercase;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        border-bottom: 2px solid var(--border-color);
+    }
+
+    &::before {
+        margin-right: 1em;
+        margin-left: 15%;
+    }
+
+    &::after {
+        margin-left: 1em;
+        margin-right: 15%;
+    }
+}
+
+@media (min-width: 1200px) {
+    .saml2-center {
+        margin-top: -40px;
     }
 }
 
@@ -25,29 +91,13 @@ Main page styles
     h1 {
         font-size: 1.6rem;
     }
+
     .lead {
-        font-size: 0.9rem;
-    }
-}
-
-.login-form {
-    width: 350px;
-}
-
-.registration-link {
-    width: 450px;
-}
-
-.btn-space {
-    margin-right: 5px;
-}
-
-@media (max-width: 768px) {
-    .col-md-8 {
-        width: 100% !important;
+        font-size: 0.85rem;
     }
 
-    .col-md-6 {
-        width: 100% !important;
+    .login-col {
+        width: 385px;
+        min-width: 385px;
     }
 }

@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.compass;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -69,7 +68,7 @@ public class CompassService {
         log.info("ModelClusterTimeLog: building clusters of {} submissions for modeling exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
         modelClusterRepository.saveAll(modelClusters);
-        modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).collect(Collectors.toList()));
+        modelElementRepository.saveAll(modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream()).toList());
         log.info("ModelClusterTimeLog: building and saving clusters of {} submissions for exercise {} done in {}", submissions.size(), modelingExercise.getId(),
                 TimeLogUtil.formatDurationFrom(start));
 
@@ -89,18 +88,25 @@ public class CompassService {
             List<Feedback> feedbacksForSuggestion = new ArrayList<>();
             ModelClusterFactory clusterBuilder = new ModelClusterFactory();
             List<UMLElement> elements = clusterBuilder.getModelElements(modelingSubmission);
-            List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).collect(Collectors.toList()));
-            List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).collect(Collectors.toList());
+
+            // elements can be null if the modeling submission does not contain a model
+            // this can happen for empty submissions in exams
+            if (elements == null) {
+                return null;
+            }
+
+            List<ModelElement> modelElements = modelElementRepository.findByModelElementIdIn(elements.stream().map(UMLElement::getJSONElementID).toList());
+            List<Long> clusterIds = modelElements.stream().map(ModelElement::getCluster).map(ModelCluster::getId).toList();
             List<ModelCluster> modelClusters = modelClusterRepository.findAllByIdInWithEagerElements(clusterIds);
             List<String> references = modelClusters.stream().flatMap(modelCluster -> modelCluster.getModelElements().stream())
-                    .map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId()).collect(Collectors.toList());
+                    .map(modelElement1 -> modelElement1.getModelElementType() + ":" + modelElement1.getModelElementId()).toList();
             List<Feedback> feedbacks = feedbackRepository.findByReferenceInAndResult_Submission_Participation_Exercise(references, modelingExercise);
             for (ModelElement modelElement : modelElements) {
                 if (modelElement != null) {
                     ModelCluster cluster = modelClusters.get(modelClusters.indexOf(modelElement.getCluster()));
                     Set<ModelElement> similarElements = cluster.getModelElements();
                     List<String> similarReferences = similarElements.stream().map(element -> element.getModelElementType() + ":" + element.getModelElementId()).toList();
-                    List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).collect(Collectors.toList());
+                    List<Feedback> similarFeedbacks = feedbacks.stream().filter(feedback -> similarReferences.contains(feedback.getReference())).toList();
                     Feedback suggestedFeedback = FeedbackSelector.selectFeedback(modelElement, similarFeedbacks, result);
                     if (suggestedFeedback != null) {
                         feedbacksForSuggestion.add(suggestedFeedback);

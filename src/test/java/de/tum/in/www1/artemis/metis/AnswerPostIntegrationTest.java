@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
-public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
@@ -43,33 +43,34 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     private static final int MAX_POSTS_PER_PAGE = 20;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
 
         database.addUsers(5, 5, 0, 1);
         student1 = database.getUserByLogin("student1");
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)
-        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null)).toList();
+        existingPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream()
+                .filter(coursePost -> coursePost.getAnswers() != null && coursePost.getPlagiarismCase() == null).toList();
 
         // get all answerPosts
         existingAnswerPosts = existingPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         // get all existing posts with answers in exercise context
-        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
+        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getExercise() != null).toList();
 
         // get all existing posts with answers in lecture context
-        existingPostsWithAnswersInLecture = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getLecture() != null).toList();
+        existingPostsWithAnswersInLecture = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getLecture() != null).toList();
 
         // get all existing posts with answers in lecture context
-        existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
+        existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> coursePost.getAnswers() != null && coursePost.getCourseWideContext() != null)
                 .toList();
 
         courseId = existingPostsWithAnswersInExercise.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember().getId();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -77,7 +78,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateAnswerPostInLecture() throws Exception {
+    void testCreateAnswerPostInLecture() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -90,7 +91,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateAnswerPostInExercise() throws Exception {
+    void testCreateAnswerPostInExercise() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -103,7 +104,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateAnswerPostCourseWide() throws Exception {
+    void testCreateAnswerPostCourseWide() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -116,7 +117,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateAnswerPostInLecture_asInstructor() throws Exception {
+    void testCreateAnswerPostInLecture_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInLecture.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -127,7 +128,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateAnswerPostInExercise_asInstructor() throws Exception {
+    void testCreateAnswerPostInExercise_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersInExercise.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -138,7 +139,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateAnswerPostCourseWide_asInstructor() throws Exception {
+    void testCreateAnswerPostCourseWide_asInstructor() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -149,7 +150,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateExistingAnswerPost_badRequest() throws Exception {
+    void testCreateExistingAnswerPost_badRequest() throws Exception {
         AnswerPost existingAnswerPostToSave = existingAnswerPosts.get(0);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/answer-posts", existingAnswerPostToSave, AnswerPost.class, HttpStatus.BAD_REQUEST);
@@ -159,7 +160,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
     // GET
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_WithUnresolvedPosts() throws Exception {
+    void testGetPostsForCourse_WithUnresolvedPosts() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
@@ -177,7 +178,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_WithOwnAndUnresolvedPosts() throws Exception {
+    void testGetPostsForCourse_WithOwnAndUnresolvedPosts() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
@@ -194,7 +195,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourseWithCourseWideContent() throws Exception {
+    void testGetPostsForCourseWithCourseWideContent() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
         params.add("courseWideContext", "TECH_SUPPORT");
@@ -208,7 +209,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourseWithUnresolvedPostsWithCourseWideContent() throws Exception {
+    void testGetPostsForCourseWithUnresolvedPostsWithCourseWideContent() throws Exception {
         // filterToUnresolved set true; will fetch all unresolved posts of current course
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
@@ -226,7 +227,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourseWithOwnWithCourseWideContent() throws Exception {
+    void testGetPostsForCourseWithOwnWithCourseWideContent() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToOwn", "true");
@@ -245,7 +246,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourseWithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
+    void testGetPostsForCourseWithOwnAndUnresolvedPostsWithCourseWideContent() throws Exception {
         // filterToOwn & filterToUnresolved set true; will fetch all unresolved posts of current user
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToUnresolved", "true");
@@ -266,7 +267,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
+    void testGetPostsForCourse_OrderByAnswerCountDESC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
         // TODO: https://github.com/h2database/h2database/issues/408
 
@@ -295,7 +296,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
+    void testGetPostsForCourse_OrderByAnswerCountASC() throws Exception {
         // TODO: Disabled until next refactoring due to incompatibility of DISTINCT & ORDER BY in H2 DB during testing
         // TODO: https://github.com/h2database/h2database/issues/408
 
@@ -324,7 +325,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAnsweredOrReactedPostsByUserForCourse() throws Exception {
+    void testGetAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
@@ -341,7 +342,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
+    void testGetOwnAndAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
@@ -359,7 +360,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetUnresolvedAnsweredOrReactedPostsByUserForCourse() throws Exception {
+    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
@@ -378,7 +379,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
+    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourse() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToOwn", "true");
@@ -398,7 +399,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+    void testGetAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
@@ -417,7 +418,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+    void testGetOwnAndAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
@@ -437,7 +438,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+    void testGetUnresolvedAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToAnsweredOrReacted", "true");
@@ -458,7 +459,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
+    void testGetUnresolvedOwnAnsweredOrReactedPostsByUserForCourseWithCourseWideContent() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("filterToOwn", "true");
@@ -481,7 +482,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditAnswerPost_asTutor() throws Exception {
+    void testEditAnswerPost_asTutor() throws Exception {
         // update post of student1 (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
@@ -493,7 +494,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPost_asStudent1() throws Exception {
+    void testEditAnswerPost_asStudent1() throws Exception {
         // update own post (index 0)--> OK
         AnswerPost answerPostToUpdate = editExistingAnswerPost(existingAnswerPosts.get(0));
 
@@ -505,7 +506,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testEditAnswerPost_asStudent2_forbidden() throws Exception {
+    void testEditAnswerPost_asStudent2_forbidden() throws Exception {
         // update post from another student (index 1)--> forbidden
         AnswerPost answerPostNotToUpdate = editExistingAnswerPost(existingAnswerPosts.get(1));
 
@@ -516,7 +517,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
+    void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-posts/" + answerPostToUpdate.getId(), answerPostToUpdate,
@@ -526,7 +527,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
+    void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
@@ -537,7 +538,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testToggleResolvesPost() throws Exception {
+    void testToggleResolvesPost() throws Exception {
         AnswerPost answerPost = existingAnswerPosts.get(0);
 
         // confirm that answer post resolves the original post
@@ -555,7 +556,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testToggleResolvesPost_asPostAuthor() throws Exception {
+    void testToggleResolvesPost_asPostAuthor() throws Exception {
         // author of the associated original post is student1
         AnswerPost answerPost = existingAnswerPosts.get(0);
 
@@ -574,7 +575,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testToggleResolvesPost_notAuthor_forbidden() throws Exception {
+    void testToggleResolvesPost_notAuthor_forbidden() throws Exception {
         // author of the associated original post is student1, author of answer post is also student1
         AnswerPost answerPost = existingAnswerPosts.get(0);
 
@@ -595,7 +596,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteAnswerPosts_asStudent1() throws Exception {
+    void testDeleteAnswerPosts_asStudent1() throws Exception {
         // delete own post (index 0)--> OK
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
@@ -605,7 +606,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
+    void testDeleteAnswerPosts_asStudent2_forbidden() throws Exception {
         // delete post from another student (index 0) --> forbidden
         AnswerPost answerPostToNotDelete = existingAnswerPosts.get(0);
 
@@ -615,7 +616,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteAnswerPost_asTutor() throws Exception {
+    void testDeleteAnswerPost_asTutor() throws Exception {
         // delete post from another student (index 0) --> ok
         AnswerPost answerPostToDelete = existingAnswerPosts.get(0);
 
@@ -625,7 +626,7 @@ public class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+    void testDeleteAnswerPost_asTutor_notFound() throws Exception {
         request.delete("/api/courses/" + courseId + "/answer-posts/" + 9999L, HttpStatus.NOT_FOUND);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }

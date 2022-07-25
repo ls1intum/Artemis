@@ -8,7 +8,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.service.metis.similarity.TitleJaccardSimilarityCompareStrategy;
 
-public class TitleJaccardSimilarityCompareStrategyTest {
+class TitleJaccardSimilarityCompareStrategyTest {
 
     private TitleJaccardSimilarityCompareStrategy compareStrategy;
 
@@ -18,7 +18,7 @@ public class TitleJaccardSimilarityCompareStrategyTest {
     }
 
     @Test
-    public void testSimilarTitle_equal() {
+    void testSimilarTitle_equal() {
         Post post1 = new Post();
         post1.setTitle("Some title");
         Post post2 = new Post();
@@ -31,7 +31,7 @@ public class TitleJaccardSimilarityCompareStrategyTest {
     }
 
     @Test
-    public void testSimilarTitle_different() {
+    void testSimilarTitle_different() {
         Post post1 = new Post();
         post1.setTitle("Totally different");
         Post post2 = new Post();
@@ -43,7 +43,7 @@ public class TitleJaccardSimilarityCompareStrategyTest {
     }
 
     @Test
-    public void testSimilarTitle_similar() {
+    void testSimilarTitle_similar() {
         Post post1 = new Post();
         post1.setTitle("Totally different");
         Post post2 = new Post();
@@ -55,7 +55,7 @@ public class TitleJaccardSimilarityCompareStrategyTest {
     }
 
     @Test
-    public void testSimilarTitle_missing() {
+    void testSimilarTitle_missing() {
         Post post1 = new Post();
         Post post2 = new Post();
         Double expectedResult = 0.0;

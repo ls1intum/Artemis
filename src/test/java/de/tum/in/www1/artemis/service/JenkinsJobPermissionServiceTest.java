@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissi
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobPermissionsUtils;
 
-public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private JenkinsJobPermissionsService jenkinsJobPermissionsService;
@@ -31,14 +31,14 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
     private static MockedStatic<JenkinsJobPermissionsUtils> mockedJenkinsJobPermissionsUtils;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         mockedJenkinsJobPermissionsUtils = mockStatic(JenkinsJobPermissionsUtils.class);
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedJenkinsJobPermissionsUtils.close();
@@ -46,7 +46,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
     @Test
     @WithMockUser(username = "student1")
-    public void testAddInstructorAndEditorAndTAPermissionsToUsersForFolderThrowIOExceptionOnXmlError() throws IOException {
+    void testAddInstructorAndEditorAndTAPermissionsToUsersForFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
@@ -64,7 +64,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
     @Test
     @WithMockUser(username = "student1")
-    public void testAddTeachingAssistantPermissionsToUserForFolderThrowIOExceptionOnXmlError() throws IOException {
+    void testAddTeachingAssistantPermissionsToUserForFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         jenkinsRequestMockProvider.mockGetFolderConfig(folderName);
 
@@ -82,7 +82,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
     @Test
     @WithMockUser(username = "student1")
-    public void testAddPermissionsForUsersToFolderThrowIOExceptionOnXmlError() throws IOException {
+    void testAddPermissionsForUsersToFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         Set<JenkinsJobPermission> taPermissions = JenkinsJobPermission.getTeachingAssistantPermissions();
         Set<String> taLogins = Set.of("ta1");
@@ -99,7 +99,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
     @Test
     @WithMockUser(username = "student1")
-    public void testRemovePermissionsFromUserOfFolderThrowIOExceptionOnXmlError() throws IOException {
+    void testRemovePermissionsFromUserOfFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         Set<JenkinsJobPermission> taPermissions = JenkinsJobPermission.getTeachingAssistantPermissions();
         String taLogin = "ta1";
@@ -117,7 +117,7 @@ public class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJe
 
     @Test
     @WithMockUser(username = "student1")
-    public void testRemovePermissionsFromUsersForFolderThrowIOExceptionOnXmlError() throws IOException {
+    void testRemovePermissionsFromUsersForFolderThrowIOExceptionOnXmlError() throws IOException {
         String folderName = "JenkinsFolder";
         Set<JenkinsJobPermission> taPermissions = JenkinsJobPermission.getTeachingAssistantPermissions();
         Set<String> taLogins = Set.of("ta1");

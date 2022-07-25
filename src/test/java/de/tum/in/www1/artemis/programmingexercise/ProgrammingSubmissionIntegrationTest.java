@@ -52,7 +52,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
-public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Value("${artemis.git.name}")
     private String artemisGitName;
@@ -77,7 +77,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     private ProgrammingExerciseStudentParticipation programmingExerciseStudentParticipation;
 
     @BeforeEach
-    public void init() {
+    void init() {
         database.addUsers(10, 2, 1, 2);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
@@ -99,7 +99,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -331,7 +331,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void triggerFailedBuildResultPresentInCIOk() throws Exception {
+    void triggerFailedBuildResultPresentInCIOk() throws Exception {
         var user = database.getUserByLogin("student1");
         var submission = new ProgrammingSubmission();
         submission.setSubmissionDate(ZonedDateTime.now().minusMinutes(4));
@@ -362,7 +362,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
+    void triggerFailedBuildSubmissionNotLatestButLastGradedNotFound() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
         String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build?lastGraded=true";
@@ -371,7 +371,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void triggerFailedBuild_CIException() throws Exception {
+    void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationService).triggerBuild(participation);
@@ -437,13 +437,13 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getAllProgrammingSubmissionsAsUserForbidden() throws Exception {
+    void getAllProgrammingSubmissionsAsUserForbidden() throws Exception {
         request.get("/api/exercises/" + exercise.getId() + "/programming-submissions", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNotifyPush_invalidParticipation() throws Exception {
+    void testNotifyPush_invalidParticipation() throws Exception {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation = studentParticipationRepository.save(studentParticipation);
 
@@ -453,7 +453,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
+    void testNotifyPush_cannotGetLastCommitDetails() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         doThrow(ContinuousIntegrationException.class).when(versionControlService).getLastCommitDetails(any());
         String url = "/api/programming-submissions/" + participation.getId();
@@ -462,7 +462,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNotifyPush_commitIsDifferentBranch() throws Exception {
+    void testNotifyPush_commitIsDifferentBranch() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
 
         Commit mockCommit = mock(Commit.class);
@@ -476,7 +476,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNotifyPush_isSetupCommit() throws Exception {
+    void testNotifyPush_isSetupCommit() throws Exception {
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, "student1");
 
         Commit mockCommit = mock(Commit.class);
@@ -495,7 +495,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
+    void getAllProgrammingSubmissionsAsInstructorAllSubmissionsReturned() throws Exception {
         final var submissions = new ArrayList<ProgrammingSubmission>();
         for (int i = 1; i < 4; i++) {
             final var submission = ModelFactory.generateProgrammingSubmission(true);
@@ -511,7 +511,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getAllProgrammingSubmissionsAssessedByTutorAllSubmissionsReturned() throws Exception {
+    void getAllProgrammingSubmissionsAssessedByTutorAllSubmissionsReturned() throws Exception {
         database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
         var assessedSubmission = ModelFactory.generateProgrammingSubmission(true);
         assessedSubmission = database.addProgrammingSubmission(exercise, assessedSubmission, "student2");
@@ -532,7 +532,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessmentAsTutorWithOneAvailableReturnsSubmission() throws Exception {
+    void getProgrammingSubmissionWithoutAssessmentAsTutorWithOneAvailableReturnsSubmission() throws Exception {
         String login = "student1";
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
@@ -548,7 +548,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testLockAndGetProgrammingSubmissionWithManualResult() throws Exception {
+    void testLockAndGetProgrammingSubmissionWithManualResult() throws Exception {
         String login = "student1";
         database.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
@@ -582,7 +582,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
+    void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithoutAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
@@ -607,7 +607,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithAutomaticResult() throws Exception {
+    void testLockAndGetProgrammingSubmissionLessManualResultsThanCorrectionRoundWithAutomaticResult() throws Exception {
 
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, "student1");
@@ -640,7 +640,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
+    void testLockAndGetProgrammingSubmissionWithoutManualResult() throws Exception {
         var result = database.addResultToParticipation(AssessmentType.AUTOMATIC, ZonedDateTime.now().minusHours(1).minusMinutes(30), programmingExerciseStudentParticipation);
         var submission = database.addProgrammingSubmissionToResultAndParticipation(result, programmingExerciseStudentParticipation, "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d");
         exercise.setAssessmentType(AssessmentType.AUTOMATIC);
@@ -658,7 +658,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
+    void testGetProgrammingSubmissionWithoutAssessment() throws Exception {
         String login = "student1";
         ProgrammingSubmission submission = ModelFactory.generateProgrammingSubmission(true);
         submission = database.addProgrammingSubmission(exercise, submission, login);
@@ -676,7 +676,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetProgrammingSubmissionWithoutAssessmentLockSubmission() throws Exception {
+    void testGetProgrammingSubmissionWithoutAssessmentLockSubmission() throws Exception {
         database.addGradingInstructionsToExercise(exercise);
         programmingExerciseRepository.save(exercise);
         User user = database.getUserByLogin("tutor1");
@@ -695,7 +695,6 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
         assertThat(storedSubmission.getLatestResult().getFeedbacks()).hasSameSizeAs(automaticResults);
         assertThat(storedSubmission.getLatestResult().getAssessor()).as("assessor is tutor1").isEqualTo(user);
         assertThat(submission.getLatestResult()).isNotNull();
-        assertThat(storedSubmission.getLatestResult().getResultString()).isEqualTo(submission.getLatestResult().getResultString());
 
         // Make sure no new submissions are created
         var latestSubmissions = submissionRepository.findAll();
@@ -710,7 +709,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetModelSubmissionWithoutAssessmentTestLockLimit() throws Exception {
+    void testGetModelSubmissionWithoutAssessmentTestLockLimit() throws Exception {
         createTenLockedSubmissionsForExercise("tutor1");
         database.updateExerciseDueDate(exercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -720,7 +719,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessmentDueDateNotPassedYet() throws Exception {
+    void getProgrammingSubmissionWithoutAssessmentDueDateNotPassedYet() throws Exception {
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);
         final var submission = database.addProgrammingSubmission(exercise, ModelFactory.generateProgrammingSubmission(true), "student1");
@@ -737,7 +736,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
+    void testGetProgrammingSubmissionWithoutAssessmentWithIndividualDueDate(boolean isIndividualDueDateInFuture) throws Exception {
         // exercise due date in the past
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
@@ -767,7 +766,7 @@ public class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getProgrammingSubmissionWithoutAssessmentAlreadyAssessedNoFound() throws Exception {
+    void getProgrammingSubmissionWithoutAssessmentAlreadyAssessedNoFound() throws Exception {
         exercise.setDueDate(ZonedDateTime.now().minusDays(2));
         exercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         programmingExerciseRepository.saveAndFlush(exercise);

@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -125,11 +124,11 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         templateParticipationId = templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
         solutionParticipationId = solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get().getId();
-        participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).collect(Collectors.toList());
+        participationIds = exercise.getStudentParticipations().stream().map(Participation::getId).toList();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         bambooRequestMockProvider.reset();
         bitbucketRequestMockProvider.reset();
@@ -520,7 +519,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // We only create submissions for the solution participation after a push to the test repository.
         assertThat(submissions).hasSize(1);
         for (Participation participation : participations) {
-            assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).collect(Collectors.toList())).hasSize(1);
+            assertThat(submissions.stream().filter(s -> s.getParticipation().getId().equals(participation.getId())).toList()).hasSize(1);
         }
         assertThat(submissions.stream().allMatch(s -> s.isSubmitted() && s.getCommitHash().equals(TEST_COMMIT) && s.getType().equals(SubmissionType.TEST))).isTrue();
 
@@ -561,7 +560,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
      */
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
+    void shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() throws Exception {
         testService.setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived();
         var pushJSON = (JSONObject) new JSONParser().parse(BITBUCKET_PUSH_EVENT_REQUEST);
         var changes = (JSONArray) pushJSON.get("changes");
@@ -785,7 +784,6 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(result.getHasFeedback()).isFalse();
         assertThat(result.isSuccessful()).isFalse();
         assertThat(result.getScore()).isZero();
-        assertThat(result.getResultString()).isEqualTo("No tests found");
 
         // Assert that the submission linked to the participation
         var submission = (ProgrammingSubmission) result.getSubmission();

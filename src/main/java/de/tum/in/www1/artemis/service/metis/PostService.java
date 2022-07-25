@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
@@ -7,7 +8,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
-import javax.ws.rs.ForbiddenException;
 
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
@@ -36,6 +36,7 @@ import de.tum.in.www1.artemis.service.metis.similarity.PostSimilarityComparisonS
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostAction;
 import de.tum.in.www1.artemis.web.websocket.dto.MetisPostDTO;
@@ -357,7 +358,7 @@ public class PostService extends PostingService {
             return plagiarismCasePosts;
         }
         else {
-            throw new ForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
+            throw new AccessForbiddenException("Only instructors in the course or the students affected by the plagiarism case are allowed to view its post");
         }
     }
 
@@ -510,7 +511,7 @@ public class PostService extends PostingService {
     public List<Post> getSimilarPosts(Long courseId, Post post) {
         PostContextFilter postContextFilter = new PostContextFilter();
         postContextFilter.setCourseId(courseId);
-        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toList());
+        List<Post> coursePosts = this.getCoursePosts(postContextFilter, false, null).stream().collect(Collectors.toCollection(ArrayList::new));
 
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));

@@ -421,7 +421,7 @@ public class CourseExamExportService {
                 }
             }
         }
-        return exportedExercises.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        return exportedExercises.stream().filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**
@@ -486,7 +486,7 @@ public class CourseExamExportService {
      * @throws IOException if any error occurs
      */
     private Path writeReport(List<ArchivalReportEntry> data, Path outputDir) throws IOException {
-        List<String> lines = data.stream().map(ArchivalReportEntry::toString).collect(Collectors.toList());
+        List<String> lines = data.stream().map(ArchivalReportEntry::toString).collect(Collectors.toCollection(ArrayList::new));
         lines.add(0, ArchivalReportEntry.getHeadline());
         return writeFile(lines, outputDir, "report.csv");
     }

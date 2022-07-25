@@ -40,6 +40,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
     confirmed: boolean;
 
     testRun?: boolean;
+    testExam?: boolean;
 
     formattedGeneralInformation?: SafeHtml;
     formattedConfirmationText?: SafeHtml;
@@ -75,6 +76,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         this.confirmed = false;
         this.startEnabled = false;
         this.testRun = this.studentExam.testRun;
+        this.testExam = this.exam.testExam;
 
         if (this.startView) {
             this.formattedGeneralInformation = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.startText);
@@ -85,6 +87,8 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             // this should be the individual working end + the grace period
             if (this.testRun) {
                 this.graceEndDate = dayjs(this.testRunStartTime!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
+            } else if (this.testExam) {
+                this.graceEndDate = dayjs(this.studentExam.startedDate!).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
             } else {
                 this.graceEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds').add(this.exam.gracePeriod!, 'seconds');
             }
@@ -134,21 +138,23 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
             this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, this.studentExam);
             this.onExamStarted.emit(this.studentExam);
         } else {
-            this.examParticipationService.loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!).subscribe((studentExam: StudentExam) => {
-                this.studentExam = studentExam;
-                this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
-                if (this.hasStarted()) {
-                    this.onExamStarted.emit(studentExam);
-                } else {
-                    this.waitingForExamStart = true;
-                    if (this.interval) {
-                        clearInterval(this.interval);
+            this.examParticipationService
+                .loadStudentExamWithExercisesForConduction(this.exam.course!.id!, this.exam.id!, this.studentExam.id!)
+                .subscribe((studentExam: StudentExam) => {
+                    this.studentExam = studentExam;
+                    this.examParticipationService.saveStudentExamToLocalStorage(this.exam.course!.id!, this.exam.id!, studentExam);
+                    if (this.hasStarted()) {
+                        this.onExamStarted.emit(studentExam);
+                    } else {
+                        this.waitingForExamStart = true;
+                        if (this.interval) {
+                            clearInterval(this.interval);
+                        }
+                        this.interval = window.setInterval(() => {
+                            this.updateDisplayedTimes(studentExam);
+                        }, UI_RELOAD_TIME);
                     }
-                    this.interval = window.setInterval(() => {
-                        this.updateDisplayedTimes(studentExam);
-                    }, UI_RELOAD_TIME);
-                }
-            });
+                });
         }
     }
 
@@ -234,7 +240,16 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
         if (this.testRun) {
             return false;
         }
-        const individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+        let individualStudentEndDate;
+        if (this.exam.testExam) {
+            if (!this.studentExam.submitted && this.studentExam.started && this.studentExam.startedDate) {
+                individualStudentEndDate = dayjs(this.studentExam.startedDate).add(this.studentExam.workingTime!, 'seconds');
+            } else {
+                return false;
+            }
+        } else {
+            individualStudentEndDate = dayjs(this.exam.startDate).add(this.studentExam.workingTime!, 'seconds');
+        }
         return individualStudentEndDate.add(this.exam.gracePeriod!, 'seconds').isBefore(this.serverDateService.now()) && !this.studentExam.submitted;
     }
 }

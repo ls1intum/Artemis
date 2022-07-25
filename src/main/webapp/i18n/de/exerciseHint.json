@@ -20,6 +20,8 @@
             "title": "Titel",
             "task": "Task",
             "taskTooltip": "Es wird nicht empfohlen, Code-Hinweise anderen Tasks zuzuweisen, weil die Hinweise speziell für einen Task erstellt wurden.",
+            "displayThreshold": "Freischalten nach Anzahl erfolgloser Einreichungen",
+            "displayThresholdTooltip": "Die Anzahl der erfolglosen Einreichungen für eine Aufgabe, nach der dieser Hinweis verfügbar sein soll. Wird dieser Wert auf 0 gesetzt, ist der Hinweis immer sichtbar.",
             "description": "Beschreibung",
             "descriptionTooltip": "Dieser Text wird Studierenden angezeigt, die diesen Hint angezeigt bekommen.",
             "content": "Inhalt",
@@ -38,14 +40,6 @@
                 "rateHintQuestion": "Wie hilfreich war dieser Hinweis?",
                 "availableHintTaskDescription": "Hast Du Probleme mit der Aufgabe '{{ taskName }}'? Hier kannst Du Dir die Musterlösung anzeigen lassen."
             }
-        },
-        "codeHint": {
-            "type": "Code Hinweis",
-            "entry": "Eintrag",
-            "entries": "Einträge",
-            "removeEntryQuestion": "Soll dieser Eintrag wirklich entfernt werden?",
-            "noEntries": "Dieser Code-Hinweis hat keine Einträge.",
-            "deleted": "Exercise Hint gelöscht mit ID {{ param }}"
         }
     }
 }

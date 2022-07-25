@@ -20,6 +20,8 @@
             "title": "Title",
             "task": "Task",
             "taskTooltip": "It is not recommended to assign code hints to other tasks since these are specifically generated for a task.",
+            "displayThreshold": "Unlock after number of unsuccessful submissions",
+            "displayThresholdTooltip": "The number of unsuccessful submissions for a task after which this hint should become available. Setting this value to zero means that the hint is always visible.",
             "description": "Description",
             "descriptionTooltip": "This text is displayed to students who are shown this hint.",
             "content": "Content",
@@ -38,14 +40,6 @@
                 "rateHintQuestion": "How helpful was this hint?",
                 "availableHintTaskDescription": "Having issues solving the task '{{ taskName }}'? You can take a look at the following example solution."
             }
-        },
-        "codeHint": {
-            "type": "Code Hint",
-            "entry": "Entry",
-            "entries": "Entries",
-            "removeEntryQuestion": "Are you sure you want to remove this entry?",
-            "noEntries": "This code hint has no solution entries.",
-            "deleted": "Deleted Code Hint with identifier {{ param }}"
         }
     }
 }

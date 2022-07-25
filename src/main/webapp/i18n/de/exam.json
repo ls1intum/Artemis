@@ -3,8 +3,41 @@
         "exam": {
             "overview": {
                 "start": "Beginn: {{start}}",
-                "duration": "Dauer: ",
-                "maxPoints": "Punkte: {{points}}"
+                "duration": "Arbeitzeit:",
+                "maxPoints": "Erreichbare Punkte: {{points}}",
+                "upcoming": "Demnächst stattfindende Klausur",
+                "imminent": "Die Klausur beginnt in",
+                "imminentExplanation": "Du kannst die Klausur durch Klicken auf die Kachel bereits öffnen",
+                "conducting": "Laufende Klausur",
+                "conductingExplanation": "Du kannst die Klausur durch Klicken auf die Kachel öffnen",
+                "timeExtension": "Die normale Arbeitszeit ist vorbei",
+                "timeExtensionExplanation": "Wenn du eine Zeitverlängerung hast, kannst du die Klausur durch Klicken auf die Kachel öffnen. Ansonsten kannst du deine Abgabe einsehen",
+                "closed": "Klausur beendet",
+                "closedExplanation": "Du kannst deine Abgabe durch Klicken auf die Kachel einsehen",
+                "review": "Klausureinsicht möglich",
+                "reviewExplanation": "Die Einsicht findet statt bis ",
+                "noMoreAttempts": "Keine weiteren Versuche",
+                "noMoreAttemptsExplanation": "Derzeit sind keine weiteren Versuche verfügbar",
+                "realExamsHeading": "Klausuren",
+                "testExamsHeading": "Testklausuren",
+                "testExam": {
+                    "upcoming": "Demnächst stattfindende Testklausur",
+                    "imminent": "Die Testklausur beginnt in ",
+                    "imminentExplanation": "Du kannst die Testklausur durch Klicken auf die Kachel bereits öffnen",
+                    "conducting": "Beginne neue Testklausur",
+                    "conductingExplanation": "Du kannst eine neue Klausur durch Klicken auf die Kachel starten",
+                    "closed": "Testklausur beendet",
+                    "closedExplanation": "Das Beginnen einer neuen Testklausur ist nicht mehr möglich",
+                    "notSubmitted": "Du hast deine Testklausur nicht rechtzeitig eingereicht!",
+                    "reviewAttempt": "Versuch #{{attempt}}",
+                    "resumeAttempt": "Versuch #{{attempt}} fortführen",
+                    "workingTimeLeft": "Verbleibende Arbeitszeit: ",
+                    "workingTimeCalculated": "Genutzte Arbeitszeit: ",
+                    "submissionDate": "Eingereicht am: ",
+                    "available": "Verfügbar von {{startDate}} bis {{endDate}}",
+                    "showMoreAttempts": "Zeige alle Versuche",
+                    "showLessAttempts": "Zeige aktuellste Versuche"
+                }
             },
             "examSummary": {
                 "yourSubmissionTo": "Deine Abgabe für {{examTitle}} ({{studentName}})",
@@ -37,6 +70,7 @@
             "endExam": "Beenden",
             "date": "Datum",
             "time": "Zeit",
+            "workingTime": "Bearbeitungszeit",
             "resultInformation": "Dein Ergebnis wird nach Abschluss der Korrektur an dieser Stelle für dich veröffentlicht. Du kommst zu dieser Seite, indem du in der Klausurenübersicht des Kurses auf diese Klausur klickst.",
             "course": "Kurs",
             "exercises": "Aufgaben",
@@ -52,6 +86,7 @@
             "nrOfStudents": "Anzahl registrierter Studierender",
             "created": "Neue Klausur erstellt",
             "updated": "Klausur bearbeitet",
+            "imported": "Klausur importiert",
             "deleted": "Klausur \"{{ param }}\" gelöscht",
             "exercise": "Aufgabe {{nr}}",
             "startConsentText": "Hiermit bestätige ich mit meinem vollen Namen stellvertretend für meine Unterschrift, dass ich die Teilnahmebedingungen gelesen habe und diese für die Dauer der Klausur einhalten werde.",
@@ -157,7 +192,8 @@
             "examExercises": "Klausuraufgaben:",
             "exercisePoints": "Punkte",
             "exerciseName": "Name",
-            "noStudentExam": "Du bist nicht für die Klausur {{ examTitle }} angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
+            "noStudentExam": "Du bist nicht für die Klausur angemeldet. Bitte wende dich an die entsprechende Lehrkraft.",
+            "noFurtherAttempts": "Derzeit sind keine weiteren Versuche für die Testklausur möglich. Um deine Abgabe zu betrachten, navigiere zur Klausurseite ",
             "submitProgrammingExercise": "Weiter",
             "submitOtherExercise": "Speichern & Weiter",
             "submitLastExercise": "Speichern",
@@ -232,6 +268,7 @@
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
+            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur started",
             "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
@@ -266,6 +303,7 @@
             },
             "title": "Klausurverwaltung",
             "createExam": "Erstelle eine neue Klausur",
+            "importExam": "Importiere eine Klausur",
             "editExam": "Bearbeite eine existierende Klausur",
             "courseTitle": "Kursname",
             "examId": "Klausur ID",
@@ -314,6 +352,9 @@
                 "endDate": "Ende Bearbeitungsfenster",
                 "workingTimeTooltip": "Die erlaubte Bearbeitungszeit je Durchlauf"
             },
+            "import": {
+                "search": "Suche nach einer Klausur"
+            },
             "monitoring": {
                 "enable": {
                     "title": "Klausur Live Statistik aktivieren",
@@ -346,6 +387,7 @@
                 "showAllUsers": "Alle Studierenden anzeigen",
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Studierenden gefunden",
+                "testExamSelfRegistration": "Studierende werden automatisch für die Klausur registriert, wenn diese mit der Bearbeitung beginnen",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "Vorname",
@@ -363,6 +405,10 @@
             "exerciseGroups": "Aufgabengruppen",
             "exerciseGroup": {
                 "create": "Neue Aufgabengruppe erstellen",
+                "import": "Aufgabengruppe importieren",
+                "selectExerciseGroup": "Aufgabengruppen auswählen",
+                "selectExerciseGroupExplanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit den Aufgabengruppen importiert werden sollen",
+                "noExerciseGroup": "Die ausgewählte Klausur {{examTitle}} hat keine Aufgabengruppen",
                 "update": "Aufgabengruppe bearbeiten",
                 "type": "Typ",
                 "title": "Titel",
@@ -379,7 +425,20 @@
                 "addFileUploadExercise": "Datei-Upload-Aufgabe hinzufügen",
                 "addModelingExercise": "Modellierungsaufgabe hinzufügen",
                 "addProgrammingExercise": "Programmieraufgabe hinzufügen",
-                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden."
+                "orderCouldNotBeSaved": "Die Reihenfolge konnte nicht gespeichert werden.",
+                "importModal": {
+                    "title": "Import von Klausuraufgaben",
+                    "explanation": "Wähle durch Klicken die individuellen Aufgaben aus, welche mit der Klausur importiert werden sollen",
+                    "selected": "Ausgewählt",
+                    "exerciseGroupTooltip": "Der Titel der Aufgabengruppe kann vor dem Import angepasst werden",
+                    "exerciseTitleTooltip": "Der Titel der Aufgabe kann vor dem Import angepasst werden. Weitere Änderungen an der Aufgabe sind nach dem Import möglich",
+                    "shortNameTooltip": "Der Kurzname einer Programmieraufgabe muss einzigartig sein. Der Kurzname der Aufgabe kann NICHT im Nachhinein bearbeitet werden! Der Kurzname muss mit einem Buchstaben beginnen, darf keine speziellen Zeichen enthalten und muss mindestens 3 Zeichen lang sein!",
+                    "invalidKey": "Der eingegebene Kurzname und Titel von {{ number }} Programmieraufgabe(n) existiert bereits. Wähle für die betreffende(n) Aufgabe(n) bitte einen anderen Kurznamen und Titel",
+                    "invalidExerciseConfiguration": "Ein oder mehrere eingegebene Werte liegen außerhalb des zulässigen Bereiches. Bitte passe diese vor dem Import an",
+                    "isImporting": "Der Import der Aufgabengruppen und der Aufgaben wird derzeit auf dem Server durchgeführt. Dies kann etwas Zeit in Anspruch nehmen.",
+                    "infoProgrammingExercises": "Programmieraufgaben werden mit der Konfiguration der ursprünglichen importiert. Für eine Änderung der Abgaberichtline, für das Aktivieren / Deaktivieren der Statischen Code Analyse oder dem neu erstellen der Build-Pläne kann diese Import Funktionalität nicht genutzt werden. In diesem Fall bitte die Aufgaben einzeln in die Aufgabengruppen importieren."
+                },
+                "importSuccessful": "Import der Aufgabengruppen erfolgreich!"
             },
             "delete": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Alle zugehörigen Elemente werden gelöscht, inklusive der Klausuren der Studierenden. Diese Aktion kann NICHT rückgängig gemacht werden!",
@@ -391,6 +450,7 @@
             },
             "checklist": {
                 "title": "Checkliste für die Durchführung von Prüfungen",
+                "conductionPlannedFromTo": "Die Durchführung ist vom {{ from }} bis {{ to }} geplant",
                 "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Prüfungen. Genauere Erklärungen zu den einzelnen Schritten können in der",
                 "linkDescription": "externen Dokumentation",
                 "introductionPart2": "eingesehen werden.",
@@ -398,6 +458,10 @@
                 "description": "Beschreibung",
                 "status": "Aktueller Status",
                 "goTo": "Seite",
+                "testExam": {
+                    "title": "Checkliste für die Durchführung von Testklausuren",
+                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren"
+                },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",
                     "exerciseGroups": "Erstellung mindestens einer Aufgabengruppe mit mindestens einer Aufgabe",
@@ -464,6 +528,10 @@
         "examMonitoring": {
             "title": "Klausur Live Statistik",
             "description": "Die Klausur Live Statistik Ansicht erlaubt es die Aktionen der Studierenden während der Klausur einzusehen und die daraus resultierenden Daten zu analysieren.",
+            "enable": "Aktivieren",
+            "disable": "Deaktivieren",
+            "enabled": "Aktiviert",
+            "disabled": "Deaktiviert",
             "table": {
                 "panelHeader": "Klausurinformationen",
                 "panelDescriptionHeader": "Details",
@@ -481,11 +549,28 @@
                 "exercises": {
                     "title": "Aufgaben",
                     "description": "Zeigt die aktuelle Teilnahme der Studierenden in den jeweilgen Aufgaben und Aufgabengruppen",
-                    "groups": "Aufgabengruppen"
+                    "groups": "Aufgabengruppen",
+                    "exercisesPerPage": "{{number}} Aufgaben pro Seite",
+                    "showAllExercises": "Zeige alle Aufgaben",
+                    "id": "Aufgabe",
+                    "exerciseGroup.id": "Aufgabengruppe",
+                    "_title": "Titel",
+                    "type": "Typ"
                 },
                 "activity-log": {
                     "title": "Aktivitäten",
-                    "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden"
+                    "description": "Zeigt die vergangenen und aktuellen Aktivitäten der aktiven Studierenden",
+                    "actionsPerPage": "{{number}} Aktionen pro Seite",
+                    "showAllActions": "Zeige alle Aktionen",
+                    "studentExamId": "Klausur-ID",
+                    "timestamp": "Zeitpunkt",
+                    "type": "Kategorie",
+                    "detail": "Detail",
+                    "forced": "Erzwungen",
+                    "failed": "Fehlgeschlagen",
+                    "automatically": "Automatisch",
+                    "connected": "Verbunden",
+                    "notConnected": "Nicht verbunden"
                 }
             },
             "charts": {
@@ -516,6 +601,18 @@
                     "xAxisLabel": "Anzahl an Ansichten",
                     "yAxisLabel": "Aufgaben",
                     "legendTitle": "Aufgaben"
+                },
+                "exercise-detail-current-chart": {
+                    "name": "Aktuelle Anzahl der Studierenden",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Studierenden"
+                },
+                "exercise-detail-navigation-chart": {
+                    "name": "Anzahl der ersten Ansichten",
+                    "tooltip": "Zeigt die aktuelle Anzahl der ersten Ansichten"
+                },
+                "exercise-detail-submission-chart": {
+                    "name": "Anzahl der Ersteinreichungen",
+                    "tooltip": "Zeigt die aktuelle Anzahl an Ersteinreichungen"
                 },
                 "average-actions-chart": {
                     "name": "Durchschnittliche Anzahl an Aktionen pro Studierende",
@@ -578,12 +675,26 @@
                 "generateStudentExams": "Generiere Klausuren: ",
                 "registered": "{{ generated }} von {{ total }}",
                 "notRegistered": "Keine Studierenden registriert",
-                "prepareExerciseStart": "Bereite Aufgabenstart vor"
+                "prepareExerciseStart": "Bereite Aufgabenstart vor",
+                "testExam": {
+                    "examPreparation": "Testklausur-Vorbereitung",
+                    "maxPointsCorrect": "Klausurpunkte richtig eingestellt auf ",
+                    "maxPointsWrong": "Klausurpunkte sollten {{ points }} sein"
+                }
             },
             "conduction": {
                 "examConduction": "Klausurdurchführung",
+                "workingTime": "Arbeitszeit",
                 "startedExams": "Begonnene Klausuren",
-                "submittedExams": "Abgegebene Klausuren"
+                "submittedExams": "Abgegebene Klausuren",
+                "conductionSuspended": "Studierende können keine Klausur starten!",
+                "testExam": {
+                    "examConduction": "Testklausur-Durchführung",
+                    "numberOfStudents": "Anzahl der Studierenden",
+                    "startedExams": "Begonnene Testklausuren",
+                    "submittedExams": "Abgegebene Testklausuren",
+                    "conductionSuspended": "Studierende können keine Testklausuren starten!"
+                }
             },
             "correction": {
                 "examCorrection": "Klausurkorrektur",

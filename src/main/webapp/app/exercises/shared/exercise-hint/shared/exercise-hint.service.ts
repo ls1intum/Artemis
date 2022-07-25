@@ -1,9 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, tap } from 'rxjs';
 
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 
 export type ExerciseHintResponse = HttpResponse<ExerciseHint>;
 
@@ -28,14 +29,6 @@ export interface IExerciseHintService {
      * @param exerciseHintId Id of exercise hint to delete
      */
     delete(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<void>>;
-
-    /**
-     * Fetches the title of the exercise hint with the given id
-     * @param exerciseHintId the id of the hint
-     * @param exerciseId Id of the exercise of which to retrieve the hint's title
-     * @return the title of the hint in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<string>>;
 
     /**
      * Finds an exercise hint
@@ -82,7 +75,7 @@ export interface IExerciseHintService {
 export class ExerciseHintService implements IExerciseHintService {
     public resourceUrl = SERVER_API_URL + 'api/programming-exercises';
 
-    constructor(protected http: HttpClient) {}
+    constructor(protected http: HttpClient, private entityTitleService: EntityTitleService) {}
 
     /**
      * Creates an exercise hint
@@ -90,7 +83,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to create
      */
     create(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise = ExerciseService.convertExerciseDatesFromClient(exerciseHint.exercise!);
         exerciseHint.type = HintType.TEXT;
         if (exerciseHint.exercise.categories) {
             exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
@@ -104,7 +97,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseHint Exercise hint to update
      */
     update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
-        exerciseHint.exercise = ExerciseService.convertDateFromClient(exerciseHint.exercise!);
+        exerciseHint.exercise = ExerciseService.convertExerciseDatesFromClient(exerciseHint.exercise!);
         exerciseHint.exercise.categories = ExerciseService.stringifyExerciseCategories(exerciseHint.exercise);
         return this.http.put<ExerciseHint>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHint.id}`, exerciseHint, { observe: 'response' });
     }
@@ -119,22 +112,14 @@ export class ExerciseHintService implements IExerciseHintService {
     }
 
     /**
-     * Fetches the title of the exercise hint with the given id
-     * @param exerciseHintId the id of the hint
-     * @param exerciseId Id of the exercise of which to retrieve the hint's title
-     * @return the title of the hint in an HttpResponse, or an HttpErrorResponse on error
-     */
-    getTitle(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}/title`, { observe: 'response', responseType: 'text' });
-    }
-
-    /**
      * Finds an exercise hint
      * @param exerciseId Id of the exercise of which to retrieve the hint
      * @param exerciseHintId Id of exercise hint to find
      */
     find(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse> {
-        return this.http.get<ExerciseHint>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}`, { observe: 'response' });
+        return this.http
+            .get<ExerciseHint>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}`, { observe: 'response' })
+            .pipe(tap((res) => this.sendTitlesToEntityTitleService(res?.body, exerciseId)));
     }
 
     /**
@@ -143,7 +128,9 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseId Id of exercise
      */
     findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
-        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`, { observe: 'response' });
+        return this.http
+            .get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`, { observe: 'response' })
+            .pipe(tap((res) => res?.body?.forEach((hint) => this.sendTitlesToEntityTitleService(hint, exerciseId))));
     }
 
     /**
@@ -151,7 +138,9 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseId Id of the exercise of which to retrieve all available exercise hints
      */
     getAvailableExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
-        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints/available`, { observe: 'response' });
+        return this.http
+            .get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints/available`, { observe: 'response' })
+            .pipe(tap((res) => res?.body?.forEach((hint) => this.sendTitlesToEntityTitleService(hint, exerciseId))));
     }
 
     /**
@@ -159,7 +148,9 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseId Id of the exercise of which to retrieve all activated exercise hints
      */
     getActivatedExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
-        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints/activated`, { observe: 'response' });
+        return this.http
+            .get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints/activated`, { observe: 'response' })
+            .pipe(tap((res) => res?.body?.forEach((hint) => this.sendTitlesToEntityTitleService(hint, exerciseId))));
     }
 
     /**
@@ -179,5 +170,9 @@ export class ExerciseHintService implements IExerciseHintService {
      */
     rateExerciseHint(exerciseId: number, exerciseHintId: number, ratingValue: number): Observable<HttpResponse<void>> {
         return this.http.post<void>(`${this.resourceUrl}/${exerciseId}/exercise-hints/${exerciseHintId}/rating/${ratingValue}`, {}, { observe: 'response' });
+    }
+
+    private sendTitlesToEntityTitleService(hint: ExerciseHint | undefined | null, exerciseId: number) {
+        this.entityTitleService.setTitle(EntityType.HINT, [hint?.id, exerciseId], hint?.title);
     }
 }
