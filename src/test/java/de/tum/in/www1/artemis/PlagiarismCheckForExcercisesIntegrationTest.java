@@ -31,7 +31,7 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
         studentAmount = 25;
 
         course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(submissionText, studentAmount);
-        database.addCourseWithOneFinishedModelingExerciseAndSimilarSubmissions(submissionModel, studentAmount, course);
+        database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(submissionModel, studentAmount, course);
 
     }
 
@@ -43,14 +43,26 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     public void testCheckPlagiarismResultForTextExercise() throws Exception {
+        var textExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
+        String path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
+        createAndTestPlagiarismResult(path);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void testCheckPlagiarismResultForModelingExercise() throws Exception {
+        var modelingExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.MODELING).findFirst().get();
+        String path = "/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism";
+        createAndTestPlagiarismResult(path);
+    }
+
+    private void createAndTestPlagiarismResult(String path) throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("similarityThreshold", "50");
         params.add("minimumScore", "0");
         params.add("minimumSize", "0");
 
-        var textExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
-        var plagiarismResultResponse = request.get("/api/text-exercises/" + textExercise.getId() + "/check-plagiarism",
-            HttpStatus.OK, PlagiarismResult.class, params);
+        var plagiarismResultResponse = request.get(path, HttpStatus.OK, PlagiarismResult.class, params);
 
         for (var comparison : plagiarismResultResponse.getComparisons()) {
             var submissionA = ((PlagiarismComparison<TextSubmissionElement>) comparison).getSubmissionA();
@@ -59,35 +71,9 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
             assertThat(submissionA).as("should have a submission A").isNotNull();
             assertThat(submissionB).as("should have a submission B").isNotNull();
 
-            assertThat(submissionA.getPlagiarismComparison()).as("should have a biderectional connection").isEqualTo(comparison);
-            assertThat(submissionB.getPlagiarismComparison()).as("should have a biderectional connection").isEqualTo(comparison);
+            assertThat(submissionA.getPlagiarismComparison()).as("should have a bidirectional connection").isEqualTo(comparison);
+            assertThat(submissionB.getPlagiarismComparison()).as("should have a bidirectional connection").isEqualTo(comparison);
         }
-
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCheckPlagiarismResultForModelingExercise() throws Exception {
-        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-        params.add("similarityThreshold", "50");
-        params.add("minimumScore", "0");
-        params.add("minimumSize", "0");
-
-        var modelingExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.MODELING).findFirst().get();
-        var plagiarismResultResponse = request.get("/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism",
-            HttpStatus.OK, PlagiarismResult.class, params);
-
-        for (var comparison : plagiarismResultResponse.getComparisons()) {
-            var submissionA = ((PlagiarismComparison<ModelingSubmissionElement>) comparison).getSubmissionA();
-            var submissionB = ((PlagiarismComparison<ModelingSubmissionElement>) comparison).getSubmissionB();
-
-            assertThat(submissionA).as("should have a submission A").isNotNull();
-            assertThat(submissionB).as("should have a submission B").isNotNull();
-
-            assertThat(submissionA.getPlagiarismComparison()).as("should have a biderectional connection").isEqualTo(comparison);
-            assertThat(submissionB.getPlagiarismComparison()).as("should have a biderectional connection").isEqualTo(comparison);
-        }
-
     }
 
 }

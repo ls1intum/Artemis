@@ -1985,14 +1985,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneFinishedModelingExerciseAndSimilarSubmissions(String similarSubmissionModel, int studentsAmount, Course existingCourse) {
-        Course course = null;
-
-        if(existingCourse == null){
-            course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-            addUsers(studentsAmount,1,1,1);
-        }
-        else course = existingCourse;
+    public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String similarSubmissionModel, int studentsAmount, Course course) {
 
         // Add text exercise to the course
         ModelingExercise exercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
