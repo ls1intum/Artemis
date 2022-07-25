@@ -24,17 +24,20 @@ public class ProgrammingLanguageConfiguration {
      * @param buildImages the map of languages to build images
      */
     public void setImages(Map<String, String> buildImages) {
+        // Make sure all keys loaded by environment variables in SpringBoot are converted to UpperCase
+        final Map<String, String> normalizedBuildImages = new HashMap<>();
+        buildImages.forEach((key, value) -> normalizedBuildImages.put(key.toUpperCase(Locale.ROOT), value));
         // Get all language names ordered by its length (needed to be sure that check of project type works)
         var allLanguageNames = Arrays.stream(ProgrammingLanguage.values()).map(Enum::name).sorted(Comparator.comparing(String::length).reversed()).toList();
         var allProjectTypes = Arrays.stream(ProjectType.values()).map(Enum::name).toList();
 
         // Check that all programming languages are present
-        if (!allLanguageNames.stream().allMatch(buildImages::containsKey)) {
-            var missing = allLanguageNames.stream().filter(programmingLanguage -> !buildImages.containsKey(programmingLanguage)).toList();
+        if (!allLanguageNames.stream().allMatch(normalizedBuildImages::containsKey)) {
+            var missing = allLanguageNames.stream().filter(programmingLanguage -> !normalizedBuildImages.containsKey(programmingLanguage)).toList();
             throw new IllegalArgumentException("Not all Build Images for Programming Languages are set in configuration. Missing: " + missing);
         }
         // Check that all defined project types do exist. Schema: {Language}_{ProjectType}
-        for (var definedKey : buildImages.keySet()) {
+        for (var definedKey : normalizedBuildImages.keySet()) {
             if (allLanguageNames.contains(definedKey)) {
                 continue;
             }
@@ -46,7 +49,7 @@ public class ProgrammingLanguageConfiguration {
                 throw new IllegalArgumentException("Could not find ProjectType: " + projectType + " in Definition: " + definedKey);
             }
         }
-        this.images = buildImages;
+        this.images = normalizedBuildImages;
     }
 
     /**

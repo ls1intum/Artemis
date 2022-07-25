@@ -4,13 +4,6 @@
 
 cd /opt/artemis || exit 1
 
-if [ -z "$(ls -A config)" ]; then
-   echo "Config is Empty .. copying default ones .."
-   cp -n -a /defaults/artemis/. config/
-else
-   echo "Config is not empty .. not copying default configs .."
-fi
-
 # Ensure at least the directories are owned by artemis. "-R" takes too long
 chown artemis:artemis config data
 
