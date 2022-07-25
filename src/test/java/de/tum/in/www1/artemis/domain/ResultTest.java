@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
-public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     Result result = new Result();
 
@@ -31,7 +31,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     ResultRepository resultRepository;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);
         Feedback feedback2 = new Feedback();
@@ -50,34 +50,30 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void evaluateFeedback() {
+    void evaluateFeedback() {
         double maxPoints = 7.0;
         result.setFeedbacks(feedbackList);
 
         double calculatedPoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatedPoints, maxPoints);
-        result.setScore(totalPoints, maxPoints);
-        result.setResultString(totalPoints, maxPoints);
+        result.setScore(100.0 * totalPoints / maxPoints);
 
         assertThat(result.getScore()).isEqualTo(5.0 / maxPoints * 100, Offset.offset(offsetByTenThousandth));
-        assertThat(result.getResultString()).isEqualToIgnoringCase("5 of 7 points");
     }
 
     @Test
-    public void evaluateFeedback_totalScoreGreaterMaxScore() {
+    void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatePoints, 4.0);
-        result.setScore(totalPoints, 4.0);
-        result.setResultString(totalPoints, 4.0);
+        result.setScore(100.0 * totalPoints / 4.0);
 
         assertThat(result.getScore()).isEqualTo(100);
-        assertThat(result.getResultString()).isEqualToIgnoringCase("4 of 4 points");
     }
 
     @Test
-    public void evaluateFeedback_negativeTotalScore() {
+    void evaluateFeedback_negativeTotalScore() {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(-2.5);
         Feedback feedback2 = new Feedback();
@@ -89,15 +85,13 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
         double totalPoints = resultRepository.constrainToRange(calculatePoints, 7.0);
-        result.setScore(totalPoints, 7.0);
-        result.setResultString(totalPoints, 7.0);
+        result.setScore(100.0 * totalPoints / 7.0);
 
         assertThat(result.getScore()).isZero();
-        assertThat(result.getResultString()).isEqualToIgnoringCase("0 of 7 points");
     }
 
     @Test
-    public void filterSensitiveFeedbacksAfterDueDate() {
+    void filterSensitiveFeedbacksAfterDueDate() {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
@@ -108,7 +102,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void filterSensitiveFeedbacksBeforeDueDate() {
+    void filterSensitiveFeedbacksBeforeDueDate() {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);

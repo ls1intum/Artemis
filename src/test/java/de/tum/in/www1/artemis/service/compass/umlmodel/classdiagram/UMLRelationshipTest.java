@@ -12,7 +12,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 
-public class UMLRelationshipTest {
+class UMLRelationshipTest {
 
     private UMLRelationship relationship;
 

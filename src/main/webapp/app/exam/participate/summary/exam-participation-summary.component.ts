@@ -59,8 +59,10 @@ export class ExamParticipationSummaryComponent implements OnInit {
     private courseId: number;
 
     isTestRun = false;
+    isTestExam = false;
 
     testRunConduction = false;
+    testExamConduction = false;
 
     examWithOnlyIdAndStudentReviewPeriod: Exam;
 
@@ -84,7 +86,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     ngOnInit(): void {
         // flags required to display test runs correctly
         this.isTestRun = this.route.snapshot.url[1]?.toString() === 'test-runs';
+        this.isTestExam = this.studentExam.exam!.testExam!;
         this.testRunConduction = this.isTestRun && this.route.snapshot.url[3]?.toString() === 'conduction';
+        this.testExamConduction = this.isTestExam && !this.studentExam.submitted;
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         if (!this.studentExam?.exam?.id) {
             throw new Error('studentExam.exam.id should be present to fetch grade info');
@@ -119,9 +123,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     get resultsPublished() {
-        if (this.testRunConduction) {
+        if (this.testRunConduction || this.testExamConduction) {
             return false;
-        } else if (this.isTestRun) {
+        } else if (this.isTestRun || this.isTestExam) {
             return true;
         }
         return this.studentExam?.exam?.publishResultsDate && dayjs(this.studentExam.exam.publishResultsDate).isBefore(dayjs());
@@ -198,7 +202,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
      * the review dates are set and the review start date has passed.
      */
     isAfterStudentReviewStart() {
-        if (this.isTestRun) {
+        if (this.isTestRun || this.isTestExam) {
             return true;
         }
         if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {
@@ -208,7 +212,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
     }
 
     isBeforeStudentReviewEnd() {
-        if (this.isTestRun) {
+        if (this.isTestRun || this.isTestExam) {
             return true;
         }
         if (this.studentExam?.exam?.examStudentReviewStart && this.studentExam.exam.examStudentReviewEnd) {

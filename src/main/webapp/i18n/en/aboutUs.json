@@ -20,10 +20,10 @@
             }
         },
         "exam": {
-            "text": "<b>Exam mode:</b> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
+            "text": "<a href={{ examModeUrl }}>Exam mode:</a> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
         },
         "grading": {
-            "text": "<b>Grading:</b> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
+            "text": "<a href={{ gradingUrl }}>Grading:</a> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
         },
         "assessment": {
             "text": "<b>Assessment:</b> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
@@ -32,13 +32,13 @@
             "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
         },
         "notifications": {
-            "text": "<b>Notifications:</b> Customizable for web and email. Users can enable and disable different notification types."
+            "text": "<a href = {{ notificationsURL }}>Notifications:</a> Customizable for web and email. Users can enable and disable different notification types."
         },
         "teamExercises": {
-            "text": "<b>Team exercises</b> with real time collaboration and dedicated tutors per team."
+            "text": "<a href={{ teamExercisesUrl }}>Team exercises</a> with real time collaboration and dedicated tutors per team."
         },
         "lectures": {
-            "text": "<b>Lectures:</b> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
+            "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
         },
         "integratedMarkdownEditor": {
             "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links."
@@ -47,21 +47,23 @@
             "text": "<a href={{ plagiarismChecksUrl }}>Plagiarism checks</a> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
         },
         "learningAnalytics": {
-            "text": "<b>Learning analytics:</b> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
+            "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."
         },
         "scalable": {
-            "text": "<b>Scalable</b> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
+            "text": "<a href={{ scalingUrl }}>Scalable</a> to multiple courses with thousands of students. Configure additional build agents in the continuous integration environment."
         },
         "highUserSatisfaction": {
-            "text": "<b>High user satisfaction:</b> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
+            "text": "<a href={{ userExperienceUrl }}>High user satisfaction:</a> Artemis is easy to use and provides guided tutorials. Developers focus on usability, user experience, and performance."
         },
         "customizable": {
-            "text": "<b>Customizable:</b> It supports multiple instructors, editors, and tutors per course and allows instructors to customize many course settings."
+            "text": "<a href={{ customizableUrl }}>Customizable:</a> It supports multiple Instructors, Editors, and Tutors per course and allows Instructors to customize many course settings."
         },
         "openSource": {
-            "text": "<b>Open-source:</b> Free to use with a large community and many active maintainers."
+            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Free to use with a large community and many active maintainers."
         },
         "getInTouch": "Get in touch",
-        "contributors": "Individual contributors"
+        "contributors": "Individual contributors",
+        "projectManager": "Project Manager",
+        "website": "Website"
     }
 }

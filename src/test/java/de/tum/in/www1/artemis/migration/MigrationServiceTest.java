@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.migration.entries.TestChangeEntry20211215_231800;
 import de.tum.in.www1.artemis.migration.entries.TestChangeEntry20211216_231800;
 import de.tum.in.www1.artemis.repository.MigrationChangeRepository;
 
-public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private MigrationRegistry registry;
@@ -47,7 +47,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     private ConfigurableEnvironment environmentMock;
 
     @BeforeEach
-    public void setUp() throws NoSuchAlgorithmException {
+    void setUp() throws NoSuchAlgorithmException {
         applicationReadyEventMock = mock(ApplicationReadyEvent.class);
         ConfigurableApplicationContext configurableApplicationContextMock = mock(ConfigurableApplicationContext.class);
         environmentMock = mock(ConfigurableEnvironment.class);
@@ -57,12 +57,12 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @AfterEach
-    public void teardown() {
+    void teardown() {
         database.resetDatabase();
     }
 
     @Test
-    public void testValidMap() {
+    void testValidMap() {
         SortedMap<Integer, MigrationEntry> map = new TreeMap<>();
         map.put(0, createEntryMock("20211214_231800", "Valid Author"));
         map.put(1, createEntryMock("20211215_231800", "Valid Author"));
@@ -73,7 +73,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testBrokenEntriesFail() {
+    void testBrokenEntriesFail() {
         SortedMap<Integer, MigrationEntry> map = new TreeMap<>();
         map.put(0, createEntryMock("20211216_231800", null));
         assertThat(migrationService.checkIntegrity(map)).isFalse();
@@ -92,7 +92,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testDuplicateDateStringsFail() {
+    void testDuplicateDateStringsFail() {
         SortedMap<Integer, MigrationEntry> map = new TreeMap<>();
         map.put(0, createEntryMock("20211216_231800", "Valid Author"));
         map.put(1, createEntryMock("20211216_231800", "Valid Author"));
@@ -100,7 +100,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testWrongOrderDateStringsFail() {
+    void testWrongOrderDateStringsFail() {
         SortedMap<Integer, MigrationEntry> map = new TreeMap<>();
         map.put(0, createEntryMock("20211217_231800", "Valid Author"));
         map.put(1, createEntryMock("20211216_231800", "Valid Author"));
@@ -108,7 +108,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testStartDateEmptyFail() {
+    void testStartDateEmptyFail() {
         SortedMap<Integer, MigrationEntry> map = new TreeMap<>();
         map.put(0, createEntryMock(null, "Valid Author"));
         map.put(1, createEntryMock("", "Valid Author"));
@@ -118,7 +118,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testNoExecutionOnTestEnvironment() throws IOException, NoSuchAlgorithmException, MigrationIntegrityException {
+    void testNoExecutionOnTestEnvironment() throws IOException, NoSuchAlgorithmException, MigrationIntegrityException {
         reset(environmentMock);
         when(environmentMock.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))).thenReturn(true);
 
@@ -128,20 +128,20 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testStopApplicationOnFailedIntegrityCheck() {
+    void testStopApplicationOnFailedIntegrityCheck() {
         assertThatThrownBy(() -> migrationService.execute(applicationReadyEventMock, createInvalidChangelog())).isInstanceOf(MigrationIntegrityException.class);
         assertThat(migrationChangeRepository.findAll()).isEmpty();
     }
 
     @Test
-    public void testExecutionSucceedsForEmptyMap() throws MigrationIntegrityException {
+    void testExecutionSucceedsForEmptyMap() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, new TreeMap<>());
 
         assertThat(migrationChangeRepository.findAll()).isEmpty();
     }
 
     @Test
-    public void testExecutionSucceedsForRegularMap() throws MigrationIntegrityException {
+    void testExecutionSucceedsForRegularMap() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, createValidChangelog());
 
         List<MigrationChangelog> changelogs = migrationChangeRepository.findAll();
@@ -152,7 +152,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testExecutionOnMultipleStarts() throws MigrationIntegrityException {
+    void testExecutionOnMultipleStarts() throws MigrationIntegrityException {
         migrationService.execute(applicationReadyEventMock, createValidChangelog());
 
         List<MigrationChangelog> changelogs = migrationChangeRepository.findAll();
@@ -171,7 +171,7 @@ public class MigrationServiceTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    public void testSplitExecution() throws MigrationIntegrityException {
+    void testSplitExecution() throws MigrationIntegrityException {
         SortedMap<Integer, Class<? extends MigrationEntry>> changelog = new TreeMap<>();
         changelog.put(0, TestChangeEntry20211214_231800.class);
         changelog.put(1, TestChangeEntry20211215_231800.class);

@@ -13,8 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;
@@ -182,9 +182,10 @@ describe('Participation Service', () => {
     }));
 
     it('should update a Participation', fakeAsync(() => {
-        const exercise = new TextExercise(new Course(), undefined);
+        const exercise = new ProgrammingExercise(new Course(), undefined);
         exercise.id = 1;
         exercise.categories = undefined;
+        exercise.exampleSolutionPublicationDate = undefined;
 
         const returnedFromService = Object.assign(
             {

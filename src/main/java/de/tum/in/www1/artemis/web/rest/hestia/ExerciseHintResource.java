@@ -144,8 +144,8 @@ public class ExerciseHintResource {
             throw new BadRequestAlertException("Exercise hints for exams are currently not supported", EXERCISE_HINT_ENTITY_NAME, "exerciseHintNotSupported");
         }
 
-        if (exerciseHint instanceof CodeHint codeHint && hintBeforeSaving instanceof CodeHint codeHintBeforeSaving) {
-            codeHint.setSolutionEntries(codeHintBeforeSaving.getSolutionEntries());
+        if (exerciseHint instanceof CodeHint codeHint && codeHint.getSolutionEntries() != null) {
+            codeHintService.updateSolutionEntriesForCodeHint(codeHint);
         }
         exerciseHint.setExerciseHintActivations(hintBeforeSaving.getExerciseHintActivations());
         ExerciseHint result = exerciseHintRepository.save(exerciseHint);
@@ -163,13 +163,8 @@ public class ExerciseHintResource {
     @GetMapping("programming-exercises/{exerciseId}/exercise-hints/{exerciseHintId}/title")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<String> getHintTitle(@PathVariable Long exerciseId, @PathVariable Long exerciseHintId) {
-        final var hint = exerciseHintRepository.findByIdElseThrow(exerciseHintId);
-
-        if (hint.getExercise() == null || !hint.getExercise().getId().equals(exerciseId)) {
-            throw new ConflictException("An exercise hint can only be retrieved if the exerciseIds match.", EXERCISE_HINT_ENTITY_NAME, "exerciseIdsMismatch");
-        }
-
-        return hint.getTitle() == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(hint.getTitle());
+        var title = exerciseHintService.getExerciseHintTitle(exerciseId, exerciseHintId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**

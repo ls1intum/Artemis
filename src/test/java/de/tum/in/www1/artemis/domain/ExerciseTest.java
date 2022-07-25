@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.ExerciseService;
 
-public class ExerciseTest {
+class ExerciseTest {
 
     @Mock
     private Exercise exercise;
@@ -63,7 +63,7 @@ public class ExerciseTest {
     private ExerciseService exerciseService;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         MockitoAnnotations.openMocks(this);
 
         exercise = mock(Exercise.class, CALLS_REAL_METHODS);
@@ -96,13 +96,13 @@ public class ExerciseTest {
     }
 
     @Test
-    public void findRelevantParticipation() {
+    void findRelevantParticipation() {
         StudentParticipation relevantParticipation = exercise.findRelevantParticipation(studentParticipations);
         assertThat(relevantParticipation).isEqualTo(studentParticipationInitialized);
     }
 
     @Test
-    public void findRelevantParticipation_inactiveParticipation() {
+    void findRelevantParticipation_inactiveParticipation() {
         StudentParticipation desiredStudentParticipationInactive = mock(StudentParticipation.class);
         when(desiredStudentParticipationInactive.getInitializationState()).thenReturn(InitializationState.INACTIVE);
         when(desiredStudentParticipationInactive.getExercise()).thenReturn(exercise);
@@ -113,13 +113,13 @@ public class ExerciseTest {
     }
 
     @Test
-    public void findRelevantParticipation_empty() {
+    void findRelevantParticipation_empty() {
         StudentParticipation relevantParticipation = exercise.findRelevantParticipation(new ArrayList<>());
         assertThat(relevantParticipation).isNull();
     }
 
     @Test
-    public void findRelevantParticipation_modelingExercise() {
+    void findRelevantParticipation_modelingExercise() {
         ModelingExercise modelingExercise = mock(ModelingExercise.class, CALLS_REAL_METHODS);
 
         when(studentParticipationInitialized.getExercise()).thenReturn(modelingExercise);
@@ -132,7 +132,7 @@ public class ExerciseTest {
     }
 
     @Test
-    public void findRelevantParticipation_textExercise() {
+    void findRelevantParticipation_textExercise() {
         TextExercise textExercise = mock(TextExercise.class, CALLS_REAL_METHODS);
 
         when(studentParticipationInitialized.getExercise()).thenReturn(textExercise);
@@ -147,7 +147,7 @@ public class ExerciseTest {
     /* Primarily the functionality of findAppropriateSubmissionByResults() is tested with the following tests */
 
     @Test
-    public void filterForCourseDashboard_filterSensitiveInformation() {
+    void filterForCourseDashboard_filterSensitiveInformation() {
         Result ratedResultTmp = new Result();
         ratedResultTmp.setAssessor(mock(User.class));
         ratedResultTmp.setRated(true);
@@ -162,13 +162,13 @@ public class ExerciseTest {
     }
 
     @Test
-    public void filterForCourseDashboard_nullParticipations() {
+    void filterForCourseDashboard_nullParticipations() {
         exerciseService.filterForCourseDashboard(exercise, null, "student", true);
         assertThat(exercise.getStudentParticipations()).isNull();
     }
 
     @Test
-    public void filterForCourseDashboard_nullSubmissions() {
+    void filterForCourseDashboard_nullSubmissions() {
         when(studentParticipationInactive.getSubmissions()).thenReturn(null);
         when(studentParticipationFinished.getSubmissions()).thenReturn(null);
         when(studentParticipationUninitialized.getSubmissions()).thenReturn(null);
@@ -179,13 +179,13 @@ public class ExerciseTest {
     }
 
     @Test
-    public void filterForCourseDashboard_emptyParticipations() {
+    void filterForCourseDashboard_emptyParticipations() {
         exerciseService.filterForCourseDashboard(exercise, new ArrayList<>(), "student", true);
         assertThat(exercise.getStudentParticipations()).isNull();
     }
 
     @Test
-    public void filterForCourseDashboard_emptySubmissions() {
+    void filterForCourseDashboard_emptySubmissions() {
         when(studentParticipationInactive.getSubmissions()).thenReturn(new HashSet<>());
         when(studentParticipationFinished.getSubmissions()).thenReturn(new HashSet<>());
         when(studentParticipationUninitialized.getSubmissions()).thenReturn(new HashSet<>());
@@ -196,13 +196,13 @@ public class ExerciseTest {
     }
 
     @Test
-    public void filterForCourseDashboard_submissionsWithRatedResultsOrder() {
+    void filterForCourseDashboard_submissionsWithRatedResultsOrder() {
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
     @Test
-    public void filterForCourseDashboard_submissionsWithUnratedResultsOrder() {
+    void filterForCourseDashboard_submissionsWithUnratedResultsOrder() {
         when(submission1.getLatestResult()).thenReturn(unratedResult);
         when(submission2.getLatestResult()).thenReturn(unratedResult);
         when(submission3.getLatestResult()).thenReturn(unratedResult);
@@ -212,7 +212,7 @@ public class ExerciseTest {
     }
 
     @Test
-    public void filterForCourseDashboard_submissionWithoutResultsOrder() {
+    void filterForCourseDashboard_submissionWithoutResultsOrder() {
         when(submission1.getLatestResult()).thenReturn(null);
         when(submission2.getLatestResult()).thenReturn(null);
         when(submission3.getLatestResult()).thenReturn(null);
@@ -222,7 +222,7 @@ public class ExerciseTest {
     }
 
     @Test
-    public void filterForCourseDashboard_submissionWithMixedResults() {
+    void filterForCourseDashboard_submissionWithMixedResults() {
         when(submission1.getLatestResult()).thenReturn(ratedResult);
         when(submission2.getLatestResult()).thenReturn(null);
         when(submission3.getLatestResult()).thenReturn(unratedResult);
@@ -232,7 +232,7 @@ public class ExerciseTest {
     }
 
     @Test
-    public void getExamViaExerciseGroupOrCourseMember_withExamExercise() {
+    void getExamViaExerciseGroupOrCourseMember_withExamExercise() {
         Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
 
         when(examExercise.isExamExercise()).thenReturn(true);
@@ -244,7 +244,7 @@ public class ExerciseTest {
     }
 
     @Test
-    public void getExamViaExerciseGroupOrCourseMember_withoutExamExercise() {
+    void getExamViaExerciseGroupOrCourseMember_withoutExamExercise() {
         Exercise examExercise = mock(Exercise.class, CALLS_REAL_METHODS);
         when(examExercise.isExamExercise()).thenReturn(false);
         Exam result = examExercise.getExamViaExerciseGroupOrCourseMember();

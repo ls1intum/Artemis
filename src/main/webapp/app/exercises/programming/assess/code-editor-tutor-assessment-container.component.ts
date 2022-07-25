@@ -12,7 +12,6 @@ import { Result } from 'app/entities/result.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DomainType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
-import { cloneDeep } from 'lodash-es';
 import { Complaint } from 'app/entities/complaint.model';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
@@ -32,11 +31,11 @@ import { DiffMatchPatch } from 'diff-match-patch-typescript';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { TemplateProgrammingExerciseParticipation } from 'app/entities/participation/template-programming-exercise-participation.model';
 import { getPositiveAndCappedTotalScore } from 'app/exercises/shared/exercise/exercise.utils';
-import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { getExerciseDashboardLink, getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { getLatestSubmissionResult, SubmissionType } from 'app/entities/submission.model';
 import { isAllowedToModifyFeedback } from 'app/assessment/assessment.service';
 import { faTimesCircle } from '@fortawesome/free-solid-svg-icons';
+import { cloneDeep } from 'lodash-es';
 
 @Component({
     selector: 'jhi-code-editor-tutor-assessment',
@@ -212,6 +211,9 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.domainService.setDomain([DomainType.PARTICIPATION, submission.participation!]);
         this.submission = submission;
         this.manualResult = getLatestSubmissionResult(this.submission);
+        if (!this.manualResult?.submission) {
+            this.manualResult!.submission = this.submission;
+        }
         this.participation = submission.participation!;
         this.exercise = this.participation.exercise as ProgrammingExercise;
         /**
@@ -543,36 +545,12 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
         this.manualResult!.feedbacks = [...this.referencedFeedback, ...this.unreferencedFeedback, ...this.automaticFeedback];
     }
 
-    private createResultString(totalScore: number, maxScore: number | undefined): string {
-        return `${roundValueSpecifiedByCourseSettings(totalScore, getCourseFromExercise(this.exercise))} of ${roundValueSpecifiedByCourseSettings(
-            maxScore,
-            getCourseFromExercise(this.exercise),
-        )} points`;
-    }
-
     private setAttributesForManualResult(totalScore: number) {
         this.setFeedbacksForManualResult();
         // Manual result is always rated and has feedback
         this.manualResult!.rated = true;
         this.manualResult!.hasFeedback = true;
-        // Append the automatic result string which the manual result holds with the score part, to create the manual result string
-        // In the case no automatic result exists before the assessment, the resultString is undefined. In this case we just want to see the manual assessment.
-        const resultStringExtension = this.createResultString(totalScore, this.exercise.maxPoints);
-        if (this.isFirstAssessment) {
-            if (this.manualResult!.resultString) {
-                this.manualResult!.resultString += ', ' + resultStringExtension;
-            } else {
-                this.manualResult!.resultString = resultStringExtension;
-            }
-            this.isFirstAssessment = false;
-        } else {
-            /* Result string has the following structure e.g: "1 of 13 passed, 2 issues, 10 of 100 points" The last part of the result string has to be updated,
-             * as the points the student has achieved have changed
-             */
-            const resultStringParts: string[] = this.manualResult!.resultString!.split(', ');
-            resultStringParts[resultStringParts.length - 1] = resultStringExtension;
-            this.manualResult!.resultString = resultStringParts.join(', ');
-        }
+        this.isFirstAssessment = false;
 
         this.manualResult!.score = (totalScore / this.exercise.maxPoints!) * 100;
         // This is done to update the result string in result.component.ts

@@ -3,10 +3,10 @@ import { NgModule } from '@angular/core';
 import { TranslateModule } from '@ngx-translate/core';
 import { ExerciseScoresChartComponent } from 'app/overview/visualizations/exercise-scores-chart/exercise-scores-chart.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { LineChartModule } from '@swimlane/ngx-charts';
 
 @NgModule({
-    imports: [TranslateModule, CommonModule, ArtemisSharedModule, NgxChartsModule],
+    imports: [TranslateModule, CommonModule, ArtemisSharedModule, LineChartModule],
     declarations: [ExerciseScoresChartComponent],
     exports: [ExerciseScoresChartComponent],
 })
