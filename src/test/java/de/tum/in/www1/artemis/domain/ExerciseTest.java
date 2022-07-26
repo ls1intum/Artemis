@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
-import java.time.Period;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -45,13 +44,13 @@ class ExerciseTest {
     private StudentParticipation studentParticipationUninitialized;
 
     @Mock
-    private Submission submission1;
+    private ProgrammingSubmission submission1;
 
     @Mock
-    private Submission submission2;
+    private ProgrammingSubmission submission2;
 
     @Mock
-    private Submission submission3;
+    private ProgrammingSubmission submission3;
 
     @Mock
     private Result ratedResult;
@@ -81,16 +80,24 @@ class ExerciseTest {
 
         studentParticipations = Arrays.asList(studentParticipationInactive, studentParticipationFinished, studentParticipationUninitialized, studentParticipationInitialized);
 
-        when(submission1.getSubmissionDate()).thenReturn(ZonedDateTime.now());
-        when(submission2.getSubmissionDate()).thenReturn(ZonedDateTime.now().plus(Period.ofDays(1)));
-        when(submission3.getSubmissionDate()).thenReturn(ZonedDateTime.now().plus(Period.ofDays(2)));
+        submission1 = new ProgrammingSubmission();
+        submission2 = new ProgrammingSubmission();
+        submission3 = new ProgrammingSubmission();
+
+        submission1.setSubmissionDate(ZonedDateTime.now());
+        submission2.setSubmissionDate(ZonedDateTime.now().plusDays(1));
+        submission3.setSubmissionDate(ZonedDateTime.now().plusDays(2));
+
+        submission1.setResults(List.of(ratedResult));
+        submission2.setResults(List.of(ratedResult));
+        submission3.setResults(List.of(ratedResult));
+
+        submission1.setCommitHash("aaaaa");
+        submission2.setCommitHash("bbbbb");
+        submission3.setCommitHash("ccccc");
 
         when(ratedResult.isRated()).thenReturn(true);
         when(unratedResult.isRated()).thenReturn(false);
-
-        when(submission1.getLatestResult()).thenReturn(ratedResult);
-        when(submission2.getLatestResult()).thenReturn(ratedResult);
-        when(submission3.getLatestResult()).thenReturn(ratedResult);
 
         when(studentParticipationInitialized.getSubmissions()).thenReturn(Set.of(submission1, submission2, submission3));
     }
@@ -152,9 +159,9 @@ class ExerciseTest {
         ratedResultTmp.setAssessor(mock(User.class));
         ratedResultTmp.setRated(true);
 
-        when(submission1.getLatestResult()).thenReturn(ratedResultTmp);
-        when(submission2.getLatestResult()).thenReturn(ratedResultTmp);
-        when(submission3.getLatestResult()).thenReturn(ratedResultTmp);
+        submission1.setResults(List.of(ratedResultTmp));
+        submission2.setResults(List.of(ratedResultTmp));
+        submission3.setResults(List.of(ratedResultTmp));
 
         exerciseService.filterForCourseDashboard(exercise, studentParticipations, "student", true);
         Result result = exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next().getLatestResult();
@@ -203,9 +210,9 @@ class ExerciseTest {
 
     @Test
     void filterForCourseDashboard_submissionsWithUnratedResultsOrder() {
-        when(submission1.getLatestResult()).thenReturn(unratedResult);
-        when(submission2.getLatestResult()).thenReturn(unratedResult);
-        when(submission3.getLatestResult()).thenReturn(unratedResult);
+        submission1.setResults(List.of(unratedResult));
+        submission2.setResults(List.of(unratedResult));
+        submission3.setResults(List.of(unratedResult));
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
@@ -213,19 +220,33 @@ class ExerciseTest {
 
     @Test
     void filterForCourseDashboard_submissionWithoutResultsOrder() {
-        when(submission1.getLatestResult()).thenReturn(null);
-        when(submission2.getLatestResult()).thenReturn(null);
-        when(submission3.getLatestResult()).thenReturn(null);
+        submission1.setResults(List.of());
+        submission2.setResults(List.of());
+        submission3.setResults(List.of());
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission3));
     }
 
     @Test
+    void filterForCourseDashboard_submissionWithoutResultsAndSameCommitHashOrder() {
+        submission1.commitHash("same");
+        submission2.commitHash("same");
+        submission3.commitHash("same");
+
+        submission1.setId(42L);
+        submission2.setId(21L);
+        submission3.setId(15L);
+
+        exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
+        assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));
+    }
+
+    @Test
     void filterForCourseDashboard_submissionWithMixedResults() {
-        when(submission1.getLatestResult()).thenReturn(ratedResult);
-        when(submission2.getLatestResult()).thenReturn(null);
-        when(submission3.getLatestResult()).thenReturn(unratedResult);
+        submission1.setResults(List.of(ratedResult));
+        submission2.setResults(List.of());
+        submission3.setResults(List.of(unratedResult));
 
         exerciseService.filterForCourseDashboard(exercise, filterForCourseDashboard_prepareParticipations(), "student", true);
         assertThat(exercise.getStudentParticipations().iterator().next().getSubmissions()).isEqualTo(Set.of(submission1));
