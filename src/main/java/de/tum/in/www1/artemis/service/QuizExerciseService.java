@@ -453,12 +453,10 @@ public class QuizExerciseService {
         final var searchTerm = search.getSearchTerm();
         final Page<QuizExercise> exercisePage;
         if (authCheckService.isAdmin(user)) {
-            exercisePage = quizExerciseRepository
-                    .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
-                            searchTerm, searchTerm, searchTerm, searchTerm, pageable);
+            exercisePage = quizExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
         }
         else {
-            exercisePage = quizExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            exercisePage = quizExerciseRepository.queryBySearchTermInCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
