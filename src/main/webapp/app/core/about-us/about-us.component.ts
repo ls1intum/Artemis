@@ -37,7 +37,7 @@ export class AboutUsComponent implements OnInit {
         ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/' }],
         ['lectures', { lecturesUrl: 'https://docs.artemis.ase.in.tum.de/user/lectures/' }],
         ['integratedMarkdownEditor', {}],
-         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.ase.in.tum.de/user/plagiarism-check/' }],
+        ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.ase.in.tum.de/user/plagiarism-check/' }],
         ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.ase.in.tum.de/user/learning-analytics/' }],
         ['scalable', { scalingUrl: 'https://docs.artemis.ase.in.tum.de/user/scaling/' }],
         ['highUserSatisfaction', { userExperienceUrl: 'https://docs.artemis.ase.in.tum.de/user/user-experience/' }],
