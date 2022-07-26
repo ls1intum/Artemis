@@ -37,9 +37,6 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
     @EntityGraph(type = LOAD, attributePaths = { "exampleSubmissions", "teamAssignmentConfig", "categories", "exampleSubmissions.submission.results" })
     Optional<ModelingExercise> findWithEagerExampleSubmissionsById(@Param("exerciseId") Long exerciseId);
 
-    Page<ModelingExercise> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
-            String partialTitle, String partialCourseTitle, String partialExamTitle, String partialExamCourseTitle, Pageable pageable);
-
     @Query("select modelingExercise from ModelingExercise modelingExercise left join fetch modelingExercise.exampleSubmissions exampleSubmissions left join fetch exampleSubmissions.submission submission left join fetch submission.results results left join fetch results.feedbacks left join fetch results.assessor left join fetch modelingExercise.teamAssignmentConfig where modelingExercise.id = :#{#exerciseId}")
     Optional<ModelingExercise> findByIdWithExampleSubmissionsAndResults(@Param("exerciseId") Long exerciseId);
 
@@ -47,25 +44,34 @@ public interface ModelingExerciseRepository extends JpaRepository<ModelingExerci
      * Query which fetches all the modeling exercises for which the user is instructor in the course and matching the search criteria.
      * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
      *
-     * @param partialTitle exercise title search term
-     * @param partialCourseTitle course title search term
-     * @param groups user groups
-     * @param pageable Pageable
+     * @param searchTerm search term
+     * @param groups     user groups
+     * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
-            SELECT me FROM ModelingExercise me
-            WHERE (me.id IN
-                    (SELECT courseMe.id FROM ModelingExercise courseMe
-                    WHERE (courseMe.course.instructorGroupName IN :groups OR courseMe.course.editorGroupName IN :groups)
-                    AND (courseMe.title LIKE %:partialTitle% OR courseMe.course.title LIKE %:partialCourseTitle%))
-                OR me.id IN
-                    (SELECT examMe.id FROM ModelingExercise examMe
-                    WHERE (examMe.exerciseGroup.exam.course.instructorGroupName IN :groups OR examMe.exerciseGroup.exam.course.editorGroupName IN :groups)
-                    AND (examMe.title LIKE %:partialTitle% OR examMe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
+                SELECT exercise FROM ModelingExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM ModelingExercise courseExercise
+                    WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+                    AND (CONCAT(courseExercise.id, '') LIKE %:searchTerm% OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM ModelingExercise examExercise
+                    WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (CONCAT(examExercise.id, '') LIKE %:searchTerm% OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
-    Page<ModelingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialCourseTitle") String partialCourseTitle,
-            @Param("groups") Set<String> groups, Pageable pageable);
+    Page<ModelingExercise> queryBySearchTermInCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT exercise FROM ModelingExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM ModelingExercise courseExercise
+                    WHERE (CONCAT(courseExercise.id, '') LIKE %:searchTerm% OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM ModelingExercise examExercise
+                    WHERE (CONCAT(examExercise.id, '') LIKE %:searchTerm% OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                        """)
+    Page<ModelingExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     /**
      * Get all modeling exercises that need to be scheduled: Those must satisfy one of the following requirements:
