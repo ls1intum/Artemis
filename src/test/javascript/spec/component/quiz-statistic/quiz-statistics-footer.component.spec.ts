@@ -101,13 +101,13 @@ describe('QuizExercise Statistic Footer Component', () => {
 
     it('should return remaining Time', () => {
         // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toEqual('4 min');
+        expect(comp.relativeTimeText(220)).toBe('4 min');
 
         // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
+        expect(comp.relativeTimeText(130)).toBe('2 min 10 s');
 
         // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toEqual('50 s');
+        expect(comp.relativeTimeText(50)).toBe('50 s');
     });
 
     describe('test previous statistic', () => {

@@ -157,16 +157,16 @@ describe('UsersImportButtonComponent', () => {
         expect(rowNumbersOrNull).toBe('2');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
-        expect(rowNumbersOrNull).toBe(undefined);
+        expect(rowNumbersOrNull).toBeUndefined();
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
-        expect(rowNumbersOrNull).toBe(undefined);
+        expect(rowNumbersOrNull).toBeUndefined();
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
         expect(rowNumbersOrNull).toBe('2, 3');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([]);
-        expect(rowNumbersOrNull).toBe(undefined);
+        expect(rowNumbersOrNull).toBeUndefined();
     });
 
     it('should import correctly', () => {
@@ -206,7 +206,7 @@ describe('UsersImportButtonComponent', () => {
         expect(component.isSubmitDisabled).toBeFalse();
         const importButton = fixture.debugElement.query(By.css('#import'));
 
-        expect(importButton).not.toBe(null);
+        expect(importButton).not.toBeNull();
 
         importButton.nativeElement.click();
 

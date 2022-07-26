@@ -61,7 +61,7 @@
         }, {
             "files": ["src/test/javascript/**"],
             "plugins": ["jest"], // todo: add "jest-extended"
-            "extends": ["plugin:jest/recommended"], // todo: add "plugin:jest-extended/all"
+            "extends": ["plugin:jest/recommended", "plugin:jest/style"], // todo: add "plugin:jest-extended/all"
             "rules": { "jest/expect-expect": "off", "jest/no-conditional-expect": "off" }
         }
     ]

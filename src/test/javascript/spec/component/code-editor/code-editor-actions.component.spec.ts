@@ -60,8 +60,8 @@ describe('CodeEditorActionsComponent', () => {
         fixture.detectChanges();
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
         const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
-        expect(submitButton).not.toBe(null);
-        expect(refreshButton).not.toBe(null);
+        expect(submitButton).not.toBeNull();
+        expect(refreshButton).not.toBeNull();
     });
 
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);

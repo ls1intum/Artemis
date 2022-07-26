@@ -58,7 +58,7 @@ describe('System Notification Component', () => {
             tick(500);
             expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
             expect(systemNotificationComponent.notification).toEqual(notification);
-            expect(systemNotificationComponent.alertClass).toEqual('alert-warning');
+            expect(systemNotificationComponent.alertClass).toBe('alert-warning');
             expect(systemNotificationComponent.alertIcon).toEqual(faExclamationTriangle);
         }));
 
@@ -69,7 +69,7 @@ describe('System Notification Component', () => {
             tick(500);
             expect(getActiveNotificationSpy).toHaveBeenCalledOnce();
             expect(systemNotificationComponent.notification).toEqual(notification);
-            expect(systemNotificationComponent.alertClass).toEqual('alert-info');
+            expect(systemNotificationComponent.alertClass).toBe('alert-info');
             expect(systemNotificationComponent.alertIcon).toEqual(faInfoCircle);
         }));
     });
@@ -86,7 +86,7 @@ describe('System Notification Component', () => {
             systemNotificationComponent.ngOnInit();
             tick(500);
             expect(connectionStateSubscribeSpy).toHaveBeenCalledOnce();
-            expect(systemNotificationComponent.websocketChannel).toEqual('/topic/system-notification');
+            expect(systemNotificationComponent.websocketChannel).toBe('/topic/system-notification');
             expect(subscribeSpy).toHaveBeenCalledOnce();
             expect(receiveSpy).toHaveBeenCalledOnce();
         }));
@@ -98,7 +98,7 @@ describe('System Notification Component', () => {
             systemNotificationComponent.ngOnInit();
             tick(500);
             expect(receiveSpy).toHaveBeenCalledOnce();
-            expect(systemNotificationComponent.notification).toEqual(undefined);
+            expect(systemNotificationComponent.notification).toBeUndefined();
             expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
         }));
 
@@ -111,7 +111,7 @@ describe('System Notification Component', () => {
             expect(subscribeSpy).toHaveBeenCalledOnce();
             expect(receiveSpy).toHaveBeenCalledOnce();
             expect(systemNotificationComponent.notification).toEqual(notification);
-            expect(systemNotificationComponent.alertClass).toEqual('alert-warning');
+            expect(systemNotificationComponent.alertClass).toBe('alert-warning');
             expect(systemNotificationComponent.alertIcon).toEqual(faExclamationTriangle);
         }));
 
@@ -126,9 +126,9 @@ describe('System Notification Component', () => {
             expect(subscribeSpy).toHaveBeenCalledOnce();
             expect(receiveSpy).toHaveBeenCalledOnce();
             expect(getActiveNotificationSpy).toHaveBeenCalledTimes(2);
-            expect(systemNotificationComponent.notification).toEqual(undefined);
-            expect(systemNotificationComponent.alertClass).toEqual(undefined);
-            expect(systemNotificationComponent.alertIcon).toEqual(undefined);
+            expect(systemNotificationComponent.notification).toBeUndefined();
+            expect(systemNotificationComponent.alertClass).toBeUndefined();
+            expect(systemNotificationComponent.alertIcon).toBeUndefined();
         }));
 
         it('should update notification when same notification is received via websocket', fakeAsync(() => {

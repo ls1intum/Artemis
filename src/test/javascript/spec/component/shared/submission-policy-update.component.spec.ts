@@ -37,7 +37,7 @@ describe('Submission Policy Update Form Component', () => {
         fixture.detectChanges();
         tick();
 
-        expect(expectedProgrammingExercise.submissionPolicy).toBe(undefined);
+        expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         // We revert the enum values, since 'none' is the default type for the type picker. Therefore we
@@ -49,7 +49,7 @@ describe('Submission Policy Update Form Component', () => {
             tick();
 
             expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(type);
-            expect(expectedProgrammingExercise.submissionPolicy?.id).toBe(undefined);
+            expect(expectedProgrammingExercise.submissionPolicy?.id).toBeUndefined();
         }
     }));
 

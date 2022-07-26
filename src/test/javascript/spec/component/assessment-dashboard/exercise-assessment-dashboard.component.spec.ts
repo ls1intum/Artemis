@@ -397,7 +397,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBe(undefined);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeFalse();
         expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
     });
@@ -408,11 +408,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).toBeCalledTimes(2);
+        expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBe(undefined);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeTrue();
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
@@ -459,7 +459,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should set exam and stats properties', () => {
-        expect(comp.exam).toBe(undefined);
+        expect(comp.exam).toBeUndefined();
 
         comp.loadAll();
         expect(comp.exercise.id).toBe(modelingExercise.id);
@@ -469,7 +469,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should calculateStatus DRAFT', () => {
-        expect(modelingSubmission.latestResult).toBe(undefined);
+        expect(modelingSubmission.latestResult).toBeUndefined();
         expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBeTrue();
     });
 
@@ -486,7 +486,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
         });
 
-        expect(comp.tutorParticipation).toBe(undefined);
+        expect(comp.tutorParticipation).toBeUndefined();
         expect(comp.isLoading).toBeFalse();
 
         comp.readInstruction();
@@ -631,7 +631,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             };
             const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
 
-            expect(complaintQuery).toBe(undefined);
+            expect(complaintQuery).toBeUndefined();
         });
 
         it('Expect present complaint to delegate the correct query', () => {
@@ -663,7 +663,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.submissionsWithComplaints = fakeDTOList;
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
-            expect(submissionToView).toBe(undefined);
+            expect(submissionToView).toBeUndefined();
         });
 
         it('Expect submission without results to gain an empty list', () => {

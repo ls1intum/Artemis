@@ -417,10 +417,10 @@ describe('Course Management Update Component', () => {
             expect(comp.courseForm.controls['instructorGroupName'].value).toBe('artemis-dev');
             expect(comp.customizeGroupNames).toBeTrue();
             comp.changeCustomizeGroupNames();
-            expect(comp.courseForm.controls['studentGroupName'].value).toBe(undefined);
-            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBe(undefined);
-            expect(comp.courseForm.controls['editorGroupName'].value).toBe(undefined);
-            expect(comp.courseForm.controls['instructorGroupName'].value).toBe(undefined);
+            expect(comp.courseForm.controls['studentGroupName'].value).toBeUndefined();
+            expect(comp.courseForm.controls['teachingAssistantGroupName'].value).toBeUndefined();
+            expect(comp.courseForm.controls['editorGroupName'].value).toBeUndefined();
+            expect(comp.courseForm.controls['instructorGroupName'].value).toBeUndefined();
             expect(comp.customizeGroupNames).toBeFalse();
         });
     });

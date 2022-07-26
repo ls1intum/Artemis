@@ -121,9 +121,9 @@ describe('GuidedTourComponent', () => {
 
         it('should highlight dots', () => {
             const highlightDot = guidedTourComponentFixture.debugElement.query(By.css('.current'));
-            expect(highlightDot).not.toBe(null);
+            expect(highlightDot).not.toBeNull();
             const nSmallDot = guidedTourComponentFixture.debugElement.queryAll(By.css('.n-small'));
-            expect(nSmallDot).not.toBe(null);
+            expect(nSmallDot).not.toBeNull();
         });
 
         it('should not trigger the guided tour with the right arrow key', () => {

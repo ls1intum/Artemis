@@ -36,18 +36,18 @@ describe('ModelingExplanationEditorComponent', () => {
             const textareaDebugElement = fixture.debugElement.query(By.css('textarea'));
             expect(textareaDebugElement).not.toBeNull();
             const textarea = textareaDebugElement.nativeElement;
-            expect(textarea.value).toEqual('Initial Explanation');
+            expect(textarea.value).toBe('Initial Explanation');
             textarea.value = 'Test';
             textarea.dispatchEvent(new Event('input'));
-            expect(comp.explanation).toEqual('Test');
-            expect(textarea.value).toEqual('Test');
+            expect(comp.explanation).toBe('Test');
+            expect(textarea.value).toBe('Test');
 
             // Test tab event
             textarea.dispatchEvent(new KeyboardEvent('keydown', { key: 'Tab' }));
             textarea.dispatchEvent(new Event('input'));
             fixture.detectChanges();
-            expect(textarea.value).toEqual('Test\t');
-            expect(comp.explanation).toEqual('Test\t');
+            expect(textarea.value).toBe('Test\t');
+            expect(comp.explanation).toBe('Test\t');
         });
     });
 });

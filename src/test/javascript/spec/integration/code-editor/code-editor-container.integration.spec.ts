@@ -235,7 +235,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.buildOutput.isBuilding).toBeFalse();
 
         // instructions
-        expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.instructions).toBeDefined(); // Have to use this as it's a component
 
         // called by build output
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
@@ -310,7 +310,7 @@ describe('CodeEditorContainerIntegration', () => {
         expect(container.buildOutput.isBuilding).toBeFalse();
 
         // instructions
-        expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.instructions).toBeDefined(); // Have to use this as it's a component
 
         // called by build output & instructions
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();

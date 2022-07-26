@@ -81,7 +81,7 @@ describe('User Settings Service', () => {
             expect(resultMap.has(type2)).toBeTrue();
             expect(resultMap.has(type3)).toBeTrue();
 
-            expect(resultMap.size).toEqual(3);
+            expect(resultMap.size).toBe(3);
 
             expect(resultMap.get(type1)).toEqual(type1ActivationStatus);
             expect(resultMap.get(type2)).toEqual(type2ActivationStatus);

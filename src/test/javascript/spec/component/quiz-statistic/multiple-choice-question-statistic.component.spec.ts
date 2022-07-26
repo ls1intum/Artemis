@@ -80,7 +80,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
-            expect(comp.websocketChannelForData).toEqual('/topic/statistic/22');
+            expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
         });
 
         it('should not load Quiz if not authorised', () => {

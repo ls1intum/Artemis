@@ -172,7 +172,7 @@ describe('User Settings Service', () => {
                 let resultingSettings: NotificationSetting[];
                 resultingSettings = userSettingsService.loadSettingsSuccessAsIndividualSettings(notificationSettingsForTesting, userSettingsCategory) as NotificationSetting[];
 
-                expect(resultingSettings.length).toEqual(expectedNotificationSettings.length);
+                expect(resultingSettings).toHaveLength(expectedNotificationSettings.length);
                 checkIfProvidedNotificationSettingsArePartOfExpectedSettings(resultingSettings, expectedNotificationSettings);
             });
         });

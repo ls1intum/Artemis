@@ -95,7 +95,7 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
             expect(teams).toStrictEqual(mockFileTeamsConverted);
             expect(comp.loading).toBeFalse();
-            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');
             expect(getElementStub).toHaveBeenCalledOnce();
             expect(control.value).toBe('');
@@ -135,7 +135,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         it('should set import file correctly for empty file', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');
             expect(changeDetectorDetectChangesSpy).not.toHaveBeenCalled();
         });
@@ -159,7 +159,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         it('should throw error', () => {
             const invalidFileStudents = [...mockFileStudents];
             invalidFileStudents[0].teamName = '1invalidTeamName';
-            expect(() => comp.convertTeams(invalidFileStudents)).toThrowError();
+            expect(() => comp.convertTeams(invalidFileStudents)).toThrow();
         });
     });
 });

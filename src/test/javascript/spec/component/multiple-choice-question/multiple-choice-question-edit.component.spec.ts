@@ -159,7 +159,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
     });
 
     function expectCleanupQuestion() {
-        expect(component.question.answerOptions?.length).toBe(0);
+        expect(component.question.answerOptions).toHaveLength(0);
         expect(component.question.text).toBeUndefined();
         expect(component.question.explanation).toBeUndefined();
         expect(component.question.hint).toBeUndefined();

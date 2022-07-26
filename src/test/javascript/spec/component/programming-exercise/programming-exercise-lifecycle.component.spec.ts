@@ -113,7 +113,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
         comp.toggleAssessmentType();
 
         expect(comp.exercise.assessmentType).toBe(AssessmentType.AUTOMATIC);
-        expect(comp.exercise.assessmentDueDate).toBe(undefined);
+        expect(comp.exercise.assessmentDueDate).toBeUndefined();
     });
 
     it('should not cascade date changes when updateReleaseDate is called when readOnly is true', () => {
@@ -164,7 +164,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.releaseDate);
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate');
+        expect(alertSpy).toHaveBeenLastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsReleaseDate');
 
         exercise.dueDate = now.add(40, 'days');
         exercise.releaseDate = now.add(30, 'days');
@@ -172,7 +172,7 @@ describe('ProgrammingExerciseLifecycleComponent', () => {
 
         expect(comp.exercise.exampleSolutionPublicationDate).toEqual(exercise.dueDate);
         expect(alertSpy).toHaveBeenCalledTimes(2);
-        expect(alertSpy).lastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
+        expect(alertSpy).toHaveBeenLastCalledWith('artemisApp.programmingExercise.timeline.alertNewExampleSolutionPublicationDateAsDueDate');
     });
 
     it('should alert each distinct string only once', () => {

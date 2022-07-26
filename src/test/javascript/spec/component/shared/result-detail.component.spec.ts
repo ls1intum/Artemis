@@ -310,7 +310,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.feedbackList).toBe(undefined);
+        expect(comp.feedbackList).toBeUndefined();
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -321,7 +321,7 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.buildLogs).toBe(undefined);
+        expect(comp.buildLogs).toBeUndefined();
         expect(comp.isLoading).toBeFalse();
     });
 

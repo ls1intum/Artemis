@@ -48,27 +48,27 @@ describe('AssessmentInstructionsComponent', () => {
         } as ModelingExercise;
         const markdownSpy = jest.spyOn(markdownService, 'safeHtmlForMarkdown').mockReturnValue('sample text');
         comp.exerciseInput = modelingExercise;
-        expect(comp.sampleSolutionModel).not.toBe(undefined);
-        expect(comp.sampleSolutionDiagramType).not.toBe(undefined);
-        expect(comp.sampleSolutionExplanation).not.toBe(undefined);
+        expect(comp.sampleSolutionModel).toBeDefined();
+        expect(comp.sampleSolutionDiagramType).toBeDefined();
+        expect(comp.sampleSolutionExplanation).toBeDefined();
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
         const textExercise = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.TEXT } as TextExercise;
         comp.exerciseInput = textExercise;
-        expect(comp.sampleSolutionExplanation).not.toBe(undefined);
+        expect(comp.sampleSolutionExplanation).toBeDefined();
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
         const fileUploadExercise = { id: 1, exampleSolution: 'sample solution', type: ExerciseType.FILE_UPLOAD } as FileUploadExercise;
         comp.exerciseInput = fileUploadExercise;
-        expect(comp.sampleSolutionExplanation).not.toBe(undefined);
+        expect(comp.sampleSolutionExplanation).toBeDefined();
 
         comp.sampleSolutionExplanation = undefined;
         fixture.detectChanges();
         const programmingExercise = { id: 1, type: ExerciseType.PROGRAMMING } as ProgrammingExercise;
         comp.exerciseInput = programmingExercise;
-        expect(comp.sampleSolutionExplanation).toBe(undefined);
+        expect(comp.sampleSolutionExplanation).toBeUndefined();
 
         expect(markdownSpy).toHaveBeenCalledTimes(11);
     });

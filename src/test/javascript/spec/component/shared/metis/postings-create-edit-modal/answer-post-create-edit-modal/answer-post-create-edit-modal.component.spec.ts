@@ -48,14 +48,14 @@ describe('AnswerPostCreateEditModalComponent', () => {
     it('should init modal with correct content and title for answer post with id', () => {
         component.posting = metisResolvingAnswerPostUser1;
         component.ngOnInit();
-        expect(component.modalTitle).toEqual('artemisApp.metis.editPosting');
+        expect(component.modalTitle).toBe('artemisApp.metis.editPosting');
         expect(component.content).toEqual(metisResolvingAnswerPostUser1.content);
     });
 
     it('should init modal with correct content and title for answer post without id', () => {
         component.posting = metisAnswerPostToCreateUser1;
         component.ngOnInit();
-        expect(component.modalTitle).toEqual('artemisApp.metis.createModalTitleAnswer');
+        expect(component.modalTitle).toBe('artemisApp.metis.createModalTitleAnswer');
         expect(component.content).toEqual(metisAnswerPostToCreateUser1.content);
     });
 

@@ -437,7 +437,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).toBe(5);
+        expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -519,7 +519,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).toBe(5);
+        expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -557,7 +557,7 @@ describe('ExamScoresComponent', () => {
         comp.exportExamResults(testOptions);
 
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
-        expect(generatedRows.length).toBe(noOfSubmittedExercises);
+        expect(generatedRows).toHaveLength(noOfSubmittedExercises);
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,

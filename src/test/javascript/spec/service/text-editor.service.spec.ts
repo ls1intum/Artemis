@@ -23,7 +23,7 @@ describe('TextEditorService', () => {
     });
     it("Can detect that a French sentence isn't German or English", () => {
         const testString = "Il s'agit d'une courte phrase en français";
-        expect(textEditorService.predictLanguage(testString)).toBe(undefined);
+        expect(textEditorService.predictLanguage(testString)).toBeUndefined();
     });
     it('Can detect a short English string', () => {
         const testString = 'This is an English String';

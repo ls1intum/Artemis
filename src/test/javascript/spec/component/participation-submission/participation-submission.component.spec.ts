@@ -178,11 +178,11 @@ describe('ParticipationSubmissionComponent', () => {
 
         // check if delete button is available
         const deleteButton = debugElement.query(By.css('#deleteButton'));
-        expect(deleteButton).not.toBe(null);
+        expect(deleteButton).not.toBeNull();
 
         // check if the right amount of rows is visible
         const row = debugElement.query(By.css('#participationSubmissionTable'));
-        expect(row.nativeElement.children.length).toEqual(1);
+        expect(row.nativeElement.children).toHaveLength(1);
 
         fixture.destroy();
         flush();

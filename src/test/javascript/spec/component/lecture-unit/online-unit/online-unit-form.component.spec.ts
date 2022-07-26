@@ -155,7 +155,7 @@ describe('OnlineUnitFormComponent', () => {
         // THEN
         expect(getOnlineResourceStub).toHaveBeenCalledOnce();
         expect(onlineUnitFormComponent.sourceControl?.valid).toBeTrue();
-        expect(onlineUnitFormComponent.sourceControl?.value).toEqual('https://example.com');
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://example.com');
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);
         expect(onlineUnitFormComponent.descriptionControl?.value).toEqual(resourceDto.description);
     });

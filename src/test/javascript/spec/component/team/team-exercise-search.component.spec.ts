@@ -144,7 +144,7 @@ describe('Team Exercise Search Component', () => {
         comp.course.id = 1;
         comp.ignoreExercises = [];
 
-        expect(comp.exerciseOptions.length).toEqual(0);
+        expect(comp.exerciseOptions).toHaveLength(0);
 
         await comp.loadExerciseOptions().subscribe((exerciseOptions) => {
             expect(exerciseOptions).not.toBeNull();

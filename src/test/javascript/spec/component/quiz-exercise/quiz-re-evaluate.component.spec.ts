@@ -141,9 +141,9 @@ describe('QuizExercise Re-evaluate Component', () => {
 
     it('Should delete quiz question', () => {
         comp.ngOnInit();
-        expect(comp.quizExercise.quizQuestions!.length).toBe(2);
+        expect(comp.quizExercise.quizQuestions).toHaveLength(2);
         comp.deleteQuestion(comp.quizExercise.quizQuestions![0]);
-        expect(comp.quizExercise.quizQuestions!.length).toBe(1);
+        expect(comp.quizExercise.quizQuestions).toHaveLength(1);
     });
 
     it('Should update and reset quiz questions', () => {
