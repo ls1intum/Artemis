@@ -5,7 +5,10 @@ import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom
 
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.*;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.BadRequestException;
@@ -33,6 +36,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
@@ -78,6 +82,8 @@ public class StudentExamResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
@@ -85,7 +91,7 @@ public class StudentExamResource {
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
             ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
-            ExamMonitoringScheduleService examMonitoringScheduleService) {
+            ExamMonitoringScheduleService examMonitoringScheduleService, InstanceMessageSendService instanceMessageSendService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -100,6 +106,7 @@ public class StudentExamResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -192,7 +199,7 @@ public class StudentExamResource {
         studentExam.setWorkingTime(workingTime);
         var savedStudentExam = studentExamRepository.save(studentExam);
 
-        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+        instanceMessageSendService.sendExamMonitoringSchedule(examId);
 
         return ResponseEntity.ok(savedStudentExam);
     }

@@ -86,15 +86,15 @@ public class ExamResource {
 
     private final StudentExamRepository studentExamRepository;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
-
     private final ExamImportService examImportService;
+
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
-            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamMonitoringScheduleService examMonitoringScheduleService,
-            ExamImportService examImportService) {
+            ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamImportService examImportService,
+            ExamMonitoringScheduleService examMonitoringScheduleService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -108,8 +108,8 @@ public class ExamResource {
         this.tutorParticipationRepository = tutorParticipationRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.studentExamRepository = studentExamRepository;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.examImportService = examImportService;
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
     }
 
     /**
@@ -140,11 +140,10 @@ public class ExamResource {
         Exam result = examRepository.save(exam);
 
         if (result.isMonitoring()) {
-            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
         }
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + result.getId())).body(result);
     }
 
     /**
@@ -184,10 +183,10 @@ public class ExamResource {
         Exam result = examRepository.save(updatedExam);
 
         if (updatedExam.isMonitoring()) {
-            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
         }
         else {
-            examMonitoringScheduleService.cancelExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
         }
         examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), updatedExam.isMonitoring());
 
@@ -239,7 +238,7 @@ public class ExamResource {
 
         // Step 5: Set Exam Monitoring
         if (examCopied.isMonitoring()) {
-            examMonitoringScheduleService.scheduleExamActivitySave(examCopied.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(examCopied.getId());
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examCopied.getId()))
@@ -630,7 +629,7 @@ public class ExamResource {
 
         if (exam.isMonitoring()) {
             // Cancel schedule of exam monitoring
-            examMonitoringScheduleService.cancelExamActivitySave(examId);
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
         }
 
         examService.delete(examId);
@@ -655,7 +654,7 @@ public class ExamResource {
 
         if (exam.isMonitoring()) {
             // Cancel schedule of exam monitoring
-            examMonitoringScheduleService.cancelExamActivitySave(examId);
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(examId);
         }
 
         examService.reset(exam.getId());
@@ -664,7 +663,7 @@ public class ExamResource {
 
         if (returnExam.isMonitoring()) {
             // Schedule exam monitoring
-            examMonitoringScheduleService.scheduleExamActivitySave(examId);
+            instanceMessageSendService.sendExamMonitoringSchedule(examId);
         }
 
         return ResponseEntity.ok(returnExam);
@@ -742,7 +741,7 @@ public class ExamResource {
         }
 
         // Reschedule after creation (possible longer working time)
-        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+        instanceMessageSendService.sendExamMonitoringSchedule(examId);
 
         log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
         return ResponseEntity.ok().body(studentExams);
@@ -783,7 +782,7 @@ public class ExamResource {
         }
 
         // Reschedule after creation (possible longer working time)
-        examMonitoringScheduleService.scheduleExamActivitySave(examId);
+        instanceMessageSendService.sendExamMonitoringSchedule(examId);
 
         log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
         return ResponseEntity.ok().body(studentExams);
