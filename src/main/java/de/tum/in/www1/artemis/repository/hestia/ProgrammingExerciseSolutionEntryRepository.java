@@ -41,6 +41,15 @@ public interface ProgrammingExerciseSolutionEntryRepository extends JpaRepositor
         return findByIdWithTestCaseAndProgrammingExercise(entryId).orElseThrow(() -> new EntityNotFoundException("Programming Exercise Solution Entry", entryId));
     }
 
+    @Query("""
+            SELECT se
+            FROM ProgrammingExerciseSolutionEntry se
+            LEFT JOIN FETCH se.testCase tc
+            LEFT JOIN FETCH tc.exercise pe
+            WHERE pe.id = :exerciseId
+            """)
+    Set<ProgrammingExerciseSolutionEntry> findByExerciseIdWithTestCases(@Param("exerciseId") long exerciseId);
+
     /**
      * Gets a solution entry with its test cases and programming exercise
      *
