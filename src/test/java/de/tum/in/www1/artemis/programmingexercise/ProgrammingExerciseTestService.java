@@ -505,7 +505,7 @@ public class ProgrammingExerciseTestService {
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
         // Check that the tasks were imported correctly (see #5474)
-        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSize(sourceExercise.getTasks().size());
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
 
         // TODO: check why the assertions do not work correctly
         // Assert correct creation of test cases
