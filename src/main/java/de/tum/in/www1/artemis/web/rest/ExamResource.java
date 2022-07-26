@@ -689,8 +689,7 @@ public class ExamResource {
         var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (exam.isTestExam()) {
-            // TODO: change to BadRequestAlertException
-            throw new AccessForbiddenException("Add student to exam is only allowed for real exams");
+            throw new BadRequestAlertException("Add student to exam is only allowed for real exams", ENTITY_NAME, "addStudentOnlyForRealExams");
         }
 
         var student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin)
@@ -809,8 +808,7 @@ public class ExamResource {
         }
         var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         if (exam.isTestExam()) {
-            // TODO: change to BadRequestAlertException
-            throw new AccessForbiddenException("Evaluate quiz exercises is only allowed for real exams");
+            throw new BadRequestAlertException("Evaluate quiz exercises is only allowed for real exams", ENTITY_NAME, "evaluateQuizExercisesOnlyForRealExams");
         }
 
         Integer numOfEvaluatedExercises = examService.evaluateQuizExercises(exam);
@@ -901,7 +899,13 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        examRegistrationService.addAllStudentsOfCourseToExam(courseId, examId);
+        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            throw new BadRequestAlertException("Registration of course students is only allowed for real exams", ENTITY_NAME, "AddCourseStudentsOnlyForRealExams");
+        }
+
+        examRegistrationService.addAllStudentsOfCourseToExam(courseId, exam);
         return ResponseEntity.ok().body(null);
     }
 
@@ -929,7 +933,13 @@ public class ExamResource {
             throw new EntityNotFoundException("user", studentLogin);
         }
 
-        examRegistrationService.unregisterStudentFromExam(examId, withParticipationsAndSubmission, optionalStudent.get());
+        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new BadRequestAlertException("Deletion of users is only allowed for real exams", ENTITY_NAME, "unregisterStudentsOnlyForRealExams");
+        }
+
+        examRegistrationService.unregisterStudentFromExam(exam, withParticipationsAndSubmission, optionalStudent.get());
         return ResponseEntity.ok().body(null);
     }
 
@@ -951,7 +961,13 @@ public class ExamResource {
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
-        examRegistrationService.unregisterAllStudentFromExam(examId, withParticipationsAndSubmission);
+        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+
+        if (exam.isTestExam()) {
+            throw new BadRequestAlertException("Unregistration is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
+        }
+
+        examRegistrationService.unregisterAllStudentFromExam(exam, withParticipationsAndSubmission);
         return ResponseEntity.ok().body(null);
     }
 

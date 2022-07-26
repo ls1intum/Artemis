@@ -562,25 +562,19 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param examId  the exam for which the StudentExam should be fetched / created
+     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
-    public StudentExam generateTestExam(Long examId, User student) {
+    public StudentExam generateTestExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
-        Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-
-        if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-            // TODO: move to resource and change to BadRequestAlertException
-            throw new AccessForbiddenException("The requested Exam is no test exam and thus no student exam can be created");
-        }
         long start = System.nanoTime();
-        StudentExam studentExam = generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+        StudentExam studentExam = generateIndividualStudentExam(exam, student);
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
 
-        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), examId);
+        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
 

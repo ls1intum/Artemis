@@ -547,8 +547,7 @@ public class StudentExamResource {
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
-            // TODO: change to BadRequestAlertException
-            throw new AccessForbiddenException("Start exercises is only allowed for real exams");
+            throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
         }
 
         examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
