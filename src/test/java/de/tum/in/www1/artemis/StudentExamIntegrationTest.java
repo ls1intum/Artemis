@@ -1023,6 +1023,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 }
                 else if (exercise instanceof QuizExercise quizExercise) {
                     // TODO: move into its own function
+                    assertThat(quizExercise.getQuizQuestions()).hasSize(3);
                     quizExercise.getQuizQuestions().forEach(quizQuestion -> {
                         assertThat(quizQuestion.getQuizQuestionStatistic()).isNull();
                         assertThat(quizQuestion.getExplanation()).isNull();
@@ -1141,6 +1142,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String shortAnswerText = "New Short Answer Text";
         int saSpotIndex = 1;
         int mcSelectedOptionIndex = 0;
+        assertThat(quizExercise.getQuizQuestions()).hasSize(3);
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {
             if (quizQuestion instanceof DragAndDropQuestion) {
                 var submittedAnswer = new DragAndDropSubmittedAnswer();
@@ -1268,6 +1270,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
             if (exercise instanceof QuizExercise) {
+                assertThat(((QuizExercise) exercise).getQuizQuestions()).hasSize(3);
                 QuizSubmission submission = (QuizSubmission) exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next();
                 assertThat(submission.getScoreInPoints()).isNull();
                 submission.getSubmittedAnswers().forEach(submittedAnswer -> {
@@ -1321,6 +1324,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
             if (exercise instanceof QuizExercise) {
+                assertThat(((QuizExercise) exercise).getQuizQuestions()).hasSize(3);
                 QuizSubmission submission = (QuizSubmission) exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next();
                 assertThat(submission.getScoreInPoints()).isNotNull();
                 submission.getSubmittedAnswers().forEach(submittedAnswer -> {
@@ -2130,6 +2134,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(ZonedDateTime.now().plusSeconds(10).isAfter(studentExamForConduction.getStartedDate())).isTrue();
         assertThat(studentExamForConduction.getSubmissionDate()).isNull();
         assertThat(studentExamForConduction.getExercises()).hasSize(3);
+        QuizExercise quizExercise = (QuizExercise) studentExamForConduction.getExercises().get(2);
+        assertThat(quizExercise.getQuizQuestions()).hasSize(3);
 
         Map<User, List<Exercise>> exercisesOfUser = studentExamService.getExercisesOfUserMap(Set.of(studentExamForConduction));
         final var studentParticipations = studentParticipationRepository.findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(),
