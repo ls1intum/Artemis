@@ -275,8 +275,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -284,8 +284,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -293,8 +293,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -308,8 +308,8 @@ describe('ParticipationSubmissionComponent', () => {
             tick();
             fixture.destroy();
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(1);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });
@@ -331,8 +331,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -340,8 +340,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -349,8 +349,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -358,8 +358,8 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
@@ -373,8 +373,8 @@ describe('ParticipationSubmissionComponent', () => {
             tick();
             fixture.destroy();
             flush();
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
             expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });

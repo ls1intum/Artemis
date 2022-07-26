@@ -35,17 +35,17 @@ describe('PostingButtonComponent', () => {
         expect(button).toBeNull();
     });
 
-    it.skip('should show spinner if loading', () => {
+    it('should show spinner if loading', () => {
         component.buttonLoading = true;
         fixture.detectChanges();
         const button = getElement(debugElement, '.posting-btn-loading-icon');
-        expect(button.visible).toBeTrue();
+        expect(button.hasAttribute('hidden')).toBeFalse();
     });
 
-    it.skip('should not show spinner if not loading', () => {
+    it('should not show spinner if not loading', () => {
         component.buttonLoading = false;
         fixture.detectChanges();
         const button = getElement(debugElement, '.posting-btn-loading-icon');
-        expect(button.visible).toBeFalse();
+        expect(button.hasAttribute('hidden')).toBeTrue();
     });
 });
