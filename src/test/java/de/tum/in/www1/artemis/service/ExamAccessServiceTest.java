@@ -304,7 +304,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     void testCheckAndGetCourseAndExamAccessForConduction_registeredUser() {
         testExam1.setRegisteredUsers(Set.of());
         examRepository.save(exam1);
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
@@ -356,7 +356,7 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetExamInCourseElseThrow_realExam() {
-        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(AccessForbiddenException.class);
+        assertThatThrownBy(() -> examAccessService.getExamInCourseElseThrow(course1.getId(), exam1.getId())).isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
