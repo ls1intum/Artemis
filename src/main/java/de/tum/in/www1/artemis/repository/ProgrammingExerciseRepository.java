@@ -226,11 +226,11 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             WHERE (exercise.id IN
                     (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
                     WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
-                    AND (CONCAT(courseExercise.id, '') LIKE %:searchTerm% OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                    AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
                 OR exercise.id IN
                     (SELECT examExercise.id FROM ProgrammingExercise examExercise
                     WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
-                    AND (CONCAT(examExercise.id, '') LIKE %:searchTerm% OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                    AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
     Page<ProgrammingExercise> queryBySearchTermInCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
@@ -238,10 +238,10 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
             SELECT exercise FROM ProgrammingExercise exercise
             WHERE (exercise.id IN
                     (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
-                    WHERE (CONCAT(courseExercise.id, '') LIKE %:searchTerm% OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                    WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
                 OR exercise.id IN
                     (SELECT examExercise.id FROM ProgrammingExercise examExercise
-                    WHERE (CONCAT(examExercise.id, '') LIKE %:searchTerm% OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                    WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
     Page<ProgrammingExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 

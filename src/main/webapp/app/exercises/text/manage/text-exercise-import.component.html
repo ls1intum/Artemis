@@ -33,7 +33,7 @@
             <tbody>
                 <tr *ngFor="let exercise of content.resultsOnPage; trackBy: trackId" class="flex-row">
                     <td class="col-1">
-                        <ngb-highlight [result]="'' + exercise.id" [term]="searchTerm"></ngb-highlight>
+                        <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
                     </td>
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
