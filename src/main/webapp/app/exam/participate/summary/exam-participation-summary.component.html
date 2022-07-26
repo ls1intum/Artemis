@@ -13,10 +13,12 @@
     </h2>
 </div>
 <jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
-<div class="mb-4 text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
-    <a class="btn btn-success" style="cursor: default; pointer-events: none">
-        {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
-    </a>
+<div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
+    <div class="row justify-content-center">
+        <div class="alert alert-success col-12 col-lg-6" role="alert">
+            {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
+        </div>
+    </div>
 </div>
 <div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
     <jhi-exam-points-summary [studentExamWithGrade]="studentExamGradeInfoDTO"></jhi-exam-points-summary>
