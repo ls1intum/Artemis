@@ -1142,7 +1142,6 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         String shortAnswerText = "New Short Answer Text";
         int saSpotIndex = 1;
         int mcSelectedOptionIndex = 0;
-        assertThat(quizExercise.getQuizQuestions()).hasSize(3);
         quizExercise.getQuizQuestions().forEach(quizQuestion -> {
             if (quizQuestion instanceof DragAndDropQuestion) {
                 var submittedAnswer = new DragAndDropSubmittedAnswer();
