@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static java.util.stream.Collectors.toList;
 import static org.apache.commons.codec.digest.DigestUtils.sha1Hex;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +34,7 @@ import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ModelingExerciseUtilService;
 
-public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private TextExerciseRepository textExerciseRepository;
@@ -65,13 +64,13 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
     private ModelAssessmentKnowledgeService modelAssessmentKnowledgeService;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(10, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -82,7 +81,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateTextAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
+    void testCreateTextAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         int count = textAssessmentKnowledgeRepository.findAll().size();
@@ -98,7 +97,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
+    void testReuseTextAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         int exerciseCount = textExerciseRepository.findAll().size();
@@ -116,7 +115,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
+    void testKeepKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -135,7 +134,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
+    void testDeleteKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedTextExercise();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         TextExercise importedExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
@@ -158,7 +157,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateModelAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
+    void testCreateModelAssessmentKnowledgeIfExerciseIsCreatedFromScratch() throws Exception {
         Course course = database.addEmptyCourse();
         ModelingExercise modelingExercise = modelingExerciseUtilService.createModelingExercise(course.getId());
         int count = modelAssessmentKnowledgeRepository.findAll().size();
@@ -173,7 +172,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testReuseModelAssessmentKnowledgeIfExerciseIsImported() throws Exception {
+    void testReuseModelAssessmentKnowledgeIfExerciseIsImported() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         int exerciseCount = modelingExerciseRepository.findAll().size();
@@ -191,7 +190,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testKeepModelAssessmentKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
+    void testKeepModelAssessmentKnowledgeWhenExerciseIsDeletedIfOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class, HttpStatus.CREATED);
@@ -210,7 +209,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteModelAssessmentKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
+    void testDeleteModelAssessmentKnowledgeWhenExerciseIsDeletedIfNoOtherExercisesUseIt() throws Exception {
         final Course course = database.addCourseWithOneReleasedModelExerciseWithKnowledge();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         ModelingExercise importedExercise = request.postWithResponseBody("/api/modeling-exercises/import/" + modelingExercise.getId(), modelingExercise, ModelingExercise.class,
@@ -233,7 +232,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSetTextAssessmentKnowledgeToTextBlocks() {
+    void testSetTextAssessmentKnowledgeToTextBlocks() {
         final Course course1 = database.addCourseWithOneReleasedTextExercise();
         final Course course2 = database.addCourseWithOneReleasedTextExercise();
         TextExercise exercise1 = (TextExercise) course1.getExercises().iterator().next();
@@ -262,12 +261,12 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
             final String idString = textSubmission.getId() + ";0-30;" + textSubmission.getText().substring(0, 30);
             return Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
                     .setText(textSubmission.getText().substring(0, 30)).build();
-        }).collect(toList());
+        }).toList();
         List<Segment> segments2 = textSubmissions2.stream().map(textSubmission -> {
             final String idString = textSubmission.getId() + ";0-30;" + textSubmission.getText().substring(0, 30);
             return Segment.newBuilder().setId(sha1Hex(idString)).setSubmissionId(textSubmission.getId().intValue()).setStartIndex(0).setEndIndex(30)
                     .setText(textSubmission.getText().substring(0, 30)).build();
-        }).collect(toList());
+        }).toList();
         List<TextBlock> textBlocks1 = atheneService.parseTextBlocks(segments1, exercise1.getId());
         List<TextBlock> textBlocks2 = atheneService.parseTextBlocks(segments2, exercise1.getId());
         for (TextBlock textBlock : textBlocks1) {
@@ -287,7 +286,7 @@ public class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegratio
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSetModelAssessmentKnowledgeToModelElements() throws Exception {
+    void testSetModelAssessmentKnowledgeToModelElements() throws Exception {
         ModelingSubmission submission1 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission1.setId(1L);
         ModelingSubmission submission2 = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.cpy.json"), true);

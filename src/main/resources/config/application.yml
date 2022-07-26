@@ -206,6 +206,8 @@ sentry:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
+    sample-rate: 1
+    traces-sample-rate: 0.2
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -218,7 +220,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     text-assessment-analytics-enabled: false
-    browser-fingerprints-enabled: true
+    student-exam-store-session-data: true
 
 # ===================================================================
 # JHipster specific properties

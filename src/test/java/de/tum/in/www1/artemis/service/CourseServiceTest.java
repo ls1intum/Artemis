@@ -23,7 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CourseService courseService;
@@ -44,7 +44,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     private ExerciseRepository exerciseRepo;
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -55,7 +55,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @MethodSource("weekRangeProvider")
-    public void testGetActiveStudents(long weeks) {
+    void testGetActiveStudents(long weeks) {
         ZonedDateTime date = ZonedDateTime.now().minusWeeks(weeks);
         SecurityUtils.setAuthorizationObject();
         var course = database.addEmptyCourse();
@@ -117,7 +117,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
     }
 
     @Test
-    public void testGetActiveStudents_UTCConversion() {
+    void testGetActiveStudents_UTCConversion() {
         ZonedDateTime date = ZonedDateTime.of(2022, 1, 2, 0, 0, 0, 0, ZonedDateTime.now().getZone());
         SecurityUtils.setAuthorizationObject();
         var course = database.addEmptyCourse();
@@ -150,7 +150,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testGetOverviewAsAdmin() {
+    void testGetOverviewAsAdmin() {
         // Minimal testcase: Admins always see all courses
         // Add two courses, one not active
         database.addEmptyCourse();
@@ -170,7 +170,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetOverviewAsInstructor() {
+    void testGetOverviewAsInstructor() {
         // Testcase: Instructors see their courses
         // Add three courses, containing one not active and one not belonging to the instructor
         database.addEmptyCourse();
@@ -198,7 +198,7 @@ public class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJ
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetOverviewAsStudent() {
+    void testGetOverviewAsStudent() {
         // Testcase: Students should not see courses
         // Add three courses, containing one not active and one not belonging to the student
         database.addEmptyCourse();

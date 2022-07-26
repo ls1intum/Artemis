@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.util;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import javax.persistence.EntityManager;
 import javax.persistence.JoinTable;
@@ -45,7 +44,7 @@ public class DatabaseCleanupService implements InitializingBean {
         }).map(managedType -> {
             var annotation = AnnotationUtils.findAnnotation(managedType.getJavaType(), Table.class);
             return annotation.name();
-        }).collect(Collectors.toList());
+        }).toList();
 
         joinTableNames = metaModel.getEntities().stream().map(ManagedType::getAttributes).flatMap(Collection::stream).filter(attribute -> {
             var joinTableAnnotation = AnnotationUtils.findAnnotation((Field) attribute.getJavaMember(), JoinTable.class);
@@ -53,7 +52,7 @@ public class DatabaseCleanupService implements InitializingBean {
         }).map(attribute -> {
             var joinTableAnnotation = AnnotationUtils.findAnnotation((Field) attribute.getJavaMember(), JoinTable.class);
             return joinTableAnnotation.name();
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     /**

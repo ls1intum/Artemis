@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 class ProgrammingExerciseParticipationTest {
 
     @Test
-    public void shouldNotBeLockedBeforeTheIndividualDueDate() {
+    void shouldNotBeLockedBeforeTheIndividualDueDate() {
         final ZonedDateTime now = ZonedDateTime.now();
         final var participation = setupParticipation(now.minusHours(2));
         participation.setIndividualDueDate(ZonedDateTime.now().plusDays(2));
@@ -21,7 +21,7 @@ class ProgrammingExerciseParticipationTest {
     }
 
     @Test
-    public void shouldBeLockedAfterTheIndividualDueDate() {
+    void shouldBeLockedAfterTheIndividualDueDate() {
         final ZonedDateTime now = ZonedDateTime.now();
         final var participation = setupParticipation(now.minusHours(2));
         participation.setIndividualDueDate(ZonedDateTime.now().minusHours(1));
@@ -29,19 +29,19 @@ class ProgrammingExerciseParticipationTest {
     }
 
     @Test
-    public void shouldNotBeLockedBeforeTheRegularDueDate() {
+    void shouldNotBeLockedBeforeTheRegularDueDate() {
         final var participation = setupParticipation(ZonedDateTime.now().plusHours(1));
         assertThat(participation.isLocked()).isFalse();
     }
 
     @Test
-    public void shouldBeLockedAfterTheRegularDueDate() {
+    void shouldBeLockedAfterTheRegularDueDate() {
         final var participation = setupParticipation(ZonedDateTime.now().minusHours(1));
         assertThat(participation.isLocked()).isTrue();
     }
 
     @Test
-    public void shouldNotBeLockedIfNoExerciseDueDate() {
+    void shouldNotBeLockedIfNoExerciseDueDate() {
         final var participation = setupParticipation(null);
         participation.getExercise().setDueDate(null);
         assertThat(participation.isLocked()).isFalse();

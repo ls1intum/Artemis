@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.service.AssessmentService;
 
-public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     Result result = new Result();
 
@@ -31,7 +31,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     ResultRepository resultRepository;
 
     @BeforeEach
-    public void setUp() throws Exception {
+    void setUp() throws Exception {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(2.5);
         Feedback feedback2 = new Feedback();
@@ -50,7 +50,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void evaluateFeedback() {
+    void evaluateFeedback() {
         double maxPoints = 7.0;
         result.setFeedbacks(feedbackList);
 
@@ -62,7 +62,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void evaluateFeedback_totalScoreGreaterMaxScore() {
+    void evaluateFeedback_totalScoreGreaterMaxScore() {
         result.setFeedbacks(feedbackList);
 
         double calculatePoints = resultRepository.calculateTotalPoints(feedbackList);
@@ -73,7 +73,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void evaluateFeedback_negativeTotalScore() {
+    void evaluateFeedback_negativeTotalScore() {
         Feedback feedback1 = new Feedback();
         feedback1.setCredits(-2.5);
         Feedback feedback2 = new Feedback();
@@ -91,7 +91,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void filterSensitiveFeedbacksAfterDueDate() {
+    void filterSensitiveFeedbacksAfterDueDate() {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
@@ -102,7 +102,7 @@ public class ResultTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     }
 
     @Test
-    public void filterSensitiveFeedbacksBeforeDueDate() {
+    void filterSensitiveFeedbacksBeforeDueDate() {
         Feedback feedback1 = new Feedback().visibility(Visibility.ALWAYS);
         Feedback feedback2 = new Feedback().visibility(Visibility.AFTER_DUE_DATE);
         Feedback feedback3 = new Feedback().visibility(Visibility.NEVER);
