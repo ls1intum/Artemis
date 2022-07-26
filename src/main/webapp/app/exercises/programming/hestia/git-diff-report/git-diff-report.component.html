@@ -9,6 +9,11 @@
         ></jhi-git-diff-line-stat>
     </div>
 </div>
-<div *ngFor="let entry of entries" class="mt-2">
-    <jhi-git-diff-entry [diffEntry]="entry"></jhi-git-diff-entry>
+<div *ngFor="let filePath of filePaths" class="mt-2">
+    <jhi-git-diff-file-panel
+        *ngIf="entriesByPath.get(filePath)?.length"
+        [diffEntries]="entriesByPath.get(filePath) ?? []"
+        [templateFileContent]="templateFileContentByPath.get(filePath)"
+        [solutionFileContent]="solutionFileContentByPath.get(filePath)"
+    ></jhi-git-diff-file-panel>
 </div>

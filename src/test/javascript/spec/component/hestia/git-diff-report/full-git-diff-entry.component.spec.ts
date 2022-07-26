@@ -1,26 +1,26 @@
 import { ArtemisTestModule } from '../../../test.module';
-import { FullGitDiffEntryComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-entry.component';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ProgrammingExerciseFullGitDiffEntry } from 'app/entities/hestia/programming-exercise-full-git-diff-entry.model';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe } from 'ng-mocks';
 import { GitDiffLineStatComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-line-stat.component';
+import { GitDiffFileComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-file.component';
+import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
 
-describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
-    let comp: FullGitDiffEntryComponent;
-    let fixture: ComponentFixture<FullGitDiffEntryComponent>;
+describe('ProgrammingExerciseGitDiffEntry Component', () => {
+    let comp: GitDiffFileComponent;
+    let fixture: ComponentFixture<GitDiffFileComponent>;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [FullGitDiffEntryComponent, AceEditorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
+            declarations: [GitDiffFileComponent, AceEditorComponent, MockPipe(ArtemisTranslatePipe), MockComponent(GitDiffLineStatComponent)],
             providers: [],
         }).compileComponents();
-        fixture = TestBed.createComponent(FullGitDiffEntryComponent);
+        fixture = TestBed.createComponent(GitDiffFileComponent);
         comp = fixture.componentInstance;
 
-        comp.diffEntry = new ProgrammingExerciseFullGitDiffEntry();
+        comp.diffEntry = new ProgrammingExerciseGitDiffEntry();
         comp.diffEntry.id = 123;
         comp.diffEntry.filePath = '/src/de/test.java';
         comp.diffEntry.previousLine = 1;

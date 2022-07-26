@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DiffGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/diff-generation-step/diff-generation-step.component';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 describe('DiffGenerationStep Component', () => {
     let comp: DiffGenerationStepComponent;
@@ -15,7 +15,7 @@ describe('DiffGenerationStep Component', () => {
     let onGitDiffLoadedSpy: jest.SpyInstance;
 
     let exercise: ProgrammingExercise;
-    let gitDiffReport: ProgrammingExerciseFullGitDiffReport;
+    let gitDiffReport: ProgrammingExerciseGitDiffReport;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -32,7 +32,7 @@ describe('DiffGenerationStep Component', () => {
         exercise.id = 1;
         comp.exercise = exercise;
 
-        gitDiffReport = new ProgrammingExerciseFullGitDiffReport();
+        gitDiffReport = new ProgrammingExerciseGitDiffReport();
         gitDiffReport.programmingExercise = exercise;
     });
 
@@ -41,7 +41,7 @@ describe('DiffGenerationStep Component', () => {
     });
 
     it('should load all code hints on init', () => {
-        const loadFilesSpy = jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of(gitDiffReport));
+        const loadFilesSpy = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
 
         comp.ngOnInit();
 

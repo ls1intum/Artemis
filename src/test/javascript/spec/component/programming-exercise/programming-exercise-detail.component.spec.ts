@@ -17,15 +17,14 @@ import { MockProgrammingExerciseService } from '../../helpers/mocks/service/mock
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { MockProvider } from 'ng-mocks';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { FullGitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/full-git-diff-report-modal.component';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/service/mock-programming-exercise-grading.service';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
 
 describe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
@@ -58,8 +57,8 @@ describe('ProgrammingExercise Management Detail Component', () => {
             {
                 previousFilePath: '/src/test.java',
                 filePath: '/src/test.java',
-                previousLine: 1,
-                line: 1,
+                previousStartLine: 1,
+                startLine: 1,
                 previousLineCount: 2,
                 lineCount: 2,
             },
@@ -95,18 +94,17 @@ describe('ProgrammingExercise Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should fetch and open git-diff', () => {
+    it('Should open git-diff', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
 
-        jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of({} as ProgrammingExerciseFullGitDiffReport));
         jest.spyOn(modalService, 'open');
 
-        comp.getAndShowFullDiff();
+        comp.showGitDiff();
 
         expect(modalService.open).toHaveBeenCalledOnce();
-        expect(modalService.open).toHaveBeenCalledWith(FullGitDiffReportModalComponent, { size: 'xl' });
+        expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl' });
     });
 
     describe('OnInit for course exercise', () => {
