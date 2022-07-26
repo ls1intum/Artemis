@@ -1,2 +1,4 @@
+.. _quiz:
+
 Quiz exercise
 =============

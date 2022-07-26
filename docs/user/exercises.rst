@@ -18,3 +18,4 @@ Artemis supports the following exercises:
    exercises/textual
    exercises/file-upload
    exercises/team-exercises
+   exercises/assessment
