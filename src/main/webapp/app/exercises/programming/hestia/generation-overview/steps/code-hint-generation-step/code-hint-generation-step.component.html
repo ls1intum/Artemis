@@ -1,0 +1,70 @@
+<div *ngIf="isLoading" class="text-center">
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+</div>
+<div *ngIf="!isLoading" [class]="codeHints?.length ? '' : 'text-center'">
+    <button
+        *ngIf="codeHints?.length"
+        type="button"
+        class="btn btn-primary"
+        jhiTranslate="artemisApp.codeHint.management.step4.updateHintsButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.management.step4.updateHintsButton.tooltip' | artemisTranslate"
+        (click)="generateCodeHints(false, 'updateHintsButton')"
+    >
+        Recreate code hints
+    </button>
+    <button
+        *ngIf="codeHints?.length === 0"
+        type="button"
+        class="btn btn-warning"
+        jhiTranslate="artemisApp.codeHint.management.step4.createHintsButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.management.step4.createHintsButton.tooltip' | artemisTranslate"
+        (click)="generateCodeHints(true, 'createHintsButton')"
+    >
+        Create code hints
+    </button>
+    <button
+        *ngIf="codeHints?.length"
+        type="button"
+        class="btn btn-warning"
+        jhiTranslate="artemisApp.codeHint.management.step4.recreateHintsButton.label"
+        [ngbTooltip]="'artemisApp.codeHint.management.step4.recreateHintsButton.tooltip' | artemisTranslate"
+        (click)="generateCodeHints(true, 'recreateHintsButton')"
+    >
+        Update code hints
+    </button>
+</div>
+<mat-accordion *ngIf="!isLoading && codeHints?.length">
+    <mat-expansion-panel [expanded]="false" [disabled]="true" class="code-hint-creation-expansion-panel-wrapper-header">
+        <mat-expansion-panel-header>
+            <mat-panel-title>{{ 'artemisApp.codeHint.management.step4.title' | artemisTranslate }}</mat-panel-title>
+            <mat-panel-description>{{ 'artemisApp.codeHint.management.step4.task' | artemisTranslate }}</mat-panel-description>
+        </mat-expansion-panel-header>
+    </mat-expansion-panel>
+    <mat-expansion-panel *ngFor="let codeHint of codeHints" class="code-hint-creation-expansion-panel-wrapper">
+        <mat-expansion-panel-header>
+            <mat-panel-title
+                ><td>{{ codeHint.title }}</td></mat-panel-title
+            >
+            <mat-panel-description>
+                {{ codeHint?.programmingExerciseTask?.taskName }}
+            </mat-panel-description>
+        </mat-expansion-panel-header>
+        <div>
+            <div *ngIf="codeHint?.solutionEntries">
+                <jhi-code-hint-container [codeHint]="codeHint"></jhi-code-hint-container>
+            </div>
+            <div class="btn-group">
+                <a
+                    [routerLink]="['/course-management', exercise?.course?.id, 'programming-exercises', exercise?.id, 'exercise-hints', codeHint.id, 'edit']"
+                    class="btn btn-warning btn-sm me-1"
+                >
+                    <fa-icon [icon]="faWrench"></fa-icon>
+                    <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+                </a>
+            </div>
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>
+<div *ngIf="!codeHints?.length" class="text-center mt-2">
+    <span jhiTranslate="artemisApp.codeHint.management.step4.notGenerated">No code hints have been generated yet.</span>
+</div>

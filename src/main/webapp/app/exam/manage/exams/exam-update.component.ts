@@ -28,6 +28,7 @@ export class ExamUpdateComponent implements OnInit {
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
     isImport = false;
+    isImportInSameCourse = false;
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Link to the component enabling the selection of exercise groups and exercises for import
@@ -57,6 +58,7 @@ export class ExamUpdateComponent implements OnInit {
 
             if (this.isImport) {
                 this.resetIdAndDatesForImport();
+                this.isImportInSameCourse = this.exam.course?.id === Number(this.route.snapshot.paramMap.get('courseId'));
             }
 
             this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
