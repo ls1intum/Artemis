@@ -94,6 +94,7 @@ public class PostService extends PostingService {
 
         // set author to current user
         post.setAuthor(user);
+        setAuthorRoleForPosting(post, course);
         // set default value display priority -> NONE
         post.setDisplayPriority(DisplayPriority.NONE);
 
@@ -246,13 +247,7 @@ public class PostService extends PostingService {
             throw new BadRequestAlertException("A new post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
-        // sets author roles to display user authority icon on posting headers
-        postsInCourse.forEach(post -> {
-            Course postingCourse = post.getCourse() != null ? post.getCourse()
-                    : post.getLecture() != null ? post.getLecture().getCourse() : post.getExercise() != null ? post.getExercise().getCourseViaExerciseGroupOrCourseMember() : null;
-            setUserRolesForPostings(post, postingCourse);
-            post.getAnswers().forEach(answerPost -> setUserRolesForPostings(answerPost, postingCourse));
-        });
+        setAuthorRoleOfPostings(postsInCourse.getContent());
 
         return postsInCourse;
     }
@@ -516,6 +511,7 @@ public class PostService extends PostingService {
 
         // sort course posts by calculated similarity scores
         coursePosts.sort(Comparator.comparing(coursePost -> postContentCompareStrategy.performSimilarityCheck(post, coursePost)));
+        setAuthorRoleOfPostings(coursePosts);
         return Lists.reverse(coursePosts).stream().limit(TOP_K_SIMILARITY_RESULTS).toList();
     }
 
@@ -533,7 +529,17 @@ public class PostService extends PostingService {
         }
     }
 
-    private void setUserRolesForPostings(Posting posting, Course postingCourse) {
+    // TODO: Add doc
+    private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
+        // sets author roles to display user authority icon on posting headers
+        postsInCourse.forEach(post -> {
+            setAuthorRoleForPosting(post, post.getCoursePostBelongsTo());
+            post.getAnswers().forEach(answerPost -> setAuthorRoleForPosting(answerPost, post.getCoursePostBelongsTo()));
+        });
+    }
+
+    // TODO: Add doc
+    private void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
         User author = userRepository.findOneWithGroupsAndAuthoritiesById(posting.getAuthor().getId()).get();
 
         if (author.getAuthorities().stream().anyMatch(authority -> authority.equals(Authority.INSTRUCTOR_AUTHORITY) || authority.equals(Authority.ADMIN_AUTHORITY))
