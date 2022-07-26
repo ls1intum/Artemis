@@ -458,7 +458,7 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock Repositories if the exam starts within 5 minutes
+                    // Unlock Repositories only if the exam starts within 5 minutes
                     if (exercise instanceof ProgrammingExercise programmingExercise
                             && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                         instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
