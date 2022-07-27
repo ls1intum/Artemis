@@ -507,6 +507,7 @@ public class FileService implements DisposableBean {
         catch (IOException ex) {
             throw new RuntimeException("Error encountered when reading File " + filePath + ".", ex);
         }
+        // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
         try {
             Files.delete(file.toPath());
             FileUtils.moveFile(tempFile, new File(filePath));
