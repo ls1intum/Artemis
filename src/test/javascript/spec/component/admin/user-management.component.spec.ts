@@ -218,10 +218,10 @@ describe('UserManagementComponent', () => {
     });
 
     it('should validate user search correctly', () => {
-        expect(comp.validateUserSearch({ value: [] } as AbstractControl)).toBe(null);
+        expect(comp.validateUserSearch({ value: [] } as AbstractControl)).toBeNull();
         expect(comp.validateUserSearch({ value: [0] } as AbstractControl)).toEqual({ searchControl: true });
         expect(comp.validateUserSearch({ value: [0, 0] } as AbstractControl)).toEqual({ searchControl: true });
-        expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBe(null);
+        expect(comp.validateUserSearch({ value: [0, 0, 0] } as AbstractControl)).toBeNull();
     });
 
     it('should sort courses', () => {

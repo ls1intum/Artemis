@@ -62,9 +62,9 @@ describe('ShortAnswerQuestionComponent', () => {
 
         expect(component.textParts).toStrictEqual([[`<p>${text}</p>`]]);
         expect(component.shortAnswerQuestion).toStrictEqual(alternativeQuestion);
-        expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).toStrictEqual(`<p>${text}</p>`);
-        expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).toStrictEqual(`<p>${hint}</p>`);
-        expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).toStrictEqual(`<p>${explanation}</p>`);
+        expect(component.renderedQuestion.text['changingThisBreaksApplicationSecurity']).toBe(`<p>${text}</p>`);
+        expect(component.renderedQuestion.hint['changingThisBreaksApplicationSecurity']).toBe(`<p>${hint}</p>`);
+        expect(component.renderedQuestion.explanation['changingThisBreaksApplicationSecurity']).toBe(`<p>${explanation}</p>`);
     });
 
     it('should set submitted texts', () => {
@@ -87,7 +87,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.setSubmittedText();
 
         expect(getNavigationStub).toHaveBeenCalledOnce();
-        expect(component.submittedTexts.length).toBe(1);
+        expect(component.submittedTexts).toHaveLength(1);
         expect(component.submittedTexts[0].text).toStrictEqual(text);
         expect(component.submittedTexts[0].spot).toStrictEqual(spot);
     });
@@ -108,7 +108,7 @@ describe('ShortAnswerQuestionComponent', () => {
         component.shortAnswerQuestion = alternativeQuestion;
         component.showSampleSolution();
 
-        expect(component.sampleSolutions.length).toBe(1);
+        expect(component.sampleSolutions).toHaveLength(1);
         expect(component.sampleSolutions[0]).toStrictEqual(solution);
         expect(component.showingSampleSolution).toBeTrue();
     });
@@ -176,17 +176,17 @@ describe('ShortAnswerQuestionComponent', () => {
         alternativeQuestion.correctMappings = [mapping];
 
         component.shortAnswerQuestion = alternativeQuestion;
-        expect(component.classifyInputField(tag)).toStrictEqual('completely-correct');
+        expect(component.classifyInputField(tag)).toBe('completely-correct');
         submittedText.text += '!';
-        expect(component.classifyInputField(tag)).toStrictEqual('correct');
+        expect(component.classifyInputField(tag)).toBe('correct');
         component.shortAnswerQuestion.correctMappings = [];
-        expect(component.classifyInputField(tag)).toStrictEqual('correct');
+        expect(component.classifyInputField(tag)).toBe('correct');
         component.submittedTexts = [];
-        expect(component.classifyInputField(tag)).toStrictEqual('wrong');
+        expect(component.classifyInputField(tag)).toBe('wrong');
         spot.invalid = true;
-        expect(component.classifyInputField(tag)).toStrictEqual('invalid');
+        expect(component.classifyInputField(tag)).toBe('invalid');
         spot.invalid = false;
         alternativeQuestion.invalid = true;
-        expect(component.classifyInputField(tag)).toStrictEqual('invalid');
+        expect(component.classifyInputField(tag)).toBe('invalid');
     });
 });

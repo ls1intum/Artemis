@@ -82,24 +82,23 @@ describe('TeamsImportFromFileFormComponent', () => {
             getElementStub = jest.spyOn(document, 'getElementById').mockReturnValue(control);
         });
 
-        afterEach(() => {
-            expect(convertTeamsStub).toHaveBeenCalledOnce();
-            expect(comp.importedTeams).toEqual(mockFileStudents);
-            expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
-            expect(teams).toStrictEqual(mockFileTeamsConverted);
-            expect(comp.loading).toBeFalse();
-            expect(comp.importFile).toBe(undefined);
-            expect(comp.importFileName).toBe('');
-            expect(getElementStub).toHaveBeenCalledOnce();
-            expect(control.value).toBe('');
-        });
-
         it('should parse json file and send converted teams', () => {
             reader = { ...reader, result: JSON.stringify(mockFileStudents), onload: null };
             comp.importFile = new File([''], 'file.json', { type: 'application/json' });
             comp.importFileName = 'file.json';
             expect(control.value).toBe('test');
+
             comp.onFileLoadImport(reader);
+
+            expect(convertTeamsStub).toHaveBeenCalledOnce();
+            expect(comp.importedTeams).toEqual(mockFileStudents);
+            expect(comp.sourceTeams).toStrictEqual(mockFileTeamsConverted);
+            expect(teams).toStrictEqual(mockFileTeamsConverted);
+            expect(comp.loading).toBeFalse();
+            expect(comp.importFile).toBeUndefined();
+            expect(comp.importFileName).toBe('');
+            expect(getElementStub).toHaveBeenCalledOnce();
+            expect(control.value).toBe('');
         });
 
         it('should parse csv file and send converted teams', async () => {
@@ -133,10 +132,10 @@ describe('TeamsImportFromFileFormComponent', () => {
             expect(changeDetectorDetectChangesSpy).toHaveBeenCalledOnce();
         });
 
-        it('should set import file correctly', () => {
+        it('should set import file correctly for empty file', () => {
             const ev = { target: { files: [] } };
             comp.setImportFile(ev);
-            expect(comp.importFile).toBe(undefined);
+            expect(comp.importFile).toBeUndefined();
             expect(comp.importFileName).toBe('');
             expect(changeDetectorDetectChangesSpy).not.toHaveBeenCalled();
         });
@@ -160,7 +159,7 @@ describe('TeamsImportFromFileFormComponent', () => {
         it('should throw error', () => {
             const invalidFileStudents = [...mockFileStudents];
             invalidFileStudents[0].teamName = '1invalidTeamName';
-            expect(() => comp.convertTeams(invalidFileStudents)).toThrowError();
+            expect(() => comp.convertTeams(invalidFileStudents)).toThrow();
         });
     });
 });

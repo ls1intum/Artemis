@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-11">
         <div *ngIf="exam">
-            <h2>
+            <h2 id="exam-detail-title">
                 <span class="badge bg-success" *ngIf="!exam.testExam">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</span>
                 <span class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
                 {{ exam.title }}

@@ -117,8 +117,8 @@ describe('CourseParticipantScores', () => {
 
         expect(component.participantScores).toEqual([participantScoreDTO]);
         expect(component.participantScoresAverage).toEqual([participantScoreAverageDTO]);
-        expect(component.avgScore).toEqual(99);
-        expect(component.avgRatedScore).toEqual(99);
+        expect(component.avgScore).toBe(99);
+        expect(component.avgRatedScore).toBe(99);
         expect(findAllOfCourseSpy).toHaveBeenCalled();
         expect(findAverageOfCoursePerParticipantSpy).toHaveBeenCalled();
         expect(findAverageOfCourseSpy).toHaveBeenCalled();

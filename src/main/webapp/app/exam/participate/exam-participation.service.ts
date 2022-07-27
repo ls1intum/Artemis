@@ -4,7 +4,7 @@ import { StudentExam } from 'app/entities/student-exam.model';
 import { HttpClient, HttpErrorResponse, HttpResponse, HttpParams } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -163,6 +163,7 @@ export class ExamParticipationService {
             map((submittedStudentExam: StudentExam) => {
                 return ExamParticipationService.convertStudentExamFromServer(submittedStudentExam);
             }),
+            tap((submittedStudentExam: StudentExam) => this.currentlyLoadedStudentExam.next(submittedStudentExam)),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));

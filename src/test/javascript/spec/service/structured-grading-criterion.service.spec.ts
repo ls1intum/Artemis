@@ -43,10 +43,10 @@ describe('Structured Grading Criteria Service', () => {
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
-            expect(totalScore).toEqual(5.0);
+            expect(totalScore).toBe(5.0);
             tick();
         }));
-        it('should calculate the total score', fakeAsync(() => {
+        it('should calculate the total score too', fakeAsync(() => {
             // define Grading Criteria and Feedback here
             const limitedSGI = new GradingInstruction();
             limitedSGI.id = 1;
@@ -71,7 +71,7 @@ describe('Structured Grading Criteria Service', () => {
 
             const returnedFromService = Object.assign([], feedbacks);
             const totalScore = service.computeTotalScore(returnedFromService);
-            expect(totalScore).toEqual(2.5);
+            expect(totalScore).toBe(2.5);
             tick();
         }));
     });

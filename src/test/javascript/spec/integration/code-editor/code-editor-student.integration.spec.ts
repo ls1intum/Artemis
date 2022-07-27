@@ -229,6 +229,6 @@ describe('CodeEditorStudentIntegration', () => {
         expect(container.loadingParticipation).toBeFalse();
         expect(container.participationCouldNotBeFetched).toBeTrue();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(container.participation).toBe(undefined);
+        expect(container.participation).toBeUndefined();
     });
 });

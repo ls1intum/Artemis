@@ -262,7 +262,7 @@ public abstract class Participation extends DomainObject implements Participatio
     }
 
     /**
-     * Like findLatestSubmission() but with the possibility to include illegal submissions,
+     * Like {@link Participation#findLatestSubmission()} but with the possibility to include illegal submissions,
      *
      * @param <T> submission type
      * @param includeIllegalSubmissions should the function include illegal submission
@@ -278,14 +278,7 @@ public abstract class Participation extends DomainObject implements Participatio
             submissions = submissions.stream().filter(submission -> !SubmissionType.ILLEGAL.equals(submission.getType())).collect(Collectors.toSet());
         }
 
-        return (Optional<T>) submissions.stream().max((s1, s2) -> {
-            if (s1.getSubmissionDate() == null || s2.getSubmissionDate() == null) {
-                // this case should not happen, but in the rare case we can compare the ids
-                // newer ids are typically later
-                return s1.getId().compareTo(s2.getId());
-            }
-            return s1.getSubmissionDate().compareTo(s2.getSubmissionDate());
-        });
+        return (Optional<T>) submissions.stream().max(Comparator.naturalOrder());
     }
 
     @Override

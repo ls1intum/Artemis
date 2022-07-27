@@ -72,7 +72,7 @@ describe('UserRouteAccessService', () => {
         snapshot.data = { authorities: [Authority.USER] };
 
         service.canActivate(snapshot, routeStateMock);
-        expect(MockSyncStorage.retrieve('authenticationToken')).toEqual('testToken');
+        expect(MockSyncStorage.retrieve('authenticationToken')).toBe('testToken');
     });
 
     it('should return true if authorities are omitted', async () => {

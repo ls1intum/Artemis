@@ -76,8 +76,8 @@ describe('OrganizationManagementDetailComponent', () => {
         tick();
 
         expect(component.organization.id).toBe(organization1.id);
-        expect(component.organization.users?.length).toBe(1);
-        expect(component.organization.courses?.length).toBe(1);
+        expect(component.organization.users).toHaveLength(1);
+        expect(component.organization.courses).toHaveLength(1);
     }));
 
     it('should track id', fakeAsync(() => {
