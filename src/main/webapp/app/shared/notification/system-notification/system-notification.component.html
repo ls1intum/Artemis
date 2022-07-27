@@ -1,5 +1,15 @@
-<div class="alert mt-4 system-notification-panel" *ngIf="notification" [ngClass]="alertClass">
-    <fa-icon class="me-2" [icon]="alertIcon"></fa-icon>
-    <strong>{{ notification.title }}<span *ngIf="notification.text">:</span></strong>
-    {{ notification.text }}
+<div
+    *ngFor="let notification of notificationsToDisplay"
+    class="system-notification"
+    [ngClass]="{ info: (notification.type || INFO) === INFO, warning: notification.type === WARNING }"
+>
+    <div class="notification-text">
+        <span class="notification-title">
+            <fa-icon *ngIf="(notification.type || INFO) === INFO" [icon]="faInfoCircle" class="left-slide-in"></fa-icon>
+            <fa-icon *ngIf="notification.type === WARNING" [icon]="faExclamationTriangle" class="left-slide-in"></fa-icon>
+            <span class="left-slide-in">{{ notification.title }}<span *ngIf="notification.text">:</span></span>
+        </span>
+        <span class="notification-content left-slide-in">{{ notification.text }}</span>
+    </div>
+    <fa-icon class="notification-close" [icon]="faTimes" (click)="close(notification)"></fa-icon>
 </div>

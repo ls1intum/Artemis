@@ -361,7 +361,7 @@ public class ProgrammingExercise extends Exercise {
             }
             return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
                     || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
-        }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }).max(Comparator.naturalOrder()).orElse(null);
     }
 
     private ZonedDateTime getRelevantDueDateForSubmission(Submission submission) {
