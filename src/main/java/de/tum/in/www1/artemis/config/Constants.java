@@ -247,8 +247,6 @@ public final class Constants {
 
     public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
 
-    public static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/" + EXAM_EXERCISE_START_STATUS;
-
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */

@@ -6,6 +6,7 @@ import static de.tum.in.www1.artemis.web.websocket.team.ParticipationTeamWebsock
 import java.net.InetSocketAddress;
 import java.security.Principal;
 import java.util.*;
+import java.util.regex.Pattern;
 
 import javax.validation.constraints.NotNull;
 
@@ -45,6 +46,7 @@ import com.google.common.collect.Iterators;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -58,6 +60,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConfiguration {
 
     private final Logger log = LoggerFactory.getLogger(WebsocketConfiguration.class);
+
+    private static final Pattern EXAM_TOPIC_PATTERN = Pattern.compile("^/topic/exams/(\\d+)/.+$");
 
     public static final String IP_ADDRESS = "IP_ADDRESS";
 
@@ -73,6 +77,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     private final ExerciseRepository exerciseRepository;
 
+    private final ExamRepository examRepository;
+
     // Split the addresses by comma
     @Value("#{'${spring.websocket.broker.addresses}'.split(',')}")
     private List<String> brokerAddresses;
@@ -85,13 +91,14 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
 
     public WebsocketConfiguration(MappingJackson2HttpMessageConverter springMvcJacksonConverter, TaskScheduler messageBrokerTaskScheduler,
             StudentParticipationRepository studentParticipationRepository, AuthorizationCheckService authorizationCheckService, ExerciseRepository exerciseRepository,
-            UserRepository userRepository) {
+            UserRepository userRepository, ExamRepository examRepository) {
         this.objectMapper = springMvcJacksonConverter.getObjectMapper();
         this.messageBrokerTaskScheduler = messageBrokerTaskScheduler;
         this.studentParticipationRepository = studentParticipationRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.exerciseRepository = exerciseRepository;
         this.userRepository = userRepository;
+        this.examRepository = examRepository;
     }
 
     @Override
@@ -254,8 +261,8 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 Long participationId = getParticipationIdFromDestination(destination);
                 return isParticipationOwnedByUser(principal, participationId);
             }
-            if (isResultNonPersonalDestination(destination)) {
-                Long exerciseId = getExerciseIdFromResultDestination(destination);
+            if (isNonPersonalExerciseResultDestination(destination)) {
+                Long exerciseId = getExerciseIdFromNonPersonalExerciseResultDestination(destination);
 
                 // TODO: Is it right that TAs are not allowed to subscribe to exam exercises?
                 Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
@@ -265,6 +272,13 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 else {
                     return isUserTAOrHigherForExercise(principal, exercise);
                 }
+            }
+
+            var examId = getExamIdFromExamRootDestination(destination);
+            if (examId.isPresent()) {
+                var exam = examRepository.findByIdElseThrow(examId.get());
+                User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
+                return authorizationCheckService.isAtLeastInstructorInCourse(exam.getCourse(), user);
             }
             return true;
         }
@@ -292,5 +306,20 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     private boolean isUserTAOrHigherForExercise(Principal principal, Exercise exercise) {
         User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         return authorizationCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
+    }
+
+    /**
+     * Returns true if the given destination belongs to a topic for a whole exam.
+     * Only instructors and admins should be allowed to subscribe to this topic.
+     *
+     * @param destination Websocket destination topic which to check
+     * @return flag whether the destination belongs
+     */
+    public static Optional<Long> getExamIdFromExamRootDestination(String destination) {
+        var matcher = EXAM_TOPIC_PATTERN.matcher(destination);
+        if (matcher.matches()) {
+            return Optional.of(Long.valueOf(matcher.group(1)));
+        }
+        return Optional.empty();
     }
 }

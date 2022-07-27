@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
 import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
-import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
@@ -49,6 +48,8 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
  */
 @Service
 public class StudentExamService {
+
+    private static final String EXAM_EXERCISE_START_STATUS_TOPIC = "/topic/exams/%s/exercise-start-status";
 
     private static final String ENTITY_NAME = "studentExam";
 
@@ -540,7 +541,7 @@ public class StudentExamService {
             else {
                 log.warn("Unable to add exam exercise start status to distributed cache because it is null");
             }
-            users.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), EXAM_EXERCISE_START_STATUS_TOPIC, status));
+            users.forEach(user -> messagingTemplate.convertAndSend(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status));
         }
         catch (Exception e) {
             log.warn("Failed to send exercise preparation status", e);

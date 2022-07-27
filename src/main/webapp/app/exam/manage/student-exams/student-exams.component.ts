@@ -21,7 +21,7 @@ import { faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { convertDateFromServer } from 'app/utils/date.utils';
 
-const WEBSOCKET_CHANNEL = '/user/topic/exam-exercise-start-status';
+const getWebsocketChannel = (examId: number) => `/topic/exams/${examId}/exercise-start-status`;
 
 export type ExamExerciseStartPreparationStatus = {
     examId?: number;
@@ -82,18 +82,16 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.loadAll();
 
-        this.websocketService.subscribe(WEBSOCKET_CHANNEL);
+        const channel = getWebsocketChannel(this.examId);
+        this.websocketService.subscribe(channel);
         this.websocketService
-            .receive(WEBSOCKET_CHANNEL)
-            .pipe(
-                tap((status: ExamExerciseStartPreparationStatus) => (status.startedAt = convertDateFromServer(status.startedAt))),
-                filter((status: ExamExerciseStartPreparationStatus) => status.examId === this.examId),
-            )
+            .receive(channel)
+            .pipe(tap((status: ExamExerciseStartPreparationStatus) => (status.startedAt = convertDateFromServer(status.startedAt))))
             .subscribe((status: ExamExerciseStartPreparationStatus) => this.setExercisePreparationStatus(status));
     }
 
     ngOnDestroy() {
-        this.websocketService.unsubscribe(WEBSOCKET_CHANNEL);
+        this.websocketService.unsubscribe(getWebsocketChannel(this.examId));
     }
 
     private loadAll() {
@@ -214,7 +212,6 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
 
     setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {
         this.exercisePreparationStatus = newStatus;
-        console.log(newStatus);
         this.exercisePreparationRunning = !!(newStatus && newStatus.finished! + newStatus.failed! < newStatus.overall!);
         this.exercisePreparationPercentage = newStatus ? (newStatus.overall! ? Math.round((newStatus.finished! / (newStatus.overall! - newStatus.failed!)) * 100) : 100) : 0;
         this.exercisePreparationEta = undefined;
