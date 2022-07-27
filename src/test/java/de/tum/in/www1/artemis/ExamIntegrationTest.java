@@ -505,7 +505,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExams_testExam() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
-                HttpStatus.FORBIDDEN);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -597,13 +597,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateMissingStudentExams_testExam() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExam.class,
-                HttpStatus.FORBIDDEN);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testEvaluateQuizExercises_testExam() throws Exception {
-        request.post("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1429,19 +1429,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
 
         // Should fail with too few exercise groups
         orderedExerciseGroups.remove(3);
         orderedExerciseGroups.remove(2);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
 
         // Should fail with different exercise group
         orderedExerciseGroups = new ArrayList<>();
         orderedExerciseGroups.add(exerciseGroup2);
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
     }
 
     @Test

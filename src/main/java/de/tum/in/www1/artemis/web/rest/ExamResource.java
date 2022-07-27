@@ -727,7 +727,6 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
-        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
