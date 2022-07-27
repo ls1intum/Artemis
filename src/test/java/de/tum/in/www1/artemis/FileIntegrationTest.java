@@ -367,7 +367,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         fileResource.addRemoveFileExtension("exotic");
     }
 
-    public Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
+    private Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
         Lecture lecture = database.createCourseWithLecture(true);
         lecture.setTitle("Test title");
         lecture.setDescription("Test");
