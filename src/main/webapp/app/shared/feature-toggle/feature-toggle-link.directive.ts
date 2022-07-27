@@ -7,7 +7,7 @@ import { Subscription } from 'rxjs';
     selector: '[jhiFeatureToggleLink]',
 })
 export class FeatureToggleLinkDirective implements OnInit, OnDestroy {
-    @Input('jhiFeatureToggleLink') feature: FeatureToggle;
+    @Input('jhiFeatureToggleLink') features: FeatureToggle | FeatureToggle[];
     /**
      * This input must be used to overwrite the disabled state given that the feature toggle is inactive.
      * If the normal [disabled] directive of Angular would be used, the HostBinding in this directive would always enable the element if the feature is active.
@@ -30,17 +30,22 @@ export class FeatureToggleLinkDirective implements OnInit, OnDestroy {
      */
     ngOnInit() {
         // If no feature is set for the toggle, the directive does nothing.
-        if (this.feature) {
-            this.featureToggleActiveSubscription = this.featureToggleService
-                .getFeatureToggleActive(this.feature)
-                .pipe(
-                    // Disable the element if the feature is inactive.
-                    tap((active) => {
-                        this.featureActive = this.skipFeatureToggle || active;
-                    }),
-                )
-                .subscribe();
+        if (!this.features) {
+            return;
         }
+        const featureArray = Array.isArray(this.features) ? this.features : [this.features];
+        if (!featureArray.length) {
+            return;
+        }
+        this.featureToggleActiveSubscription = this.featureToggleService
+            .getFeatureTogglesActive(featureArray)
+            .pipe(
+                // Disable the element if the feature is inactive.
+                tap((active) => {
+                    this.featureActive = this.skipFeatureToggle || active;
+                }),
+            )
+            .subscribe();
     }
 
     /**
