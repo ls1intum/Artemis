@@ -114,7 +114,7 @@ describe('OrionConnectorService', () => {
         expect((window as any).orionBuildConnector.onBuildFinished).toHaveBeenCalledWith();
     });
 
-    it('should forward onBuildFailed', () => {
+    it('should forward onBuildFailed with error', () => {
         serviceUnderTest.onBuildFailed([{ fileName: 'file', row: 5, column: 4, text: 'error', type: 'error', timestamp: 0 } as Annotation]);
 
         expect((window as any).orionBuildConnector.onBuildFailed).toHaveBeenCalledOnce();
@@ -123,7 +123,7 @@ describe('OrionConnectorService', () => {
         );
     });
 
-    it('should forward onBuildFinished', () => {
+    it('should forward onTestResult', () => {
         serviceUnderTest.onTestResult(true, 'name', 'message');
 
         expect((window as any).orionBuildConnector.onTestResult).toHaveBeenCalledOnce();

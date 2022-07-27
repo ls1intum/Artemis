@@ -28,9 +28,9 @@ describe('Round', () => {
     });
 
     it('should return NaN', () => {
-        expect(round(Number.NaN, 2)).toBe(NaN);
-        expect(round(Number.NaN, 1)).toBe(NaN);
-        expect(round(9.9999, 0.5)).toBe(NaN);
+        expect(round(Number.NaN, 2)).toBeNaN();
+        expect(round(Number.NaN, 1)).toBeNaN();
+        expect(round(9.9999, 0.5)).toBeNaN();
     });
 });
 

@@ -32,7 +32,7 @@ describe('OrionButtonComponent', () => {
         comp.buttonLoading = true;
 
         const buttonElement = fixture.debugElement.query(By.css('button'));
-        expect(buttonElement).not.toBe(null);
+        expect(buttonElement).not.toBeNull();
 
         buttonElement.nativeElement.click();
 
@@ -44,7 +44,7 @@ describe('OrionButtonComponent', () => {
         comp.buttonLoading = false;
 
         const buttonElement = fixture.debugElement.query(By.css('button'));
-        expect(buttonElement).not.toBe(null);
+        expect(buttonElement).not.toBeNull();
 
         buttonElement.nativeElement.click();
 

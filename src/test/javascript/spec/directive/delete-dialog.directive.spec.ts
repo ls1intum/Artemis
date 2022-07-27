@@ -59,16 +59,16 @@ describe('DeleteDialogDirective', () => {
 
         // Check that button was assigned with proper classes and type.
         const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
-        expect(deleteButton).not.toBe(null);
+        expect(deleteButton).not.toBeNull();
         expect(deleteButton.properties['type']).toBe('submit');
 
         // Check that delete text span was added to the DOM.
         const deleteTextSpan = debugElement.query(By.css('.d-none.d-md-inline'));
-        expect(deleteTextSpan).not.toBe(null);
-        expect(deleteTextSpan.nativeElement.textContent).not.toBe(null);
+        expect(deleteTextSpan).not.toBeNull();
+        expect(deleteTextSpan.nativeElement.textContent).not.toBeNull();
 
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
-        expect(directiveEl).not.toBe(null);
+        expect(directiveEl).not.toBeNull();
         const directiveInstance = directiveEl.injector.get(DeleteButtonDirective);
         expect(directiveInstance.entityTitle).toBe('title');
         expect(directiveInstance.deleteQuestion).toBe('question');

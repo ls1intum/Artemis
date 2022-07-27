@@ -123,7 +123,7 @@ describe('Exam Management Service Tests', () => {
             method: 'GET',
             url: `api/exams/${mockExam.id}`,
         });
-        expect(req.request.url).toEqual(`api/exams/${mockExam.id}`);
+        expect(req.request.url).toBe(`api/exams/${mockExam.id}`);
 
         // CLEANUP
         req.flush(expected);
@@ -143,9 +143,9 @@ describe('Exam Management Service Tests', () => {
             method: 'GET',
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id}?withStudents=false&withExerciseGroups=false`,
         });
-        expect(req.request.url).toEqual(`${service.resourceUrl}/${course.id!}/exams/${mockExam.id}`);
-        expect(req.request.params.get('withStudents')).toEqual('false');
-        expect(req.request.params.get('withExerciseGroups')).toEqual('false');
+        expect(req.request.url).toBe(`${service.resourceUrl}/${course.id!}/exams/${mockExam.id}`);
+        expect(req.request.params.get('withStudents')).toBe('false');
+        expect(req.request.params.get('withExerciseGroups')).toBe('false');
 
         // CLEANUP
         req.flush(expected);

@@ -24,7 +24,7 @@ describe('GuidedTourUtils', () => {
             const offsetParent1 = { offsetLeft: 4 } as any;
             const offsetParent2 = { offsetLeft: 2, offsetParent: offsetParent1 } as any;
             const dummyElement2 = { offsetLeft: 4, offsetParent: offsetParent2 } as HTMLElement;
-            expect(calculateLeftOffset(dummyElement2)).toEqual(10);
+            expect(calculateLeftOffset(dummyElement2)).toBe(10);
         });
     });
     describe('calculateTopOffset', () => {
@@ -32,7 +32,7 @@ describe('GuidedTourUtils', () => {
             const offsetParent1 = { offsetTop: 4 } as any;
             const offsetParent2 = { offsetTop: 2, offsetParent: offsetParent1 } as any;
             const dummyElement2 = { offsetTop: 4, offsetParent: offsetParent2 } as HTMLElement;
-            expect(calculateTopOffset(dummyElement2)).toEqual(10);
+            expect(calculateTopOffset(dummyElement2)).toBe(10);
         });
     });
     describe('isElementInViewPortHorizontally', () => {
@@ -42,27 +42,27 @@ describe('GuidedTourUtils', () => {
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 1000, 1000, 1000)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for bottom left', () => {
             const topleft = Orientation.BOTTOMLEFT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 1000, 1000, 1000)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for left', () => {
             const topleft = Orientation.LEFT;
             expect(isElementInViewPortHorizontally(topleft, 100, 0, 50)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 100, 0, 150)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for top right', () => {
             const topleft = Orientation.TOPRIGHT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 300)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for bottom right', () => {
             const topleft = Orientation.BOTTOMRIGHT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 300)).toBeFalse();
         });
-        it('should isElementInViewPortHorizontally', () => {
+        it('should isElementInViewPortHorizontally for right', () => {
             const topleft = Orientation.RIGHT;
             expect(isElementInViewPortHorizontally(topleft, 100, 100, 100)).toBeTrue();
             expect(isElementInViewPortHorizontally(topleft, 1000, 1000, 1000)).toBeFalse();

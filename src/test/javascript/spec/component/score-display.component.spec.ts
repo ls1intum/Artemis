@@ -46,7 +46,7 @@ describe('ScoreDisplayComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.bonusPoints).toBe(undefined);
+        expect(component.bonusPoints).toBeUndefined();
         expect(component.maxPointsWithBonus).toBe(15);
         expect(component.maxPercentage).toBe(150);
         expect(component.score).toBe(9.56);
@@ -59,9 +59,9 @@ describe('ScoreDisplayComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.bonusPoints).toBe(undefined);
-        expect(component.maxPointsWithBonus).toBe(undefined);
-        expect(component.maxPercentage).toBe(undefined);
+        expect(component.bonusPoints).toBeUndefined();
+        expect(component.maxPointsWithBonus).toBeUndefined();
+        expect(component.maxPercentage).toBeUndefined();
         expect(component.score).toBe(4.72);
     });
 
@@ -70,9 +70,9 @@ describe('ScoreDisplayComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.bonusPoints).toBe(undefined);
-        expect(component.maxPointsWithBonus).toBe(undefined);
-        expect(component.maxPercentage).toBe(undefined);
+        expect(component.bonusPoints).toBeUndefined();
+        expect(component.maxPointsWithBonus).toBeUndefined();
+        expect(component.maxPercentage).toBeUndefined();
         expect(component.score).toBe(1.38);
     });
 });

@@ -94,12 +94,12 @@ describe('Participation Service', () => {
     it('should delete for guided tour', fakeAsync(() => {
         service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
         let request = httpMock.expectOne({ method: 'DELETE' });
-        expect(request.request.params.keys().length).toEqual(0);
+        expect(request.request.params.keys()).toHaveLength(0);
 
         service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok));
         request = httpMock.expectOne({ method: 'DELETE' });
-        expect(request.request.params.keys().length).toEqual(1);
-        expect(request.request.params.get('a')).toEqual('param');
+        expect(request.request.params.keys()).toHaveLength(1);
+        expect(request.request.params.get('a')).toBe('param');
     }));
 
     it('should cleanup build plan', fakeAsync(() => {
@@ -107,7 +107,7 @@ describe('Participation Service', () => {
         httpMock.expectOne({ method: 'PUT' });
     }));
 
-    it('should merge student participations', fakeAsync(() => {
+    it('should merge student participations for programming exercises', fakeAsync(() => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             id: 1,
             type: ParticipationType.PROGRAMMING,
