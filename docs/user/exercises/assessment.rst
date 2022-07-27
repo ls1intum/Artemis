@@ -44,7 +44,7 @@ It also shows the average score the tutor has given and the average rating they 
 Each exercise also has its own assessment dashboard that shows all of this information for a single exercise.
 
 
-Automatic assessment
+Automatic Assessment
 --------------------
 
 Automatic assessment is available for programming and quiz exercises.
