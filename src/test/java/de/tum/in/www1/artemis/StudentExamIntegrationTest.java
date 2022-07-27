@@ -1269,8 +1269,8 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             assertThat(exercise.getGradingInstructions()).isNull();
             assertThat(exercise.getGradingCriteria()).isEmpty();
 
-            if (exercise instanceof QuizExercise) {
-                assertThat(((QuizExercise) exercise).getQuizQuestions()).hasSize(3);
+            if (exercise instanceof QuizExercise quizExercise) {
+                assertThat(quizExercise.getQuizQuestions()).hasSize(3);
                 QuizSubmission submission = (QuizSubmission) exercise.getStudentParticipations().iterator().next().getSubmissions().iterator().next();
                 assertThat(submission.getScoreInPoints()).isNull();
                 submission.getSubmittedAnswers().forEach(submittedAnswer -> {
