@@ -173,6 +173,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
+        exercise.setTitle("LoremIpsum");
         exercise = programmingExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch("" + exercise.getId());

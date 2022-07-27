@@ -756,6 +756,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         TextExercise exercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
+        exercise.setTitle("LoremIpsum");
         exercise = textExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch("" + exercise.getId());

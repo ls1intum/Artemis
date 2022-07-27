@@ -555,6 +555,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         ModelingExercise exercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        exercise.setTitle("LoremIpsum");
         exercise = modelingExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch("" + exercise.getId());

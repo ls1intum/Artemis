@@ -835,6 +835,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
+        exercise.setTitle("LoremIpsum");
         exercise = quizExerciseRepository.save(exercise);
 
         final var searchTerm = database.configureSearch("" + exercise.getId());
