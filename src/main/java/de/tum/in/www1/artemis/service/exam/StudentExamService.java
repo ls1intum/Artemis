@@ -19,9 +19,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -89,14 +86,12 @@ public class StudentExamService {
 
     private final SimpMessageSendingOperations messagingTemplate;
 
-    private final ObjectMapper objectMapper;
-
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
             ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService,
-            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -114,7 +109,6 @@ public class StudentExamService {
         this.instanceMessageSendService = instanceMessageSendService;
         this.cacheManager = cacheManager;
         this.messagingTemplate = messagingTemplate;
-        this.objectMapper = objectMapper;
     }
 
     /**
@@ -530,7 +524,7 @@ public class StudentExamService {
             var status = new ExamExerciseStartPreparationStatus(examId, done, failed, overall, startTime);
             var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
             if (cache != null) {
-                cache.put(examId, objectMapper.writeValueAsString(status));
+                cache.put(examId, status);
             }
             else {
                 log.warn("Unable to add exam exercise start status to distributed cache because it is null");
@@ -543,14 +537,8 @@ public class StudentExamService {
     }
 
     public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
-        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId)).map(wrapper -> (String) wrapper.get()).map(json -> {
-            try {
-                return objectMapper.readValue(json, ExamExerciseStartPreparationStatus.class);
-            }
-            catch (JsonProcessingException e) {
-                return null;
-            }
-        });
+        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId))
+                .map(wrapper -> (ExamExerciseStartPreparationStatus) wrapper.get());
     }
 
     /**
