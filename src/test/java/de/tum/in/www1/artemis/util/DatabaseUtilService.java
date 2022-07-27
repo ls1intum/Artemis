@@ -881,7 +881,7 @@ public class DatabaseUtilService {
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setAuthor(getUserByLoginWithoutAuthorities(String.format(usernamePrefix + "%s", (i + 1))));
+        post.setAuthor(getUserByLoginWithoutAuthorities(String.format("%s%s", usernamePrefix, (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();

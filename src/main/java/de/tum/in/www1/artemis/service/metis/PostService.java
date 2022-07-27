@@ -535,7 +535,10 @@ public class PostService extends PostingService {
         }
     }
 
-    // TODO: Add doc
+    /**
+     * helper method to retrieve groups and authorities of all posting authors in a list of Posts
+     * @param postsInCourse list of posts with answers whose authors are to be populated with their groups and authorities
+     */
     private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
         // sets author roles to display user authority icon on posting headers
         postsInCourse.forEach(post -> {
@@ -544,9 +547,13 @@ public class PostService extends PostingService {
         });
     }
 
-    // TODO: Add doc
+    /**
+     * fetches and sets groups and authorities of posting author, which are used to display author role icon in the posting header
+     * @param posting       posting to fetch groups and authorities
+     * @param postingCourse course that the post belons to, must be explicitly fetched and provided for new post creation
+     */
     private void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
-        User author = userRepository.findOneWithGroupsAndAuthoritiesById(posting.getAuthor().getId()).get();
+        User author = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(posting.getAuthor().getId());
 
         if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, author)) {
             posting.setAuthorRole(UserRole.INSTRUCTOR);
