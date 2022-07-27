@@ -59,8 +59,8 @@ describe('ExerciseDetailsComponent', () => {
 
     it('should initialize programming exercise', () => {
         fixture.detectChanges();
-        expect(component).not.toBe(null);
-        expect(component.programmingExercise).not.toBe(null);
+        expect(component).not.toBeNull();
+        expect(component.programmingExercise).not.toBeNull();
         expect(isAtLeastTutor).toHaveBeenCalledOnce();
         expect(isAtLeastEditor).toHaveBeenCalledOnce();
         expect(isAtLeastInstructor).toHaveBeenCalledOnce();
@@ -69,19 +69,19 @@ describe('ExerciseDetailsComponent', () => {
     it('should show timeline', () => {
         fixture.detectChanges();
         const timeline = getElement(fixture.debugElement, 'jhi-programming-exercise-lifecycle');
-        expect(timeline).not.toBe(null);
+        expect(timeline).not.toBeNull();
     });
 
     it('should show instructions', () => {
         fixture.detectChanges();
         const instructions = getElement(fixture.debugElement, 'jhi-programming-exercise-instructions');
-        expect(instructions).not.toBe(null);
+        expect(instructions).not.toBeNull();
     });
 
     it('should not show grading criteria', () => {
         fixture.detectChanges();
         const gradingCriteria = getElement(fixture.debugElement, 'jhi-structured-grading-instructions-assessment-layout');
-        expect(gradingCriteria).toBe(null);
+        expect(gradingCriteria).toBeNull();
     });
 
     describe('ExerciseDetailsComponent with Text Exercise', () => {
@@ -97,7 +97,7 @@ describe('ExerciseDetailsComponent', () => {
         it('should initialize text exercise', () => {
             component.exercise = textExercise;
             fixture.detectChanges();
-            expect(component.programmingExercise).toBe(undefined);
+            expect(component.programmingExercise).toBeUndefined();
             expect(isAtLeastTutor).toHaveBeenCalledOnce();
             expect(isAtLeastEditor).toHaveBeenCalledOnce();
             expect(isAtLeastInstructor).toHaveBeenCalledOnce();
@@ -107,7 +107,7 @@ describe('ExerciseDetailsComponent', () => {
             component.exercise = textExercise;
             fixture.detectChanges();
             const gradingCriteria = getElement(fixture.debugElement, 'jhi-structured-grading-instructions-assessment-layout');
-            expect(gradingCriteria).not.toBe(null);
+            expect(gradingCriteria).not.toBeNull();
         });
     });
 });

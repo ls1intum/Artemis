@@ -143,7 +143,7 @@ describe('QuizExercise Statistic Component', () => {
 
             // check
             expect(comp.quizExercise).toBe(quizExercise);
-            expect(comp.maxScore).toEqual(11);
+            expect(comp.maxScore).toBe(11);
             expect(loadDataSpy).toHaveBeenCalled();
         });
 

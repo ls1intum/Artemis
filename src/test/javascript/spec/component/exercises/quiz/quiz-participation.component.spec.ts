@@ -195,7 +195,7 @@ describe('QuizParticipationComponent', () => {
             expect(component.dragAndDropMappings.get(question1.id!)).toEqual([]);
             expect(component.selectedAnswerOptions.get(question2.id!)).toEqual([]);
             expect(component.shortAnswerSubmittedTexts.get(question3.id!)).toEqual([]);
-            expect(component.submission).not.toBe(null);
+            expect(component.submission).not.toBeNull();
         });
 
         it('should update in intervals', fakeAsync(() => {
@@ -255,7 +255,7 @@ describe('QuizParticipationComponent', () => {
             const initLiveModeSpy = jest.spyOn(component, 'initLiveMode');
 
             const refreshButton = fixture.debugElement.nativeElement.querySelector('#refresh-quiz button');
-            expect(refreshButton).not.toBe(null);
+            expect(refreshButton).not.toBeNull();
 
             refreshButton.click();
             fixture.detectChanges();
@@ -287,7 +287,7 @@ describe('QuizParticipationComponent', () => {
             const refreshQuizSpy = jest.spyOn(component, 'refreshQuiz').mockReturnValue();
 
             const joinButton = fixture.debugElement.nativeElement.querySelector(quizMode === QuizMode.BATCHED ? '#join-batch button' : '#start-batch button');
-            expect(joinButton).not.toBe(null);
+            expect(joinButton).not.toBeNull();
 
             joinButton.click();
             fixture.detectChanges();
@@ -301,7 +301,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -344,7 +344,7 @@ describe('QuizParticipationComponent', () => {
             component.remainingTimeSeconds = 200;
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -496,7 +496,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();
@@ -576,7 +576,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
 
             const submitButton = fixture.debugElement.nativeElement.querySelector('#submit-quiz button');
-            expect(submitButton).not.toBe(null);
+            expect(submitButton).not.toBeNull();
 
             submitButton.click();
             fixture.detectChanges();

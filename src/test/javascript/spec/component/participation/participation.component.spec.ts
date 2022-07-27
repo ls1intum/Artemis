@@ -96,7 +96,7 @@ describe('ParticipationComponent', () => {
         tick();
 
         expect(component.isLoading).toBeFalse();
-        expect(component.participations.length).toBe(1);
+        expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
         expect(component.newManualResultAllowed).toBeFalse();
         expect(component.presentationScoreEnabled).toBeFalse();
@@ -122,7 +122,7 @@ describe('ParticipationComponent', () => {
         tick();
 
         expect(component.isLoading).toBeFalse();
-        expect(component.participations.length).toBe(1);
+        expect(component.participations).toHaveLength(1);
         expect(component.participations[0].id).toBe(participation.id);
         expect(component.newManualResultAllowed).toBeFalse();
         expect(component.presentationScoreEnabled).toBeFalse();
