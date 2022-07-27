@@ -7,7 +7,7 @@ Quiz exercise
 Overview
 --------
 
-- Prepare a Quiz Exercise: Only instructors and tutors can create, import, and export quiz exercises.
+- Prepare a Quiz Exercise: Only instructors and editors can create, import, and export quiz exercises.
 
 - Resolve a Quiz Exercise: Students can solve quiz exercises.
 
@@ -39,11 +39,11 @@ Create new Quiz Exercise
 
     - **Categories**: Type the category for the quiz exercise.
 
-    - **Difficulty**: Select the difficulty level among Easy, Medium and Hard. It is possible to select No level.
+    - **Difficulty**: Select the difficulty level among Easy, Medium and Hard. It is possible to select No Level.
 
     - **Duration**: Provide the time in minutes and seconds for students to solve the quiz exercise.
 
-    - **Options**: Choose between presenting the questions in Random order or not.
+    - **Options**: Choose between presenting the questions in random order or not.
 
     - **Batch Mode**: Batch Mode controls how students can participate in the quiz.
 
@@ -55,9 +55,9 @@ Create new Quiz Exercise
 
     - **Visible from**: The date and hour when the quiz becomes visible to students.
 
-    - **Schedule Quiz Start**: To establish the date and hour at which the quiz will be available to solve be solved.
+    - **Schedule Quiz Start**: To establish the date and hour at which the quiz will be available for solving.
 
-        - **Start of working time**: Set the time when the students are able to see the questions and start answering. Students can start working on the quiz from this time until the duration ends.
+        - **Start of working time**: Set the time for the students to see the questions and start answering them. Students can start working on the quiz from this time until the duration ends.
 
     - **Should this exercise be included in the course score calculation?**:
 
@@ -82,13 +82,13 @@ Create new Quiz Exercise
 
             - Scoring type:
 
-                - All or nothing
+                - All or Nothing
                 - Proportional with Penalty
                 - Proportional without Penalty
 
             - Present answer options in random order.
 
-            - Single Choice Mode: When there is just one correct option. This disables the Scoring type.
+            - Single Choice Mode: When there is just one correct option. This disables the Scoring type (resp. sets it to All or Nothing).
 
             - Delete icon: To delete the current question.
 
@@ -123,7 +123,7 @@ Create new Quiz Exercise
 
             - Scoring type:
 
-                - All or nothing
+                - All or Nothing
 
                 - Proportional with Penalty
 
@@ -168,7 +168,7 @@ Create new Quiz Exercise
 
             - Scoring type:
 
-                - All or nothing
+                - All or Nothing
 
                 - Proportional with Penalty
 
@@ -186,9 +186,9 @@ Create new Quiz Exercise
 
             - Text editor: The quiz statement can be developed with the spots and options.
 
-            - Text view button: Enables the text editor to write and edit the question statement.
+            - Text View: Enables the text editor to write and edit the question statement.
 
-            - Preview View button: Enables the student view.
+            - Visual View: Enables the student view.
 
         - **Add Existing Questions**
 
@@ -318,7 +318,7 @@ Import a Quiz
 
         - The list of quizzes: Whit their ID, title, course and indicator if they are exam questions.
 
-        - Clicking the Import button |ImportButton| opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in **Create new quiz exercise**.
+        - Clicking the Import button |ImportButton| opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in **Create new Quiz Exercise**.
 
 Export a Quiz
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -329,14 +329,14 @@ Export a Quiz
             :align: center
             :scale: 50
 
-        - Select the quizzes for being exported in the Export Column.
+        - Select the quizzes for being exported in the Export column.
 
         - The Export button |ExportButton| will download the quiz in a JSON file.
 
 Resolve a Quiz Exercise
 --------
 
-    - If a quiz exercise is available on the Artemis Homepage as a current exercise, it will be possible to see it in the course overview or inside the course where it belongs.
+    - If a quiz exercise is available on the Artemis home page as a current exercise, it will be possible to see it in the course overview or inside the course where it belongs.
 
         .. figure:: quiz/current-quiz-exercise.png
             :align: center
@@ -400,7 +400,7 @@ Resolve a Quiz Exercise
             :align: center
             :scale: 40
 
-        - To submit and finish the quiz, the student must press the submit button |SubmitButton|. However, when the quiz time's up, the answers will be submitted automatically.
+        - To submit and finish the quiz, the student must press the Submit button |SubmitButton|. However, when the quiz time's up, the answers will be submitted automatically.
 
     - The assessment is automatic and the student can see the result of the overall quiz and of specific questions. In the case of MC questions, the solution will be displayed.
 
@@ -408,7 +408,7 @@ Resolve a Quiz Exercise
             :align: center
             :scale: 35
 
-    - In the case of Drag and Drop questions, the solution is shown by clicking the show sample solution button |ShowSampleSolutionButton|.
+    - In the case of Drag and Drop questions, the solution is shown by clicking the Show Sample Solution button |ShowSampleSolutionButton|.
 
         .. figure:: quiz/solution-drag-and-drop.png
             :align: center
