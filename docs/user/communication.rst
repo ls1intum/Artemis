@@ -85,7 +85,7 @@ Prevent Post Duplication
 ------------------------
 
 In order to prevent duplicated questions from being posted, we integrate a duplication check that runs during post creation.
-We strongly recommend users that create a post, to check the automatically provided list of similar posts to find out if the question in mind has already been asked and resolved in the best case.
+We strongly recommend users that create a post, to check the automatically provided list of similar posts to find out whether the question in mind has already been asked and resolved in the best case.
 
 Mark Your Post As Resolved
 --------------------------
