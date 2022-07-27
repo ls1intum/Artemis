@@ -93,7 +93,7 @@ describe('UpdatingResultComponent', () => {
         fixture.detectChanges();
 
         expect(subscribeForLatestResultOfParticipationStub).not.toHaveBeenCalled();
-        expect(comp.result).toBe(undefined);
+        expect(comp.result).toBeUndefined();
     });
 
     it('should use the newest rated result of the provided participation and subscribe for new results', () => {
@@ -195,7 +195,7 @@ describe('UpdatingResultComponent', () => {
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
         expect(getLatestPendingSubmissionStub).not.toHaveBeenCalled();
-        expect(comp.isBuilding).toBe(undefined);
+        expect(comp.isBuilding).toBeUndefined();
         expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
     });
 
@@ -213,7 +213,7 @@ describe('UpdatingResultComponent', () => {
         comp.exercise = { id: 99, type: ExerciseType.PROGRAMMING, dueDate: submission.submissionDate.subtract(1, 'minute') } as Exercise;
         getLatestPendingSubmissionStub.mockReturnValue(of({ submissionState: ProgrammingSubmissionState.IS_BUILDING_PENDING_SUBMISSION, submission, participationId: 3 }));
         cleanInitializeGraded();
-        expect(comp.isBuilding).toBe(undefined);
+        expect(comp.isBuilding).toBeUndefined();
         expect(comp.missingResultInfo).toBe(MissingResultInfo.NONE);
     });
 });

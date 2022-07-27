@@ -133,7 +133,7 @@ describe('Test Run Management Component', () => {
             expect(createTestRunButton).toBeTruthy();
             expect(createTestRunButton.nativeElement.disabled).toBeFalsy();
             createTestRunButton.nativeElement.click();
-            expect(component.testRuns.length).toEqual(3);
+            expect(component.testRuns).toHaveLength(3);
         });
 
         it('should correctly catch error after creating test run', () => {
@@ -175,7 +175,7 @@ describe('Test Run Management Component', () => {
     });
 
     describe('sort rows', () => {
-        it('should forward request to ', fakeAsync(() => {
+        it('should forward request to', fakeAsync(() => {
             const sortService = TestBed.inject(SortService);
             jest.spyOn(sortService, 'sortByProperty').mockReturnValue(studentExams);
             fixture.detectChanges();

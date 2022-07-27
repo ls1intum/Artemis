@@ -463,7 +463,7 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[5]).toEqual(editorSubmissionCrumb);
         });
 
-        it('modeling exercise example submission', () => {
+        it('existing modeling exercise example submission', () => {
             const testUrl = '/course-management/1/modeling-exercises/2/example-submissions/3';
             router.setUrl(testUrl);
 

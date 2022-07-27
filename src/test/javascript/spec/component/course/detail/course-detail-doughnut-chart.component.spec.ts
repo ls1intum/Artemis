@@ -81,6 +81,6 @@ describe('CourseDetailDoughnutChartComponent', () => {
         component.ngOnInit();
 
         expect(component.doughnutChartTitle).toBe('');
-        expect(component.titleLink).toBe(undefined);
+        expect(component.titleLink).toBeUndefined();
     });
 });

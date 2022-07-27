@@ -139,7 +139,7 @@ describe('AuthServerProvider', () => {
             sessionStorageService.store(tokenKey, storedToken);
 
             service.removeAuthTokenFromCaches().subscribe((resp) => {
-                expect(resp).toBe(undefined);
+                expect(resp).toBeUndefined();
                 expect(sessionStorageClearSpy).toHaveBeenCalledOnce();
                 expect(sessionStorageClearSpy).toHaveBeenCalledWith(tokenKey);
                 expect(localStorageClearSpy).toHaveBeenCalledOnce();
@@ -153,7 +153,7 @@ describe('AuthServerProvider', () => {
             sessionStorageService.store(tokenKey, storedToken);
 
             service.clearCaches().subscribe((resp) => {
-                expect(resp).toBe(undefined);
+                expect(resp).toBeUndefined();
                 expect(sessionStorageClearSpy).toHaveBeenCalledOnce();
                 expect(sessionStorageClearSpy).toHaveBeenCalledWith();
                 expect(localStorageClearSpy).toHaveBeenCalledOnce();

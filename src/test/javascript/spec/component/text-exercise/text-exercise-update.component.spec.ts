@@ -186,9 +186,9 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -218,9 +218,9 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeFalse();
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -246,10 +246,10 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeTrue();
-            expect(comp.textExercise.course).toEqual(undefined);
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.course).toBeUndefined();
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -276,9 +276,9 @@ describe('TextExercise Management Update Component', () => {
             // THEN
             expect(comp.isImport).toBeTrue();
             expect(comp.isExamMode).toBeTrue();
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 });

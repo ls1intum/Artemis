@@ -201,7 +201,7 @@ describe('TeamParticipationTableComponent', () => {
 
         // Check that ngx-datatable is present
         const datatable = debugElement.query(By.css('jhi-data-table'));
-        expect(datatable).not.toBe(null);
+        expect(datatable).not.toBeNull();
     });
 
     it('Assessment Action "continue" is triggered', () => {

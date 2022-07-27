@@ -132,8 +132,8 @@ describe('PageDiscussionSectionComponent', () => {
     it('should reset current post', fakeAsync(() => {
         component.resetCurrentPost();
         tick();
-        expect(component.currentPost).toEqual(undefined);
-        expect(component.currentPostId).toEqual(undefined);
+        expect(component.currentPost).toBeUndefined();
+        expect(component.currentPostId).toBeUndefined();
     }));
 
     it('should sort posts correctly', () => {
