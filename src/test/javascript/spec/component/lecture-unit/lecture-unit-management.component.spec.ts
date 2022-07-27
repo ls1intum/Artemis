@@ -139,7 +139,7 @@ describe('LectureUnitManagementComponent', () => {
         // not moved as first one
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[0].id);
         const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
-        expect(downButton).toBeDefined;
+        expect(downButton).toBeDefined();
         downButton.nativeElement.click();
         expect(moveDownSpy).toHaveBeenCalledOnce();
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
@@ -159,7 +159,7 @@ describe('LectureUnitManagementComponent', () => {
 
         expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition].id);
         const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
-        expect(upButton).toBeDefined;
+        expect(upButton).toBeDefined();
         upButton.nativeElement.click();
         expect(moveUpSpy).toHaveBeenCalledOnce();
         expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition - 1].id);
@@ -176,17 +176,17 @@ describe('LectureUnitManagementComponent', () => {
     });
 
     it('should give the correct delete question translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toEqual('artemisApp.attachmentUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toEqual('artemisApp.exerciseUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toEqual('artemisApp.textUnit.delete.question');
-        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toEqual('artemisApp.videoUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new TextUnit())).toBe('artemisApp.textUnit.delete.question');
+        expect(lectureUnitManagementComponent.getDeleteQuestionKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.question');
     });
 
     it('should give the correct confirmation text translation key', () => {
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toEqual('artemisApp.attachmentUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toEqual('artemisApp.exerciseUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toEqual('artemisApp.videoUnit.delete.typeNameToConfirm');
-        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toEqual('artemisApp.textUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new AttachmentUnit())).toBe('artemisApp.attachmentUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new ExerciseUnit())).toBe('artemisApp.exerciseUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new VideoUnit())).toBe('artemisApp.videoUnit.delete.typeNameToConfirm');
+        expect(lectureUnitManagementComponent.getDeleteConfirmationTextKey(new TextUnit())).toBe('artemisApp.textUnit.delete.typeNameToConfirm');
     });
 
     it('should give the correct action type', () => {

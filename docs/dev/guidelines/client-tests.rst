@@ -259,7 +259,7 @@ Some guidelines:
     .. code:: ts
 
         expect(course == undefined).toBeTrue();
-        expect(courseList.length).toBe(4);
+        expect(courseList).toHaveLength(4);
 
     extract as much as possible:
 

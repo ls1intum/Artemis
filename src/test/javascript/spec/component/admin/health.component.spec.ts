@@ -79,7 +79,7 @@ describe('HealthComponent', () => {
         fixture.detectChanges();
 
         const linkToClick = fixture.debugElement.query(By.css('a.hand'));
-        expect(linkToClick).not.toBe(null);
+        expect(linkToClick).not.toBeNull();
 
         linkToClick.nativeElement.click();
         fixture.detectChanges();
