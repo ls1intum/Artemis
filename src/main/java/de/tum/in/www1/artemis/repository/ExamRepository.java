@@ -81,7 +81,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     @Query("""
             SELECT DISTINCT e FROM Exam e
                     WHERE e.course.instructorGroupName IN :groups
-                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
               """)
     Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
