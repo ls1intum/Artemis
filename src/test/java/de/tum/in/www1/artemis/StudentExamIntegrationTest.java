@@ -48,6 +48,7 @@ import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
+import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
@@ -303,8 +304,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
         }
 
-        Integer noGeneratedParticipations = request.postWithResponseBody("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/start-exercises",
-                Optional.empty(), Integer.class, HttpStatus.OK);
+        int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam2, course2);
 
         assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam2.getExerciseGroups().size());
 
@@ -322,8 +322,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testStartExercises_testExam() throws Exception {
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
-                HttpStatus.FORBIDDEN);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/start-exercises", null, HttpStatus.FORBIDDEN, null);
     }
 
     @Test

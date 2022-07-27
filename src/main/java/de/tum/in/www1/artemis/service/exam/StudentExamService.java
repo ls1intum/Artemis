@@ -8,6 +8,7 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
@@ -505,27 +506,47 @@ public class StudentExamService {
         var finishedExamsCounter = new AtomicInteger(0);
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
-        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt);
+        var lock = new ReentrantLock();
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt, lock);
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = studentExams.stream()
                 .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
                         .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
-                                generatedParticipations.size(), startedAt))
+                                generatedParticipations.size(), startedAt, lock))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
                             sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
-                                    generatedParticipations.size(), startedAt);
+                                    generatedParticipations.size(), startedAt, lock);
                             return null;
                         }))
                 .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
-        return CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).thenApply(empty -> generatedParticipations.size());
+        return CompletableFuture.allOf(futures).thenApply((emtpy) -> {
+            threadPool.shutdown();
+            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.get(), studentExams.size(), generatedParticipations.size(), startedAt,
+                    lock);
+            return generatedParticipations.size();
+        });
     }
 
-    private void sendAndCacheExercisePreparationStatus(Long examId, int done, int failed, int overall, int participations, ZonedDateTime startTime) {
+    private void sendAndCacheExercisePreparationStatus(Long examId, int finished, int failed, int overall, int participations, ZonedDateTime startTime, ReentrantLock lock) {
+        // Synchronizing and comparing to avoid race conditions here
+        // Otherwise it can happen that a status with less completed exams is sent after one with a higher value
         try {
-            var status = new ExamExerciseStartPreparationStatus(done, failed, overall, participations, startTime);
+            lock.lock();
+            ExamExerciseStartPreparationStatus status = null;
             var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
             if (cache != null) {
+                var oldValue = cache.get(examId);
+                if (oldValue != null) {
+                    var oldStatus = (ExamExerciseStartPreparationStatus) oldValue.get();
+                    if (oldStatus != null) {
+                        status = new ExamExerciseStartPreparationStatus(Math.max(finished, oldStatus.finished()), Math.max(failed, oldStatus.failed()),
+                                Math.max(overall, oldStatus.overall()), Math.max(participations, oldStatus.participationCount()), startTime);
+                    }
+                }
+                if (status == null) {
+                    status = new ExamExerciseStartPreparationStatus(finished, failed, overall, participations, startTime);
+                }
                 cache.put(examId, status);
             }
             else {
@@ -535,6 +556,9 @@ public class StudentExamService {
         }
         catch (Exception e) {
             log.warn("Failed to send exercise preparation status", e);
+        }
+        finally {
+            lock.unlock();
         }
     }
 
