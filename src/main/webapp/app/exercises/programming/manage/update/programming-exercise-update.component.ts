@@ -453,7 +453,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.programmingExercise);
@@ -532,14 +532,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving = false;
-        this.previousState();
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse) {

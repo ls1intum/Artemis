@@ -804,7 +804,7 @@ abstract class ProgrammingExerciseGradingServiceTest extends AbstractSpringInteg
             assertThat(singleResult).isEqualTo(participation.findLatestLegalResult());
         }
         else if (student == 5) {
-            // student5 Build Failed
+            // student5 Build failed
             assertThat(results).hasSize(1);
             var singleResult = results.iterator().next();
             testParticipationResult(singleResult, 0D, false, 0, AssessmentType.AUTOMATIC);

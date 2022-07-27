@@ -1323,14 +1323,15 @@ describe('QuizExercise Management Detail Component', () => {
             });
 
             it('should go back to quiz exercise page on cancel', () => {
-                comp.cancel();
-                expect(routerSpy).toHaveBeenCalledWith(['/course-management', comp.courseId, 'quiz-exercises']);
+                comp.quizExercise.course = course;
+                comp.previousState();
+                expect(routerSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exercises']);
             });
 
-            it('should go back to quiz exercise groups page on cancel', () => {
-                comp.isExamMode = true;
-                comp.cancel();
-                expect(routerSpy).toHaveBeenCalledWith(['/course-management', comp.courseId, 'exams', comp.examId, 'exercise-groups']);
+            it('should go back to quiz exercise page on cancel (exam)', () => {
+                comp.quizExercise.exerciseGroup = { id: 4, exam: { id: 5, course } };
+                comp.previousState();
+                expect(routerSpy).toHaveBeenCalledWith(['/course-management', course.id, 'exams', 5, 'exercise-groups']);
             });
         });
 

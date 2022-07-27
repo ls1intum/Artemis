@@ -118,7 +118,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return the ProgrammingSubmission for the last commitHash
      * @throws EntityNotFoundException  if no ProgrammingExerciseParticipation could be found
      * @throws IllegalStateException    if a ProgrammingSubmission already exists
-     * @throws IllegalArgumentException it the Commit hash could not be parsed for submission from participation
+     * @throws IllegalArgumentException if the Commit hash could not be parsed for submission from participation
      */
     public ProgrammingSubmission notifyPush(Long participationId, Object requestBody) throws EntityNotFoundException, IllegalStateException, IllegalArgumentException {
         // Note: the following line is intentionally at the top of the method to get the most accurate submission date
@@ -173,7 +173,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         }
 
         // There can't be two submissions for the same participation and commitHash!
-        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participationId, commit.getCommitHash());
+        ProgrammingSubmission programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participationId, commit.getCommitHash());
         if (programmingSubmission != null) {
             throw new IllegalStateException("Submission for participation id " + participationId + " and commitHash " + commit.getCommitHash() + " already exists!");
         }
@@ -384,7 +384,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
             throws IllegalStateException {
         String lastCommitHash = getLastCommitHashForParticipation(participation);
         // we first try to get an existing programming submission with the last commit hash
-        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHash(participation.getId(), lastCommitHash);
+        var programmingSubmission = programmingSubmissionRepository.findFirstByParticipationIdAndCommitHashOrderByIdDesc(participation.getId(), lastCommitHash);
         // in case no programming submission is available, we create one
         return Objects.requireNonNullElseGet(programmingSubmission, () -> createSubmissionWithCommitHashAndSubmissionType(participation, lastCommitHash, submissionType));
     }
