@@ -20,7 +20,6 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Authority;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Organization;
 import de.tum.in.www1.artemis.domain.User;
@@ -98,9 +97,6 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroup(@Param("groupName") String groupName);
-
-    @Query("select user from User user where :#{#authority} member of user.authorities")
-    List<User> findAllWithAuthority(@Param("authority") Authority authority);
 
     @Query("select user from User user where user.isInternal = :#{#isInternal}")
     List<User> findAllByInternal(boolean isInternal);

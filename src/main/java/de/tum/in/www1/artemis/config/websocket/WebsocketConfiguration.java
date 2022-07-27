@@ -309,11 +309,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
     }
 
     /**
-     * Returns true if the given destination belongs to a topic for a whole exam.
+     * Returns the exam id if the given destination belongs to a topic for a whole exam.
      * Only instructors and admins should be allowed to subscribe to this topic.
      *
      * @param destination Websocket destination topic which to check
-     * @return flag whether the destination belongs
+     * @return an optional that contains the exam id if this is a topic for a whole exam; an empty optional otherwise
      */
     public static Optional<Long> getExamIdFromExamRootDestination(String destination) {
         var matcher = EXAM_TOPIC_PATTERN.matcher(destination);

@@ -498,7 +498,6 @@ public class StudentExamService {
      * @param examId exam to which the student exams belong
      * @return a future that will yield the number of generated participations
      */
-    @SuppressWarnings("unchecked")
     public CompletableFuture<Integer> startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
@@ -506,32 +505,27 @@ public class StudentExamService {
             throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
         }
 
-        var updateTargets = new HashSet<User>();
-        updateTargets.addAll(userRepository.getInstructors(exam.getCourse()));
-        updateTargets.addAll(userRepository.findAllWithAuthority(Authority.ADMIN_AUTHORITY));
-
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
 
         var finishedExamsCounter = new AtomicInteger(0);
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
-        sendExercisePreparationStatus(examId, 0, 0, studentExams.size(), startedAt, updateTargets);
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), startedAt);
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = studentExams.stream()
-                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
-                        .thenRun(() -> sendExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(), startedAt,
-                                updateTargets))
-                        .exceptionally(t -> {
-                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), t);
-                            sendExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(), startedAt, updateTargets);
+                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool).thenRun(
+                        () -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(), startedAt))
+                        .exceptionally(throwable -> {
+                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(), startedAt);
                             return null;
                         }))
                 .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
-        return CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).thenApply(v -> generatedParticipations.size());
+        return CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).thenApply(empty -> generatedParticipations.size());
     }
 
-    private void sendExercisePreparationStatus(Long examId, int done, int failed, int overall, ZonedDateTime startTime, Collection<User> users) {
+    private void sendAndCacheExercisePreparationStatus(Long examId, int done, int failed, int overall, ZonedDateTime startTime) {
         try {
             var status = new ExamExerciseStartPreparationStatus(examId, done, failed, overall, startTime);
             var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
@@ -541,7 +535,7 @@ public class StudentExamService {
             else {
                 log.warn("Unable to add exam exercise start status to distributed cache because it is null");
             }
-            users.forEach(user -> messagingTemplate.convertAndSend(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status));
+            messagingTemplate.convertAndSend(EXAM_EXERCISE_START_STATUS_TOPIC.formatted(examId), status);
         }
         catch (Exception e) {
             log.warn("Failed to send exercise preparation status", e);
