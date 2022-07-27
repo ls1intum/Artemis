@@ -291,6 +291,13 @@
                 "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
+            },
+            "exercisePreparationProgress": {
+                "label": "Exercise preparation progress:",
+                "failed": "failed",
+                "remaining": "remaining",
+                "finished": "Finished",
+                "noeta": "No ETA"
             }
         },
         "examManagement": {

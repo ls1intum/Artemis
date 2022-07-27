@@ -289,6 +289,13 @@
                 "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
                 "submit": "Abgeben",
                 "unsubmit": "Abgabe entfernen"
+            },
+            "exercisePreparationProgress": {
+                "label": "Aufgabenvorbereitungsfortschritt:",
+                "failed": "fehlgeschlagen",
+                "remaining": "verbleibend",
+                "finished": "Fertig",
+                "noeta": "Kein ETA"
             }
         },
         "examManagement": {

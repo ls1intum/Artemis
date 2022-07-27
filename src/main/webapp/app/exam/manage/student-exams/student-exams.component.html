@@ -56,7 +56,7 @@
     <div class="d-flex align-items-center gap-3 mt-2 mb-3 flex-wrap">
         <jhi-student-exam-status *ngIf="!isLoading" [isTestExam]="isTestExam" [hasStudentsWithoutExam]="hasStudentsWithoutExam"></jhi-student-exam-status>
         <div *ngIf="exercisePreparationStatus" class="d-flex flex-wrap flex-grow-1 align-items-center gap-1">
-            <div>Exercise preparation progress:</div>
+            <div jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.label">Exercise preparation progress:</div>
             <div class="flex-grow-1 flex-basis-10 position-relative">
                 <div class="position-absolute w-100 h-100 top-0">
                     <ngb-progressbar
@@ -69,15 +69,20 @@
                     ></ngb-progressbar>
                 </div>
                 <div class="d-flex justify-content-center gap-1 w-100 z-1 position-relative ms-2 me-2">
-                    <span
-                        >{{ exercisePreparationPercentage }}% {{ exercisePreparationStatus.finished }} / {{ exercisePreparationStatus.overall }} ({{
-                            exercisePreparationStatus.failed
-                        }}
-                        failed)</span
+                    <span>{{ exercisePreparationPercentage }}% {{ exercisePreparationStatus.finished }} / {{ exercisePreparationStatus.overall }}</span>
+                    <span *ngIf="exercisePreparationStatus.failed"
+                        >({{ exercisePreparationStatus.failed }} {{ 'artemisApp.studentExams.exercisePreparationProgress.failed' | artemisTranslate }})</span
                     >
-                    <span *ngIf="exercisePreparationEta">{{ exercisePreparationEta }} remaining</span>
-                    <span *ngIf="!exercisePreparationEta && exercisePreparationPercentage === 100">Finished</span>
-                    <span *ngIf="!exercisePreparationEta && exercisePreparationPercentage < 100">No ETA</span>
+                    |
+                    <span *ngIf="exercisePreparationEta"
+                        >{{ exercisePreparationEta }} {{ 'artemisApp.studentExams.exercisePreparationProgress.remaining' | artemisTranslate }}</span
+                    >
+                    <span *ngIf="!exercisePreparationEta && exercisePreparationPercentage === 100" jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.finished"
+                        >Finished</span
+                    >
+                    <span *ngIf="!exercisePreparationEta && exercisePreparationPercentage < 100" jhiTranslate="artemisApp.studentExams.exercisePreparationProgress.noeta"
+                        >No ETA</span
+                    >
                 </div>
             </div>
         </div>
