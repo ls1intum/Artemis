@@ -117,15 +117,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
         return findAllPlannedToStartAfter(ZonedDateTime.now());
     }
 
-    /**
-     * Query which fetches all the quiz exercises for which the user is instructor in the course and matching the search criteria.
-     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
-     *
-     * @param searchTerm search term
-     * @param groups     user groups
-     * @param pageable   Pageable
-     * @return Page with search results
-     */
     @Query("""
                 SELECT exercise FROM QuizExercise exercise
             WHERE (exercise.id IN
@@ -137,7 +128,21 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
                     WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
                     AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
-    Page<QuizExercise> queryBySearchTermInCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<QuizExercise> queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT courseExercise FROM QuizExercise courseExercise
+            WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+            AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT examExercise FROM QuizExercise examExercise
+            WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+            AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
     @Query("""
             SELECT exercise FROM QuizExercise exercise
@@ -148,6 +153,18 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
                     (SELECT examExercise.id FROM QuizExercise examExercise
                     WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
+    Page<QuizExercise> queryBySearchTermInAllCoursesAndExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("""
+            SELECT courseExercise FROM QuizExercise courseExercise
+            WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
+                """)
     Page<QuizExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("""
+            SELECT examExercise FROM QuizExercise examExercise
+            WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllExams(@Param("searchTerm") String searchTerm, Pageable pageable);
 
 }
