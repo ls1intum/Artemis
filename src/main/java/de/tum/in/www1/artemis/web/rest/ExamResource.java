@@ -734,8 +734,8 @@ public class ExamResource {
 
         examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
-        // Reset existing participations
-        examService.reset(exam.getId());
+        // Reset existing student exams & participations
+        examService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 

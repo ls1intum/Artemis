@@ -222,6 +222,25 @@ public class ExamService {
     }
 
     /**
+     * Deletes student exams and existing participations for an exam.
+     *
+     * @param examId the ID of the exam where the student exams and participations should be deleted
+     */
+    public void deleteStudentExamsAndExistingParticipationsForExam(@NotNull Long examId) {
+        User user = userRepository.getUser();
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        log.info("User {} has requested to delete existing student exams and participations for exam {}", user.getLogin(), exam.getTitle());
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseDeletionService.deletePlagiarismResultsAndParticipations(exercise);
+                }
+            }
+        }
+        studentExamRepository.deleteAll(exam.getStudentExams());
+    }
+
+    /**
      * Puts students, result and exerciseGroups together for ExamScoresDTO
      *
      * @param examId the id of the exam

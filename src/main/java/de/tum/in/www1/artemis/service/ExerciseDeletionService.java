@@ -207,14 +207,23 @@ public class ExerciseDeletionService {
     public void reset(Exercise exercise) {
         log.debug("Request reset Exercise : {}", exercise.getId());
 
+        this.deletePlagiarismResultsAndParticipations(exercise);
+
+        if (exercise instanceof QuizExercise) {
+            quizExerciseService.resetExercise(exercise.getId());
+        }
+    }
+
+    /**
+     * Deletes all plagiarism results and participations for an exercise.
+     *
+     * @param exercise for which the plagiarism results and participations should be deleted
+     */
+    public void deletePlagiarismResultsAndParticipations(Exercise exercise) {
         // delete all plagiarism results for this exercise
         plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exercise.getId());
 
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
-
-        if (exercise instanceof QuizExercise) {
-            quizExerciseService.resetExercise(exercise.getId());
-        }
     }
 }
