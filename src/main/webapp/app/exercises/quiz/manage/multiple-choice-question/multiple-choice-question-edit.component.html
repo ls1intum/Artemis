@@ -20,7 +20,7 @@
         <div class="question-card-header-inputs">
             <div class="form-group question-score">
                 <span jhiTranslate="artemisApp.quizQuestion.score" class="colon-suffix"></span>
-                <input class="form-control" title="score" type="number" min="1" max="9999" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
+                <input id="score" class="form-control" title="score" type="number" min="1" max="9999" [(ngModel)]="question.points" (ngModelChange)="questionUpdated.emit()" />
             </div>
             <div class="question-type">
                 <h3 class="mb-0"><span class="badge bg-info align-text-top">MC</span></h3>

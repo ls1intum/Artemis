@@ -16,6 +16,9 @@ const navigationBar = artemis.pageobjects.navigationBar;
 const courseManagement = artemis.pageobjects.course.management;
 const examManagement = artemis.pageobjects.exam.management;
 const textCreation = artemis.pageobjects.exercise.text.creation;
+const programmingCreation = artemis.pageobjects.exercise.programming.creation;
+const quizCreation = artemis.pageobjects.exercise.quiz.creation;
+const modelingCreation = artemis.pageobjects.exercise.modeling.creation;
 const exerciseGroups = artemis.pageobjects.exam.exerciseGroups;
 const exerciseGroupCreation = artemis.pageobjects.exam.exerciseGroupCreation;
 const studentExamManagement = artemis.pageobjects.exam.studentExamManagement;
@@ -30,7 +33,7 @@ describe('Exam management', () => {
 
     before(() => {
         cy.login(users.getAdmin());
-        courseManagementRequests.createCourse().then((response) => {
+        courseManagementRequests.createCourse(true).then((response) => {
             course = response.body;
             courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
             const examConfig = new CypressExamBuilder(course).title(examTitle).build();
@@ -44,19 +47,23 @@ describe('Exam management', () => {
         cy.login(users.getAdmin());
     });
 
-    it('Adds an exercise group with a text exercise', () => {
+    it('Create exercise group', () => {
         cy.visit('/');
         navigationBar.openCourseManagement();
         courseManagement.openExamsOfCourse(course.shortName!);
         examManagement.openExerciseGroups(exam.id!);
         exerciseGroups.shouldShowNumberOfExerciseGroups(0);
         exerciseGroups.clickAddExerciseGroup();
-        const groupName = 'group 1';
+        const groupName = 'Group 1';
         exerciseGroupCreation.typeTitle(groupName);
         exerciseGroupCreation.isMandatoryBoxShouldBeChecked();
         exerciseGroupCreation.clickSave();
         exerciseGroups.shouldShowNumberOfExerciseGroups(1);
-        // Add text exercise
+    });
+
+    it('Adds a text exercise', () => {
+        cy.visit(`/course-management/${course.id}/exams`);
+        examManagement.openExerciseGroups(exam.id!);
         exerciseGroups.clickAddTextExercise();
         const textExerciseTitle = 'text' + uid;
         textCreation.typeTitle(textExerciseTitle);
@@ -64,6 +71,44 @@ describe('Exam management', () => {
         textCreation.create().its('response.statusCode').should('eq', 201);
         exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
         exerciseGroups.shouldContainExerciseWithTitle(textExerciseTitle);
+    });
+
+    it('Adds a quiz exercise', () => {
+        cy.visit(`/course-management/${course.id}/exams`);
+        examManagement.openExerciseGroups(exam.id!);
+        exerciseGroups.clickAddQuizExercise();
+        const quizExerciseTitle = 'quiz' + uid;
+        quizCreation.setTitle(quizExerciseTitle);
+        quizCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
+        quizCreation.saveQuiz().its('response.statusCode').should('eq', 201);
+        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+        exerciseGroups.shouldContainExerciseWithTitle(quizExerciseTitle);
+    });
+
+    it('Adds a modeling exercise', () => {
+        cy.visit(`/course-management/${course.id}/exams`);
+        examManagement.openExerciseGroups(exam.id!);
+        exerciseGroups.clickAddModelingExercise();
+        const modelingExerciseTitle = 'modeling' + uid;
+        modelingCreation.setTitle(modelingExerciseTitle);
+        modelingCreation.setPoints(10);
+        modelingCreation.save().its('response.statusCode').should('eq', 201);
+        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+        exerciseGroups.shouldContainExerciseWithTitle(modelingExerciseTitle);
+    });
+
+    it('Adds a programming exercise', () => {
+        cy.visit(`/course-management/${course.id}/exams`);
+        examManagement.openExerciseGroups(exam.id!);
+        exerciseGroups.clickAddProgrammingExercise();
+        const programmingExerciseTitle = 'programming' + uid;
+        programmingCreation.setTitle(programmingExerciseTitle);
+        programmingCreation.setShortName(programmingExerciseTitle);
+        programmingCreation.setPackageName('de.test');
+        programmingCreation.setPoints(10);
+        programmingCreation.generate().its('response.statusCode').should('eq', 201);
+        exerciseGroups.visitPageViaUrl(course.id!, exam.id!);
+        exerciseGroups.shouldContainExerciseWithTitle(programmingExerciseTitle);
     });
 
     it('Registers the course students for the exam', () => {

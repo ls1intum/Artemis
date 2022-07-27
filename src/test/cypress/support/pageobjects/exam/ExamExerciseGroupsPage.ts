@@ -18,6 +18,18 @@ export class ExamExerciseGroupsPage {
         cy.get('#add-text-exercise').click();
     }
 
+    clickAddModelingExercise() {
+        cy.get('#add-modeling-exercise').click();
+    }
+
+    clickAddQuizExercise() {
+        cy.get('#add-quiz-exercise').click();
+    }
+
+    clickAddProgrammingExercise() {
+        cy.get('#add-programming-exercise').click();
+    }
+
     visitPageViaUrl(courseId: number, examId: number) {
         cy.visit(`course-management/${courseId}/exams/${examId}/exercise-groups`);
     }

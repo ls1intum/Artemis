@@ -59,7 +59,7 @@
                             <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
+                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" id="add-quiz-exercise">
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
@@ -83,7 +83,12 @@
                             <fa-icon class="d-xl-none" [icon]="faProjectDiagram"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.modelingExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
+                        <a
+                            *ngIf="course?.isAtLeastEditor"
+                            [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']"
+                            class="btn btn-info btn-sm me-1 mb-1"
+                            id="add-modeling-exercise"
+                        >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faProjectDiagram"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addModelingExercise' | artemisTranslate }}</span>
@@ -95,7 +100,12 @@
                             <fa-icon class="d-xl-none" [icon]="faKeyboard"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.programmingExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1">
+                        <a
+                            *ngIf="course?.isAtLeastEditor"
+                            [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']"
+                            class="btn btn-info btn-sm me-1 mb-1"
+                            id="add-programming-exercise"
+                        >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faKeyboard"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addProgrammingExercise' | artemisTranslate }}</span>
