@@ -14,9 +14,12 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
@@ -90,11 +93,13 @@ public class ExamResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
+    private final CustomAuditEventRepository auditEventRepository;
+
     public ExamResource(UserRepository userRepository, CourseRepository courseRepository, ExamService examService, ExamAccessService examAccessService,
             InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository, SubmissionService submissionService, AuthorizationCheckService authCheckService,
             ExamDateService examDateService, TutorParticipationRepository tutorParticipationRepository, AssessmentDashboardService assessmentDashboardService,
             ExamRegistrationService examRegistrationService, StudentExamRepository studentExamRepository, ExamImportService examImportService,
-            ExamMonitoringScheduleService examMonitoringScheduleService) {
+            ExamMonitoringScheduleService examMonitoringScheduleService, CustomAuditEventRepository auditEventRepository) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.examService = examService;
@@ -110,6 +115,7 @@ public class ExamResource {
         this.studentExamRepository = studentExamRepository;
         this.examImportService = examImportService;
         this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.auditEventRepository = auditEventRepository;
     }
 
     /**
@@ -386,7 +392,7 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
+    public ResponseEntity<Exam> checkAccessAndLog(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
             @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
 
@@ -720,6 +726,21 @@ public class ExamResource {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
 
+        final var exam = checkAccessAndLog(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
+        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
+
+        // we need to break a cycle for the serialization
+        breakCyclesForSerialization(studentExams);
+
+        // Reschedule after creation (possible longer working time)
+        instanceMessageSendService.sendExamMonitoringSchedule(examId);
+        log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
+        return ResponseEntity.ok().body(studentExams);
+    }
+
+    @NotNull
+    private Exam checkAccessAndLog(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
@@ -731,22 +752,10 @@ public class ExamResource {
         // Validate settings of the exam
         examService.validateForStudentExamGeneration(exam);
 
-        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
-
-        List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
-
-        // we need to break a cycle for the serialization
-        for (StudentExam studentExam : studentExams) {
-            studentExam.getExam().setRegisteredUsers(null);
-            studentExam.getExam().setExerciseGroups(null);
-            studentExam.getExam().setStudentExams(null);
-        }
-
-        // Reschedule after creation (possible longer working time)
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
-
-        log.info("Generated {} student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
-        return ResponseEntity.ok().body(studentExams);
+        User instructor = userRepository.getUser();
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), auditEventAction, "examId=" + examId, "user=" + instructor.getLogin());
+        auditEventRepository.add(auditEvent);
+        return exam;
     }
 
     /**
@@ -761,33 +770,27 @@ public class ExamResource {
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/generate-missing-student-exams")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<StudentExam>> generateMissingStudentExams(@PathVariable Long courseId, @PathVariable Long examId) {
+        long start = System.nanoTime();
         log.info("REST request to generate missing student exams for exam {}", examId);
 
-        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration is only allowed for RealExams");
-        }
-
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-
-        // Validate settings of the exam
-        examService.validateForStudentExamGeneration(exam);
-
+        final var exam = checkAccessAndLog(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
         List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
+        breakCyclesForSerialization(studentExams);
+
+        // Reschedule after creation (possible longer working time)
+        instanceMessageSendService.sendExamMonitoringSchedule(examId);
+        log.info("Generated {} missing student exams in {} for exam {}", studentExams.size(), formatDurationFrom(start), examId);
+        return ResponseEntity.ok().body(studentExams);
+    }
+
+    private static void breakCyclesForSerialization(List<StudentExam> studentExams) {
         for (StudentExam studentExam : studentExams) {
             studentExam.getExam().setRegisteredUsers(null);
             studentExam.getExam().setExerciseGroups(null);
             studentExam.getExam().setStudentExams(null);
         }
-
-        // Reschedule after creation (possible longer working time)
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
-
-        log.info("Generated {} missing student exams for exam {}", studentExams.size(), examId);
-        return ResponseEntity.ok().body(studentExams);
     }
 
     /**
@@ -861,7 +864,7 @@ public class ExamResource {
      * POST /courses/:courseId/exams/:examId/students : Add multiple users to the students of the exam so that they can access the exam
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
-     *
+     * <p>
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
@@ -1053,7 +1056,7 @@ public class ExamResource {
 
     /**
      * PUT /courses/{courseId}/exams/{examId}/archive : archive an existing exam asynchronously.
-     *
+     * <p>
      * This method starts the process of archiving all exam exercises and submissions.
      * It immediately returns and runs this task asynchronously. When the task is done, the exam is marked as archived, which means the zip file can be downloaded.
      *
