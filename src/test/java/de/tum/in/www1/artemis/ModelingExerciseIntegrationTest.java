@@ -562,7 +562,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         exercise.setTitle("LoremIpsum");
         exercise = modelingExerciseRepository.save(exercise);
 
-        final var searchTerm = database.configureSearch("" + exercise.getId());
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
         final var searchResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }

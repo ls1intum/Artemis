@@ -842,7 +842,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exercise.setTitle("LoremIpsum");
         exercise = quizExerciseRepository.save(exercise);
 
-        final var searchTerm = database.configureSearch("" + exercise.getId());
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
         final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }

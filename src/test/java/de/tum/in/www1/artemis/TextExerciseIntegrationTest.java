@@ -763,7 +763,7 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         exercise.setTitle("LoremIpsum");
         exercise = textExerciseRepository.save(exercise);
 
-        final var searchTerm = database.configureSearch("" + exercise.getId());
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
         final var searchResult = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }

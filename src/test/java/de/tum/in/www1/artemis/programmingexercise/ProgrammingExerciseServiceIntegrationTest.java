@@ -180,7 +180,7 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         exercise.setTitle("LoremIpsum");
         exercise = programmingExerciseRepository.save(exercise);
 
-        final var searchTerm = database.configureSearch("" + exercise.getId());
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
         final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }
