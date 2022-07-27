@@ -39,6 +39,9 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     // Icons
     faSort = faSort;
 
+    isCourseFilter = true;
+    isExamFilter = true;
+
     constructor(private pagingService: ProgrammingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit() {
@@ -53,7 +56,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForExercises(this.state)),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
             .subscribe((resp) => {
                 this.content = resp;
@@ -77,6 +80,16 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     get searchTerm(): string {
         return this.state.searchTerm;
+    }
+
+    onCourseFilterChange() {
+        this.isCourseFilter = !this.isCourseFilter;
+        this.search.next();
+    }
+
+    onExamFilterChange() {
+        this.isExamFilter = !this.isExamFilter;
+        this.search.next();
     }
 
     set listSorting(ascending: boolean) {
