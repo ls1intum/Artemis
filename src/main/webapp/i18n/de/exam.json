@@ -295,7 +295,9 @@
                 "failed": "fehlgeschlagen",
                 "remaining": "verbleibend",
                 "finished": "Fertig",
-                "noeta": "Kein ETA"
+                "noeta": "Kein ETA",
+                "participations": "Teilnahmen",
+                "exams": "Klausuren"
             }
         },
         "examManagement": {

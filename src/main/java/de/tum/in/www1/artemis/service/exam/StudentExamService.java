@@ -505,23 +505,25 @@ public class StudentExamService {
         var finishedExamsCounter = new AtomicInteger(0);
         var failedExamsCounter = new AtomicInteger(0);
         var startedAt = ZonedDateTime.now();
-        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), startedAt);
+        sendAndCacheExercisePreparationStatus(examId, 0, 0, studentExams.size(), 0, startedAt);
         var threadPool = Executors.newFixedThreadPool(10);
         var futures = studentExams.stream()
-                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool).thenRun(
-                        () -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(), startedAt))
+                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
+                        .thenRun(() -> sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(),
+                                generatedParticipations.size(), startedAt))
                         .exceptionally(throwable -> {
                             log.error("Exception while preparing exercises for student exam " + studentExam.getId(), throwable);
-                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(), startedAt);
+                            sendAndCacheExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(),
+                                    generatedParticipations.size(), startedAt);
                             return null;
                         }))
                 .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
         return CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).thenApply(empty -> generatedParticipations.size());
     }
 
-    private void sendAndCacheExercisePreparationStatus(Long examId, int done, int failed, int overall, ZonedDateTime startTime) {
+    private void sendAndCacheExercisePreparationStatus(Long examId, int done, int failed, int overall, int participations, ZonedDateTime startTime) {
         try {
-            var status = new ExamExerciseStartPreparationStatus(done, failed, overall, startTime);
+            var status = new ExamExerciseStartPreparationStatus(done, failed, overall, participations, startTime);
             var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
             if (cache != null) {
                 cache.put(examId, status);

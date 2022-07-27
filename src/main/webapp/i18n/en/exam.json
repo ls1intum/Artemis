@@ -297,7 +297,9 @@
                 "failed": "failed",
                 "remaining": "remaining",
                 "finished": "Finished",
-                "noeta": "No ETA"
+                "noeta": "No ETA",
+                "participations": "Participations",
+                "exams": "Exams"
             }
         },
         "examManagement": {
