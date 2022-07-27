@@ -31,6 +31,8 @@
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
                 "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
+                "searchInCourses": "Suche in Kursen?",
+                "searchInExams": "Suche in Klausuren?",
                 "table": {
                     "title": "Titel",
                     "language": "Programmiersprache",
