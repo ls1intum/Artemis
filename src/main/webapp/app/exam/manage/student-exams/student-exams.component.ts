@@ -212,11 +212,11 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
 
     setExercisePreparationStatus(newStatus?: ExamExerciseStartPreparationStatus) {
         this.exercisePreparationStatus = newStatus;
-        this.exercisePreparationRunning = !!(newStatus && newStatus.finished! + newStatus.failed! < newStatus.overall!);
-        this.exercisePreparationPercentage = newStatus ? (newStatus.overall! ? Math.round((newStatus.finished! / (newStatus.overall! - newStatus.failed!)) * 100) : 100) : 0;
+        const processedExams = (newStatus?.finished ?? 0) + (newStatus?.failed ?? 0);
+        this.exercisePreparationRunning = !!(newStatus && processedExams < newStatus.overall!);
+        this.exercisePreparationPercentage = newStatus ? (newStatus.overall! ? Math.round((processedExams / newStatus.overall!) * 100) : 100) : 0;
         this.exercisePreparationEta = undefined;
         if (this.exercisePreparationRunning && newStatus?.finished) {
-            const processedExams = newStatus!.finished! + newStatus!.failed!;
             const remainingExams = newStatus!.overall! - processedExams;
 
             const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
@@ -226,7 +226,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
             const min = Math.floor((remainingSeconds - h * 60 * 60) / 60);
             const s = Math.floor(remainingSeconds - h * 60 * 60 - min * 60);
 
-            this.exercisePreparationEta = (h ? h + 'h' : '') + (min ? min + 'm' : '') + (s ? s + 's' : '');
+            this.exercisePreparationEta = (h ? h + 'h' : '') + (min || h ? min + 'm' : '') + (s || min || h ? s + 's' : '');
         }
     }
 
