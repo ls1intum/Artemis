@@ -521,7 +521,7 @@ public class StudentExamService {
 
     private void sendAndCacheExercisePreparationStatus(Long examId, int done, int failed, int overall, ZonedDateTime startTime) {
         try {
-            var status = new ExamExerciseStartPreparationStatus(examId, done, failed, overall, startTime);
+            var status = new ExamExerciseStartPreparationStatus(done, failed, overall, startTime);
             var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
             if (cache != null) {
                 cache.put(examId, status);
