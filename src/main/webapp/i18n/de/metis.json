@@ -106,9 +106,9 @@
                 "deleted": "Antwort erfolgreich gelöscht"
             },
             "userAuthorityTooltips": {
-                "instructor": "Dozent: Verantwortlich für die Kursdurchführung.",
-                "ta": "Tutor (Lehrassistent): Offiziell verantwortlich für die Unterstützung der Benutzer bei ihren Fragen zum Kurs und zu den Übungen.",
-                "user": "Benutzer: Nimmt an Kursen teil, nimmt an Übungen teil und stellt Fragen."
+                "instructor": "Lehrkraft: Verantwortlich für die Kursdurchführung.",
+                "ta": "Tutor:in (Lehrassistenz): Verantwortlich für die Unterstützung der Benutzer:innen bei ihren Fragen zum Kurs und zu den Übungen.",
+                "user": "Benutzer:in: Nimmt an Kursen und Übungen teil und stellt Fragen."
             }
         }
     }
