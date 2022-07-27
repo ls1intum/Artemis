@@ -15,7 +15,7 @@ Artemis offers three different modes of exercise assessment:
 
 - **Manual:** Tutors must manually grade the submissions of students.
 - **Automatic:** Artemis automatically grades the submissions of students.
-- **Semi-Automatic:** Artemis automatically grades students' submissions, but the tutors manually grade all submissions afterward.
+- **Semi-Automatic:** Artemis automatically grades the submissions of students, but the tutors manually grade all submissions afterward.
 
 Manual assessment
 -----------------
@@ -23,15 +23,15 @@ Manual assessment
 Manual assessment is available for all exercise types except quiz exercises.
 The manual assessment begins after the deadline of an exercise has passed for all students and is double-blind. This means that the tutors do not know the names of the students they assess, and the students do not know the identity of the tutors.
 
-Instructors can use the assessment training process to make the grading more consistent. The assessment training process is a series of example submissions and assessments defined by the instructor, which the tutors must first read through.
+Instructors can use the assessment training process to make the grading more consistent. They define a series of example submissions and assessments that the tutors must first read through.
 
 Students have the option to rate the assessments of the tutors. They can also complain or ask for more feedback.
 
-Assessment dashboard
+Assessment Dashboard
 ^^^^^^^^^^^^^^^^^^^^
 
 To keep track of the manual assessments, Artemis offers the assessment dashboard.
-The assessment dashboard shows the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
+It shows the assessment progress of each exercise by showing the state of the exercise, the total number of submissions, the number of submissions that have been assessed, and the number of complaints and more feedback requests.
 It also shows the average rating the students have given to each exercise.
 
     .. figure:: assessment/assessment_dashboard.png
@@ -63,9 +63,8 @@ The student has to write an additional text when submitting a complaint to justi
             :alt: The student complains about the assessment of an exercise
             :align: center
 
-A complaint leads to a reevaluation of the submission by another tutor. This tutor sees the existing submission and the complaint reason. The tutor can then either accept the complaint or reject it.
-If the tutor accepts the complaint, they can modify the assessment's score.
-If the tutor rejects the complaint, they cannot do this.
+A complaint leads to a reevaluation of the submission by another tutor. This tutor sees the existing assessment and the complaint reason. The tutor can then either accept or reject the complaint.
+Only if the tutor accepts the complaint, they can modify the assessment's score.
     .. figure:: assessment/complaint_response.png
         :alt: A tutor answers the complaint of a student
         :align: center
