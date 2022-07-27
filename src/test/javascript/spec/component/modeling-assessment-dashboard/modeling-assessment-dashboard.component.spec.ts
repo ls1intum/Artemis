@@ -99,7 +99,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
         expect(component.reverse).toBeFalse();
-        expect(component.predicate).toEqual('id');
+        expect(component.predicate).toBe('id');
         expect(component.filteredSubmissions).toEqual([]);
 
         // call

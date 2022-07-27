@@ -303,9 +303,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
             scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
-            expect(scaCheckbox).toBe(null);
+            expect(scaCheckbox).toBeNull();
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
 
@@ -359,7 +359,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
             expect(comp.selectedProjectType).toBe(ProjectType.FACT);
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
         }));
     });
 
@@ -417,7 +417,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // SCA penalty field disappears or appears after the sca checkbox click
                 maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
                 if (scaActivatedOriginal) {
-                    expect(maxPenaltyInput).toBe(null);
+                    expect(maxPenaltyInput).toBeNull();
                 } else {
                     maxPenaltyInput.value = newMaxPenalty;
                     maxPenaltyInput.dispatchEvent(new Event('input'));
@@ -440,7 +440,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
     });

@@ -101,7 +101,7 @@ describe('CreateLearningGoal', () => {
         ).componentInstance;
         learningGoalForm.formSubmitted.emit(formData);
 
-        createLearningGoalComponentFixture.whenStable().then(() => {
+        return createLearningGoalComponentFixture.whenStable().then(() => {
             const learningGoal = new LearningGoal();
             learningGoal.title = formData.title;
             learningGoal.description = formData.description;

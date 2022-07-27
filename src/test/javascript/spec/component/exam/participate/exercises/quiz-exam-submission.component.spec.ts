@@ -81,10 +81,10 @@ describe('QuizExamSubmissionComponent', () => {
         expect(fixture).toBeDefined();
         expect(quizServiceSpy).toHaveBeenCalledOnce();
         expect(component.selectedAnswerOptions.has(1)).toBeTrue();
-        expect(component.selectedAnswerOptions.size).toEqual(1);
+        expect(component.selectedAnswerOptions.size).toBe(1);
         expect(component.dragAndDropMappings.has(2)).toBeTrue();
-        expect(component.dragAndDropMappings.size).toEqual(1);
-        expect(component.shortAnswerSubmittedTexts.size).toEqual(0);
+        expect(component.dragAndDropMappings.size).toBe(1);
+        expect(component.shortAnswerSubmittedTexts.size).toBe(0);
     });
 
     it('should update view from submission and fill the dictionary accordingly when submitted answer', () => {
@@ -112,7 +112,7 @@ describe('QuizExamSubmissionComponent', () => {
 
         expect(JSON.stringify(component.selectedAnswerOptions.get(1))).toEqual(JSON.stringify([multipleChoiceSelectedOptions]));
         expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([dragAndDropMapping]));
-        expect(component.shortAnswerSubmittedTexts.size).toEqual(0);
+        expect(component.shortAnswerSubmittedTexts.size).toBe(0);
 
         /**
          * Test the return value of the getSubmission and getExercise
@@ -143,7 +143,7 @@ describe('QuizExamSubmissionComponent', () => {
         expect(JSON.stringify(component.dragAndDropMappings.get(2))).toEqual(JSON.stringify([]));
         expect(component.dragAndDropMappings.has(2)).toBeTrue();
 
-        expect(component.shortAnswerSubmittedTexts.size).toEqual(1);
+        expect(component.shortAnswerSubmittedTexts.size).toBe(1);
         expect(component.shortAnswerSubmittedTexts.has(3)).toBeTrue();
     });
 
@@ -164,7 +164,7 @@ describe('QuizExamSubmissionComponent', () => {
         expect(windowSpy).toHaveBeenCalled();
     });
 
-    it('should create multiple choice submission from users selection ', () => {
+    it('should create multiple choice submission from users selection', () => {
         exercise.quizQuestions = [multipleChoiceQuestion, dragAndDropQuestion, shortAnswerQuestion];
         component.studentSubmission = new QuizSubmission();
         component.exercise = exercise;
@@ -197,7 +197,7 @@ describe('QuizExamSubmissionComponent', () => {
         component.updateSubmissionFromView();
         fixture.detectChanges();
 
-        expect(component.studentSubmission.submittedAnswers?.length).toEqual(3);
+        expect(component.studentSubmission.submittedAnswers?.length).toBe(3);
         expect(JSON.stringify(component.studentSubmission.submittedAnswers)).toEqual(
             JSON.stringify([multipleChoiceSubmittedAnswer, dragAndDropSubmittedAnswer, shortAnswerSubmittedAnswer]),
         );

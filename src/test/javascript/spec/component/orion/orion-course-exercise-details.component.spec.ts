@@ -23,6 +23,6 @@ describe('OrionCourseExerciseDetailsComponent', () => {
     it('should contain CourseExerciseDetailsComponent', () => {
         const courseExerciseDetails = fixture.debugElement.query(By.directive(CourseExerciseDetailsComponent));
 
-        expect(courseExerciseDetails).not.toBe(null);
+        expect(courseExerciseDetails).not.toBeNull();
     });
 });

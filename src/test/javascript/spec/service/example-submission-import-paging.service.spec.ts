@@ -42,11 +42,11 @@ describe('Example Submission Import Paging Service', () => {
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(searchResult));
         const req = httpMock.expectOne({ method: 'GET' });
-        expect(req.request.params.get('pageSize')).toEqual('2');
-        expect(req.request.params.get('page')).toEqual('3');
+        expect(req.request.params.get('pageSize')).toBe('2');
+        expect(req.request.params.get('page')).toBe('3');
         expect(req.request.params.get('sortingOrder')).toEqual(SortingOrder.DESCENDING);
-        expect(req.request.params.get('searchTerm')).toEqual('testSearchTerm');
-        expect(req.request.params.get('sortedColumn')).toEqual('testSortedColumn');
+        expect(req.request.params.get('searchTerm')).toBe('testSearchTerm');
+        expect(req.request.params.get('sortedColumn')).toBe('testSortedColumn');
 
         req.flush(searchResult);
         tick();

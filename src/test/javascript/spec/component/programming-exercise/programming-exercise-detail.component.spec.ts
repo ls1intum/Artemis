@@ -127,10 +127,10 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeFalse();
-            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
-            expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);
+            expect(comp.doughnutStats.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
+            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
     });
@@ -156,7 +156,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
-            expect(comp.programmingExercise.gitDiffReport).not.toBe(undefined);
+            expect(comp.programmingExercise.gitDiffReport).toBeDefined();
             expect(comp.programmingExercise.gitDiffReport?.entries).toHaveLength(1);
         });
     });
