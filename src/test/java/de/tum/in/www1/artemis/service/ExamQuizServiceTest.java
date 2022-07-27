@@ -148,7 +148,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
-        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));
@@ -244,7 +244,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
-        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             final var user = database.getUserByLogin("student" + (i + 1));
@@ -298,7 +298,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         assertThat(studentExamRepository.generateStudentExams(exam)).hasSize(numberOfParticipants);
         assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(numberOfParticipants);
-        assertThat(studentExamService.startExercises(exam.getId())).isEqualTo(numberOfParticipants);
+        assertThat(studentExamService.startExercises(exam.getId()).join()).isEqualTo(numberOfParticipants);
 
         for (int i = 0; i < numberOfParticipants; i++) {
             database.changeUser("student" + (i + 1));

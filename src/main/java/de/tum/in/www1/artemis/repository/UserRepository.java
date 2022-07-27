@@ -9,7 +9,10 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
@@ -17,7 +20,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Authority;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Organization;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -92,6 +98,9 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     @Query("select user from User user where :#{#groupName} member of user.groups")
     List<User> findAllInGroup(@Param("groupName") String groupName);
+
+    @Query("select user from User user where :#{#authority} member of user.authorities")
+    List<User> findAllWithAuthority(@Param("authority") Authority authority);
 
     @Query("select user from User user where user.isInternal = :#{#isInternal}")
     List<User> findAllByInternal(boolean isInternal);

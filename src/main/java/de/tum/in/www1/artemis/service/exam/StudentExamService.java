@@ -1,20 +1,27 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
+import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS_TOPIC;
 import static de.tum.in.www1.artemis.service.util.TimeLogUtil.formatDurationFrom;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.ForkJoinPool;
-import java.util.concurrent.Future;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 
 import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.cache.CacheManager;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -33,6 +40,7 @@ import de.tum.in.www1.artemis.service.SubmissionVersionService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
+import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -76,11 +84,18 @@ public class StudentExamService {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final CacheManager cacheManager;
+
+    private final SimpMessageSendingOperations messagingTemplate;
+
+    private final ObjectMapper objectMapper;
+
     public StudentExamService(StudentExamRepository studentExamRepository, UserRepository userRepository, ParticipationService participationService,
             QuizSubmissionRepository quizSubmissionRepository, TextSubmissionRepository textSubmissionRepository, ModelingSubmissionRepository modelingSubmissionRepository,
             SubmissionVersionService submissionVersionService, ProgrammingExerciseParticipationService programmingExerciseParticipationService, SubmissionService submissionService,
             ProgrammingSubmissionRepository programmingSubmissionRepository, StudentParticipationRepository studentParticipationRepository, ExamQuizService examQuizService,
-            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService) {
+            ProgrammingExerciseRepository programmingExerciseRepository, ExamRepository examRepository, InstanceMessageSendService instanceMessageSendService,
+            CacheManager cacheManager, SimpMessageSendingOperations messagingTemplate, ObjectMapper objectMapper) {
         this.participationService = participationService;
         this.studentExamRepository = studentExamRepository;
         this.userRepository = userRepository;
@@ -96,6 +111,9 @@ public class StudentExamService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.examRepository = examRepository;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.cacheManager = cacheManager;
+        this.messagingTemplate = messagingTemplate;
+        this.objectMapper = objectMapper;
     }
 
     /**
@@ -477,37 +495,67 @@ public class StudentExamService {
      * Starts all the exercises of all the student exams of an exam
      *
      * @param examId exam to which the student exams belong
-     * @return number of generated Participations
+     * @return a future that will yield the number of generated participations
      */
-    public int startExercises(Long examId) {
+    @SuppressWarnings("unchecked")
+    public CompletableFuture<Integer> startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
             throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
         }
+
+        var updateTargets = new HashSet<User>();
+        updateTargets.addAll(userRepository.getInstructors(exam.getCourse()));
+        updateTargets.addAll(userRepository.findAllWithAuthority(Authority.ADMIN_AUTHORITY));
+
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
-        executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
-        return generatedParticipations.size();
+
+        var finishedExamsCounter = new AtomicInteger(0);
+        var failedExamsCounter = new AtomicInteger(0);
+        var startedAt = ZonedDateTime.now();
+        sendExercisePreparationStatus(examId, 0, 0, studentExams.size(), startedAt, updateTargets);
+        var threadPool = Executors.newFixedThreadPool(10);
+        var futures = studentExams.stream()
+                .map(studentExam -> CompletableFuture.runAsync(() -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations), threadPool)
+                        .thenRun(() -> sendExercisePreparationStatus(examId, finishedExamsCounter.incrementAndGet(), failedExamsCounter.get(), studentExams.size(), startedAt,
+                                updateTargets))
+                        .exceptionally(t -> {
+                            log.error("Exception while preparing exercises for student exam " + studentExam.getId(), t);
+                            sendExercisePreparationStatus(examId, finishedExamsCounter.get(), failedExamsCounter.incrementAndGet(), studentExams.size(), startedAt, updateTargets);
+                            return null;
+                        }))
+                .toList().toArray(new CompletableFuture<?>[studentExams.size()]);
+        return CompletableFuture.allOf(futures).thenRun(threadPool::shutdown).thenApply(v -> generatedParticipations.size());
     }
 
-    private void executeInParallel(Runnable task) {
-        final int numberOfParallelThreads = 10;
-        ForkJoinPool forkJoinPool = new ForkJoinPool(numberOfParallelThreads);
-        Future<?> future = forkJoinPool.submit(task);
-        // Wait for the operation to complete
+    private void sendExercisePreparationStatus(Long examId, int done, int failed, int overall, ZonedDateTime startTime, Collection<User> users) {
         try {
-            future.get();
+            var status = new ExamExerciseStartPreparationStatus(examId, done, failed, overall, startTime);
+            var cache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+            if (cache != null) {
+                cache.put(examId, objectMapper.writeValueAsString(status));
+            }
+            else {
+                log.warn("Unable to add exam exercise start status to distributed cache because it is null");
+            }
+            users.forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), EXAM_EXERCISE_START_STATUS_TOPIC, status));
         }
-        catch (InterruptedException e) {
-            log.error("Execute in parallel got interrupted while waiting for task to complete", e);
+        catch (Exception e) {
+            log.warn("Failed to send exercise preparation status", e);
         }
-        catch (ExecutionException e) {
-            log.error("Execute in parallel failed, an exception was thrown", e.getCause());
-        }
-        finally {
-            forkJoinPool.shutdown();
-        }
+    }
+
+    public Optional<ExamExerciseStartPreparationStatus> getExerciseStartStatusOfExam(Long examId) {
+        return Optional.ofNullable(cacheManager.getCache(EXAM_EXERCISE_START_STATUS)).map(cache -> cache.get(examId)).map(wrapper -> (String) wrapper.get()).map(json -> {
+            try {
+                return objectMapper.readValue(json, ExamExerciseStartPreparationStatus.class);
+            }
+            catch (JsonProcessingException e) {
+                return null;
+            }
+        });
     }
 
     /**
