@@ -741,6 +741,29 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testInstructorSearchTermMatchesId() throws Exception {
+        testSearchTermMatchesId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminSearchTermMatchesId() throws Exception {
+        testSearchTermMatchesId();
+    }
+
+    private void testSearchTermMatchesId() throws Exception {
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        TextExercise exercise = ModelFactory.generateTextExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), course);
+        exercise = textExerciseRepository.save(exercise);
+
+        final var searchTerm = database.configureSearch("" + exercise.getId());
+        final var searchResult = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
     void testInstructorGetsOnlyResultsFromOwningExams() throws Exception {
         database.addCourseExamExerciseGroupWithOneTextExercise();

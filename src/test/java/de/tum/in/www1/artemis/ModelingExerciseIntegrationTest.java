@@ -541,6 +541,29 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testInstructorSearchTermMatchesId() throws Exception {
+        testSearchTermMatchesId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminSearchTermMatchesId() throws Exception {
+        testSearchTermMatchesId();
+    }
+
+    private void testSearchTermMatchesId() throws Exception {
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        ModelingExercise exercise = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course);
+        exercise = modelingExerciseRepository.save(exercise);
+
+        final var searchTerm = database.configureSearch("" + exercise.getId());
+        final var searchResult = request.get("/api/modeling-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         database.addCourseWithOneModelingExercise();
         database.addCourseWithOneModelingExercise("Activity Diagram");
