@@ -135,13 +135,13 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void evaluateQuiz_notOver_forbidden() throws Exception {
+    void evaluateQuiz_notOver_badRequest() throws Exception {
         exam = examRepository.save(exam);
         exerciseGroup = exerciseGroupRepository.save(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
 
         request.postWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), Integer.class,
-                HttpStatus.FORBIDDEN);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
