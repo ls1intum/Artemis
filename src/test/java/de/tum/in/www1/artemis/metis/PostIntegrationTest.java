@@ -533,7 +533,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(returnedPosts).hasSameSizeAs(existingCoursePosts);
 
         assertThat(returnedPosts.stream().filter(post -> Arrays.asList(1L, 2L, 3L, 4L).contains(post.getId()))).allMatch(post -> post.getAuthorRole().equals(UserRole.USER));
-        assertThat(returnedPosts.stream().filter(post -> Arrays.asList(1L, 5L, 6L, 7L, 8L, 10L, 11L, 12L, 13L).contains(post.getId())))
+        assertThat(returnedPosts.stream().filter(post -> Arrays.asList(5L, 6L, 7L, 8L, 10L, 11L, 12L, 13L).contains(post.getId())))
                 .allMatch(post -> post.getAuthorRole().equals(UserRole.TUTOR));
         assertThat(returnedPosts.stream().filter(post -> post.getAuthorRole().equals(UserRole.INSTRUCTOR))).isEmpty();
     }
