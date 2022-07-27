@@ -2653,7 +2653,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     public void testImportExamWithExercises_student() throws Exception {
-        final Exam exam = new Exam();
         request.postWithoutLocation("/api/courses/" + course1.getId() + "/exam-import", exam1, HttpStatus.FORBIDDEN, null);
     }
 
