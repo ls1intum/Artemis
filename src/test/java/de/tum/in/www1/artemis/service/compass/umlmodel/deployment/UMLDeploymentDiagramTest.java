@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.component.UMLComponent;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
-public class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
+class UMLDeploymentDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityDeploymentDiagram_EqualModels() {

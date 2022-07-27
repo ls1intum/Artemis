@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 import org.apache.commons.io.FileUtils;
@@ -61,10 +60,10 @@ public class LocalRepository {
     }
 
     public List<RevCommit> getAllLocalCommits() throws Exception {
-        return StreamSupport.stream(this.localGit.log().call().spliterator(), false).collect(Collectors.toList());
+        return StreamSupport.stream(this.localGit.log().call().spliterator(), false).toList();
     }
 
     public List<RevCommit> getAllOriginCommits() throws Exception {
-        return StreamSupport.stream(this.originGit.log().call().spliterator(), false).collect(Collectors.toList());
+        return StreamSupport.stream(this.originGit.log().call().spliterator(), false).toList();
     }
 }

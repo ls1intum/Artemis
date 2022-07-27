@@ -226,6 +226,8 @@ public class ExamMonitoringScheduleService {
             ((ExamMonitoringCache) cachedMonitoring).setExamActivitySaveHandler(ExamMonitoringCache.getEmptyExamActivitySaveHandler());
             return cachedMonitoring;
         });
+        // We want to clear the activities from the cache
+        executeExamActivitySaveTask(examId);
     }
 
     /**
@@ -244,7 +246,10 @@ public class ExamMonitoringScheduleService {
 
         // TODO: Save actions in future PR in database
         // examActivityService.saveAll(cache.getActivities().values());
-        cache.getActivities().clear();
+        examCache.performCacheWriteIfPresent(examId, cachedMonitoring -> {
+            ((ExamMonitoringCache) cachedMonitoring).getActivities().clear();
+            return cachedMonitoring;
+        });
     }
 
     /**

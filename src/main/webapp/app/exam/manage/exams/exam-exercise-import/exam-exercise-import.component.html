@@ -1,0 +1,133 @@
+<div *ngIf="containsProgrammingExercises.size !== 0" class="alert alert-info">
+    <span jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.infoProgrammingExercises"></span>
+</div>
+<table class="table table-striped">
+    <thead class="thead-dark align-center">
+        <tr>
+            <th class="w-25">
+                <label jhiTranslate="artemisApp.examScores.titleExerciseGroupColumn">Exercise Group</label>
+                <jhi-help-icon placement="top" text="artemisApp.examManagement.exerciseGroup.importModal.exerciseGroupTooltip"></jhi-help-icon>
+            </th>
+            <th class="w-75" jhiTranslate="artemisApp.examScores.titleExerciseColumn">Exercise</th>
+        </tr>
+    </thead>
+    <tbody>
+        <!-- Exercise Group as rows -->
+        <tr *ngFor="let exerciseGroup of exam.exerciseGroups" [class.exerciseGroupNotSelected]="!exerciseGroupContainsExercises(exerciseGroup)">
+            <td>
+                <!-- Display general exercise group settings (name, mandatory) to the left -->
+                <table class="table table-hover table-striped">
+                    <tbody>
+                        <tr class="w-25">
+                            <td class="justify-content-center">
+                                <label class="form-check-label" [for]="'exerciseGroup-' + exerciseGroup.id + '-title'" jhiTranslate="artemisApp.examManagement.exerciseGroup.title"
+                                    >Title</label
+                                >
+                            </td>
+                            <td class="w-75">
+                                <input
+                                    [ngClass]="{ 'form-control': true, 'is-invalid': exerciseGroup?.title?.length! === 0 }"
+                                    type="text"
+                                    [id]="'exerciseGroup-' + exerciseGroup.id + '-title'"
+                                    [name]="'exerciseGroup-' + exerciseGroup.id + '-title'"
+                                    [(ngModel)]="exerciseGroup.title"
+                                />
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="justify-content-center">
+                                <label
+                                    class="form-check-label"
+                                    [for]="'exerciseGroup-' + exerciseGroup.id + '-mandatory'"
+                                    jhiTranslate="artemisApp.examManagement.exerciseGroup.mandatory"
+                                >
+                                    Mandatory
+                                </label>
+                            </td>
+                            <td>
+                                <input
+                                    class="form-check-input"
+                                    type="checkbox"
+                                    [id]="'exerciseGroup-' + exerciseGroup.id + '-mandatory'"
+                                    [name]="'exerciseGroup-' + exerciseGroup.id + '-mandatory'"
+                                    [(ngModel)]="exerciseGroup.isMandatory"
+                                />
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+            <td>
+                <!-- Display a List of all Exercises to the right -->
+                <table class="table table-hover table-striped text-center">
+                    <thead>
+                        <tr>
+                            <th class="smallbox" jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.selected">Selected</th>
+                            <th class="smallbox">#</th>
+                            <th class="smallbox" jhiTranslate="artemisApp.exercise.type">Type</th>
+                            <th [class]="exerciseGroupContainsProgrammingExercises(exerciseGroup) ? 'mediumbox' : 'largebox'">
+                                <label jhiTranslate="artemisApp.exercise.title">Title</label>
+                                <jhi-help-icon placement="top" text="artemisApp.examManagement.exerciseGroup.importModal.exerciseTitleTooltip"></jhi-help-icon>
+                            </th>
+                            <th *ngIf="exerciseGroupContainsProgrammingExercises(exerciseGroup)" class="mediumbox">
+                                <label class="label-narrow" jhiTranslate="artemisApp.exercise.shortName">Short Name</label>
+                                <jhi-help-icon placement="auto" text="artemisApp.examManagement.exerciseGroup.importModal.shortNameTooltip"></jhi-help-icon>
+                            </th>
+                            <th class="smallbox" jhiTranslate="artemisApp.exercise.difficulty">Difficulty Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let exercise of exerciseGroup.exercises" [id]="'exercise-' + exercise.id">
+                            <td>
+                                <h4 class="form-check d-flex justify-content-center">
+                                    <input
+                                        type="checkbox"
+                                        class="form-check-input"
+                                        [checked]="exerciseIsSelected(exercise, exerciseGroup)"
+                                        (click)="onSelectExercise(exercise, exerciseGroup)"
+                                    />
+                                </h4>
+                            </td>
+                            <td>{{ exercise.id }}</td>
+                            <td>
+                                <fa-icon size="2x" [icon]="getExerciseIcon(exercise)"></fa-icon>
+                            </td>
+                            <td>
+                                <input
+                                    *ngIf="exercise.type !== exerciseType.PROGRAMMING"
+                                    [ngClass]="{ 'form-control': true, 'is-invalid': exercise?.title?.length! === 0 }"
+                                    type="text"
+                                    [id]="'exercise-' + exercise.id + '-title'"
+                                    [name]="'exercise-' + exercise.id + '-title'"
+                                    [(ngModel)]="exercise.title"
+                                />
+                                <input
+                                    *ngIf="exercise.type === exerciseType.PROGRAMMING"
+                                    [class]="{ 'form-control': true, 'is-invalid': !validateTitleOfProgrammingExercise(exercise) }"
+                                    type="text"
+                                    [id]="'exercise-' + exercise.id + '-title'"
+                                    [name]="'exercise-' + exercise.id + '-title'"
+                                    [placeholder]="getBlocklistTitleOfProgrammingExercise(exercise.id!)"
+                                    [(ngModel)]="exercise.title"
+                                />
+                            </td>
+                            <td *ngIf="exercise.type! === exerciseType.PROGRAMMING">
+                                <input
+                                    [ngClass]="{ 'form-control': true, 'is-invalid': !validateShortNameOfProgrammingExercise(exercise) }"
+                                    type="text"
+                                    [id]="'programming-exercise-' + exercise.id + '-shortName'"
+                                    [name]="'programming-exercise-' + exercise.id + '-shortName'"
+                                    [placeholder]="getBlocklistShortNameOfProgrammingExercise(exercise.id!)"
+                                    [(ngModel)]="exercise.shortName"
+                                />
+                            </td>
+                            <td>
+                                <jhi-difficulty-badge class="me-1" [exercise]="exercise" [showNoLevel]="false"></jhi-difficulty-badge>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </td>
+        </tr>
+    </tbody>
+</table>

@@ -6,14 +6,11 @@
          xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd
 http://pmd.sourceforge.net/ruleset/2.0.0 ">
 
-    <description>
-        Allows underscores in JUnit 4 and 5 test methods
-        Template from https://pmd.github.io/pmd-6.40.0/pmd_userdocs_making_rulesets.html#creating-a-ruleset
-    </description>
-
-    // Java
-    // Allows underscores in testing method names
     <rule ref="category/java/codestyle.xml/MethodNamingConventions">
+        <description>
+            Allows underscores in JUnit 4 and 5 test methods
+            Template from https://pmd.github.io/pmd-6.40.0/pmd_userdocs_making_rulesets.html#creating-a-ruleset
+        </description>
         <properties>
             <property name="methodPattern" value="[a-z][a-zA-Z0-9]*"/>
             <property name="staticPattern" value="[a-z][a-zA-Z0-9]*"/>
@@ -169,6 +166,29 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
     <rule ref="category/java/performance.xml/UseStringBufferLength"/>
     <rule ref="category/java/errorprone.xml/UselessOperationOnImmutable"/>
     <rule ref="category/java/codestyle.xml/UselessQualifiedThis"/>
+    <rule ref="category/java/bestpractices.xml/JUnit5TestShouldBePackagePrivate" />
+    <rule name="DontUseCollectorsToList"
+          language="java"
+          message="Don't use Collectors.toList()"
+          class="net.sourceforge.pmd.lang.rule.XPathRule">
+        <description>
+            <![CDATA[
+                Collectors.toList() should not be used.
+                Use the .toList() for an unmodifiable list or .collect(Collectors.toCollection(ArrayList::new)) for a modifiable list.
+            ]]>
+        </description>
+        <priority>3</priority>
+        <properties>
+            <property name="version" value="2.0"/>
+            <property name="xpath">
+                <value>
+                    <![CDATA[
+                        //PrimaryPrefix[Name[@Image = "Collectors.toList" or @Image = "toList"]]
+                    ]]>
+                </value>
+            </property>
+        </properties>
+    </rule>
 
     // all JSP rules
     <rule ref="category/jsp/bestpractices.xml"/>
@@ -211,6 +231,4 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
     <rule ref="category/xsl/codestyle.xml/UseConcatOnce"/>
     <rule ref="category/xml/errorprone.xml/MistypedCDATASection"/>
     <rule ref="category/pom/errorprone.xml"/>
-
-
 </ruleset>

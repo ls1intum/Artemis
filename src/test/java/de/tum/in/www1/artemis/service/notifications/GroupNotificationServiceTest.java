@@ -32,7 +32,7 @@ import de.tum.in.www1.artemis.repository.NotificationRepository;
 import de.tum.in.www1.artemis.repository.NotificationSettingRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private NotificationRepository notificationRepository;
@@ -100,7 +100,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Sets up all needed mocks and their wanted behavior.
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         course = database.createCourse();
 
         database.addUsers(1, 0, 0, 1);
@@ -152,7 +152,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
@@ -177,7 +177,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAboutExerciseUpdate method with an undefined release date
      */
     @Test
-    public void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
+    void testNotifyAboutExerciseUpdate_undefinedReleaseDate() {
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
     }
@@ -186,7 +186,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAboutExerciseUpdate method with a future release date
      */
     @Test
-    public void testNotifyAboutExerciseUpdate_futureReleaseDate() {
+    void testNotifyAboutExerciseUpdate_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
@@ -196,7 +196,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAboutExerciseUpdate method with a correct release date (now) for exam exercises
      */
     @Test
-    public void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
+    void testNotifyAboutExerciseUpdate_correctReleaseDate_examExercise() {
         examExercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(examExercise, null);
         verify(groupNotificationService, times(1)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
@@ -206,7 +206,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAboutExerciseUpdate method with a correct release date (now) for course exercises
      */
     @Test
-    public void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
+    void testNotifyAboutExerciseUpdate_correctReleaseDate_courseExercise() {
         exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.notifyAboutExerciseUpdate(exercise, null);
         verify(groupNotificationService, times(0)).notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(any(), any());
@@ -220,7 +220,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for checkNotificationForExerciseRelease method with an undefined release date
      */
     @Test
-    public void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
+    void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
         groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
@@ -229,7 +229,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for checkNotificationForExerciseRelease method with a current or past release date
      */
     @Test
-    public void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
+    void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
         groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
@@ -239,7 +239,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for checkNotificationForExerciseRelease method with a future release date
      */
     @Test
-    public void testCheckNotificationForExerciseRelease_futureReleaseDate() {
+    void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
         groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
         verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
@@ -280,7 +280,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for checkAndCreateAppropriateNotificationsWhenUpdatingExercise method based on a decision matrix
      */
     @Test
-    public void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
+    void testCheckAndCreateAppropriateNotificationsWhenUpdatingExercise() {
         testCheckNotificationForExerciseReleaseHelper(null, null, false, false, false, false);
         testCheckNotificationForExerciseReleaseHelper(null, PAST_TIME, false, false, false, false);
         testCheckNotificationForExerciseReleaseHelper(null, CURRENT_TIME, false, false, false, false);
@@ -329,7 +329,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyStudentGroupAboutAttachmentChange method with a future release date
      */
     @Test
-    public void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
+    void testNotifyStudentGroupAboutAttachmentChange_futureReleaseDate() {
         attachment.setReleaseDate(FUTURE_TIME);
         groupNotificationService.notifyStudentGroupAboutAttachmentChange(attachment, NOTIFICATION_TEXT);
         assertThat(notificationRepository.findAll()).as("No notification should be created/saved").isEmpty();
@@ -339,7 +339,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyStudentGroupAboutAttachmentChange method with a non future release date
      */
     @Test
-    public void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
+    void testNotifyStudentGroupAboutAttachmentChange_nonFutureReleaseDate() {
         lecture = new Lecture();
         lecture.setCourse(course);
 
@@ -358,7 +358,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyStudentGroupAboutExercisePractice method
      */
     @Test
-    public void testNotifyStudentGroupAboutExercisePractice() {
+    void testNotifyStudentGroupAboutExercisePractice() {
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_OPEN_FOR_PRACTICE);
         groupNotificationService.notifyStudentGroupAboutExercisePractice(exercise);
         verifyRepositoryCallWithCorrectNotification(1, EXERCISE_PRACTICE_TITLE);
@@ -369,7 +369,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyStudentGroupAboutQuizExerciseStart method
      */
     @Test
-    public void testNotifyStudentGroupAboutQuizExerciseStart() {
+    void testNotifyStudentGroupAboutQuizExerciseStart() {
         groupNotificationService.notifyStudentGroupAboutQuizExerciseStart(quizExercise);
         verifyRepositoryCallWithCorrectNotification(1, QUIZ_EXERCISE_STARTED_TITLE);
     }
@@ -378,7 +378,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate method
      */
     @Test
-    public void testNotifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate() {
+    void testNotifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(3, EXERCISE_UPDATED_TITLE);
     }
@@ -387,7 +387,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAllGroupsAboutReleasedExercise method
      */
     @Test
-    public void testNotifyAllGroupsAboutReleasedExercise() {
+    void testNotifyAllGroupsAboutReleasedExercise() {
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
@@ -398,7 +398,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyEditorAndInstructorGroupAboutExerciseUpdate method
      */
     @Test
-    public void testNotifyEditorAndInstructorGroupAboutExerciseUpdate() {
+    void testNotifyEditorAndInstructorGroupAboutExerciseUpdate() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutExerciseUpdate(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(2, EXERCISE_UPDATED_TITLE);
     }
@@ -407,7 +407,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyEditorAndInstructorGroupAboutExerciseUpdate method
      */
     @Test
-    public void testNotifyAllGroupsAboutNewPostForExercise() {
+    void testNotifyAllGroupsAboutNewPostForExercise() {
         groupNotificationService.notifyAllGroupsAboutNewPostForExercise(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_EXERCISE_POST_TITLE);
     }
@@ -416,7 +416,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise method
      */
     @Test
-    public void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
+    void testNotifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise() {
         groupNotificationService.notifyEditorAndInstructorGroupAboutDuplicateTestCasesForExercise(programmingExercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(2, DUPLICATE_TEST_CASE_TITLE);
     }
@@ -425,7 +425,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutIllegalSubmissionsForExercise method
      */
     @Test
-    public void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
+    void testNotifyInstructorGroupAboutIllegalSubmissionsForExercise() {
         groupNotificationService.notifyInstructorGroupAboutIllegalSubmissionsForExercise(exercise, NOTIFICATION_TEXT);
         verifyRepositoryCallWithCorrectNotification(1, ILLEGAL_SUBMISSION_TITLE);
     }
@@ -434,7 +434,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAllGroupsAboutNewPostForLecture method
      */
     @Test
-    public void testNotifyAllGroupsAboutNewPostForLecture() {
+    void testNotifyAllGroupsAboutNewPostForLecture() {
         groupNotificationService.notifyAllGroupsAboutNewPostForLecture(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_LECTURE_POST_TITLE);
     }
@@ -443,7 +443,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAllGroupsAboutNewCoursePost method
      */
     @Test
-    public void testNotifyAllGroupsAboutNewCoursePost() {
+    void testNotifyAllGroupsAboutNewCoursePost() {
         groupNotificationService.notifyAllGroupsAboutNewCoursePost(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_COURSE_POST_TITLE);
     }
@@ -452,7 +452,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost method
      */
     @Test
-    public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
+    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForCoursePost() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForCoursePost(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_COURSE_POST_TITLE);
     }
@@ -461,7 +461,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise method
      */
     @Test
-    public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
+    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForExercise() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewReplyForExercise(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_EXERCISE_POST_TITLE);
     }
@@ -470,7 +470,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyAllGroupsAboutNewAnnouncement method
      */
     @Test
-    public void testNotifyAllGroupsAboutNewAnnouncement() {
+    void testNotifyAllGroupsAboutNewAnnouncement() {
         prepareNotificationSettingForTest(student, NOTIFICATION__COURSE_WIDE_DISCUSSION__NEW_ANNOUNCEMENT_POST);
         groupNotificationService.notifyAllGroupsAboutNewAnnouncement(post, course);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, NEW_ANNOUNCEMENT_POST_TITLE);
@@ -481,7 +481,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture method
      */
     @Test
-    public void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
+    void testNotifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture() {
         groupNotificationService.notifyTutorAndEditorAndInstructorGroupAboutNewAnswerForLecture(post, answerPost, course);
         verifyRepositoryCallWithCorrectNotification(3, NEW_REPLY_FOR_LECTURE_POST_TITLE);
     }
@@ -490,7 +490,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutChangedTestCasesForProgrammingExercise method
      */
     @Test
-    public void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
+    void testNotifyInstructorGroupAboutChangedTestCasesForProgrammingExercise() {
         prepareNotificationSettingForTest(instructor, NOTIFICATION__EDITOR_NOTIFICATION__PROGRAMMING_TEST_CASES_CHANGED);
         groupNotificationService.notifyEditorAndInstructorGroupsAboutChangedTestCasesForProgrammingExercise(programmingExercise);
         verifyRepositoryCallWithCorrectNotification(2, PROGRAMMING_TEST_CASES_CHANGED_TITLE);
@@ -502,7 +502,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type CourseArchiveStarted
      */
     @Test
-    public void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveStarted() {
+    void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveStarted() {
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_STARTED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_STARTED_TITLE);
     }
@@ -511,7 +511,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type CourseArchiveFailed
      */
     @Test
-    public void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFailed() {
+    void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFailed() {
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FAILED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_FAILED_TITLE);
     }
@@ -520,7 +520,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type CourseArchiveFinished
      */
     @Test
-    public void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFinished() {
+    void testNotifyInstructorGroupAboutCourseArchiveState_CourseArchiveFinished() {
         groupNotificationService.notifyInstructorGroupAboutCourseArchiveState(course, COURSE_ARCHIVE_FINISHED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, COURSE_ARCHIVE_FINISHED_TITLE);
     }
@@ -531,7 +531,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveStarted
      */
     @Test
-    public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveStarted() {
+    void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveStarted() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_STARTED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_STARTED_TITLE);
     }
@@ -540,7 +540,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveFailed
      */
     @Test
-    public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFailed() {
+    void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFailed() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FAILED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FAILED_TITLE);
     }
@@ -549,7 +549,7 @@ public class GroupNotificationServiceTest extends AbstractSpringIntegrationBambo
      * Test for notifyInstructorGroupAboutCourseArchiveState method for the notification type ExamArchiveFinished
      */
     @Test
-    public void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
+    void testNotifyInstructorGroupAboutCourseArchiveState_ExamArchiveFinished() {
         groupNotificationService.notifyInstructorGroupAboutExamArchiveState(exam, EXAM_ARCHIVE_FINISHED, archiveErrors);
         verifyRepositoryCallWithCorrectNotification(1, EXAM_ARCHIVE_FINISHED_TITLE);
     }

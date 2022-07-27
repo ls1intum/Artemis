@@ -110,7 +110,7 @@ public class GitLabService extends AbstractVersionControlService {
         final var userId = gitLabUserManagementService.getUserId(user.getLogin());
 
         try {
-            log.info("repositoryPath: " + repositoryPath + ", userId: " + userId);
+            log.info("repositoryPath: {}, userId: {}", repositoryPath, userId);
             gitlab.getProjectApi().addMember(repositoryPath, userId, DEVELOPER);
         }
         catch (GitLabApiException e) {

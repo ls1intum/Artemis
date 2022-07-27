@@ -8,20 +8,20 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.service.ConsistencyCheckServiceTest;
 
-public class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ConsistencyCheckServiceTest consistencyCheckServiceTest;
 
     @BeforeEach
-    public void setup() throws Exception {
+    void setup() throws Exception {
         consistencyCheckServiceTest.setup(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() throws Exception {
+    void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         database.resetDatabase();
@@ -34,37 +34,37 @@ public class ConsistencyCheckGitlabJenkinsIntegrationTest extends AbstractSpring
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
+    void checkConsistencyOfProgrammingExercise_noErrors() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_noErrors();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
+    void checkConsistencyOfProgrammingExercise_missingVCSProject() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_missingVCSProject();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
+    void checkConsistencyOfProgrammingExercise_missingVCSRepos() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_missingVCSRepos();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
+    void checkConsistencyOfProgrammingExercise_buildPlansMissing() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_buildPlansMissing();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
+    void checkConsistencyOfProgrammingExercise_isLocalSimulation() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_isLocalSimulation();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
+    void checkConsistencyOfProgrammingExercise_forbidden() throws Exception {
         consistencyCheckServiceTest.testCheckConsistencyOfProgrammingExercise_forbidden();
     }
 

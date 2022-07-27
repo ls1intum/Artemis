@@ -32,7 +32,7 @@ describe('Exam management', () => {
         cy.login(users.getAdmin());
         courseManagementRequests.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequests.addStudentToCourse(course.id!, users.getStudentOne().username);
+            courseManagementRequests.addStudentToCourse(course, users.getStudentOne());
             const examConfig = new CypressExamBuilder(course).title(examTitle).build();
             courseManagementRequests.createExam(examConfig).then((examResponse) => {
                 exam = examResponse.body;

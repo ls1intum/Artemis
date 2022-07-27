@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.team;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Team;
@@ -26,7 +25,7 @@ public abstract class TeamImportStrategy {
      * @param destinationExercise Exercise in which the cloned teams should be saved
      */
     protected void cloneTeamsIntoDestinationExercise(List<Team> originalTeams, Exercise destinationExercise) {
-        List<Team> clonedTeams = originalTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).collect(Collectors.toList());
+        List<Team> clonedTeams = originalTeams.stream().map(Team::new).map(team -> team.exercise(destinationExercise)).toList();
         teamRepository.saveAll(clonedTeams);
     }
 }

@@ -177,7 +177,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to true for tests
     text-assessment-analytics-enabled: true
-    browser-fingerprints-enabled: true
+    student-exam-store-session-data: true
 
 jhipster:
     clientApp:

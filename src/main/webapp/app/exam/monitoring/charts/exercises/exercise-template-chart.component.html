@@ -4,8 +4,9 @@
         nameTranslationValue="artemisApp.examMonitoring.charts.{{ chartIdentifierKey }}.name"
         tooltipTranslationValue="artemisApp.examMonitoring.charts.{{ chartIdentifierKey }}.tooltip"
     ></jhi-chart-title>
-    <div class="bar-chart">
+    <div #containerRef class="bar-chart">
         <ngx-charts-bar-horizontal
+            [view]="[containerRef.offsetWidth, containerRef.offsetHeight]"
             [scheme]="ngxColor"
             [results]="ngxData"
             [gradient]="false"

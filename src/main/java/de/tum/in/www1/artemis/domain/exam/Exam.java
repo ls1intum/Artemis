@@ -30,7 +30,7 @@ public class Exam extends DomainObject {
     private String title;
 
     /**
-     * This boolean indicates whether it is a RealExam (false) or TestExams (true)
+     * This boolean indicates whether it is a real exam (false) or test exam (true)
      */
     @Column(name = "test_exam")
     private boolean testExam;
@@ -453,5 +453,24 @@ public class Exam extends DomainObject {
 
     public void setExamArchivePath(String examArchivePath) {
         this.examArchivePath = examArchivePath;
+    }
+
+    /**
+     * Columns for which we allow a pageable search. For example see {@see de.tum.in.www1.artemis.service.TextExerciseService#getAllOnPageWithSize(PageableSearchDTO, User)}}
+     * method. This ensures, that we can't search in columns that don't exist, or we do not want to be searchable.
+     */
+    public enum ExamSearchColumn {
+
+        ID("id"), TITLE("title"), COURSE_TITLE("course.title"), EXAM_MODE("exam.testExam");
+
+        private final String mappedColumnName;
+
+        ExamSearchColumn(String mappedColumnName) {
+            this.mappedColumnName = mappedColumnName;
+        }
+
+        public String getMappedColumnName() {
+            return mappedColumnName;
+        }
     }
 }
