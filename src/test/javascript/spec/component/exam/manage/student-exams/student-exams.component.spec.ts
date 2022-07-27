@@ -518,9 +518,11 @@ describe('StudentExamsComponent', () => {
         { status: { finished: 90, failed: 10, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: true, percentage: 10, eta: '15m0s' } },
         { status: { finished: 990, failed: 10, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: false, percentage: 100, eta: undefined } },
     ])('should correctly calculate exam preparation progress', ({ status, expected }) => {
+        jest.useFakeTimers().setSystemTime(referenceDateNow.toDate());
         studentExamsComponent.setExercisePreparationStatus(status);
         expect(studentExamsComponent.exercisePreparationRunning).toBe(expected.running);
         expect(studentExamsComponent.exercisePreparationPercentage).toBe(expected.percentage);
         expect(studentExamsComponent.exercisePreparationEta).toBe(expected.eta);
+        jest.useRealTimers();
     });
 });
