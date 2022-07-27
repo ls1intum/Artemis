@@ -213,7 +213,7 @@ public class Post extends Posting {
             return this.lecture.getCourse();
         }
         else if (this.exercise != null) {
-            this.getExercise().getCourseViaExerciseGroupOrCourseMember();
+            return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
         return null;

@@ -19,7 +19,10 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 
-import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
@@ -57,12 +60,14 @@ public class PostService extends PostingService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
-            PlagiarismCaseRepository plagiarismCaseRepository) {
+            PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService1) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
@@ -70,6 +75,7 @@ public class PostService extends PostingService {
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
         this.plagiarismCaseService = plagiarismCaseService;
+        this.authorizationCheckService = authorizationCheckService1;
     }
 
     /**
@@ -542,13 +548,10 @@ public class PostService extends PostingService {
     private void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
         User author = userRepository.findOneWithGroupsAndAuthoritiesById(posting.getAuthor().getId()).get();
 
-        if (author.getAuthorities().stream().anyMatch(authority -> authority.equals(Authority.INSTRUCTOR_AUTHORITY) || authority.equals(Authority.ADMIN_AUTHORITY))
-                || (postingCourse != null && author.getGroups().stream().anyMatch(group -> group.equals(postingCourse.getInstructorGroupName())))) {
+        if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, author)) {
             posting.setAuthorRole(UserRole.INSTRUCTOR);
         }
-        else if (author.getAuthorities().stream().anyMatch(authority -> authority.equals(Authority.TA_AUTHORITY) || authority.equals(Authority.EDITOR_AUTHORITY))
-                || (postingCourse != null && author.getGroups().stream()
-                        .anyMatch(group -> group.equals(postingCourse.getTeachingAssistantGroupName()) || group.equals(postingCourse.getEditorGroupName())))) {
+        else if (authorizationCheckService.isTeachingAssistantInCourse(postingCourse, author) || authorizationCheckService.isEditorInCourse(postingCourse, author)) {
             posting.setAuthorRole(UserRole.TUTOR);
         }
         else {
