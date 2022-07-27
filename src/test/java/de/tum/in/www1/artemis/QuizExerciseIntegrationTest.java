@@ -822,12 +822,16 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testInstructorSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
         testSearchTermMatchesId();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testAdminSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
         testSearchTermMatchesId();
     }
 
