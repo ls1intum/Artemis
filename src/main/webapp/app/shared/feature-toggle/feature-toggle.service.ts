@@ -75,6 +75,14 @@ export class FeatureToggleService {
 
     /**
      * Getter method for the active features toggles as an observable.
+     * Will check that the passed feature is enabled
+     */
+    getFeatureToggleActive(feature: FeatureToggle) {
+        return this.getFeatureTogglesActive([feature]);
+    }
+
+    /**
+     * Getter method for the active features toggles as an observable.
      * Will check that all passed features are enabled
      */
     getFeatureTogglesActive(features: FeatureToggle[]) {
