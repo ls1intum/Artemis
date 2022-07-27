@@ -15,7 +15,7 @@ Artemis offers three different modes of exercise assessment:
 
 - **Manual:** Tutors must manually grade the submissions of students.
 - **Automatic:** Artemis automatically grades the submissions of students.
-- **Semi-Automatic:** Artemis automatically grades the submissions of students, but the tutors manually grade all submissions afterward.
+- **Semi-Automatic:** Artemis provides an automatic starting point for the tutors to manually improve the grading afterward.
 
 Manual Assessment
 -----------------
