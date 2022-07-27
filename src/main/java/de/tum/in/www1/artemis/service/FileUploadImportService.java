@@ -2,11 +2,11 @@ package de.tum.in.www1.artemis.service;
 
 import java.util.HashMap;
 
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-
-import com.sun.istack.NotNull;
 
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;

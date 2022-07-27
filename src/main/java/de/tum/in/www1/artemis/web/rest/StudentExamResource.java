@@ -11,9 +11,9 @@ import java.util.Optional;
 import java.util.Set;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,7 +37,6 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -80,8 +79,6 @@ public class StudentExamResource {
 
     private final ExamService examService;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
-
     private final InstanceMessageSendService instanceMessageSendService;
 
     @Value("${info.student-exam-store-session-data:#{true}}")
@@ -90,8 +87,7 @@ public class StudentExamResource {
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
-            ExamMonitoringScheduleService examMonitoringScheduleService, InstanceMessageSendService instanceMessageSendService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -105,7 +101,6 @@ public class StudentExamResource {
         this.examRepository = examRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
         this.instanceMessageSendService = instanceMessageSendService;
     }
 
@@ -393,9 +388,9 @@ public class StudentExamResource {
      * GET /courses/{courseId}/exams/{examId}/student-exams/grade-summary : Return student exam result, aggregate points, assessment result
      * for a student exam and grade calculations if the exam is assessed. Only instructors can use userId parameter to get exam results of other users,
      * if the caller is a student, userId should either be the user id of the caller or empty.
-     *
+     * <p>
      * Does not return the student exam itself to save bandwidth.
-     *
+     * <p>
      * See {@link StudentExamWithGradeDTO} for more explanation.
      *
      * @param courseId  the course to which the student exam belongs to
@@ -480,10 +475,10 @@ public class StudentExamResource {
 
     /**
      * POST /courses/{courseId}/exams/{examId}/student-exams/assess-unsubmitted-and-empty-student-exams : Assess unsubmitted student exams and empty submissions.
-     *
+     * <p>
      * Finds student exams which the students did not submit on time i.e. {@link StudentExam#isSubmitted()} is false and assesses all exercises with 0 points in {@link StudentExamService#assessUnsubmittedStudentExams}.
      * Additionally assess all empty exercises with 0 points in {@link StudentExamService#assessEmptySubmissionsOfStudentExams}.
-     *
+     * <p>
      * NOTE: A result with 0 points is only added if no other result is present for the latest submission of a relevant StudentParticipation.
      *
      * @param courseId the id of the course
@@ -548,14 +543,15 @@ public class StudentExamResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
-        log.info("REST request to start exercises for student exams of exam {}", examId);
-
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
+        User instructor = userRepository.getUser();
+        log.info("REST request to start exercises for student exams of exam {}", examId);
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
+        auditEventRepository.add(auditEvent);
+
         int numberOfGeneratedParticipations = studentExamService.startExercises(examId);
-
         log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-
         return ResponseEntity.ok().body(numberOfGeneratedParticipations);
     }
 

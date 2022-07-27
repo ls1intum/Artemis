@@ -163,6 +163,12 @@ public final class Constants {
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
 
+    public static final String PREPARE_EXERCISE_START = "PREPARE_EXERCISE_START";
+
+    public static final String GENERATE_STUDENT_EXAMS = "GENERATE_STUDENT_EXAMS";
+
+    public static final String GENERATE_MISSING_STUDENT_EXAMS = "GENERATE_MISSING_STUDENT_EXAMS";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
