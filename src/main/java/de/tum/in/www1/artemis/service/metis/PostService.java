@@ -539,8 +539,8 @@ public class PostService extends PostingService {
     private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
         // sets author roles to display user authority icon on posting headers
         postsInCourse.forEach(post -> {
-            setAuthorRoleForPosting(post, post.getCoursePostBelongsTo());
-            post.getAnswers().forEach(answerPost -> setAuthorRoleForPosting(answerPost, post.getCoursePostBelongsTo()));
+            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
+            post.getAnswers().forEach(answerPost -> setAuthorRoleForPosting(answerPost, post.getCoursePostingBelongsTo()));
         });
     }
 

@@ -205,7 +205,8 @@ public class Post extends Posting {
      * Helper method to extract the course a Post belongs to, which is found in different locations based on the Post's context
      * @return the course Post belongs to
      */
-    public Course getCoursePostBelongsTo() {
+    @Override
+    public Course getCoursePostingBelongsTo() {
         if (this.course != null) {
             return this.course;
         }
@@ -214,6 +215,9 @@ public class Post extends Posting {
         }
         else if (this.exercise != null) {
             return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.plagiarismCase != null) {
+            return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 
         return null;
