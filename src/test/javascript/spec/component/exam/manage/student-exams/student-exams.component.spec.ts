@@ -89,6 +89,14 @@ describe('StudentExamsComponent', () => {
                     }),
                 );
             },
+            getExerciseStartStatus: () => {
+                return of(
+                    new HttpResponse({
+                        body: undefined,
+                        status: 200,
+                    }),
+                );
+            },
             unlockAllRepositories: () => {
                 return of(
                     new HttpResponse({
