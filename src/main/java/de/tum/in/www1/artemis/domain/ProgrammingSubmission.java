@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -115,5 +116,16 @@ public class ProgrammingSubmission extends Submission {
     @Override
     public String toString() {
         return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
+    }
+
+    @Override
+    public int compareTo(Submission other) {
+        if (getSubmissionDate() == null || other.getSubmissionDate() == null
+                || other instanceof ProgrammingSubmission otherProgrammingSubmission && Objects.equals(getCommitHash(), otherProgrammingSubmission.getCommitHash())) {
+            // this case should not happen, but in the rare case we can compare the ids
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getSubmissionDate().compareTo(other.getSubmissionDate());
     }
 }
