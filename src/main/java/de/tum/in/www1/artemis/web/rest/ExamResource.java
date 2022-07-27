@@ -392,7 +392,7 @@ public class ExamResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<Exam> checkAccessAndLog(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
+    public ResponseEntity<Exam> getExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestParam(defaultValue = "false") boolean withStudents,
             @RequestParam(defaultValue = "false") boolean withExerciseGroups) {
         log.debug("REST request to get exam : {}", examId);
 
@@ -726,7 +726,7 @@ public class ExamResource {
         long start = System.nanoTime();
         log.info("REST request to generate student exams for exam {}", examId);
 
-        final var exam = checkAccessAndLog(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
+        final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
         examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
@@ -740,11 +740,11 @@ public class ExamResource {
     }
 
     @NotNull
-    private Exam checkAccessAndLog(Long courseId, Long examId, String auditEventAction) {
+    private Exam checkAccessForStudentExamGenerationAndLogAuditEvent(Long courseId, Long examId, String auditEventAction) {
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
 
         if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration is only allowed for RealExams");
+            throw new BadRequestAlertException("Generate student exams is only allowed for real exams", ENTITY_NAME, "generateStudentExamsOnlyForRealExams");
         }
 
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, exam);
@@ -773,7 +773,7 @@ public class ExamResource {
         long start = System.nanoTime();
         log.info("REST request to generate missing student exams for exam {}", examId);
 
-        final var exam = checkAccessAndLog(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
+        final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_MISSING_STUDENT_EXAMS);
         List<StudentExam> studentExams = studentExamRepository.generateMissingStudentExams(exam);
 
         // we need to break a cycle for the serialization
@@ -808,7 +808,8 @@ public class ExamResource {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         if (examDateService.getLatestIndividualExamEndDate(examId).isAfter(ZonedDateTime.now())) {
-            throw new AccessForbiddenException("There are still exams running, quizzes can only be evaluated once all exams are finished.");
+            throw new BadRequestAlertException("There are still exams running, quizzes can only be evaluated once all exams are finished.", ENTITY_NAME,
+                    "evaluateQuizExercisesTooEarly");
         }
         var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
         if (exam.isTestExam()) {
@@ -1015,13 +1016,13 @@ public class ExamResource {
 
         // Ensure that exactly as many exercise groups have been received as are currently related to the exam
         if (orderedExerciseGroups.size() != exam.getExerciseGroups().size()) {
-            throw new AccessForbiddenException("exam", examId);
+            throw new BadRequestAlertException("The number of exercise groups changed", ENTITY_NAME, "numberExerciseGroupsChanged");
         }
 
         // Ensure that all received exercise groups are already related to the exam
         for (ExerciseGroup exerciseGroup : orderedExerciseGroups) {
             if (!exam.getExerciseGroups().contains(exerciseGroup)) {
-                throw new AccessForbiddenException("exam", examId);
+                throw new BadRequestAlertException("The exercise group is not related to the exam", ENTITY_NAME, "exerciseGroupNotRelatedToExam");
             }
             // Set the exam manually as it won't be included in orderedExerciseGroups
             exerciseGroup.setExam(exam);
