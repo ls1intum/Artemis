@@ -969,7 +969,7 @@ public class ProgrammingExerciseService {
         }
         else {
             if (isCourseFilter && isExamFilter) {
-                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
             }
             else if (isCourseFilter) {
                 exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);

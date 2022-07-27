@@ -71,7 +71,7 @@ public class ModelingExerciseService {
         }
         else {
             if (isCourseFilter && isExamFilter) {
-                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
             }
             else if (isCourseFilter) {
                 exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);

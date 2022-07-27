@@ -471,7 +471,7 @@ public class QuizExerciseService {
         }
         else {
             if (isCourseFilter && isExamFilter) {
-                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
             }
             else if (isCourseFilter) {
                 exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);

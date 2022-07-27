@@ -55,7 +55,7 @@ public class TextExerciseService {
         }
         else {
             if (isCourseFilter && isExamFilter) {
-                exercisePage = textExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+                exercisePage = textExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
             }
             else if (isCourseFilter) {
                 exercisePage = textExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
