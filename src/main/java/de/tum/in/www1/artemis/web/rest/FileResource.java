@@ -111,7 +111,7 @@ public class FileResource {
     /**
      * POST /fileUpload : Upload a new file.
      *
-     * @param file The file to save
+     * @param file         The file to save
      * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
@@ -140,7 +140,7 @@ public class FileResource {
     /**
      * POST /markdown-file-upload : Upload a new file for markdown.
      *
-     * @param file The file to save
+     * @param file         The file to save
      * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
@@ -169,8 +169,8 @@ public class FileResource {
     /**
      * GET /files/templates/:filename : Get the template file with the given filename
      *
-     * @param filename The filename of the file to get
-     * @param language The programming language for which the template file should be returned
+     * @param filename    The filename of the file to get
+     * @param language    The programming language for which the template file should be returned
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
@@ -232,9 +232,9 @@ public class FileResource {
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
      *
-     * @param submissionId id of the submission, the file belongs to
-     * @param exerciseId id of the exercise, the file belongs to
-     * @param filename  the filename of the file
+     * @param submissionId         id of the submission, the file belongs to
+     * @param exerciseId           id of the exercise, the file belongs to
+     * @param filename             the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
@@ -275,9 +275,9 @@ public class FileResource {
     /**
      * GET files/file-upload-exercises/:exerciseId/submissions/:submissionId/:filename/access-token : Generates an access token that is valid for 30 seconds and given exerciseId and submissionId
      *
-     * @param exerciseId ID of the exercise the submission belongs to
+     * @param exerciseId   ID of the exercise the submission belongs to
      * @param submissionId ID of the submission the access token is for
-     * @param filename The filename of the file
+     * @param filename     The filename of the file
      * @return The generated access token
      */
     @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}/access-token")
@@ -374,8 +374,8 @@ public class FileResource {
     /**
      * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
      *
-     * @param lectureId ID of the lecture, the attachment belongs to
-     * @param filename  the filename of the file
+     * @param lectureId            ID of the lecture, the attachment belongs to
+     * @param filename             the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
@@ -444,7 +444,7 @@ public class FileResource {
      * GET /files/attachments/attachment-unit/:attachmentUnitId/:filename/access-token : Get an access-token for the attachment unit
      *
      * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
-     * @param filename  the filename of the file
+     * @param filename         the filename of the file
      * @return The generated access token, 403 if the user has no access to the course
      */
     @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}/access-token")
@@ -503,8 +503,8 @@ public class FileResource {
     /**
      * Checks if the user is authorized to access an attachment
      *
-     * @param course the course to check if the user is part of it
-     * @param attachment  the attachment for which the authentication should be checked
+     * @param course     the course to check if the user is part of it
+     * @param attachment the attachment for which the authentication should be checked
      * @return true if the user is authorized to access the attachment, otherwise false is returned
      */
     private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
@@ -520,7 +520,7 @@ public class FileResource {
      * Validates temporary access token
      *
      * @param temporaryAccessToken token to be validated
-     * @param customClaims               the claims that the access token has to contain
+     * @param customClaims         the claims that the access token has to contain
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
     private boolean validateTemporaryAccessToken(String temporaryAccessToken, Map<String, ? extends Serializable> customClaims) {

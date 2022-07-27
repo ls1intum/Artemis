@@ -87,8 +87,9 @@ public class TokenProvider {
 
     /**
      * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
      * @param authentication Authentication Object
-     * @param rememberMe Determines Token lifetime (30 minutes vs 30 days)
+     * @param rememberMe     Determines Token lifetime (30 minutes vs 30 days)
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
@@ -109,9 +110,9 @@ public class TokenProvider {
     /**
      * Generates an access token with custom claims that allows a user to download a file. This token is only valid for the given validity period.
      *
-     * @param authentication Currently active authentication mostly the currently logged-in user
+     * @param authentication            Currently active authentication mostly the currently logged-in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
-     * @param customClaims The claims that are included in the token
+     * @param customClaims              The claims that are included in the token
      * @return File access token as a JWT token
      */
     public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Claims customClaims) {
@@ -124,9 +125,9 @@ public class TokenProvider {
     /**
      * Generates an access token that allows a user to download a file of a course. This token is only valid for the given validity period.
      *
-     * @param authentication Currently active authentication mostly the currently logged-in user
+     * @param authentication            Currently active authentication mostly the currently logged-in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
-     * @param courseId The id of the course, which the token belongs to
+     * @param courseId                  The id of the course, which the token belongs to
      * @return File access token as a JWT token
      */
     public String createFileTokenForCourseWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Long courseId) throws IllegalAccessException {
@@ -138,6 +139,7 @@ public class TokenProvider {
 
     /**
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
+     *
      * @param token JWT Authorization Token
      * @return UsernamePasswordAuthenticationToken
      */
@@ -158,7 +160,7 @@ public class TokenProvider {
     /**
      * Checks if custom claims are inside the signed JWT token. Also validates the JWT token if it is still valid.
      *
-     * @param authToken The token that has to be checked
+     * @param authToken      The token that has to be checked
      * @param requiredClaims The claims that should be included in the token
      * @return true if everything matches
      */
@@ -200,6 +202,7 @@ public class TokenProvider {
 
     /**
      * Validate an JWT Authorization Token
+     *
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
@@ -209,6 +212,7 @@ public class TokenProvider {
 
     /**
      * Validate an JWT Authorization Token
+     *
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
