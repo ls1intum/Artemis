@@ -215,7 +215,7 @@ export class StudentExamsComponent implements OnInit, OnDestroy {
         this.exercisePreparationRunning = !!(newStatus && processedExams < newStatus.overall!);
         this.exercisePreparationPercentage = newStatus ? (newStatus.overall! ? Math.round((processedExams / newStatus.overall!) * 100) : 100) : 0;
         this.exercisePreparationEta = undefined;
-        if (this.exercisePreparationRunning && newStatus?.finished) {
+        if (this.exercisePreparationRunning && processedExams) {
             const remainingExams = newStatus!.overall! - processedExams;
 
             const passedSeconds = dayjs().diff(newStatus!.startedAt!, 's');
