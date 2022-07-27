@@ -93,7 +93,8 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse) =>
             alertService.error('error.http.405');
             break;
         case 500:
-            alertService.error('error.http.500');
+            // Removed to avoid alerts about internal errors as the user can't do anything about it
+            // and the alert does not provide any other value
             break;
         default:
             alertService.addAlert({

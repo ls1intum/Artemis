@@ -15,6 +15,7 @@ import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.FileUploadImportService;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
 import de.tum.in.www1.artemis.service.QuizExerciseImportService;
@@ -56,12 +57,15 @@ public class ExamImportService {
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
     public ExamImportService(TextExerciseImportService textExerciseImportService, TextExerciseRepository textExerciseRepository,
             ModelingExerciseImportService modelingExerciseImportService, ModelingExerciseRepository modelingExerciseRepository, ExamRepository examRepository,
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository) {
+            FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
         this.modelingExerciseImportService = modelingExerciseImportService;
@@ -77,6 +81,7 @@ public class ExamImportService {
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
         this.fileUploadImportService = fileUploadImportService;
         this.gradingCriterionRepository = gradingCriterionRepository;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
 
     /**
@@ -231,14 +236,17 @@ public class ExamImportService {
 
                 case PROGRAMMING -> {
                     final Optional<ProgrammingExercise> optionalOriginalProgrammingExercise = programmingExerciseRepository
-                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(
-                                    exerciseToCopy.getId());
+                            .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(exerciseToCopy.getId());
                     if (optionalOriginalProgrammingExercise.isEmpty()) {
                         break;
                     }
+                    var originalProgrammingExercise = optionalOriginalProgrammingExercise.get();
+                    // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
+                    var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
+                    originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
+
                     prepareProgrammingExerciseForExamImport((ProgrammingExercise) exerciseToCopy);
-                    exerciseCopied = programmingExerciseImportService.importProgrammingExercise(optionalOriginalProgrammingExercise.get(), (ProgrammingExercise) exerciseToCopy,
-                            false, false);
+                    exerciseCopied = programmingExerciseImportService.importProgrammingExercise(originalProgrammingExercise, (ProgrammingExercise) exerciseToCopy, false, false);
                 }
 
                 case FILE_UPLOAD -> {

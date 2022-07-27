@@ -172,8 +172,7 @@ public class CourseResource {
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, Course.ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
     /**

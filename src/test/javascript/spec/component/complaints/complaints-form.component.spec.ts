@@ -87,7 +87,7 @@ describe('ComplaintsFormComponent', () => {
     });
 
     it('should throw unknown error after complaint creation', () => {
-        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 500 })));
+        const createMock = jest.spyOn(complaintService, 'create').mockReturnValue(throwError(() => ({ status: 400 })));
         const submitSpy = jest.spyOn(component.submit, 'emit');
         const errorSpy = jest.spyOn(alertService, 'error');
         component.createComplaint();
