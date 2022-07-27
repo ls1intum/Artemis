@@ -62,9 +62,6 @@ describe('ExerciseGroupUpdateComponent', () => {
     beforeEach(fakeAsync(() => {
         fixture.detectChanges();
         tick();
-        expect(component).not.toBeNull();
-        expect(component.exam).toEqual(exam);
-        expect(component.exerciseGroup).toEqual(exerciseGroup);
     }));
 
     afterEach(() => {
@@ -72,6 +69,10 @@ describe('ExerciseGroupUpdateComponent', () => {
     });
 
     it('Should save exercise group', fakeAsync(() => {
+        expect(component).not.toBeNull();
+        expect(component.exam).toEqual(exam);
+        expect(component.exerciseGroup).toEqual(exerciseGroup);
+
         const responseFakeExerciseGroup = { body: exerciseGroup } as EntityResponseType;
         jest.spyOn(service, 'update').mockReturnValue(of(responseFakeExerciseGroup));
 

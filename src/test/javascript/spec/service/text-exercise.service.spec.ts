@@ -103,7 +103,7 @@ describe('TextExercise Service', () => {
             service.delete(123).subscribe((resp) => (requestResult = resp));
             const req = httpMock.expectOne({ method: 'DELETE' });
             req.flush({ status: 200 });
-            expect(requestResult.status).toEqual(200);
+            expect(requestResult.status).toBe(200);
         });
 
         it('should calculate and return tutor efforts', () => {

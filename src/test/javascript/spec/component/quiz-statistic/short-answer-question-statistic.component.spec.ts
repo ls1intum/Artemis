@@ -105,7 +105,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(4);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
-            expect(comp.websocketChannelForData).toEqual('/topic/statistic/4');
+            expect(comp.websocketChannelForData).toBe('/topic/statistic/4');
         });
 
         it('should not load Quiz if not authorised', () => {

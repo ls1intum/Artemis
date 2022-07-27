@@ -18,7 +18,7 @@ describe('TextExamSummaryComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(fixture.debugElement.nativeElement.querySelector('div').innerHTML).toEqual('No submission');
+        expect(fixture.debugElement.nativeElement.querySelector('div').innerHTML).toBe('No submission');
     });
 
     it('should display the submission text', () => {

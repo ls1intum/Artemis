@@ -14,7 +14,9 @@
                     <th jhiSortBy="text"><span jhiTranslate="artemisApp.systemNotification.text">Text</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th jhiSortBy="type"><span jhiTranslate="artemisApp.systemNotification.type">Type</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th></th>
-                    <th jhiSortBy="expireDate"><span jhiTranslate="artemisApp.systemNotification.notificationDate">Notification Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="notificationDate">
+                        <span jhiTranslate="artemisApp.systemNotification.notificationDate">Notification Date</span> <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th jhiSortBy="expireDate"><span jhiTranslate="artemisApp.systemNotification.expireDate">Expire Date</span> <fa-icon [icon]="faSort"></fa-icon></th>
                     <th></th>
                 </tr>
@@ -25,13 +27,16 @@
                     <td>{{ notification.title }}</td>
                     <td>{{ notification.text }}</td>
                     <td>{{ notification.type }}</td>
-                    <td>
-                        <span *ngIf="isNotificationActive(notification); else notActive" class="badge bg-success">{{
-                            'artemisApp.systemNotification.active' | artemisTranslate
-                        }}</span>
-                        <ng-template #notActive>
-                            <span class="badge bg-danger">{{ 'artemisApp.systemNotification.notActive' | artemisTranslate }}</span>
-                        </ng-template>
+                    <td [ngSwitch]="getNotificationState(notification)">
+                        <span *ngSwitchCase="ACTIVE" class="badge bg-success">
+                            {{ 'artemisApp.systemNotification.active' | artemisTranslate }}
+                        </span>
+                        <span *ngSwitchCase="EXPIRED" class="badge bg-danger">
+                            {{ 'artemisApp.systemNotification.expired' | artemisTranslate }}
+                        </span>
+                        <span *ngSwitchCase="SCHEDULED" class="badge bg-info">
+                            {{ 'artemisApp.systemNotification.scheduled' | artemisTranslate }}
+                        </span>
                     </td>
                     <td>{{ notification.notificationDate | artemisDate }}</td>
                     <td>{{ notification.expireDate | artemisDate }}</td>

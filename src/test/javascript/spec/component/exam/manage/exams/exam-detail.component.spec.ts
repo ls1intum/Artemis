@@ -133,7 +133,7 @@ describe('ExamDetailComponent', () => {
         const editButton = examDetailComponentFixture.debugElement.query(By.css('#editButton')).nativeElement;
         editButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/edit');
+            expect(location.path()).toBe('/course-management/1/exams/1/edit');
         });
     }));
 
@@ -143,7 +143,7 @@ describe('ExamDetailComponent', () => {
         const studentExamsButton = examDetailComponentFixture.debugElement.query(By.css('#studentExamsButton')).nativeElement;
         studentExamsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/student-exams');
+            expect(location.path()).toBe('/course-management/1/exams/1/student-exams');
         });
     }));
 
@@ -153,7 +153,7 @@ describe('ExamDetailComponent', () => {
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#assessment-dashboard-button')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/assessment-dashboard');
+            expect(location.path()).toBe('/course-management/1/exams/1/assessment-dashboard');
         });
     }));
 
@@ -163,7 +163,7 @@ describe('ExamDetailComponent', () => {
         const dashboardButton = examDetailComponentFixture.debugElement.query(By.css('#exercises-button-groups')).nativeElement;
         dashboardButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/exercise-groups');
+            expect(location.path()).toBe('/course-management/1/exams/1/exercise-groups');
         });
     }));
 
@@ -173,7 +173,7 @@ describe('ExamDetailComponent', () => {
         const scoresButton = examDetailComponentFixture.debugElement.query(By.css('#scores-button')).nativeElement;
         scoresButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/scores');
+            expect(location.path()).toBe('/course-management/1/exams/1/scores');
         });
     }));
 
@@ -183,7 +183,7 @@ describe('ExamDetailComponent', () => {
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#students-button')).nativeElement;
         studentsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/students');
+            expect(location.path()).toBe('/course-management/1/exams/1/students');
         });
     }));
 
@@ -193,7 +193,7 @@ describe('ExamDetailComponent', () => {
         const studentsButton = examDetailComponentFixture.debugElement.query(By.css('#testrun-button')).nativeElement;
         studentsButton.click();
         examDetailComponentFixture.whenStable().then(() => {
-            expect(location.path()).toEqual('/course-management/1/exams/1/test-runs');
+            expect(location.path()).toBe('/course-management/1/exams/1/test-runs');
         });
     }));
 

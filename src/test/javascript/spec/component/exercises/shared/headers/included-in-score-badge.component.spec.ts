@@ -26,7 +26,7 @@ describe('IncludedInScoreBadge', () => {
         component.ngOnChanges();
         component.ngOnInit();
 
-        expect(component.badgeClass).toBe(undefined);
+        expect(component.badgeClass).toBeUndefined();
     });
 
     it('should show a warning badge if the score is included as bonus', () => {

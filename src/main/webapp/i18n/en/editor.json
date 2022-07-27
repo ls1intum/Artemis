@@ -31,7 +31,7 @@
             "submitDescription": "Stage, commit, push, build and test your changes.",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
-            "buildFailed": "Build Failed",
+            "buildFailed": "Build failed",
             "noBuildOutput": "No build results available",
             "selectFile": "Select a file to get started!",
             "downloadBuildResult": "Download Build Result",

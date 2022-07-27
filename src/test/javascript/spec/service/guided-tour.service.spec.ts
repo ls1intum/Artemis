@@ -214,11 +214,11 @@ describe('GuidedTourService', () => {
             });
 
             // Start course overview tour
-            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBe(null);
+            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).toBeNull();
             guidedTourService['enableTour'](guidedTour, true);
             guidedTourService['startTour']();
             guidedTourComponentFixture.detectChanges();
-            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).not.toBe(null);
+            expect(guidedTourComponentFixture.debugElement.query(By.css('.tour-step'))).not.toBeNull();
             expect(guidedTourService.isOnFirstStep).toBeTrue();
             expect(guidedTourService.currentTourStepDisplay).toBe(1);
             expect(guidedTourService.currentTourStepCount).toBe(2);
@@ -233,7 +233,7 @@ describe('GuidedTourService', () => {
             it('should start and finish the course overview guided tour', async () => {
                 // Navigate to next step
                 const nextButton = guidedTourComponentFixture.debugElement.query(By.css('.next-button'));
-                expect(nextButton).not.toBe(null);
+                expect(nextButton).not.toBeNull();
                 nextButton.nativeElement.click();
                 expect(guidedTourService.isOnLastStep).toBeTrue();
 
@@ -241,16 +241,16 @@ describe('GuidedTourService', () => {
                 nextButton.nativeElement.click();
                 guidedTourComponentFixture.detectChanges();
                 const tourStep = guidedTourComponentFixture.debugElement.query(By.css('.tour-step'));
-                expect(tourStep).toBe(null);
+                expect(tourStep).toBeNull();
             });
 
             it('should start and skip the tour', () => {
                 const skipButton = guidedTourComponentFixture.debugElement.query(By.css('.btn-close'));
-                expect(skipButton).not.toBe(null);
+                expect(skipButton).not.toBeNull();
                 skipButton.nativeElement.click();
                 guidedTourComponentFixture.detectChanges();
                 const tourStep = guidedTourComponentFixture.debugElement.query(By.css('.tour-step'));
-                expect(tourStep).toBe(null);
+                expect(tourStep).toBeNull();
             });
 
             it('backdrop should prevent from advancing', () => {
@@ -273,7 +273,7 @@ describe('GuidedTourService', () => {
             it('should disable the next button', () => {
                 guidedTourComponentFixture.detectChanges();
                 const nextButton = guidedTourComponentFixture.debugElement.nativeElement.querySelector('.next-button').disabled;
-                expect(nextButton).not.toBe(null);
+                expect(nextButton).not.toBeNull();
             });
         });
 
@@ -293,9 +293,9 @@ describe('GuidedTourService', () => {
             }
 
             function currentCourseAndExerciseUndefined(): void {
-                expect(guidedTourService.currentTour).toBe(undefined);
-                expect(guidedTourService['currentCourse']).toBe(undefined);
-                expect(guidedTourService['currentExercise']).toBe(undefined);
+                expect(guidedTourService.currentTour).toBeUndefined();
+                expect(guidedTourService['currentCourse']).toBeUndefined();
+                expect(guidedTourService['currentExercise']).toBeUndefined();
             }
 
             beforeEach(() => {
@@ -321,7 +321,7 @@ describe('GuidedTourService', () => {
                 guidedTourService.enableTourForCourseOverview(courses, tourWithCourseAndExercise, true);
                 expect(guidedTourService.currentTour).toEqual(tourWithCourseAndExercise);
                 expect(guidedTourService['currentCourse']).toEqual(course1);
-                expect(guidedTourService['currentExercise']).toBe(undefined);
+                expect(guidedTourService['currentExercise']).toBeUndefined();
                 resetCurrentTour();
             });
 
@@ -378,13 +378,13 @@ describe('GuidedTourService', () => {
                 // disable tour for not matching course without exercise
                 guidedTourService.currentTour = undefined;
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
-                expect(guidedTourService.currentTour).toBe(undefined);
+                expect(guidedTourService.currentTour).toBeUndefined();
 
                 // disable tour for not matching course but matching exercise identifier
                 guidedTourService.currentTour = undefined;
                 course2.exercises = [exercise3];
                 guidedTourService.enableTourForCourseExerciseComponent(course2, tourWithCourseAndExercise, true);
-                expect(guidedTourService.currentTour).toBe(undefined);
+                expect(guidedTourService.currentTour).toBeUndefined();
             });
 
             describe('Tour with student participation', () => {
@@ -501,7 +501,7 @@ describe('GuidedTourService', () => {
 
         describe('getCurrentStepString', () => {
             it('should return nothing if currentTour is undefined', () => {
-                expect(guidedTourService.getCurrentStepString()).toBe(undefined);
+                expect(guidedTourService.getCurrentStepString()).toBeUndefined();
             });
             it('should return correct string if currentTour is defined', () => {
                 guidedTourService.currentTour = tour;
@@ -644,19 +644,14 @@ describe('GuidedTourService', () => {
             describe('return undefined if parameters are undefined', () => {
                 it('should return undefined if exercise.course is undefined', fakeAsync(() => {
                     const inputExercise = {} as Exercise;
-                    expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).toBe(undefined);
+                    expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).toBeUndefined();
                     expect(enableTourSpy).toHaveBeenCalledTimes(0);
                 }));
                 it('should return undefined if guidedTour mapping is undefined', fakeAsync(() => {
                     guidedTourService.guidedTourMapping = undefined;
-                    expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toBe(undefined);
+                    expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toBeUndefined();
                 }));
             });
-            it('should enableTourForExercise for text exercise', fakeAsync(() => {
-                expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toEqual(exerciseText);
-                expect(enableTourSpy).toHaveBeenCalledOnce();
-                expect(startTourSpy).toHaveBeenCalledTimes(0);
-            }));
             it('should enableTourForExercise for text exercise', fakeAsync(() => {
                 expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toEqual(exerciseText);
                 expect(enableTourSpy).toHaveBeenCalledOnce();

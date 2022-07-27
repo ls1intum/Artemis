@@ -566,7 +566,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         else if (!submissionsWithUnratedResult.isEmpty()) {
@@ -580,7 +580,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         else if (!submissionsWithoutResult.isEmpty()) {
@@ -589,7 +589,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         return null;
