@@ -318,10 +318,10 @@
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
                 <ng-container *ngIf="(tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isTestRun">
-                    <h4 *ngIf="!isExamMode">
+                    <h4 *ngIf="!isExamMode" class="d-inline-block">
                         {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
                     </h4>
-                    <h4 *ngIf="isExamMode">
+                    <h4 *ngIf="isExamMode" class="d-inline-block">
                         {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam' | artemisTranslate: { round: correctionRound + 1 } }}
                     </h4>
                     <fa-icon
