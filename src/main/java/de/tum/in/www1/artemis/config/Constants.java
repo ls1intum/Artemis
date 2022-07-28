@@ -245,6 +245,8 @@ public final class Constants {
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
 
+    public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
      */
