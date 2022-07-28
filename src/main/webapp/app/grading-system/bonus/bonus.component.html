@@ -1,4 +1,67 @@
 <div class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TOdo: Ata">Mode</span>
-    <jhi-mode-picker [options]="modePickerOptions" [(value)]="gradeEditMode"></jhi-mode-picker>
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
+    <jhi-mode-picker [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption"></jhi-mode-picker>
+</div>
+<div *ngIf="currentBonusStrategyOption === BonusStrategyOptions.GRADES" class="form-group">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
+    <jhi-mode-picker [options]="bonusStrategyDiscreteness" [(value)]="currentBonusStrategyDiscreteness"></jhi-mode-picker>
+</div>
+<div class="form-group">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
+    <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.calculationSign"></jhi-mode-picker>
+</div>
+<div class="form-group">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.TODO: Ata">Select bonus source</span>
+    <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="setBonusSourcePoints($event)" title="Select bonus source">
+        <option *ngFor="let sourceGradingScale of sourceGradingScales" [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
+    </select>
+</div>
+<h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
+<div *ngIf="bonus.source?.gradeSteps" style="font-size: 1.1em">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
+                <th *ngIf="hasPointsSet()">{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let gradeStep of bonus.source?.gradeSteps; let i = index; let last = last">
+                <td>{{ gradeStep.gradeName }}</td>
+                <td>
+                    <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                </td>
+                <td *ngIf="hasPointsSet()">
+                    <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<h6>{{ 'artemisApp.TODO: Ata Formula' | artemisTranslate }}</h6>
+<div>
+    <button (click)="save()" [disabled]="isLoading || !isFormValid()" class="btn btn-primary mr-1 mb-1" type="button">
+        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
+    </button>
+    <button
+        *ngIf="bonus.id"
+        class="mb-1"
+        jhiDeleteButton
+        [entityTitle]="''"
+        [buttonSize]="ButtonSize.MEDIUM"
+        deleteQuestion="artemisApp.TODO: Ata.deleteQuestion"
+        (delete)="delete()"
+        [dialogError]="dialogError$"
+        [disabled]="isLoading"
+    >
+        <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+    </button>
+    <div *ngIf="invalidBonusMessage" class="alert alert-warning mt-3">
+        <fa-icon [icon]="faExclamationTriangle"></fa-icon>
+        <span>
+            {{ invalidBonusMessage }}
+        </span>
+    </div>
 </div>

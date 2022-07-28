@@ -103,7 +103,7 @@ public class GradingScaleResource {
      * @param search The pageable search containing the page size, page number and query string
      * @return The desired page, sorted and matching the given query
      */
-    @GetMapping("grading-scales")
+    @GetMapping("/grading-scales")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(PageableSearchDTO<String> search) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();

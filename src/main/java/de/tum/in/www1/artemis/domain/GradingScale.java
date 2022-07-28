@@ -26,6 +26,10 @@ public class GradingScale extends DomainObject {
     @Column(name = "grade_type")
     private GradeType gradeType = GradeType.NONE; // default
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "bonus_strategy")
+    private BonusStrategy bonusStrategy;
+
     @OneToOne
     @JoinColumn(name = "course_id")
     private Course course;
@@ -40,6 +44,7 @@ public class GradingScale extends DomainObject {
     private Set<GradeStep> gradeSteps = new HashSet<>();
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JoinColumn(name = "grading_scale_id")
     @JsonIgnoreProperties(value = "bonusFrom", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Bonus> bonusFrom = new HashSet<>();
@@ -50,6 +55,14 @@ public class GradingScale extends DomainObject {
 
     public void setGradeType(GradeType gradeType) {
         this.gradeType = gradeType;
+    }
+
+    public BonusStrategy getBonusStrategy() {
+        return bonusStrategy;
+    }
+
+    public void setBonusStrategy(BonusStrategy bonusStrategy) {
+        this.bonusStrategy = bonusStrategy;
     }
 
     public Course getCourse() {

@@ -212,6 +212,15 @@ export const examManagementRoute: Routes = [
         loadChildren: () => import('app/grading-system/grading-system.module').then((m) => m.GradingSystemModule),
     },
     {
+        path: ':examId/bonus',
+        component: BonusComponent,
+        data: {
+            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+            pageTitle: 'artemisApp.TODO: Ata',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: ':examId/test-runs',
         component: TestRunManagementComponent,
         resolve: {

@@ -22,8 +22,11 @@ public class GradingScaleService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public GradingScaleService(GradingScaleRepository gradingScaleRepository) {
+    private final AuthorizationCheckService authCheckService;
+
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService) {
         this.gradingScaleRepository = gradingScaleRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -53,20 +56,19 @@ public class GradingScaleService {
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
      * @param search The search query defining the search term and the size of the returned page
-     * @param user The user for whom to fetch all available exercises
+     * @param user   The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
         final var pageable = PageUtil.createGradingScaleRequest(search);
         final var searchTerm = search.getSearchTerm();
         final Page<GradingScale> gradingScalePage;
-        // if (authCheckService.isAdmin(user)) {
-        // gradingScalePage = gradingScaleRepository
-        // .findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(searchTerm, searchTerm, pageable);
-        // }
-        // else {
-        gradingScalePage = gradingScaleRepository.findByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
-        // }
+        if (authCheckService.isAdmin(user)) {
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(searchTerm, pageable);
+        }
+        else {
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
+        }
         return new SearchResultPageDTO<>(gradingScalePage.getContent(), gradingScalePage.getTotalPages());
     }
 

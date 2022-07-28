@@ -22,15 +22,11 @@ public class Bonus extends DomainObject {
 
     private static final int CALCULATION_PLUS = 1;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "bonus_strategy")
-    private BonusStrategy bonusStrategy = BonusStrategy.GRADES_DISCRETE; // default
-
     /**
      * Can be either +1 or -1 to add or subtract bonus.
      */
-    @Column(name = "calculationSign")
-    private Integer calculationSign;
+    @Column(name = "weight")
+    private Double weight;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "source_grading_scale_id", referencedColumnName = "id")
@@ -39,14 +35,6 @@ public class Bonus extends DomainObject {
     // @ManyToOne(optional = false)
     // @JoinColumn(name = "target_grading_scale_id", referencedColumnName = "id")
     // private GradingScale target;
-
-    public BonusStrategy getBonusStrategy() {
-        return bonusStrategy;
-    }
-
-    public void setBonusStrategy(BonusStrategy bonusStrategy) {
-        this.bonusStrategy = bonusStrategy;
-    }
 
     public GradingScale getSource() {
         return source;
@@ -65,16 +53,17 @@ public class Bonus extends DomainObject {
         // this.target = targetGradingScale;
     }
 
-    public Integer getCalculationSign() {
+    public Integer getWeight() {
         return (int) Math.signum(1.0);
     }
 
-    public void setCalculationSign(Integer calculationSign) {
-        this.calculationSign = calculationSign;
+    public void setWeight(Double weight) {
+        this.weight = weight;
     }
 
-    public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, Double achievedPointsForBonus, Double achievedPointsForTarget) {
-        return getBonusStrategy().calculateGradeWithBonus(gradingScaleRepository, gradingScaleRepository.findByBonusFromId(getId()).orElse(null), achievedPointsForTarget,
-                getSource(), achievedPointsForBonus, getCalculationSign());
+    public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, BonusStrategy bonusStrategy, Double achievedPointsForBonus,
+            Double achievedPointsForTarget) {
+        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, gradingScaleRepository.findByBonusFromId(getId()).orElse(null), achievedPointsForTarget, getSource(),
+                achievedPointsForBonus, getWeight());
     }
 }

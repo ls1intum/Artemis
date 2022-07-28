@@ -8,7 +8,8 @@ export const gradingSystemState: Routes = [
     {
         path: '',
         redirectTo: 'interval',
-        canActivate: [UserRouteAccessService],
+        // canActivate: [UserRouteAccessService],
+        pathMatch: 'full',
     },
     {
         path: 'interval',
@@ -28,4 +29,13 @@ export const gradingSystemState: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
+    // {
+    //     path: 'bonus',
+    //     component: BonusComponent,
+    //     data: {
+    //         authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
+    //         pageTitle: 'artemisApp.gradingSystem.TODO: Ata',
+    //     },
+    //     canActivate: [UserRouteAccessService],
+    // },
 ];

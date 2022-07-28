@@ -119,12 +119,25 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return Page with search results
      */
     @Query("""
-            SELECT gradingScale
-            FROM GradingScale gradingScale
-            WHERE (gradingScale.course.instructorGroupName IN :groups AND gradingScale.course.title LIKE %:partialTitle%)
-                OR (gradingScale.exam.course.instructorGroupName IN :groups AND gradingScale.exam.title LIKE %:partialTitle%)
+            SELECT gs
+            FROM GradingScale gs
+            LEFT JOIN gs.course
+            LEFT JOIN gs.exam
+            WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
+                OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
             """)
-    Page<GradingScale> findByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups,
+            Pageable pageable);
+
+    @Query("""
+            SELECT gs
+            FROM GradingScale gs
+            LEFT JOIN gs.course
+            LEFT JOIN gs.exam
+            WHERE gs.gradeType = 'BONUS' AND (gs.course.title LIKE %:partialTitle%
+                OR gs.exam.title LIKE %:partialTitle%)
+            """)
+    Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 
     // Page<GradingScale> findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(String partialCourseTitle, String partialExamTitle, Pageable pageable);
 

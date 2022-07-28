@@ -8,7 +8,7 @@
             </h2>
             <hr />
             <div *ngIf="exam.course?.isAtLeastInstructor">
-                <a [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
+                <a [routerLink]="getExamRoutesByIdentifier('participant-scores')" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
@@ -43,7 +43,7 @@
                     <fa-icon [icon]="faUser"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
-                <a [routerLink]="getExamRoutesByIdentifier('bonus-sources')" class="btn btn-info mt-1">
+                <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
                     <fa-icon [icon]="faAward"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.bonusSource' | artemisTranslate }}</span>
                 </a>

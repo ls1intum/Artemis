@@ -1361,10 +1361,10 @@ public class ModelFactory {
         return organization;
     }
 
-    public static Bonus generateBonusSource(BonusStrategy bonusStrategy, int calculationSign, GradingScale sourceGradngScale, GradingScale targetGradingScale) {
+    public static Bonus generateBonusSource(BonusStrategy bonusStrategy, Double weight, GradingScale sourceGradngScale, GradingScale targetGradingScale) {
         Bonus bonus = new Bonus();
-        bonus.setBonusStrategy(bonusStrategy);
-        bonus.setCalculationSign(calculationSign);
+        // bonus.setBonusStrategy(bonusStrategy); // TODO: Ata
+        bonus.setWeight(weight);
         bonus.setSource(sourceGradngScale);
         // bonusSource.setTarget(targetGradingScale);
         targetGradingScale.addBonus(bonus);

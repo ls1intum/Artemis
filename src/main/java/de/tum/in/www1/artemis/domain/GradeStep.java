@@ -150,7 +150,7 @@ public class GradeStep extends DomainObject {
             String normalizedGradeName = gradeName.replace(',', '.');
             Matcher matcher = NUMERIC_VALUE_PATTERN.matcher(normalizedGradeName);
             if (matcher.find()) {
-                String numberString = matcher.group(1);
+                String numberString = matcher.group();
                 return Double.valueOf(numberString);
             }
         }

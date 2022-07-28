@@ -94,15 +94,10 @@ export class GradingKeyOverviewComponent implements OnInit {
     }
 
     /**
-     * Determines whether all grade steps have their lower and upper bounds set in absolute points
+     * @see GradingSystemService.hasPointsSet
      */
     hasPointsSet(): boolean {
-        for (const gradeStep of this.gradeSteps) {
-            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined || gradeStep.upperBoundPoints === 0) {
-                return false;
-            }
-        }
-        return this.gradeSteps.length !== 0;
+        return this.gradingSystemService.hasPointsSet(this.gradeSteps);
     }
 
     /**

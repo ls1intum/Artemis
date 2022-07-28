@@ -64,14 +64,14 @@ public class BonusResource {
 
     /**
      * TODO: Ata
-     * GET /courses/{courseId}/bonus-sources : Find bonus source for course
+     * GET /courses/{courseId}/bonus : Find bonus source for course
      *
      * @param courseId the course to which the bonus source belongs
      * @return ResponseEntity with status 200 (Ok) with body the bonus source if it exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/bonus-sources")
+    @GetMapping("/courses/{courseId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> getBonussWithSourceCourse(@PathVariable Long courseId) {
+    public ResponseEntity<Bonus> getBonusWithSourceCourse(@PathVariable Long courseId) {
         log.debug("REST request to get bonus source for course: {}", courseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         Optional<Bonus> bonus = bonusRepository.findBySourceCourseId(courseId);
@@ -81,29 +81,29 @@ public class BonusResource {
 
     /**
      * TODO: Ata
-     * GET /courses/{courseId}/exams/{examId}/bonus-sources : Find bonus source for exam
+     * GET /courses/{courseId}/exams/{examId}/bonus : Find bonus source for exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId the exam to which the bonus source belongs
      * @return ResponseEntity with status 200 (Ok) with body the bonus source if it exists and 404 (Not found) otherwise
      */
-    @GetMapping("/courses/{courseId}/exams/{examId}/bonus-sources")
+    @GetMapping("/courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Set<Bonus>> getBonussWithTargetExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Set<Bonus>> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get bonus sources for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Set<Bonus> bonus = bonusRepository.findAllByTargetExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        Set<Bonus> bonus = bonusRepository.findAllByTargetExamId(examId);
         return ResponseEntity.ok(bonus);
     }
 
     /**
-     * GET bonus-sources/:bonusId : get the bonus with id.
+     * GET bonus/:bonusId : get the bonus with id.
      *
      * @param bonusId the id of the bonus to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the bonus, or with status 404 (Not Found)
      */
-    @GetMapping("bonus-sources/{bonusId}")
+    @GetMapping("bonus/{bonusId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Bonus> getBonus(@PathVariable Long bonusId) {
         log.debug("REST request to get Bonus : {}", bonusId);
@@ -122,7 +122,7 @@ public class BonusResource {
         return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, calculationSign);
     }
 
-    @GetMapping("bonus-sources/calculate-raw")
+    @GetMapping("bonus/calculate-raw")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<String> calculateGradeWithBonus(@RequestParam BonusStrategy bonusStrategy, @RequestParam Double calculationSign, @RequestParam Long targetGradingScaleId,
             @RequestParam Double targetPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
@@ -136,7 +136,7 @@ public class BonusResource {
         return ResponseEntity.ok(gradeWithBonus);
     }
 
-    // @GetMapping("bonus-sources/{bonusId}/calculate-grade/{studentId}")
+    // @GetMapping("bonus/{bonusId}/calculate-grade/{studentId}")
     // @PreAuthorize("hasRole('USER')")
     // public ResponseEntity<String> calculateGradeWithBonus(@PathVariable Long bonusId, @PathVariable Long studentId) {
     // log.debug("REST request to get Bonus : {} for Student Id: {}", bonusId, studentId);
@@ -162,7 +162,7 @@ public class BonusResource {
     // }
 
     /**
-     * POST /courses/{courseId}/exams/{examId}/bonus-sources : Create bonus source for exam
+     * POST /courses/{courseId}/exams/{examId}/bonus : Create bonus source for exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId the exam to which the bonus source belongs
@@ -170,10 +170,10 @@ public class BonusResource {
      * @return ResponseEntity with status 201 (Created) with body the new bonus source if no such exists for the course
      *         and if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PostMapping("/courses/{courseId}/exams/{examId}/bonus-sources")
+    @PostMapping("/courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Bonus> createBonusForTargetExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
-        log.debug("REST request to create a bonus source for target exam: {}", examId);
+        log.debug("REST request to create a bonus source for exam: {}", examId);
         if (bonus.getId() != null) {
             throw new BadRequestAlertException("A new bonus source cannot already have an ID", ENTITY_NAME, "idexists");
         }
@@ -190,17 +190,17 @@ public class BonusResource {
         examGradingScale.getBonusFrom().add(bonus);
 
         Bonus savedBonus = bonusService.saveBonus(bonus);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus-sources/" + savedBonus.getId()))
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 
     /**
-     * PUT /courses/{courseId}/bonus-sources : Update bonus source for course
+     * PUT /courses/{courseId}/bonus : Update bonus source for course
      *
      * @param bonus the bonus source which will be updated
      * @return ResponseEntity with status 200 (Ok) with body the newly updated bonus source if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PutMapping("/bonus-sources")
+    @PutMapping("/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Bonus> updateBonus(@RequestBody Bonus bonus) {
         log.debug("REST request to update a bonus source: {}", bonus.getId());
@@ -226,14 +226,14 @@ public class BonusResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, sourceCourse, null);
     }
     // /**
-    // * PUT /courses/{courseId}/exams/{examId}/bonus-sources : Update bonus source for exam
+    // * PUT /courses/{courseId}/exams/{examId}/bonus : Update bonus source for exam
     // *
     // * @param courseId the course to which the exam belongs
     // * @param examId the exam to which the bonus source belongs
     // * @param bonus the bonus source which will be updated
     // * @return ResponseEntity with status 200 (Ok) with body the newly updated bonus source if it is correctly formatted and 400 (Bad request) otherwise
     // */
-    // @PutMapping("/courses/{courseId}/exams/{examId}/bonus-sources")
+    // @PutMapping("/courses/{courseId}/exams/{examId}/bonus")
     // @PreAuthorize("hasRole('INSTRUCTOR')")
     // public ResponseEntity<Bonus> updateBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) {
     // log.debug("REST request to update a bonus source for exam: {}", examId);
@@ -252,14 +252,14 @@ public class BonusResource {
     // }
 
     /**
-     * DELETE /courses/{courseId}/bonus-sources : Delete bonus source for course
+     * DELETE /courses/{courseId}/bonus : Delete bonus source for course
      *
      * @param bonusId the id of the bonus source to delete
      * @return ResponseEntity with status 200 (Ok) if the bonus source is successfully deleted and 400 (Bad request) otherwise
      */
-    @DeleteMapping("/bonus-sources/{bonusId}")
+    @DeleteMapping("/bonus/{bonusId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteBonusForCourse(@PathVariable Long bonusId) {
+    public ResponseEntity<Void> deleteBonus(@PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus source: {}", bonusId);
         Bonus bonus = bonusRepository.findById(bonusId).orElseThrow();
         checkIsAtLeastInstructorForGradingScaleCourse(bonus.getTarget());
@@ -268,13 +268,13 @@ public class BonusResource {
     }
 
     // /**
-    // * DELETE /courses/{courseId}/exams/{examId}/bonus-sources : Delete bonus source for course
+    // * DELETE /courses/{courseId}/exams/{examId}/bonus : Delete bonus source for course
     // *
     // * @param courseId the course to which the exam belongs
     // * @param examId the exam to which the bonus source belongs
     // * @return ResponseEntity with status 200 (Ok) if the bonus source is successfully deleted and 400 (Bad request) otherwise
     // */
-    // @DeleteMapping("/courses/{courseId}/exams/{examId}/bonus-sources")
+    // @DeleteMapping("/courses/{courseId}/exams/{examId}/bonus")
     // @PreAuthorize("hasRole('INSTRUCTOR')")
     // public ResponseEntity<Void> deleteBonusForExam(@PathVariable Long courseId, @PathVariable Long examId) {
     // log.debug("REST request to delete the bonus source for exam: {}", examId);

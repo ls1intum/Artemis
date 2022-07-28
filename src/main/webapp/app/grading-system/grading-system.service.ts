@@ -1,11 +1,14 @@
 import { Injectable } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { map } from 'rxjs/operators';
+import { Course } from 'app/entities/course.model';
+import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
+export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingSystemService {
@@ -135,6 +138,24 @@ export class GradingSystemService {
     }
 
     /**
+     * TODO: Ata
+     *
+     */
+    findWithBonusGradeTypeForInstructor(pageable: PageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
+        const params = new HttpParams()
+            .set('pageSize', String(pageable.pageSize))
+            .set('page', String(pageable.page))
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('searchTerm', pageable.searchTerm)
+            .set('sortedColumn', pageable.sortedColumn);
+
+        return this.http.get<SearchResult<GradingScale>>(`${SERVER_API_URL}api/grading-scales`, {
+            params,
+            observe: 'response',
+        });
+    }
+
+    /**
      * Finds a grade step for course that matches the given percentage
      *
      * @param courseId the course to which the exam belongs
@@ -253,5 +274,17 @@ export class GradingSystemService {
             gradeStep.lowerBoundPoints = (maxPoints * gradeStep.lowerBoundPercentage) / 100;
             gradeStep.upperBoundPoints = (maxPoints * gradeStep.upperBoundPercentage) / 100;
         }
+    }
+
+    /**
+     * Determines whether all grade steps have their lower and upper bounds set in absolute points
+     */
+    hasPointsSet(gradeSteps: GradeStep[]): boolean {
+        for (const gradeStep of gradeSteps) {
+            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined || gradeStep.upperBoundPoints === 0) {
+                return false;
+            }
+        }
+        return gradeSteps.length !== 0;
     }
 }

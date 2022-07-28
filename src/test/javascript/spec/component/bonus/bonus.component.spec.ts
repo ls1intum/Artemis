@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { BonusComponent } from 'app/grading-system/bonus-source/bonus.component';
+import { BonusComponent } from 'app/grading-system/bonus/bonus.component';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
