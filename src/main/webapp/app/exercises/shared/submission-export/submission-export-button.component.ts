@@ -4,11 +4,13 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { SubmissionExportDialogComponent } from './submission-export-dialog.component';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-exercise-submission-export',
     template: `
         <jhi-button
+            [featureToggle]="FeatureToggle.Exports"
             [disabled]="!exerciseId"
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
@@ -22,6 +24,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
 export class SubmissionExportButtonComponent {
     ButtonType = ButtonType;
     ButtonSize = ButtonSize;
+    readonly FeatureToggle = FeatureToggle;
 
     @Input() exerciseId: number;
     @Input() exerciseType: ExerciseType;

@@ -13,7 +13,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             [btnType]="ButtonType.INFO"
             [btnSize]="ButtonSize.SMALL"
             [shouldSubmit]="false"
-            [featureToggle]="FeatureToggle.ProgrammingExercises"
+            [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [icon]="faDownload"
             [title]="singleParticipantMode ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"

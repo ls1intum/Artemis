@@ -45,7 +45,7 @@
                 "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren und zudem Bilder und Links integrieren."
             },
             "plagiarismChecks": {
-                "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
+                "text": "<a href={{ plagiarismChecksUrl }}>Plagiatsüberprüfungen:</a> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
             },
             "learningAnalytics": {
                 "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."

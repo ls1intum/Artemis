@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
@@ -39,6 +39,7 @@ export class LectureUpdateComponent implements OnInit {
         protected courseService: CourseManagementService,
         protected activatedRoute: ActivatedRoute,
         private navigationUtilService: ArtemisNavigationUtilService,
+        private router: Router,
     ) {}
 
     /**
@@ -86,7 +87,7 @@ export class LectureUpdateComponent implements OnInit {
      */
     protected subscribeToSaveResponse(result: Observable<HttpResponse<Lecture>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<Lecture>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
@@ -94,9 +95,9 @@ export class LectureUpdateComponent implements OnInit {
     /**
      * Action on successful lecture creation or edit
      */
-    protected onSaveSuccess() {
+    protected onSaveSuccess(lecture: Lecture) {
         this.isSaving = false;
-        this.previousState();
+        this.router.navigate(['course-management', lecture.course!.id, 'lectures', lecture.id]);
     }
 
     /**

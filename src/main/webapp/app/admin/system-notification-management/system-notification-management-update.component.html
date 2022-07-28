@@ -1,48 +1,49 @@
 <div class="row justify-content-center">
     <div class="col-md-8">
-        <form name="editForm" role="form" novalidate (ngSubmit)="save()" #editForm="ngForm">
+        <form name="editForm" role="form" (ngSubmit)="save()" #editForm="ngForm" [formGroup]="form">
             <h2 id="myNotificationLabel" jhiTranslate="artemisApp.systemNotification.createOrEditLabel">Create or edit a system notification</h2>
             <div>
                 <div class="form-group" [hidden]="!notification.id">
                     <label jhiTranslate="global.field.id">ID</label>
-                    <input type="text" class="form-control" name="id" [(ngModel)]="notification.id" readonly />
+                    <input type="text" class="form-control" name="id" formControlName="id" readonly />
                 </div>
 
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.systemNotification.title">Title</label>
-                    <input type="text" class="form-control" name="login" #titleInput="ngModel" [(ngModel)]="notification.title" required minlength="1" maxlength="50" />
+                    <input type="text" class="form-control" name="title" formControlName="title" />
                 </div>
                 <div class="form-group">
                     <label class="form-control-label" jhiTranslate="artemisApp.systemNotification.text">Text</label>
-                    <input type="text" class="form-control" name="text" #textInput="ngModel" [(ngModel)]="notification.text" />
+                    <input type="text" class="form-control" name="text" formControlName="text" />
                 </div>
                 <div class="form-group">
                     <label jhiTranslate="artemisApp.systemNotification.type">Type</label>
-                    <select class="form-select" name="type" [(ngModel)]="notification.type">
+                    <select class="form-select" name="type" formControlName="type">
                         <option *ngFor="let systemNotificationType of systemNotificationTypes" [value]="systemNotificationType.value">{{ systemNotificationType.name }}</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <jhi-date-time-picker
                         [labelName]="'artemisApp.systemNotification.notificationDate' | artemisTranslate"
-                        [(ngModel)]="notification.notificationDate"
+                        formControlName="notificationDate"
                         [shouldDisplayTimeZoneWarning]="false"
                         name="notificationDate"
-                        required
                     ></jhi-date-time-picker>
                 </div>
                 <div class="form-group">
                     <jhi-date-time-picker
                         [labelName]="'artemisApp.systemNotification.expireDate' | artemisTranslate"
-                        [(ngModel)]="notification.expireDate"
+                        formControlName="expireDate"
                         [shouldDisplayTimeZoneWarning]="false"
                         name="expireDate"
-                        required
                     ></jhi-date-time-picker>
+                    <span *ngIf="expireDate?.errors?.expireMustBeAfterNotification" class="text-danger">{{
+                        'error.systemNotificationNeedsNotificationBeforeExpiration' | artemisTranslate
+                    }}</span>
                 </div>
             </div>
             <div>
-                <button id="cancelButton" type="button" class="btn btn-secondary" (click)="previousState()">
+                <button id="cancelButton" type="button" class="btn btn-secondary" (click)="goToOverview()">
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                 </button>
                 <button id="saveButton" type="submit" [disabled]="editForm.form.invalid || isSaving" class="btn btn-primary">

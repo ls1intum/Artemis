@@ -101,13 +101,13 @@ describe('QuizExercise Statistic Footer Component', () => {
 
     it('should return remaining Time', () => {
         // only minutes if time > 2min 30sec
-        expect(comp.relativeTimeText(220)).toEqual('4 min');
+        expect(comp.relativeTimeText(220)).toBe('4 min');
 
         // minutes and seconds if time in minutes between 1 <= x < 2.5
-        expect(comp.relativeTimeText(130)).toEqual('2 min 10 s');
+        expect(comp.relativeTimeText(130)).toBe('2 min 10 s');
 
         // only seconds if time < 1min
-        expect(comp.relativeTimeText(50)).toEqual('50 s');
+        expect(comp.relativeTimeText(50)).toBe('50 s');
     });
 
     describe('test previous statistic', () => {
@@ -235,7 +235,7 @@ describe('QuizExercise Statistic Footer Component', () => {
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/quiz-exercises/42/quiz-statistic`);
         });
 
-        it('should go to quiz-statistic', () => {
+        it('should go to quiz-statistic with points', () => {
             // setup
             quizExercise.quizQuestions = [];
             comp.quizExercise = quizExercise;
@@ -290,7 +290,7 @@ describe('QuizExercise Statistic Footer Component', () => {
             expect(routerSpy).toHaveBeenCalledWith(`/course-management/2/exams/10/exercise-groups/11/quiz-exercises/43/quiz-statistic`);
         });
 
-        it('should go to quiz-statistic for exam', () => {
+        it('should go to quiz-statistic with points for exam', () => {
             // setup
             examQuizExercise.quizQuestions = [];
             comp.quizExercise = examQuizExercise;

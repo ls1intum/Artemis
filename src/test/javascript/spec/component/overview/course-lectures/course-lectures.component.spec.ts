@@ -100,7 +100,7 @@ describe('CourseLectures', () => {
 
     it('should initialize', () => {
         courseLecturesComponentFixture.detectChanges();
-        expect(courseLecturesComponent).not.toBe(null);
+        expect(courseLecturesComponent).not.toBeNull();
         courseLecturesComponent.ngOnDestroy();
     });
 

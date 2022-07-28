@@ -80,8 +80,8 @@ describe('Programming Exercise Management', () => {
             programmingCreation.checkAllowOnlineEditor();
             programmingCreation.generate().then((request: Interception) => {
                 const exercise = request.response!.body;
-                cy.url().should('include', '/exercises');
-                courseExercises.shouldContainExerciseWithName(exercise.id);
+                cy.get('#exercise-detail-title').should('contain.text', exerciseTitle);
+                cy.url().should('include', `/programming-exercises/${exercise.id}`);
             });
         });
     });

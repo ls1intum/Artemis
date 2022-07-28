@@ -131,7 +131,7 @@ describe('Monitoring Exercise Component', () => {
         propWithIdentifier = comp.prepareProp(propWithIdentifier);
 
         // THEN (both branches)
-        expect(comp.prepareProp(propWithIdentifier)).toEqual('test');
-        expect(comp.prepareProp(propWithIdentifier)).toEqual('test');
+        expect(comp.prepareProp(propWithIdentifier)).toBe('test');
+        expect(comp.prepareProp(propWithIdentifier)).toBe('test');
     });
 });

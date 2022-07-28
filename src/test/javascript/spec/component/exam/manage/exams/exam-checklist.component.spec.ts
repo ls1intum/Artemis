@@ -13,7 +13,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';
 
-export function getExerciseGroups(equalPoints: boolean) {
+function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
     const exerciseGroups = [
         {

@@ -1,6 +1,6 @@
 import { GraphColors } from 'app/entities/statistics.model';
 import { ExamAction, ExamActionType, SavedExerciseAction, SwitchedExerciseAction } from 'app/entities/exam-user-activity.model';
-import { groupBy } from 'lodash';
+import { groupBy } from 'lodash-es';
 import { Exam } from 'app/entities/exam.model';
 import { NgxChartsEntry } from 'app/shared/chart/ngx-charts-datatypes';
 import { Color } from '@swimlane/ngx-charts';

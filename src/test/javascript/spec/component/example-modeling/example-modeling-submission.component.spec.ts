@@ -331,7 +331,7 @@ describe('Example Modeling Submission Component', () => {
         comp.saveExampleAssessment();
 
         // THEN
-        expect(comp.result).toBe(undefined);
+        expect(comp.result).toBeUndefined();
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessmentEditor.messages.saveFailed');
     });
