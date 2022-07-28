@@ -144,7 +144,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         }
         fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
         fileUploadSubmission.setType(SubmissionType.MANUAL);
-        fileUploadSubmission.setParticipation(participation);
+        participation.addSubmission(fileUploadSubmission);
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         fileUploadSubmission.setResults(new ArrayList<>());
@@ -155,14 +155,10 @@ public class FileUploadSubmissionService extends SubmissionService {
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
-        participation.addSubmission(fileUploadSubmission);
-        participation.setInitializationState(InitializationState.FINISHED);
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
-        if (fileUploadSubmission.getId() == null) {
-            Optional<Submission> optionalSubmission = savedParticipation.findLatestSubmission();
-            if (optionalSubmission.isPresent()) {
-                fileUploadSubmission = (FileUploadSubmission) optionalSubmission.get();
-            }
+        if (!exercise.isExamExercise() && participation.getInitializationState() != InitializationState.FINISHED) {
+            // not for exam exercises
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
         }
 
         return fileUploadSubmission;

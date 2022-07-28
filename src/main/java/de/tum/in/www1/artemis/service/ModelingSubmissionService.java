@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -110,7 +109,7 @@ public class ModelingSubmissionService extends SubmissionService {
         }
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
-        modelingSubmission.setParticipation(participation);
+        participation.addSubmission(modelingSubmission);
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         // versioning of submission
@@ -126,16 +125,10 @@ public class ModelingSubmissionService extends SubmissionService {
             log.error("Modeling submission version could not be saved", ex);
         }
 
-        participation.addSubmission(modelingSubmission);
-
-        participation.setInitializationState(InitializationState.FINISHED);
-
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
-        if (modelingSubmission.getId() == null) {
-            Optional<Submission> optionalSubmission = savedParticipation.findLatestSubmission();
-            if (optionalSubmission.isPresent()) {
-                modelingSubmission = (ModelingSubmission) optionalSubmission.get();
-            }
+        if (!modelingExercise.isExamExercise() && participation.getInitializationState() != InitializationState.FINISHED) {
+            // not for exam exercises
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
         }
 
         log.debug("return model: {}", modelingSubmission.getModel());

@@ -11,7 +11,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
-import de.tum.in.www1.artemis.domain.Submission;
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
@@ -90,7 +89,7 @@ public class TextSubmissionService extends SubmissionService {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
-        textSubmission.setParticipation(participation);
+        participation.addSubmission(textSubmission);
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
         textSubmission.setResults(new ArrayList<>());
@@ -109,14 +108,10 @@ public class TextSubmissionService extends SubmissionService {
             log.error("Text submission version could not be saved", ex);
         }
 
-        participation.addSubmission(textSubmission);
-        participation.setInitializationState(InitializationState.FINISHED);
-        StudentParticipation savedParticipation = studentParticipationRepository.save(participation);
-        if (textSubmission.getId() == null) {
-            Optional<Submission> optionalTextSubmission = savedParticipation.findLatestSubmission();
-            if (optionalTextSubmission.isPresent()) {
-                textSubmission = (TextSubmission) optionalTextSubmission.get();
-            }
+        if (!textExercise.isExamExercise() && participation.getInitializationState() != InitializationState.FINISHED) {
+            // not for exam exercises
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
         }
 
         return textSubmission;
