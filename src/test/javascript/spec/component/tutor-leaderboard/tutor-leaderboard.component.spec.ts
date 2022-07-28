@@ -57,7 +57,7 @@ describe('TutorLeaderboardComponent', () => {
             });
             expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(course);
-            expect(comp.exercise).toBe(undefined);
+            expect(comp.exercise).toBeUndefined();
         });
 
         it('sets isAtLeastInstructor if exercise.course is set', () => {
@@ -94,8 +94,8 @@ describe('TutorLeaderboardComponent', () => {
             comp.ngOnInit();
             expect(comp.isAtLeastInstructor).toBeFalse();
             expect(comp.isExerciseDashboard).toBeFalse();
-            expect(comp.course).toBe(undefined);
-            expect(isAtLeastInstructorInCourseStub).not.toBeCalled();
+            expect(comp.course).toBeUndefined();
+            expect(isAtLeastInstructorInCourseStub).not.toHaveBeenCalled();
 
             setupComponent(comp);
             comp.ngOnInit();

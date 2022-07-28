@@ -139,9 +139,9 @@ describe('FileUploadExercise Management Detail Component', () => {
 
             // THEN
             expect(statisticsServiceStub).toHaveBeenCalled();
-            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.doughnutStats.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithCourse);
         });
@@ -171,9 +171,9 @@ describe('FileUploadExercise Management Detail Component', () => {
 
             // THEN
             expect(statisticsServiceStub).toHaveBeenCalled();
-            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.doughnutStats.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.fileUploadExercise).toEqual(fileUploadExerciseWithExerciseGroup);
         });

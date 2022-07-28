@@ -60,7 +60,7 @@ describe('TextResultComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(component).not.toBe(undefined);
+        expect(component).toBeDefined();
     });
 
     it('should convert text to result blocks', () => {
@@ -99,7 +99,7 @@ describe('TextResultComponent', () => {
 
         component.result = result;
 
-        expect(component.textResults.length).toBe(4);
+        expect(component.textResults).toHaveLength(4);
     });
 
     it('should repeat steps for each credit', () => {
@@ -129,7 +129,7 @@ describe('TextResultComponent', () => {
         textBlock.endIndex = 5;
         let textResultBlock = new TextResultBlock(textBlock, feedbacks[0]);
 
-        expect(textResultBlock.length).toBe(5);
+        expect(textResultBlock).toHaveLength(5);
         expect(textResultBlock.cssClass).toBe('text-with-feedback positive-feedback');
         expect(textResultBlock.icon).toBe(faCheck);
         expect(textResultBlock.iconCssClass).toBe('feedback-icon positive-feedback');
@@ -229,9 +229,9 @@ describe('TextResultComponent', () => {
         component.result = result;
 
         expect(component.textResults).toHaveLength(2);
-        expect(component.textResults[0].feedback).not.toBe(undefined);
-        expect(component.textResults[0].feedback!.isSubsequent).toBe(undefined);
-        expect(component.textResults[1].feedback).not.toBe(undefined);
+        expect(component.textResults[0].feedback).toBeDefined();
+        expect(component.textResults[0].feedback!.isSubsequent).toBeUndefined();
+        expect(component.textResults[1].feedback).toBeDefined();
         expect(component.textResults[1].feedback!.isSubsequent).toBeTrue();
     });
 });

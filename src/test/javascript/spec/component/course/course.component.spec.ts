@@ -254,7 +254,7 @@ describe('CoursesComponent', () => {
         tick();
 
         expect(navigateSpy).toHaveBeenCalledWith(['courses', 1, 'exams', 3]);
-        expect(location.path()).toEqual('/courses/1/exams/3');
+        expect(location.path()).toBe('/courses/1/exams/3');
     }));
 
     it('Should load next relevant exam ignoring test exams', fakeAsync(() => {

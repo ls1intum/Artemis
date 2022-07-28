@@ -217,7 +217,7 @@ describe('Notification Sidebar Component', () => {
             const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).toBe(notifications.length);
+            expect(notificationSidebarComponent.notifications).toHaveLength(notifications.length);
         });
 
         it('should update sorted notifications array after new notifications were loaded', () => {
@@ -242,7 +242,7 @@ describe('Notification Sidebar Component', () => {
             const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse([notificationNow])));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).toBe(1);
+            expect(notificationSidebarComponent.notifications).toHaveLength(1);
             expect(notificationSidebarComponent.totalNotifications).toBe(1);
         });
 
@@ -251,7 +251,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.totalNotifications = 1;
             replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).toBe(1);
+            expect(notificationSidebarComponent.notifications).toHaveLength(1);
             expect(notificationSidebarComponent.totalNotifications).toBe(1);
         });
 
@@ -280,7 +280,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.recentNotificationCount = 2;
             notificationSidebarComponentFixture.detectChanges();
             const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.bg-danger > span'));
-            expect(plus).not.toBe(null);
+            expect(plus).not.toBeNull();
         });
     });
 
@@ -289,14 +289,14 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.notifications = [];
             notificationSidebarComponentFixture.detectChanges();
             const noNotificationsMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.no-notifications');
-            expect(noNotificationsMessage).not.toBe(null);
+            expect(noNotificationsMessage).not.toBeNull();
         });
 
         it('should show loading spinner when more notifications are loaded', () => {
             notificationSidebarComponent.loading = true;
             notificationSidebarComponentFixture.detectChanges();
             const loadingSpinner = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.loading-spinner');
-            expect(loadingSpinner).not.toBe(null);
+            expect(loadingSpinner).not.toBeNull();
         });
 
         it('should show all notifications loaded message when all notifications are loaded', () => {
@@ -304,14 +304,14 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.totalNotifications = 1;
             notificationSidebarComponentFixture.detectChanges();
             const allLoadedMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.all-loaded');
-            expect(allLoadedMessage).not.toBe(null);
+            expect(allLoadedMessage).not.toBeNull();
         });
 
         it('should show error message when loading of notifications failed', () => {
             notificationSidebarComponent.error = 'error';
             notificationSidebarComponentFixture.detectChanges();
             const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
-            expect(errorMessage).not.toBe(null);
+            expect(errorMessage).not.toBeNull();
         });
 
         it('should toggle which notifications are displayed (hide until property) when user clicks on archive button', () => {

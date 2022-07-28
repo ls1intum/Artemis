@@ -114,7 +114,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).not.toBe(null);
+        expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
 
         // check if extension elements are set
@@ -142,10 +142,10 @@ describe('FileUploadSubmissionComponent', () => {
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).toBe(null);
+        expect(fileUploadInput).toBeNull();
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
-        expect(submitFileButton).toBe(null);
+        expect(submitFileButton).toBeNull();
     });
 
     it('Too big file can not be submitted', fakeAsync(() => {
@@ -164,15 +164,15 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toBeCalledTimes(1);
-        expect(comp.submissionFile).toBe(undefined);
-        expect(comp.submission!.filePath).toBe(undefined);
+        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submissionFile).toBeUndefined();
+        expect(comp.submission!.filePath).toBeUndefined();
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).toBeDefined();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
     }));
 
     it('Incorrect file type can not be submitted', fakeAsync(() => {
@@ -191,15 +191,15 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toBeCalledTimes(1);
-        expect(comp.submissionFile).toBe(undefined);
-        expect(comp.submission!.filePath).toBe(undefined);
+        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submissionFile).toBeUndefined();
+        expect(comp.submission!.filePath).toBeUndefined();
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).toBeDefined();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
 
         tick();
         fixture.destroy();
@@ -218,7 +218,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('true');
+        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
 
         tick();
         fixture.destroy();
@@ -238,7 +238,7 @@ describe('FileUploadSubmissionComponent', () => {
         expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('false');
+        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
 
         tick();
         fixture.destroy();
@@ -257,7 +257,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('true');
+        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
 
         tick();
         fixture.destroy();
@@ -320,9 +320,9 @@ describe('FileUploadSubmissionComponent', () => {
 
         const unreferencedFeedback = comp.unreferencedFeedback;
 
-        expect(unreferencedFeedback).not.toBe(undefined);
+        expect(unreferencedFeedback).toBeDefined();
         expect(unreferencedFeedback).toHaveLength(2);
-        expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
+        expect(unreferencedFeedback![0].isSubsequent).toBeUndefined();
         expect(unreferencedFeedback![1].isSubsequent).toBeTrue();
     });
 

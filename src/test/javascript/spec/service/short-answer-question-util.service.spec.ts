@@ -63,7 +63,7 @@ describe('ShortAnswerQuestionUtil', () => {
         expect(sampleSolutions).toContain(solution);
         expect(mappingFromGetter).toEqual(mapping);
         expect(spotFromGetter).toEqual(spot);
-        expect(spotNr).toEqual(123);
+        expect(spotNr).toBe(123);
 
         let isMappedTogether = service.isMappedTogether(shortAnswerQuestion.correctMappings, solution, spot);
         expect(isMappedTogether).toBeTrue();
