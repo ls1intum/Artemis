@@ -34,17 +34,17 @@ describe('ShortAnswerQuestionUtil', () => {
         const sentence1 = '    this is a test';
         const sentence2 = '  `another test`';
         const sentence3 = '`last test`';
-        expect(shortAnswerQuestionUtil.getIndentation(sentence1)).toEqual('    ');
-        expect(shortAnswerQuestionUtil.getIndentation(sentence2)).toEqual('  ');
-        expect(shortAnswerQuestionUtil.getIndentation(sentence3)).toEqual('');
+        expect(shortAnswerQuestionUtil.getIndentation(sentence1)).toBe('    ');
+        expect(shortAnswerQuestionUtil.getIndentation(sentence2)).toBe('  ');
+        expect(shortAnswerQuestionUtil.getIndentation(sentence3)).toBe('');
     }));
 
     it('Should return first word of a sentence', fakeAsync(() => {
         const sentence1 = '         this is a test';
         const sentence2 = '    `another test`';
         const sentence3 = '';
-        expect(shortAnswerQuestionUtil.getFirstWord(sentence1)).toEqual('this');
-        expect(shortAnswerQuestionUtil.getFirstWord(sentence2)).toEqual('another');
-        expect(shortAnswerQuestionUtil.getFirstWord(sentence3)).toEqual('');
+        expect(shortAnswerQuestionUtil.getFirstWord(sentence1)).toBe('this');
+        expect(shortAnswerQuestionUtil.getFirstWord(sentence2)).toBe('another');
+        expect(shortAnswerQuestionUtil.getFirstWord(sentence3)).toBe('');
     }));
 });

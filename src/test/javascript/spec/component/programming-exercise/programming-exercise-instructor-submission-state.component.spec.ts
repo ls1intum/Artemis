@@ -105,9 +105,9 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
     };
 
     it('should not show the component before the build summary is retrieved', () => {
-        expect(getTriggerAllButton()).toBe(null);
-        expect(getTriggerFailedButton()).toBe(null);
-        expect(getBuildState()).toBe(null);
+        expect(getTriggerAllButton()).toBeNull();
+        expect(getTriggerFailedButton()).toBeNull();
+        expect(getBuildState()).toBeNull();
     });
 
     it('should show the result eta if there is at least one building submission', fakeAsync(() => {
@@ -125,7 +125,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
 
         const resultEta = getResultEtaContainer();
-        expect(resultEta).not.toBe(null);
+        expect(resultEta).not.toBeNull();
     }));
 
     it('should not show the result eta if there is no building submission', () => {
@@ -141,7 +141,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
 
         const resultEta = getResultEtaContainer();
-        expect(resultEta).toBe(null);
+        expect(resultEta).toBeNull();
     });
 
     it('should show & enable the trigger all button and the build state once the build summary is loaded', fakeAsync(() => {
@@ -167,11 +167,11 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.isBuildingFailedSubmissions).toBeFalse();
         expect(comp.buildingSummary).toEqual(compressedSummary);
 
-        expect(getTriggerAllButton()).not.toBe(null);
+        expect(getTriggerAllButton()).not.toBeNull();
         expect(getTriggerAllButton().disabled).toBeFalse();
-        expect(getTriggerFailedButton()).not.toBe(null);
+        expect(getTriggerFailedButton()).not.toBeNull();
         expect(getTriggerFailedButton().disabled).toBeTrue();
-        expect(getBuildState()).not.toBe(null);
+        expect(getBuildState()).not.toBeNull();
     }));
 
     it('should show & enable both buttons and the build state once the build summary is loaded when a failed submission exists', fakeAsync(() => {
@@ -201,12 +201,12 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         expect(comp.isBuildingFailedSubmissions).toBeFalse();
         expect(comp.buildingSummary).toEqual(compressedSummary);
 
-        expect(getResultEtaContainer()).not.toBe(null);
-        expect(getTriggerAllButton()).not.toBe(null);
+        expect(getResultEtaContainer()).not.toBeNull();
+        expect(getTriggerAllButton()).not.toBeNull();
         expect(getTriggerAllButton().disabled).toBeFalse();
-        expect(getTriggerFailedButton()).not.toBe(null);
+        expect(getTriggerFailedButton()).not.toBeNull();
         expect(getTriggerFailedButton().disabled).toBeFalse();
-        expect(getBuildState()).not.toBe(null);
+        expect(getBuildState()).not.toBeNull();
     }));
 
     it('should trigger the appropriate service method on trigger failed and set the isBuildingFailedSubmissionsState until the request returns a response', () => {
@@ -222,7 +222,7 @@ describe('ProgrammingExerciseInstructorSubmissionStateComponent', () => {
         fixture.detectChanges();
 
         const triggerButton = getTriggerFailedButton();
-        expect(triggerButton).not.toBe(null);
+        expect(triggerButton).not.toBeNull();
         expect(triggerButton.disabled).toBeFalse();
 
         // Button is clicked.

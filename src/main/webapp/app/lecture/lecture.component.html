@@ -5,19 +5,84 @@
                 <span jhiTranslate="artemisApp.lecture.home.title">Lectures</span>
             </h2>
         </div>
-        <div class="col-8 align-self-end text-end">
-            <button (click)="openImportModal()" class="btn btn-primary jh-create-entity import-lecture text-truncate mb-1" id="lecture-import-button">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
-            </button>
-            <a id="jh-create-entity" class="btn btn-primary jh-create-entity create-lecture mb-1" [routerLink]="['new']">
-                <fa-icon [icon]="faPlus"></fa-icon>
-                <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
-            </a>
+        <div class="d-flex flex-row-reverse bd-highlight mb-3">
+            <div aria-label="Button group with nested dropdown" class="btn-group" role="group">
+                <div class="me-2" aria-label="Filter Dropdown" ngbDropdown>
+                    <button
+                        class="btn"
+                        [ngClass]="{ 'btn-secondary': activeFilters.size === 0, 'btn-success': activeFilters.size > 0 }"
+                        ngbDropdownToggle
+                        id="filter-dropdown-button"
+                    >
+                        <fa-icon [icon]="faFilter"></fa-icon>
+                        <span class="d-s-none d-md-inline">{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: activeFilters.size } }}</span>
+                    </button>
+                    <ul ngbDropdownMenu class="checkbox-menu text-nowrap pe-2" aria-labelledby="filter-dropdown-button">
+                        <li>
+                            <label>
+                                <input
+                                    id="filterPast"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.PAST])"
+                                    [checked]="activeFilters.has(filterType.PAST)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterPast">Past</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    id="filterCurrent"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.CURRENT])"
+                                    [checked]="activeFilters.has(filterType.CURRENT)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterCurrent">Current</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    id="filterFuture"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.FUTURE])"
+                                    [checked]="activeFilters.has(filterType.FUTURE)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterFuture">Future</span>
+                            </label>
+                        </li>
+                        <li>
+                            <label>
+                                <input
+                                    id="filterUnspecified"
+                                    class="ms-2 form-check-input"
+                                    (change)="toggleFilters([filterType.UNSPECIFIED])"
+                                    [checked]="activeFilters.has(filterType.UNSPECIFIED)"
+                                    type="checkbox"
+                                />
+                                <span class="ms-2" jhiTranslate="artemisApp.lecture.home.filterOptions.filterUnspecifiedDates">Unspecified Date(s)</span>
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+                <div class="d-flex-end text-end">
+                    <button (click)="openImportModal()" class="btn btn-primary jh-create-entity import-lecture text-truncate mb-1" id="lecture-import-button">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span jhiTranslate="artemisApp.lecture.home.importLabel">Import Lecture</span>
+                    </button>
+                    <a id="jh-create-entity" class="btn btn-primary jh-create-entity create-lecture mb-1" [routerLink]="['new']">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span jhiTranslate="artemisApp.lecture.home.createLabel">Create Lecture</span>
+                    </a>
+                </div>
+            </div>
         </div>
     </div>
     <br />
-    <div class="table-responsive" *ngIf="lectures">
+    <div class="table-responsive" *ngIf="filteredLectures">
         <table class="table table-striped">
             <thead>
                 <tr>
@@ -31,7 +96,7 @@
                 </tr>
             </thead>
             <tbody class="markdown-preview" id="lecture-preview">
-                <tr *ngFor="let lecture of lectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
+                <tr *ngFor="let lecture of filteredLectures; trackBy: trackId; let i = index" id="lecture-row-{{ i }}">
                     <td>
                         <a [routerLink]="[lecture.id]">{{ lecture.id }}</a>
                     </td>

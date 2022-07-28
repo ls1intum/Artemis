@@ -1,6 +1,6 @@
 {
     "name": "artemis",
-    "version": "5.9.3",
+    "version": "5.9.5",
     "description": "Interactive Learning with Individual Feedback",
     "private": true,
     "license": "MIT",
@@ -28,14 +28,14 @@
         "@fortawesome/fontawesome-svg-core": "6.1.1",
         "@fortawesome/free-regular-svg-icons": "6.1.1",
         "@fortawesome/free-solid-svg-icons": "6.1.1",
-        "@ls1intum/apollon": "2.11.1",
+        "@ls1intum/apollon": "2.11.2",
         "@ng-bootstrap/ng-bootstrap": "13.0.0-beta.1",
         "@ngx-translate/core": "14.0.0",
         "@ngx-translate/http-loader": "7.0.0",
         "@sentry/angular": "7.7.0",
         "@sentry/tracing": "7.7.0",
         "@swimlane/ngx-charts": "20.1.0",
-        "ace-builds": "1.8.0",
+        "ace-builds": "1.8.1",
         "bootstrap": "5.2.0",
         "brace": "0.11.1",
         "compare-versions": "4.1.3",
@@ -68,7 +68,7 @@
         "uuid": "8.3.2",
         "webstomp-client": "1.2.6",
         "xlsx": "0.18.5",
-        "zone.js": "0.11.6"
+        "zone.js": "0.11.7"
     },
     "overrides": {
         "showdown-katex": {
@@ -102,6 +102,7 @@
         "eslint": "8.20.0",
         "eslint-config-prettier": "8.5.0",
         "eslint-plugin-deprecation": "1.3.2",
+        "eslint-plugin-jest": "26.6.0",
         "eslint-plugin-prettier": "4.2.1",
         "eslint-webpack-plugin": "3.2.0",
         "folder-hash": "4.0.2",
@@ -116,7 +117,7 @@
         "merge-jsons-webpack-plugin": "2.0.1",
         "ng-mocks": "14.1.0",
         "prettier": "2.7.1",
-        "sass": "1.53.0",
+        "sass": "1.54.0",
         "ts-jest": "28.0.7",
         "tslint": "6.1.3",
         "tslint-config-prettier": "1.18.0",

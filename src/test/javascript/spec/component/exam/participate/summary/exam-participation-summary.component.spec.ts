@@ -209,7 +209,7 @@ describe('ExamParticipationSummaryComponent', () => {
         toggleCollapseExerciseButtonTwo.nativeElement.click();
         toggleCollapseExerciseButtonThree.nativeElement.click();
         toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds.length).toEqual(4);
+        expect(component.collapsedExerciseIds).toHaveLength(4);
 
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
@@ -289,9 +289,9 @@ describe('ExamParticipationSummaryComponent', () => {
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
         if (shouldBeNonNull) {
-            expect(span).not.toBe(null);
+            expect(span).not.toBeNull();
         } else {
-            expect(span).toBe(null);
+            expect(span).toBeNull();
         }
     });
 

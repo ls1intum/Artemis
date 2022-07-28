@@ -8,7 +8,7 @@ export const gradingSystemState: Routes = [
     {
         path: '',
         redirectTo: 'interval',
-        canActivate: [UserRouteAccessService],
+        pathMatch: 'full',
     },
     {
         path: 'interval',

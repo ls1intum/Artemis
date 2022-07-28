@@ -1,0 +1,7 @@
+<div *ngIf="isLoading" class="text-center">
+    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+</div>
+<jhi-testwise-coverage-report *ngIf="coverageReport && fileContentByPath" [report]="coverageReport" [fileContentByPath]="fileContentByPath"></jhi-testwise-coverage-report>
+<div *ngIf="!(coverageReport || fileContentByPath)" class="text-center">
+    <span jhiTranslate="artemisApp.codeHint.management.step1.notGenerated">Coverage report has not been generated yet.</span>
+</div>

@@ -62,7 +62,7 @@ describe('CourseLectureRow', () => {
 
     it('should initialize', () => {
         courseLectureRowComponentFixture.detectChanges();
-        expect(courseLectureRowComponent).not.toBe(null);
+        expect(courseLectureRowComponent).not.toBeNull();
     });
 
     it('should set urgent class to date if remaining days is less than 7 days', () => {
@@ -78,7 +78,7 @@ describe('CourseLectureRow', () => {
         courseLectureRowComponentFixture.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
-        expect(dateContainer).not.toBe(null);
+        expect(dateContainer).not.toBeNull();
     });
 
     it('should not urgent class to date if remaining days is more than 7 days', () => {
@@ -94,7 +94,7 @@ describe('CourseLectureRow', () => {
         courseLectureRowComponentFixture.detectChanges();
 
         const dateContainer = courseLectureRowComponentFixture.debugElement.query(By.css('.text-danger'));
-        expect(dateContainer).toBe(null);
+        expect(dateContainer).toBeNull();
     });
 
     it('navigate to details page if row is clicked', fakeAsync(() => {

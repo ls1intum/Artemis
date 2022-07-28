@@ -1,19 +1,24 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.time.*;
+import java.time.temporal.ChronoUnit;
+import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ScheduledFuture;
+
+import javax.annotation.PostConstruct;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.core.env.Environment;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
 import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.scheduledexecutor.*;
+import com.hazelcast.scheduledexecutor.DuplicateTaskException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.exam.Exam;
@@ -21,10 +26,11 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
+import tech.jhipster.config.JHipsterConstants;
 
 /**
  * For all {@link Exam}s where monitoring is enabled, the scheduling service schedules the cache reset after another 30 minutes {@link Constants}
@@ -38,19 +44,27 @@ public class ExamMonitoringScheduleService {
 
     private final ExamCache examCache;
 
-    private final IScheduledExecutorService threadPoolTaskScheduler;
+    private final TaskScheduler scheduler;
+
+    private final Map<Long, ScheduledFuture<?>> scheduledExamMonitoring = new HashMap<>();
+
+    private final Environment env;
 
     private final ExamRepository examRepository;
+
+    private final StudentExamRepository studentExamRepository;
 
     private final WebsocketMessagingService messagingService;
 
     private final ExamActivityService examActivityService;
 
-    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, ExamRepository examRepository, WebsocketMessagingService messagingService,
-            ExamActivityService examActivityService) {
-        this.threadPoolTaskScheduler = hazelcastInstance.getScheduledExecutorService(Constants.HAZELCAST_MONITORING_SCHEDULER);
+    public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, ExamRepository examRepository,
+            StudentExamRepository studentExamRepository, WebsocketMessagingService messagingService, ExamActivityService examActivityService) {
         this.examCache = new ExamCache(hazelcastInstance);
+        this.scheduler = scheduler;
+        this.env = env;
         this.examRepository = examRepository;
+        this.studentExamRepository = studentExamRepository;
         this.messagingService = messagingService;
         this.examActivityService = examActivityService;
     }
@@ -65,11 +79,35 @@ public class ExamMonitoringScheduleService {
         config.getScheduledExecutorConfig(Constants.HAZELCAST_MONITORING_SCHEDULER).setPoolSize(16).setCapacity(1000).setDurability(1);
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void applicationReady() {
-        // activate Exam Monitoring Service
-        SecurityUtils.setAuthorizationObject();
-        startSchedule();
+    /**
+     * This method schedules all exam activity save tasks after a server (re-)start.
+     */
+    @PostConstruct
+    public void startSchedule() {
+        try {
+            Collection<String> activeProfiles = Arrays.asList(env.getActiveProfiles());
+            if (activeProfiles.contains(JHipsterConstants.SPRING_PROFILE_DEVELOPMENT)) {
+                // only execute this on production server, i.e. when the prod profile is active
+                // NOTE: if you want to test this locally, please comment it out, but do not commit the changes
+                return;
+            }
+
+            if (!activeProfiles.contains("scheduling")) {
+                // only execute this on server with active scheduling profile
+                return;
+            }
+
+            SecurityUtils.setAuthorizationObject();
+
+            List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
+            logger.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
+            for (Exam exam : exams) {
+                scheduleExamMonitoringTask(exam.getId());
+            }
+        }
+        catch (Exception e) {
+            logger.error("Failed to start ExamMonitoringScheduleService", e);
+        }
     }
 
     /**
@@ -132,30 +170,12 @@ public class ExamMonitoringScheduleService {
     }
 
     /**
-     * This method schedules all exam activity save tasks after a server (re-)start.
-     */
-    public void startSchedule() {
-        List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
-        logger.info("Found {} exams that are not yet ended or are scheduled to start in the future", exams.size());
-        for (Exam exam : exams) {
-            cancelExamActivitySave(exam.getId());
-            if (exam.isMonitoring()) {
-                scheduleExamActivitySave(exam.getId());
-            }
-        }
-    }
-
-    /**
      * Stops the exam activity save for all exams.
      */
     public void stopSchedule() {
         for (Cache cachedExamMonitoring : examCache.getAllCaches()) {
-            if (((ExamMonitoringCache) cachedExamMonitoring).getExamActivitySaveHandler() != null) {
-                cancelExamActivitySave(((ExamMonitoringCache) cachedExamMonitoring).getExamId());
-            }
+            cancelExamMonitoringTask(((ExamMonitoringCache) cachedExamMonitoring).getExamId());
         }
-        threadPoolTaskScheduler.shutdown();
-        threadPoolTaskScheduler.destroy();
     }
 
     /**
@@ -163,25 +183,24 @@ public class ExamMonitoringScheduleService {
      *
      * @param examId specific exam
      */
-    public void scheduleExamActivitySave(final long examId) {
-        this.cancelExamActivitySave(examId);
+    public void scheduleExamMonitoringTask(final long examId) {
+        this.cancelExamMonitoringTask(examId);
         // reload from database to make sure there are no proxy objects
         final var exam = examRepository.findByIdElseThrow(examId);
         try {
+            if (!exam.isMonitoring()) {
+                return;
+            }
             // 3 am after the end of the exam
             ZonedDateTime endOfExamDay = exam.getEndDate().toLocalDate().atTime(LocalTime.MAX).atZone(ZoneId.systemDefault());
+            var schedulingTime = endOfExamDay.plus(3600 * 3, ChronoUnit.SECONDS);
+            var scheduledFuture = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
 
-            var saveTimeDelay = Duration.between(ZonedDateTime.now(), endOfExamDay).toSeconds() + 3600 * 3;
-
-            var scheduledFuture = threadPoolTaskScheduler.schedule(new ExamActivitySaveTask(examId), saveTimeDelay, TimeUnit.MILLISECONDS);
-            // save scheduled future in HashMap
-            examCache.performCacheWrite(examId, examMonitoringCache -> {
-                ((ExamMonitoringCache) examMonitoringCache).setExamActivitySaveHandler(List.of(scheduledFuture.getHandler()));
-                return examMonitoringCache;
-            });
+            scheduledExamMonitoring.put(examId, future);
+            logger.info("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
         }
         catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-            logger.debug("Exam {} monitoring save task already registered", examId);
+            logger.info("Exam {} monitoring save task already registered", examId);
             // this is expected if we run on multiple nodes
         }
     }
@@ -191,30 +210,13 @@ public class ExamMonitoringScheduleService {
      *
      * @param examId specific exam
      */
-    public void cancelExamActivitySave(final long examId) {
-        ((ExamMonitoringCache) examCache.getReadCacheFor(examId)).getExamActivitySaveHandler().forEach(taskHandler -> {
-            IScheduledFuture<?> scheduledFuture = threadPoolTaskScheduler.getScheduledFuture(taskHandler);
-            try {
-                // if the task has been disposed, this will throw a StaleTaskException
-                boolean taskNotDone = !scheduledFuture.isDone();
-                boolean cancelSuccess = false;
-                if (taskNotDone) {
-                    cancelSuccess = scheduledFuture.cancel(false);
-                }
-                scheduledFuture.dispose();
-                if (taskNotDone) {
-                    logger.info("Stop scheduled exam activity save for exam {} was successful: {}", examId, cancelSuccess);
-                }
-            }
-            catch (@SuppressWarnings("unused") StaleTaskException e) {
-                logger.info("Stop scheduled exam activity save for exam {} already disposed/cancelled", examId);
-                // has already been disposed (sadly there is no method to check that)
-            }
-        });
-        examCache.performCacheWriteIfPresent(examId, cachedMonitoring -> {
-            ((ExamMonitoringCache) cachedMonitoring).setExamActivitySaveHandler(ExamMonitoringCache.getEmptyExamActivitySaveHandler());
-            return cachedMonitoring;
-        });
+    public void cancelExamMonitoringTask(final long examId) {
+        ScheduledFuture<?> future = scheduledExamMonitoring.get(examId);
+        if (future != null) {
+            logger.info("Cancelling scheduled task for Exam Monitoring ({}).", examId);
+            future.cancel(true);
+            scheduledExamMonitoring.remove(examId);
+        }
         // We want to clear the activities from the cache
         executeExamActivitySaveTask(examId);
     }
@@ -226,9 +228,6 @@ public class ExamMonitoringScheduleService {
      */
     public void executeExamActivitySaveTask(Long examId) {
         examCache.performCacheWriteIfPresent(examId, examMonitoringCache -> {
-            ((ExamMonitoringCache) examMonitoringCache).getExamActivitySaveHandler().clear();
-            logger.debug("Removed exam {} monitoring save tasks", examId);
-
             // Save actions in database
             examActivityService.saveAll(((ExamMonitoringCache) examMonitoringCache).getActivities().values());
             ((ExamMonitoringCache) examMonitoringCache).getActivities().clear();
