@@ -323,6 +323,11 @@
                     </h4>
                     <h4 *ngIf="isExamMode">
                         {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam' | artemisTranslate: { round: correctionRound + 1 } }}
+                        <fa-icon
+                            class="text-secondary"
+                            [icon]="faQuestionCircle"
+                            ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                        ></fa-icon>
                     </h4>
                 </ng-container>
                 <ng-container *ngIf="numberOfCorrectionRoundsEnabled > correctionRound">
@@ -471,9 +476,6 @@
                 </ng-container>
                 <div class="alert alert-info" *ngIf="numberOfCorrectionRoundsEnabled <= correctionRound">
                     {{ 'artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled' | artemisTranslate }}
-                </div>
-                <div class="alert alert-info" *ngIf="correctionRound > 0">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}
                 </div>
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
