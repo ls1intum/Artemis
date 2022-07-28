@@ -145,7 +145,7 @@ public class StudentExamService {
     }
 
     private void saveSubmissions(StudentExam studentExam, User currentUser) {
-        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        List<StudentParticipation> existingParticipations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
 
         for (Exercise exercise : studentExam.getExercises()) {
             // we do not apply the following checks for programming exercises or file upload exercises
@@ -230,7 +230,7 @@ public class StudentExamService {
 
                         // versioning of submission
                         try {
-                            submissionVersionService.saveVersionForIndividual(submission, currentUser.getLogin());
+                            submissionVersionService.saveVersionForIndividual(submission, currentUser);
                         }
                         catch (Exception ex) {
                             log.error("Submission version could not be saved", ex);
@@ -458,7 +458,7 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock Repositories if the exam starts within 5 minutes
+                    // Unlock Repositories only if the exam starts within 5 minutes
                     if (exercise instanceof ProgrammingExercise programmingExercise
                             && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                         instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
@@ -481,10 +481,6 @@ public class StudentExamService {
      */
     public int startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
-        }
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
@@ -567,24 +563,19 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param examId  the exam for which the StudentExam should be fetched / created
+     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
-    public StudentExam generateTestExam(Long examId, User student) {
+    public StudentExam generateTestExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
-        Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-
-        if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-            throw new AccessForbiddenException("The requested Exam is no TestExam and thus no StudentExam can be created");
-        }
         long start = System.nanoTime();
-        StudentExam studentExam = generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+        StudentExam studentExam = generateIndividualStudentExam(exam, student);
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
 
-        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), examId);
+        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
 
