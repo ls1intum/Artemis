@@ -1096,6 +1096,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testResetExamWithQuizExercise_asInstructor() throws Exception {
+        QuizExercise quizExercise = ModelFactory.generateQuizExerciseForExam(exam2.getExerciseGroups().get(0));
+        quizExercise = exerciseRepo.save(quizExercise);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam2.getId() + "/reset", HttpStatus.OK);
+        quizExercise = (QuizExercise) exerciseRepo.findByIdElseThrow(quizExercise.getId());
+        assertThat(quizExercise.getReleaseDate()).isNull();
+        assertThat(quizExercise.getDueDate()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteStudent() throws Exception {
         // Create an exam with registered students
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
