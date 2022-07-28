@@ -130,7 +130,6 @@ public class AttachmentUnitResource {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);
-        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(attachmentUnit);
+        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId())).body(attachmentUnit);
     }
 }

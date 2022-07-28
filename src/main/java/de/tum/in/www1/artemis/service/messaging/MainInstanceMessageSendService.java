@@ -100,4 +100,16 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleAssessedExerciseSubmittedNotification(exerciseId);
     }
+
+    @Override
+    public void sendExamMonitoringSchedule(Long examId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleExamMonitoring(examId);
+    }
+
+    @Override
+    public void sendExamMonitoringScheduleCancel(Long examId) {
+        // No need to go through the broker, pass it directly
+        instanceMessageReceiveService.processScheduleExamMonitoringCancel(examId);
+    }
 }

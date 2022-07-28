@@ -32,7 +32,7 @@ describe('EmojiComponent', () => {
     it('should subscribe and unsubscribe to the theme service and set dark flag', () => {
         expect(themeSpy).toHaveBeenCalledOnce();
         expect(comp.dark).toBeTrue();
-        expect(comp.themeSubscription).not.toBeUndefined();
+        expect(comp.themeSubscription).toBeDefined();
 
         const subSpy = jest.spyOn(comp.themeSubscription, 'unsubscribe');
 

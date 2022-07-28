@@ -69,7 +69,7 @@ describe('PostingContentPartComponent', () => {
             expect(markdownRenderedTexts![0].innerHTML).toBe('<p class="inline-paragraph">' + postingContent + '</p>');
 
             const referenceLink = getElement(debugElement, '.reference-hash');
-            expect(referenceLink).toBe(null);
+            expect(referenceLink).toBeNull();
         });
     });
 
@@ -95,18 +95,18 @@ describe('PostingContentPartComponent', () => {
 
             // should display post number to user
             const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
+            expect(referenceLink).not.toBeNull();
             expect(referenceLink.innerHTML).toInclude(referenceStr);
 
             // should display relevant icon for post
             const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
+            expect(icon).not.toBeNull();
             expect(icon.innerHTML).toInclude('fa fa-message');
 
             // on click should navigate to referenced post within current tab
             referenceLink.click();
             expect(navigateByUrlSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).toBeCalledTimes(0);
+            expect(openAttachmentSpy).toHaveBeenCalledTimes(0);
         });
 
         it.each([
@@ -129,18 +129,18 @@ describe('PostingContentPartComponent', () => {
 
             // should display artifact name to user
             const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
+            expect(referenceLink).not.toBeNull();
             expect(referenceLink.innerHTML).toInclude(referenceStr);
 
             // should display relevant icon for artifact according to its type
             const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
+            expect(icon).not.toBeNull();
             expect(icon.innerHTML).toInclude(faIcon);
 
             // on click should navigate to referenced artifact within current tab
             referenceLink.click();
             expect(navigateByUrlSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).toBeCalledTimes(0);
+            expect(openAttachmentSpy).toHaveBeenCalledTimes(0);
         });
 
         it('should contain a reference to attachment with icon', () => {
@@ -157,18 +157,18 @@ describe('PostingContentPartComponent', () => {
 
             // should display file name to user
             const referenceLink = getElement(debugElement, '.reference');
-            expect(referenceLink).not.toBe(null);
+            expect(referenceLink).not.toBeNull();
             expect(referenceLink.innerHTML).toInclude(referenceStr);
 
             // should display relevant icon for attachment
             const icon = getElement(debugElement, 'fa-icon');
-            expect(icon).not.toBe(null);
+            expect(icon).not.toBeNull();
             expect(icon.innerHTML).toInclude('fa fa-file');
 
             // on click should open referenced attachment within new tab
             referenceLink.click();
-            expect(openAttachmentSpy).toBeCalledTimes(1);
-            expect(openAttachmentSpy).toBeCalledWith(attachmentURL);
+            expect(openAttachmentSpy).toHaveBeenCalledTimes(1);
+            expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
         });
     });
 });

@@ -22,6 +22,6 @@ describe('OrionCourseManagementExercisesComponent', () => {
     it('should contain CourseManagementExercisesComponent', () => {
         const courseExerciseDetails = fixture.debugElement.query(By.directive(CourseManagementExercisesComponent));
 
-        expect(courseExerciseDetails).not.toBe(null);
+        expect(courseExerciseDetails).not.toBeNull();
     });
 });

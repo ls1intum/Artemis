@@ -46,14 +46,14 @@ describe('External Submission Service', () => {
         req.flush(returned);
         expect(convertDateFromServerSpy).toHaveBeenCalledOnce();
         expect(convertDateFromServerSpy).toHaveBeenCalledWith(createResult);
-        expect(createResult).not.toBe(undefined);
+        expect(createResult).toBeDefined();
         expect(createResult!.body).toEqual(returned);
     });
 
     it('generates initial manual result correctly', () => {
         const result = service.generateInitialManualResult();
         expect(result).toBeInstanceOf(Result);
-        expect(result.completionDate).not.toBe(undefined);
+        expect(result.completionDate).toBeDefined();
         // a maximum delay of 1s between creation and assertion is unlikely but accurate enough for an assertion of ‘approximately now’ here
         expect(dayjs().diff(result.completionDate, 'ms')).toBeLessThan(1000);
         expect(result.successful).toBeTrue();

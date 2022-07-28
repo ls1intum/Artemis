@@ -55,7 +55,7 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -163,6 +163,12 @@ public final class Constants {
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
 
+    public static final String PREPARE_EXERCISE_START = "PREPARE_EXERCISE_START";
+
+    public static final String GENERATE_STUDENT_EXAMS = "GENERATE_STUDENT_EXAMS";
+
+    public static final String GENERATE_MISSING_STUDENT_EXAMS = "GENERATE_MISSING_STUDENT_EXAMS";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
@@ -213,7 +219,7 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
-    public static final long MONITORING_CACHE_RESET_DELAY = 1000 * 60 * 30; // 30 minutes in milliseconds
+    public static final long MONITORING_CACHE_RESET_DELAY = 60 * 30; // 30 minutes in seconds
 
     public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
 

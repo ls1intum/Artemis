@@ -67,6 +67,7 @@
                     [(ngModel)]="complaintResponse.responseText"
                     [readonly]="handled || isLockedForLoggedInUser"
                     [disabled]="handled || isLockedForLoggedInUser"
+                    ondrop="return false;"
                 >
                 </textarea>
                 <jhi-textarea-counter [maxLength]="this.course!.maxComplaintResponseTextLimit!" [content]="complaintResponse.responseText" [visible]="!handled">

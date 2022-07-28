@@ -55,14 +55,14 @@ describe('MultipleChoiceQuestionComponent', () => {
         expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
         expect(component.renderedQuestion.hint).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.hint));
         expect(component.renderedQuestion.explanation).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.explanation));
-        expect(component.renderedQuestion.renderedSubElements.length).toEqual(1);
+        expect(component.renderedQuestion.renderedSubElements).toHaveLength(1);
 
         const expectedAnswer = question.answerOptions![0];
         const renderedAnswer = component.renderedQuestion.renderedSubElements[0];
         expect(safeHtmlToString(renderedAnswer.text)).toEqual(toHtml(expectedAnswer.text!));
         expect(safeHtmlToString(renderedAnswer.hint)).toEqual(toHtml(expectedAnswer.hint!));
         expect(safeHtmlToString(renderedAnswer.explanation)).toEqual(toHtml(expectedAnswer.explanation!));
-        expect(renderedAnswer.renderedSubElements.length).toEqual(0);
+        expect(renderedAnswer.renderedSubElements).toHaveLength(0);
     });
 
     it('should update rendered question and answer with empty strings when question/answer values are undefined', () => {
@@ -79,15 +79,15 @@ describe('MultipleChoiceQuestionComponent', () => {
 
         component.question = question;
         expect(component.renderedQuestion.text).toEqual(artemisMarkdownService.safeHtmlForMarkdown(question.text));
-        expect(component.renderedQuestion.hint).toEqual('');
-        expect(component.renderedQuestion.explanation).toEqual('');
-        expect(component.renderedQuestion.renderedSubElements.length).toEqual(1);
+        expect(component.renderedQuestion.hint).toBe('');
+        expect(component.renderedQuestion.explanation).toBe('');
+        expect(component.renderedQuestion.renderedSubElements).toHaveLength(1);
 
         const expectedAnswer = question.answerOptions![0];
         const renderedAnswer = component.renderedQuestion.renderedSubElements[0];
         expect(safeHtmlToString(renderedAnswer.explanation)).toEqual(toHtml(expectedAnswer.explanation!));
         expect(safeHtmlToString(renderedAnswer.text)).toEqual(toHtml(expectedAnswer.text!));
-        expect(safeHtmlToString(renderedAnswer.hint)).toEqual('');
+        expect(safeHtmlToString(renderedAnswer.hint)).toBe('');
     });
 
     function toHtml(value: string) {

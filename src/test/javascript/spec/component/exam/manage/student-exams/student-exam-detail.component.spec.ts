@@ -282,8 +282,8 @@ describe('StudentExamDetailComponent', () => {
     it('should toggle to unsubmitted', () => {
         const toggleSubmittedStateSpy = jest.spyOn(studentExamService, 'toggleSubmittedState');
         studentExamDetailComponentFixture.detectChanges();
-        expect(studentExamDetailComponent.studentExam.submitted).toBe(undefined);
-        expect(studentExamDetailComponent.studentExam.submissionDate).toBe(undefined);
+        expect(studentExamDetailComponent.studentExam.submitted).toBeUndefined();
+        expect(studentExamDetailComponent.studentExam.submissionDate).toBeUndefined();
 
         studentExamDetailComponent.toggle();
 
@@ -291,7 +291,7 @@ describe('StudentExamDetailComponent', () => {
         expect(studentExamDetailComponent.studentExam.submitted).toBeTrue();
         // the toggle uses the current time as submission date,
         // therefore no useful assertion about a concrete value is possible here
-        expect(studentExamDetailComponent.studentExam.submissionDate).not.toBe(undefined);
+        expect(studentExamDetailComponent.studentExam.submissionDate).toBeDefined();
     });
 
     it('should update the percent difference when the absolute working time changes', () => {

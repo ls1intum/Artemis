@@ -94,7 +94,7 @@ describe('Grading Instructions Management Component', () => {
         const index = component.findCriterionIndex(gradingCriterion, component.exercise);
         fixture.detectChanges();
 
-        expect(index).toEqual(0);
+        expect(index).toBe(0);
     });
 
     it('should return grading instruction index', () => {
@@ -102,7 +102,7 @@ describe('Grading Instructions Management Component', () => {
         const index = component.findInstructionIndex(gradingInstruction, component.exercise, 0);
         fixture.detectChanges();
 
-        expect(index).toEqual(0);
+        expect(index).toBe(0);
     });
 
     it('should add new grading instruction to criteria', () => {
@@ -110,7 +110,7 @@ describe('Grading Instructions Management Component', () => {
         component.addNewInstruction(gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions.length).toEqual(2);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions).toHaveLength(2);
     });
 
     it('should delete the grading criterion', () => {
@@ -118,7 +118,7 @@ describe('Grading Instructions Management Component', () => {
         component.deleteGradingCriterion(gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria.length).toEqual(0);
+        expect(component.exercise.gradingCriteria).toHaveLength(0);
     });
 
     it('should reset the grading criterion', () => {
@@ -135,7 +135,7 @@ describe('Grading Instructions Management Component', () => {
         component.addNewGradingCriterion();
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria.length).toEqual(2);
+        expect(component.exercise.gradingCriteria).toHaveLength(2);
     });
 
     it('should change grading criteria title', () => {
@@ -163,7 +163,7 @@ describe('Grading Instructions Management Component', () => {
         component.deleteInstruction(gradingInstruction, gradingCriterion);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).toEqual(undefined);
+        expect(component.exercise.gradingCriteria[0].structuredGradingInstructions[0].id).toBeUndefined();
     });
 
     it('should set grading instruction text for exercise', () => {
@@ -189,7 +189,7 @@ describe('Grading Instructions Management Component', () => {
         component.domainCommandsFound(domainCommands);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria).not.toBeUndefined();
+        expect(component.exercise.gradingCriteria).toBeDefined();
         const gradingCriteria = component.exercise.gradingCriteria![0];
         expect(gradingCriteria.structuredGradingInstructions[0]).toEqual(gradingInstructionWithoutId);
     });
@@ -208,7 +208,7 @@ describe('Grading Instructions Management Component', () => {
         component.domainCommandsFound(domainCommands);
         fixture.detectChanges();
 
-        expect(component.exercise.gradingCriteria).not.toBeUndefined();
+        expect(component.exercise.gradingCriteria).toBeDefined();
         const gradingCriteria = component.exercise.gradingCriteria![0];
         expect(gradingCriteria).toEqual(gradingCriterionWithoutId);
     });
