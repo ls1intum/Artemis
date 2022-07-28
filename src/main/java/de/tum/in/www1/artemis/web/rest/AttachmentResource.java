@@ -78,8 +78,7 @@ public class AttachmentResource {
         }
         Attachment result = attachmentRepository.save(attachment);
         this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(result.getLink()));
-        return ResponseEntity.created(new URI("/api/attachments/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/attachments/" + result.getId())).body(result);
     }
 
     /**

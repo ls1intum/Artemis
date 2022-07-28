@@ -27,11 +27,11 @@ describe('User Service', () => {
 
             const req = httpMock.expectOne({ method: 'GET' });
             const resourceUrl = SERVER_API_URL + 'api/users';
-            expect(req.request.url).toEqual(`${resourceUrl}/user`);
+            expect(req.request.url).toBe(`${resourceUrl}/user`);
         });
         it('should return User', () => {
             service.find('user').subscribe((received) => {
-                expect(received!.login).toEqual('user');
+                expect(received!.login).toBe('user');
             });
 
             const req = httpMock.expectOne({ method: 'GET' });
@@ -51,27 +51,27 @@ describe('User Service', () => {
             service.updateLastNotificationRead().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
             const resourceUrl = SERVER_API_URL + 'api/users/notification-date';
-            expect(req.request.url).toEqual(`${resourceUrl}`);
+            expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
         it('should call correct URL to update notification visibility', () => {
             service.updateNotificationVisibility(true).subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
             const resourceUrl = SERVER_API_URL + 'api/users/notification-visibility';
-            expect(req.request.url).toEqual(`${resourceUrl}`);
+            expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
         it('should call correct URL to initialize LTI user', () => {
             service.initializeLTIUser().subscribe();
             const req = httpMock.expectOne({ method: 'PUT' });
             const resourceUrl = SERVER_API_URL + 'api/users/initialize';
-            expect(req.request.url).toEqual(`${resourceUrl}`);
+            expect(req.request.url).toBe(`${resourceUrl}`);
         });
 
         it('should propagate not found response', () => {
             service.find('user').subscribe({
                 error: (_error: any) => {
-                    expect(_error.status).toEqual(404);
+                    expect(_error.status).toBe(404);
                 },
             });
 

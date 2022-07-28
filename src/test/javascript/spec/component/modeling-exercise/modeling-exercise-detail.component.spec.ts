@@ -82,9 +82,9 @@ describe('ModelingExercise Management Detail Component', () => {
         expect(findStub).toHaveBeenCalled();
         expect(statisticsServiceStub).toHaveBeenCalled();
         expect(comp.modelingExercise).toEqual(modelingExercise);
-        expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-        expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-        expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+        expect(comp.doughnutStats.participationsInPercent).toBe(100);
+        expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+        expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
         expect(subscribeSpy).toHaveBeenCalledWith('modelingExerciseListModification', expect.anything());
         tick();
         expect(comp.exampleSolutionUML).toEqual(model);

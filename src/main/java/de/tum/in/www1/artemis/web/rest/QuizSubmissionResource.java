@@ -226,7 +226,7 @@ public class QuizSubmissionResource {
         // Prevent multiple submissions (currently only for exam submissions)
         quizSubmission = (QuizSubmission) examSubmissionService.preventMultipleSubmissions(quizExercise, quizSubmission, user);
 
-        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user.getLogin());
+        QuizSubmission updatedQuizSubmission = quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, user);
         long end = System.currentTimeMillis();
         log.info("submitQuizForExam took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(updatedQuizSubmission);

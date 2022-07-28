@@ -73,8 +73,7 @@ public class ApollonDiagramResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
 
         ApollonDiagram result = apollonDiagramRepository.save(apollonDiagram);
-        return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/apollon-diagrams/" + result.getId())).body(result);
     }
 
     /**

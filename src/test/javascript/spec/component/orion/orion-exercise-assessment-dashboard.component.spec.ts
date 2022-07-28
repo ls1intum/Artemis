@@ -119,7 +119,7 @@ describe('OrionExerciseAssessmentDashboardComponent', () => {
         tick();
 
         expect(comp.exerciseId).toBe(10);
-        expect(comp.exercise).toBe(undefined);
+        expect(comp.exercise).toBeUndefined();
         expect(comp.orionState).toEqual(orionState);
 
         expect(getForTutorsStub).toHaveBeenCalledOnce();

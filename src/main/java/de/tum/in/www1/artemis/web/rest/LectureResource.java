@@ -88,8 +88,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
     /**
@@ -115,7 +114,7 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
+        return ResponseEntity.ok().body(result);
     }
 
     /**
@@ -200,8 +199,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
     /**

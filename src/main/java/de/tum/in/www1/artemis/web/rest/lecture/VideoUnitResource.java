@@ -157,8 +157,7 @@ public class VideoUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         VideoUnit persistedVideoUnit = (VideoUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
-        return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedVideoUnit);
+        return ResponseEntity.created(new URI("/api/video-units/" + persistedVideoUnit.getId())).body(persistedVideoUnit);
     }
 
 }

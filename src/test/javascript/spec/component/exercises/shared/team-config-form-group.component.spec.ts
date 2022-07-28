@@ -43,7 +43,7 @@ describe('Team Config Form Group Component', () => {
 
     it('should set config to undefined when exercise mode changed to INDIVIDUAL', () => {
         component.onExerciseModeChange(ExerciseMode.INDIVIDUAL);
-        expect(component.config).toBe(undefined);
+        expect(component.config).toBeUndefined();
     });
 
     it('should apply config when exercise mode changed to TEAM', () => {

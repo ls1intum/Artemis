@@ -436,6 +436,7 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);

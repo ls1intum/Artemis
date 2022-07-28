@@ -263,7 +263,7 @@ describe('ComplaintsForTutorComponent', () => {
 
         const responseTextArea = complaintForTutorComponentFixture.debugElement.query(By.css('#responseTextArea')).nativeElement;
         responseTextArea.value = 'abcdefghijklmnopqrstuvwxyz';
-        expect(responseTextArea.value.length).toBe(26);
+        expect(responseTextArea.value).toHaveLength(26);
 
         const rejectComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#rejectComplaintButton')).nativeElement;
         const acceptComplaintButton = complaintForTutorComponentFixture.debugElement.query(By.css('#acceptComplaintButton')).nativeElement;
@@ -271,7 +271,7 @@ describe('ComplaintsForTutorComponent', () => {
         expect(acceptComplaintButton.disabled).toBeFalse();
 
         responseTextArea.value = responseTextArea.value + 'A';
-        expect(responseTextArea.value.length).toBe(27);
+        expect(responseTextArea.value).toHaveLength(27);
 
         // Update fixture
         complaintForTutorComponentFixture.detectChanges();

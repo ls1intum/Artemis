@@ -26,8 +26,8 @@ describe('Quiz Participation Service', () => {
         mockResult.id = 1;
         mockResult.score = 10;
         service.submitForPractice(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).toEqual(1);
-            expect(res.body!.score).toEqual(10);
+            expect(res.body!.id).toBe(1);
+            expect(res.body!.score).toBe(10);
         });
 
         const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/practice` });
@@ -41,8 +41,8 @@ describe('Quiz Participation Service', () => {
         mockResult.id = 1;
         mockResult.score = 10;
         service.submitForPreview(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).toEqual(1);
-            expect(res.body!.score).toEqual(10);
+            expect(res.body!.id).toBe(1);
+            expect(res.body!.score).toBe(10);
         });
 
         const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/preview` });
@@ -55,8 +55,8 @@ describe('Quiz Participation Service', () => {
         mockSubmission.id = 1;
         mockSubmission.scoreInPoints = 10;
         service.submitForLiveMode(mockSubmission, exerciseId).subscribe((res) => {
-            expect(res.body!.id).toEqual(1);
-            expect(res.body!.scoreInPoints).toEqual(10);
+            expect(res.body!.id).toBe(1);
+            expect(res.body!.scoreInPoints).toBe(10);
         });
 
         const req = httpMock.expectOne({ method: 'POST', url: `api/exercises/${exerciseId}/submissions/live` });

@@ -80,6 +80,8 @@
         "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
         "exerciseNotDefined": "The exercise is not defined.",
         "exerciseIdMismatch": "The exercise ids do not match.",
-        "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement."
+        "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
+        "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
+        "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date."
     }
 }

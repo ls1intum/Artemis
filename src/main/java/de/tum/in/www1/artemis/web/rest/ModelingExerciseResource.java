@@ -376,6 +376,7 @@ public class ModelingExerciseResource {
      */
     @PostMapping("modeling-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 

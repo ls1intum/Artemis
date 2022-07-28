@@ -197,7 +197,7 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
 
-        it('should make get request', fakeAsync(() => {
+        it('should make get request for export', fakeAsync(() => {
             const expectedBlob = new Blob(['abc', 'cfe']);
             service.exportInstructorExercise(123).subscribe((resp) => expect(resp.body).toEqual(expectedBlob));
             const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/123/export-instructor-exercise` });
@@ -205,7 +205,7 @@ describe('ProgrammingExercise Service', () => {
             tick();
         }));
 
-        it('should make get request', fakeAsync(() => {
+        it('should make get request for diff report', fakeAsync(() => {
             const expected = new ProgrammingExerciseFullGitDiffReport();
             expected.templateRepositoryCommitHash = 'XYZ';
             expected.solutionRepositoryCommitHash = 'ABC';

@@ -67,14 +67,14 @@ describe('PostHeaderComponent', () => {
         metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.editIcon')).not.toBe(null);
-        expect(getElement(debugElement, '.deleteIcon')).not.toBe(null);
+        expect(getElement(debugElement, '.editIcon')).not.toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
     });
 
     it('should invoke metis service when delete icon is clicked', () => {
         metisServiceUserIsAtLeastTutorStub.mockReturnValue(true);
         fixture.detectChanges();
-        expect(getElement(debugElement, '.deleteIcon')).not.toBe(null);
+        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
         component.deletePosting();
         expect(metisServiceDeletePostMock).toHaveBeenCalledOnce();
     });
@@ -84,8 +84,8 @@ describe('PostHeaderComponent', () => {
         component.posting = metisAnnouncement;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.editIcon')).not.toBe(null);
-        expect(getElement(debugElement, '.deleteIcon')).not.toBe(null);
+        expect(getElement(debugElement, '.editIcon')).not.toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
     });
 
     it('should display edit and delete options to instructor if posting is announcement', () => {
@@ -93,7 +93,7 @@ describe('PostHeaderComponent', () => {
         component.posting = metisAnnouncement;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(getElement(debugElement, '.editIcon')).not.toBe(null);
-        expect(getElement(debugElement, '.deleteIcon')).not.toBe(null);
+        expect(getElement(debugElement, '.editIcon')).not.toBeNull();
+        expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
     });
 });
