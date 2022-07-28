@@ -43,7 +43,7 @@ describe('RatingListComponent', () => {
     });
 
     it('should initialize ratings', () => {
-        expect(component.ratings.length).toEqual(3);
+        expect(component.ratings).toHaveLength(3);
     });
 
     it('should not open exercise du to missing participation', () => {

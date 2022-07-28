@@ -1,16 +1,15 @@
 import { TestBed } from '@angular/core/testing';
 import { ArtemisTestModule } from '../test.module';
-import { NavigationEnd, Router, UrlTree } from '@angular/router';
+import { Router, UrlTree } from '@angular/router';
 import { Location } from '@angular/common';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { of } from 'rxjs';
 import { MockRouter } from '../helpers/mocks/mock-router';
 
 describe('Navigation Util Service', () => {
     let service: ArtemisNavigationUtilService;
 
     const router = new MockRouter();
-    router.events = of(new NavigationEnd(1, 'a', 'b'), new NavigationEnd(1, 'a', 'b'));
+    router.setUrl('a');
 
     beforeEach(() => {
         TestBed.configureTestingModule({

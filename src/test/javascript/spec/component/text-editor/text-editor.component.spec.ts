@@ -245,7 +245,7 @@ describe('TextEditorComponent', () => {
     it('should return submission for answer', () => {
         jest.spyOn(textService, 'predictLanguage');
         const submissionForAnswer = comp['submissionForAnswer']('abc');
-        expect(submissionForAnswer.text).toEqual('abc');
+        expect(submissionForAnswer.text).toBe('abc');
         expect(submissionForAnswer.language).toEqual(Language.ENGLISH);
     });
 
@@ -261,7 +261,7 @@ describe('TextEditorComponent', () => {
             ],
         } as Result;
         const unreferencedFeedback = comp.unreferencedFeedback;
-        expect(unreferencedFeedback?.length).toEqual(1);
+        expect(unreferencedFeedback?.length).toBe(1);
     });
 
     it('should receive submission from team', () => {
@@ -282,7 +282,7 @@ describe('TextEditorComponent', () => {
         jest.spyOn(comp, 'updateParticipation');
         comp.onReceiveSubmissionFromTeam(submission);
         expect(comp['updateParticipation']).toHaveBeenCalledOnce();
-        expect(comp.answer).toEqual('abc');
+        expect(comp.answer).toBe('abc');
     });
 
     it('should destroy', () => {

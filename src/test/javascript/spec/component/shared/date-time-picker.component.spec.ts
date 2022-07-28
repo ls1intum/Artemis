@@ -44,7 +44,7 @@ describe('FormDateTimePickerComponent', () => {
         it('should return null if dayjs is undefined', () => {
             convertedDate = component.convert();
 
-            expect(convertedDate).toBe(null);
+            expect(convertedDate).toBeNull();
         });
 
         it('should return null if dayjs is invalid', () => {
@@ -54,7 +54,7 @@ describe('FormDateTimePickerComponent', () => {
 
             convertedDate = component.convert(unconvertedDate);
 
-            expect(convertedDate).toBe(null);
+            expect(convertedDate).toBeNull();
         });
     });
 

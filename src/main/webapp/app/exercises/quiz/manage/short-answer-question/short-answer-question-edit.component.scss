@@ -34,18 +34,20 @@
         display: flex;
         justify-content: center;
         align-items: center;
-        width: 45%;
+        width: 60%;
+        border: 1px solid var(--sa-question-container-input-border);
 
         .slider-container {
             display: flex;
             justify-content: center;
-            width: 65%;
+            width: 45%;
 
             .slider-with-label {
-                width: 70%;
+                width: 80%;
                 display: flex;
                 justify-content: center;
                 align-items: center;
+                min-width: 50px;
 
                 input[type='range'] {
                     cursor: pointer;
@@ -54,7 +56,8 @@
                 }
 
                 p {
-                    margin: auto;
+                    margin: 0 10px;
+                    min-width: 40px;
                 }
             }
         }

@@ -28,7 +28,7 @@ describe('Delete Dialog Service', () => {
     });
 
     it('should open delete dialog', () => {
-        expect(service.modalRef).toBe(undefined);
+        expect(service.modalRef).toBeUndefined();
         const data: DeleteDialogData = {
             dialogError: new Observable<string>(),
             entityTitle: 'title',

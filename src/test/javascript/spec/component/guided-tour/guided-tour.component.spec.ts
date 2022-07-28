@@ -98,10 +98,6 @@ describe('GuidedTourComponent', () => {
     });
 
     describe('Keydown Element', () => {
-        const expectedTourStepEntries = {
-            contentTranslateKey: '',
-            headlineTranslateKey: '',
-        };
         beforeEach(() => {
             // Prepare guided tour service
             jest.spyOn(guidedTourService, 'init').mockImplementation();
@@ -117,17 +113,17 @@ describe('GuidedTourComponent', () => {
             guidedTourComponent.ngAfterViewInit();
 
             // Start course overview tour
-            expect(guidedTourComponent.currentTourStep).toBe(undefined);
             guidedTourService['enableTour'](courseOverviewTour, true);
             guidedTourService['startTour']();
-            expect(guidedTourComponent.currentTourStep).toEqual(expectedTourStepEntries);
 
-            // Check highlight (current) dot and small dot
             guidedTourComponentFixture.detectChanges();
+        });
+
+        it('should highlight dots', () => {
             const highlightDot = guidedTourComponentFixture.debugElement.query(By.css('.current'));
-            expect(highlightDot).not.toBe(null);
+            expect(highlightDot).not.toBeNull();
             const nSmallDot = guidedTourComponentFixture.debugElement.queryAll(By.css('.n-small'));
-            expect(nSmallDot).not.toBe(null);
+            expect(nSmallDot).not.toBeNull();
         });
 
         it('should not trigger the guided tour with the right arrow key', () => {

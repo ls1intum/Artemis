@@ -365,7 +365,7 @@ describe('CourseStatisticsComponent', () => {
         // Include all exercises
         comp.toggleNotIncludedInScoreExercises();
         fixture.detectChanges();
-        expect(comp.ngxExerciseGroups.length).toBe(4);
+        expect(comp.ngxExerciseGroups).toHaveLength(4);
         const modelingWrapper = fixture.debugElement.query(By.css('#modeling-wrapper'));
         expect(modelingWrapper.query(By.css('h4')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.exerciseCount ');
         expect(modelingWrapper.query(By.css('#absolute-score')).nativeElement.textContent).toBe(' artemisApp.courseOverview.statistics.yourPoints ');
@@ -432,7 +432,7 @@ describe('CourseStatisticsComponent', () => {
         fixture.detectChanges();
         comp.ngOnInit();
         fixture.detectChanges();
-        expect(comp.ngxExerciseGroups.length).toBe(1);
+        expect(comp.ngxExerciseGroups).toHaveLength(1);
         let exercise: any = comp.ngxExerciseGroups[0][0];
         expect(exercise.absoluteScore).toBe(20);
         expect(exercise.reachableScore).toBe(36);

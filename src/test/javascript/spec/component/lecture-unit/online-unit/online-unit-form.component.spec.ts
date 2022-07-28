@@ -49,7 +49,7 @@ describe('OnlineUnitFormComponent', () => {
         const submitButton = onlineUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        onlineUnitFormComponentFixture.whenStable().then(() => {
+        return onlineUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).not.toHaveBeenCalled();
             expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
@@ -73,7 +73,7 @@ describe('OnlineUnitFormComponent', () => {
         const submitButton = onlineUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        onlineUnitFormComponentFixture.whenStable().then(() => {
+        return onlineUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).not.toHaveBeenCalled();
             expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
@@ -98,7 +98,7 @@ describe('OnlineUnitFormComponent', () => {
         const submitButton = onlineUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        onlineUnitFormComponentFixture.whenStable().then(() => {
+        return onlineUnitFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: exampleName,
@@ -155,7 +155,7 @@ describe('OnlineUnitFormComponent', () => {
         // THEN
         expect(getOnlineResourceStub).toHaveBeenCalledOnce();
         expect(onlineUnitFormComponent.sourceControl?.valid).toBeTrue();
-        expect(onlineUnitFormComponent.sourceControl?.value).toEqual('https://example.com');
+        expect(onlineUnitFormComponent.sourceControl?.value).toBe('https://example.com');
         expect(onlineUnitFormComponent.nameControl?.value).toEqual(resourceDto.title);
         expect(onlineUnitFormComponent.descriptionControl?.value).toEqual(resourceDto.description);
     });

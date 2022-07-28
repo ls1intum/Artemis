@@ -36,7 +36,7 @@ describe('ReferenceCommand', () => {
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('> Reference');
     });
 
-    it('should remove > Reference on execute when reference is selected', () => {
+    it('should remove > lorem on execute when reference is selected', () => {
         comp.aceEditorContainer.getEditor().setValue('> lorem');
         referenceCommand.execute();
         expect(comp.aceEditorContainer.getEditor().getValue()).toBe('lorem');

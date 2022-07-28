@@ -46,9 +46,6 @@ describe('AccountService', () => {
         // @ts-ignore
         accountService = new AccountService(translateService, new MockSyncStorage(), httpService, new MockWebsocketService(), new MockFeatureToggleService());
         getStub = jest.spyOn(httpService, 'get');
-
-        expect(accountService.userIdentity).toBe(undefined);
-        expect(accountService.isAuthenticated()).toBeFalse();
     });
 
     afterEach(() => {
@@ -97,7 +94,8 @@ describe('AccountService', () => {
     });
 
     it('should authenticate a user', () => {
-        accountService.userIdentity = undefined;
+        expect(accountService.userIdentity).toBeUndefined();
+        expect(accountService.isAuthenticated()).toBeFalse();
 
         accountService.authenticate(user);
 
@@ -475,7 +473,7 @@ describe('AccountService', () => {
         it('should return undefined if not authenticated', () => {
             url = accountService.getImageUrl();
 
-            expect(url).toBe(undefined);
+            expect(url).toBeUndefined();
         });
 
         it('should return image url if authenticated', () => {

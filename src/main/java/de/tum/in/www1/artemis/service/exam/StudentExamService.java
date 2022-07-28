@@ -434,7 +434,7 @@ public class StudentExamService {
 
         for (Exercise exercise : studentExam.getExercises()) {
             SecurityUtils.setAuthorizationObject();
-            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
+            // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
             // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
@@ -458,14 +458,15 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock Repositories if the exam starts within 5 minutes
+                    // Unlock Repositories only if the exam starts within 5 minutes
                     if (exercise instanceof ProgrammingExercise programmingExercise
                             && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                         instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
                     }
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
                 }
                 catch (Exception ex) {
-                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
                             ex.getMessage(), ex);
                 }
             }
@@ -480,10 +481,6 @@ public class StudentExamService {
      */
     public int startExercises(Long examId) {
         var exam = examRepository.findWithStudentExamsExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("The exercise start for TestExams will be perfomed when the student starts with the conduction");
-        }
         var studentExams = exam.getStudentExams();
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         executeInParallel(() -> studentExams.parallelStream().forEach(studentExam -> setUpExerciseParticipationsAndSubmissions(studentExam, generatedParticipations)));
@@ -566,24 +563,19 @@ public class StudentExamService {
     /**
      * Generates a new test exam for the student and stores it in the database
      *
-     * @param examId  the exam for which the StudentExam should be fetched / created
+     * @param exam  the exam with loaded exercie groups and exercise for which the StudentExam should be  created
      * @param student the corresponding student
      * @return a StudentExam for the student and exam
      */
-    public StudentExam generateTestExam(Long examId, User student) {
+    public StudentExam generateTestExam(Exam exam, User student) {
         // To create a new StudentExam, the Exam with loaded ExerciseGroups and Exercises is needed
-        Exam examWithExerciseGroupsAndExercises = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(examId);
-
-        if (!examWithExerciseGroupsAndExercises.isTestExam()) {
-            throw new AccessForbiddenException("The requested Exam is no TestExam and thus no StudentExam can be created");
-        }
         long start = System.nanoTime();
-        StudentExam studentExam = generateIndividualStudentExam(examWithExerciseGroupsAndExercises, student);
+        StudentExam studentExam = generateIndividualStudentExam(exam, student);
         // we need to break a cycle for the serialization
         studentExam.getExam().setExerciseGroups(null);
         studentExam.getExam().setStudentExams(null);
 
-        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), examId);
+        log.info("Generated 1 student exam for {} in {} for exam {}", student.getId(), formatDurationFrom(start), exam.getId());
 
         return studentExam;
 

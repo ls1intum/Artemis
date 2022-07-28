@@ -75,8 +75,7 @@ export class LectureComponent implements OnInit {
                     .subscribe({
                         next: (res: Lecture) => {
                             this.lectures.push(res);
-                            this.activeFilters.clear();
-                            this.applyFilters();
+                            this.router.navigate(['course-management', res.course!.id, 'lectures', res.id]);
                         },
                         error: (res: HttpErrorResponse) => onError(this.alertService, res),
                     });
