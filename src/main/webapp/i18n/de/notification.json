@@ -30,7 +30,8 @@
             "expireDate": "Gültig bis",
             "notificationDate": "Mitteilungsdatum",
             "active": "Aktiv",
-            "notActive": "Nicht Aktiv",
+            "expired": "Abgelaufen",
+            "scheduled": "Geplant",
             "createLabel": "Neue Systemmitteilung erstellen",
             "createOrEditLabel": "Systemmitteilung erstellen oder bearbeiten",
             "delete": {

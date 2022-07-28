@@ -1,12 +1,14 @@
 <div class="jhi-git-diff-report">
     <div class="row">
-        <div class="col-6">
-            <h6>{{ diffEntry.previousFilePath }}</h6>
+        <div class="col-8 col-md-10">
+            <div *ngIf="diffEntry.previousFilePath && diffEntry.filePath && diffEntry.previousFilePath !== diffEntry.filePath; else oneFileName">
+                <h6 class="text-wrap">{{ diffEntry.previousFilePath }} → {{ diffEntry.filePath }}</h6>
+            </div>
+            <ng-template #oneFileName>
+                <h6 class="text-break">{{ diffEntry.previousFilePath || diffEntry.filePath }}</h6>
+            </ng-template>
         </div>
-        <div class="col-4">
-            <h6>{{ diffEntry.filePath }}</h6>
-        </div>
-        <div class="col-2 text-end">
+        <div class="col-4 col-md-10 text-end">
             <jhi-git-diff-line-stat
                 [addedLineCount]="addedLineCount"
                 [removedLineCount]="removedLineCount"

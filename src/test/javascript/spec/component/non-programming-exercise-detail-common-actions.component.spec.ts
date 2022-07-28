@@ -64,21 +64,21 @@ describe('Exercise detail common actions Component', () => {
         comp.exercise = textExercise;
         comp.course = course;
         comp.ngOnInit();
-        expect(comp.baseResource).toEqual('/course-management/123/text-exercises/123/');
+        expect(comp.baseResource).toBe('/course-management/123/text-exercises/123/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, undefined);
         fileUploadExercise.id = 123;
 
         comp.exercise = fileUploadExercise;
         comp.ngOnInit();
-        expect(comp.baseResource).toEqual('/course-management/123/file-upload-exercises/123/');
+        expect(comp.baseResource).toBe('/course-management/123/file-upload-exercises/123/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, undefined);
         modelingExercise.id = 123;
 
         comp.exercise = modelingExercise;
         comp.ngOnInit();
-        expect(comp.baseResource).toEqual('/course-management/123/modeling-exercises/123/');
+        expect(comp.baseResource).toBe('/course-management/123/modeling-exercises/123/');
     });
 
     it('should get the correct edit routes for exam exercise', () => {
@@ -91,21 +91,21 @@ describe('Exercise detail common actions Component', () => {
         comp.exercise = textExercise;
         comp.course = course;
         comp.ngOnInit();
-        expect(comp.baseResource).toEqual('/course-management/123/exams/2/exercise-groups/3/text-exercises/4/');
+        expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/text-exercises/4/');
 
         const fileUploadExercise: FileUploadExercise = new FileUploadExercise(course, exerciseGroup);
         fileUploadExercise.id = 5;
 
         comp.exercise = fileUploadExercise;
         comp.ngOnInit();
-        expect(comp.baseResource).toEqual('/course-management/123/exams/2/exercise-groups/3/file-upload-exercises/5/');
+        expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/file-upload-exercises/5/');
 
         const modelingExercise: ModelingExercise = new ModelingExercise(UMLDiagramType.ClassDiagram, course, exerciseGroup);
         modelingExercise.id = 6;
 
         comp.exercise = modelingExercise;
         comp.ngOnInit();
-        expect(comp.baseResource).toEqual('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
+        expect(comp.baseResource).toBe('/course-management/123/exams/2/exercise-groups/3/modeling-exercises/6/');
     });
 
     it('should call event manager on delete exercises', () => {

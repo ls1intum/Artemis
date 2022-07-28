@@ -100,7 +100,7 @@ describe('Sort Service', () => {
             'should sort array with null properties descending',
             repeatWithRandomArray(10, (arr) => {
                 service.sortByProperty(arr, 'd', false);
-                expect(arr.length).toEqual(6);
+                expect(arr).toHaveLength(6);
                 expect(arr.slice(0, 2)).toIncludeSameMembers([e3, e6]);
                 expect(arr.slice(2, 6)).toEqual([e2, e5, e1, e4]);
             }),

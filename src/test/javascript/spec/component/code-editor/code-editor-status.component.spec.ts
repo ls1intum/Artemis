@@ -42,9 +42,9 @@ describe('CodeEditorStatusComponent', () => {
     const showsExactlyOneStatusSegment = (stateSegment: DebugElement) => {
         expect(stateSegment.children).toHaveLength(1);
         const icon = stateSegment.query(By.css('fa-icon'));
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
         const text = stateSegment.query(By.css('span'));
-        expect(text).not.toBe(null);
+        expect(text).not.toBeNull();
         expect(text.nativeElement.textContent).not.toBe('');
     };
 });

@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -199,19 +200,19 @@ public class QuizSubmissionService {
      * @param user              the student who wants to submit the quiz during the exam
      * @return                  the updated quiz submission after it has been saved to the database
      */
-    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, String user) {
+    public QuizSubmission saveSubmissionForExamMode(QuizExercise quizExercise, QuizSubmission quizSubmission, User user) {
         // update submission properties
         quizSubmission.setSubmitted(true);
         quizSubmission.setType(SubmissionType.MANUAL);
         quizSubmission.setSubmissionDate(ZonedDateTime.now());
 
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user);
+        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, user.getLogin());
 
         if (optionalParticipation.isEmpty()) {
-            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user);
+            log.warn("The participation for quiz exercise {}, quiz submission {} and user {} was not found", quizExercise.getId(), quizSubmission.getId(), user.getLogin());
             // TODO: think of better way to handle failure
-            throw new EntityNotFoundException(
-                    "Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user " + user + " was not found!");
+            throw new EntityNotFoundException("Participation for quiz exercise " + quizExercise.getId() + " and quiz submission " + quizSubmission.getId() + " for user "
+                    + user.getLogin() + " was not found!");
         }
         StudentParticipation studentParticipation = optionalParticipation.get();
         quizSubmission.setParticipation(studentParticipation);

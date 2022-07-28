@@ -90,7 +90,7 @@ describe('AnswerPostReactionsBarComponent', () => {
         expect(metisServiceCreateReactionSpy).toHaveBeenCalledWith(reactionToDelete);
     });
 
-    it('should invoke metis service method with own reaction to delete it', () => {
+    it('should invoke metis service method with own reaction to remove it', () => {
         component.ngOnInit();
         const addOrRemoveSpy = jest.spyOn(component, 'addOrRemoveReaction');
         component.updateReaction(reactionToDelete.emojiId!);

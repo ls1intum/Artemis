@@ -113,6 +113,6 @@ describe('Team Owner Search Component', () => {
         expect(searchFailedSpy).toHaveBeenCalledWith(true);
 
         expect(comp.ownerOptionsLoaded).toBeFalse();
-        expect(loadOwnerOptionsResult).toBe(undefined);
+        expect(loadOwnerOptionsResult).toBeUndefined();
     });
 });

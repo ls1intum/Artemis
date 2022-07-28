@@ -142,21 +142,21 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp);
         fixture.detectChanges();
         expect(comp.isLoading).toBeTrue();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.toBe(null);
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).not.toBeNull();
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).toBeNull();
         expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
 
         getFileSubject.next({ fileContent: 'lorem ipsum', fileName: 'README.md' });
-        expect(comp.problemStatement).toEqual('lorem ipsum');
+        expect(comp.problemStatement).toBe('lorem ipsum');
         expect(loadInitialResultStub).toHaveBeenCalledOnce();
         expect(comp.latestResult).toEqual(result);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
 
     it('should NOT try to fetch README.md from assignment repository if a problemStatement was provided', () => {
@@ -182,15 +182,15 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         triggerChanges(comp);
 
         expect(getFileStub).not.toHaveBeenCalled();
-        expect(comp.problemStatement).toEqual('lorem ipsum');
+        expect(comp.problemStatement).toBe('lorem ipsum');
         expect(loadInitialResultStub).toHaveBeenCalledOnce();
         expect(comp.latestResult).toEqual(result);
         expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
 
     it('should emit that no instructions are available if there is neither a problemStatement provided nor a README.md can be retrieved', () => {
@@ -220,16 +220,16 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         expect(getFileStub).toHaveBeenCalledWith(participation.id, 'README.md');
 
         getFileSubject.error('fatal error');
-        expect(comp.problemStatement).toBe(undefined);
+        expect(comp.problemStatement).toBeUndefined();
         expect(loadInitialResultStub).not.toHaveBeenCalled();
-        expect(comp.latestResult).toBe(undefined);
+        expect(comp.latestResult).toBeUndefined();
         expect(updateMarkdownStub).not.toHaveBeenCalled();
         expect(noInstructionsAvailableSpy).toHaveBeenCalledOnce();
         expect(comp.isInitial).toBeFalse();
         expect(comp.isLoading).toBeFalse();
         fixture.detectChanges();
-        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBe(null);
-        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBe(null);
+        expect(debugElement.query(By.css('#programming-exercise-instructions-loading'))).toBeNull();
+        expect(debugElement.query(By.css('#programming-exercise-instructions-content'))).not.toBeNull();
     });
 
     it('should NOT update markdown if the problemStatement is changed', () => {
@@ -349,7 +349,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         });
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
@@ -357,8 +357,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--not-executed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
-        expect(bubbleSortStep).not.toBe(null);
-        expect(mergeSortStep).not.toBe(null);
+        expect(bubbleSortStep).not.toBeNull();
+        expect(mergeSortStep).not.toBeNull();
 
         const modalRef = { componentInstance: {} };
         openModalStub.mockReturnValue(modalRef);
@@ -411,7 +411,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         });
         fixture.detectChanges();
 
-        expect(debugElement.query(By.css('.stepwizard'))).not.toBe(null);
+        expect(debugElement.query(By.css('.stepwizard'))).not.toBeNull();
         expect(debugElement.queryAll(By.css('.btn-circle'))).toHaveLength(2);
         tick();
         fixture.detectChanges();
@@ -419,8 +419,8 @@ describe('ProgrammingExerciseInstructionComponent', () => {
 
         const bubbleSortStep = debugElement.query(By.css('.stepwizard-step--failed'));
         const mergeSortStep = debugElement.query(By.css('.stepwizard-step--success'));
-        expect(bubbleSortStep).not.toBe(null);
-        expect(mergeSortStep).not.toBe(null);
+        expect(bubbleSortStep).not.toBeNull();
+        expect(mergeSortStep).not.toBeNull();
 
         const modalRef = { componentInstance: {} };
         openModalStub.mockReturnValue(modalRef);

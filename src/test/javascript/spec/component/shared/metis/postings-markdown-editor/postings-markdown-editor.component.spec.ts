@@ -18,7 +18,7 @@ import { metisAnswerPostUser2, metisPostExerciseUser1 } from '../../../../helper
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: 'jhi-markdown-editor' })
-export class MockMarkdownEditorDirective {
+class MockMarkdownEditorDirective {
     @Input() markdown?: string;
     @Output() markdownChange = new EventEmitter<string>();
 }
@@ -72,7 +72,7 @@ describe('PostingsMarkdownEditor', () => {
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
-        expect(charCounter.style.color).not.toEqual('red');
+        expect(charCounter.style.color).not.toBe('red');
     });
 
     it('should show the correct amount of characters in red if max length exceeded', () => {
@@ -81,7 +81,7 @@ describe('PostingsMarkdownEditor', () => {
         const charCounter = getElement(debugElement, 'p.small');
         expect(charCounter.textContent).toContain(component.maxContentLength.toString());
         expect(charCounter.textContent).toContain(metisPostExerciseUser1.content!.length.toString());
-        expect(charCounter.style.color).toEqual('red');
+        expect(charCounter.style.color).toBe('red');
     });
 
     it('should initialize markdown correctly with post content', () => {
@@ -94,7 +94,7 @@ describe('PostingsMarkdownEditor', () => {
         component.maxContentLength = 200;
         fixture.detectChanges();
         mockMarkdownEditorDirective.markdownChange.emit('updated text');
-        expect(component.content).toEqual('updated text');
+        expect(component.content).toBe('updated text');
     });
 
     it('should write value of form group in content variable', () => {

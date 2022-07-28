@@ -609,7 +609,7 @@ public class ProgrammingExerciseExportService {
 
         if (latestAllowedDate.isPresent()) {
             Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.comparing(Submission::getSubmissionDate));
+                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.naturalOrder());
             gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
         }
     }

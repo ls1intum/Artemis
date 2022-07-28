@@ -51,8 +51,9 @@ describe('Exam creation/deletion', () => {
         creationPage.submit().then((examResponse: Interception) => {
             examId = examResponse.response!.body.id;
             expect(examResponse.response!.statusCode).to.eq(201);
+            cy.url().should('contain', `/exams/${examId}`);
         });
-        examManagement.getExamRowRoot(examTitle).should('be.visible');
+        cy.get('#exam-detail-title').should('contain.text', examTitle);
     });
 
     describe('Exam deletion', () => {

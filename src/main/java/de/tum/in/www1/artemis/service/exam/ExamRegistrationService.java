@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.service.ParticipationService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -178,7 +179,7 @@ public class ExamRegistrationService {
         Exam exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
 
         if (!exam.isTestExam()) {
-            throw new AccessForbiddenException("Self-Registration is only allowed for test exams");
+            throw new BadRequestAlertException("Self-Registration is only allowed for test exams", "ExamRegistrationService", "SelfRegistrationOnlyForRealExams");
         }
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
@@ -195,17 +196,11 @@ public class ExamRegistrationService {
     }
 
     /**
-     * @param examId                            the exam for which a student should be unregistered
+     * @param exam                             the exam with eagerly loaded registered users for which a student should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      * @param student                           the user object that should be unregistered
      */
-    public void unregisterStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission, User student) {
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Deletion of users is only allowed for real exams");
-        }
-
+    public void unregisterStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission, User student) {
         exam.removeRegisteredUser(student);
 
         // Note: we intentionally do not remove the user from the course, because the student might just have "unregistered" from the exam, but should
@@ -227,7 +222,7 @@ public class ExamRegistrationService {
 
         // Optionally delete participations and submissions
         if (deleteParticipationsAndSubmission) {
-            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+            List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissions(studentExam);
             for (var participation : participations) {
                 participationService.delete(participation.getId(), true, true);
             }
@@ -240,15 +235,10 @@ public class ExamRegistrationService {
     /**
      * Unregisters all students from the exam
      *
-     * @param examId                            the exam for which a student should be unregistered
+     * @param exam                             the exam with eagerly loaded registered users for which all students should be unregistered
      * @param deleteParticipationsAndSubmission whether the participations and submissions of the student should be deleted
      */
-    public void unregisterAllStudentFromExam(Long examId, boolean deleteParticipationsAndSubmission) {
-        var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Unregistration is only allowed for real exams");
-        }
+    public void unregisterAllStudentFromExam(Exam exam, boolean deleteParticipationsAndSubmission) {
 
         // remove all registered students
         List<Long> userIds = new ArrayList<>();
@@ -258,7 +248,7 @@ public class ExamRegistrationService {
         examRepository.save(exam);
 
         // remove all students exams
-        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(examId);
+        Set<StudentExam> studentExams = studentExamRepository.findAllWithExercisesByExamId(exam.getId());
         studentExams.forEach(studentExam -> removeStudentExam(studentExam, deleteParticipationsAndSubmission));
 
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
@@ -272,16 +262,11 @@ public class ExamRegistrationService {
      * Adds all students registered in the course to the given exam
      *
      * @param courseId Id of the course
-     * @param examId   Id of the exam
+     * @param exam   the exam with eagerly loaded registered users to which the course students should be added
      */
-    public void addAllStudentsOfCourseToExam(Long courseId, Long examId) {
+    public void addAllStudentsOfCourseToExam(Long courseId, Exam exam) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         var students = userRepository.getStudents(course);
-        var exam = examRepository.findByIdWithRegisteredUsersElseThrow(examId);
-
-        if (exam.isTestExam()) {
-            throw new AccessForbiddenException("Registration is only allowed for real exams");
-        }
 
         Map<String, Object> userData = new HashMap<>();
         userData.put("exam", exam.getTitle());

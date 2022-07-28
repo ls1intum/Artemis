@@ -189,7 +189,7 @@ describe('CourseExerciseRowComponent', () => {
         expect(comp.exercise.participationStatus).toBe(ParticipationStatus.INITIALIZED);
     });
 
-    it('Participation status of programming exercise should evaluate to EXERCISE_MISSED', () => {
+    it('Participation status of programming exercise should evaluate to EXERCISE_MISSED with uninitialized participation', () => {
         setupExercise(ExerciseType.PROGRAMMING, dayjs().subtract(1, 'day'));
 
         const studentParticipation = {

@@ -114,7 +114,7 @@ describe('TreeviewItemComponent', () => {
 
             it('should not render children', () => {
                 const checkboxElements = fixture.debugElement.queryAll(By.css('.form-check-input'));
-                expect(checkboxElements.length).toBe(1);
+                expect(checkboxElements).toHaveLength(1);
             });
         });
 
