@@ -2484,8 +2484,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         verify(gitService, times(0)).combineAllCommitsOfRepositoryIntoOne(any());
 
         // invoke prepare exercise start
-        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
-                HttpStatus.OK);
+        prepareExerciseStart(exam1);
 
         verify(gitService, times(getNumberOfProgrammingExercises(exam1))).combineAllCommitsOfRepositoryIntoOne(any());
     }
