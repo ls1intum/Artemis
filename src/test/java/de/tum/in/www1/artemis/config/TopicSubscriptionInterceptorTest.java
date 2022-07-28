@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.config.websocket.WebsocketConfiguration;
 
 @SuppressWarnings("unchecked")
-public class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private WebsocketConfiguration websocketConfiguration;
@@ -28,7 +28,7 @@ public class TopicSubscriptionInterceptorTest extends AbstractSpringIntegrationB
     }
 
     @Test
-    public void testAllowSubscription() {
+    void testAllowSubscription() {
         database.addUsers(4, 0, 1, 1);
         var course = database.createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(false);
         var exercise = course.getExercises().stream().findFirst().orElseThrow();

@@ -559,7 +559,7 @@ public class StudentExamResource {
      * @param examId   the exam to which the student exams belongs to
      * @return ResponseEntity containing the status
      */
-    @GetMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);

@@ -12,8 +12,18 @@ import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 
 public class ExamPrepareExercisesTestUtil {
 
-    private static final Logger log = LoggerFactory.getLogger(ExamPrepareExercisesTestUtil.class);
+    private static final Logger log = LoggerFactory.getLogger(ExamPrepareExercisesTestUtil.class); // NOPMD
 
+    /**
+     * Testing util that sends a request to prepare exam exercise starts and waits for the process to finish by
+     * watching responses from the status endpoint. Will fail after one minute if the process doesn't finish.
+     *
+     * @param requestUtilService the request util service
+     * @param exam the exam
+     * @param course the course of the exam
+     * @return the number of generated participations
+     * @throws Exception potentially an exception from the request util service
+     */
     public static int prepareExerciseStart(RequestUtilService requestUtilService, Exam exam, Course course) throws Exception {
         requestUtilService.postWithoutLocation("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/student-exams/start-exercises", null, HttpStatus.OK, null);
 
