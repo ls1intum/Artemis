@@ -48,9 +48,9 @@ public class SubmissionVersionService {
                 return updateExistingVersion(latestVersion, submission);
             }
             else {
-                return createNewVersion(submission, user);
+                return saveVersionForIndividual(submission, user);
             }
-        }).orElseGet(() -> createNewVersion(submission, user));
+        }).orElseGet(() -> saveVersionForIndividual(submission, user));
     }
 
     /**
@@ -62,18 +62,25 @@ public class SubmissionVersionService {
      */
     public SubmissionVersion saveVersionForIndividual(Submission submission, String username) {
         User user = userRepository.findOneByLogin(username).orElseThrow();
-        return createNewVersion(submission, user);
+        return saveVersionForIndividual(submission, user);
     }
 
-    private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {
+    /**
+     * Saves a version for the given individual submission to track its content
+     *
+     * @param submission Submission for which to save a version
+     * @param user       Author of the submission update
+     * @return           created/updated submission version
+     */
+    public SubmissionVersion saveVersionForIndividual(Submission submission, User user) {
+        SubmissionVersion version = new SubmissionVersion();
+        version.setAuthor(user);
+        version.setSubmission(submission);
         version.setContent(getSubmissionContent(submission));
         return submissionVersionRepository.save(version);
     }
 
-    private SubmissionVersion createNewVersion(Submission submission, User user) {
-        SubmissionVersion version = new SubmissionVersion();
-        version.setAuthor(user);
-        version.setSubmission(submission);
+    private SubmissionVersion updateExistingVersion(SubmissionVersion version, Submission submission) {
         version.setContent(getSubmissionContent(submission));
         return submissionVersionRepository.save(version);
     }
