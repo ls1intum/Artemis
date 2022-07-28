@@ -137,8 +137,7 @@ public class OnlineUnitResource {
         lecture.addLectureUnit(persistedOnlineUnit);
         lectureRepository.save(lecture);
 
-        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedOnlineUnit);
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }
 
     /**

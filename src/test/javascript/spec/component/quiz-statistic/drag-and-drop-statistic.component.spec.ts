@@ -76,7 +76,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             expect(accountSpy).toHaveBeenCalled();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
-            expect(comp.websocketChannelForData).toEqual('/topic/statistic/42');
+            expect(comp.websocketChannelForData).toBe('/topic/statistic/42');
         });
 
         it('should not load Quiz if not authorised', () => {

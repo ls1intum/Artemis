@@ -213,7 +213,7 @@ describe('ExamPointsSummaryComponent', () => {
         fixture.detectChanges();
         expect(fixture).not.toBeNull();
 
-        expect(component.getAchievedPointsSum()).toEqual(0);
-        expect(component.getMaxPointsSum()).toEqual(0);
+        expect(component.getAchievedPointsSum()).toBe(0);
+        expect(component.getMaxPointsSum()).toBe(0);
     });
 });

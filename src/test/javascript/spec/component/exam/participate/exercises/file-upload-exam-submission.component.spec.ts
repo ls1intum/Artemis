@@ -196,15 +196,15 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.studentSubmission.isSynced = false;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submissionFile).not.toBeUndefined();
+            expect(comp.submissionFile).toBeDefined();
         });
         it('should set submitted filename and file extension', () => {
             comp.studentSubmission.isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toEqual('file1.png');
-            expect(comp.submittedFileExtension).toEqual('png');
-            expect(comp.submissionFile).toEqual(undefined);
+            expect(comp.submittedFileName).toBe('file1.png');
+            expect(comp.submittedFileExtension).toBe('png');
+            expect(comp.submissionFile).toBeUndefined();
         });
     });
 
@@ -232,7 +232,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
         jest.restoreAllMocks();
     }));
 
@@ -260,7 +260,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
 
         tick();
         fixture.destroy();

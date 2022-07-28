@@ -55,7 +55,7 @@ describe('Plagiarism Split Pane Header Component', () => {
             files: { currentValue: files } as SimpleChange,
         });
 
-        expect(comp.activeFileIndex).toEqual(0);
+        expect(comp.activeFileIndex).toBe(0);
     });
 
     it('selects the first file on change', () => {

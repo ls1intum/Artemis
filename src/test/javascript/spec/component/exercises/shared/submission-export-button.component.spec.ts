@@ -10,7 +10,7 @@ import { SubmissionExportButtonComponent } from 'app/exercises/shared/submission
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
 
-export class MockNgbModalRef {
+class MockNgbModalRef {
     componentInstance = {
         exerciseId: undefined,
         exerciseType: undefined,

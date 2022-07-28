@@ -108,7 +108,7 @@ describe('CreateOnlineUnitComponent', () => {
             expect(onlineUnitCallArgument.description).toEqual(formDate.description);
             expect(onlineUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
             expect(onlineUnitCallArgument.source).toEqual(formDate.source);
-            expect(lectureIdCallArgument).toEqual(1);
+            expect(lectureIdCallArgument).toBe(1);
 
             expect(createStub).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();

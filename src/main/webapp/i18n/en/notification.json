@@ -30,7 +30,8 @@
             "expireDate": "Expiration Date",
             "notificationDate": "Notification Date",
             "active": "Active",
-            "notActive": "Not Active",
+            "expired": "Expired",
+            "scheduled": "Scheduled",
             "createLabel": "Create a new system notification",
             "createOrEditLabel": "Create or edit a system notification",
             "delete": {

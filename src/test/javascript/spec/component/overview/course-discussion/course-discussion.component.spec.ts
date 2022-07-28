@@ -105,7 +105,7 @@ describe('CourseDiscussionComponent', () => {
         component.ngOnInit();
         tick();
         expect(component.course).toBe(metisCourse);
-        expect(component.createdPost).not.toBe(null);
+        expect(component.createdPost).not.toBeNull();
         expect(component.posts).toEqual(metisCoursePosts);
         expect(component.currentPostContextFilter).toEqual({
             courseId: metisCourse.id,
