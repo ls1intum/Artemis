@@ -106,7 +106,7 @@ describe('ModelingExercise Service', () => {
     it('should convert model to pdf', fakeAsync(() => {
         jest.spyOn(helper, 'downloadStream').mockReturnValue();
         const blob = new Blob(['test'], { type: 'text/html' }) as File;
-        service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).resolves);
+        service.convertToPdf('model1', 'filename').subscribe((resp) => expect(resp).toResolve());
 
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(blob);
@@ -209,7 +209,7 @@ describe('ModelingExercise Service', () => {
 
     it('should delete clusters', fakeAsync(() => {
         elemDefault.id = 756;
-        service.deleteClusters(elemDefault.id).subscribe((resp) => expect(resp).resolves);
+        service.deleteClusters(elemDefault.id).subscribe((resp) => expect(resp).toResolve());
         const req = httpMock.expectOne({ method: 'DELETE', url: `${service.resourceUrl}/${elemDefault.id}/clusters` });
         req.flush({});
         tick();

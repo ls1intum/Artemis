@@ -185,7 +185,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.notificationText)
             .subscribe({
-                next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
+                next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
                     this.isSaving = false;
@@ -194,24 +194,24 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
-    private onSaveSuccess(exerciseId: number): void {
+    private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
 
         switch (this.editType) {
             case EditType.CREATE:
             case EditType.IMPORT:
-                // Passing exerciseId since it is required for navigation to the example submission dashboard.
-                navigateToExampleSubmissions(this.router, { ...this.modelingExercise, id: exerciseId });
+                // Passing exercise since it is required for navigation to the example submission dashboard.
+                navigateToExampleSubmissions(this.router, exercise);
                 break;
             case EditType.UPDATE:
-                this.previousState();
+                this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
                 break;
         }
     }

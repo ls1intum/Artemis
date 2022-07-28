@@ -25,8 +25,7 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
-            <!-- Changing to test exams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
-            <div class="form-group" *ngIf="isAdmin">
+            <div class="form-group">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
@@ -146,7 +145,7 @@
                 <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation">
                     Select the individual exercises, which should be imported alongside the exam, by clicking on it
                 </p>
-                <jhi-exam-exercise-import [exam]="exam"></jhi-exam-exercise-import>
+                <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse"></jhi-exam-exercise-import>
             </div>
 
             <!-- Section exam assessment and student review

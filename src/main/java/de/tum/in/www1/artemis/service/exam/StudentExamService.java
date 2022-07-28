@@ -321,13 +321,8 @@ public class StudentExamService {
      * @return a map of the User as key, and a list of the users exercises as value
      */
     public Map<User, List<Exercise>> getExercisesOfUserMap(Set<StudentExam> studentExams) {
-        return studentExams.stream()
-                .collect(
-                        Collectors
-                                .toMap(StudentExam::getUser,
-                                        studentExam -> studentExam.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise
-                                                || exercise instanceof TextExercise || exercise instanceof FileUploadExercise || exercise instanceof ProgrammingExercise)
-                                                .collect(Collectors.toList())));
+        return studentExams.stream().collect(
+                Collectors.toMap(StudentExam::getUser, studentExam -> studentExam.getExercises().stream().filter(exercise -> !(exercise instanceof QuizExercise)).toList()));
     }
 
     /**
@@ -439,7 +434,7 @@ public class StudentExamService {
 
         for (Exercise exercise : studentExam.getExercises()) {
             SecurityUtils.setAuthorizationObject();
-            // NOTE: it is not ideal to invoke the next line several times (e.g. 2000 student exams with 10 exercises would lead to 20.000 database calls to find a participation).
+            // NOTE: it's not ideal to invoke the next line several times (2000 student exams with 10 exercises would lead to 20.000 database calls to find all participations).
             // One optimization could be that we load all participations per exercise once (or per exercise) into a large list (10 * 2000 = 20.000 participations) and then check if
             // those participations exist in Java, however this might lead to memory issues and might be more difficult to program (and more difficult to understand)
             // TODO: directly check in the database if the entry exists for the student, exercise and InitializationState.INITIALIZED
@@ -468,9 +463,10 @@ public class StudentExamService {
                             && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
                         instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
                     }
+                    log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
                 }
                 catch (Exception ex) {
-                    log.warn("Start exercise for student exam {} and exercise {} and student {} failed with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
+                    log.warn("FAILED: Start exercise for student exam {} and exercise {} and student {} with exception: {}", studentExam.getId(), exercise.getId(), student.getId(),
                             ex.getMessage(), ex);
                 }
             }

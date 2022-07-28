@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.exception.JenkinsException;
 import de.tum.in.www1.artemis.service.connectors.jenkins.jobs.JenkinsJobService;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
-public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private JenkinsJobService jenkinsJobService;
@@ -38,7 +38,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     private Document validDocument;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
         // create the document before the mock so that it still works correctly
@@ -52,7 +52,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
     }
 
     @AfterEach
-    public void tearDown() throws IOException {
+    void tearDown() throws IOException {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedXmlFileUtils.close();
@@ -60,7 +60,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
 
     @Test
     @WithMockUser(username = "student1")
-    public void testCreateIfJobExists() throws IOException {
+    void testCreateIfJobExists() throws IOException {
         jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", true);
         // This call shall not fail, since the job already exists ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
@@ -70,7 +70,7 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
 
     @Test
     @WithMockUser(username = "student1")
-    public void testCreateIfJobDoesNotExist() throws IOException {
+    void testCreateIfJobDoesNotExist() throws IOException {
         jenkinsRequestMockProvider.mockCreateJobInFolder("JenkinsFolder", "JenkinsJob", false);
         // This call shall not fail, since the job will be created ..
         jenkinsJobService.createJobInFolder(validDocument, "JenkinsFolder", "JenkinsJob");
@@ -80,20 +80,20 @@ public class JenkinsJobServiceTest extends AbstractSpringIntegrationJenkinsGitla
 
     @Test
     @WithMockUser(username = "student1")
-    public void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
+    void testCreateJobInFolderJenkinsExceptionOnXmlError() throws IOException {
         jenkinsRequestMockProvider.mockGetFolderJob("JenkinsFolder", new FolderJob());
         assertThrows(JenkinsException.class, () -> jenkinsJobService.createJobInFolder(invalidDocument, "JenkinsFolder", "JenkinsJob"));
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testUpdateJobThrowIOExceptionOnXmlError() {
+    void testUpdateJobThrowIOExceptionOnXmlError() {
         assertThrows(IOException.class, () -> jenkinsJobService.updateJob("JenkinsFolder", "JenkinsJob", invalidDocument));
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testUpdateFolderJobThrowIOExceptionOnXmlError() {
+    void testUpdateFolderJobThrowIOExceptionOnXmlError() {
         assertThrows(IOException.class, () -> jenkinsJobService.updateFolderJob("JenkinsFolder", invalidDocument));
     }
 

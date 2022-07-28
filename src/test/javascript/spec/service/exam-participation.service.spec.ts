@@ -78,16 +78,6 @@ describe('Exam Participation Service', () => {
         req.flush(returnedFromService);
     });
 
-    it('should load a StudentExam with exercises for summary', async () => {
-        const returnedFromService = Object.assign({}, studentExam);
-        service
-            .loadStudentExamWithExercisesForSummary(1, 1, 1)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: studentExam }));
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-    });
-
     it('should load a student exam grade info for summary', async () => {
         const studentExamWithGrade: StudentExamWithGradeDTO = {
             maxPoints: 100,
@@ -255,7 +245,7 @@ describe('Exam Participation Service', () => {
         const expected = Object.assign({}, sendToService);
         service.saveStudentExamToLocalStorage(1, 1, sendToService);
         jest.spyOn(localStorage, 'store').mockImplementation(() => {
-            expect(localStorage['artemis_student_exam_1_1'].toBe(expected));
+            expect(localStorage['artemis_student_exam_1_1']).toBe(expected);
         });
     });
     it('should load StudentExam from localStorage', async () => {

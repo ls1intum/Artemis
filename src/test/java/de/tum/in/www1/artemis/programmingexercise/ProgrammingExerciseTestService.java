@@ -46,11 +46,13 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -146,6 +148,12 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private JavaTemplateUpgradeService javaTemplateUpgradeService;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private UrlService urlService;
@@ -329,7 +337,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
+    void createProgrammingExercise_sequential_validExercise_created(ProgrammingLanguage programmingLanguage) throws Exception {
         exercise = ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course, programmingLanguage);
         exercise.setSequentialTestRuns(true);
         setupRepositoryMocks(exercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
@@ -338,15 +346,14 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
+    void createProgrammingExercise_mode_validExercise_created(ExerciseMode mode) throws Exception {
         exercise.setMode(mode);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         validateProgrammingExercise(request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED));
     }
 
     // TEST
-    public void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
-            throws Exception {
+    void createProgrammingExercise_programmingLanguage_validExercise_created(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature) throws Exception {
         exercise.setProgrammingLanguage(language);
         if (language == SWIFT) {
             exercise.setPackageName("swiftTest");
@@ -357,7 +364,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
+    void createProgrammingExercise_validExercise_bonusPointsIsNull() throws Exception {
         exercise.setBonusPoints(null);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class);
@@ -367,8 +374,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature)
-            throws Exception {
+    void createProgrammingExercise_validExercise_withStaticCodeAnalysis(ProgrammingLanguage language, ProgrammingLanguageFeature programmingLanguageFeature) throws Exception {
         exercise.setStaticCodeAnalysisEnabled(true);
         exercise.setProgrammingLanguage(language);
         if (language == SWIFT) {
@@ -396,7 +402,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
+    void createProgrammingExercise_failToCreateProjectInCi() throws Exception {
         exercise.setMode(ExerciseMode.INDIVIDUAL);
         mockDelegate.mockConnectorRequestsForSetup(exercise, true);
         var programmingExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -404,7 +410,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExerciseForExam_validExercise_created() throws Exception {
+    void createProgrammingExerciseForExam_validExercise_created() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
 
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
@@ -416,7 +422,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
+    void createProgrammingExerciseForExam_invalidExercise_dates(InvalidExamExerciseDateConfiguration dates) throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
 
@@ -424,7 +430,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExerciseForExam_DatesSet() throws Exception {
+    void createProgrammingExerciseForExam_DatesSet() throws Exception {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
@@ -447,7 +453,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
+    void createAndImportJavaProgrammingExercise(boolean staticCodeAnalysisEnabled) throws Exception {
         setupRepositoryMocks(exercise, sourceExerciseRepo, sourceSolutionRepo, sourceTestRepo, sourceAuxRepo);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         exercise.setProjectType(ProjectType.MAVEN_MAVEN);
@@ -459,6 +465,15 @@ public class ProgrammingExerciseTestService {
 
         // Setup exercises for import
         database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addTasksToProgrammingExercise(sourceExercise);
+        // Manually add task
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName("Task 1");
+        task.setExercise(sourceExercise);
+        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
+        sourceExercise.setTasks(Collections.singletonList(task));
+        programmingExerciseTaskRepository.save(task);
+        programmingExerciseRepository.save(sourceExercise);
         database.addHintsToExercise(sourceExercise);
 
         // Reset because we will add mocks for new requests
@@ -489,24 +504,27 @@ public class ProgrammingExerciseTestService {
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
 
+        // Check that the tasks were imported correctly (see #5474)
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
+
         // TODO: check why the assertions do not work correctly
         // Assert correct creation of test cases
-        // var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
-        // var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        // var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
+        // var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         // assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         // assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
         // .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
         //
         // // Assert correct creation of hints
-        // var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
-        // var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        // var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
+        // var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
         // assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         // assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
         // .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     // TEST
-    public void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
+    void importExercise_created(ProgrammingLanguage programmingLanguage, boolean recreateBuildPlans, boolean addAuxRepos) throws Exception {
         boolean staticCodeAnalysisEnabled = programmingLanguage == JAVA || programmingLanguage == SWIFT;
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories(programmingLanguage);
@@ -536,24 +554,24 @@ public class ProgrammingExerciseTestService {
 
         if (staticCodeAnalysisEnabled) {
             // Assert correct creation of static code analysis categories
-            var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
-            var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toList());
+            var importedCategoryIds = importedExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
+            var sourceCategoryIds = sourceExercise.getStaticCodeAnalysisCategories().stream().map(StaticCodeAnalysisCategory::getId).collect(Collectors.toSet());
             assertThat(importedCategoryIds).doesNotContainAnyElementsOf(sourceCategoryIds);
             assertThat(importedExercise.getStaticCodeAnalysisCategories()).usingRecursiveFieldByFieldElementComparator().usingElementComparatorIgnoringFields("id", "exercise")
                     .containsExactlyInAnyOrderElementsOf(sourceExercise.getStaticCodeAnalysisCategories());
         }
 
         // Assert correct creation of test cases
-        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
-        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
+        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toSet());
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
                 .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
         // Assert correct creation of hints
-        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
-        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
+        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toSet());
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
@@ -561,7 +579,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void importExercise_enablePlanFails() throws Exception {
+    void importExercise_enablePlanFails() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         commonImportSetup(sourceExercise);
@@ -583,7 +601,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void importExercise_planDoesntExist() throws Exception {
+    void importExercise_planDoesntExist() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         commonImportSetup(sourceExercise);
@@ -605,7 +623,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_team_modeChange() throws Exception {
+    void testImportProgrammingExercise_team_modeChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(ExerciseMode.INDIVIDUAL);
@@ -643,7 +661,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_individual_modeChange() throws Exception {
+    void testImportProgrammingExercise_individual_modeChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         sourceExercise.setMode(TEAM);
@@ -681,7 +699,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testImportProgrammingExercise_scaChange() throws Exception {
+    void testImportProgrammingExercise_scaChange() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = database.addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories();
         database.addTestCasesToProgrammingExercise(sourceExercise);
@@ -706,7 +724,7 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseToBeImported.getMaxStaticCodeAnalysisPenalty()).isNull();
     }
 
-    public void testImportProgrammingExercise_scaChange_activated() throws Exception {
+    void testImportProgrammingExercise_scaChange_activated() throws Exception {
         // Setup exercises for import
         ProgrammingExercise sourceExercise = (ProgrammingExercise) database.addCourseWithOneProgrammingExercise(false).getExercises().iterator().next();
         database.addTestCasesToProgrammingExercise(sourceExercise);
@@ -786,23 +804,23 @@ public class ProgrammingExerciseTestService {
         assertThat(exerciseReceived.getExerciseGroup()).isNotEqualTo(targetExam.getExerciseGroups().get(0));
 
         // Assert correct creation of test cases
-        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
-        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).collect(Collectors.toList());
+        var importedTestCaseIds = importedExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).toList();
+        var sourceTestCaseIds = sourceExercise.getTestCases().stream().map(ProgrammingExerciseTestCase::getId).toList();
         assertThat(importedTestCaseIds).doesNotContainAnyElementsOf(sourceTestCaseIds);
         assertThat(importedExercise.getTestCases()).usingRecursiveFieldByFieldElementComparator()
                 .usingElementComparatorIgnoringFields("id", "exercise", "tasks", "solutionEntries", "coverageEntries")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getTestCases());
 
         // Assert correct creation of hints
-        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
-        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).collect(Collectors.toList());
+        var importedHintIds = importedExercise.getExerciseHints().stream().map(ExerciseHint::getId).toList();
+        var sourceHintIds = sourceExercise.getExerciseHints().stream().map(ExerciseHint::getId).toList();
         assertThat(importedHintIds).doesNotContainAnyElementsOf(sourceHintIds);
         assertThat(importedExercise.getExerciseHints()).usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "exercise", "exerciseHintActivations")
                 .containsExactlyInAnyOrderElementsOf(sourceExercise.getExerciseHints());
     }
 
     // TEST
-    public void createProgrammingExercise_validExercise_structureOracle() throws Exception {
+    void createProgrammingExercise_validExercise_structureOracle() throws Exception {
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
         final var generatedExercise = request.postWithResponseBody(ROOT + SETUP, exercise, ProgrammingExercise.class, HttpStatus.CREATED);
         String response = request.putWithResponseBody(ROOT + GENERATE_TESTS.replace("{exerciseId}", String.valueOf(generatedExercise.getId())), generatedExercise, String.class,
@@ -827,7 +845,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_noTutors_created() throws Exception {
+    void createProgrammingExercise_noTutors_created() throws Exception {
         course.setTeachingAssistantGroupName(null);
         courseRepository.save(course);
         mockDelegate.mockConnectorRequestsForSetup(exercise, false);
@@ -836,7 +854,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+    void startProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
         var user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         Participant participant = user;
@@ -851,7 +869,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExercise_correctInitializationState() throws Exception {
+    void startProgrammingExercise_correctInitializationState() throws Exception {
         var user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         user.setLogin("edx_student1");
         user.setInternal(true);
@@ -878,14 +896,14 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
+    void resumeProgrammingExercise_doesNotExist(ExerciseMode exerciseMode) throws Exception {
         final Course course = setupCourseWithProgrammingExercise(exerciseMode);
         request.putWithResponseBody("/api/exercises/" + exercise.getId() + "/resume-programming-participation", null, ProgrammingExerciseStudentParticipation.class,
                 HttpStatus.NOT_FOUND);
     }
 
     // TEST
-    public void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+    void resumeProgrammingExercise_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
 
         // These will be updated when the participation is resumed.
@@ -905,7 +923,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode, Object body) throws Exception {
+    void resumeProgrammingExerciseByPushingIntoRepo_correctInitializationState(ExerciseMode exerciseMode, Object body) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
@@ -928,7 +946,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode, SubmissionType submissionType) throws Exception {
+    void resumeProgrammingExerciseByTriggeringBuild_correctInitializationState(ExerciseMode exerciseMode, SubmissionType submissionType) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
@@ -961,7 +979,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode, boolean buildPlanExists) throws Exception {
+    void resumeProgrammingExerciseByTriggeringFailedBuild_correctInitializationState(ExerciseMode exerciseMode, boolean buildPlanExists) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
@@ -998,7 +1016,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
+    void resumeProgrammingExerciseByTriggeringInstructorBuild_correctInitializationState(ExerciseMode exerciseMode) throws Exception {
         var participation = createStudentParticipationWithSubmission(exerciseMode);
         var participant = participation.getParticipant();
 
@@ -1031,7 +1049,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void exportInstructorRepositories_shouldReturnFile() throws Exception {
+    void exportInstructorRepositories_shouldReturnFile() throws Exception {
         String zip = exportInstructorRepository("TEMPLATE", exerciseRepo, HttpStatus.OK);
         assertThat(zip).isNotNull();
 
@@ -1043,7 +1061,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void exportInstructorRepositories_forbidden() throws Exception {
+    void exportInstructorRepositories_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
@@ -1079,7 +1097,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
+    void exportProgrammingExerciseInstructorMaterial_shouldReturnFile() throws Exception {
         var zipFile = exportProgrammingExerciseInstructorMaterial(HttpStatus.OK);
         // Assure, that the zip folder is already created and not 'in creation' which would lead to a failure when extracting it in the next step
         await().until(zipFile::exists);
@@ -1100,14 +1118,14 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
+    void exportProgrammingExerciseInstructorMaterial_forbidden() throws Exception {
         // change the group name to enforce a HttpStatus forbidden after having accessed the endpoint
         course.setInstructorGroupName("test");
         courseRepository.save(course);
         exportProgrammingExerciseInstructorMaterial(HttpStatus.FORBIDDEN);
     }
 
-    public java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
+    java.io.File exportProgrammingExerciseInstructorMaterial(HttpStatus expectedStatus) throws Exception {
         generateProgrammingExerciseForExport();
 
         // Mock template repo
@@ -1137,7 +1155,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testArchiveCourseWithProgrammingExercise() throws Exception {
+    void testArchiveCourseWithProgrammingExercise() throws Exception {
         course.setEndDate(ZonedDateTime.now().minusMinutes(4));
         course.setCourseArchivePath(null);
         course.setExercises(Set.of(exercise));
@@ -1186,19 +1204,19 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
+    void testExportCourseCannotExportSingleParticipationCanceledException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new CanceledException("Checkout canceled"));
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
+    void testExportCourseCannotExportSingleParticipationGitApiException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new InvalidRemoteException("InvalidRemoteException"));
     }
 
     // Test
-    public void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
+    void testExportCourseCannotExportSingleParticipationGitException() throws Exception {
         createCourseWithProgrammingExerciseAndParticipationWithFiles();
         testExportCourseWithFaultyParticipationCannotGetOrCheckoutRepository(new GitException("GitException"));
     }
@@ -1274,7 +1292,7 @@ public class ProgrammingExerciseTestService {
      *
      * @param repository the repository
      */
-    public void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
+    private void disableAutoGC(org.eclipse.jgit.lib.Repository repository) {
         // See https://www.eclipse.org/lists/jgit-dev/msg03734.html
         repository.getConfig().setInt(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTO, 0);
         repository.getConfig().setBoolean(ConfigConstants.CONFIG_GC_SECTION, null, ConfigConstants.CONFIG_KEY_AUTODETACH, false);
@@ -1290,7 +1308,7 @@ public class ProgrammingExerciseTestService {
      * @throws IOException when the file cannot be created
      * @throws GitAPIException when git can't add or commit the file
      */
-    public void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {
+    private void createAndCommitDummyFileInLocalRepository(LocalRepository localRepository, String filename) throws IOException, GitAPIException {
         var file = Path.of(localRepository.localRepoFile.toPath().toString(), filename);
         if (!Files.exists(file)) {
             Files.createFile(file);
@@ -1300,7 +1318,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // Test
-    public void testDownloadCourseArchiveAsInstructor() throws Exception {
+    void testDownloadCourseArchiveAsInstructor() throws Exception {
         // Archive the course and wait until it's complete
         testArchiveCourseWithProgrammingExercise();
 
@@ -1358,7 +1376,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
+    void startProgrammingExerciseStudentSubmissionFailedWithBuildlog() throws Exception {
         final var course = getCourseForExercise();
         User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
@@ -1391,7 +1409,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
+    void startProgrammingExerciseStudentRetrieveEmptyArtifactPage() throws Exception {
         final var course = getCourseForExercise();
         User user = userRepo.findOneByLogin(studentLogin).orElseThrow();
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, user.getParticipantIdentifier(), Set.of(user), true, HttpStatus.CREATED);
@@ -1411,7 +1429,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
+    void repositoryAccessIsAdded_whenStudentIsAddedToTeam() throws Exception {
         setupTeamExercise();
 
         // Create a team with students
@@ -1441,7 +1459,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
+    void repositoryAccessIsRemoved_whenStudentIsRemovedFromTeam() throws Exception {
         setupTeamExercise();
 
         // Create a team with students
@@ -1470,7 +1488,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
+    void configureRepository_throwExceptionWhenLtiUserIsNotExistent() throws Exception {
         setupTeamExercise();
 
         // create a team for the user (necessary condition before starting an exercise)
@@ -1490,7 +1508,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void copyRepository_testNotCreatedError() throws Exception {
+    void copyRepository_testNotCreatedError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
         var participantRepoTestUrl = ModelFactory.getMockFileRepositoryUrl(studentTeamRepo);
@@ -1534,7 +1552,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void copyRepository_testConflictError() throws Exception {
+    void copyRepository_testConflictError() throws Exception {
         setupTeamExercise();
 
         // Create a team with students
@@ -1554,7 +1572,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void configureRepository_testBadRequestError() throws Exception {
+    void configureRepository_testBadRequestError() throws Exception {
         Team team = setupTeamForBadRequestForStartExercise();
 
         // Start participation
@@ -1564,7 +1582,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void automaticCleanupBuildPlans() throws Exception {
+    void automaticCleanupBuildPlans() throws Exception {
         exercise = programmingExerciseRepository.save(exercise);
         examExercise = programmingExerciseRepository.save(examExercise);
 
@@ -1645,7 +1663,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void automaticCleanupGitRepositories() {
+    void automaticCleanupGitRepositories() {
         var startDate = ZonedDateTime.now().minusWeeks(15L);
         var endDate = startDate.plusDays(5L);
         exercise.setReleaseDate(startDate);
@@ -1693,7 +1711,7 @@ public class ProgrammingExerciseTestService {
         return request.postWithResponseBody(path, null, ProgrammingExerciseStudentParticipation.class, HttpStatus.CREATED);
     }
 
-    public List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {
+    private List<DiffEntry> getChanges(Repository repository, RevCommit commit) throws Exception {
         try (ObjectReader reader = repository.newObjectReader()) {
             CanonicalTreeParser oldTreeIter = new CanonicalTreeParser();
             oldTreeIter.reset(reader, commit.getParents()[0].getTree());
@@ -1712,7 +1730,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
+    void importProgrammingExerciseFromCourseToCourse_exampleSolutionPublicationDate() throws Exception {
         Course course1 = database.addEmptyCourse();
         Course course2 = database.addEmptyCourse();
 
@@ -1737,7 +1755,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
+    void createProgrammingExercise_setInvalidExampleSolutionPublicationDate_badRequest() throws Exception {
         final var baseTime = ZonedDateTime.now();
 
         exercise.setAssessmentDueDate(null);
@@ -1758,7 +1776,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
+    void createProgrammingExercise_setValidExampleSolutionPublicationDate() throws Exception {
         final var baseTime = ZonedDateTime.now();
 
         exercise.setAssessmentDueDate(null);
@@ -1775,7 +1793,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
+    void testGetProgrammingExercise_exampleSolutionVisibility(boolean isStudent, String username) throws Exception {
 
         if (isStudent) {
             assertEquals(studentLogin, username, "The setup is done according to studentLogin value, another username may not work as expected");
@@ -1815,7 +1833,7 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
+    void exportSolutionRepository_shouldReturnFileOrForbidden() throws Exception {
 
         // Test example solution publication date not set.
         exercise.setExampleSolutionPublicationDate(null);

@@ -260,8 +260,7 @@ public class LearningGoalResource {
         }
         persistedLearningGoal = learningGoalRepository.save(persistedLearningGoal);
 
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedLearningGoal);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
 
     }
 
@@ -319,7 +318,7 @@ public class LearningGoalResource {
 
         course.addPrerequisite(learningGoal);
         courseRepository.save(course);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, learningGoal.getTitle())).body(learningGoal);
+        return ResponseEntity.ok().body(learningGoal);
     }
 
     /**

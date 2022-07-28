@@ -195,9 +195,12 @@ public class ProgrammingExercise extends Exercise {
         this.auxiliaryRepositories = auxiliaryRepositories;
     }
 
+    /**
+     * @return an unmodifiable list of auxiliary repositories used in the build plan
+     */
     @JsonIgnore
     public List<AuxiliaryRepository> getAuxiliaryRepositoriesForBuildPlan() {
-        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).collect(Collectors.toList());
+        return this.auxiliaryRepositories.stream().filter(AuxiliaryRepository::shouldBeIncludedInBuildPlan).toList();
     }
 
     public void addAuxiliaryRepository(AuxiliaryRepository repository) {
@@ -358,7 +361,7 @@ public class ProgrammingExercise extends Exercise {
             }
             return this.getDueDate() == null || SubmissionType.INSTRUCTOR.equals(submission.getType()) || SubmissionType.TEST.equals(submission.getType())
                     || submission.getSubmissionDate().isBefore(getRelevantDueDateForSubmission(submission));
-        }).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+        }).max(Comparator.naturalOrder()).orElse(null);
     }
 
     private ZonedDateTime getRelevantDueDateForSubmission(Submission submission) {

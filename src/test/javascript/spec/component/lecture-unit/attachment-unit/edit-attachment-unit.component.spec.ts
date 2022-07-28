@@ -140,7 +140,7 @@ describe('EditAttachmentUnitComponent', () => {
         expect(attachmentUnitFormStubComponent.formData.formProperties.name).toEqual(attachment.name);
         expect(attachmentUnitFormStubComponent.formData.formProperties.releaseDate).toEqual(attachment.releaseDate);
         expect(attachmentUnitFormStubComponent.formData.formProperties.updateNotificationText).toBeUndefined();
-        expect(attachmentUnitFormStubComponent.formData.formProperties.version).toEqual(1);
+        expect(attachmentUnitFormStubComponent.formData.formProperties.version).toBe(1);
         expect(attachmentUnitFormStubComponent.formData.formProperties.description).toEqual(attachmentUnit.description);
         expect(attachmentUnitFormStubComponent.formData.fileProperties.fileName).toEqual(attachment.link);
         expect(attachmentUnitFormStubComponent.formData.fileProperties.file).toBeUndefined();
@@ -225,7 +225,7 @@ describe('EditAttachmentUnitComponent', () => {
         uploadFileSpy.mockReturnValue(Promise.reject(new Error('some error')));
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
         editAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(attachmentUnitFormStubComponent.errorMessage).toEqual('some error');
+            expect(attachmentUnitFormStubComponent.errorMessage).toBe('some error');
             expect(performUpdateSpy).toHaveBeenCalledTimes(0);
             performUpdateSpy.mockRestore();
         });

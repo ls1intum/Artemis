@@ -1,5 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Exam } from 'app/entities/exam.model';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import { Observable } from 'rxjs';
@@ -10,8 +10,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import dayjs from 'dayjs/esm';
 import { onError } from 'app/shared/util/global.utils';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { faBan, faCheckDouble, faExclamationTriangle, faSave, faFont } from '@fortawesome/free-solid-svg-icons';
-import { AccountService } from 'app/core/auth/account.service';
+import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fortawesome/free-solid-svg-icons';
 import { tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
@@ -28,9 +27,8 @@ export class ExamUpdateComponent implements OnInit {
     workingTimeInMinutes: number;
     // The maximum working time in Minutes (used as a dynamic max-value for the working time Input)
     maxWorkingTimeInMinutes: number;
-    // Interims-boolean to hide test exams and exam monitoring, as they are not yet fully implemented
-    isAdmin: boolean;
     isImport = false;
+    isImportInSameCourse = false;
     // Expose enums to the template
     exerciseType = ExerciseType;
     // Link to the component enabling the selection of exercise groups and exercises for import
@@ -49,7 +47,7 @@ export class ExamUpdateComponent implements OnInit {
         private alertService: AlertService,
         private courseManagementService: CourseManagementService,
         private navigationUtilService: ArtemisNavigationUtilService,
-        private accountService: AccountService,
+        private router: Router,
     ) {}
 
     ngOnInit(): void {
@@ -61,6 +59,7 @@ export class ExamUpdateComponent implements OnInit {
 
             if (this.isImport) {
                 this.resetIdAndDatesForImport();
+                this.isImportInSameCourse = this.exam.course?.id === Number(this.route.snapshot.paramMap.get('courseId'));
             }
 
             this.courseManagementService.find(Number(this.route.snapshot.paramMap.get('courseId'))).subscribe({
@@ -84,7 +83,6 @@ export class ExamUpdateComponent implements OnInit {
         // Initialize helper attributes
         this.workingTimeInMinutes = this.exam.workingTime! / 60;
         this.calculateMaxWorkingTime();
-        this.isAdmin = this.accountService.isAdmin();
     }
 
     /**
@@ -118,14 +116,15 @@ export class ExamUpdateComponent implements OnInit {
 
     subscribeToSaveResponse(result: Observable<HttpResponse<Exam>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<Exam>) => this.onSaveSuccess(response.body!),
             error: (err: HttpErrorResponse) => this.onSaveError(err),
         });
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exam: Exam) {
         this.isSaving = false;
-        this.previousState();
+        this.router.navigate(['course-management', this.course.id, 'exams', exam.id]);
+        window.scrollTo(0, 0);
     }
 
     private onSaveError(httpErrorResponse: HttpErrorResponse) {

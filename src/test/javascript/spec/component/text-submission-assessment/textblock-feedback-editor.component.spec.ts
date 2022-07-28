@@ -219,14 +219,16 @@ describe('TextblockFeedbackEditorComponent', () => {
         expect(searchOriginIcon).toBeTruthy();
     });
 
-    it('should open modal when open origin of feedback function is called', () => {
+    it('should open modal when open origin of feedback function is called', async () => {
         const modalService: NgbModal = TestBed.inject(NgbModal);
         const content = {};
         const modalServiceSpy = jest.spyOn(modalService, 'open');
 
-        component.openOriginOfFeedbackModal(content).then(() => {
-            expect(modalServiceSpy).toHaveBeenCalledOnce();
-        });
+        await expect(component.openOriginOfFeedbackModal(content))
+            .toResolve()
+            .then(() => {
+                expect(modalServiceSpy).toHaveBeenCalledOnce();
+            });
     });
 
     it('should connect automatic feedback origin blocks with current feedback', fakeAsync(() => {

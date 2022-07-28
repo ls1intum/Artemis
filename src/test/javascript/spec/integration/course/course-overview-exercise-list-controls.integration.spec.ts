@@ -86,10 +86,10 @@ describe('CourseOverviewExerciseListControls', () => {
         parentFixture.detectChanges();
 
         const filterDropdown = parentFixture.debugElement.query(By.css('#filter-dropdown-button'));
-        expect(filterDropdown).not.toBe(null);
+        expect(filterDropdown).not.toBeNull();
 
         const filterDropdownLabel = filterDropdown.query(By.css('span'));
-        expect(filterDropdownLabel).not.toBe(null);
+        expect(filterDropdownLabel).not.toBeNull();
 
         // Start: No filters should bet set
         childComponent.activeFilters.clear();

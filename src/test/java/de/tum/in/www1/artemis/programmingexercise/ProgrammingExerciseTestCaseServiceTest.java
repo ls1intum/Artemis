@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseTestCaseDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
-public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
@@ -45,7 +45,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         database.addUsers(5, 1, 0, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
         var programmingExercises = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations();
@@ -54,13 +54,13 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         bambooRequestMockProvider.reset();
     }
 
     @Test
-    public void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
+    void shouldSetAllTestCasesToInactiveIfFeedbackListIsEmpty() {
         List<Feedback> feedbacks = new ArrayList<>();
         testCaseService.generateTestCasesFromFeedbacks(feedbacks, programmingExercise);
 
@@ -71,7 +71,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldUpdateActiveFlagsOfTestCases() {
+    void shouldUpdateActiveFlagsOfTestCases() {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().text("test1"));
         feedbacks.add(new Feedback().text("test2"));
@@ -93,7 +93,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldGenerateNewTestCases() {
+    void shouldGenerateNewTestCases() {
         testCaseRepository.deleteAll();
 
         List<Feedback> feedbacks = new ArrayList<>();
@@ -108,7 +108,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
+    void shouldNotGenerateNewTestCasesForStaticCodeAnalysisFeedback() {
         testCaseRepository.deleteAll();
 
         List<Feedback> feedbackList = ModelFactory.generateStaticCodeAnalysisFeedbackList(5);
@@ -119,7 +119,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldFilterOutDuplicateTestCases() {
+    void shouldFilterOutDuplicateTestCases() {
         testCaseRepository.deleteAll();
 
         List<Feedback> feedbacks = new ArrayList<>();
@@ -135,7 +135,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void shouldResetTestWeights() throws Exception {
+    void shouldResetTestWeights() throws Exception {
         String dummyHash = "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d";
         when(gitService.getLastCommitHash(any())).thenReturn(ObjectId.fromString(dummyHash));
         database.addProgrammingParticipationWithResultForExercise(programmingExercise, "student1");
@@ -159,7 +159,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void shouldUpdateTestWeight() throws Exception {
+    void shouldUpdateTestWeight() throws Exception {
         // After a test case update, the solution and template repository should be build, so the ContinuousIntegrationService needs to be triggered
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getTemplateParticipation());
@@ -195,7 +195,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @EnumSource(AssessmentType.class)
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void shouldAllowTestCaseWeightSumZeroManualAssessment(AssessmentType assessmentType) throws Exception {
+    void shouldAllowTestCaseWeightSumZeroManualAssessment(AssessmentType assessmentType) throws Exception {
         // for non-automatic exercises the update succeeds and triggers an update
         if (assessmentType != AssessmentType.AUTOMATIC) {
             bambooRequestMockProvider.mockTriggerBuild(programmingExercise.getSolutionParticipation());
@@ -234,7 +234,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldMapStructuralTestCaseTypesCorrectly() {
+    void shouldMapStructuralTestCaseTypesCorrectly() {
         Set<ProgrammingExerciseTestCase> structuralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testClass[Policy]").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testConstructors[BubbleSort]").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testMethods[Context]").exercise(programmingExercise),
@@ -245,7 +245,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldMapBehavioralTestCaseTypesCorrectly() {
+    void shouldMapBehavioralTestCaseTypesCorrectly() {
         Set<ProgrammingExerciseTestCase> behavioralTestCases = Set.of(new ProgrammingExerciseTestCase().testName("testBubbleSort").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("testMergeSort").exercise(programmingExercise),
                 new ProgrammingExerciseTestCase().testName("test13412").exercise(programmingExercise),
@@ -256,7 +256,7 @@ public class ProgrammingExerciseTestCaseServiceTest extends AbstractSpringIntegr
     }
 
     @Test
-    public void shouldMapNonJavaTestsToDefaultTestCaseType() {
+    void shouldMapNonJavaTestsToDefaultTestCaseType() {
         Set<ProgrammingExerciseTestCase> testCases;
 
         for (ProgrammingLanguage language : ProgrammingLanguage.values()) {

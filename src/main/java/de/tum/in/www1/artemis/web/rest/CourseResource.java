@@ -172,8 +172,7 @@ public class CourseResource {
 
         courseService.createOrValidateGroups(course);
         Course result = courseRepository.save(course);
-        return ResponseEntity.created(new URI("/api/courses/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, Course.ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.created(new URI("/api/courses/" + result.getId())).body(result);
     }
 
     /**
@@ -329,7 +328,7 @@ public class CourseResource {
             // only include courses that have NOT been finished
             userCourses = userCourses.filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()));
         }
-        return userCourses.collect(Collectors.toList());
+        return userCourses.toList();
     }
 
     /**
@@ -405,8 +404,7 @@ public class CourseResource {
             else {
                 return true;
             }
-        }).collect(Collectors.toList());
-        registrableCourses.removeAll(allRegisteredCourses);
+        }).filter(course -> !allRegisteredCourses.contains(course)).toList();
         return registrableCourses;
     }
 

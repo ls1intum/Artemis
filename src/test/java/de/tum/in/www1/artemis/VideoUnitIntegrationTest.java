@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -35,7 +35,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     private VideoUnit videoUnit;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
         this.lecture1 = this.database.createCourseWithLecture(true);
         this.videoUnit = new VideoUnit();
@@ -56,25 +56,25 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAll_asTutor() throws Exception {
+    void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testAll_asStudent() throws Exception {
+    void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
+    void createVideoUnit_asInstructor_shouldCreateVideoUnit() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);
         assertThat(persistedVideoUnit.getId()).isNotNull();
@@ -82,14 +82,14 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void createVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void createVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         videoUnit.setSource("https://www.youtube.com/embed/8iU8LPEa4o0");
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
+    void updateVideoUnit_asInstructor_shouldUpdateVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
@@ -101,7 +101,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateVideoUnit_asInstructor_shouldKeepOrdering() throws Exception {
+    void updateVideoUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistVideoUnitWithLecture();
 
         // Add a second lecture unit
@@ -127,7 +127,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    public void updateVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    void updateVideoUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
@@ -138,7 +138,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void updateVideoUnit_noId_shouldReturnBadRequest() throws Exception {
+    void updateVideoUnit_noId_shouldReturnBadRequest() throws Exception {
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
@@ -148,7 +148,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getVideoUnit_correctId_shouldReturnVideoUnit() throws Exception {
+    void getVideoUnit_correctId_shouldReturnVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
@@ -158,7 +158,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
+    void deleteVideoUnit_correctId_shouldDeleteVideoUnit() throws Exception {
         persistVideoUnitWithLecture();
 
         this.videoUnit = (VideoUnit) lectureRepository.findByIdWithLectureUnits(lecture1.getId()).get().getLectureUnits().stream().findFirst().get();
@@ -169,7 +169,7 @@ public class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void removeLeadingAndTrailingWhitespaces() throws Exception {
+    void removeLeadingAndTrailingWhitespaces() throws Exception {
         String source = "     https://www.youtube.com/embed/8iU8LPEa4o0     ";
         videoUnit.setSource(source);
         var persistedVideoUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/video-units", videoUnit, VideoUnit.class, HttpStatus.CREATED);

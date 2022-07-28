@@ -5,6 +5,13 @@
                 "title": "Lectures",
                 "createLabel": "Create Lecture",
                 "importLabel": "Import Lecture",
+                "filterLabel": "Filter",
+                "filterOptions": {
+                    "filterPast": "Past",
+                    "filterCurrent": "Current",
+                    "filterFuture": "Future",
+                    "filterUnspecifiedDates": "Unspecified Date(s)"
+                },
                 "createOrEditLabel": "Create or Edit Lecture"
             },
             "created": "Created new lecture with identifier {{ param }}",

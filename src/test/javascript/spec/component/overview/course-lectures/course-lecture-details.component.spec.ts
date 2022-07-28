@@ -196,13 +196,13 @@ describe('CourseLectureDetails', () => {
     it('should get the attachment extension', fakeAsync(() => {
         const attachment = getAttachmentUnit(lecture, 1, dayjs()).attachment!;
 
-        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('pdf');
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('pdf');
 
         attachment.link = '/path/to/file/test.test.docx';
-        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('docx');
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('docx');
 
         attachment.link = undefined;
-        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toEqual('N/A');
+        expect(courseLecturesDetailsComponent.attachmentExtension(attachment)).toBe('N/A');
     }));
 
     it('should download file for attachment', fakeAsync(() => {
