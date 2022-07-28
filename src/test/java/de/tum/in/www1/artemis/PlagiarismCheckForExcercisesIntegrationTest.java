@@ -4,7 +4,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.util.FileUtils;
 import org.junit.jupiter.api.AfterEach;
@@ -22,13 +21,11 @@ public class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringI
 
     private Course course;
 
-    private int studentAmount;
-
     @BeforeEach
     void initTestCase() throws IOException {
         String submissionText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
         String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        studentAmount = 25;
+        int studentAmount = 25;
 
         course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(submissionText, studentAmount);
         database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(submissionModel, studentAmount, course);
