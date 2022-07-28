@@ -28,7 +28,7 @@ public class BuildLogStatisticsEntryService {
      */
     public BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, BuildLogStatisticsEntry.BuildJobPartDuration agentSetupDuration,
             BuildLogStatisticsEntry.BuildJobPartDuration testDuration, BuildLogStatisticsEntry.BuildJobPartDuration scaDuration,
-            BuildLogStatisticsEntry.BuildJobPartDuration totalJobDuration, Long dependenciesDownloadedCount) {
+            BuildLogStatisticsEntry.BuildJobPartDuration totalJobDuration, Integer dependenciesDownloadedCount) {
 
         BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration.durationInSeconds(),
                 testDuration.durationInSeconds(), scaDuration.durationInSeconds(), totalJobDuration.durationInSeconds(), dependenciesDownloadedCount);

@@ -348,6 +348,16 @@ public class BambooService extends AbstractContinuousIntegrationService {
     @Override
     public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
             List<BuildLogEntry> buildLogEntries) {
+        if (buildLogEntries.isEmpty()) {
+            // No logs received -> Do nothing
+            return;
+        }
+
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            // Not supported -> Do nothing
+            return;
+        }
+
         ZonedDateTime jobStarted = null;
         ZonedDateTime agentSetupCompleted = null;
         ZonedDateTime testsStarted = null;
@@ -355,21 +365,20 @@ public class BambooService extends AbstractContinuousIntegrationService {
         ZonedDateTime scaStarted = null;
         ZonedDateTime scaFinished = null;
         ZonedDateTime jobFinished = null;
-        Long dependenciesDownloadedCount = null;
+        Integer dependenciesDownloadedCount = null;
 
-        if (programmingLanguage == ProgrammingLanguage.JAVA) {
-            jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
-            agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
-            testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
-            testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
-            scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
-            scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
-            jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
+        jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
+        agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
+        testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
+        testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
+        scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
+        scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
+        jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
 
-            if (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN) {
-                // Not supported for GRADLE projects
-                dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
-            }
+        // If the projectType is null, this is an old (Maven-only) exercise
+        if (projectType == null || projectType.isMaven()) {
+            // Not supported for GRADLE projects
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
 
         var agentSetupDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, agentSetupCompleted);

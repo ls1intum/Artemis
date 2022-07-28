@@ -180,9 +180,10 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         ZonedDateTime scaStarted = null;
         ZonedDateTime scaFinished = null;
         ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
-        Long dependenciesDownloadedCount = null;
+        Integer dependenciesDownloadedCount = null;
 
-        if (projectType == ProjectType.MAVEN_MAVEN || projectType == ProjectType.PLAIN_MAVEN) {
+        // If the projectType is null, this is an old (Maven-only) exercise
+        if (projectType == null || projectType.isMaven()) {
             agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
@@ -190,7 +191,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
             scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:", 1);
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }
-        else if (projectType == ProjectType.GRADLE_GRADLE || projectType == ProjectType.PLAIN_GRADLE) {
+        else if (projectType.isGradle()) {
             // agentSetupCompleted is not supported
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
             testsFinished = getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains("BUILD SUCCESSFUL in") || b.getLog().contains("BUILD FAILED in"));

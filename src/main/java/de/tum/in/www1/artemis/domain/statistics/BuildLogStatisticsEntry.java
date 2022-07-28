@@ -28,26 +28,26 @@ public class BuildLogStatisticsEntry extends DomainObject {
     private ProgrammingSubmission programmingSubmission;
 
     @Nullable
-    private Long agentSetupDuration; // in seconds
+    private Integer agentSetupDuration; // in seconds
 
     @Nullable
-    private Long testDuration; // in seconds
+    private Integer testDuration; // in seconds
 
     @Nullable
-    private Long scaDuration; // in seconds;
+    private Integer scaDuration; // in seconds;
 
     @Nullable
-    private Long totalJobDuration; // in seconds;
+    private Integer totalJobDuration; // in seconds;
 
     @Nullable
-    private Long dependenciesDownloadedCount;
+    private Integer dependenciesDownloadedCount;
 
     public BuildLogStatisticsEntry() {
         // Required for Hibernate
     }
 
-    public BuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, @Nullable Long agentSetupDuration, @Nullable Long testDuration, @Nullable Long scaDuration,
-            @Nullable Long totalJobDuration, @Nullable Long dependenciesDownloadedCount) {
+    public BuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, @Nullable Integer agentSetupDuration, @Nullable Integer testDuration, @Nullable Integer scaDuration,
+            @Nullable Integer totalJobDuration, @Nullable Integer dependenciesDownloadedCount) {
         this.programmingSubmission = programmingSubmission;
         this.agentSetupDuration = agentSetupDuration;
         this.testDuration = testDuration;
@@ -65,47 +65,47 @@ public class BuildLogStatisticsEntry extends DomainObject {
     }
 
     @Nullable
-    public Long getAgentSetupDuration() {
+    public Integer getAgentSetupDuration() {
         return agentSetupDuration;
     }
 
-    public void setAgentSetupDuration(@Nullable Long agentSetupDuration) {
+    public void setAgentSetupDuration(@Nullable Integer agentSetupDuration) {
         this.agentSetupDuration = agentSetupDuration;
     }
 
     @Nullable
-    public Long getTestDuration() {
+    public Integer getTestDuration() {
         return testDuration;
     }
 
-    public void setTestDuration(@Nullable Long testDuration) {
+    public void setTestDuration(@Nullable Integer testDuration) {
         this.testDuration = testDuration;
     }
 
     @Nullable
-    public Long getScaDuration() {
+    public Integer getScaDuration() {
         return scaDuration;
     }
 
-    public void setScaDuration(@Nullable Long scaDuration) {
+    public void setScaDuration(@Nullable Integer scaDuration) {
         this.scaDuration = scaDuration;
     }
 
     @Nullable
-    public Long getTotalJobDuration() {
+    public Integer getTotalJobDuration() {
         return totalJobDuration;
     }
 
-    public void setTotalJobDuration(@Nullable Long totalJobDuration) {
+    public void setTotalJobDuration(@Nullable Integer totalJobDuration) {
         this.totalJobDuration = totalJobDuration;
     }
 
     @Nullable
-    public Long getDependenciesDownloadedCount() {
+    public Integer getDependenciesDownloadedCount() {
         return dependenciesDownloadedCount;
     }
 
-    public void setDependenciesDownloadedCount(@Nullable Long dependenciesDownloadedCount) {
+    public void setDependenciesDownloadedCount(@Nullable Integer dependenciesDownloadedCount) {
         this.dependenciesDownloadedCount = dependenciesDownloadedCount;
     }
 
@@ -116,12 +116,12 @@ public class BuildLogStatisticsEntry extends DomainObject {
          *
          * @return the duration in second between the from and to arguments, or null if at least one of them is null
          */
-        public Long durationInSeconds() {
+        public Integer durationInSeconds() {
             if (from == null || to == null) {
                 return null;
             }
             else {
-                return ChronoUnit.SECONDS.between(from, to);
+                return Math.toIntExact(ChronoUnit.SECONDS.between(from, to));
             }
         }
     }

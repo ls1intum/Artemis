@@ -92,7 +92,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @return the ZonedDateTime of the found BuildLogEntry, or null if none was found
      */
     protected ZonedDateTime getTimestampForLogEntry(List<BuildLogEntry> buildLogEntries, String searchString, int skipEntries) {
-        return getTimestampForLogEntry(buildLogEntries, b -> b.getLog().contains(searchString), skipEntries);
+        return getTimestampForLogEntry(buildLogEntries, buildLogEntry -> buildLogEntry.getLog().contains(searchString), skipEntries);
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class AbstractContinuousIntegrationService implements Continuous
      * @param searchString the text that must be contained in the log message
      * @return the number of matching log entries
      */
-    protected long countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {
-        return buildLogEntries.stream().filter(b -> b.getLog().contains(searchString)).count();
+    protected Integer countMatchingLogs(List<BuildLogEntry> buildLogEntries, String searchString) {
+        return Math.toIntExact(buildLogEntries.stream().filter(buildLogEntry -> buildLogEntry.getLog().contains(searchString)).count());
     }
 }
