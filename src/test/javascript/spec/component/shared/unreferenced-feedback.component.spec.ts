@@ -88,7 +88,7 @@ describe('UnreferencedFeedbackComponent', () => {
         });
         // Call spy function with empty event
         comp.createAssessmentOnDrop(new Event(''));
-        expect(comp.unreferencedFeedback.length).toBe(1);
+        expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].gradingInstruction).toBe(instruction);
         expect(comp.unreferencedFeedback[0].credits).toBe(instruction.credits);
     });
