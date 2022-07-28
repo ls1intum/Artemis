@@ -39,7 +39,7 @@
         [annotations]="annotations"
         [commitState]="commitState"
         [editorState]="editorState"
-        [feedbacks]="(participation?.results && participation.results!.length > 0 && participation.results!.first()!.feedbacks) || []"
+        [feedbacks]="participation.results?.first()?.feedbacks ?? []"
         [readOnlyManualFeedback]="readOnlyManualFeedback"
         [isTutorAssessment]="isTutorAssessment"
         [highlightDifferences]="highlightDifferences"

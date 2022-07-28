@@ -8,8 +8,8 @@
             <div>
                 <span class="d-inline-block">
                     <span class="text-muted font-weight-bolder">Tutor:</span>
-                    <a *ngIf="isAdmin && team.owner" [routerLink]="['/admin', 'user-management', team.owner?.login]">{{ team.owner?.name }}</a>
-                    <a *ngIf="!isAdmin && team.owner" [href]="'mailto:' + team.owner.email">{{ team.owner?.name }}</a>
+                    <a *ngIf="isAdmin && team.owner" [routerLink]="['/admin', 'user-management', team.owner.login]">{{ team.owner.name }}</a>
+                    <a *ngIf="!isAdmin && team.owner" [href]="'mailto:' + team.owner.email">{{ team.owner.name }}</a>
                     <span *ngIf="!team.owner" class="font-weight-bold" jhiTranslate="artemisApp.team.detail.noOwner">No tutor</span>
                 </span>
                 <span class="d-inline-block ms-2">
@@ -46,7 +46,7 @@
             ></jhi-team-delete-button>
         </div>
     </div>
-    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team?.students || []">
+    <jhi-data-table [isLoading]="isLoading" [isTransitioning]="isTransitioning" [showPageSizeDropdownAndSearchField]="false" [allEntities]="team.students || []">
         <ng-template let-settings="settings" let-controls="controls">
             <ngx-datatable
                 class="bootstrap"

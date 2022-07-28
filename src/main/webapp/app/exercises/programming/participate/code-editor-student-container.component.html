@@ -23,9 +23,9 @@
     [course]="course"
 >
     <div editorTitle>
-        <span>{{ exercise?.title }}</span>
+        <span>{{ exercise.title }}</span>
         <span
-            >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
+            >&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
             }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
             >]
             <jhi-included-in-score-badge

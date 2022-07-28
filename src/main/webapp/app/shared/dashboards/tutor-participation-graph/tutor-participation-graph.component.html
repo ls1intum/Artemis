@@ -34,12 +34,12 @@
                     >
                     </jhi-progress-bar>
                 </div>
-                <div class="stacked-item" *ngIf="numberOfSubmissions && numberOfSubmissions!.late > 0">
+                <div class="stacked-item" *ngIf="numberOfSubmissions && numberOfSubmissions!.late">
                     <jhi-progress-bar
                         [tooltip]="'artemisApp.assessmentDashboard.assessStudentsLateSubmissions' | artemisTranslate"
                         [percentage]="percentageLateAssessmentProgressOfCorrectionRound[i]"
                         [numerator]="numberOfAssessedSubmissions.late"
-                        [denominator]="numberOfSubmissions?.late || 0"
+                        [denominator]="numberOfSubmissions.late"
                     >
                     </jhi-progress-bar>
                 </div>

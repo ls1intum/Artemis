@@ -35,7 +35,7 @@
         class="btn btn-danger"
         jhiTranslate="artemisApp.codeHint.management.step3.deleteAllEntriesButton.label"
         [ngbTooltip]="'artemisApp.codeHint.management.step3.deleteAllEntriesButton.tooltip' | artemisTranslate"
-        [disabled]="!solutionEntries?.length"
+        [disabled]="!solutionEntries.length"
         (click)="openBulkDeletionModal()"
     ></button>
 </div>
@@ -90,7 +90,7 @@
             </tr>
         </tbody>
     </table>
-    <div *ngIf="!solutionEntries?.length" class="text-center mt-2">
+    <div *ngIf="!solutionEntries.length" class="text-center mt-2">
         <span jhiTranslate="artemisApp.codeHint.management.step3.notGenerated">No Solution Code Snippets have been generated yet.</span>
     </div>
 </div>

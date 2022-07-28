@@ -17,11 +17,11 @@
                 <h4><fa-icon [icon]="faChalkboardTeacher"></fa-icon></h4>
             </div>
             <div class="col-sm col">
-                <h4>{{ lecture?.title }}</h4>
+                <h4>{{ lecture.title }}</h4>
             </div>
         </div>
         <div class="row">
-            <div class="col-auto mb-2" *ngIf="lecture?.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
+            <div class="col-auto mb-2" *ngIf="lecture.startDate; else noDate" [ngClass]="getUrgentClass(lecture.startDate)">
                 <span class="d-none d-sm-inline"> {{ lecture.startDate | artemisDate: 'long-date' }} </span>
                 ({{ lecture.startDate | artemisTimeAgo }})
             </div>

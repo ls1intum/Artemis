@@ -14,13 +14,9 @@
         <fa-icon [icon]="faSearch"></fa-icon>
     </span>
 
-    <span
-        class="badge bg-warning"
-        *ngIf="!conflictMode && feedback.conflictingTextAssessments && feedback.conflictingTextAssessments.length > 0"
-        (click)="onConflictClicked(feedback.id)"
-    >
+    <span class="badge bg-warning" *ngIf="!conflictMode && feedback.conflictingTextAssessments?.length" (click)="onConflictClicked(feedback.id)">
         <fa-icon [icon]="faBalanceScaleRight"></fa-icon>
-        <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments?.length }"></span>
+        <span jhiTranslate="artemisApp.textAssessment.conflict.conflictingAssessments" [translateValues]="{ number: feedback.conflictingTextAssessments!.length }"></span>
     </span>
 
     <span class="badge bg-warning" title="{{ conflictType }}" *ngIf="conflictType && conflictMode">

@@ -5,9 +5,9 @@
         [contentType]="DoughnutChartType.AVERAGE_EXERCISE_SCORE"
         [exerciseId]="exercise.id!"
         [exerciseType]="exerciseType"
-        [currentPercentage]="doughnutStats?.averageScoreOfExercise"
-        [currentAbsolute]="doughnutStats?.absoluteAveragePoints"
-        [currentMax]="doughnutStats?.maxPointsOfExercise"
+        [currentPercentage]="doughnutStats.averageScoreOfExercise"
+        [currentAbsolute]="doughnutStats.absoluteAveragePoints"
+        [currentMax]="doughnutStats.maxPointsOfExercise"
     >
     </jhi-doughnut-chart>
     <jhi-doughnut-chart
@@ -16,9 +16,9 @@
         [contentType]="DoughnutChartType.PARTICIPATIONS"
         [exerciseId]="exercise.id!"
         [exerciseType]="exerciseType"
-        [currentPercentage]="doughnutStats?.participationsInPercent"
-        [currentAbsolute]="doughnutStats?.numberOfParticipations"
-        [currentMax]="doughnutStats?.numberOfStudentsOrTeamsInCourse"
+        [currentPercentage]="doughnutStats.participationsInPercent"
+        [currentAbsolute]="doughnutStats.numberOfParticipations"
+        [currentMax]="doughnutStats.numberOfStudentsOrTeamsInCourse"
     >
     </jhi-doughnut-chart>
     <jhi-doughnut-chart
@@ -27,9 +27,9 @@
         [contentType]="DoughnutChartType.QUESTIONS"
         [exerciseId]="exercise.id!"
         [exerciseType]="exerciseType"
-        [currentPercentage]="doughnutStats?.resolvedPostsInPercent"
-        [currentAbsolute]="doughnutStats?.numberOfResolvedPosts"
-        [currentMax]="doughnutStats?.numberOfPosts"
+        [currentPercentage]="doughnutStats.resolvedPostsInPercent"
+        [currentAbsolute]="doughnutStats.numberOfResolvedPosts"
+        [currentMax]="doughnutStats.numberOfPosts"
     >
     </jhi-doughnut-chart>
 </div>

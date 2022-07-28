@@ -2,9 +2,9 @@
     <div class="d-flex flex-wrap">
         <div class="mr-auto flex-fill">
             <h2>
-                <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
+                <span>{{ exercise.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>
             </h2>
-            <div *ngIf="exercise?.type === ExerciseType.PROGRAMMING" class="d-flex align-items-center mt-2">
+            <div *ngIf="exercise.type === ExerciseType.PROGRAMMING" class="d-flex align-items-center mt-2">
                 <label class="radio-inline mb-0 d-flex align-items-center">
                     <input type="radio" [ngModel]="participationCriteria.filterProp" (click)="updateParticipationFilter(FilterProp.ALL)" [value]="FilterProp.ALL" />
                     <span class="ms-1">{{ 'artemisApp.exercise.showAll' | artemisTranslate }}</span>
@@ -24,14 +24,14 @@
                 </label>
             </div>
         </div>
-        <div *ngIf="exercise?.type !== ExerciseType.QUIZ && exercise?.isAtLeastInstructor" class="p-2">
+        <div *ngIf="exercise.type !== ExerciseType.QUIZ && exercise.isAtLeastInstructor" class="p-2">
             <button class="btn btn-success" [disabled]="isSaving || participationsChangedDueDate.size === 0" (click)="saveChangedDueDates()" jhiTranslate="entity.action.save">
                 Save
             </button>
         </div>
         <jhi-programming-exercise-instructor-submission-state
             class="p-2"
-            *ngIf="exercise?.isAtLeastInstructor && exercise?.type === ExerciseType.PROGRAMMING"
+            *ngIf="exercise.isAtLeastInstructor && exercise.type === ExerciseType.PROGRAMMING"
             [exercise]="exercise"
         ></jhi-programming-exercise-instructor-submission-state>
     </div>
@@ -41,8 +41,8 @@
         [allEntities]="participations"
         entitiesPerPageTranslation="artemisApp.exercise.resultsPerPage"
         showAllEntitiesTranslation="artemisApp.exercise.showAllResults"
-        [searchPlaceholderTranslation]="exercise?.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
-        [searchFields]="exercise?.teamMode ? ['team.shortName', 'team.name', 'team.students.login', 'team.students.name'] : ['student.login', 'student.name']"
+        [searchPlaceholderTranslation]="exercise.teamMode ? 'artemisApp.exercise.searchForTeams' : 'artemisApp.exercise.searchForStudents'"
+        [searchFields]="exercise.teamMode ? ['team.shortName', 'team.name', 'team.students.login', 'team.students.name'] : ['student.login', 'student.name']"
         [searchTextFromEntity]="searchTextFromParticipation"
         [searchResultFormatter]="searchResultFormatter"
         [customFilterKey]="participationCriteria.filterProp"
@@ -84,7 +84,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="120" [width]="120">
+                <ngx-datatable-column prop="repositoryUrl" *ngIf="exercise.type === ExerciseType.PROGRAMMING" [minWidth]="120" [width]="120">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('repositoryUrl')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.repositoryUrl"> Repository Url </span>
@@ -98,7 +98,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="exercise?.type === ExerciseType.PROGRAMMING" [minWidth]="100" [width]="100">
+                <ngx-datatable-column *ngIf="exercise.type === ExerciseType.PROGRAMMING" [minWidth]="100" [width]="100">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.buildPlanId"> Build Plan Id </span>
@@ -214,7 +214,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column *ngIf="exercise?.type !== ExerciseType.QUIZ && exercise?.dueDate" [minWidth]="270" [width]="270">
+                <ngx-datatable-column *ngIf="exercise.type !== ExerciseType.QUIZ && exercise.dueDate" [minWidth]="270" [width]="270">
                     <ng-template ngx-datatable-header-template>
                         <span class="datatable-header-cell-wrapper" (click)="controls.onSort('buildPlanId')">
                             <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.participation.individualDueDate">Individual DueDate</span>
@@ -233,7 +233,7 @@
                             &nbsp;
                             <button
                                 class="btn btn-danger"
-                                *ngIf="exercise?.isAtLeastInstructor && row.individualDueDate"
+                                *ngIf="exercise.isAtLeastInstructor && row.individualDueDate"
                                 [disabled]="isSaving"
                                 (click)="removeIndividualDueDate(row)"
                             >
@@ -247,7 +247,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="text-end">
                             <div class="btn-group">
-                                <ng-container *ngIf="exercise?.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
+                                <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.isAtLeastInstructor">
                                     <jhi-programming-exercise-instructor-trigger-build-button
                                         *ngIf="hasLoadedPendingSubmissions; else triggerLoading"
                                         [exercise]="exercise"
@@ -277,7 +277,7 @@
                                     <fa-icon [icon]="faTimes"></fa-icon>
                                 </button>
                                 <button
-                                    *ngIf="exercise?.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
+                                    *ngIf="exercise.type === ExerciseType.PROGRAMMING && value.buildPlanId !== null && exercise.isAtLeastInstructor"
                                     [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                                     jhiDeleteButton
                                     [actionType]="ActionType.Cleanup"

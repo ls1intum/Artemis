@@ -44,7 +44,7 @@
                                     <tr
                                         *ngFor="let exercise of exerciseGroup.exercises"
                                         (click)="onSelectExercise(exercise, exerciseGroup)"
-                                        [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id]?.id"
+                                        [class.active]="exerciseGroup.id && exercise.id === testRunConfiguration[exerciseGroup.id].id"
                                         [id]="'exercise-' + exercise.id"
                                     >
                                         <td>{{ exercise.id }}</td>

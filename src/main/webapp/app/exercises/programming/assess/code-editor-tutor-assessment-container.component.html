@@ -19,7 +19,7 @@
     [submitBusy]="submitBusy"
     [cancelBusy]="cancelBusy"
     [nextSubmissionBusy]="nextSubmissionBusy"
-    [isTeamMode]="!!exercise?.teamMode"
+    [isTeamMode]="!!exercise.teamMode"
     [isAssessor]="isAssessor"
     [isTestRun]="isTestRun"
     [exerciseDashboardLink]="exerciseDashboardLink"
@@ -67,9 +67,9 @@
     </ng-container>
     <!-- The templates must be outside of the ng-container, otherwise it cannot be transferred via the context -->
     <ng-template #editorTitle>
-        <span>{{ exercise?.title }}</span>
+        <span>{{ exercise.title }}</span>
         <span
-            >&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
+            >&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate
             }}<span *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span
             >]
             <jhi-included-in-score-badge
@@ -87,7 +87,7 @@
             ></jhi-programming-assessment-repo-export>
             <a
                 class="ms-2 me-5"
-                href="{{ participation?.userIndependentRepositoryUrl }}"
+                href="{{ participation.userIndependentRepositoryUrl }}"
                 target="_blank"
                 rel="noopener noreferrer"
                 jhiTranslate="artemisApp.exerciseAssessmentDashboard.programmingExercise.goToRepo"

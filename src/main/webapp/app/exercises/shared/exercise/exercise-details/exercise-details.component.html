@@ -1,18 +1,18 @@
 <dt *ngIf="exercise.course || exercise.exerciseGroup"><span jhiTranslate="artemisApp.exercise.course">Course</span></dt>
 <dd *ngIf="exercise.course">
     <div>
-        <a [routerLink]="['/course-management', exercise.course?.id]">{{ exercise.course?.title }}</a>
+        <a [routerLink]="['/course-management', exercise.course.id]">{{ exercise.course.title }}</a>
     </div>
 </dd>
 <dd *ngIf="exercise.exerciseGroup">
     <div>
-        <a [routerLink]="['/course-management', exercise.exerciseGroup?.exam?.course?.id]">{{ exercise.exerciseGroup?.exam?.course?.title }}</a>
+        <a [routerLink]="['/course-management', exercise.exerciseGroup.exam?.course?.id]">{{ exercise.exerciseGroup.exam?.course?.title }}</a>
     </div>
 </dd>
 <dt *ngIf="exercise.exerciseGroup"><span jhiTranslate="artemisApp.exercise.exam">Exam</span></dt>
 <dd *ngIf="exercise.exerciseGroup">
     <div>
-        <a [routerLink]="['/course-management', exercise.exerciseGroup?.exam?.course?.id, 'exams', exercise.exerciseGroup?.exam?.id]">{{ exercise.exerciseGroup?.exam?.title }}</a>
+        <a [routerLink]="['/course-management', exercise.exerciseGroup.exam?.course?.id, 'exams', exercise.exerciseGroup.exam?.id]">{{ exercise.exerciseGroup.exam?.title }}</a>
     </div>
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>

@@ -87,12 +87,12 @@
                     <td>
                         <ng-container *ngIf="submission.participation?.submissions">
                             <a
-                                *ngIf="exercise?.isAtLeastInstructor && !examId"
+                                *ngIf="exercise.isAtLeastInstructor && !examId"
                                 [routerLink]="[
                                     '/course-management',
                                     courseId,
-                                    exercise?.type + '-exercises',
-                                    exercise?.id,
+                                    exercise.type + '-exercises',
+                                    exercise.id,
                                     'participations',
                                     submission.participation?.id,
                                     'submissions'
@@ -101,7 +101,7 @@
                                 {{ submission.participation?.submissions?.length }}
                             </a>
                             <a
-                                *ngIf="exercise?.isAtLeastInstructor && !!examId"
+                                *ngIf="exercise.isAtLeastInstructor && !!examId"
                                 [routerLink]="[
                                     '/course-management',
                                     courseId,

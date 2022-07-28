@@ -25,7 +25,7 @@
 
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
-                        [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
+                        [routerLink]="['/course-management', programmingExercise.course.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
                         class="btn btn-warning btn-sm me-1 position-relative"
                         style="margin-bottom: 10px"
                     >
@@ -304,11 +304,11 @@
                 </dd>
                 <dt>
                     <span jhiTranslate="artemisApp.programmingExercise.templateRepositoryUrl">Template Repository Url</span>
-                    <div class="clone-buttons" *ngIf="programmingExercise.templateParticipation && programmingExercise.templateParticipation.repositoryUrl">
+                    <div class="clone-buttons" *ngIf="programmingExercise.templateParticipation?.repositoryUrl">
                         <jhi-clone-repo-button
                             class="ms-2"
                             [smallButtons]="true"
-                            [repositoryUrl]="programmingExercise?.templateParticipation?.repositoryUrl! || ''"
+                            [repositoryUrl]="programmingExercise.templateParticipation?.repositoryUrl ?? ''"
                             [isTeamParticipation]="false"
                         ></jhi-clone-repo-button>
                         <jhi-programming-exercise-instructor-repo-download
@@ -465,7 +465,7 @@
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.templateResult">Template Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise?.templateParticipation" class="d-flex align-items-center">
+                    <div *ngIf="programmingExercise.templateParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingTemplateParticipationResults"
                             [exercise]="programmingExercise"
@@ -489,14 +489,14 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise?.templateParticipation?.id">
+                <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.templateParticipation?.id">
                     <a [routerLink]="getParticipationSubmissionLink(programmingExercise!.templateParticipation!.id!)" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }">
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showTemplateSubmissions">Show Submissions</span>
                     </a>
                 </dd>
                 <dt><span jhiTranslate="artemisApp.programmingExercise.solutionResult">Solution Result</span></dt>
                 <dd>
-                    <div *ngIf="programmingExercise?.solutionParticipation" class="d-flex align-items-center">
+                    <div *ngIf="programmingExercise.solutionParticipation" class="d-flex align-items-center">
                         <jhi-updating-result
                             *ngIf="!loadingSolutionParticipationResults && programmingExercise.solutionParticipation"
                             [exercise]="programmingExercise"
@@ -520,12 +520,12 @@
                         ></jhi-programming-exercise-instructor-trigger-build-button>
                     </div>
                 </dd>
-                <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise?.solutionParticipation?.id">
+                <dd *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.solutionParticipation?.id">
                     <a [routerLink]="getParticipationSubmissionLink(programmingExercise!.solutionParticipation!.id!)" [queryParams]="{ isTmpOrSolutionProgrParticipation: true }">
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
-                <div *ngIf="programmingExercise?.gitDiffReport">
+                <div *ngIf="programmingExercise.gitDiffReport">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
                     <dd>
                         <div class="fw-bold">
@@ -547,10 +547,10 @@
                         </div>
                     </dd>
                 </div>
-                <div *ngIf="programmingExercise.isAtLeastTutor && programmingExercise?.testwiseCoverageEnabled">
+                <div *ngIf="programmingExercise.isAtLeastTutor && programmingExercise.testwiseCoverageEnabled">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
                     <dd>
-                        <span>{{ programmingExercise?.coveredLinesRatio ? (programmingExercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
+                        <span>{{ programmingExercise.coveredLinesRatio ? (programmingExercise.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
                     </dd>
                 </div>
             </dl>

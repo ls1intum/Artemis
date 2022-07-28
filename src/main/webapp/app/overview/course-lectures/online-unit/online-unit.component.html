@@ -4,11 +4,11 @@
             <div class="col-auto row align-content-center">
                 <h5 class="m-0 fw-medium">
                     <fa-icon class="me-2 col-auto" [icon]="faLink" [ngbTooltip]="'artemisApp.onlineUnit.tooltip' | artemisTranslate"></fa-icon>
-                    {{ onlineUnit?.name }}
+                    {{ onlineUnit.name }}
                     <span
-                        *ngIf="!onlineUnit?.visibleToStudents"
+                        *ngIf="!onlineUnit.visibleToStudents"
                         class="badge bg-warning ms-2"
-                        ngbTooltip="{{ 'artemisApp.onlineUnit.notReleasedTooltip' | artemisTranslate }} {{ onlineUnit?.releaseDate | artemisDate }}"
+                        ngbTooltip="{{ 'artemisApp.onlineUnit.notReleasedTooltip' | artemisTranslate }} {{ onlineUnit.releaseDate | artemisDate }}"
                     >
                         {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
                     </span>
@@ -35,7 +35,7 @@
             </div>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            <p>{{ onlineUnit?.description }}</p>
+            <p>{{ onlineUnit.description }}</p>
 
             <button class="btn btn-sm btn-primary rounded-pill" (click)="openLink($event)" [ngbTooltip]="domainName">
                 <fa-icon [icon]="faUpRightFromSquare"></fa-icon> <span jhiTranslate="artemisApp.onlineUnit.doOpen">Open link</span>

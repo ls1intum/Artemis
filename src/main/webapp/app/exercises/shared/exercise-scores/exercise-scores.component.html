@@ -1,7 +1,7 @@
 <div *ngIf="exercise">
     <h2>
-        <span *ngIf="exercise.course">{{ exercise.course?.title }} - {{ exercise.title }}</span>
-        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>
+        <span *ngIf="exercise.course">{{ exercise.course.title }} - {{ exercise.title }}</span>
+        <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup.exam?.title }} - {{ exercise.title }}</span>
         <small jhiTranslate="artemisApp.exercise.resultCount" [translateValues]="{ resultsLength: filteredResultsSize }">results</small>
     </h2>
     <h4 *ngIf="this.rangeFilter" class="d-flex align-items-center">
@@ -275,7 +275,7 @@
                         </a>
                         <a
                             *ngIf="exercise.course && (newManualResultAllowed || (value.assessmentType !== exercise.assessmentType && exercise.isAtLeastInstructor))"
-                            [routerLink]="['/course-management', exercise.course?.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="['/course-management', exercise.course.id, 'programming-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
@@ -319,7 +319,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a
                             *ngIf="exercise.course"
-                            [routerLink]="['/course-management', exercise.course?.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="['/course-management', exercise.course.id, 'file-upload-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             class="btn btn-primary btn-sm me-1"
                         >
                             <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
@@ -356,7 +356,7 @@
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <a
                             *ngIf="exercise.course"
-                            [routerLink]="['/course-management', exercise.course?.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
+                            [routerLink]="['/course-management', exercise.course.id, 'modeling-exercises', exercise.id, 'submissions', value.submission.id, 'assessment']"
                             [queryParams]="{ optimal: false, hideBackButton: true }"
                             class="btn btn-primary btn-sm me-1"
                         >

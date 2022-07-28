@@ -5,9 +5,9 @@
     </div>
     <jhi-statistics-score-distribution-graph
         *ngIf="exerciseStatistics"
-        [averageScoreOfExercise]="exerciseStatistics?.averageScoreOfExercise"
-        [scoreDistribution]="exerciseStatistics?.scoreDistribution"
-        [numberOfExerciseScores]="exerciseStatistics?.numberOfExerciseScores"
+        [averageScoreOfExercise]="exerciseStatistics.averageScoreOfExercise"
+        [scoreDistribution]="exerciseStatistics.scoreDistribution"
+        [numberOfExerciseScores]="exerciseStatistics.numberOfExerciseScores"
         [exerciseType]="exercise.type!"
         [courseId]="exercise.course!.id!"
         [exerciseId]="exercise.id!"
@@ -34,6 +34,6 @@
     </div>
     <div *ngFor="let graph of graphTypes; let i = index" id="exercise-statistics-graph-{{ i }}" class="graph">
         <hr *ngIf="i !== 0" />
-        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="exercise?.id"> </jhi-statistics-graph>
+        <jhi-statistics-graph [graphType]="graph" [currentSpan]="currentSpan" [statisticsView]="statisticsView" [entityId]="exercise.id"> </jhi-statistics-graph>
     </div>
 </div>

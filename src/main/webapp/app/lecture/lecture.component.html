@@ -108,7 +108,7 @@
                     <td>{{ lecture.endDate | artemisDate }}</td>
                     <td>
                         <div *ngIf="lecture.course">
-                            <a [routerLink]="['..']">{{ lecture.course?.title }}</a>
+                            <a [routerLink]="['..']">{{ lecture.course.title }}</a>
                         </div>
                     </td>
                     <td class="text-end">

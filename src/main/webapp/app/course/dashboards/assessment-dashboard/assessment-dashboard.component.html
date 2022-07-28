@@ -2,14 +2,14 @@
     <div class="row justify-content-between">
         <div class="col-md-8">
             <h2>
-                <h2 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course?.title }}</h2>
+                <h2 *ngIf="!isExamMode">{{ 'artemisApp.assessmentDashboard.pageHeader' | artemisTranslate }} {{ course.title }}</h2>
                 <h2 *ngIf="isExamMode">
                     {{
                         !isTestRun
                             ? ('artemisApp.assessmentDashboard.pageHeaderExam' | artemisTranslate)
                             : ('artemisApp.assessmentDashboard.pageHeaderExamTestRun' | artemisTranslate)
                     }}
-                    {{ exam?.title }}
+                    {{ exam.title }}
                 </h2>
             </h2>
         </div>
@@ -17,18 +17,18 @@
     <div *ngIf="isExamMode && !isTestRun" class="row justify-content-between">
         <div class="col-md-8">
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam?.endDate | artemisDate }} </span>
+                <span class="me-2"> {{ 'artemisApp.exam.endDate' | artemisTranslate }} : {{ exam.endDate | artemisDate }} </span>
             </h4>
             <h4>
-                <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam?.publishResultsDate | artemisDate }} </span>
+                <span class="me-2"> {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }} : {{ exam.publishResultsDate | artemisDate }} </span>
             </h4>
         </div>
-        <jhi-exam-assessment-buttons *ngIf="course?.isAtLeastInstructor" class="assessment-button-row"></jhi-exam-assessment-buttons>
+        <jhi-exam-assessment-buttons *ngIf="course.isAtLeastInstructor" class="assessment-button-row"></jhi-exam-assessment-buttons>
     </div>
 </div>
 
 <div
-    *ngIf="isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1"
+    *ngIf="isTestRun && exam.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam! > 1"
     style="margin-top: 1em"
     class="alert alert-warning"
     jhiTranslate="artemisApp.examManagement.testRun.secondCorrectionHint"
@@ -181,7 +181,7 @@
                                 <ng-container
                                     class="col-lg-3 col-md-6 col-sm-6"
                                     *ngIf="
-                                        course?.isAtLeastInstructor && isExamMode && !isTestRun && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1
+                                        course.isAtLeastInstructor && isExamMode && !isTestRun && exam.numberOfCorrectionRoundsInExam && exam.numberOfCorrectionRoundsInExam! > 1
                                     "
                                 >
                                     <jhi-second-correction-enable-button
@@ -191,7 +191,7 @@
                                         [togglingSecondCorrectionButton]="isTogglingSecondCorrection.get(exercise.id!)!"
                                     ></jhi-second-correction-enable-button>
                                 </ng-container>
-                                <a class="btn btn-primary btn-sm mb-1" *ngIf="course?.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
+                                <a class="btn btn-primary btn-sm mb-1" *ngIf="course.isAtLeastInstructor" [routerLink]="getSubmissionsLinkForExercise(exercise)">
                                     <span jhiTranslate="artemisApp.assessmentDashboard.submissions">Submissions</span>
                                 </a>
                             </ng-container>

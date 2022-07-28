@@ -1,13 +1,13 @@
 <div class="modal-header">
-    <h4 class="modal-title">{{ learningGoal?.title }}</h4>
+    <h4 class="modal-title">{{ learningGoal.title }}</h4>
     <button type="button" class="btn-close" (click)="activeModal.close()"></button>
 </div>
 <div class="modal-body">
-    <p *ngIf="learningGoal?.description">{{ learningGoal?.description }}</p>
+    <p *ngIf="learningGoal.description">{{ learningGoal.description }}</p>
     <!-- Table for connected lecture units -->
     <div *ngIf="!isPrerequisite">
         <ng-template #elseBlock>{{ 'artemisApp.learningGoal.learningGoalCard.noUnitsConnected' | artemisTranslate }}</ng-template>
-        <div *ngIf="learningGoal?.lectureUnits && learningGoal!.lectureUnits!.length > 0; else elseBlock">
+        <div *ngIf="learningGoal.lectureUnits?.length; else elseBlock">
             <h5>{{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnits' | artemisTranslate }}</h5>
             <p>
                 {{ 'artemisApp.learningGoal.learningGoalCard.connectedLectureUnitsExplanation' | artemisTranslate }}

@@ -1,15 +1,15 @@
 <td class="align-middle">
-    {{ exercise?.id }}
+    {{ exercise.id }}
 </td>
 <td class="align-middle" style="font-size: 1.35rem">
     <fa-icon *ngIf="exercise && exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>
 </td>
 <td class="align-middle">
-    {{ exercise?.title }}
+    {{ exercise.title }}
 </td>
 <td class="align-middle">
-    <ng-container class="score" *ngIf="exercise && achievedPointsPerExercise?.[exercise.id!] != undefined; else scoreNotDefined">
-        {{ achievedPointsPerExercise?.[exercise.id!] }}
+    <ng-container class="score" *ngIf="exercise && achievedPointsPerExercise[exercise.id!] != undefined; else scoreNotDefined">
+        {{ achievedPointsPerExercise[exercise.id!] }}
     </ng-container>
     <ng-template #scoreNotDefined>
         {{ 'N/A' }}

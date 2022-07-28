@@ -1,6 +1,6 @@
 <jhi-header-participation-page class="d-block mb-4" [exercise]="modelingExercise" [participation]="participation">
     <span pagetitle>
-        {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ modelingExercise?.title }}</span>
+        {{ 'artemisApp.modelingSubmission.modelingEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ modelingExercise.title }}</span>
     </span>
     <jhi-button
         submitbutton
@@ -20,7 +20,7 @@
     <!--region Left Panel-->
     <div left-body class="submission-container d-flex flex-column w-100">
         <div class="d-flex flex-column flex-md-row" *ngIf="modelingExercise">
-            <div *ngIf="modelingExercise?.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
+            <div *ngIf="modelingExercise.teamMode && (isActive || isLate)" class="flex-shrink-0 align-self-end align-self-md-stretch mb-2 ms-md-2 ms-lg-3">
                 <jhi-team-participate-info-box
                     [exercise]="modelingExercise"
                     [participation]="participation"

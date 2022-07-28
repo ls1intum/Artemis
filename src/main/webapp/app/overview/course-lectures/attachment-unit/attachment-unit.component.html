@@ -4,11 +4,11 @@
             <div class="col-auto row align-content-center">
                 <h5 class="m-0 fw-medium">
                     <fa-icon class="me-2" [icon]="getAttachmentIcon()" [ngbTooltip]="'artemisApp.attachmentUnit.tooltip' | artemisTranslate"> </fa-icon>
-                    {{ attachmentUnit?.attachment?.name ? attachmentUnit?.attachment?.name : '' }}
+                    {{ attachmentUnit.attachment?.name ? attachmentUnit.attachment?.name : '' }}
                     <span
-                        *ngIf="!attachmentUnit?.visibleToStudents"
+                        *ngIf="!attachmentUnit.visibleToStudents"
                         class="badge bg-warning ms-2"
-                        ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit?.attachment?.releaseDate | artemisDate }}"
+                        ngbTooltip="{{ 'artemisApp.attachmentUnit.notReleasedTooltip' | artemisTranslate }} {{ attachmentUnit.attachment?.releaseDate | artemisDate }}"
                     >
                         {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
                     </span>
@@ -35,21 +35,21 @@
             </div>
         </div>
         <div class="card-body unit-card-body" [ngbCollapse]="isCollapsed">
-            <div *ngIf="attachmentUnit?.attachment?.uploadDate">
+            <div *ngIf="attachmentUnit.attachment?.uploadDate">
                 <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.uploadDate' | artemisTranslate }}: </span>
-                {{ attachmentUnit?.attachment?.uploadDate | artemisDate }}
+                {{ attachmentUnit.attachment?.uploadDate | artemisDate }}
             </div>
-            <div *ngIf="attachmentUnit?.attachment?.version">
+            <div *ngIf="attachmentUnit.attachment?.version">
                 <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.version' | artemisTranslate }}: </span>
-                {{ attachmentUnit?.attachment?.version }}
+                {{ attachmentUnit.attachment?.version }}
             </div>
-            <div *ngIf="attachmentUnit?.attachment?.link">
+            <div *ngIf="attachmentUnit.attachment?.link">
                 <span class="font-weight-bold"> {{ 'artemisApp.attachmentUnit.FileName' | artemisTranslate }}: </span>
                 {{ getFileName() }}
             </div>
-            <div *ngIf="attachmentUnit?.description">
+            <div *ngIf="attachmentUnit.description">
                 <hr />
-                {{ attachmentUnit?.description }}
+                {{ attachmentUnit.description }}
             </div>
             <hr />
             <button id="downloadButton" class="btn btn-primary btn-sm rounded-pill" (click)="downloadAttachment()">

@@ -1,7 +1,7 @@
 <div *ngIf="exercise" class="row">
     <div class="col-12 col-lg-7 d-flex flex-column justify-content-between">
-        <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise?.title }">
-            Example Modeling Submission for Exercise {{ exercise?.title }}
+        <h2 jhiTranslate="artemisApp.modelingExercise.exampleSubmissionForModelingExercise" [translateValues]="{ exerciseTitle: exercise.title }">
+            Example Modeling Submission for Exercise {{ exercise.title }}
         </h2>
         <h5 *ngIf="toComplete" class="fw-light">{{ 'artemisApp.exampleSubmission.home.assessmentTraining' | artemisTranslate }}</h5>
         <p *ngIf="assessmentMode" jhiTranslate="artemisApp.exampleSubmission.assessmentInstruction">Double-click on a model element to view and edit the element's assessment.</p>
@@ -106,10 +106,10 @@
                         class="col-12"
                         *ngIf="assessmentMode && exercise.diagramType"
                         [umlModel]="umlModel"
-                        [resultFeedbacks]="result?.feedbacks || []"
+                        [resultFeedbacks]="result.feedbacks ?? []"
                         [diagramType]="exercise.diagramType!"
-                        [maxScore]="exercise.maxPoints || 0"
-                        [maxBonusPoints]="exercise.bonusPoints || 0"
+                        [maxScore]="exercise.maxPoints ?? 0"
+                        [maxBonusPoints]="exercise.bonusPoints ?? 0"
                         [totalScore]="totalScore"
                         [readOnly]="readOnly"
                         [course]="course"

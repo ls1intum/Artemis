@@ -1,6 +1,6 @@
 <jhi-header-exercise-page-with-details *ngIf="exercise" [exercise]="exercise" [exam]="exam" [isTestRun]="isTestRun">
-    <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
-    <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise?.title }}</span>
+    <span *ngIf="!isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.pageHeader' | artemisTranslate }} {{ exercise.title }}</span>
+    <span *ngIf="isTestRun" pagetitle>{{ 'artemisApp.exerciseAssessmentDashboard.testRunPageHeader' | artemisTranslate }} {{ exercise.title }}</span>
 </jhi-header-exercise-page-with-details>
 
 <div *ngIf="exercise">

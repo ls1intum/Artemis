@@ -19,9 +19,9 @@
     (onResizeEditorInstructions)="onResizeEditorInstructions()"
 >
     <div editorTitle>
-        <span>{{ exercise?.title }}</span>
+        <span>{{ exercise.title }}</span>
         <!-- prettier-ignore -->
-        <span>&nbsp;[{{ exercise?.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
+        <span>&nbsp;[{{ exercise.maxPoints }} {{ 'artemisApp.examParticipation.points' | artemisTranslate }}<span
             *ngIf="exercise.bonusPoints">, {{ exercise.bonusPoints }} {{ 'artemisApp.examParticipation.bonus' | artemisTranslate }}</span>]
             <jhi-included-in-score-badge
                 *ngIf="exercise.includedInOverallScore !== IncludedInOverallScore.INCLUDED_COMPLETELY"
@@ -31,8 +31,8 @@
         <jhi-programming-exercise-instructor-exercise-status
             class="me-2"
             [exercise]="exercise"
-            [templateParticipation]="exercise?.templateParticipation!"
-            [solutionParticipation]="exercise?.solutionParticipation!"
+            [templateParticipation]="exercise.templateParticipation!"
+            [solutionParticipation]="exercise.solutionParticipation!"
         ></jhi-programming-exercise-instructor-exercise-status>
         <!-- repository select -->
         <div ngbDropdown class="d-inline-block me-2">

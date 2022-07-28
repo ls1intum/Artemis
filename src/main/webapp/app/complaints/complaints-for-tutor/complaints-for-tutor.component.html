@@ -18,9 +18,7 @@
     </div>
     <div class="mt-3 mb-3">
         <div id="lockDuration" class="alert alert-info" *ngIf="showLockDuration">
-            {{
-                'artemisApp.locks.lockInformation' | artemisTranslate: { user: this.complaintResponse?.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate }
-            }}
+            {{ 'artemisApp.locks.lockInformation' | artemisTranslate: { user: this.complaintResponse.reviewer?.login, endDate: this.complaintResponse.lockEndDate | artemisDate } }}
         </div>
         <button id="lockButton" class="btn btn-secondary" *ngIf="showRemoveLockButton" (click)="removeLock()">
             {{ 'artemisApp.locks.removeButton' | artemisTranslate }}

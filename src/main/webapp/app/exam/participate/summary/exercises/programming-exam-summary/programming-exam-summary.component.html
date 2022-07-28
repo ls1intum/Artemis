@@ -1,9 +1,9 @@
 <h6>
     <span>Repository Link:</span>
     <span>
-        <a href="{{ participation?.userIndependentRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ participation?.userIndependentRepositoryUrl || 'n.a' }}</a>
+        <a href="{{ participation.userIndependentRepositoryUrl }}" target="_blank" rel="noopener noreferrer">{{ participation.userIndependentRepositoryUrl || 'n.a' }}</a>
     </span>
     <br />
     <span>{{ 'artemisApp.exam.examSummary.lastCommitHash' | artemisTranslate }}:</span>
-    <span [title]="submission?.commitHash">{{ (submission?.commitHash | slice: 0:7) || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}</span>
+    <span [title]="submission.commitHash">{{ (submission.commitHash | slice: 0:7) || ('artemisApp.exam.examSummary.noCommitHash' | artemisTranslate) }}</span>
 </h6>

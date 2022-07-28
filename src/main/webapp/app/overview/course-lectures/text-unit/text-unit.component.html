@@ -4,11 +4,11 @@
             <div class="col-auto row align-content-center">
                 <h5 class="m-0 fw-medium">
                     <fa-icon class="me-2" [icon]="faScroll" [ngbTooltip]="'artemisApp.textUnit.tooltip' | artemisTranslate"></fa-icon>
-                    {{ textUnit?.name ? textUnit.name : '' }}
+                    {{ textUnit.name ? textUnit.name : '' }}
                     <span
-                        *ngIf="!textUnit?.visibleToStudents"
+                        *ngIf="!textUnit.visibleToStudents"
                         class="badge bg-warning ms-2"
-                        ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ textUnit?.releaseDate | artemisDate }}"
+                        ngbTooltip="{{ 'artemisApp.textUnit.notReleasedTooltip' | artemisTranslate }} {{ textUnit.releaseDate | artemisDate }}"
                     >
                         {{ 'artemisApp.courseOverview.exerciseList.notReleased' | artemisTranslate }}
                     </span>

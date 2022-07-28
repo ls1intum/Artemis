@@ -61,16 +61,16 @@
             <ng-container *ngIf="!isTestRun">
                 <div [class.fw-500]="isNextDueDate[0]">
                     {{ 'artemisApp.exam.endDate' | artemisTranslate }}
-                    {{ exam?.endDate | artemisDate }}
-                    <span *ngIf="exam?.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
-                        {{ exam?.endDate | artemisTimeAgo }}
+                    {{ exam.endDate | artemisDate }}
+                    <span *ngIf="exam.endDate && !isTestRun" [ngClass]="statusBadges[0]" class="badge">
+                        {{ exam.endDate | artemisTimeAgo }}
                     </span>
                 </div>
                 <div [class.fw-500]="isNextDueDate[1]">
                     {{ 'artemisApp.exam.publishResultsDate' | artemisTranslate }}
-                    {{ exam?.publishResultsDate | artemisDate }}
-                    <span *ngIf="exam?.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
-                        {{ exam?.publishResultsDate | artemisTimeAgo }}
+                    {{ exam.publishResultsDate | artemisDate }}
+                    <span *ngIf="exam.publishResultsDate" [ngClass]="statusBadges[1]" class="badge">
+                        {{ exam.publishResultsDate | artemisTimeAgo }}
                     </span>
                 </div>
             </ng-container>

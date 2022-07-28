@@ -2,7 +2,7 @@
     <div class="d-flex">
         <div class="mb-3">
             <h2 class="mb-1">
-                <span>{{ exercise?.title }} - </span>{{ filteredTeamsSize }} <span jhiTranslate="artemisApp.team.home.title">Teams</span>
+                <span>{{ exercise.title }} - </span>{{ filteredTeamsSize }} <span jhiTranslate="artemisApp.team.home.title">Teams</span>
             </h2>
             <div class="d-flex align-items-center">
                 <label class="radio-inline mb-0 d-flex align-items-center">
@@ -18,13 +18,13 @@
         <div class="d-flex ms-auto">
             <jhi-teams-export-button
                 class="me-2"
-                *ngIf="exercise?.isAtLeastEditor && teams && teams.length > 0"
+                *ngIf="exercise.isAtLeastEditor && teams && teams.length > 0"
                 [teams]="teams"
                 [buttonSize]="ButtonSize.MEDIUM"
             ></jhi-teams-export-button>
             <jhi-teams-import-button
                 class="me-2"
-                *ngIf="exercise?.isAtLeastEditor"
+                *ngIf="exercise.isAtLeastEditor"
                 [exercise]="exercise"
                 [teams]="teams"
                 [buttonSize]="ButtonSize.MEDIUM"
@@ -66,7 +66,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
-                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value]">
+                        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value]">
                             {{ value }}
                         </a>
                     </ng-template>
@@ -92,7 +92,7 @@
                         </span>
                     </ng-template>
                     <ng-template ngx-datatable-cell-template let-value="row">
-                        <a [routerLink]="['/course-management', exercise?.course?.id, 'exercises', exercise?.id, 'teams', value.id]">
+                        <a [routerLink]="['/course-management', exercise.course?.id, 'exercises', exercise.id, 'teams', value.id]">
                             {{ value.shortName }}
                         </a>
                     </ng-template>

@@ -1,6 +1,6 @@
 <jhi-header-participation-page class="d-block mb-4" [exercise]="textExercise" [participation]="participation">
     <span pagetitle>
-        {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ textExercise?.title }}</span>
+        {{ 'artemisApp.textSubmission.textEditor' | artemisTranslate }}: <span class="font-weight-normal">{{ textExercise.title }}</span>
     </span>
     <jhi-button
         id="submit"
@@ -20,7 +20,7 @@
 <jhi-resizeable-container *ngIf="textExercise" [isExerciseParticipation]="true">
     <!--region Left Panel-->
     <div left-body class="text-editor-grid ps-2 pb-2 w-100">
-        <div class="grid-area-team-info pb-4 ps-md-2" *ngIf="textExercise?.teamMode && isActive">
+        <div class="grid-area-team-info pb-4 ps-md-2" *ngIf="textExercise.teamMode && isActive">
             <jhi-team-participate-info-box
                 [exercise]="textExercise"
                 [participation]="participation"
@@ -51,7 +51,7 @@
                     (input)="onTextEditorInput($event)"
                 ></textarea>
                 <jhi-team-submission-sync
-                    *ngIf="textExercise?.teamMode"
+                    *ngIf="textExercise.teamMode"
                     [exerciseType]="textExercise.type!"
                     [submissionObservable]="submissionObservable"
                     [participation]="participation"

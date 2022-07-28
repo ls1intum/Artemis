@@ -4,8 +4,8 @@
             <mat-panel-title><fa-icon [icon]="faQuestionCircle" size="2x"></fa-icon></mat-panel-title>
             <mat-panel-description>
                 <div>
-                    <div>{{ exerciseHint!.description }}</div>
-                    <div class="task-name">{{ exerciseHint!.programmingExerciseTask?.taskName }}</div>
+                    <div>{{ exerciseHint.description }}</div>
+                    <div class="task-name">{{ exerciseHint.programmingExerciseTask?.taskName }}</div>
                 </div>
             </mat-panel-description>
             <!-- styles.visibility is used to prevent resizing the panel header when the button is not visible -->
@@ -29,7 +29,7 @@
         </div>
     </div>
     <div *ngIf="!isLoading">
-        <div *ngIf="exerciseHint?.content" class="p-3 mb-2 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint!.content | htmlForMarkdown"></div>
+        <div *ngIf="exerciseHint.content" class="p-3 mb-2 border border-1 border-secondary bg-light" [innerHTML]="exerciseHint.content | htmlForMarkdown"></div>
         <div *ngIf="exerciseHint.type === HintType.CODE && (exerciseHint | castToCodeHint)?.solutionEntries">
             <jhi-code-hint-container [codeHint]="exerciseHint | castToCodeHint"></jhi-code-hint-container>
         </div>
@@ -39,7 +39,7 @@
                 checkedColor="gold"
                 uncheckedColor="grey"
                 size="24"
-                [value]="this.exerciseHint?.currentUserRating ?? 0"
+                [value]="this.exerciseHint.currentUserRating ?? 0"
                 [readOnly]="false"
                 [totalStars]="5"
                 (rate)="onRate($event)"
