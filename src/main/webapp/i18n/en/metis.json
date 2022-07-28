@@ -108,7 +108,7 @@
             "userAuthorityTooltips": {
                 "instructor": "Instructor: Responsible for course conduction.",
                 "ta": "Tutor (Teaching Assistant): Responsible for helping users with their questions about the course and exercises.",
-                "user": "User: Takes courses, participates in exercises, and asks questions."
+                "student": "Student: Takes courses, participates in exercises, and asks questions."
             }
         }
     }

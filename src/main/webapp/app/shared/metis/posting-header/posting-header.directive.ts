@@ -50,7 +50,7 @@ export abstract class PostingHeaderDirective<T extends Posting> implements OnIni
 
         if (!this.posting.authorRole || this.posting.authorRole === UserRole.USER) {
             this.userAuthorityIcon = faUser;
-            this.userAuthorityTooltip = toolTipTranslationPath + 'user';
+            this.userAuthorityTooltip = toolTipTranslationPath + 'student';
         } else if (this.posting.authorRole === UserRole.INSTRUCTOR) {
             this.userAuthorityIcon = faUserGraduate;
             this.userAuthorityTooltip = toolTipTranslationPath + 'instructor';

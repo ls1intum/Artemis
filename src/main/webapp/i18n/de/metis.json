@@ -108,7 +108,7 @@
             "userAuthorityTooltips": {
                 "instructor": "Lehrkraft: Verantwortlich für die Kursdurchführung.",
                 "ta": "Tutor:in (Lehrassistenz): Verantwortlich für die Unterstützung der Benutzer:innen bei ihren Fragen zum Kurs und zu den Übungen.",
-                "user": "Benutzer:in: Nimmt an Kursen und Übungen teil und stellt Fragen."
+                "student": "Studierende:r: Nimmt an Kursen und Übungen teil und stellt Fragen."
             }
         }
     }

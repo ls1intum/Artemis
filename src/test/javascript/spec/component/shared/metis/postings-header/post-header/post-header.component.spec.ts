@@ -111,7 +111,7 @@ describe('PostHeaderComponent', () => {
 
         // should display relevant icon for author authority
         const icon = getElement(debugElement, 'fa-icon');
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
         expect(icon.innerHTML).toInclude(param.expect);
     });
 });
