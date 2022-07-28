@@ -1,10 +1,10 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
-import java.time.*;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
@@ -26,9 +26,9 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.repository.ExamRepository;
-import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
 import tech.jhipster.config.JHipsterConstants;
 
@@ -42,6 +42,8 @@ public class ExamMonitoringScheduleService {
 
     private final Logger logger = LoggerFactory.getLogger(ExamMonitoringScheduleService.class);
 
+    private static final long MONITORING_THREE_HOURS_DELAY = 60 * 60 * 3;
+
     private final ExamCache examCache;
 
     private final TaskScheduler scheduler;
@@ -52,19 +54,16 @@ public class ExamMonitoringScheduleService {
 
     private final ExamRepository examRepository;
 
-    private final StudentExamRepository studentExamRepository;
-
     private final WebsocketMessagingService messagingService;
 
     private final ExamActivityService examActivityService;
 
     public ExamMonitoringScheduleService(HazelcastInstance hazelcastInstance, @Qualifier("taskScheduler") TaskScheduler scheduler, Environment env, ExamRepository examRepository,
-            StudentExamRepository studentExamRepository, WebsocketMessagingService messagingService, ExamActivityService examActivityService) {
+            WebsocketMessagingService messagingService, ExamActivityService examActivityService) {
         this.examCache = new ExamCache(hazelcastInstance);
         this.scheduler = scheduler;
         this.env = env;
         this.examRepository = examRepository;
-        this.studentExamRepository = studentExamRepository;
         this.messagingService = messagingService;
         this.examActivityService = examActivityService;
     }
@@ -193,10 +192,10 @@ public class ExamMonitoringScheduleService {
             }
             // 3 am after the end of the exam
             ZonedDateTime endOfExamDay = exam.getEndDate().toLocalDate().atTime(LocalTime.MAX).atZone(ZoneId.systemDefault());
-            var schedulingTime = endOfExamDay.plus(3600 * 3, ChronoUnit.SECONDS);
+            var schedulingTime = endOfExamDay.plus(MONITORING_THREE_HOURS_DELAY, ChronoUnit.SECONDS);
             var scheduledFuture = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
 
-            scheduledExamMonitoring.put(examId, future);
+            scheduledExamMonitoring.put(examId, scheduledFuture);
             logger.info("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
         }
         catch (@SuppressWarnings("unused") DuplicateTaskException e) {

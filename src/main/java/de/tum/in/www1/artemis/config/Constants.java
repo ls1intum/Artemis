@@ -219,8 +219,6 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
-    public static final long MONITORING_CACHE_RESET_DELAY = 60 * 30; // 30 minutes in seconds
-
     public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
 
     public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";
