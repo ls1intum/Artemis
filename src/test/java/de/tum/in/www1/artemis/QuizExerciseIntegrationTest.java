@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
@@ -77,6 +78,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private TeamRepository teamRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private QuizExercise quizExercise;
 
@@ -841,6 +845,40 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var searchTerm = database.configureSearch(id.toString());
         final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup);
+        quizExercise.setTitle("Ankh-Morpork");
+        quizExerciseRepository.save(quizExercise);
+
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
+        exercise.setTitle("Ankh");
+        quizExerciseRepository.save(exercise);
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
+        quizExercise = database.createQuizForExam(exerciseGroup);
+        quizExercise.setTitle("Ankh-Morpork");
+        quizExerciseRepository.save(quizExercise);
+
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
+        exercise.setTitle("Ankh");
+        quizExerciseRepository.save(exercise);
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/");
     }
 
     @Test

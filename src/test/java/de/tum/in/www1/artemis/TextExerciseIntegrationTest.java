@@ -28,11 +28,8 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
-import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
+import de.tum.in.www1.artemis.util.*;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
-import de.tum.in.www1.artemis.util.ModelFactory;
-import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismComparisonStatusDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -73,6 +70,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     @BeforeEach
     void initTestCase() {
@@ -738,6 +738,22 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         final var searchNon = database.configureSearch("Non");
         final var resultNon = request.get("/api/text-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchNon));
         assertThat(resultNon.getResultsOnPage()).isNullOrEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        database.addCourseWithOneReleasedTextExercise("Ankh");
+        database.addCourseExamExerciseGroupWithOneTextExercise("Ankh-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        database.addCourseWithOneReleasedTextExercise("Ankh");
+        database.addCourseExamExerciseGroupWithOneTextExercise("Ankh-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/text-exercises");
     }
 
     @Test
