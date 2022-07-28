@@ -86,21 +86,18 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves his/her answer
      *
      * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
      * @param textSubmission the textSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
+    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save TextSubmission : {}", textSubmission);
         if (textSubmission.getId() != null) {
             throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
         checkTextLength(textSubmission);
-
-        return handleTextSubmission(exerciseId, principal, textSubmission);
+        return handleTextSubmission(exerciseId, textSubmission);
     }
 
     /**
@@ -118,16 +115,16 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to update TextSubmission : {}", textSubmission);
         if (textSubmission.getId() == null) {
-            return createTextSubmission(exerciseId, principal, textSubmission);
+            return createTextSubmission(exerciseId, textSubmission);
         }
 
         checkTextLength(textSubmission);
 
-        return handleTextSubmission(exerciseId, principal, textSubmission);
+        return handleTextSubmission(exerciseId, textSubmission);
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+    private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
@@ -140,12 +137,10 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
         // Check if the user is allowed to submit
         textSubmissionService.checkSubmissionAllowanceElseThrow(textExercise, textSubmission, user);
 
-        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
-
-        this.textSubmissionService.hideDetails(textSubmission, user);
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, user);
+        textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
-        log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
-
+        log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(textSubmission);
     }
 

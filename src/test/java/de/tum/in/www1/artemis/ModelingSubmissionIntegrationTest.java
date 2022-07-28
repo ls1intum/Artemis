@@ -44,9 +44,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private CourseRepository courseRepo;
-
-    @Autowired
     private ExerciseRepository exerciseRepo;
 
     @Autowired

@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -15,10 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.GradingCriterion;
-import de.tum.in.www1.artemis.domain.Result;
-import de.tum.in.www1.artemis.domain.Submission;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -82,22 +78,18 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * starting the exercise or starting a retry.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
-     * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
+    public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
-        long start = System.currentTimeMillis();
         if (modelingSubmission.getId() != null) {
             throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
-        long end = System.currentTimeMillis();
-        log.info("createModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
-        return response;
+        checkModelLength(modelingSubmission);
+        return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
     /**
@@ -105,38 +97,39 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * submitting modeling submissions. The submit specific handling occurs in the ModelingSubmissionService.save() function.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
-     * @param principal          the current user principal
      * @param modelingSubmission the modelingSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated modelingSubmission, or with status 400 (Bad Request) if the modelingSubmission is not valid, or
      *         with status 500 (Internal Server Error) if the modelingSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, Principal principal, @RequestBody ModelingSubmission modelingSubmission) {
-        long start = System.currentTimeMillis();
+    public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
         log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
-        ResponseEntity<ModelingSubmission> response = handleModelingSubmission(exerciseId, principal, modelingSubmission);
-        long end = System.currentTimeMillis();
-        log.debug("updateModelingSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
-        return response;
+        if (modelingSubmission.getId() == null) {
+            return createModelingSubmission(exerciseId, modelingSubmission);
+        }
+        checkModelLength(modelingSubmission);
+        return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
     @NotNull
-    private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, Principal principal, ModelingSubmission modelingSubmission) {
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+    private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
+        long start = System.currentTimeMillis();
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Apply further checks if it is an exam submission
         examSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
         modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(modelingExercise, modelingSubmission, user);
-
         // Check if the user is allowed to submit
         modelingSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, modelingSubmission, user);
 
-        modelingSubmission = modelingSubmissionService.save(modelingSubmission, modelingExercise, principal.getName());
+        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, modelingExercise, user);
         modelingSubmissionService.hideDetails(modelingSubmission, user);
+        long end = System.currentTimeMillis();
+        log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(modelingSubmission);
     }
 
@@ -340,5 +333,15 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
         }
 
         return ResponseEntity.ok(modelingSubmission);
+    }
+
+    /**
+     * Throws IllegalArgumentException if the model length is over 30000 characters.
+     * @param modelingSubmission the modeling submission
+     */
+    private void checkModelLength(ModelingSubmission modelingSubmission) {
+        if (modelingSubmission.getModel() != null && modelingSubmission.getModel().length() > 30000) {
+            throw new BadRequestAlertException("Submission cannot contain more than 30000 characters", ENTITY_NAME, "modelingSubmissionTooLong");
+        }
     }
 }
