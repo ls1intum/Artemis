@@ -39,7 +39,7 @@ describe('DifficultyBadge', () => {
         component.ngOnChanges();
         component.ngOnInit();
 
-        expect(component.badgeClass).toBe(undefined);
+        expect(component.badgeClass).toBeUndefined();
     });
 
     it('should a success badge for easy exercises', () => {

@@ -133,9 +133,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).toBe(null);
+        expect(buildLogNoResultHtml).toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
@@ -150,9 +150,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.toBe(null);
+        expect(buildLogNoResultHtml).not.toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
         expect(buildLogHtmlEntries).toHaveLength(0);
     });
@@ -173,9 +173,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.toBe(null);
+        expect(buildLogNoResultHtml).not.toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
         expect(buildLogHtmlEntries).toHaveLength(0);
     });
@@ -198,9 +198,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).toBe(null);
+        expect(buildLogNoResultHtml).toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
@@ -225,9 +225,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).toBe(null);
+        expect(buildLogNoResultHtml).toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });

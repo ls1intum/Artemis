@@ -253,7 +253,7 @@ describe('User Management Update Component', () => {
     it('should set password to undefined if random password should be used', () => {
         comp.user = { password: 'abc' } as User;
         comp.shouldRandomizePassword(true);
-        expect(comp.user.password).toBe(undefined);
+        expect(comp.user.password).toBeUndefined();
 
         comp.shouldRandomizePassword(false);
         expect(comp.user.password).toBe('');

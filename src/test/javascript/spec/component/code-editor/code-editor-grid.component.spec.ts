@@ -44,7 +44,7 @@ describe('CodeEditorGridComponent', () => {
             fixture.detectChanges();
             let draggableIconForWindow = getDebugElement(windowName);
 
-            expect(draggableIconForWindow).not.toBe(null);
+            expect(draggableIconForWindow).not.toBeNull();
 
             const resizable = () => {};
             const windowInteractable: Interactable = { target: '.resizable-' + windowName.toLowerCase(), resizable } as Interactable;
@@ -62,7 +62,7 @@ describe('CodeEditorGridComponent', () => {
 
             draggableIconForWindow = getDebugElement(windowName);
             expectWindowToBeCollapsed(windowName, true);
-            expect(draggableIconForWindow).toBe(null);
+            expect(draggableIconForWindow).toBeNull();
         };
 
         const getDebugElement = (windowName: string) => {

@@ -48,7 +48,7 @@ describe('TextAssessmentAreaComponent', () => {
             fixture.detectChanges();
 
             const all = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
-            expect(all.length).toBe(i);
+            expect(all).toHaveLength(i);
         }
     });
 

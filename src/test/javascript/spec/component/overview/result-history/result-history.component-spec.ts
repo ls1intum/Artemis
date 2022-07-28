@@ -34,13 +34,13 @@ describe('ResultHistoryComponent', () => {
         fixture.detectChanges();
         result.score = 85;
         expect(component.resultIcon(result)).toEqual(faCheck);
-        expect(component.resultClass(result)).toEqual('success');
+        expect(component.resultClass(result)).toBe('success');
 
         result.score = 50;
         expect(component.resultIcon(result)).toEqual(faTimes);
-        expect(component.resultClass(result)).toEqual('warning');
+        expect(component.resultClass(result)).toBe('warning');
 
         result.score = 30;
-        expect(component.resultClass(result)).toEqual('danger');
+        expect(component.resultClass(result)).toBe('danger');
     });
 });

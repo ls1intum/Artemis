@@ -84,7 +84,7 @@ describe('CourseLearningGoals', () => {
     it('should initialize', () => {
         courseLearningGoalsComponentFixture.detectChanges();
         expect(courseLearningGoalsComponent).toBeDefined();
-        expect(courseLearningGoalsComponent.courseId).toEqual(1);
+        expect(courseLearningGoalsComponent.courseId).toBe(1);
     });
 
     it('should load progress for each learning goal in a given course', () => {

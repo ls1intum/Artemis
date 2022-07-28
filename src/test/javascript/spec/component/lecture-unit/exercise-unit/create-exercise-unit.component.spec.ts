@@ -142,14 +142,14 @@ describe('CreateExerciseUnitComponent', () => {
         );
 
         createExerciseUnitComponentFixture.detectChanges();
-        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation.length).toEqual(5);
+        expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation).toHaveLength(5);
 
         const tableRows = createExerciseUnitComponentFixture.debugElement.queryAll(By.css('tbody > tr'));
-        expect(tableRows.length).toEqual(5);
+        expect(tableRows).toHaveLength(5);
         tableRows[0].nativeElement.click(); // textExercise
         tableRows[1].nativeElement.click(); // programmingExercise
         tableRows[2].nativeElement.click(); // quizExercise
-        expect(createExerciseUnitComponent.exercisesToCreateUnitFor.length).toEqual(3);
+        expect(createExerciseUnitComponent.exercisesToCreateUnitFor).toHaveLength(3);
         expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[0].id).toEqual(textExercise.id);
         expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[1].id).toEqual(programmingExercise.id);
         expect(createExerciseUnitComponent.exercisesAvailableForUnitCreation[2].id).toEqual(quizExercise.id);
