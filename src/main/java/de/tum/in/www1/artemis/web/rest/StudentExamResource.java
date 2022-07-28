@@ -544,6 +544,13 @@ public class StudentExamResource {
     public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
+        }
+
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
 
         User instructor = userRepository.getUser();
         log.info("REST request to start exercises for student exams of exam {}", examId);
