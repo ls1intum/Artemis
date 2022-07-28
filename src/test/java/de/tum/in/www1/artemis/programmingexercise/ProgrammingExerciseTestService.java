@@ -1866,8 +1866,8 @@ public class ProgrammingExerciseTestService {
         var submission1 = database.createProgrammingSubmission(participation, false);
         var submission2 = database.createProgrammingSubmission(participation, false);
 
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10L, 20L, 30L, 60L, 5L));
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 8L, 15L, null, 30L, 0L));
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 8, 15, null, 30, 0));
 
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
         assertThat(statistics.getBuildCount()).isEqualTo(2);
