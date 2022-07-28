@@ -228,36 +228,32 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "other-ta1", roles = "TA")
     void testGetAccessTokenForFileUploadSubmissionAsTutorNotInCourse_forbidden() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
-        String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
-        fileUploadSubmission.setFilePath(path);
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithoutUploadPermissions();
 
         // create tutor that is not in the course
         database.addTeachingAssistant("other-tutors", "other-ta");
 
-        request.get(path + "/access-token", HttpStatus.FORBIDDEN, String.class);
+        request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
     @WithMockUser(username = "student1")
     void testGetAccessTokenForOwnFileUploadSubmissionAsStudent() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
-        String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
-        fileUploadSubmission.setFilePath(path);
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithoutUploadPermissions();
 
         // get access token
-        request.get(path + "/access-token", HttpStatus.OK, String.class);
+        request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
     }
 
     @Test
     @WithMockUser(username = "student2")
     void testGetAccessTokenForOtherStudentsFileUploadSubmissionAsStudent_forbidden() throws Exception {
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithoutUploadPermissions();
+
+        request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    private FileUploadSubmission createFileUploadSubmissionWithoutUploadPermissions() {
         Course course = database.addCourseWithThreeFileUploadExercise();
         FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
         FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
@@ -265,7 +261,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String path = "/api/files/file-upload-exercises/" + fileUploadExercise.getId() + "/submissions/" + fileUploadSubmission.getId() + "/test.png";
         fileUploadSubmission.setFilePath(path);
 
-        request.get(path + "/access-token", HttpStatus.FORBIDDEN, String.class);
+        return fileUploadSubmission;
     }
 
     @Test
