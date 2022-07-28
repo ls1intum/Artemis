@@ -108,8 +108,7 @@ public class TextSubmissionService extends SubmissionService {
             log.error("Text submission version could not be saved", ex);
         }
 
-        if (!textExercise.isExamExercise() && participation.getInitializationState() != InitializationState.FINISHED) {
-            // not for exam exercises
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
             studentParticipationRepository.save(participation);
         }

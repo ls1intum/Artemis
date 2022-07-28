@@ -125,8 +125,7 @@ public class ModelingSubmissionService extends SubmissionService {
             log.error("Modeling submission version could not be saved", ex);
         }
 
-        if (!modelingExercise.isExamExercise() && participation.getInitializationState() != InitializationState.FINISHED) {
-            // not for exam exercises
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
             studentParticipationRepository.save(participation);
         }

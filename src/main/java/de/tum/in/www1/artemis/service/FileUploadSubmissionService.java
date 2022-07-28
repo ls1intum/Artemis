@@ -155,8 +155,7 @@ public class FileUploadSubmissionService extends SubmissionService {
         // Note: we save again so that the new file is stored on the file system
         fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
 
-        if (!exercise.isExamExercise() && participation.getInitializationState() != InitializationState.FINISHED) {
-            // not for exam exercises
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
             participation.setInitializationState(InitializationState.FINISHED);
             studentParticipationRepository.save(participation);
         }
