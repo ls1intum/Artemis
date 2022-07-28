@@ -410,8 +410,10 @@ public class QuizExerciseService {
 
         // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
-        // exam exercises MUST NOT have a release date
-        quizExercise.setReleaseDate(quizExercise.isExamExercise() ? null : ZonedDateTime.now().plusYears(1));
+        if (!quizExercise.isCourseExercise()) {
+            // do not set the release date of exam exercises
+            quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        }
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
