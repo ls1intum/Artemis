@@ -155,18 +155,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetFileUploadSubmission() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
-
-        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
-                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
-
-        fileUploadSubmission.setFilePath(filePath);
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
 
         // get access token
         String accessToken = request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
@@ -179,18 +168,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetFileUploadSubmissionAsTutor() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
-        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
-        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
-        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
-
-        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
-        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
-        String responsePath = response.get("path").asText();
-        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
-                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
-
-        fileUploadSubmission.setFilePath(filePath);
+        FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithRealFile();
 
         // get access token
         String accessToken = request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.OK, String.class);
@@ -251,6 +229,22 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         FileUploadSubmission fileUploadSubmission = createFileUploadSubmissionWithoutUploadPermissions();
 
         request.get(fileUploadSubmission.getFilePath() + "/access-token", HttpStatus.FORBIDDEN, String.class);
+    }
+
+    private FileUploadSubmission createFileUploadSubmissionWithRealFile() throws Exception {
+        Course course = database.addCourseWithThreeFileUploadExercise();
+        FileUploadExercise fileUploadExercise = database.findFileUploadExerciseWithTitle(course.getExercises(), "released");
+        FileUploadSubmission fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
+        fileUploadSubmission = database.addFileUploadSubmission(fileUploadExercise, fileUploadSubmission, "student1");
+
+        MockMultipartFile file = new MockMultipartFile("file", "file.png", "application/json", "some data".getBytes());
+        JsonNode response = request.postWithMultipartFile("/api/fileUpload?keepFileName=true", file.getOriginalFilename(), "file", file, JsonNode.class, HttpStatus.CREATED);
+        String responsePath = response.get("path").asText();
+        String filePath = fileService.manageFilesForUpdatedFilePath(null, responsePath,
+                FileUploadSubmission.buildFilePath(fileUploadExercise.getId(), fileUploadSubmission.getId()), fileUploadSubmission.getId(), true);
+
+        fileUploadSubmission.setFilePath(filePath);
+        return fileUploadSubmission;
     }
 
     private FileUploadSubmission createFileUploadSubmissionWithoutUploadPermissions() {
