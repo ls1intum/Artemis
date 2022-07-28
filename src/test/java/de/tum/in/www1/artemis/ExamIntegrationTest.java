@@ -51,7 +51,7 @@ import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.ZipFileTestUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -186,13 +186,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testAddStudentToExam_testExam() throws Exception {
-        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/student42", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/student42", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testRemoveStudentToExam_testExam() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/student42", HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students/student42", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -356,13 +356,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testRemoveAllStudentsFromExam_testExam() throws Exception {
-        request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/students", HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testStartExercisesWithTextExercise() throws Exception {
 
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 
         // registering users
@@ -398,6 +399,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // invoke start exercises
         int noGeneratedParticipations = prepareExerciseStart(exam2);
+        verify(gitService, times(getNumberOfProgrammingExercises(exam2))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
         List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
 
@@ -415,12 +417,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             exam2.removeStudentExam(studentExam);
         }
         examRepository.save(exam2);
-
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testStartExercisesWithModelingExercise() throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO IMPORTANT test more complex exam configurations (mixed exercise type, more variants and more registered students)
 
         // registering users
@@ -454,6 +456,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // invoke start exercises
         int noGeneratedParticipations = prepareExerciseStart(exam2);
+        verify(gitService, times(getNumberOfProgrammingExercises(exam2))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
         List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
 
@@ -501,7 +504,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateStudentExams_testExam() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
-                HttpStatus.FORBIDDEN);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -593,18 +596,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGenerateMissingStudentExams_testExam() throws Exception {
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/generate-missing-student-exams", Optional.empty(), StudentExam.class,
-                HttpStatus.FORBIDDEN);
+                HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testEvaluateQuizExercises_testExam() throws Exception {
-        request.post("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.FORBIDDEN);
+        request.post("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/student-exams/evaluate-quiz-exercises", Optional.empty(), HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovingAllStudents() throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
 
         // Generate student exams
@@ -616,6 +620,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int numberOfGeneratedParticipations = prepareExerciseStart(exam);
 
         assertThat(numberOfGeneratedParticipations).isEqualTo(16);
+        verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         // Fetch student exams
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
         assertThat(studentExamsDB).hasSize(4);
@@ -653,6 +658,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testRemovingAllStudentsAndParticipations() throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
 
         // Generate student exams
@@ -662,7 +668,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(exam.getRegisteredUsers()).hasSize(4);
 
         int numberOfGeneratedParticipations = prepareExerciseStart(exam);
-
+        verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(numberOfGeneratedParticipations).isEqualTo(16);
         // Fetch student exams
         List<StudentExam> studentExamsDB = request.getList("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/student-exams", HttpStatus.OK, StudentExam.class);
@@ -1092,6 +1098,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteStudent() throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
         var student1 = database.getUserByLogin("student1");
@@ -1117,6 +1124,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // Start the exam to create participations
         prepareExerciseStart(exam);
 
+        verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         // Get the student exam of student2
         Optional<StudentExam> optionalStudent1Exam = generatedStudentExams.stream().filter(studentExam -> studentExam.getUser().equals(student2)).findFirst();
         assertThat(optionalStudent1Exam.get()).isNotNull();
@@ -1147,6 +1155,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testDeleteStudentForTestExam_badRequest() throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
+        // Create an exam with registered students
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+        exam.setTestExam(true);
+        examRepository.save(exam);
+
+        // Remove student1 from the exam
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/students/student1", HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1194,6 +1215,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteStudentWithParticipationsAndSubmissions() throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // Create an exam with registered students
         Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
         var student1 = database.getUserByLogin("student1");
@@ -1209,6 +1231,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Start the exam to create participations
         prepareExerciseStart(exam);
+        verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         List<StudentParticipation> participationsStudent1 = studentParticipationRepository
                 .findByStudentIdAndIndividualExercisesWithEagerSubmissionsResultIgnoreTestRuns(student1.getId(), studentExam1.getExercises());
         assertThat(participationsStudent1).hasSize(studentExam1.getExercises().size());
@@ -1328,7 +1351,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testRegisterCourseStudents_testExam() throws Exception {
-        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation("/api/courses/" + course1.getId() + "/exams/" + testExam1.getId() + "/register-course-students", null, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -1399,19 +1422,19 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Should fail with too many exercise groups
         orderedExerciseGroups.add(exerciseGroup1);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
 
         // Should fail with too few exercise groups
         orderedExerciseGroups.remove(3);
         orderedExerciseGroups.remove(2);
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
 
         // Should fail with different exercise group
         orderedExerciseGroups = new ArrayList<>();
         orderedExerciseGroups.add(exerciseGroup2);
         orderedExerciseGroups.add(exerciseGroup3);
         orderedExerciseGroups.add(ModelFactory.generateExerciseGroup(true, exam));
-        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/exercise-groups-order", orderedExerciseGroups, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -1603,10 +1626,23 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.get("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/scores", HttpStatus.FORBIDDEN, ExamScoresDTO.class);
     }
 
+    private int getNumberOfProgrammingExercises(Exam exam) {
+        exam = examRepository.findWithExerciseGroupsAndExercisesByIdOrElseThrow(exam.getId());
+        int count = 0;
+        for (var exerciseGroup : exam.getExerciseGroups()) {
+            for (var exercise : exerciseGroup.getExercises()) {
+                if (exercise instanceof ProgrammingExercise) {
+                    count++;
+                }
+            }
+        }
+        return count;
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetExamScore() throws Exception {
-
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
         // TODO avoid duplicated code with StudentExamIntegrationTest
 
         var examVisibleDate = now().minusMinutes(5);
@@ -1638,7 +1674,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // start exercises
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
         assertThat(noGeneratedParticipations).isEqualTo(registeredStudents.size() * exam.getExerciseGroups().size());
-
+        verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         // explicitly set the user again to prevent issues in the following server call due to the use of SecurityUtils.setAuthorizationObject();
         database.changeUser("instructor1");
 
@@ -2190,6 +2226,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     }
 
     void testGetStatsForExamAssessmentDashboard(int numberOfCorrectionRounds) throws Exception {
+        doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
+
         User examTutor1 = userRepo.findOneByLogin("tutor1").get();
         User examTutor2 = userRepo.findOneByLogin("tutor2").get();
 
@@ -2226,7 +2264,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<StudentExam> studentExams = request.postListWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
-
+        verify(gitService, times(getNumberOfProgrammingExercises(exam))).combineAllCommitsOfRepositoryIntoOne(any());
         // set start and submitted date as results are created below
         studentExams.forEach(studentExam -> {
             studentExam.setStarted(true);
@@ -2438,10 +2476,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void testGenerateStudentExamsTemplateCombine() throws Exception {
         Exam examWithProgramming = database.addExerciseGroupsAndExercisesToExam(exam1, true);
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(any());
+
         // invoke generate student exams
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + examWithProgramming.getId() + "/generate-student-exams", Optional.empty(),
                 StudentExam.class, HttpStatus.OK);
-        verify(gitService, times(1)).combineAllCommitsOfRepositoryIntoOne(any());
+
+        verify(gitService, times(0)).combineAllCommitsOfRepositoryIntoOne(any());
+
+        // invoke prepare exercise start
+        request.postWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam1.getId() + "/student-exams/start-exercises", Optional.empty(), Integer.class,
+                HttpStatus.OK);
+
+        verify(gitService, times(getNumberOfProgrammingExercises(exam1))).combineAllCommitsOfRepositoryIntoOne(any());
     }
 
     @Test
@@ -2502,14 +2548,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "student1", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_noTestExam() {
         assertThatThrownBy(() -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), database.getUserByLogin("student1")))
-                .isInstanceOf(AccessForbiddenException.class);
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test
     @WithMockUser(username = "student42", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_studentNotPartOfCourse() {
         assertThatThrownBy(() -> examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, exam1.getId(), database.getUserByLogin("student42")))
-                .isInstanceOf(AccessForbiddenException.class);
+                .isInstanceOf(BadRequestAlertException.class);
     }
 
     @Test

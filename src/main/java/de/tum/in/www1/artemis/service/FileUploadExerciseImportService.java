@@ -15,13 +15,13 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.SubmissionRepository;
 
 @Service
-public class FileUploadImportService extends ExerciseImportService {
+public class FileUploadExerciseImportService extends ExerciseImportService {
 
     private final Logger log = LoggerFactory.getLogger(TextExerciseImportService.class);
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    public FileUploadImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
+    public FileUploadExerciseImportService(ExampleSubmissionRepository exampleSubmissionRepository, SubmissionRepository submissionRepository, ResultRepository resultRepository,
             FileUploadExerciseRepository fileUploadExerciseRepository) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;

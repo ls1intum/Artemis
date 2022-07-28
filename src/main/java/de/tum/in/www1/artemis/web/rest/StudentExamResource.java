@@ -545,9 +545,21 @@ public class StudentExamResource {
     public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+        final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
+
+        if (exam.isTestExam()) {
+            throw new BadRequestAlertException("Start exercises is only allowed for real exams", "StudentExam", "startExerciseOnlyForRealExams");
+        }
+
+        examService.combineTemplateCommitsOfAllProgrammingExercisesInExam(exam);
+
+        User instructor = userRepository.getUser();
+        log.info("REST request to start exercises for student exams of exam {}", examId);
+        AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
+        auditEventRepository.add(auditEvent);
+
         studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
                 numberOfGeneratedParticipations, formatDurationFrom(start), examId));
-
         return ResponseEntity.ok().build();
     }
 
