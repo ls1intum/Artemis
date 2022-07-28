@@ -324,6 +324,7 @@ describe('Exercise Scores Component', () => {
         expect(resultServiceStub).toHaveBeenCalledOnce();
         expect(resultServiceStub).toHaveBeenCalledWith(component.exercise);
         expect(component.results).toEqual([result]);
+        expect(component.filteredResults).toEqual([result]);
         expect(component.isLoading).toBeFalse();
     });
 

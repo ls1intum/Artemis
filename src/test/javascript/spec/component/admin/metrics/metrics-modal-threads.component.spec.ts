@@ -71,21 +71,21 @@ describe('MetricsModalThreadsComponent', () => {
 
             // THEN
             expect(comp.threadDumpAll).toEqual(comp.threads.length);
-            expect(comp.threadDumpBlocked).toEqual(0);
+            expect(comp.threadDumpBlocked).toBe(0);
             expect(comp.threadDumpRunnable).toEqual(runnableThreads.length);
-            expect(comp.threadDumpTimedWaiting).toEqual(0);
+            expect(comp.threadDumpTimedWaiting).toBe(0);
             expect(comp.threadDumpWaiting).toEqual(waitingThreads.length);
         });
     });
 
     describe('background class', () => {
         it('computes correct bg-* class based on thread state', () => {
-            expect(comp.getBgClass(ThreadState.Runnable)).toEqual('bg-success');
-            expect(comp.getBgClass(ThreadState.Waiting)).toEqual('bg-info');
-            expect(comp.getBgClass(ThreadState.TimedWaiting)).toEqual('bg-warning');
-            expect(comp.getBgClass(ThreadState.Blocked)).toEqual('bg-danger');
-            expect(comp.getBgClass(ThreadState.New)).toEqual('');
-            expect(comp.getBgClass(ThreadState.Terminated)).toEqual('');
+            expect(comp.getBgClass(ThreadState.Runnable)).toBe('bg-success');
+            expect(comp.getBgClass(ThreadState.Waiting)).toBe('bg-info');
+            expect(comp.getBgClass(ThreadState.TimedWaiting)).toBe('bg-warning');
+            expect(comp.getBgClass(ThreadState.Blocked)).toBe('bg-danger');
+            expect(comp.getBgClass(ThreadState.New)).toBe('');
+            expect(comp.getBgClass(ThreadState.Terminated)).toBe('');
         });
     });
 
@@ -160,13 +160,13 @@ describe('MetricsModalThreadsComponent', () => {
         it('calls activeModal.dismiss()', () => {
             // GIVEN
             const dismissSpy = jest.spyOn(activeModal, 'dismiss').mockImplementation(() => {});
-            expect(dismissSpy).not.toBeCalled();
+            expect(dismissSpy).not.toHaveBeenCalled();
 
             // WHEN
             comp.dismiss();
 
             // THEN
-            expect(dismissSpy).toBeCalled();
+            expect(dismissSpy).toHaveBeenCalled();
         });
     });
 });

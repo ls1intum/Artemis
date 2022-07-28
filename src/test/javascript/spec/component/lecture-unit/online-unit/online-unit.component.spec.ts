@@ -64,26 +64,30 @@ describe('OnlineUnitComponent', () => {
         handleCollapseSpy.mockRestore();
     });
 
-    it('should call completion callback when opening link', (done) => {
-        const windowSpy = jest.spyOn(window, 'open').mockImplementation(() => {
-            return null;
+    it('should call completion callback when opening link', () => {
+        return new Promise<void>((done) => {
+            const windowSpy = jest.spyOn(window, 'open').mockImplementation(() => {
+                return null;
+            });
+            onlineUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(onlineUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            onlineUnitComponent.openLink(new Event('click'));
+            expect(windowSpy).toHaveBeenCalledOnce();
+            expect(windowSpy).toHaveBeenCalledWith(exampleSource, '_blank');
         });
-        onlineUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(onlineUnit);
-            expect(event.completed).toBeTrue();
-            done();
-        });
-        onlineUnitComponent.openLink(new Event('click'));
-        expect(windowSpy).toHaveBeenCalledOnce();
-        expect(windowSpy).toHaveBeenCalledWith(exampleSource, '_blank');
     }, 1000);
 
-    it('should call completion callback when clicked', (done) => {
-        onlineUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(onlineUnit);
-            expect(event.completed).toBeFalse();
-            done();
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            onlineUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(onlineUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            onlineUnitComponent.handleClick(new Event('click'), false);
         });
-        onlineUnitComponent.handleClick(new Event('click'), false);
     }, 1000);
 });

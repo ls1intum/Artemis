@@ -222,7 +222,7 @@ describe('ExamParticipationCoverComponent', () => {
         expect(component.hasStarted()).toBeTrue();
     });
 
-    it('should update displayed times if exam suddenly started ', () => {
+    it('should update displayed times if exam suddenly started', () => {
         component.testRun = true;
         component.exam.startDate = dayjs();
         component.onExamStarted = new EventEmitter<StudentExam>();

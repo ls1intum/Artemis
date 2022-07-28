@@ -316,11 +316,11 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.addTextSolution();
 
-        expect(component.shortAnswerQuestion.solutions!.length).toBe(3); // 2 -> 3
+        expect(component.shortAnswerQuestion.solutions).toHaveLength(3); // 2 -> 3
 
         component.deleteSolution(shortAnswerSolution2);
 
-        expect(component.shortAnswerQuestion.solutions!.length).toBe(2); // 3 -> 2
+        expect(component.shortAnswerQuestion.solutions).toHaveLength(2); // 3 -> 2
     });
 
     it('should add spot at cursor visual mode', () => {
@@ -419,9 +419,9 @@ describe('ShortAnswerQuestionEditComponent', () => {
         component.shortAnswerQuestion.correctMappings.push(mapping);
 
         component.togglePreview();
-        expect(component.textParts.length).toBe(1);
+        expect(component.textParts).toHaveLength(1);
         const firstElement = component.textParts.pop();
-        expect(firstElement!.length).toBe(1);
+        expect(firstElement).toHaveLength(1);
         expect(firstElement).toEqual(['<p>This is the text of a question</p>']);
     });
 
@@ -472,7 +472,7 @@ describe('ShortAnswerQuestionEditComponent', () => {
 
         component.deleteSpot(spot1);
 
-        expect(component.shortAnswerQuestion.spots.length).toBe(1);
+        expect(component.shortAnswerQuestion.spots).toHaveLength(1);
         expect(component.shortAnswerQuestion.spots[0]).toEqual(spot2);
     });
 

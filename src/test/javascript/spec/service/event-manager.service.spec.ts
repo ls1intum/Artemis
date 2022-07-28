@@ -56,7 +56,7 @@ describe('Event Manager tests', () => {
             // WHEN
             eventManager.broadcast('modifier');
             // THEN
-            expect(receivedEvent).toEqual('modifier');
+            expect(receivedEvent).toBe('modifier');
         });
 
         it('should subscribe to multiple events', () => {
@@ -76,7 +76,7 @@ describe('Event Manager tests', () => {
             // WHEN
             eventManager.broadcast('modifier2');
             // THEN
-            expect(receivedEvent).toEqual('modifier2');
+            expect(receivedEvent).toBe('modifier2');
         });
     });
 });

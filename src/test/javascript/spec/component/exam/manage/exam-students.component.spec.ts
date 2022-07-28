@@ -185,12 +185,12 @@ describe('ExamStudentsComponent', () => {
 
     it('should format search result', () => {
         const resultString = component.searchResultFormatter(user1);
-        expect(resultString).toEqual('name (login)');
+        expect(resultString).toBe('name (login)');
     });
 
     it('should format search text from user', () => {
         const resultString = component.searchTextFromUser(user1);
-        expect(resultString).toEqual('login');
+        expect(resultString).toBe('login');
     });
 
     it('should test on error', () => {

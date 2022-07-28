@@ -74,17 +74,17 @@ describe('ManualTextblockSelectionComponent', () => {
     });
 
     it('should add TextBlockRefGroup correctly', () => {
-        expect(component.textBlockRefGroups.length).toBe(3);
+        expect(component.textBlockRefGroups).toHaveLength(3);
     });
 
     it('should add a TextblockAssessmentCardComponent for each TextBlockRefGroup with a feedback', () => {
         const all = fixture.debugElement.queryAll(By.directive(TextblockAssessmentCardComponent));
-        expect(all.length).toBe(1);
+        expect(all).toHaveLength(1);
     });
 
     it('should add a ManualTextSelectionComponent for each TextBlockRefGroup without a feedback', () => {
         const all = fixture.debugElement.queryAll(By.directive(ManualTextSelectionComponent));
-        expect(all.length).toBe(2);
+        expect(all).toHaveLength(2);
     });
 
     it('should handle manual text selection correctly', () => {
