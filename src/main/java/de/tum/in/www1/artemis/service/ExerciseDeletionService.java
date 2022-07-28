@@ -213,7 +213,8 @@ public class ExerciseDeletionService {
         // delete all participations belonging to this exercise, this will also delete submissions, results, feedback, complaints, etc.
         participationService.deleteAllByExerciseId(exercise.getId(), true, true);
 
-        if (exercise instanceof QuizExercise) {
+        // and additional call to the quizExerciseService is only needed for course exercises, not for exam exercises
+        if (exercise instanceof QuizExercise && exercise.isCourseExercise()) {
             quizExerciseService.resetExercise(exercise.getId());
         }
     }

@@ -79,7 +79,8 @@
     </ng-template>
     <button
         *ngIf="canArchive()"
-        [disabled]="isBeingArchived"
+        [jhiFeatureToggle]="FeatureToggle.Exports"
+        [overwriteDisabled]="isBeingArchived"
         type="button"
         [attr.data-mode]="archiveMode"
         id="archiveButton"

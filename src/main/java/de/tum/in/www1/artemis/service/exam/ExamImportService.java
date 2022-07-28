@@ -16,7 +16,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
-import de.tum.in.www1.artemis.service.FileUploadImportService;
+import de.tum.in.www1.artemis.service.FileUploadExerciseImportService;
 import de.tum.in.www1.artemis.service.ModelingExerciseImportService;
 import de.tum.in.www1.artemis.service.QuizExerciseImportService;
 import de.tum.in.www1.artemis.service.TextExerciseImportService;
@@ -53,7 +53,7 @@ public class ExamImportService {
 
     private final FileUploadExerciseRepository fileUploadExerciseRepository;
 
-    private final FileUploadImportService fileUploadImportService;
+    private final FileUploadExerciseImportService fileUploadExerciseImportService;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -64,7 +64,7 @@ public class ExamImportService {
             ExerciseGroupRepository exerciseGroupRepository, QuizExerciseRepository quizExerciseRepository, QuizExerciseImportService importQuizExercise,
             CourseRepository courseRepository, ProgrammingExerciseService programmingExerciseService1, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseImportService programmingExerciseImportService, FileUploadExerciseRepository fileUploadExerciseRepository,
-            FileUploadImportService fileUploadImportService, GradingCriterionRepository gradingCriterionRepository,
+            FileUploadExerciseImportService fileUploadExerciseImportService, GradingCriterionRepository gradingCriterionRepository,
             ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.textExerciseImportService = textExerciseImportService;
         this.textExerciseRepository = textExerciseRepository;
@@ -79,7 +79,7 @@ public class ExamImportService {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseImportService = programmingExerciseImportService;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
-        this.fileUploadImportService = fileUploadImportService;
+        this.fileUploadExerciseImportService = fileUploadExerciseImportService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
@@ -254,7 +254,7 @@ public class ExamImportService {
                     if (optionalFileUploadExercise.isEmpty()) {
                         break;
                     }
-                    exerciseCopied = fileUploadImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy);
+                    exerciseCopied = fileUploadExerciseImportService.importFileUploadExercise(optionalFileUploadExercise.get(), (FileUploadExercise) exerciseToCopy);
                 }
 
                 case QUIZ -> {
