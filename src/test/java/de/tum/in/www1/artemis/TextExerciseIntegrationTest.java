@@ -742,7 +742,6 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testInstructorSearchTermMatchesId() throws Exception {
     void testCourseAndExamFiltersAsInstructor() throws Exception {
         database.addCourseWithOneReleasedTextExercise("Ankh");
         database.addCourseExamExerciseGroupWithOneTextExercise("Ankh-Morpork");
