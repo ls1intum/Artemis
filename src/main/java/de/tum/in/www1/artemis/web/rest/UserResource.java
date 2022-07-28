@@ -6,9 +6,11 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -84,14 +86,17 @@ public class UserResource {
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
+    private final Optional<LdapUserService> ldapUserService;
+
     public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository) {
+                        ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, LtiUserIdRepository ltiUserIdRepository, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
         this.ltiUserIdRepository = ltiUserIdRepository;
+        this.ldapUserService = ldapUserService;
     }
 
     private static void checkUsernameAndPasswordValidity(String username, String password) {
@@ -200,26 +205,21 @@ public class UserResource {
     /**
      * PUT ldap : Updates an existing User based on the info available in the LDAP server.
      *
-     * @param login of the user to update
+     * @param userId of the user to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated user
      */
-    @PutMapping("users/{login:" + Constants.LOGIN_REGEX + "}/sync-ldap")
+    @PutMapping("users/{userId}/sync-ldap")
     @PreAuthorize("hasRole('ADMIN')")
     @Profile("ldap")
-    public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable String login) {
-        log.debug("REST request to update ldap information User : {}", login);
+    public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
+        log.debug("REST request to update ldap information User : {}", userId);
 
-        var existingUser = userRepository.findOneWithGroupsAndAuthoritiesByLogin(login);
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
 
-        if (existingUser.isPresent()) {
-            var ldapUser = userService.updateUserFromLdap(existingUser.get().getRegistrationNumber());
-            if (ldapUser.isPresent()) {
-                return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", login)).body(new UserDTO(ldapUser.get()));
-            }
-        }
+        ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
+        userCreationService.saveUser(user);
 
-        return ResponseEntity.notFound().build();
-
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", userId.toString())).body(new UserDTO(user));
     }
 
     /**

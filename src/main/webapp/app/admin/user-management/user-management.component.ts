@@ -575,8 +575,8 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         });
     }
 
-    ldapSync(login: string) {
-        this.userService.syncLdap(login).subscribe(() => {
+    ldapSync(userId: number) {
+        this.userService.syncLdap(userId).subscribe(() => {
             this.loadAll();
         });
     }
