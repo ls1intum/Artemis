@@ -64,6 +64,11 @@ jobs:
         access-token: ${{ secrets.GITHUB_TOKEN }}
         path: build/test-results/test/*.xml
         numFailures: 99
+    - name: Add coverage to PR
+      uses: madrapps/jacoco-report@v1.2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        paths: build/reports/jacoco/test/jacocoTestReport.xml
 
   server-style:
     runs-on: ubuntu-latest
@@ -105,6 +110,11 @@ jobs:
               access-token: ${{ secrets.GITHUB_TOKEN }}
               path: junit.xml
               numFailures: 99
+        - name: Comment Test Coverage
+          uses: AthleticNet/comment-test-coverage@1.2.2
+          with:
+            token: ${{ secrets.GITHUB_TOKEN }}
+            path: /build/test-results/coverage-summary.json
 
   client-tests-selected:
       runs-on: ubuntu-latest

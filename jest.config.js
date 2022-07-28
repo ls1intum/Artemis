@@ -30,7 +30,7 @@ module.exports = {
     setupFiles: ['jest-date-mock'],
     cacheDirectory: '<rootDir>/build/jest-cache',
     coverageDirectory: '<rootDir>/build/test-results/',
-    reporters: ['default', ['jest-junit', { outputDirectory: '<rootDir>/build/test-results/', outputName: 'TESTS-results-jest.xml' }]],
+    reporters: ['default', ['json-summary', { outputDirectory: '<rootDir>/build/test-results/', outputName: 'coverage-summary.json' }], ['jest-junit', { outputDirectory: '<rootDir>/build/test-results/', outputName: 'TESTS-results-jest.xml' }]],
     collectCoverageFrom: ['src/main/webapp/**/*.{js,jsx,ts,tsx}', '!src/main/webapp/**/*.module.{js,jsx,ts,tsx}'],
     coveragePathIgnorePatterns: [
         '/node_modules/',
