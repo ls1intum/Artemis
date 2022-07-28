@@ -111,10 +111,7 @@ public class ProgrammingExerciseTaskService {
     public List<ProgrammingExerciseTask> getSortedTasks(ProgrammingExercise exercise) {
         var unsortedTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(exercise.getId());
         var sortedExtractedTasks = extractTasks(exercise);
-        return sortedExtractedTasks.stream()
-                .map(extractedTask -> unsortedTasks.stream()
-                        .filter(task -> task.getTaskName().equals(extractedTask.getTaskName()) && task.getTestCases().equals(extractedTask.getTestCases())).findFirst()
-                        .orElse(null))
+        return sortedExtractedTasks.stream().map(extractedTask -> unsortedTasks.stream().filter(task -> task.equals(extractedTask)).findFirst().orElse(null))
                 .filter(Objects::nonNull).toList();
     }
 
