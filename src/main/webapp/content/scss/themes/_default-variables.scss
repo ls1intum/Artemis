@@ -308,6 +308,9 @@ $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
 
+// Lecture Attachments
+$lecture-attachment-edit-overlay-color: rgba($gray-300, 0.9);
+
 // Notification sidebar
 $notification-sb-background: $brighter-body-bg;
 $notification-sb-overlay-bg: rgba(0, 0, 0, 0.2);
@@ -433,7 +436,7 @@ $artemis-alert-danger-color: #600c0c;
 $artemis-alert-danger-background: #f1d1d1;
 $artemis-alert-danger-border: #bb2d3b;
 $artemis-alert-warning-color: #604c0c;
-$artemis-alert-warning-background: #f1e8d1;
+$artemis-alert-warning-background: #ffe196;
 $artemis-alert-warning-border: #cc9c12;
 $artemis-alert-success-color: #21600c;
 $artemis-alert-success-background: #d9f1d1;

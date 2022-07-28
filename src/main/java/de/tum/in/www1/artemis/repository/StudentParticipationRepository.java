@@ -714,12 +714,12 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations belonging to exam with submissions and their relevant results.
      *
      * @param examId the id of the exam
-     * @return list of participations belonging to course
+     * @return an unmodifiable list of participations belonging to course
      */
     default List<StudentParticipation> findByExamIdWithSubmissionRelevantResult(Long examId) {
         var participations = findByExamIdWithEagerLegalSubmissionsRatedResults(examId); // without test run participations
         // filter out the participations of test runs which can only be made by instructors
-        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).collect(Collectors.toList());
+        participations = participations.stream().filter(studentParticipation -> !studentParticipation.isTestRun()).toList();
         return filterParticipationsWithRelevantResults(participations, true);
     }
 
@@ -727,7 +727,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * Get all participations belonging to course with relevant results.
      *
      * @param courseId the id of the course
-     * @return list of participations belonging to course
+     * @return an unmodifiable list of participations belonging to course
      */
     default List<StudentParticipation> findByCourseIdWithRelevantResult(Long courseId) {
         List<StudentParticipation> participations = findByCourseIdWithEagerRatedResults(courseId);
@@ -739,7 +739,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      *
      * @param participations     the participations to get filtered
      * @param resultInSubmission flag to indicate if the results are represented in the submission or participation
-     * @return the filtered participations
+     * @return an unmodifiable list of filtered participations
      */
     private List<StudentParticipation> filterParticipationsWithRelevantResults(List<StudentParticipation> participations, boolean resultInSubmission) {
 
@@ -783,7 +783,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                         relevantResults.add(correctResult);
                     }
                     participation.setResults(new HashSet<>(relevantResults));
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     /**
@@ -888,7 +888,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      *
      * @param user      the user to get the participations for
      * @param exercises the exercise to get the participations for
-     * @return the participations of the user in the exercises
+     * @return an unmodifiable list of participations of the user in the exercises
      */
     default List<StudentParticipation> getAllParticipationsOfUserInExercises(User user, Set<Exercise> exercises) {
         Map<ExerciseMode, List<Exercise>> exercisesGroupedByExerciseMode = exercises.stream().collect(Collectors.groupingBy(Exercise::getMode));
@@ -909,7 +909,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
         var teamParticipations = findByStudentIdAndTeamExercisesWithEagerLegalSubmissionsResult(user.getId(), teamExercises);
 
         // 3rd: merge both into one list for further processing
-        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).collect(Collectors.toList());
+        return Stream.concat(individualParticipations.stream(), teamParticipations.stream()).toList();
     }
 
     /**

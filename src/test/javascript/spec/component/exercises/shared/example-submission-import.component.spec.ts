@@ -105,7 +105,7 @@ describe('ExampleSubmissionImportComponent', () => {
         expect(component.content).toBe(searchResult);
         component.sortRows();
         expect(sortByPropertySpy).toHaveBeenCalledWith(searchResult.resultsOnPage, component.sortedColumn, component.listSorting);
-        expect(component.content.resultsOnPage).not.toBe(undefined);
+        expect(component.content.resultsOnPage).toBeDefined();
         expect(component.content.resultsOnPage[0].submissionSize).toBe(3);
         expect(getSubmissionSizeSpy).toHaveBeenCalledTimes(2);
     };

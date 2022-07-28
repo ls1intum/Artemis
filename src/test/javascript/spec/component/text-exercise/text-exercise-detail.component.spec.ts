@@ -89,9 +89,9 @@ describe('TextExercise Management Detail Component', () => {
             expect(statisticsServiceStub).toHaveBeenCalled();
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
-            expect(comp.doughnutStats.participationsInPercent).toEqual(100);
-            expect(comp.doughnutStats.resolvedPostsInPercent).toEqual(50);
-            expect(comp.doughnutStats.absoluteAveragePoints).toEqual(5);
+            expect(comp.doughnutStats.participationsInPercent).toBe(100);
+            expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
+            expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);
         });
     });
 

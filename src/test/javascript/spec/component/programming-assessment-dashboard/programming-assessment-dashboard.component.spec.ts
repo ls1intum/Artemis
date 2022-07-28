@@ -104,7 +104,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         expect(component).toBeTruthy();
         expect(component.submissions).toEqual([]);
         expect(component.reverse).toBeFalse();
-        expect(component.predicate).toEqual('id');
+        expect(component.predicate).toBe('id');
         expect(component.filteredSubmissions).toEqual([]);
 
         // call
@@ -199,8 +199,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
     it('should assessmentTypeTranslationKey', () => {
         const result = { id: 55, assessmentType: AssessmentType.SEMI_AUTOMATIC };
-        expect(component.assessmentTypeTranslationKey(result)).toEqual(`artemisApp.AssessmentType.${result.assessmentType}`);
-        expect(component.assessmentTypeTranslationKey(undefined)).toEqual(`artemisApp.AssessmentType.null`);
+        expect(component.assessmentTypeTranslationKey(result)).toBe(`artemisApp.AssessmentType.${result.assessmentType}`);
+        expect(component.assessmentTypeTranslationKey(undefined)).toBe(`artemisApp.AssessmentType.null`);
     });
 
     describe('shouldGetAssessmentLink', () => {

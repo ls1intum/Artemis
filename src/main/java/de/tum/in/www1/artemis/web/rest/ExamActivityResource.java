@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
@@ -25,12 +26,16 @@ public class ExamActivityResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     private final ExamAccessService examAccessService;
 
     private final ExamRepository examRepository;
 
-    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService, ExamAccessService examAccessService, ExamRepository examRepository) {
+    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService, InstanceMessageSendService instanceMessageSendService,
+            ExamAccessService examAccessService, ExamRepository examRepository) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
         this.examAccessService = examAccessService;
         this.examRepository = examRepository;
     }
@@ -76,10 +81,10 @@ public class ExamActivityResource {
         Exam result = examRepository.save(exam);
 
         if (result.isMonitoring()) {
-            examMonitoringScheduleService.scheduleExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
         }
         else {
-            examMonitoringScheduleService.cancelExamActivitySave(result.getId());
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
         }
         examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), result.isMonitoring());
 

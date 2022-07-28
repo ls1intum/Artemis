@@ -4,7 +4,7 @@ import dayjs from 'dayjs/esm';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockTranslateService } from '../helpers/mocks/service/mock-translate.service';
 
-export const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';
+const GERMAN_SHORT_DATE_FORMAT = 'DD. MMM. YYYY';
 
 describe('ArtemisDatePipe', () => {
     let pipe: ArtemisDatePipe;

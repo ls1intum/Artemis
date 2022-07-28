@@ -8,17 +8,17 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.web.rest.vm.LoggerVM;
 
-public class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LogsResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void testGetList() throws Exception {
+    void testGetList() throws Exception {
         request.get("/management/logs", HttpStatus.OK, List.class);
     }
 
     @Test
     @WithMockUser(roles = "ADMIN")
-    public void testChangeLevel() throws Exception {
+    void testChangeLevel() throws Exception {
         LoggerVM logger = new LoggerVM();
         logger.setLevel("1");
         logger.setName("logger");

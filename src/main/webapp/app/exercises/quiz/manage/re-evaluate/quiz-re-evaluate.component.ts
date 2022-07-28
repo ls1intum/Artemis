@@ -113,7 +113,7 @@ export class QuizReEvaluateComponent extends QuizExerciseValidationDirective imp
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     back(): void {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);

@@ -13,7 +13,6 @@ import { ProgrammingExerciseImportComponent } from 'app/exercises/programming/ma
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { SortService } from 'app/shared/service/sort.service';
 import { ProgrammingExerciseEditSelectedComponent } from 'app/exercises/programming/manage/programming-exercise-edit-selected.component';
 import { ProgrammingAssessmentRepoExportDialogComponent } from 'app/exercises/programming/assess/repo-export/programming-assessment-repo-export-dialog.component';
@@ -68,7 +67,6 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         private alertService: AlertService,
         private modalService: NgbModal,
         private router: Router,
-        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private sortService: SortService,
         private profileService: ProfileService,
         courseService: CourseManagementService,
@@ -225,18 +223,4 @@ export class ProgrammingExerciseComponent extends ExerciseComponent implements O
         const modalRef = this.modalService.open(ConsistencyCheckComponent, { keyboard: true, size: 'lg' });
         modalRef.componentInstance.exercisesToCheck = this.selectedProgrammingExercises;
     }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * Checks if the url includes the string "nolocalsetup', which is an indication
-     * that the particular programming exercise has no local setup
-     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
-     * @param urlToCheck the url which will be checked if it contains the substring
-     */
-    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
-        return this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck);
-    }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

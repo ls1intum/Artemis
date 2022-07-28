@@ -52,7 +52,7 @@ describe('CourseCardComponent', () => {
 
     it('should initialize component', () => {
         fixture.detectChanges();
-        expect(component).not.toBe(undefined);
+        expect(component).toBeDefined();
     });
 
     it('should display the next exercise which is not yet successful', () => {

@@ -48,6 +48,8 @@
         "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
         "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
         "oneActivePlagiarismCheck": "Please wait until the current plagiarism check in this course has finished until you start another one.",
-        "invalidPersonalAccessTokenLifetime": "Requested token lifetime exceeds the maximum lifetime for personal access tokens."
+        "invalidPersonalAccessTokenLifetime": "Requested token lifetime exceeds the maximum lifetime for personal access tokens.",
+        "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
+        "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date."
     }
 }

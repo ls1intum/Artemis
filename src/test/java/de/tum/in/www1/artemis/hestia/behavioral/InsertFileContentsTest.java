@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.service.hestia.behavioral.BehavioralSolutionEntryG
 import de.tum.in.www1.artemis.service.hestia.behavioral.GroupedFile;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.InsertFileContents;
 
-public class InsertFileContentsTest {
+class InsertFileContentsTest {
 
     private InsertFileContents insertFileContents;
 
@@ -24,7 +24,7 @@ public class InsertFileContentsTest {
     private Map<String, String> solutionRepoFiles;
 
     @BeforeEach
-    public void initBlackboard() {
+    void initBlackboard() {
         solutionRepoFiles = new HashMap<>();
         BehavioralBlackboard blackboard = new BehavioralBlackboard(null, null, solutionRepoFiles);
         var groupedFiles = new ArrayList<GroupedFile>();
@@ -36,7 +36,7 @@ public class InsertFileContentsTest {
     }
 
     @Test
-    public void testNoAction() {
+    void testNoAction() {
         solutionRepoFiles.put("test.java", "Something else");
         groupedFile.setFileContent("Something");
 
@@ -44,7 +44,7 @@ public class InsertFileContentsTest {
     }
 
     @Test
-    public void testAddContent() throws BehavioralSolutionEntryGenerationException {
+    void testAddContent() throws BehavioralSolutionEntryGenerationException {
         solutionRepoFiles.put("test.java", "Something");
 
         assertThat(insertFileContents.executeCondition()).isTrue();
@@ -53,7 +53,7 @@ public class InsertFileContentsTest {
     }
 
     @Test
-    public void testInvalidContent() {
+    void testInvalidContent() {
         assertThat(insertFileContents.executeCondition()).isTrue();
         assertThatExceptionOfType(BehavioralSolutionEntryGenerationException.class).isThrownBy(() -> insertFileContents.executeAction());
     }

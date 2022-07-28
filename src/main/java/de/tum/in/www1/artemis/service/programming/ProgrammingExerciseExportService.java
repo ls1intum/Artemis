@@ -180,8 +180,7 @@ public class ProgrammingExerciseExportService {
         if (includingStudentRepos) {
             // Lazy load student participation, sort by id, and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
-                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId))
-                    .collect(Collectors.toList());
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
             exportOptions.setHideStudentNameInZippedFolder(false);
 
@@ -210,7 +209,7 @@ public class ProgrammingExerciseExportService {
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
-        List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).toList();
 
         String cleanProjectName = fileService.removeIllegalCharacters(exercise.getProjectName());
         // Add report entry, programming repositories cannot be skipped
@@ -610,7 +609,7 @@ public class ProgrammingExerciseExportService {
 
         if (latestAllowedDate.isPresent()) {
             Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.comparing(Submission::getSubmissionDate));
+                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.naturalOrder());
             gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
         }
     }
@@ -730,12 +729,12 @@ public class ProgrammingExerciseExportService {
      * Get all files in path except .git files
      *
      * @param path The path for which all file names should be listed
-     * @return A list of all file names under the given path
+     * @return an unmodifiable list of all file names under the given path
      */
     private List<String> listAllFilesInPath(Path path) {
         List<String> allRepoFiles = Collections.emptyList();
         try (Stream<Path> walk = Files.walk(path)) {
-            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).collect(Collectors.toList());
+            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).toList();
         }
         catch (IOException | SecurityException e) {
             log.error("Cannot list all files in path {}: {}", path, e.getMessage());

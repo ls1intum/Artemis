@@ -17,19 +17,19 @@ describe('TextEditorService', () => {
         httpClient = new HttpClient(new MockHttpHandler());
         textEditorService = new TextEditorService(httpClient);
     });
-    it('Can detect a short German string ', () => {
+    it('Can detect a short German string', () => {
         const testString = 'Das ist ein kurzer, deutscher Satz';
         expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
     });
     it("Can detect that a French sentence isn't German or English", () => {
         const testString = "Il s'agit d'une courte phrase en français";
-        expect(textEditorService.predictLanguage(testString)).toBe(undefined);
+        expect(textEditorService.predictLanguage(testString)).toBeUndefined();
     });
-    it('Can detect a short English string ', () => {
+    it('Can detect a short English string', () => {
         const testString = 'This is an English String';
         expect(textEditorService.predictLanguage(testString)).toBe(Language.ENGLISH);
     });
-    it('Can detect a long German text ', () => {
+    it('Can detect a long German text', () => {
         // copied from https://de.wikipedia.org/wiki/Bernd_Br%C3%BCgge
 
         const testString =
@@ -41,7 +41,7 @@ describe('TextEditorService', () => {
             'Er promovierte an der Carnegie Mellon University (Ph.D.).';
         expect(textEditorService.predictLanguage(testString)).toBe(Language.GERMAN);
     });
-    it('Can detect a long English text ', () => {
+    it('Can detect a long English text', () => {
         // copied from https://en.wikipedia.org/wiki/Bernd_Bruegge
 
         const testString =

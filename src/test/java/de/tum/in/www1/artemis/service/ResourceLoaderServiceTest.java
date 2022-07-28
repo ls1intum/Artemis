@@ -15,7 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 
-public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ResourceLoaderService resourceLoaderService;
@@ -25,13 +25,13 @@ public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBi
     private final Path jenkinsPath = Path.of("templates", "jenkins", "jenkins.txt");
 
     @AfterEach
-    public void cleanup() throws IOException {
+    void cleanup() throws IOException {
         Files.deleteIfExists(javaPath);
         Files.deleteIfExists(jenkinsPath);
     }
 
     @Test
-    public void testShouldLoadJavaFileFromClasspath() throws IOException {
+    void testShouldLoadJavaFileFromClasspath() throws IOException {
         FileUtils.writeStringToFile(javaPath.toFile(), "filesystem", Charset.defaultCharset());
         try (InputStream inputStream = resourceLoaderService.getResource(javaPath.toString()).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
@@ -41,7 +41,7 @@ public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    public void testShouldLoadJenkinsFileFromFilesystem() throws IOException {
+    void testShouldLoadJenkinsFileFromFilesystem() throws IOException {
         FileUtils.writeStringToFile(jenkinsPath.toFile(), "filesystem", Charset.defaultCharset());
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath.toString()).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
@@ -51,7 +51,7 @@ public class ResourceLoaderServiceTest extends AbstractSpringIntegrationBambooBi
     }
 
     @Test
-    public void testShouldLoadJenkinsFileFromClasspath_IfNotPresentInFileSystem() throws IOException {
+    void testShouldLoadJenkinsFileFromClasspath_IfNotPresentInFileSystem() throws IOException {
         try (InputStream inputStream = resourceLoaderService.getResource(jenkinsPath.toString()).getInputStream()) {
             String fileContent = IOUtils.toString(inputStream, Charset.defaultCharset());
 

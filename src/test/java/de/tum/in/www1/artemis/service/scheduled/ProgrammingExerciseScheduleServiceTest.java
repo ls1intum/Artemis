@@ -329,7 +329,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testCombineTemplateBeforeRelease() throws Exception {
+    void testCombineTemplateBeforeRelease() throws Exception {
         ProgrammingExercise programmingExerciseWithTemplate = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(programmingExercise.getId());
         VcsRepositoryUrl repositoryUrl = programmingExerciseWithTemplate.getVcsTemplateRepositoryUrl();
         doNothing().when(gitService).combineAllCommitsOfRepositoryIntoOne(repositoryUrl);
@@ -343,7 +343,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
+    void scheduleIndividualDueDateNoBuildAndTestDateLock() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 400;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -372,7 +372,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
+    void scheduleIndividualDueDateBetweenDueDateAndBuildAndTestDate() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -405,7 +405,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void scheduleIndividualDueDateAfterBuildAndTestDate() throws Exception {
+    void scheduleIndividualDueDateAfterBuildAndTestDate() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -425,7 +425,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
+    void scheduleIndividualDueDateTestsAfterDueDateNoBuildAndTestDate() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -450,7 +450,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
+    void cancelAllSchedulesOnRemovingExerciseDueDate() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -491,7 +491,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
+    void cancelIndividualSchedulesOnRemovingIndividualDueDate() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -520,7 +520,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void updateIndividualScheduleOnIndividualDueDateChange() throws Exception {
+    void updateIndividualScheduleOnIndividualDueDateChange() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -548,7 +548,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
+    void keepIndividualScheduleOnExerciseDueDateChange() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -583,7 +583,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() throws Exception {
+    void shouldScheduleExerciseIfAnyIndividualDueDateInFuture() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();
@@ -603,7 +603,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void shouldCancelAllTasksIfSchedulingNoLongerNeeded() throws Exception {
+    void shouldCancelAllTasksIfSchedulingNoLongerNeeded() throws Exception {
         mockStudentRepoLocks();
         final long delayMS = 200;
         final ZonedDateTime now = ZonedDateTime.now();

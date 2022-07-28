@@ -4,7 +4,8 @@ import { Subject } from 'rxjs';
 
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { CodeHint } from 'app/entities/hestia/code-hint-model';
-import { CodeHintService } from 'app/exercises/shared/exercise-hint/shared/code-hint.service';
+import { CodeHintService } from 'app/exercises/shared/exercise-hint/services/code-hint.service';
+import { faTimes } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Component containing the solution entries for a {@link CodeHint}.
@@ -25,6 +26,8 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
+
+    faTimes = faTimes;
 
     constructor(protected route: ActivatedRoute, private codeHintService: CodeHintService) {}
 
@@ -51,6 +54,7 @@ export class CodeHintContainerComponent implements OnInit, OnDestroy {
         this.codeHintService.removeSolutionEntryFromCodeHint(this.codeHint.exercise!.id!, this.codeHint.id!, solutionEntryId).subscribe({
             next: () => {
                 this.sortedSolutionEntries = this.sortedSolutionEntries.filter((entry) => entry.id !== solutionEntryId);
+                this.codeHint.solutionEntries = this.sortedSolutionEntries;
                 this.dialogErrorSource.next('');
             },
             error: (error) => {

@@ -66,7 +66,7 @@ describe('Programming exercise participations', () => {
     function makeFailingSubmission() {
         const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, submission, () => {
-            editorPage.getResultScore().contains('Build Failed').should('be.visible');
+            editorPage.getResultScore().contains('Build failed').should('be.visible');
             editorPage.getResultScore().contains('0%').and('be.visible');
         });
     }

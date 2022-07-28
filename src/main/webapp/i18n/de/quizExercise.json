@@ -260,6 +260,9 @@
                 "explanationTitle": "Ähnlichkeit",
                 "explanation": "Legt die erforderliche Ähnlichkeit zwischen vordefinierten Lösungen und Antworten von Studierenden in der Auswertung für jede Lücke fest. Der Wert (zwischen 50 % und 100 %) gibt an, ob nur exakt richtige Antworten (100 %) als richtig behandelt werden oder ob Studierende Tippfehler in ihren Antworten haben dürfen. Je niedriger der Wert ist, desto mehr Tippfehler sind in den Antworten erlaubt (basierend auf der Levenshtein-Distanz https://de.wikipedia.org/wiki/Levenshtein-Distanz). Beispiel: Ein Wert von 85 % würde 1 Tippfehler in einem Wort mit 5 Zeichen und 2 Tippfehler in einem Wort mit 10 Zeichen zulassen. Bitte verwende die Vorschaufunktion für das Quiz, um verschiedene Werte auszuprobieren."
             },
+            "answerMatching": {
+                "title": "Antwortabgleich"
+            },
             "matchingInfoModalTitle": "Optionen zum Bewerten von Antworten",
             "quizMode": {
                 "title": "Ausführungsmodus",

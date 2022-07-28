@@ -91,7 +91,7 @@ describe('TextSubmission Service', () => {
 
     it('should not parse jwt from header', fakeAsync(() => {
         service.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(1).subscribe((textSubmission) => {
-            expect(textSubmission.atheneTextAssessmentTrackingToken).toBe(undefined);
+            expect(textSubmission.atheneTextAssessmentTrackingToken).toBeUndefined();
         });
 
         const mockRequest = httpMock.expectOne({ method: 'GET' });

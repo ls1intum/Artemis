@@ -65,7 +65,7 @@ info:
   imprint: https://ase.in.tum.de/lehrstuhl_1/component/content/article/179-imprint
   test-server: true
   text-assessment-analytics-enabled: true
-  browser-fingerprints-enabled: true
+  student-exam-store-session-data: true
 
 logging:
   file:
