@@ -33,10 +33,12 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-3">
-                        <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                        <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                        <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
+                        <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="col-2">
+                    <th class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
                         <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
                     </th>
                     <th class="col-1"></th>
@@ -56,7 +58,7 @@
                     <td class="text-break col-3">
                         <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
-                    <td class="col-1">
+                    <td class="col-1" [hidden]="!(isCourseFilter && isExamFilter)">
                         <div style="text-align: center; vertical-align: middle">
                             <fa-icon *ngIf="exercise.exerciseGroup" [icon]="faCheck"></fa-icon>
                         </div>

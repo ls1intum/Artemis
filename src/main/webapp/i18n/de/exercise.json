@@ -35,8 +35,9 @@
                 "searchInExams": "Suche in Klausuren?",
                 "table": {
                     "title": "Titel",
-                    "language": "Programmiersprache",
+                    "language": "Sprache",
                     "course": "Kurs",
+                    "exam": "Klausur",
                     "examQuestion": "Klausuraufgabe",
                     "doImport": "Importieren"
                 }

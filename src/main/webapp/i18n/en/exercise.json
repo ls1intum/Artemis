@@ -35,8 +35,9 @@
                 "searchInExams": "Search in exams?",
                 "table": {
                     "title": "Title",
-                    "language": "Programming Language",
+                    "language": "Language",
                     "course": "Course",
+                    "exam": "Exam",
                     "examQuestion": "Exam Question",
                     "doImport": "Import"
                 }
