@@ -132,7 +132,7 @@ public class ExamMonitoringScheduleService {
             });
 
             // send message to subscribers
-            messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", action);
+            messagingService.sendMessage("/topic/exams/" + examId + "/monitoring-action", action);
         }
     }
 
@@ -143,7 +143,7 @@ public class ExamMonitoringScheduleService {
      * @param monitoring    new exam action
      */
     public void notifyMonitoringUpdate(Long examId, boolean monitoring) {
-        messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/update", monitoring);
+        messagingService.sendMessage("/topic/exams/" + examId + "/monitoring-update", monitoring);
     }
 
     /**

@@ -46,18 +46,18 @@ public class ExamActivityResource {
      * @param examId    the exam to which the student exams belong to
      * @param action    action performed by the user
      */
-    @MessageMapping("/topic/exam-monitoring/{examId}/actions")
+    @MessageMapping("/topic/exams/{examId}/monitoring-actions")
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
         examMonitoringScheduleService.addExamActions(examId, action);
     }
 
     /**
-     * GET api/exam-monitoring/{examId}/load-actions: returns all actions of the exam.
+     * GET api/exams/{examId}/load-actions: returns all actions of the exam.
      *
      * @param examId the exam to which the student exams belong to
      * @return all exam actions of the exam
      */
-    @GetMapping("api/exam-monitoring/{examId}/load-actions")
+    @GetMapping("api/exams/{examId}/load-actions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
         return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));

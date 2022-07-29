@@ -89,7 +89,7 @@ describe('ExamActionService', () => {
         initialActionsLoaded.set(exam.id!, true);
 
         expect(spy).toHaveBeenCalledOnce();
-        expect(spy).toHaveBeenCalledWith(`api/exam-monitoring/${exam.id}/load-actions`);
+        expect(spy).toHaveBeenCalledWith(`api/exams/${exam.id}/load-actions`);
         expect(examActionService.initialActionsLoaded).toEqual(initialActionsLoaded);
     });
 
@@ -317,14 +317,14 @@ describe('ExamActionService', () => {
 
     // topics
     it('should get correct exam monitoring action topic', () => {
-        expect(EXAM_MONITORING_ACTION_TOPIC(exam.id!)).toBe(`/topic/exam-monitoring/${exam.id!}/action`);
+        expect(EXAM_MONITORING_ACTION_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/monitoring-action`);
     });
 
     it('should get correct exam monitoring actions topic', () => {
-        expect(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!)).toBe(`/topic/exam-monitoring/${exam.id!}/actions`);
+        expect(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/monitoring-actions`);
     });
 
     it('should get correct exam monitoring status topic', () => {
-        expect(EXAM_MONITORING_STATUS_TOPIC(exam.id!)).toBe(`/topic/exam-monitoring/${exam.id!}/update`);
+        expect(EXAM_MONITORING_STATUS_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/monitoring-update`);
     });
 });
