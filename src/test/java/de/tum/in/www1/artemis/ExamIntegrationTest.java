@@ -75,6 +75,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ExamService examService;
 
     @Autowired
+    private StudentExamService studentExamService;
+
+    @Autowired
     private ExamDateService examDateService;
 
     @Autowired
@@ -495,6 +498,39 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             assertThat(studentExam.getExam()).isEqualTo(exam);
             // TODO: check exercise configuration, each mandatory exercise group has to appear, one optional exercise should appear
         }
+
+        // Make sure delete also works if so many objects have been created before
+        request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testGenerateStudentExamsCleanupOldParticipations() throws Exception {
+        Exam exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(course1);
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.OK);
+
+        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).isEmpty();
+
+        // invoke start exercises
+        studentExamService.startExercises(exam.getId()).join();
+
+        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).hasSize(16);
+
+        request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
+                HttpStatus.OK);
+
+        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).isEmpty();
+
+        // invoke start exercises
+        studentExamService.startExercises(exam.getId()).join();
+
+        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        assertThat(studentParticipations).hasSize(16);
 
         // Make sure delete also works if so many objects have been created before
         request.delete("/api/courses/" + course1.getId() + "/exams/" + exam.getId(), HttpStatus.OK);
