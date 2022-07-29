@@ -42,7 +42,7 @@
             },
             "postsEnabled": {
                 "title": "Enable communication features",
-                "description": "Enable communication section on lecture and exercise pages."
+                "description": "Enable course communication overview and communication section on lecture and exercise pages."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",
