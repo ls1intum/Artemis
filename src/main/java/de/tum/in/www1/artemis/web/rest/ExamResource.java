@@ -730,7 +730,7 @@ public class ExamResource {
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
 
-        // Reset existing student exams & participations
+        // Reset existing student exams & participations in case they already exist
         examService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
 
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
