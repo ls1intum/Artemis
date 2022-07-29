@@ -102,10 +102,6 @@ public class ExamAction extends DomainObject {
         this.examActivityId = examActivityId;
     }
 
-    public ExamActivity getExamActivity() {
-        return examActivity;
-    }
-
     public void setExamActivity(ExamActivity examActivity) {
         this.examActivity = examActivity;
     }
