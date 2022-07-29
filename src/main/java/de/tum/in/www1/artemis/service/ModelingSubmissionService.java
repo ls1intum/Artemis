@@ -84,14 +84,14 @@ public class ModelingSubmissionService extends SubmissionService {
      * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions.
      *
      * @param modelingSubmission the submission that should be saved
-     * @param modelingExercise   the exercise the submission belongs to
+     * @param exercise   the exercise the submission belongs to
      * @param user               the user who initiated the save
      * @return the saved modelingSubmission entity
      */
-    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, User user) {
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise, user.getLogin());
+    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user) {
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + modelingExercise.getId());
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
         final var dueDate = exerciseDateService.getDueDate(participation);
@@ -105,10 +105,10 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (modelingExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             modelingSubmission.setSubmitted(true);
         }
-        modelingSubmission = save(modelingSubmission, modelingExercise, user, participation);
+        modelingSubmission = save(modelingSubmission, exercise, user, participation);
         return modelingSubmission;
     }
 

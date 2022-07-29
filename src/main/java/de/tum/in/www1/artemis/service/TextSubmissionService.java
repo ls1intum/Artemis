@@ -50,15 +50,15 @@ public class TextSubmissionService extends SubmissionService {
      * Handles text submissions sent from the client and saves them in the database.
      *
      * @param textSubmission the text submission that should be saved
-     * @param textExercise   the corresponding text exercise
-     * @param user           the user who initiated the save
+     * @param exercise   the corresponding text exercise
+     * @param user           the user who initiated the save/submission
      * @return the saved text submission
      */
-    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, User user) {
+    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, user.getLogin());
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + textExercise.getId());
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
         final var dueDate = exerciseDateService.getDueDate(participation);
@@ -68,10 +68,10 @@ public class TextSubmissionService extends SubmissionService {
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (textExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
-        textSubmission = save(textSubmission, participation, textExercise, user);
+        textSubmission = save(textSubmission, participation, exercise, user);
         return textSubmission;
     }
 

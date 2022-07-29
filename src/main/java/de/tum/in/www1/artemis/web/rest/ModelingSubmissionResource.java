@@ -84,11 +84,10 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PostMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> createModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to create ModelingSubmission : {}", modelingSubmission.getModel());
+        log.debug("REST request to create modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new modelingSubmission cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new modeling submission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-        checkModelLength(modelingSubmission);
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
@@ -104,29 +103,29 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     @PutMapping("/exercises/{exerciseId}/modeling-submissions")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ModelingSubmission> updateModelingSubmission(@PathVariable long exerciseId, @RequestBody ModelingSubmission modelingSubmission) {
-        log.debug("REST request to update ModelingSubmission : {}", modelingSubmission.getModel());
+        log.debug("REST request to update modeling submission: {}", modelingSubmission.getModel());
         if (modelingSubmission.getId() == null) {
             return createModelingSubmission(exerciseId, modelingSubmission);
         }
-        checkModelLength(modelingSubmission);
         return handleModelingSubmission(exerciseId, modelingSubmission);
     }
 
     @NotNull
     private ResponseEntity<ModelingSubmission> handleModelingSubmission(Long exerciseId, ModelingSubmission modelingSubmission) {
         long start = System.currentTimeMillis();
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final ModelingExercise modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
+        checkModelLength(modelingSubmission);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var exercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
-        modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(modelingExercise, modelingSubmission, user);
+        modelingSubmission = (ModelingSubmission) examSubmissionService.preventMultipleSubmissions(exercise, modelingSubmission, user);
         // Check if the user is allowed to submit
-        modelingSubmissionService.checkSubmissionAllowanceElseThrow(modelingExercise, modelingSubmission, user);
+        modelingSubmissionService.checkSubmissionAllowanceElseThrow(exercise, modelingSubmission, user);
 
-        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, modelingExercise, user);
+        modelingSubmission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, exercise, user);
         modelingSubmissionService.hideDetails(modelingSubmission, user);
         long end = System.currentTimeMillis();
         log.info("save took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
