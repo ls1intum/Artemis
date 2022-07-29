@@ -209,6 +209,7 @@
                 </td>
                 <td>
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examDetails' | artemisTranslate }}</span>
+                    <!-- Additional hints for test exams, as several steps are automated compared to the normal exam and therefore do not need to be performed by the user -->
                     <ul class="list-unstyled" *ngIf="isTestExam">
                         <hr />
                         <span>{{ 'artemisApp.examManagement.checklist.testExam.detailsHintForTestExams' | artemisTranslate }}:</span>
