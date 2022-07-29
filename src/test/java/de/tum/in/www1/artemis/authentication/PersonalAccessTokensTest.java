@@ -43,31 +43,31 @@ public class PersonalAccessTokensTest extends AbstractSpringIntegrationJenkinsGi
 
     @Test
     @WithAnonymousUser
-    public void testNotFullyAuthorized() throws Exception {
+    void testNotFullyAuthorized() throws Exception {
         request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays, HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     @WithMockUser(username = NOT_ACTIVATE_NAME, roles = "ADMIN")
-    public void testNotActivated() throws Exception {
+    void testNotActivated() throws Exception {
         request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays, HttpStatus.UNAUTHORIZED);
     }
 
     @Test
     @WithMockUser(username = ACTIVATE_NAME, roles = "ADMIN")
-    public void testFullyAuthorized() throws Exception {
+    void testFullyAuthorized() throws Exception {
         request.postWithoutLocation(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays, HttpStatus.OK, null);
     }
 
     @Test
     @WithMockUser(username = ACTIVATE_NAME, roles = "ADMIN")
-    public void testInvalidLifetime() throws Exception {
+    void testInvalidLifetime() throws Exception {
         request.post(TOKEN_API_URL, this.personalAccessTokenMaxLifetimeDays + 1, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = ACTIVATE_NAME, roles = "ADMIN")
-    public void testNoLifetime() throws Exception {
+    void testNoLifetime() throws Exception {
         request.post(TOKEN_API_URL, "", HttpStatus.BAD_REQUEST);
     }
 }
