@@ -403,7 +403,14 @@ export class ExamManagementService {
      * @param examId The exam id.
      */
     reset(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
+        return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' }).pipe(
+            map((res: EntityResponseType) => ExamManagementService.convertCourseResponseDateFromServer(res)),
+            tap((res: EntityResponseType) => {
+                if (res.body?.course) {
+                    this.accountService.setAccessRightsForCourse(res.body.course);
+                }
+            }),
+        );
     }
 
     public static convertExamDatesFromClient(exam: Exam): Exam {
