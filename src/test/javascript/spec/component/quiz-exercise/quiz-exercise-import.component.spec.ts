@@ -83,7 +83,7 @@ describe('QuizExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -93,7 +93,7 @@ describe('QuizExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 }, true, true);
             expect(comp.page).toBe(5);
         });
     }));
@@ -106,7 +106,7 @@ describe('QuizExerciseImportComponent', () => {
             tick(10);
             expect(searchForExercisesStub).toHaveBeenCalledTimes(0);
             tick(290);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -116,7 +116,7 @@ describe('QuizExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, true, true);
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));
