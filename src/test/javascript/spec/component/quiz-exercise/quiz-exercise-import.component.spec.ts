@@ -124,4 +124,31 @@ describe('QuizExerciseImportComponent', () => {
     it('should return quiz exercise id', () => {
         expect(comp.trackId(0, quizExercise)).toEqual(quizExercise.id);
     });
+
+    it('should switch courseFilter/examFilter and search', fakeAsync(() => {
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
+
+        fixture.detectChanges();
+        expect(comp.isCourseFilter).toBe(true);
+        expect(comp.isExamFilter).toBe(true);
+
+        comp.onCourseFilterChange();
+        comp.onExamFilterChange();
+        tick();
+        expect(comp.isCourseFilter).toBe(false);
+        expect(comp.isExamFilter).toBe(false);
+
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        tick(300);
+
+        const expectedSearchObject = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: '',
+            sortedColumn: 'ID',
+            sortingOrder: 'DESCENDING',
+        };
+        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false);
+    }));
 });
