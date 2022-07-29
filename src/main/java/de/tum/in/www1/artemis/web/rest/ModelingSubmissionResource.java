@@ -77,7 +77,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modelingSubmission. This is called when a student saves his model the first time after
+     * POST /exercises/{exerciseId}/modeling-submissions : Create a new modeling submission. This is called when a student saves his model the first time after
      * starting the exercise or starting a retry.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
@@ -95,8 +95,9 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * PUT /courses/{courseId}/exercises/{exerciseId}/modeling-submissions : Updates an existing modelingSubmission. This function is called by the modeling editor for saving and
-     * submitting modeling submissions. The submit specific handling occurs in the ModelingSubmissionService.save() function.
+     * PUT /exercises/{exerciseId}/modeling-submissions : Updates an existing modeling submission or creates a new one.
+     * This function is called by the modeling editor for saving and submitting modeling submissions.
+     * The submit specific handling occurs in the ModelingSubmissionService.handleModelingSubmission() and save() methods.
      *
      * @param exerciseId         the id of the exercise for which to init a participation
      * @param modelingSubmission the modelingSubmission to update

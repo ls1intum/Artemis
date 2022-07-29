@@ -103,8 +103,9 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     }
 
     /**
-     * PUT /exercises/{exerciseId}/text-submissions : Updates an existing textSubmission. This function is called by the text editor for saving and submitting text submissions. The
-     * submit specific handling occurs in the TextSubmissionService.save() function.
+     * PUT /exercises/{exerciseId}/text-submissions : Updates an existing text submission or creates a new one.
+     * This function is called by the text editor for saving and submitting text submissions.
+     * The submit specific handling occurs in the TextSubmissionService.createTextSubmission() and save() methods.
      *
      * @param exerciseId     the id of the exercise for which to init a participation
      * @param textSubmission the textSubmission to update
