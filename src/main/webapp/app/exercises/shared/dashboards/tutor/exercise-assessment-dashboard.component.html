@@ -28,7 +28,7 @@
             </p>
 
             <div
-                *ngIf="exercise.isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam!.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
+                *ngIf="exercise.isAtLeastInstructor && exam?.numberOfCorrectionRoundsInExam && exam?.numberOfCorrectionRoundsInExam! > 1 && isExamMode && !isTestRun"
                 class="d-inline-block"
             >
                 <ng-container *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR']">
@@ -317,17 +317,21 @@
                 {{ 'artemisApp.submission.lockedSubmissionsLimitReached' | artemisTranslate }}
             </div>
             <div *ngFor="let roundState of numberOfAssessmentsOfCorrectionRounds; let correctionRound = index">
+                <ng-container *ngIf="(tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isTestRun">
+                    <h4 *ngIf="!isExamMode" class="d-inline-block">
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
+                    </h4>
+                    <h4 *ngIf="isExamMode" class="d-inline-block">
+                        {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissionsExam' | artemisTranslate: { round: correctionRound + 1 } }}
+                    </h4>
+                    <fa-icon
+                        *ngIf="correctionRound > 0"
+                        class="text-secondary"
+                        [icon]="faQuestionCircle"
+                        ngbTooltip="{{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}"
+                    ></fa-icon>
+                </ng-container>
                 <ng-container *ngIf="numberOfCorrectionRoundsEnabled > correctionRound">
-                    <ng-container *ngIf="(tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED) && !isTestRun">
-                        <h4 *ngIf="!isExamMode">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}
-                        </h4>
-
-                        <h4 *ngIf="isExamMode">
-                            {{ 'artemisApp.exerciseAssessmentDashboard.studentsSubmissions' | artemisTranslate }}, Correction Round {{ correctionRound + 1 }}:
-                        </h4>
-                    </ng-container>
-
                     <h4 *ngIf="isTestRun">
                         {{ 'artemisApp.exerciseAssessmentDashboard.testRunSubmissions' | artemisTranslate }}
                     </h4>
@@ -338,10 +342,7 @@
                         <table
                             class="table exercise-table"
                             *ngIf="
-                                ((unassessedSubmissionByCorrectionRound &&
-                                    unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
-                                    unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0) ||
-                                    (submissionsByCorrectionRound.get(correctionRound) && submissionsByCorrectionRound.get(correctionRound)!.length > 0)) &&
+                                (unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id || submissionsByCorrectionRound.get(correctionRound)?.length) &&
                                     !exercise.allowComplaintsForAutomaticAssessments;
                                 else noSubmissions
                             "
@@ -365,21 +366,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <ng-container
-                                    *ngIf="
-                                        unassessedSubmissionByCorrectionRound &&
-                                        unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
-                                        unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0 &&
-                                        !exercise.teamMode &&
-                                        !isTestRun
-                                    "
-                                >
+                                <ng-container *ngIf="unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id && !exercise.teamMode && !isTestRun">
                                     <tr>
                                         <td></td>
-                                        <td>{{ unassessedSubmissionByCorrectionRound.get(correctionRound)?.submissionDate | artemisDate }}</td>
+                                        <td>{{ unassessedSubmissionByCorrectionRound!.get(correctionRound)!.submissionDate | artemisDate }}</td>
                                         <td></td>
                                         <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound.get(correctionRound)!"></jhi-language-table-cell>
+                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound!.get(correctionRound)!"></jhi-language-table-cell>
                                         </td>
                                         <td>
                                             <a
@@ -458,13 +451,7 @@
                         <ng-container
                             *ngIf="
                                 isExamMode &&
-                                !(
-                                    unassessedSubmissionByCorrectionRound &&
-                                    unassessedSubmissionByCorrectionRound!.get(correctionRound) &&
-                                    unassessedSubmissionByCorrectionRound!.get(correctionRound)!.id! > 0 &&
-                                    !exercise.teamMode &&
-                                    !isTestRun
-                                ) &&
+                                (!unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id || exercise.teamMode || isTestRun) &&
                                 numberOfSubmissions.inTime != roundState.inTime
                             "
                         >
@@ -488,8 +475,8 @@
                         </ng-container>
                     </div>
                 </ng-container>
-                <div class="alert alert-info" *ngIf="correctionRound == 1">
-                    {{ 'artemisApp.exerciseAssessmentDashboard.noSubmissionsBecauseFirstAssessedByYourself' | artemisTranslate }}
+                <div class="alert alert-info" *ngIf="numberOfCorrectionRoundsEnabled <= correctionRound">
+                    {{ 'artemisApp.exerciseAssessmentDashboard.correctionRoundNotYetEnabled' | artemisTranslate }}
                 </div>
                 <ng-template #noSubmissions>
                     <jhi-assessment-warning [exercise]="exercise"></jhi-assessment-warning>
