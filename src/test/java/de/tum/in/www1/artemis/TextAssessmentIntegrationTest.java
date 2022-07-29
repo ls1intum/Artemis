@@ -15,6 +15,8 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -1257,10 +1259,11 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 null, FeedbackConflict.class, expectedStatus);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = AssessmentType.class, names = { "SEMI_AUTOMATIC", "MANUAL" })
     @WithMockUser(username = "tutor1", roles = "TA")
-    void multipleCorrectionRoundsForExam() throws Exception {
-        // Setup exam with 2 correction rounds and a programming exercise
+    void multipleCorrectionRoundsForExam(AssessmentType assessmentType) throws Exception {
+        // Setup exam with 2 correction rounds and a text exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         Exam exam = database.addExam(textExercise.getCourseViaExerciseGroupOrCourseMember());
         exam.setNumberOfCorrectionRoundsInExam(2);
@@ -1273,6 +1276,7 @@ class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         TextExercise exercise = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        exercise.setAssessmentType(assessmentType);
         exercise = exerciseRepo.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
