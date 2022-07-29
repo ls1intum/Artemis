@@ -12,6 +12,7 @@ import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { ExamScoreDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
+import { AccountService } from 'app/core/auth/account.service';
 
 describe('Exam Management Service Tests', () => {
     let service: ExamManagementService;
@@ -671,13 +672,14 @@ describe('Exam Management Service Tests', () => {
     }));
 
     it('should reset an exam', fakeAsync(() => {
+        const accountService = TestBed.inject(AccountService);
+        const accountServiceSpy = jest.spyOn(accountService, 'setAccessRightsForCourse').mockImplementation();
+
         // GIVEN
-        const mockExam: Exam = { id: 1 };
-        const mockResponse = { id: 1 };
-        const expected = { id: 1 };
+        const mockExam: Exam = { id: 1, course };
 
         // WHEN
-        service.reset(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(expected));
+        service.reset(course.id!, mockExam.id!).subscribe((res) => expect(res.body).toEqual(mockExam));
 
         // THEN
         const req = httpMock.expectOne({
@@ -685,7 +687,10 @@ describe('Exam Management Service Tests', () => {
             url: `${service.resourceUrl}/${course.id!}/exams/${mockExam.id!}/reset`,
         });
 
-        req.flush(mockResponse);
+        req.flush(mockExam);
         tick();
+
+        expect(accountServiceSpy).toHaveBeenCalledOnce();
+        expect(accountServiceSpy).toHaveBeenCalledWith(course);
     }));
 });
