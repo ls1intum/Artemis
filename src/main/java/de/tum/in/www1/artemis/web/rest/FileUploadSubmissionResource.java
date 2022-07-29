@@ -11,10 +11,12 @@ import javax.validation.constraints.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -329,7 +331,7 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         // Check the file size
         if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
             // NOTE: Maximum file size for submission is MAX_SUBMISSION_FILE_SIZE
-            throw new BadRequestAlertException("The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!", ENTITY_NAME, "fileUploadSubmissionFileTooBig");
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
         }
     }
 }

@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -13,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
@@ -339,8 +342,8 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param modelingSubmission the modeling submission
      */
     private void checkModelLength(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getModel() != null && modelingSubmission.getModel().length() > 30000) {
-            throw new BadRequestAlertException("Submission cannot contain more than 30000 characters", ENTITY_NAME, "modelingSubmissionTooLong");
+        if (modelingSubmission.getModel() != null && modelingSubmission.getModel().length() > MAX_SUBMISSION_TEXT_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "A modeling submission cannot contain more than 30000 characters");
         }
     }
 }

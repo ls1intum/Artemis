@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -97,7 +98,7 @@ public class ModelingSubmissionService extends SubmissionService {
         final var dueDate = exerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            throw new AccessForbiddenException();
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result

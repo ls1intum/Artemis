@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -7,9 +9,11 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -266,8 +270,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param textSubmission the text submission
      */
     private void checkTextLength(TextSubmission textSubmission) {
-        if (textSubmission.getText() != null && textSubmission.getText().length() > 30000) {
-            throw new BadRequestAlertException("Submission cannot contain more than 30000 characters", ENTITY_NAME, "textSubmissionTooLong");
+        if (textSubmission.getText() != null && textSubmission.getText().length() > MAX_SUBMISSION_TEXT_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "A text submission cannot contain more than 30000 characters");
         }
     }
 }
