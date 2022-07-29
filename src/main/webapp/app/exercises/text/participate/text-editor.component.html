@@ -44,6 +44,7 @@
                     id="text-editor"
                     #textEditor
                     class="text-editor-textarea"
+                    maxlength="30000"
                     [(ngModel)]="answer"
                     [readonly]="!isActive || !submission || !isOwnerOfParticipation"
                     [disabled]="!isActive || !submission"
