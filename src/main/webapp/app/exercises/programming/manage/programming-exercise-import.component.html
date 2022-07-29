@@ -8,11 +8,11 @@
             <span jhiTranslate="artemisApp.exercise.import.search">Search for exercise</span>:
             <input class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter" (change)="onCourseFilterChange()" />
+                <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter" (change)="onCourseFilterChange()" [disabled]="!isExamFilter" />
                 <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses">Search in courses?</label>
             </div>
             <div class="form-check form-check-inline">
-                <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter" (change)="onExamFilterChange()" />
+                <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter" (change)="onExamFilterChange()" [disabled]="!isCourseFilter" />
                 <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams">Search in exams?</label>
             </div>
             <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
