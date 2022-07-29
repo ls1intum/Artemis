@@ -405,7 +405,7 @@ export class ExamManagementService {
 
     private processExamArrayResponseFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach(this.convertExamFromServerAndSendTitles);
+            res.body.forEach(this.convertExamFromServerAndSendTitles.bind(this));
         }
         return res;
     }
