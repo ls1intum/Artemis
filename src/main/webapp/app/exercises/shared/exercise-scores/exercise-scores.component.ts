@@ -1,4 +1,5 @@
 import { Component, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { forkJoin, of, Subscription, zip } from 'rxjs';
 import { ActivatedRoute } from '@angular/router';
 import dayjs from 'dayjs/esm';
@@ -126,18 +127,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                 zip(this.resultService.getResults(this.exercise), this.loadAndCacheProgrammingExerciseSubmissionState())
                     .pipe(take(1))
                     .subscribe((results) => {
-                        this.results = results[0].body || [];
-                        this.filteredResults = this.filterByScoreRange(this.results);
-                        if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                            this.profileService.getProfileInfo().subscribe((profileInfo) => {
-                                setBuildPlanUrlForProgrammingParticipations(
-                                    profileInfo,
-                                    this.results.map<ProgrammingExerciseStudentParticipation>((result) => result.participation as ProgrammingExerciseStudentParticipation),
-                                    (this.exercise as ProgrammingExercise).projectKey,
-                                );
-                            });
-                        }
-                        this.isLoading = false;
+                        this.handleNewResults(results[0]);
                     });
 
                 this.newManualResultAllowed = areManualResultsAllowed(this.exercise);
@@ -169,6 +159,21 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
                   participationId.toString(),
                   'submissions',
               ];
+    }
+
+    private handleNewResults(results: HttpResponse<Result[]>) {
+        this.results = results.body || [];
+        this.filteredResults = this.filterByScoreRange(this.results);
+        if (this.exercise.type === ExerciseType.PROGRAMMING) {
+            this.profileService.getProfileInfo().subscribe((profileInfo) => {
+                setBuildPlanUrlForProgrammingParticipations(
+                    profileInfo,
+                    this.results.map<ProgrammingExerciseStudentParticipation>((result) => result.participation as ProgrammingExerciseStudentParticipation),
+                    (this.exercise as ProgrammingExercise).projectKey,
+                );
+            });
+        }
+        this.isLoading = false;
     }
 
     /**
@@ -306,8 +311,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         this.isLoading = true;
         this.results = [];
         this.resultService.getResults(this.exercise).subscribe((results) => {
-            this.results = results.body || [];
-            this.isLoading = false;
+            this.handleNewResults(results);
         });
     }
 

@@ -162,8 +162,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -423,8 +422,7 @@ public class TextExerciseResource {
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
-        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newTextExercise.getId().toString())).body(newTextExercise);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
     /**
@@ -436,6 +434,7 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);

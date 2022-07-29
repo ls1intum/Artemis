@@ -258,13 +258,13 @@
             "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} fehlende individuelle Klausuren erfolgreich generiert!",
             "missingStudentExamGenerationError": "Es gab einen Fehler bei der Generierung der fehlenden individuellen Klausuren:\n {{message}}",
-            "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
+            "startExerciseSuccess": "Die Aufgaben werden nun vorbereitet. Dies kann eine Weile dauern.",
             "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
             "evaluateQuizExerciseSuccess": "{{number}} Quiz-Aufgaben erfolgreich ausgewertet!",
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Alle Klausuren der Studierenden überprüft und die nicht eingereichten oder leeren Modellierungs- und Textaufgaben mit 0 Punkten bewertet.",
             "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet.",
-            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
+            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.\n\nBestehende Teilnahmen und Abgaben werden ebenfalls gelöscht!",
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
@@ -289,6 +289,15 @@
                 "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
                 "submit": "Abgeben",
                 "unsubmit": "Abgabe entfernen"
+            },
+            "exercisePreparationProgress": {
+                "label": "Aufgabenvorbereitungsfortschritt:",
+                "failed": "fehlgeschlagen",
+                "remaining": "verbleibend",
+                "finished": "Fertig",
+                "noeta": "Kein ETA",
+                "participations": "Teilnahmen",
+                "exams": "Klausuren"
             }
         },
         "examManagement": {

@@ -27,7 +27,6 @@
             "createExampleSubmissions": "Create example submission",
             "automaticAssessmentEnabled": "Automatic assessment suggestions enabled",
             "checkPlagiarism": "Check Plagiarism",
-            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the text exercise. You will be redirected automatically.",
             "saveSuccessful": "Your answer was saved successfully!",
             "error": "An error occurred. Please try again later.",
             "tutorEffortStatistics": {
