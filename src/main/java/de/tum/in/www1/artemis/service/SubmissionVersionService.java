@@ -32,17 +32,15 @@ public class SubmissionVersionService {
 
     /**
      * Saves a version for the given team submission to track its current content and author
-     *
+     * <p>
      * If the last version for this submission was made by the same user, update this version.
      * Otherwise, create a new version. This drastically reduces the number of versions that need to be created.
      *
      * @param submission Submission for which to save a version
-     * @param username Username of the author of the submission update
+     * @param user       Author of the submission update
      * @return created/updated submission version
      */
-    public SubmissionVersion saveVersionForTeam(Submission submission, String username) {
-        User user = userRepository.findOneByLogin(username).orElseThrow();
-
+    public SubmissionVersion saveVersionForTeam(Submission submission, User user) {
         return submissionVersionRepository.findLatestVersion(submission.getId()).map(latestVersion -> {
             if (latestVersion.getAuthor().equals(user)) {
                 return updateExistingVersion(latestVersion, submission);
@@ -51,18 +49,6 @@ public class SubmissionVersionService {
                 return saveVersionForIndividual(submission, user);
             }
         }).orElseGet(() -> saveVersionForIndividual(submission, user));
-    }
-
-    /**
-     * Saves a version for the given individual submission to track its content
-     *
-     * @param submission Submission for which to save a version
-     * @param username Username of the author of the submission update
-     * @return created/updated submission version
-     */
-    public SubmissionVersion saveVersionForIndividual(Submission submission, String username) {
-        User user = userRepository.findOneByLogin(username).orElseThrow();
-        return saveVersionForIndividual(submission, user);
     }
 
     /**
