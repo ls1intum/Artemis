@@ -30,7 +30,7 @@ export class ExamStatusComponent implements OnChanges {
     @Input()
     public exam: Exam;
     @Input()
-    public course: Course;
+    public course?: Course;
 
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
@@ -72,7 +72,7 @@ export class ExamStatusComponent implements OnChanges {
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
             this.isTestExam = this.exam.testExam!;
 
-            if (this.course.isAtLeastInstructor) {
+            if (this.course?.isAtLeastInstructor) {
                 // Step 1:
                 this.setExamPreparation();
             }
@@ -144,7 +144,7 @@ export class ExamStatusComponent implements OnChanges {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         if (this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
-        } else if (this.examAlreadyEnded() && (!this.course.isAtLeastInstructor || this.examPreparationFinished)) {
+        } else if (this.examAlreadyEnded() && (!this.course?.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
