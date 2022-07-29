@@ -17,7 +17,6 @@ import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 describe('TutorLeaderboardComponent', () => {
     let comp: TutorLeaderboardComponent;
     let fixture: ComponentFixture<TutorLeaderboardComponent>;
-    let accountService: AccountService;
     let sortService: SortService;
     let sortByPropertySpy: jest.SpyInstance;
 
@@ -35,7 +34,6 @@ describe('TutorLeaderboardComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                accountService = TestBed.inject(AccountService);
                 fixture = TestBed.createComponent(TutorLeaderboardComponent);
                 comp = fixture.componentInstance;
                 sortService = TestBed.inject(SortService);
@@ -48,18 +46,20 @@ describe('TutorLeaderboardComponent', () => {
     });
 
     describe('ngOnInit', () => {
-        it('sets isAtLeastInstructor if course is set', () => {
+        it('sets variables correctly if course is set', () => {
             const course = { isAtLeastInstructor: true } as Course;
             comp.course = course;
+            comp.ngOnInit();
             expect(comp.isExerciseDashboard).toBeFalse();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBeUndefined();
         });
 
-        it('sets isAtLeastInstructor if exercise.course is set', () => {
+        it('sets variables correctly if exercise.course is set', () => {
             const course = { isAtLeastInstructor: true } as Course;
             const exercise = { course } as Exercise;
             comp.exercise = exercise;
+            comp.ngOnInit();
             expect(comp.isExerciseDashboard).toBeTrue();
             expect(comp.course).toBe(course);
             expect(comp.exercise).toBe(exercise);
