@@ -268,7 +268,7 @@
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
-            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur started",
+            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur startet",
             "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
@@ -396,7 +396,6 @@
                 "showAllUsers": "Alle Studierenden anzeigen",
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Studierenden gefunden",
-                "testExamSelfRegistration": "Studierende werden automatisch für die Klausur registriert, wenn diese mit der Bearbeitung beginnen",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "Vorname",
@@ -469,7 +468,10 @@
                 "goTo": "Seite",
                 "testExam": {
                     "title": "Checkliste für die Durchführung von Testklausuren",
-                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren"
+                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
+                    "detailsHintForTestExams": "Für Testklausuren gilt",
+                    "studentRegistration": "Studierende werden automatisch für die Testklausur registriert, wenn diese mit der Bearbeitung beginnen",
+                    "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht"
                 },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",
