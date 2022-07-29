@@ -102,22 +102,21 @@ public class WebsocketMessagingService {
         result.setFeedbacks(originalFeedback);
 
         // Send to tutors, instructors and admins
-        messagingTemplate.convertAndSend(getResultDestination(participation.getExercise().getId()), result);
+        messagingTemplate.convertAndSend(getNonPersonalExerciseResultDestination(participation.getExercise().getId()), result);
 
         // recover the participation because we might want to use it again after this method
         result.setParticipation(originalParticipation);
     }
 
     /**
-     * Returns true if the given destination should be handled by this service.
-     * This is the case if this is a 'non-personal' subscription (a result subscription for a whole exercise).
+     * Returns true if the given destination is a 'non-personal' exercise result subscription.
      * Only teaching assistants, instructors and admins should be allowed to subscribe to this topic.
      *
      * @param destination Websocket destination topic which to check
-     * @return flag whether the destination belongs to this controller (is a 'non-personal' result subscription)
+     * @return flag whether the destination is a 'non-personal' exercise result subscription
      */
-    public static boolean isResultNonPersonalDestination(String destination) {
-        return Optional.ofNullable(getExerciseIdFromResultDestination(destination)).isPresent();
+    public static boolean isNonPersonalExerciseResultDestination(String destination) {
+        return Optional.ofNullable(getExerciseIdFromNonPersonalExerciseResultDestination(destination)).isPresent();
     }
 
     /**
@@ -126,17 +125,17 @@ public class WebsocketMessagingService {
      * @param destination Websocket destination topic from which to extract the exercise id
      * @return exercise id
      */
-    public static Long getExerciseIdFromResultDestination(String destination) {
-        Pattern pattern = Pattern.compile("^" + getResultDestination("(\\d*)"));
+    public static Long getExerciseIdFromNonPersonalExerciseResultDestination(String destination) {
+        Pattern pattern = Pattern.compile("^" + getNonPersonalExerciseResultDestination("(\\d*)"));
         Matcher matcher = pattern.matcher(destination);
         return matcher.find() ? Long.parseLong(matcher.group(1)) : null;
     }
 
-    private static String getResultDestination(long exerciseId) {
-        return getResultDestination(String.valueOf(exerciseId));
+    private static String getNonPersonalExerciseResultDestination(long exerciseId) {
+        return getNonPersonalExerciseResultDestination(String.valueOf(exerciseId));
     }
 
-    private static String getResultDestination(String exerciseId) {
+    private static String getNonPersonalExerciseResultDestination(String exerciseId) {
         return EXERCISE_TOPIC_ROOT + exerciseId + "/newResults";
     }
 }

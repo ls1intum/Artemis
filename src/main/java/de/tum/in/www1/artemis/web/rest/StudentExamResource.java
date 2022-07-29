@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
 import de.tum.in.www1.artemis.service.util.HttpRequestUtils;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -550,7 +551,7 @@ public class StudentExamResource {
      */
     @PostMapping(value = "/courses/{courseId}/exams/{examId}/student-exams/start-exercises")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Integer> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Void> startExercises(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.nanoTime();
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         final Exam exam = examRepository.findByIdWithRegisteredUsersExerciseGroupsAndExercisesElseThrow(examId);
@@ -566,9 +567,25 @@ public class StudentExamResource {
         AuditEvent auditEvent = new AuditEvent(instructor.getLogin(), Constants.PREPARE_EXERCISE_START, "examId=" + examId, "user=" + instructor.getLogin());
         auditEventRepository.add(auditEvent);
 
-        int numberOfGeneratedParticipations = studentExamService.startExercises(examId);
-        log.info("Generated {} participations in {} for student exams of exam {}", numberOfGeneratedParticipations, formatDurationFrom(start), examId);
-        return ResponseEntity.ok().body(numberOfGeneratedParticipations);
+        studentExamService.startExercises(examId).thenAccept(numberOfGeneratedParticipations -> log.info("Generated {} participations in {} for student exams of exam {}",
+                numberOfGeneratedParticipations, formatDurationFrom(start), examId));
+        return ResponseEntity.ok().build();
+    }
+
+    /**
+     * GET /courses/{courseId}/exams/{examId}/student-exams/start-exercises/status : Return the current status of
+     * starting exams for student exams in the given exam if available
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId   the exam to which the student exams belongs to
+     * @return ResponseEntity containing the status
+     */
+    @GetMapping("/courses/{courseId}/exams/{examId}/student-exams/start-exercises/status")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<ExamExerciseStartPreparationStatus> getExerciseStartStatus(@PathVariable Long courseId, @PathVariable Long examId) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        return ResponseEntity.ok(studentExamService.getExerciseStartStatusOfExam(examId).orElse(null));
     }
 
     /**
