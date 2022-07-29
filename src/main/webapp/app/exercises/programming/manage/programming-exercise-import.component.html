@@ -36,6 +36,9 @@
                         <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
+                    <th class="col-2">
+                        <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
+                    </th>
                     <th class="col-1"></th>
                 </tr>
             </thead>
@@ -54,7 +57,12 @@
                         <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
                     <td class="col-1">
-                        <jhi-button (onClick)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"> </jhi-button>
+                        <div style="text-align: center; vertical-align: middle">
+                            <fa-icon *ngIf="exercise.exerciseGroup" [icon]="faCheck"></fa-icon>
+                        </div>
+                    </td>
+                    <td class="col-1">
+                        <jhi-button (onClick)="openImport(exercise)" [title]="'artemisApp.exercise.import.table.doImport'"></jhi-button>
                     </td>
                 </tr>
             </tbody>

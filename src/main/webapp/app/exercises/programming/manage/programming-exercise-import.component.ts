@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 
 export enum TableColumn {
     ID = 'ID',
@@ -38,6 +38,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faCheck = faCheck;
 
     isCourseFilter = true;
     isExamFilter = true;
