@@ -433,7 +433,7 @@ export class ExamManagementService {
     }
 
     /**
-     * Downloads the exam archive of the specified examId. Returns an error´
+     * Downloads the exam archive of the specified examId. Returns an error
      * if the archive does not exist.
      * @param courseId
      * @param examId The id of the exam
