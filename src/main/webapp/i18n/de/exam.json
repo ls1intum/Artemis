@@ -258,7 +258,7 @@
             "studentExamGenerationError": "Es gab einen Fehler bei der Generierung der individuellen Klausuren:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} fehlende individuelle Klausuren erfolgreich generiert!",
             "missingStudentExamGenerationError": "Es gab einen Fehler bei der Generierung der fehlenden individuellen Klausuren:\n {{message}}",
-            "startExerciseSuccess": "{{number}} Aufgaben erfolgreich vorbereitet!",
+            "startExerciseSuccess": "Die Aufgaben werden nun vorbereitet. Dies kann eine Weile dauern.",
             "startExerciseFailure": "Es gab einen Fehler bei der Vorbereitung der Aufgaben:\n {{message}}",
             "evaluateQuizExerciseSuccess": "{{number}} Quiz-Aufgaben erfolgreich ausgewertet!",
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
@@ -289,6 +289,15 @@
                 "warningRemove": "<strong class='text-danger'>Wiederherstellen des ursprünglichen Abgabedatums ist nach der Löschung nicht möglich!</strong>",
                 "submit": "Abgeben",
                 "unsubmit": "Abgabe entfernen"
+            },
+            "exercisePreparationProgress": {
+                "label": "Aufgabenvorbereitungsfortschritt:",
+                "failed": "fehlgeschlagen",
+                "remaining": "verbleibend",
+                "finished": "Fertig",
+                "noeta": "Kein ETA",
+                "participations": "Teilnahmen",
+                "exams": "Klausuren"
             }
         },
         "examManagement": {

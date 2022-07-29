@@ -152,13 +152,13 @@ describe('CourseExamsComponent', () => {
         expect(component.expandAttemptsMap).toEqual(expectedMap);
     });
 
-    it('should correctly return visible RealExams ordered according to startedDate', () => {
+    it('should correctly return visible real exams ordered according to startedDate', () => {
         component.ngOnInit();
         const resultArray = [visibleRealExam2, visibleRealExam1];
         expect(component.realExamsOfCourse).toEqual(resultArray);
     });
 
-    it('should correctly return visible TestExams ordered according to startedDate', () => {
+    it('should correctly return visible test exams ordered according to startedDate', () => {
         component.ngOnInit();
         const resultArray = [visibleTestExam2, visibleTestExam1];
         expect(component.testExamsOfCourse).toEqual(resultArray);
