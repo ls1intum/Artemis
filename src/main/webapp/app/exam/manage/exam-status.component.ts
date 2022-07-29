@@ -5,6 +5,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 
 export enum ExamReviewState {
     UNSET = 'unset',
@@ -28,9 +29,8 @@ export enum ExamConductionState {
 export class ExamStatusComponent implements OnChanges {
     @Input()
     public exam: Exam;
-
     @Input()
-    public isAtLeastInstructor: boolean;
+    public course: Course;
 
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
@@ -72,7 +72,7 @@ export class ExamStatusComponent implements OnChanges {
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
             this.isTestExam = this.exam.testExam!;
 
-            if (this.isAtLeastInstructor) {
+            if (this.course.isAtLeastInstructor) {
                 // Step 1:
                 this.setExamPreparation();
             }
@@ -144,7 +144,7 @@ export class ExamStatusComponent implements OnChanges {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         if (this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
-        } else if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
+        } else if (this.examAlreadyEnded() && (!this.course.isAtLeastInstructor || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
