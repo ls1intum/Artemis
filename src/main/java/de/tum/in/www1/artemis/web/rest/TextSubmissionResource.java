@@ -230,15 +230,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
         else {
-            Optional<TextSubmission> optionalTextSubmission;
-            if (skipAssessmentOrderOptimization) {
-                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.isExamExercise(),
-                        correctionRound);
-            }
-            else {
-                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.isExamExercise(),
-                        correctionRound);
-            }
+            Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
+                    skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
             if (optionalTextSubmission.isEmpty()) {
                 // TODO: in this case we should simply return an empty response, because this is not an error if all submissions have been corrected
                 throw new EntityNotFoundException("No submission found to be assessed");
