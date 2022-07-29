@@ -1,19 +1,22 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.util.FileUtils;
+import static org.assertj.core.api.Assertions.assertThat;
+
+import java.io.IOException;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
-import java.io.IOException;
-import static org.assertj.core.api.Assertions.assertThat;
+
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
+import de.tum.in.www1.artemis.util.FileUtils;
 
 class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

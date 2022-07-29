@@ -2001,7 +2001,7 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String similarSubmissionText, int studentsAmount) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
-        addUsers(studentsAmount,1,1,1);
+        addUsers(studentsAmount, 1, 1, 1);
 
         // Add text exercise to the course
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
@@ -2013,7 +2013,7 @@ public class DatabaseUtilService {
 
         Set<StudentParticipation> participations = new HashSet<>();
 
-        for (int i = 0; i < studentsAmount; i++){
+        for (int i = 0; i < studentsAmount; i++) {
             User participant = getUserByLogin("student" + (i + 1));
             StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, participant);
             participation.setParticipant(participant);
@@ -2045,7 +2045,7 @@ public class DatabaseUtilService {
 
         Set<StudentParticipation> participations = new HashSet<>();
 
-        for (int i = 0; i < studentsAmount; i++){
+        for (int i = 0; i < studentsAmount; i++) {
             User participant = getUserByLogin("student" + (i + 1));
             StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
             participation.setParticipant(participant);
