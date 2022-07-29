@@ -102,7 +102,7 @@
             "noSubmissionsInfo": "You may not assess any submissions this round. {{notYetAssessed}} submissions have yet to be assessed, of which {{lockedSubmissionsByOtherTutor}} are currently locked by other tutors ",
             "noSubmissionsInfoSecondCorrection": " and {{firstRoundAssessments}} were assessed by you in the first round.",
             "noSubmissionsBecauseFirstAssessedByYourself": "In the second correction round you may only assess submissions which you did not assess in the first round.",
-            "correctionRoundNotYetEnabled": "This correctoion round is not yet enabled.",
+            "correctionRoundNotYetEnabled": "This correction round is not yet enabled.",
             "openAssessments": "Open assessments",
             "closedAssessments": "Closed assessments",
             "ratings": "Ratings"
