@@ -91,8 +91,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
             const testCaseIssues = debugElement.query(By.css(`#${testCaseIssuesId}`));
 
             // Test cases are not ok according to the analysis.
-            expect(testCaseOk).toBe(null);
-            expect(testCaseIssues).not.toBe(null);
+            expect(testCaseOk).toBeNull();
+            expect(testCaseIssues).not.toBeNull();
         }));
 
         describe('Analysis service integration test', () => {
@@ -105,7 +105,7 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 triggerChanges(comp, { property: 'problemStatement', currentValue: problemStatement });
                 fixture.detectChanges();
 
-                expect(debugElement.nativeElement.innerHtml).toBe(undefined);
+                expect(debugElement.nativeElement.innerHtml).toBeUndefined();
                 expect(comp.missingTestCases).toEqual([]);
                 expect(comp.invalidTestCases).toEqual([]);
             });
@@ -135,8 +135,8 @@ describe('ProgrammingExerciseInstructionInstructorAnalysis', () => {
                 fixture.detectChanges();
                 tick(500);
 
-                expect(debugElement.nativeElement.innerHtml).toBe(undefined);
-                expect(debugElement.query(By.css('fa-icon'))).not.toBe(null);
+                expect(debugElement.nativeElement.innerHtml).toBeUndefined();
+                expect(debugElement.query(By.css('fa-icon'))).not.toBeNull();
                 expect(comp.missingTestCases).toEqual(missingTestCases);
                 expect(comp.invalidTestCases).toEqual(invalidTestCases);
             }));

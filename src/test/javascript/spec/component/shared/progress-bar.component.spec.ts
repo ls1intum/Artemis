@@ -55,7 +55,7 @@ describe('ProgressBarComponent', () => {
 
     it('unsubscribes from theme service on destroy', () => {
         fixture.detectChanges();
-        expect(component.themeSubscription).not.toBeUndefined();
+        expect(component.themeSubscription).toBeDefined();
         expect(component.themeSubscription.closed).toBeFalse();
 
         component.ngOnDestroy();

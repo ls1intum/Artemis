@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
-
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -18,6 +17,7 @@ import { reconnectSubmissions, Submission } from 'app/entities/submission.model'
 import { AccountService } from 'app/core/auth/account.service';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -324,10 +324,27 @@ export class ExamManagementService {
      * Start all the exercises for all the student exams belonging to the exam
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
-     * @returns number of generated participations
      */
-    startExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+    startExercises(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Get the current progress of starting exercises for all students
+     * @param courseId course to which the exam belongs
+     * @param examId exam to which the student exams belong
+     * @returns an object containing the status
+     */
+    getExerciseStartStatus(courseId: number, examId: number): Observable<HttpResponse<ExamExerciseStartPreparationStatus>> {
+        return this.http
+            .get<ExamExerciseStartPreparationStatus>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises/status`, { observe: 'response' })
+            .pipe(
+                tap((res: HttpResponse<ExamExerciseStartPreparationStatus>) => {
+                    if (res.body) {
+                        res.body.startedAt = convertDateFromServer(res.body.startedAt);
+                    }
+                }),
+            );
     }
 
     /**

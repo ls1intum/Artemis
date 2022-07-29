@@ -69,9 +69,9 @@ describe('DragAndDropQuestionComponent', () => {
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(comp.renderedQuestion).toBeDefined();
-        expect(comp.renderedQuestion.text).toEqual(`${question.text}markdown`);
-        expect(comp.renderedQuestion.hint).toEqual(`${question.hint}markdown`);
-        expect(comp.renderedQuestion.explanation).toEqual(`${question.explanation}markdown`);
+        expect(comp.renderedQuestion.text).toBe(`${question.text}markdown`);
+        expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
+        expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
     });
 
     it('should count correct mappings as zero if no correct mappings', () => {
@@ -196,7 +196,7 @@ describe('DragAndDropQuestionComponent', () => {
         comp.onMappingUpdate = onMappingUpdate;
         comp.onDragDrop(dropLocation, event);
         expect(comp.mappings).toEqual(expectedMappings);
-        expect(onMappingUpdate.mock.calls.length).toBe(callCount);
+        expect(onMappingUpdate.mock.calls).toHaveLength(callCount);
     };
 
     it('should change loading with given value', () => {

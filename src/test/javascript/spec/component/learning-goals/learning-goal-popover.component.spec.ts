@@ -65,7 +65,7 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).toEqual('/courses/1/learning-goals');
+        expect(location.path()).toBe('/courses/1/learning-goals');
     }));
 
     it('should navigate to learning goal management', fakeAsync(() => {
@@ -80,6 +80,6 @@ describe('LearningGoalPopoverComponent', () => {
         const anchor = learningGoalPopoverComponentFixture.debugElement.query(By.css('a')).nativeElement;
         anchor.click();
         tick();
-        expect(location.path()).toEqual('/course-management/1/goal-management');
+        expect(location.path()).toBe('/course-management/1/goal-management');
     }));
 });

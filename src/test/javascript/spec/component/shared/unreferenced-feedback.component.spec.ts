@@ -46,14 +46,14 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.addReferenceIdForExampleSubmission = true;
         comp.addUnreferencedFeedback();
 
-        expect(comp.unreferencedFeedback.length).toBe(1);
-        expect(comp.unreferencedFeedback[0].reference).not.toBe(undefined);
+        expect(comp.unreferencedFeedback).toHaveLength(1);
+        expect(comp.unreferencedFeedback[0].reference).toBeDefined();
 
         fixture.detectChanges();
         comp.addUnreferencedFeedback();
 
-        expect(comp.unreferencedFeedback.length).toBe(2);
-        expect(comp.unreferencedFeedback[1].reference).not.toBe(undefined);
+        expect(comp.unreferencedFeedback).toHaveLength(2);
+        expect(comp.unreferencedFeedback[1].reference).toBeDefined();
     });
 
     it('should update unreferenced feedback', () => {
@@ -63,7 +63,7 @@ describe('UnreferencedFeedbackComponent', () => {
         feedback.text = newFeedbackText;
         comp.updateAssessment(feedback);
 
-        expect(comp.unreferencedFeedback.length).toBe(1);
+        expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.unreferencedFeedback[0].text).toBe(newFeedbackText);
     });
 
@@ -72,6 +72,6 @@ describe('UnreferencedFeedbackComponent', () => {
         comp.unreferencedFeedback = [feedback];
         comp.deleteAssessment(feedback);
 
-        expect(comp.unreferencedFeedback.length).toBe(0);
+        expect(comp.unreferencedFeedback).toHaveLength(0);
     });
 });

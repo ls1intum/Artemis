@@ -89,12 +89,12 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.cachedParticipations.size).toBe(0);
 
         expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(1);
-        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(undefined);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
 
         expect(participationWebsocketService.resultObservables.size).toBe(1);
         expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
 
-        expect(participationWebsocketService.participationObservable).toBe(undefined);
+        expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
 
     it('should setup a result subscriptions with the websocket service on subscribeForLatestResult for students', () => {
@@ -113,7 +113,7 @@ describe('ParticipationWebsocketService', () => {
         expect(participationWebsocketService.resultObservables.size).toBe(1);
         expect(participationWebsocketService.resultObservables.has(participation.id!)).toBeTrue();
 
-        expect(participationWebsocketService.participationObservable).toBe(undefined);
+        expect(participationWebsocketService.participationObservable).toBeUndefined();
     });
 
     it('should emit rated result when received through websocket', () => {
@@ -250,12 +250,12 @@ describe('ParticipationWebsocketService', () => {
 
         participationWebsocketService.resetLocalCache();
 
-        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBe(undefined);
+        expect(participationWebsocketService.openPersonalWebsocketSubscription).toBeUndefined();
         expect(participationWebsocketService.openResultWebsocketSubscriptions.size).toBe(0);
     });
 
     it('should return the cached participation after adding it', () => {
-        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id!)).toBe(undefined);
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id!)).toBeUndefined();
 
         participationWebsocketService.addParticipation(participation);
 

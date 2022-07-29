@@ -48,19 +48,10 @@ describe('PostingContentComponent', () => {
     it('should calculate correct pattern matches for content without reference', () => {
         component.content = 'I do not want to reference a Post.';
         expect(component.getPatternMatches()).toEqual([]);
-    });
-
-    it('should calculate correct pattern matches for content without reference.', () => {
         component.content = 'I do not want to reference a Post - #yolo.';
         expect(component.getPatternMatches()).toEqual([]);
-    });
-
-    it('should calculate correct pattern matches for content without reference.', () => {
         component.content = '##I do not want to reference a Post.';
         expect(component.getPatternMatches()).toEqual([]);
-    });
-
-    it('should calculate correct pattern matches for content without reference.', () => {
         component.content = '## 1. do not want to reference a Post.';
         expect(component.getPatternMatches()).toEqual([]);
     });
