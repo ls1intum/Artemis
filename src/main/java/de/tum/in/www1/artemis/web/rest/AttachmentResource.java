@@ -106,7 +106,7 @@ public class AttachmentResource {
         if (notificationText != null) {
             groupNotificationService.notifyStudentGroupAboutAttachmentChange(result, notificationText);
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachment.getId().toString())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**

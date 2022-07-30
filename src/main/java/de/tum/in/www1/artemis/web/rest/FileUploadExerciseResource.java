@@ -184,7 +184,7 @@ public class FileUploadExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(fileUploadExerciseBeforeUpdate, updatedExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, exerciseId.toString())).body(updatedExercise);
+        return ResponseEntity.ok(updatedExercise);
     }
 
     /**

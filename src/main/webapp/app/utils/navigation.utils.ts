@@ -105,28 +105,6 @@ export class ArtemisNavigationUtilService {
     }
 }
 
-export const navigateToExampleSubmissions = (router: Router, exercise: Exercise): void => {
-    setTimeout(() => {
-        // If an exercise group is set -> we are in exam mode
-        if (exercise.exerciseGroup) {
-            router.navigate([
-                'course-management',
-                exercise.exerciseGroup!.exam!.course!.id!.toString(),
-                'exams',
-                exercise.exerciseGroup!.exam!.id!.toString(),
-                'exercise-groups',
-                exercise.exerciseGroup!.id!,
-                exercise.type! + '-exercises',
-                exercise.id,
-                'example-submissions',
-            ]);
-            return;
-        }
-
-        router.navigate(['course-management', exercise.course!.id!, exercise.type! + '-exercises', exercise.id, 'example-submissions']);
-    }, 1000);
-};
-
 export const getLinkToSubmissionAssessment = (
     exerciseType: ExerciseType,
     courseId: number,

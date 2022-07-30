@@ -148,8 +148,7 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -213,8 +212,7 @@ public class ModelingExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
-                .body(updatedModelingExercise);
+        return ResponseEntity.ok(updatedModelingExercise);
     }
 
     /**
@@ -363,8 +361,7 @@ public class ModelingExerciseResource {
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString())).body(newModelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
 
     /**
