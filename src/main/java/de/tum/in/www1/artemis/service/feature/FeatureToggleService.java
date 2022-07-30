@@ -49,6 +49,10 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
+        /*
+         * Exam Live Statistics: TODO: - Deactivate all active collections: The student should not collect and send actions anymore - Stop all scheduled tasks - Clear the Hazelcast
+         * cache Quiz: TODO: - Stop all scheduled tasks - Clear the cache
+         */
         features.put(feature, false);
         sendUpdate();
     }
