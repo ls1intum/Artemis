@@ -151,11 +151,11 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     /**
-     * Set the translation strings
+     * Update the translation strings after the application language is changed
      */
     private setTranslationStrings() {
         this.fileSizeLimitation = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation');
-        this.fileLimitations = `${FILE_EXTENSIONS} ${this.fileSizeLimitation}`;
+        this.fileLimitations = `${FILE_EXTENSIONS.join(', ')}. ${this.fileSizeLimitation}`;
         this.fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
         this.fileName = this.fileNamePlaceholder;
     }

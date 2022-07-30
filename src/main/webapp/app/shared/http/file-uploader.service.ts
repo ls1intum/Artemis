@@ -2,6 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { lastValueFrom } from 'rxjs';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export interface FileUploadResponse {
     path?: string;
@@ -14,7 +15,7 @@ type Options = {
 @Injectable({ providedIn: 'root' })
 export class FileUploaderService {
     // NOTE: this list has to be the same as in FileResource.java
-    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf,zip,odt,ods,odp,odg,odf,doc,docx,csv,xls,xlsx,ppt,pptx,pages,rtf,pages-tef,numbers,key';
+    acceptedFileExtensions = FILE_EXTENSIONS.toString();
 
     constructor(private http: HttpClient) {}
 
