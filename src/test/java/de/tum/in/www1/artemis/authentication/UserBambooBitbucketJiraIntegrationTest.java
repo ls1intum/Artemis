@@ -333,13 +333,13 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testUserWithRegistrationNumber() throws Exception {
+    void testUserWithRegistrationNumber() throws Exception {
         userTestService.testUserWithRegistrationNumber();
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testUserWithoutRegistrationNumber() throws Exception {
+    void testUserWithoutRegistrationNumber() throws Exception {
         userTestService.testUserWithoutRegistrationNumber();
     }
 }
