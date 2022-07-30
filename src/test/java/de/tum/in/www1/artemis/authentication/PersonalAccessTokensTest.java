@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
-public class PersonalAccessTokensTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class PersonalAccessTokensTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     private static final String TOKEN_API_URL = "/api/personal-access-token";
 
