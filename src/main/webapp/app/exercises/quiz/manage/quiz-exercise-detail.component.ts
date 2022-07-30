@@ -893,8 +893,11 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.quizExercise = quizExercise;
         this.changeDetector.detectChanges();
 
-        // Navigate back
-        this.previousState();
+        // Navigate back only if it's an import
+        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
+        if (this.isImport) {
+            this.previousState();
+        }
     }
 
     /**

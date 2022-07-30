@@ -162,8 +162,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -215,7 +214,7 @@ public class TextExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
+        return ResponseEntity.ok(updatedTextExercise);
     }
 
     /**
@@ -423,8 +422,7 @@ public class TextExerciseResource {
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
-        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newTextExercise.getId().toString())).body(newTextExercise);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
     /**

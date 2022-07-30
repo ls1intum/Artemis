@@ -264,11 +264,11 @@
             "evaluateQuizExerciseFailure": "Es gab einen Fehler bei der Auswertung der Quiz-Aufgaben:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Alle Klausuren der Studierenden überprüft und die nicht eingereichten oder leeren Modellierungs- und Textaufgaben mit 0 Punkten bewertet.",
             "assessUnsubmittedStudentExamsFailure": "Die Klausur ist noch nicht für alle Studierenden beendet.",
-            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.",
+            "studentExamGenerationModalText": "Es existieren bereits individuelle Klausuren. Beim Fortfahren werden diese Klausuren gelöscht und neue individuelle Klausuren generiert.\n\nBestehende Teilnahmen und Abgaben werden ebenfalls gelöscht!",
             "studentExamStatusSuccess": "Alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarning": "Nicht alle registrierten Studierenden haben eine Klausur",
             "studentExamStatusWarningTooltip": "Klicke auf den Button 'Fehlende individuelle Klausuren erstellen', um die fehlenden Klausuren zu generieren. Alternativ, klicke auf den Button 'Individuelle Klausuren erstellen', um alle Klausuren zu löschen und neu zu generieren",
-            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur started",
+            "studentExamStatusTestExam": "Die Klausuren werden automatisch erstellt, sobald ein Studierender eine Testklausur startet",
             "unlockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden entsperrt.",
             "unlockAllRepositoriesFailure": "Es gab einen Fehler beim Entsperren der Repositories:\n {{message}}",
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
@@ -396,7 +396,6 @@
                 "showAllUsers": "Alle Studierenden anzeigen",
                 "searchForUsers": "Studierende für diese Klausur anmelden durch Suchen nach Login oder Namen",
                 "searchNoResults": "Keine Studierenden gefunden",
-                "testExamSelfRegistration": "Studierende werden automatisch für die Klausur registriert, wenn diese mit der Bearbeitung beginnen",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "Vorname",
@@ -455,7 +454,8 @@
             },
             "reset": {
                 "question": "Soll die Klausur <strong>{{ title }}</strong> wirklich dauerhaft zurückgesetzt werden? Alle Klausuren der Studierenden werden gelöscht. Teilnehmende an der Klausur und die Konfigurationen der Aufgaben bleiben erhalten. Diese Aktion kann NICHT rückgängig gemacht werden!",
-                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein."
+                "typeNameToConfirm": "Bitte gib den Namen der Klausur zur Bestätigung ein.",
+                "success": "Die Klausur wurde erfolgreich zurückgesetzt."
             },
             "checklist": {
                 "title": "Checkliste für die Durchführung von Prüfungen",
@@ -469,7 +469,10 @@
                 "goTo": "Seite",
                 "testExam": {
                     "title": "Checkliste für die Durchführung von Testklausuren",
-                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren"
+                    "introduction": "Diese Seite gibt einen Überblick über die verschiedenen Schritte zur Durchführung von Testklausuren",
+                    "detailsHintForTestExams": "Für Testklausuren gilt",
+                    "studentRegistration": "Studierende werden automatisch für die Testklausur registriert, wenn diese mit der Bearbeitung beginnen",
+                    "instantResults": "Die Ergebnisse der Testklausur werden direkt nach dem Einreichen veröffentlicht"
                 },
                 "tableItem": {
                     "register": "Registrierung der Studierenden zur Klausur",

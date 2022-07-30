@@ -202,10 +202,6 @@
                 'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
             }}</span>
         </div>
-        <div class="form-group" *ngIf="!modelingExercise.id || isImport">
-            <label class="form-control-label" jhiTranslate="artemisApp.modelingExercise.exampleSubmissions">Example submissions</label>
-            <div class="alert alert-info mt-3" *ngIf="!modelingExercise.id || isImport" jhiTranslate="artemisApp.modelingExercise.exampleSubmissionsRequireExercise"></div>
-        </div>
         <div class="form-group" *ngIf="modelingExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
