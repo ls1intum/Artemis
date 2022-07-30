@@ -10,6 +10,7 @@ import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { ExamActionService } from './exam-action.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export class TableContent {
     translateValue: string;
@@ -41,6 +42,8 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
     private courseId: number;
 
     exam: Exam;
+
+    readonly FeatureToggle = FeatureToggle;
 
     constructor(
         private route: ActivatedRoute,
