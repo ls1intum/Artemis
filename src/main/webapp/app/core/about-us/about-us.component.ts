@@ -31,7 +31,7 @@ export class AboutUsComponent implements OnInit {
         ['exercises.fileUpload', { fileUploadUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/file-upload/' }],
         ['exam', { examModeUrl: 'https://docs.artemis.ase.in.tum.de/user/exam_mode/', studentFeatureUrl: '/features/students', instructorFeatureUrl: '/features/instructors' }],
         ['grading', { gradingUrl: 'https://docs.artemis.ase.in.tum.de/user/grading/' }],
-        ['assessment', {}],
+        ['assessment', { assessmentUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/assessment/' }],
         ['communication', { communicationUrl: 'https://docs.artemis.ase.in.tum.de/user/communication/' }],
         ['notifications', { notificationsURL: 'https://docs.artemis.ase.in.tum.de/user/notifications' }],
         ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/' }],

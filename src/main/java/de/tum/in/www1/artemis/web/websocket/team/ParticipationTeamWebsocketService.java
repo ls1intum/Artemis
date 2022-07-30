@@ -170,12 +170,12 @@ public class ParticipationTeamWebsocketService {
         final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
-        if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
-            submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());
+        if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
+            submission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, modelingExercise, user);
             modelingSubmissionService.hideDetails(submission, user);
         }
-        else if (submission instanceof TextSubmission && exercise instanceof TextExercise) {
-            submission = textSubmissionService.handleTextSubmission((TextSubmission) submission, (TextExercise) exercise, principal);
+        else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
+            submission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, user);
             textSubmissionService.hideDetails(submission, user);
         }
         else {

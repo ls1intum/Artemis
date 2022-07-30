@@ -529,6 +529,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
                     // - Don't display '<type>-exercises' because it has no associated route
                     break;
+                } else if (this.lastRouteUrlSegment === 'exams' && segment === 'import') {
+                    // This route is only used internally when opening the exam import modal and therefore shouldn't be displayed.
+                    // When opening the exam-update.component, the id of the to be imported exam is appended (-> case `import`).
+                    break;
                 }
 
                 this.addTranslationAsCrumb(currentPath, segment);

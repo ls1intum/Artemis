@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -83,20 +85,20 @@ public class ModelingSubmissionService extends SubmissionService {
      * Saves the given submission and the corresponding model and creates the result if necessary. This method used for creating and updating modeling submissions.
      *
      * @param modelingSubmission the submission that should be saved
-     * @param modelingExercise   the exercise the submission belongs to
-     * @param username           the name of the corresponding user
+     * @param exercise   the exercise the submission belongs to
+     * @param user               the user who initiated the save
      * @return the saved modelingSubmission entity
      */
-    public ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, String username) {
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(modelingExercise, username);
+    public ModelingSubmission handleModelingSubmission(ModelingSubmission modelingSubmission, ModelingExercise exercise, User user) {
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
-            throw new EntityNotFoundException("No participation found for " + username + " in exercise with id " + modelingExercise.getId());
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
-        StudentParticipation participation = optionalParticipation.get();
-
-        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
+        final var participation = optionalParticipation.get();
+        final var dueDate = exerciseDateService.getDueDate(participation);
+        // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
         if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+            throw new AccessForbiddenException();
         }
 
         // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
@@ -104,21 +106,38 @@ public class ModelingSubmissionService extends SubmissionService {
 
         // update submission properties
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (modelingExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             modelingSubmission.setSubmitted(true);
         }
+        modelingSubmission = save(modelingSubmission, exercise, user, participation);
+        return modelingSubmission;
+    }
+
+    /**
+     * Saves the given submission. Is used for creating and updating modeling submissions.
+     *
+     * @param modelingSubmission the submission that should be saved
+     * @param participation      the participation the submission belongs to
+     * @param modelingExercise   the exercise the submission belongs to
+     * @param user               the user who initiated the save
+     * @return the textSubmission entity that was saved to the database
+     */
+    private ModelingSubmission save(ModelingSubmission modelingSubmission, ModelingExercise modelingExercise, User user, StudentParticipation participation) {
         modelingSubmission.setSubmissionDate(ZonedDateTime.now());
         modelingSubmission.setType(SubmissionType.MANUAL);
         participation.addSubmission(modelingSubmission);
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        modelingSubmission.setResults(new ArrayList<>());
         modelingSubmission = modelingSubmissionRepository.save(modelingSubmission);
 
         // versioning of submission
         try {
             if (modelingExercise.isTeamMode()) {
-                submissionVersionService.saveVersionForTeam(modelingSubmission, username);
+                submissionVersionService.saveVersionForTeam(modelingSubmission, user);
             }
             else if (modelingExercise.isExamExercise()) {
-                submissionVersionService.saveVersionForIndividual(modelingSubmission, username);
+                submissionVersionService.saveVersionForIndividual(modelingSubmission, user);
             }
         }
         catch (Exception ex) {
@@ -130,7 +149,6 @@ public class ModelingSubmissionService extends SubmissionService {
             studentParticipationRepository.save(participation);
         }
 
-        log.debug("return model: {}", modelingSubmission.getModel());
         return modelingSubmission;
     }
 
