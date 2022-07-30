@@ -23,7 +23,7 @@
                     #textEditor
                     id="text-editor"
                     class="text-editor-textarea"
-                    maxlength="30000"
+                    [maxlength]="maxCharacterCount"
                     [(ngModel)]="answer"
                     [readonly]="!studentSubmission"
                     [disabled]="!studentSubmission"
