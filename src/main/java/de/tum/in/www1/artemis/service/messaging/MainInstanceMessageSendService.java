@@ -112,7 +112,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    @FeatureToggle(Feature.ExamLiveStatistics)
     public void sendExamMonitoringScheduleCancel(Long examId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleExamMonitoringCancel(examId);

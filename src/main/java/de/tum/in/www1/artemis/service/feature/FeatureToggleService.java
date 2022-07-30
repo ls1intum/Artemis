@@ -7,7 +7,10 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
+import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 @Service
 public class FeatureToggleService {
@@ -16,10 +19,17 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    private final ExamRepository examRepository;
+
     private final Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, HazelcastInstance hazelcastInstance) {
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
+            HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
+        this.instanceMessageSendService = instanceMessageSendService;
+        this.examRepository = examRepository;
 
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
@@ -49,8 +59,18 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
+        if (feature == Feature.ExamLiveStatistics) {
+            List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
+            for (var exam : exams) {
+                // Updates all exams
+                exam.setMonitoring(false);
+                examRepository.save(exam);
+
+                // Cancels all exam monitoring tasks and deletes the cache
+                instanceMessageSendService.sendExamMonitoringScheduleCancel(exam.getId());
+            }
+        }
         /*
-         * Exam Live Statistics: TODO: - Deactivate all active collections: The student should not collect and send actions anymore - Stop all scheduled tasks - Clear the Hazelcast
          * cache Quiz: TODO: - Stop all scheduled tasks - Clear the cache
          */
         features.put(feature, false);

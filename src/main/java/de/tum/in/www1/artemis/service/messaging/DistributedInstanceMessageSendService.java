@@ -117,7 +117,6 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    @FeatureToggle(Feature.ExamLiveStatistics)
     public void sendExamMonitoringSchedule(Long examId) {
         log.info("Sending schedule for exam monitoring {} to broker.", examId);
         sendMessageDelayed("exam-monitoring-schedule", examId);
