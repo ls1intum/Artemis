@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -19,12 +18,14 @@ import org.springframework.web.server.ResponseStatusException;
 import de.tum.in.www1.artemis.domain.FileUploadExercise;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.EmptyFileException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -51,22 +52,33 @@ public class FileUploadSubmissionService extends SubmissionService {
      * Handles file upload submissions sent from the client and saves them in the database.
      *
      * @param fileUploadSubmission the file upload submission that should be saved
-     * @param fileUploadExercise   the corresponding file upload exercise
-     * @param file                  the file that will be stored on the server
-     * @param principal            the user principal
+     * @param exercise             the corresponding file upload exercise
+     * @param file                 the file that will be stored on the server
+     * @param user                 the user who initiated the save/submission
      * @return the saved file upload submission
      * @throws IOException if file can't be saved
      * @throws EmptyFileException if file is empty
      */
-    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise fileUploadExercise,
-            Principal principal) throws IOException, EmptyFileException {
-        Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(fileUploadExercise, principal.getName());
+    public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
+            throws IOException, EmptyFileException {
+        // Don't allow submissions after the due date (except if the exercise was started after the due date)
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + fileUploadExercise.getId());
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
-        StudentParticipation participation = optionalParticipation.get();
+        final var participation = optionalParticipation.get();
+        final var dueDate = exerciseDateService.getDueDate(participation);
+        // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
+            throw new AccessForbiddenException();
+        }
+        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+            fileUploadSubmission.setSubmitted(true);
+        }
 
-        return save(fileUploadSubmission, file, participation, fileUploadExercise);
+        fileUploadSubmission = save(fileUploadSubmission, file, participation, exercise);
+        return fileUploadSubmission;
     }
 
     /**
@@ -101,10 +113,32 @@ public class FileUploadSubmissionService extends SubmissionService {
      */
     public FileUploadSubmission save(FileUploadSubmission fileUploadSubmission, MultipartFile file, StudentParticipation participation, FileUploadExercise exercise)
             throws IOException, EmptyFileException {
-        final Optional<ZonedDateTime> dueDate = exerciseDateService.getDueDate(participation);
-        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+
+        String newFilePath = storeFile(fileUploadSubmission, file, exercise);
+
+        // update submission properties
+        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
+        fileUploadSubmission.setType(SubmissionType.MANUAL);
+        participation.addSubmission(fileUploadSubmission);
+
+        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
+        fileUploadSubmission.setResults(new ArrayList<>());
+
+        // Note: we save before the new file path is set to potentially remove the old file on the file system
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+        fileUploadSubmission.setFilePath(newFilePath);
+        // Note: we save again so that the new file is stored on the file system
+        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
+
+        if (participation.getInitializationState() != InitializationState.FINISHED) {
+            participation.setInitializationState(InitializationState.FINISHED);
+            studentParticipationRepository.save(participation);
         }
+
+        return fileUploadSubmission;
+    }
+
+    private String storeFile(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise) throws EmptyFileException, IOException {
         if (file.isEmpty()) {
             throw new EmptyFileException(file.getOriginalFilename());
         }
@@ -137,30 +171,7 @@ public class FileUploadSubmissionService extends SubmissionService {
                 fileService.resetOnPath(newLocalFilePath);
             }
         }
-        // update submission properties
-        // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
-            fileUploadSubmission.setSubmitted(true);
-        }
-        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now());
-        fileUploadSubmission.setType(SubmissionType.MANUAL);
-        participation.addSubmission(fileUploadSubmission);
-
-        // remove result from submission (in the unlikely case it is passed here), so that students cannot inject a result
-        fileUploadSubmission.setResults(new ArrayList<>());
-
-        // Note: we save before the new file path is set to potentially remove the old file on the file system
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-        fileUploadSubmission.setFilePath(newFilePath);
-        // Note: we save again so that the new file is stored on the file system
-        fileUploadSubmission = fileUploadSubmissionRepository.save(fileUploadSubmission);
-
-        if (participation.getInitializationState() != InitializationState.FINISHED) {
-            participation.setInitializationState(InitializationState.FINISHED);
-            studentParticipationRepository.save(participation);
-        }
-
-        return fileUploadSubmission;
+        return newFilePath;
     }
 
     private String saveFileForSubmission(final MultipartFile file, final Submission submission, FileUploadExercise exercise) throws IOException {

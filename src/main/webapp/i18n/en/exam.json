@@ -266,7 +266,7 @@
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
-            "studentExamStatusTestExam": "StudentExams are automatically created once a student requests to start a Test Exam",
+            "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -397,7 +397,6 @@
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "searchNoResults": "No students found",
-                "testExamSelfRegistration": "Students are automatically registered for the Test Exam when starting a Test Exam",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "First name",
@@ -456,7 +455,8 @@
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "success": "The exam has been successfully reset."
             },
             "checklist": {
                 "title": "Exam Checklist",
@@ -470,7 +470,10 @@
                 "goTo": "Page",
                 "testExam": {
                     "title": "Test Exam Checklist",
-                    "introduction": "This page gives an overview over the various steps when creating a Test Exam."
+                    "introduction": "This page gives an overview over the various steps when creating a test exam.",
+                    "detailsHintForTestExams": "For test exams, the following applies",
+                    "studentRegistration": "Students are automatically registered for the test exam when starting a test exam",
+                    "instantResults": "The results are automatically published once a student submits the exam"
                 },
                 "tableItem": {
                     "register": "Register students for the exam",

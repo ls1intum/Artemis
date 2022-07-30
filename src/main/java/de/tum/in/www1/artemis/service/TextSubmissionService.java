@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Optional;
@@ -13,11 +12,13 @@ import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.TextExercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Service
@@ -50,29 +51,28 @@ public class TextSubmissionService extends SubmissionService {
      * Handles text submissions sent from the client and saves them in the database.
      *
      * @param textSubmission the text submission that should be saved
-     * @param textExercise   the corresponding text exercise
-     * @param principal      the user principal
+     * @param exercise   the corresponding text exercise
+     * @param user           the user who initiated the save/submission
      * @return the saved text submission
      */
-    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise textExercise, Principal principal) {
+    public TextSubmission handleTextSubmission(TextSubmission textSubmission, TextExercise exercise, User user) {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(textExercise, principal.getName());
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
-            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + principal.getName() + " in exercise " + textExercise.getId());
+            throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }
         final var participation = optionalParticipation.get();
         final var dueDate = exerciseDateService.getDueDate(participation);
         // Important: for exam exercises, we should NOT check the exercise due date, we only check if for course exercises
-        if (textExercise.isCourseExercise() && dueDate.isPresent() && participation.getInitializationDate().isBefore(dueDate.get())
-                && dueDate.get().isBefore(ZonedDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN);
+        if (dueDate.isPresent() && exerciseDateService.isAfterDueDate(participation) && participation.getInitializationDate().isBefore(dueDate.get())) {
+            throw new AccessForbiddenException();
         }
 
         // NOTE: from now on we always set submitted to true to prevent problems here! Except for late submissions of course exercises to prevent issues in auto-save
-        if (textExercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
+        if (exercise.isExamExercise() || exerciseDateService.isBeforeDueDate(participation)) {
             textSubmission.setSubmitted(true);
         }
-        textSubmission = save(textSubmission, participation, textExercise, principal);
+        textSubmission = save(textSubmission, participation, exercise, user);
         return textSubmission;
     }
 
@@ -82,10 +82,10 @@ public class TextSubmissionService extends SubmissionService {
      * @param textSubmission the submission that should be saved
      * @param participation  the participation the submission belongs to
      * @param textExercise   the exercise the submission belongs to
-     * @param principal      the principal of the user
+     * @param user           the user who initiated the save
      * @return the textSubmission entity that was saved to the database
      */
-    public TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, Principal principal) {
+    private TextSubmission save(TextSubmission textSubmission, StudentParticipation participation, TextExercise textExercise, User user) {
         // update submission properties
         textSubmission.setSubmissionDate(ZonedDateTime.now());
         textSubmission.setType(SubmissionType.MANUAL);
@@ -98,10 +98,10 @@ public class TextSubmissionService extends SubmissionService {
         // versioning of submission
         try {
             if (textExercise.isTeamMode()) {
-                submissionVersionService.saveVersionForTeam(textSubmission, principal.getName());
+                submissionVersionService.saveVersionForTeam(textSubmission, user);
             }
             else if (textExercise.isExamExercise()) {
-                submissionVersionService.saveVersionForIndividual(textSubmission, principal.getName());
+                submissionVersionService.saveVersionForIndividual(textSubmission, user);
             }
         }
         catch (Exception ex) {
@@ -134,13 +134,14 @@ public class TextSubmissionService extends SubmissionService {
      * assessment for the corresponding submission yet.
      *
      * @param textExercise the exercise for which we want to retrieve a submission without manual result
-     * @param correctionRound - the correction round we want our submission to have results for
      * @param skipAssessmentQueue skip using the assessment queue and do NOT optimize the assessment order (default: false)
      * @param examMode flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @param correctionRound - the correction round we want our submission to have results for
      * @return a textSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<TextSubmission> getRandomTextSubmissionEligibleForNewAssessment(TextExercise textExercise, boolean skipAssessmentQueue, boolean examMode, int correctionRound) {
-        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue) {
+        // If automatic assessment is enabled and available, try to learn the most possible amount during the first correction round
+        if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
         var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(textExercise, examMode, correctionRound);

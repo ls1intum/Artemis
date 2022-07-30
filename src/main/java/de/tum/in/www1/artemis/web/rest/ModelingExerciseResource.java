@@ -212,8 +212,7 @@ public class ModelingExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
-                .body(updatedModelingExercise);
+        return ResponseEntity.ok(updatedModelingExercise);
     }
 
     /**
