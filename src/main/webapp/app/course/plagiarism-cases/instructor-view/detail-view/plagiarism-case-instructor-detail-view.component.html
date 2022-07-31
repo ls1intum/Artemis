@@ -25,7 +25,7 @@
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
                     <span class="d-none d-md-inline">{{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}</span>
                 </button>
-                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost"></jhi-post-create-edit-modal>
+                <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)"></jhi-post-create-edit-modal>
             </div>
         </div>
         <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>

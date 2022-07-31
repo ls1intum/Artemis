@@ -115,6 +115,13 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         return this.posts?.length > 0;
     }
 
+    onStudentNotified(post: Post) {
+        if (!this.posts) {
+            this.posts = [];
+        }
+        this.posts.push(post);
+    }
+
     /**
      * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
      * this empty post has no course-wide context as well as the plagiarism case set as context
