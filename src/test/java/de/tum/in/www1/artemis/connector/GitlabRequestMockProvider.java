@@ -85,6 +85,9 @@ public class GitlabRequestMockProvider {
     @Mock
     private ProtectedBranchesApi protectedBranchesApi;
 
+    @Mock
+    private PipelineApi pipelineApi;
+
     @SpyBean
     private GitLabUserManagementService gitLabUserManagementService;
 
@@ -661,5 +664,52 @@ public class GitlabRequestMockProvider {
 
     public UserApi getMockedUserApi() {
         return userApi;
+    }
+
+    public void mockCreateTrigger(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).createPipelineTrigger(any(), anyString());
+        }
+        else {
+            doReturn(new Trigger()).when(pipelineApi).createPipelineTrigger(any(), anyString());
+        }
+    }
+
+    public void mockTriggerPipeline(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
+        }
+        else {
+            doReturn(null).when(pipelineApi).triggerPipeline(any(), (Trigger) any(), anyString(), any());
+        }
+    }
+
+    public void mockDeleteTrigger(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(pipelineApi).deletePipelineTrigger(any(), anyLong());
+        }
+        else {
+            doNothing().when(pipelineApi).deletePipelineTrigger(any(), anyLong());
+        }
+    }
+
+    public void mockGetProject(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).getProject(anyString());
+        }
+        else {
+            Project project = new Project();
+            doReturn(project).when(projectApi).getProject(anyString());
+        }
+    }
+
+    public void mockUpdateProject(boolean shouldFail) throws GitLabApiException {
+        if (shouldFail) {
+            doThrow(new GitLabApiException("Internal Error", 500)).when(projectApi).updateProject(any());
+        }
+        else {
+            Project project = new Project();
+            doReturn(project).when(projectApi).updateProject(any());
+        }
     }
 }
