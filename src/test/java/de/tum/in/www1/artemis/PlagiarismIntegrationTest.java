@@ -137,9 +137,8 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPlagiarismComparisonsForSplitView_student() throws Exception {
-        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view?studentLogin=student1",
-                HttpStatus.OK, plagiarismComparison1.getClass());
-        assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
+        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
+                plagiarismComparison1.getClass());
         assertThat(comparison.getSubmissionA().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
         assertThat(comparison.getSubmissionB().getStudentLogin()).as("should anonymize plagiarism comparison").isIn("Your submission", "Other submission");
     }
@@ -147,9 +146,8 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
-        var comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
+        request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
                 plagiarismComparison1.getClass());
-        assertThat(comparison.getPlagiarismResult()).isEqualTo(textPlagiarismResult);
     }
 
     @Test

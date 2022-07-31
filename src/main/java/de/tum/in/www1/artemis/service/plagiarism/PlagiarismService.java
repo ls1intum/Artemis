@@ -33,7 +33,7 @@ public class PlagiarismService {
      * @param userLogin of the student asking to see his plagiarism comparison.
      * @return the anonymized plagiarism comparison for the given student
      */
-    public PlagiarismComparison anonymizeComparisonForStudent(PlagiarismComparison comparison, String userLogin) {
+    public PlagiarismComparison checkStudentAccess(PlagiarismComparison comparison, String userLogin) {
         if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
             comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
             comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);

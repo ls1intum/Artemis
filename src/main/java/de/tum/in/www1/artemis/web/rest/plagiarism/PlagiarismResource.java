@@ -93,14 +93,12 @@ public class PlagiarismResource {
      *
      * @param courseId the id of the course
      * @param comparisonId the id of the PlagiarismComparison
-     * @param studentLogin optional login of the student
      * @return the PlagiarismComparison
      * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
      */
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId,
-            @RequestParam(value = "studentLogin", required = false) String studentLogin) {
+    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
         var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
@@ -114,11 +112,15 @@ public class PlagiarismResource {
         }
 
         comparisonA.setSubmissionB(comparisonB.getSubmissionB());
-        if (studentLogin != null) {
-            comparisonA = this.plagiarismService.anonymizeComparisonForStudent(comparisonA, studentLogin);
+        if (authenticationCheckService.isOnlyStudentInCourse(course, user)) {
+            // Note: this calls also checks that the student is allowed to see the complaint
+            comparisonA = this.plagiarismService.checkStudentAccess(comparisonA, user.getLogin());
         }
         comparisonA.getSubmissionA().setPlagiarismComparison(null);
         comparisonA.getSubmissionB().setPlagiarismComparison(null);
+
+        // hide the chain to plagiarism result, exercise and course to avoid leaks and keep the response small
+        comparisonA.setPlagiarismResult(null);
         return ResponseEntity.ok(comparisonA);
     }
 

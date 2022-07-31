@@ -132,6 +132,13 @@ public class PlagiarismCaseResource {
         var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseId(user.getId(), exerciseId);
         if (plagiarismCaseOptional.isPresent()) {
             var plagiarismCase = plagiarismCaseOptional.get();
+            // only return the plagiarism case if the student was already notified
+            if (plagiarismCase.getPost() == null) {
+                // the student was not notified yet and should not yet see the case
+                // TODO: we should handle this better in the future, e.g. by storing a field in the plagiarism case whether the student was notified or not
+                return ResponseEntity.ok().build();
+            }
+            // the post itself does not need to be part of the response
             plagiarismCase.setPost(null);
             return ResponseEntity.ok(plagiarismCase);
         }
