@@ -15,10 +15,9 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
-import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.util.FileUtils;
 
-class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PlagiarismCheckForExercisesIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private Course course;
 
@@ -30,7 +29,6 @@ class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringIntegrat
 
         course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(submissionText, studentAmount);
         database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(submissionModel, studentAmount, course);
-
     }
 
     @AfterEach
@@ -64,11 +62,11 @@ class PlagiarismCheckForExcercisesIntegrationTest extends AbstractSpringIntegrat
         params.add("minimumScore", "0");
         params.add("minimumSize", "0");
 
-        var plagiarismResultResponse = request.get(path, HttpStatus.OK, PlagiarismResult.class, params);
+        PlagiarismResult<?> plagiarismResult = request.get(path, HttpStatus.OK, PlagiarismResult.class, params);
 
-        for (var comparison : plagiarismResultResponse.getComparisons()) {
-            var submissionA = ((PlagiarismComparison<TextSubmissionElement>) comparison).getSubmissionA();
-            var submissionB = ((PlagiarismComparison<TextSubmissionElement>) comparison).getSubmissionB();
+        for (PlagiarismComparison<?> comparison : plagiarismResult.getComparisons()) {
+            var submissionA = comparison.getSubmissionA();
+            var submissionB = comparison.getSubmissionB();
 
             assertThat(submissionA).as("should have a submission A").isNotNull();
             assertThat(submissionB).as("should have a submission B").isNotNull();
