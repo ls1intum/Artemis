@@ -66,7 +66,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     ngOnInit(): void {
         this.initializeForm();
 
-        this.translateService.onLangChange.subscribe(() => {
+        this.translateService.onLangChange?.subscribe(() => {
             this.setTranslationStrings();
         });
     }
