@@ -4,7 +4,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { User } from 'app/core/user/user.model';
 import { StudentWithTeam } from 'app/entities/team.model';
 import { Team } from 'app/entities/team.model';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { parse } from 'papaparse';
 
 const csvColumns = Object.freeze({
@@ -177,7 +177,7 @@ export class TeamsImportFromFileFormComponent {
             }
 
             const shortName = student.teamName.replace(/[^0-9a-z]/gi, '').toLowerCase();
-            if (!shortName.match(shortNamePattern)) {
+            if (!shortName.match(SHORT_NAME_PATTERN)) {
                 throw new Error(this.translate.instant('artemisApp.team.teamName.pattern', { entryNr, teamName: shortName }));
             }
 
