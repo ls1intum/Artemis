@@ -5,10 +5,6 @@
                 <span jhiTranslate="artemisApp.examManagement.students">Students</span>
                 <span class="text-muted">({{ exam.title }})</span>
             </h3>
-            <h5 *ngIf="isTestExam" class="d-flex badge bg-info">
-                <fa-icon class="ms-2 text-white" [icon]="faInfoCircle"></fa-icon>
-                <span class="ms-1" jhiTranslate="artemisApp.examManagement.examStudents.testExamSelfRegistration"></span>
-            </h5>
         </div>
         <div>
             <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span>:

@@ -2489,7 +2489,8 @@ public class DatabaseUtilService {
                     StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
-                    modelSubmissionService.save(submission, (ModelingExercise) exercise, "student" + j);
+                    var user = getUserByLogin("student" + j);
+                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
                     studentParticipationRepo.save(participation);
                 }
                 return course;
@@ -2607,7 +2608,8 @@ public class DatabaseUtilService {
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     StudentParticipation participation = createAndSaveParticipationForExercise(modelingExercise, "student" + j);
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-                    modelSubmissionService.save(submission, modelingExercise, "student" + j);
+                    var user = getUserByLogin("student" + j);
+                    modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
@@ -2706,7 +2708,8 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
-        submission = modelSubmissionService.save(submission, exercise, login);
+        var user = getUserByLogin(login);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
         result = resultRepo.save(result);
         result.setSubmission(submission);

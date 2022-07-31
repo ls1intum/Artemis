@@ -47,7 +47,6 @@ public class TextAssessmentQueueService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise, List<Language> languages) {
-
         if (!textExercise.isAutomaticAssessmentEnabled()) {
             throw new IllegalArgumentException("The TextExercise is not automatic assessable");
         }

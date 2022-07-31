@@ -37,7 +37,12 @@
         "skipMetadataEmit" : true,
         "fullTemplateTypeCheck": true,
         "strictTemplates": true,
-        "preserveWhitespaces": true
+        "preserveWhitespaces": true,
+        "extendedDiagnostics": {
+            "checks": {
+                "optionalChainNotNullable": "suppress"
+            }
+        }
     },
     "include": [
         "src/main/webapp/app"
