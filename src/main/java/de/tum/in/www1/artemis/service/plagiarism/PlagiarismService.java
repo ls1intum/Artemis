@@ -66,14 +66,20 @@ public class PlagiarismService {
         return submission;
     }
 
+    /**
+     * Checks whether the student with the given userlogin is involved in a plagiarism case which contains the given submissionId and the student is notified by the instructor.
+     *
+     * @param submissionId the id of a submissions that will be checked in plagiarism cases
+     * @param userLogin the user login of the student
+     * @return true if the student with userlogin owns one of the submissions in a PlagiarismComparison which contains the given submissionId and is notified by the instructor, otherwise false
+     */
     public boolean isUserNotifiedByInstructor(Long submissionId, String userLogin) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submissionId, submissionId);
 
         // disallow requests from users who are not notified about this case:
-        boolean isUserNotifiedByInstructor = false;
         if (comparisonOptional.isPresent()) {
             var comparisons = comparisonOptional.get();
-            isUserNotifiedByInstructor = comparisons.stream()
+            return comparisons.stream()
                     .anyMatch(comparison -> (comparison.getSubmissionA().getPlagiarismCase() != null
                             && (comparison.getSubmissionA().getPlagiarismCase().getPost() != null || comparison.getSubmissionA().getPlagiarismCase().getVerdict() != null)
                             && (comparison.getSubmissionA().getStudentLogin().equals(userLogin)))
@@ -81,7 +87,7 @@ public class PlagiarismService {
                                     && (comparison.getSubmissionB().getPlagiarismCase().getPost() != null || comparison.getSubmissionB().getPlagiarismCase().getVerdict() != null)
                                     && (comparison.getSubmissionB().getStudentLogin().equals(userLogin))));
         }
-        return isUserNotifiedByInstructor;
+        return false;
     }
 
     /**
