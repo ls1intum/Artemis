@@ -23,8 +23,7 @@
             <!-- new post button -->
             <div class="col-2 mt-2" *ngIf="(!posts || posts.length === 0) && createdPost">
                 <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                    <fa-icon [icon]="faPlus"></fa-icon>
-                    <span class="d-none d-md-inline">{{ 'artemisApp.metis.addNewPost' | artemisTranslate }}</span>
+                    <span class="d-none d-md-inline">{{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}</span>
                 </button>
                 <jhi-post-create-edit-modal #createEditModal [posting]="createdPost"></jhi-post-create-edit-modal>
             </div>

@@ -80,7 +80,8 @@
                 "notNotified": "Noch nicht benachrichtigt",
                 "respondedByStudent": "Studierende:r hat eine Aussage gemacht",
                 "notResponded": "Noch nicht beantwortet",
-                "noCases": "Keine Plagiatsfälle in diesem Kurs"
+                "noCases": "Keine Plagiatsfälle in diesem Kurs",
+                "notifyStudent": "Studierende:r benachrichtigen"
             },
             "cases": {
                 "pageTitle": "Plagiatsfälle",

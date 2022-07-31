@@ -80,7 +80,8 @@
                 "notNotified": "Not yet notified",
                 "respondedByStudent": "Student has given a statement",
                 "notResponded": "Not yet responded",
-                "noCases": "No plagiarism cases in this course"
+                "noCases": "No plagiarism cases in this course",
+                "notifyStudent": "Notify student"
             },
             "cases": {
                 "pageTitle": "Plagiarism Cases",

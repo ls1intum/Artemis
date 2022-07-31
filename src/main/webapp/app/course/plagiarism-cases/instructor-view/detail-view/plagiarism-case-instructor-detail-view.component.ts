@@ -9,7 +9,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -28,9 +27,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly pageType = PageType.PLAGIARISM_CASE;
     private postsSubscription: Subscription;
     posts: Post[];
-
-    // Icons
-    faPlus = faPlus;
 
     constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 
