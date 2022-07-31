@@ -115,11 +115,11 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Retrieves the plagiarismCase related to an exercise for the student.
+     * Retrieves the plagiarismCase related to an exercise for the student if the plagiarism comparison was confirmed and the student was notified
      *
      * @param courseId the id of the course
      * @param exerciseId the id of the exercise
-     * @return the plagiarism case for the exercise and student
+     * @return the plagiarism case id for the exercise and student if and only if the comparison was confirmed and the student was notified
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
     @PreAuthorize("hasRole('USER')")
@@ -133,13 +133,15 @@ public class PlagiarismCaseResource {
         if (plagiarismCaseOptional.isPresent()) {
             // the student was notified if the plagiarism case is available (due to the nature of the query above)
             var plagiarismCase = plagiarismCaseOptional.get();
-            // Note: we only return the ID to tell the client there is a plagiarism case and to support navigating to the detail page
-            // all other information might be irrelevant or sensitive and could lead to longer loading times
-            return ResponseEntity.ok(plagiarismCase.getId());
+            // the following line is already checked in the SQL statement, but we want to ensure it 100%
+            if (plagiarismCase.getPost() != null) {
+                // Note: we only return the ID to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the detail page
+                // all other information might be irrelevant or sensitive and could lead to longer loading times
+                return ResponseEntity.ok(plagiarismCase.getId());
+            }
         }
-        else {
-            return ResponseEntity.ok().build();
-        }
+        // in all other cases the response is empty
+        return ResponseEntity.ok().build();
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
