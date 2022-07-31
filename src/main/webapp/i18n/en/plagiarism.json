@@ -65,7 +65,8 @@
                     "pointDeduction": "Point deduction",
                     "confirmationTitle": "Confirm plagiarism verdict",
                     "confirmationText": "Are you sure you want to set this verdict? This action cannot be undone.",
-                    "tooltip": "Set this verdict?"
+                    "tooltip": "Set this verdict?",
+                    "studentNotNotified": "You must notify the student before determining the verdict."
                 },
                 "exercise": "Affected exercise",
                 "comparisons": "Comparisons",

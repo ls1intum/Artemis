@@ -103,6 +103,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * saves the verdict of the plagiarism case as PLAGIARISM
      */
     saveVerdict(): void {
+        if (!this.isStudentNotified()) {
+            return;
+        }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
@@ -110,6 +113,10 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.plagiarismCase.verdictDate = res.body!.verdictDate;
             },
         });
+    }
+
+    isStudentNotified() {
+        return this.posts?.length > 0;
     }
 
     /**

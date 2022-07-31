@@ -32,6 +32,9 @@
         <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
         <div class="row justify-content-between">
             <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
+            <div class="alert alert-warning" *ngIf="!isStudentNotified()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified">
+                Student must be notified before setting a verdict.
+            </div>
             <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
                     <div class="input-group w-auto">
@@ -47,7 +50,10 @@
                         <span class="input-group-text">%</span>
                     </div>
                 </div>
-                <div class="row justify-content-center mt-2">
+                <div
+                    class="row justify-content-center mt-2"
+                    [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
+                >
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"
                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
@@ -55,7 +61,7 @@
                         tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
                         class="col-auto"
                         [translateText]="true"
-                        [disabled]="!!plagiarismCase.verdict || verdictPointDeduction < 0 || verdictPointDeduction > 100"
+                        [disabled]="!!plagiarismCase.verdict || verdictPointDeduction < 0 || verdictPointDeduction > 100 || !isStudentNotified()"
                         (onConfirm)="savePointDeductionVerdict()"
                     ></jhi-confirm-button>
                 </div>
@@ -64,7 +70,10 @@
                 <div class="row justify-content-center">
                     <textarea class="col" [(ngModel)]="verdictMessage" [disabled]="!!plagiarismCase.verdict" [readonly]="!!plagiarismCase.verdict"></textarea>
                 </div>
-                <div class="row justify-content-center mt-2">
+                <div
+                    class="row justify-content-center mt-2"
+                    [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
+                >
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.warning"
                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
@@ -72,19 +81,22 @@
                         tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
                         class="col-auto"
                         [translateText]="true"
-                        [disabled]="!!plagiarismCase.verdict"
+                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                         (onConfirm)="saveWarningVerdict()"
                     ></jhi-confirm-button>
                 </div>
             </div>
-            <div class="col-3 d-flex flex-column">
+            <div
+                class="col-3 d-flex flex-column"
+                [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
+            >
                 <jhi-confirm-button
                     title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
                     confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
                     confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
                     tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
                     [translateText]="true"
-                    [disabled]="!!plagiarismCase.verdict"
+                    [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                     (onConfirm)="saveVerdict()"
                 ></jhi-confirm-button>
             </div>
