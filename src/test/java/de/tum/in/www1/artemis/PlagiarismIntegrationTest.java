@@ -47,15 +47,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison1;
 
-    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionA1;
-
-    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionB1;
-
     private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison2;
-
-    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionA2;
-
-    private static PlagiarismSubmission<TextSubmissionElement> plagiarismSubmissionB2;
 
     @BeforeEach
     void initTestCase() {
@@ -67,9 +59,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
-        plagiarismSubmissionA1 = new PlagiarismSubmission<>();
+        var plagiarismSubmissionA1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA1.setStudentLogin("student1");
-        plagiarismSubmissionB1 = new PlagiarismSubmission<>();
+        var plagiarismSubmissionB1 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB1.setStudentLogin("student2");
         plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
         plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
@@ -78,9 +70,9 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismComparison2 = new PlagiarismComparison<>();
         plagiarismComparison2.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison2.setStatus(PlagiarismStatus.NONE);
-        plagiarismSubmissionA2 = new PlagiarismSubmission<>();
+        var plagiarismSubmissionA2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionA2.setStudentLogin("student2");
-        plagiarismSubmissionB2 = new PlagiarismSubmission<>();
+        var plagiarismSubmissionB2 = new PlagiarismSubmission<TextSubmissionElement>();
         plagiarismSubmissionB2.setStudentLogin("student3");
         plagiarismComparison2.setSubmissionA(plagiarismSubmissionA2);
         plagiarismComparison2.setSubmissionB(plagiarismSubmissionB2);
