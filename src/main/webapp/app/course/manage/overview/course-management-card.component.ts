@@ -19,6 +19,7 @@ import {
     faListAlt,
     faTable,
     faUserCheck,
+    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
@@ -69,6 +70,7 @@ export class CourseManagementCardComponent implements OnChanges {
     faGraduationCap = faGraduationCap;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
+    faPersonChalkboard = faPersonChalkboard;
 
     ngOnChanges() {
         // Only sort one time once loaded

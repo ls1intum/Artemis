@@ -22,6 +22,11 @@
                 <fa-icon [icon]="faFlag"></fa-icon>
                 <span jhiTranslate="artemisApp.learningGoal.learningGoalButton">Learning Goals</span>
             </a>
+            <!-- ToDo: Implement feature toggle for tutor group management similar to posts enabled-->
+            <a *ngIf="course.isAtLeastInstructor" [routerLink]="['/course-management', course.id, 'tutorial-groups-management']" class="tab-item btn btn-primary btn-md ms-1">
+                <fa-icon [icon]="faPersonChalkboard"></fa-icon>
+                <span jhiTranslate="artemisApp.tutorialGroups.tutorialGroupsButton"></span>
+            </a>
             <a [routerLink]="['/course-management', course.id, 'assessment-dashboard']" class="tab-item btn btn-info btn-md ms-1">
                 <fa-icon [icon]="faUserCheck"></fa-icon>
                 <span jhiTranslate="entity.action.assessmentDashboard">Assessment Dashboard</span>

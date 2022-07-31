@@ -1,0 +1,10 @@
+{
+    "artemisApp": {
+        "tutorialGroups": {
+            "tutorialGroupsButton": "Tutorial Groups",
+            "manageTutorialGroups": {
+                "title": "Tutorial Groups Management"
+            }
+        }
+    }
+}

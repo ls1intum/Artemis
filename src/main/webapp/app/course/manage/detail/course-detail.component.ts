@@ -25,6 +25,7 @@ import {
     faTimes,
     faUserCheck,
     faWrench,
+    faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
 
 export enum DoughnutChartType {
@@ -72,6 +73,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faGraduationCap = faGraduationCap;
     faHeartBroken = faHeartBroken;
+    faPersonChalkboard = faPersonChalkboard;
 
     constructor(
         private eventManager: EventManager,

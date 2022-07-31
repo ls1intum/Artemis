@@ -451,6 +451,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             // No breadcrumbs for those segments
             case 'goal-management':
+            case 'tutorial-groups-management':
             case 'unit-management':
             case 'exercise-groups':
             case 'student-exams':

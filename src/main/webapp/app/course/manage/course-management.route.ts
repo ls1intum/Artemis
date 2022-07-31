@@ -16,6 +16,7 @@ import { GradingSystemComponent } from 'app/grading-system/grading-system.compon
 import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
+import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 
 export const courseManagementState: Routes = [
     {
@@ -159,6 +160,15 @@ export const courseManagementState: Routes = [
                         canActivate: [UserRouteAccessService],
                     },
                 ],
+            },
+            {
+                path: 'tutorial-groups-management',
+                component: TutorialGroupsManagementComponent,
+                data: {
+                    authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                    pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                },
+                canActivate: [UserRouteAccessService],
             },
         ],
     },
