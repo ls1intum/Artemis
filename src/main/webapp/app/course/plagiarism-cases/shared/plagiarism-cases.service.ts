@@ -9,7 +9,7 @@ import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/Plagiar
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
-export type StatementEntityResponseType = HttpResponse<string>;
+export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
@@ -43,7 +43,7 @@ export class PlagiarismCasesService {
      * @param { number } plagiarismCaseId id of the plagiarismCase
      * @param plagiarismVerdict plagiarism case verdict to save including the verdict itself and optionally the message or the point deduction
      */
-    public savePlagiarismCaseVerdict(
+    public saveVerdict(
         courseId: number,
         plagiarismCaseId: number,
         plagiarismVerdict: { verdict: PlagiarismVerdict; verdictMessage?: string; verdictPointDeduction?: number },
@@ -75,19 +75,11 @@ export class PlagiarismCasesService {
      * Get the plagiarism comparison with the given id
      * @param { number } courseId
      * @param { number } plagiarismComparisonId
-     * @param { string } studentLogin
      */
-    public getPlagiarismComparisonForSplitView(
-        courseId: number,
-        plagiarismComparisonId: number,
-        studentLogin = '',
-    ): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>>> {
-        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(
-            `${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view` + (studentLogin ? `?studentLogin=${studentLogin}` : ''),
-            {
-                observe: 'response',
-            },
-        );
+    public getPlagiarismComparisonForSplitView(courseId: number, plagiarismComparisonId: number): Observable<HttpResponse<Comparison>> {
+        return this.http.get<Comparison>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view`, {
+            observe: 'response',
+        });
     }
 
     /**

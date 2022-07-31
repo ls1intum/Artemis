@@ -65,7 +65,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     savePointDeductionVerdict(): void {
         this.plagiarismCasesService
-            .savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
                 verdictPointDeduction: this.verdictPointDeduction,
             })
@@ -85,7 +85,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveWarningVerdict(): void {
         this.plagiarismCasesService
-            .savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
                 verdictMessage: this.verdictMessage,
             })
@@ -103,7 +103,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * saves the verdict of the plagiarism case as PLAGIARISM
      */
     saveVerdict(): void {
-        this.plagiarismCasesService.savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
                 this.plagiarismCase.verdictBy = res.body!.verdictBy;

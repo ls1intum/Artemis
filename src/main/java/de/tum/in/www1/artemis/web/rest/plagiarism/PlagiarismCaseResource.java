@@ -13,6 +13,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
@@ -126,9 +127,8 @@ public class PlagiarismCaseResource {
         log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
-        }
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
         var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseId(user.getId(), exerciseId);
         if (plagiarismCaseOptional.isPresent()) {
             var plagiarismCase = plagiarismCaseOptional.get();
@@ -174,9 +174,8 @@ public class PlagiarismCaseResource {
         log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
-        }
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
         var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");

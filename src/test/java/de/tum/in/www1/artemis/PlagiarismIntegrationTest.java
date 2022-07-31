@@ -144,10 +144,25 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    void testGetPlagiarismComparisonsForSplitView_student_forbidden() throws Exception {
+        request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.FORBIDDEN,
+                plagiarismComparison1.getClass());
+
+    }
+
+    @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testGetPlagiarismComparisonsForSplitView_editor() throws Exception {
-        request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view", HttpStatus.OK,
-                plagiarismComparison1.getClass());
+        PlagiarismComparison<?> comparison = request.get("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/for-split-view",
+                HttpStatus.OK, plagiarismComparison1.getClass());
+        assertThat(comparison).isEqualTo(plagiarismComparison1);
+        assertThat(comparison.getPlagiarismResult()).isNull();
+        assertThat(comparison.getSubmissionA()).isEqualTo(plagiarismComparison1.getSubmissionA());
+        assertThat(comparison.getSubmissionB()).isEqualTo(plagiarismComparison1.getSubmissionB());
+        assertThat(comparison.getSimilarity()).isEqualTo(plagiarismComparison1.getSimilarity());
+        assertThat(comparison.getStatus()).isEqualTo(plagiarismComparison1.getStatus());
+        assertThat(comparison.getMatches()).isEqualTo(plagiarismComparison1.getMatches());
     }
 
     @Test

@@ -97,7 +97,7 @@ describe('Plagiarism Cases Service', () => {
             ...plagiarismCase1,
             verdict: PlagiarismVerdict.PLAGIARISM,
         };
-        service.savePlagiarismCaseVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
+        service.saveVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
