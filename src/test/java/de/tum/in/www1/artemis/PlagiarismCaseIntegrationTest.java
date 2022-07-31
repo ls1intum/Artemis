@@ -211,8 +211,8 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         plagiarismCase1.setPost(post);
         plagiarismCaseRepository.save(plagiarismCase1);
 
-        var plagiarismCase = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-case", HttpStatus.OK, PlagiarismCase.class);
-        assertThat(plagiarismCase.getId()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
+        var plagiarismCaseId = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-case", HttpStatus.OK, Long.class);
+        assertThat(plagiarismCaseId).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
     }
 
     @Test

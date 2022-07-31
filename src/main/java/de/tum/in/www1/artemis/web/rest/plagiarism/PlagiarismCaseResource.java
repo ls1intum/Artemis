@@ -123,24 +123,19 @@ public class PlagiarismCaseResource {
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismCase> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
+    public ResponseEntity<Long> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseId(user.getId(), exerciseId);
+        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPost(user.getId(), exerciseId);
         if (plagiarismCaseOptional.isPresent()) {
+            // the student was notified if the plagiarism case is available (due to the nature of the query above)
             var plagiarismCase = plagiarismCaseOptional.get();
-            // only return the plagiarism case if the student was already notified
-            if (plagiarismCase.getPost() == null) {
-                // the student was not notified yet and should not yet see the case
-                // TODO: we should handle this better in the future, e.g. by storing a field in the plagiarism case whether the student was notified or not
-                return ResponseEntity.ok().build();
-            }
-            // the post itself does not need to be part of the response
-            plagiarismCase.setPost(null);
-            return ResponseEntity.ok(plagiarismCase);
+            // Note: we only return the ID to tell the client there is a plagiarism case and to support navigating to the detail page
+            // all other information might be irrelevant or sensitive and could lead to longer loading times
+            return ResponseEntity.ok(plagiarismCase.getId());
         }
         else {
             return ResponseEntity.ok().build();
@@ -180,6 +175,10 @@ public class PlagiarismCaseResource {
         if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
+
+        // hide potentially sensitive data
+        plagiarismCase.getExercise().filterSensitiveInformation();
+
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 }

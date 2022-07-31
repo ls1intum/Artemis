@@ -54,12 +54,12 @@ export class PlagiarismCasesService {
     /* Student */
 
     /**
-     * Get all plagiarism cases for the student of the course with the given id
+     * Get the plagiarism case id for the student for the given course and exercise
      * @param { number } courseId id of the course
      * @param { number } exerciseId id of the exercise
      */
-    public getPlagiarismCaseForStudent(courseId: number, exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<PlagiarismCase>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
+    public getPlagiarismCaseIdForStudent(courseId: number, exerciseId: number): Observable<HttpResponse<number>> {
+        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
     }
 
     /**

@@ -92,7 +92,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
-    plagiarismCase?: PlagiarismCase;
+    plagiarismCaseId?: number;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
 
@@ -192,8 +192,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
         });
-        this.plagiarismCaseService.getPlagiarismCaseForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCase>) => {
-            this.plagiarismCase = res.body!;
+        this.plagiarismCaseService.getPlagiarismCaseIdForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<number>) => {
+            this.plagiarismCaseId = res.body ?? undefined;
         });
     }
 
