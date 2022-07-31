@@ -92,11 +92,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         }
         // Error case 3: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
-        if (!hasPermissions && !plagiarismService.isUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
+        if (!hasPermissions && !plagiarismService.wasUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
+            // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
         // Error case 4: The user's participation repository is locked.
         if (repositoryAction == RepositoryActionType.WRITE && (programmingParticipation.isLocked() || lockRepositoryPolicyEnforced)) {
+            // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
 
@@ -109,6 +111,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 isOwner = authCheckService.isOwnerOfParticipation((StudentParticipation) participation);
             }
             if (isStudent && programmingParticipation.isLocked()) {
+                // TODO: change to AccessForbiddenException
                 throw new IllegalAccessException();
             }
             // A tutor/instructor who is owner of the exercise should always be able to reset the repository
@@ -116,12 +119,14 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
                 // Check if a tutor is allowed to reset during the assessment
                 // Check for a regular course exercise
                 if (!programmingExercise.isExamExercise() && !programmingParticipation.isLocked()) {
+                    // TODO: change to AccessForbiddenException
                     throw new IllegalAccessException();
                 }
                 // Check for an exam exercise, as it might not be locked but a student might still be allowed to submit
                 var optStudent = ((StudentParticipation) participation).getStudent();
                 if (optStudent.isPresent() && programmingExercise.isExamExercise()
                         && examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, optStudent.get(), false)) {
+                    // TODO: change to AccessForbiddenException
                     throw new IllegalAccessException();
                 }
             }
@@ -130,6 +135,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         // This must be a student participation as hasPermissions would have been false and an error already thrown
         boolean isStudentParticipation = participation instanceof ProgrammingExerciseStudentParticipation;
         if (isStudentParticipation && isStudent && !examSubmissionService.isAllowedToSubmitDuringExam(programmingExercise, user, false)) {
+            // TODO: change to AccessForbiddenException
             throw new IllegalAccessException();
         }
         var repositoryUrl = programmingParticipation.getVcsRepositoryUrl();
