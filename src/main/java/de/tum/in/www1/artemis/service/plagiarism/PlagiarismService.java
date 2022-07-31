@@ -23,11 +23,10 @@ public class PlagiarismService {
      * Anonymize the submission for the student view.
      * A student should not see sensitive information but be able to retrieve both answers from both students for the comparison
      *
-     * @param submission    the submission to anonymize.
-     * @param userLogin     the user login of the student asking to see his plagiarism comparison.
-     * @return the anonymized submission for the given student
+     * @param submission the submission to anonymize.
+     * @param userLogin  the user login of the student asking to see his plagiarism comparison.
      */
-    public Submission anonymizeSubmissionForStudent(Submission submission, String userLogin) {
+    public void anonymizeSubmissionForStudent(Submission submission, String userLogin) {
         var comparisonOptional = plagiarismComparisonRepository.findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(submission.getId(), submission.getId());
 
         // disallow requests from users who are not notified about this case:
@@ -48,7 +47,6 @@ public class PlagiarismService {
         submission.setParticipation(null);
         submission.setResults(null);
         submission.setSubmissionDate(null);
-        return submission;
     }
 
     /**
