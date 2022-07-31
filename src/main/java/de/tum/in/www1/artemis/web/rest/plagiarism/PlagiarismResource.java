@@ -118,8 +118,12 @@ public class PlagiarismResource {
             // Note: this calls also checks that the student is allowed to see the complaint, and throws otherwise
             checkStudentAccess(comparisonA, user.getLogin());
         }
+
+        // hide unnecessary details
         comparisonA.getSubmissionA().setPlagiarismComparison(null);
+        comparisonA.getSubmissionA().setPlagiarismCase(null);
         comparisonA.getSubmissionB().setPlagiarismComparison(null);
+        comparisonA.getSubmissionB().setPlagiarismCase(null);
 
         // hide the chain to plagiarism result, exercise and course to avoid leaks and keep the response small
         comparisonA.setPlagiarismResult(null);

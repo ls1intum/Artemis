@@ -163,6 +163,10 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(comparison.getSimilarity()).isEqualTo(plagiarismComparison1.getSimilarity());
         assertThat(comparison.getStatus()).isEqualTo(plagiarismComparison1.getStatus());
         assertThat(comparison.getMatches()).isEqualTo(plagiarismComparison1.getMatches());
+
+        // Important: make sure those additional information is hidden
+        assertThat(comparison.getSubmissionA().getPlagiarismCase()).isNull();
+        assertThat(comparison.getSubmissionB().getPlagiarismCase()).isNull();
     }
 
     @Test
