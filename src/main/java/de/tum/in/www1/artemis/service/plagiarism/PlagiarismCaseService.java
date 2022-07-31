@@ -141,7 +141,7 @@ public class PlagiarismCaseService {
         plagiarismComparison.getSubmissionB().setPlagiarismCase(null);
         // we do not save plagiarism comparison or plagiarism submission directly because due to issues with Cascade_All, it will automatically delete matches and re-add them
         // we actually use a custom modifying query to avoid all issues with Cascade ALL
-        // plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionA().getId(), null);
+        plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionA().getId(), null);
         plagiarismSubmissionRepository.updatePlagiarismCase(plagiarismComparison.getSubmissionB().getId(), null);
 
         // delete plagiarism case of Student A if it doesn't contain any submissions now

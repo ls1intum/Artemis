@@ -63,6 +63,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         course = database.addCourseWithOneFinishedTextExercise();
         textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         textPlagiarismResult = database.createTextPlagiarismResultForExercise(textExercise);
+
         plagiarismComparison1 = new PlagiarismComparison<>();
         plagiarismComparison1.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison1.setStatus(PlagiarismStatus.CONFIRMED);
@@ -73,6 +74,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismComparison1.setSubmissionA(plagiarismSubmissionA1);
         plagiarismComparison1.setSubmissionB(plagiarismSubmissionB1);
         plagiarismComparison1 = plagiarismComparisonRepository.save(plagiarismComparison1);
+
         plagiarismComparison2 = new PlagiarismComparison<>();
         plagiarismComparison2.setPlagiarismResult(textPlagiarismResult);
         plagiarismComparison2.setStatus(PlagiarismStatus.NONE);
@@ -130,8 +132,15 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", plagiarismComparisonStatusDTODenied, HttpStatus.OK);
         var updatedComparisonDenied = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(plagiarismComparison1.getId());
         assertThat(updatedComparisonDenied.getStatus()).as("should update plagiarism comparison status").isEqualTo(PlagiarismStatus.DENIED);
-        Optional<PlagiarismCase> plagiarismCaseOptionalEmpty = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1", textExercise.getId());
-        assertThat(plagiarismCaseOptionalEmpty.isEmpty()).as("should remove plagiarism case").isTrue();
+
+        Optional<PlagiarismCase> plagiarismCaseOptionalEmpty1 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1", textExercise.getId());
+        assertThat(plagiarismCaseOptionalEmpty1.isEmpty()).as("should remove plagiarism case for student 1").isTrue();
+
+        Optional<PlagiarismCase> plagiarismCaseOptionalEmpty2 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student2", textExercise.getId());
+        assertThat(plagiarismCaseOptionalEmpty2.isPresent()).as("should NOT remove plagiarism case for student2").isTrue();
+
+        Optional<PlagiarismCase> plagiarismCaseOptionalEmpty3 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student3", textExercise.getId());
+        assertThat(plagiarismCaseOptionalEmpty3.isPresent()).as("should NOT remove plagiarism case for student 3").isTrue();
     }
 
     @Test
