@@ -31,8 +31,8 @@
         <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
         <div class="row justify-content-between">
             <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
-            <div class="alert alert-warning" *ngIf="!isStudentNotified()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.studentNotNotified">
-                Student must be notified before setting a verdict.
+            <div class="alert alert-warning" *ngIf="!isStudentNotified()" jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified">
+                You must notify the student before determining the verdict.
             </div>
             <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
