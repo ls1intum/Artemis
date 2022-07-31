@@ -1,10 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.athene;
 
 import static de.tum.in.www1.artemis.config.Constants.ATHENE_RESULT_API_PATH;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.Collectors.toMap;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -91,7 +90,7 @@ public class AtheneService {
                 submission.setText(textSubmission.getText());
                 submission.setId(textSubmission.getId());
                 return submission;
-            }).collect(toList());
+            }).toList();
         }
     }
 
@@ -190,7 +189,7 @@ public class AtheneService {
         List<TextCluster> textClusters = parseTextClusters(clusters);
 
         // Save textBlocks in Database
-        final Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(toMap(TextBlock::getId, block -> block));
+        final Map<String, TextBlock> textBlockMap = textBlockRepository.saveAll(textBlocks).stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
 
         // Save clusters in Database
         processClusters(textClusters, textBlockMap, exerciseId);
@@ -211,7 +210,7 @@ public class AtheneService {
     public List<TextBlock> parseTextBlocks(List<Segment> segments, Long exerciseId) {
         // Create submissionsMap for lookup
         List<TextSubmission> submissions = textSubmissionRepository.getTextSubmissionsWithTextBlocksByExerciseId(exerciseId);
-        Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
+        Map<Long, TextSubmission> submissionsMap = submissions.stream().collect(Collectors.toMap(/* Key: */ Submission::getId, /* Value: */ submission -> submission));
 
         // Get knowledge of exercise
         TextAssessmentKnowledge textAssessmentKnowledge = textExerciseRepository.findById(exerciseId).get().getKnowledge();
@@ -253,7 +252,7 @@ public class AtheneService {
         List<TextCluster> textClusters = new ArrayList<>();
         for (Cluster cluster : clusters) {
             TextCluster textCluster = new TextCluster();
-            List<TextBlock> blocks = cluster.getSegmentsList().stream().map(s -> new TextBlock().id(s.getId())).collect(toList());
+            List<TextBlock> blocks = cluster.getSegmentsList().stream().map(s -> new TextBlock().id(s.getId())).collect(Collectors.toCollection(ArrayList::new));
             textCluster.setBlocks(blocks);
 
             double[][] distanceMatrix = new double[blocks.size()][blocks.size()];
@@ -289,7 +288,7 @@ public class AtheneService {
         for (TextCluster cluster : savedClusters) {
             cluster.setExercise(textExercise);
             List<TextBlock> updatedBlockReferences = cluster.getBlocks().parallelStream().map(block -> textBlockMap.get(block.getId())).peek(block -> block.setCluster(cluster))
-                    .collect(toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
             textAssessmentQueueService.setAddedDistances(updatedBlockReferences, cluster);
             cluster.setBlocks(updatedBlockReferences);
             textBlockRepository.saveAll(updatedBlockReferences);

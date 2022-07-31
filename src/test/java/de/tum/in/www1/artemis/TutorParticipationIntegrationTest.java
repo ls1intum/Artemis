@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.TutorParticipationService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -63,7 +63,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     private String path;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(0, 1, 0, 0);
         Course course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {
@@ -85,14 +85,14 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
+    void testTutorParticipateInModelingExerciseWithExampleSubmission(boolean usedForTutorial) throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(usedForTutorial);
         var tutorParticipation = request.postWithResponseBody(path, exampleSubmission, TutorParticipation.class, HttpStatus.OK);
         assertThat(tutorParticipation.getTrainedExampleSubmissions()).as("Tutor participation has example submission").hasSize(1);
@@ -107,7 +107,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
+    void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
@@ -127,7 +127,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
+    void testTutorParticipateInTextExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareTextExampleSubmission(true);
 
         // Tutor reviewed the instructions.
@@ -148,7 +148,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
+    void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.
@@ -168,7 +168,7 @@ public class TutorParticipationIntegrationTest extends AbstractSpringIntegration
      */
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
+    void testTutorParticipateInModelingExerciseWithExampleSubmissionAddingUnnecessaryUnreferencedFeedbackBadRequest() throws Exception {
         ExampleSubmission exampleSubmission = prepareModelingExampleSubmission(true);
 
         // Tutor reviewed the instructions.

@@ -119,7 +119,7 @@ describe('AssessmentHeaderComponent', () => {
         fixture.detectChanges();
 
         const alertComponent = fixture.debugElement.query(By.css('ngb-alert'));
-        expect(alertComponent).not.toBe(undefined);
+        expect(alertComponent).toBeDefined();
         expect(alertComponent.nativeElement.innerHTML).toContain('Assessment Due Date is over, the assessment will be published immediately after submitting');
     });
 

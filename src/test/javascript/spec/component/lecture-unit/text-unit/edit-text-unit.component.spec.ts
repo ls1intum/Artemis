@@ -97,7 +97,7 @@ describe('EditTextUnitComponent', () => {
         const textUnitFormStubComponent: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
 
         editTextUnitComponentFixture.detectChanges();
-        editTextUnitComponentFixture.whenStable().then(() => {
+        return editTextUnitComponentFixture.whenStable().then(() => {
             expect(findByIdStub).toHaveBeenCalledOnce();
             expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
             expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
@@ -147,7 +147,7 @@ describe('EditTextUnitComponent', () => {
         const textUnitForm: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
         textUnitForm.formSubmitted.emit(formDate);
 
-        editTextUnitComponentFixture.whenStable().then(() => {
+        return editTextUnitComponentFixture.whenStable().then(() => {
             expect(findByIdStub).toHaveBeenCalledOnce();
             expect(updatedStub).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();

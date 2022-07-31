@@ -21,7 +21,7 @@ describe('ExerciseUtils', () => {
         const individualDueDate = dayjs().add(1, 'hour');
         const participation = participationWithDueDate(individualDueDate);
 
-        expect(getExerciseDueDate(exercise, participation)).toBe(undefined);
+        expect(getExerciseDueDate(exercise, participation)).toBeUndefined();
     });
 
     it('should return the exercise due date if no individual due date exists', () => {

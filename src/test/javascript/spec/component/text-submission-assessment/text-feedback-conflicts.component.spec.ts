@@ -185,7 +185,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     it('should use jhi-text-feedback-conflicts-header', () => {
         const headerComponent = fixture.debugElement.query(By.directive(TextFeedbackConflictsHeaderComponent));
-        expect(headerComponent).not.toBe(null);
+        expect(headerComponent).not.toBeNull();
     });
 
     it('should set conflicting submission correctly', () => {
@@ -201,7 +201,7 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
         const textAssessmentAreaComponent = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        expect(textAssessmentAreaComponent).not.toBe(null);
+        expect(textAssessmentAreaComponent).not.toBeNull();
     });
 
     it('should solve conflict by overriding left submission', () => {
@@ -249,7 +249,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).not.toBe(undefined);
+        expect(component.selectedRightFeedbackId).toBeDefined();
         expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.latestResult!.feedbacks![0].id);
     });
 
@@ -267,7 +267,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBe(undefined);
+        expect(component.selectedRightFeedbackId).toBeUndefined();
     });
 
     it('should not be able to select conflicting feedback for left submission', () => {
@@ -284,7 +284,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBe(undefined);
+        expect(component.selectedRightFeedbackId).toBeUndefined();
     });
 
     it('should discard conflict', () => {
@@ -339,7 +339,7 @@ describe('TextFeedbackConflictsComponent', () => {
         const clickSpy = jest.spyOn(component, 'didClickedButtonNoConflict');
         fixture.detectChanges();
         const button = fixture.debugElement.query(By.css('button'));
-        expect(button).not.toBe(null);
+        expect(button).not.toBeNull();
         button.triggerEventHandler('click', null);
 
         expect(clickSpy).toHaveBeenCalledOnce();

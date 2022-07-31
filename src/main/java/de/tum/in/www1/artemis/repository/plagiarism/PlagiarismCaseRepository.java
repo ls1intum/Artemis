@@ -31,8 +31,6 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             LEFT JOIN FETCH plagiarismCase.post
             LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
             LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
-            LEFT JOIN FETCH plagiarismComparison.submissionA submissionA
-            LEFT JOIN FETCH plagiarismComparison.submissionB submissionB
             WHERE plagiarismCase.exercise.course.id = :courseId
             """)
     List<PlagiarismCase> findByCourseIdWithPlagiarismSubmissionsAndComparison(@Param("courseId") Long courseId);

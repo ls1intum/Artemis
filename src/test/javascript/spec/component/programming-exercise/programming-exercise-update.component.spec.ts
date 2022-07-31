@@ -50,6 +50,7 @@ import { LockRepositoryPolicy, SubmissionPenaltyPolicy } from 'app/entities/subm
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import '@angular/localize/init';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
+import { By } from '@angular/platform-browser';
 
 describe('ProgrammingExercise Management Update Component', () => {
     const courseId = 1;
@@ -142,7 +143,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             // GIVEN
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 2 } })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
             // WHEN
@@ -159,7 +160,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             const entity = new ProgrammingExercise(undefined, undefined);
             entity.releaseDate = dayjs(); // We will get a warning if we do not set a release date
             entity.title = 'My Exercise   ';
-            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: entity })));
+            jest.spyOn(programmingExerciseService, 'automaticSetup').mockReturnValue(of(new HttpResponse({ body: { ...entity, id: 1 } })));
             comp.programmingExercise = entity;
             comp.programmingExercise.course = course;
 
@@ -302,9 +303,9 @@ describe('ProgrammingExercise Management Update Component', () => {
             tick();
             scaCheckbox = fixture.nativeElement.querySelector('#field_staticCodeAnalysisEnabled');
 
-            expect(scaCheckbox).toBe(null);
+            expect(scaCheckbox).toBeNull();
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             expect(comp.programmingExercise.programmingLanguage).toBe(ProgrammingLanguage.HASKELL);
         }));
 
@@ -358,7 +359,7 @@ describe('ProgrammingExercise Management Update Component', () => {
             expect(comp.selectedProgrammingLanguage).toBe(ProgrammingLanguage.C);
             expect(comp.selectedProjectType).toBe(ProjectType.FACT);
             expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBeFalse();
-            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
+            expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
         }));
     });
 
@@ -416,7 +417,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 // SCA penalty field disappears or appears after the sca checkbox click
                 maxPenaltyInput = fixture.nativeElement.querySelector('#field_maxPenalty');
                 if (scaActivatedOriginal) {
-                    expect(maxPenaltyInput).toBe(null);
+                    expect(maxPenaltyInput).toBeNull();
                 } else {
                     maxPenaltyInput.value = newMaxPenalty;
                     maxPenaltyInput.dispatchEvent(new Event('input'));
@@ -439,7 +440,7 @@ describe('ProgrammingExercise Management Update Component', () => {
 
                 // SCA should revert to the state of the original exercise, maxPenalty will revert to undefined
                 expect(comp.programmingExercise.staticCodeAnalysisEnabled).toBe(comp.originalStaticCodeAnalysisEnabled);
-                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBe(undefined);
+                expect(comp.programmingExercise.maxStaticCodeAnalysisPenalty).toBeUndefined();
             }),
         );
     });
@@ -683,8 +684,34 @@ describe('ProgrammingExercise Management Update Component', () => {
             }
         });
     });
-});
 
+    it('should disable checkboxes for certain options of existing exercise', fakeAsync(() => {
+        const entity = new ProgrammingExercise(new Course(), undefined);
+        entity.id = 123;
+        comp.programmingExercise = entity;
+        comp.programmingExercise.course = course;
+        comp.programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+
+        const route = TestBed.inject(ActivatedRoute);
+        route.params = of({ courseId });
+        route.url = of([{ path: 'edit' } as UrlSegment]);
+        route.data = of({ programmingExercise: entity });
+
+        const getFeaturesStub = jest.spyOn(programmingExerciseFeatureService, 'getProgrammingLanguageFeature');
+        getFeaturesStub.mockImplementation((language: ProgrammingLanguage) => getProgrammingLanguageFeature(language));
+
+        fixture.detectChanges();
+        tick();
+
+        const scaCheckbox = debugElement.query(By.css('#field_staticCodeAnalysisEnabled'));
+        expect(scaCheckbox).toBeTruthy();
+        expect(scaCheckbox.nativeElement.disabled).toBeTrue();
+
+        const coverageCheckbox = debugElement.query(By.css('#field_testwiseCoverageEnabled'));
+        expect(coverageCheckbox).toBeTruthy();
+        expect(coverageCheckbox.nativeElement.disabled).toBeTrue();
+    }));
+});
 const getProgrammingLanguageFeature = (programmingLanguage: ProgrammingLanguage) => {
     switch (programmingLanguage) {
         case ProgrammingLanguage.SWIFT:

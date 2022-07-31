@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private PersistenceAuditEventRepository persistenceAuditEventRepository;
@@ -40,7 +40,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     private PersistentAuditEvent persAuditEvent;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(1, 0, 0, 0);
         persAuditEvent = new PersistentAuditEvent();
         persAuditEvent.setPrincipal("student1");
@@ -61,14 +61,14 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         featureToggleService.enableFeature(Feature.ProgrammingExercises);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void toggleFeatures() throws Exception {
+    void toggleFeatures() throws Exception {
         // This setup only needed in this test case
         var course = database.addCourseWithOneProgrammingExercise();
         var programmingExercise1 = programmingExerciseRepository.findAll().get(0);
@@ -115,14 +115,14 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getAllAuditEvents() throws Exception {
+    void getAllAuditEvents() throws Exception {
         var auditEvents = request.getList("/management/audits", HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvents).hasSize(2);
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getAllAuditEventsByDate() throws Exception {
+    void getAllAuditEventsByDate() throws Exception {
         String pastDate = LocalDate.now().minusDays(1).toString();
         String currentDate = LocalDate.now().toString();
         var auditEvents = request.getList("/management/audits?fromDate=" + pastDate + "&toDate=" + currentDate, HttpStatus.OK, PersistentAuditEvent.class);
@@ -135,7 +135,7 @@ public class ManagementResourceIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void getAuditEvent() throws Exception {
+    void getAuditEvent() throws Exception {
         var auditEvent = request.get("/management/audits/" + persAuditEvent.getId(), HttpStatus.OK, PersistentAuditEvent.class);
         assertThat(auditEvent).isNotNull();
         var auditEventInDb = persistenceAuditEventRepository.findById(persAuditEvent.getId()).get();

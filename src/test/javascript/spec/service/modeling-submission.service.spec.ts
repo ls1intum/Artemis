@@ -79,7 +79,7 @@ describe('ModelingSubmission Service', () => {
         tick();
     }));
 
-    it('should getModelingSubmissionsForExerciseByCorrectionRound without correction round', fakeAsync(() => {
+    it('should getModelingSubmissionsForExerciseByCorrectionRound with correction round', fakeAsync(() => {
         const { exerciseId, returnedFromService, requestOption, correctionRound } = getDefaultValues();
         service
             .getModelingSubmissionsForExerciseByCorrectionRound(5, requestOption, correctionRound)

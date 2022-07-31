@@ -42,6 +42,7 @@ import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -65,8 +66,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     exerciseGroup?: ExerciseGroup;
     courseRepository: CourseManagementService;
     notificationText?: string;
-
-    isImport = false;
 
     // TODO: why do we have entity, savedEntity and quizExercise?
     entity: QuizExercise;
@@ -136,6 +135,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         private modalService: NgbModal,
         public changeDetector: ChangeDetectorRef,
         private exerciseGroupService: ExerciseGroupService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {
         super();
     }
@@ -198,7 +198,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
             this.quizExerciseService.find(quizId).subscribe((response: HttpResponse<QuizExercise>) => {
                 this.quizExercise = response.body!;
                 this.init();
-                if (this.isExamMode && this.quizExercise.testRunParticipationsExist) {
+                if (this.testRunExistsAndShouldNotBeIgnored()) {
                     this.alertService.warning(this.translateService.instant('artemisApp.quizExercise.edit.testRunSubmissionsExist'));
                 }
             });
@@ -893,9 +893,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.quizExercise = quizExercise;
         this.changeDetector.detectChanges();
 
-        // Navigate back
+        // Navigate back only if it's an import
+        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
         if (this.isImport) {
-            this.cancel();
+            this.previousState();
         }
     }
 
@@ -997,14 +998,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * Navigate back
+     * Navigate back to the overview
      */
-    cancel(): void {
-        if (!this.isExamMode) {
-            this.router.navigate(['/course-management', this.courseId, 'quiz-exercises']);
-        } else {
-            this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']);
-        }
+    previousState(): void {
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
     }
 
     /**

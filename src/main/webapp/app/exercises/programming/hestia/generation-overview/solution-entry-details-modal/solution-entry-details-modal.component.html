@@ -1,0 +1,19 @@
+<div>
+    <div class="modal-header">
+        <h4 class="modal-title" jhiTranslate="artemisApp.programmingExerciseSolutionEntry.simplifiedName"><span>Solution Code Snippets</span></h4>
+        <button type="button" class="btn-close" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <div class="mb-3">
+            <span jhiTranslate="artemisApp.programmingExerciseSolutionEntry.changeContentNote"
+                >Note: Changes apply to the fragments in existing code hints that contain this fragment.</span
+            >
+        </div>
+        <div class="d-flex flex-row">
+            <jhi-solution-entry class="flex-grow-1" [solutionEntry]="solutionEntry" [enableEditing]="isEditable"></jhi-solution-entry>
+            <div class="ps-2 flex-grow-0" *ngIf="isEditable">
+                <button type="button" class="btn btn-primary" jhiTranslate="entity.action.save" (click)="saveSolutionEntry()">Save</button>
+            </div>
+        </div>
+    </div>
+</div>

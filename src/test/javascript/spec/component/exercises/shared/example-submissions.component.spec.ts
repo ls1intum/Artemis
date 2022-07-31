@@ -67,7 +67,7 @@ describe('Example Submission Component', () => {
     it('should initialize the component', () => {
         component.ngOnInit();
 
-        expect(component.exercise).not.toBe(undefined);
+        expect(component.exercise).toBeDefined();
     });
 
     it('should delete an example submission', () => {
@@ -80,7 +80,7 @@ describe('Example Submission Component', () => {
 
         // THEN
         expect(deleteStub).toHaveBeenCalledOnce();
-        expect(exercise.exampleSubmissions?.length).toBe(1);
+        expect(exercise.exampleSubmissions).toHaveLength(1);
     });
 
     it('should catch an error on delete', () => {
@@ -108,7 +108,7 @@ describe('Example Submission Component', () => {
 
         component.exercise = exercise;
         component.ngOnInit();
-        expect(component.exercise.exampleSubmissions).not.toBe(undefined);
+        expect(component.exercise.exampleSubmissions).toBeDefined();
         expect(component.exercise.exampleSubmissions![0].submission?.submissionSize).toBe(2);
         expect(getSubmissionSizeSpy).toHaveBeenCalledOnce();
     });

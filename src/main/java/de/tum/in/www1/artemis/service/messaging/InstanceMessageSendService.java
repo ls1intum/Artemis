@@ -89,4 +89,16 @@ public interface InstanceMessageSendService {
      * @param exerciseId of the exercise a notification should be created for
      */
     void sendAssessedExerciseSubmissionNotificationSchedule(Long exerciseId);
+
+    /**
+     * Send a message to the main server that the exam monitoring was updated and a (re-)scheduling has to be performed
+     * @param examId the id of the exam that should be scheduled
+     */
+    void sendExamMonitoringSchedule(Long examId);
+
+    /**
+     * Send a message to the main server that the exam monitoring was cancelled and the scheduling should be cancelled
+     * @param examId the id of the exam that should be scheduled
+     */
+    void sendExamMonitoringScheduleCancel(Long examId);
 }

@@ -295,7 +295,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should delete a course ', fakeAsync(() => {
+    it('should delete a course', fakeAsync(() => {
         courseManagementService
             .delete(course.id!)
             .pipe(take(1))
@@ -305,7 +305,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should get all exercise details ', fakeAsync(() => {
+    it('should get all exercise details', fakeAsync(() => {
         returnedFromService = [{ ...course }] as Course[];
         courseManagementService
             .getExercisesForManagementOverview(true)
@@ -352,7 +352,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should find all users of course group', fakeAsync(() => {
+    it('should download course archive', fakeAsync(() => {
         const expectedBlob = new Blob(['abc', 'cfe']);
         courseManagementService.downloadCourseArchive(course.id!).subscribe((resp) => {
             expect(resp.body).toEqual(expectedBlob);

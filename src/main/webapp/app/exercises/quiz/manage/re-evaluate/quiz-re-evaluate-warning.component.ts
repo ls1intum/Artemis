@@ -9,6 +9,7 @@ import { MultipleChoiceQuestion } from 'app/entities/quiz/multiple-choice-questi
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faBan, faCheck, faCheckCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-re-evaluate-warning',
@@ -45,6 +46,7 @@ export class QuizReEvaluateWarningComponent implements OnInit {
         private eventManager: EventManager,
         private quizExerciseService: QuizExerciseService,
         private quizReEvaluateService: QuizReEvaluateService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {}
 
     /**
@@ -260,9 +262,11 @@ export class QuizReEvaluateWarningComponent implements OnInit {
     }
 
     /**
-     * Close modal
+     * Close modal and navigate to the overview page
      */
-    close(): void {
+    closeAndNavigate(): void {
         this.activeModal.close();
+        // It doesn't navigate without the timeout...
+        setTimeout(() => this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise));
     }
 }

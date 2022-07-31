@@ -266,8 +266,7 @@ public class ProgrammingExerciseResource {
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled())) {
                 staticCodeAnalysisService.createDefaultCategories(newProgrammingExercise);
             }
-            return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId()))
-                    .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newProgrammingExercise.getTitle())).body(newProgrammingExercise);
+            return ResponseEntity.created(new URI("/api/programming-exercises" + newProgrammingExercise.getId())).body(newProgrammingExercise);
         }
         catch (IOException | URISyntaxException | GitAPIException | ContinuousIntegrationException e) {
             log.error("Error while setting up programming exercise", e);
@@ -314,6 +313,9 @@ public class ProgrammingExerciseResource {
         if (programmingExerciseBeforeUpdate.isStaticCodeAnalysisEnabled() != updatedProgrammingExercise.isStaticCodeAnalysisEnabled()) {
             throw new BadRequestAlertException("Static code analysis enabled flag must not be changed", ENTITY_NAME, "staticCodeAnalysisCannotChange");
         }
+        if (programmingExerciseBeforeUpdate.isTestwiseCoverageEnabled() != updatedProgrammingExercise.isTestwiseCoverageEnabled()) {
+            throw new BadRequestAlertException("Testwise coverage enabled flag must not be changed", ENTITY_NAME, "testwiseCoverageCannotChange");
+        }
         if (!Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOnlineEditor()) && !Boolean.TRUE.equals(updatedProgrammingExercise.isAllowOfflineIde())) {
             return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName,
                     "You need to allow at least one participation mode, the online editor or the offline IDE", "noParticipationModeAllowed")).body(null);
@@ -348,8 +350,7 @@ public class ProgrammingExerciseResource {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseService.updateProgrammingExercise(updatedProgrammingExercise, notificationText);
         exerciseService.logUpdate(updatedProgrammingExercise, updatedProgrammingExercise.getCourseViaExerciseGroupOrCourseMember(), user);
         exerciseService.updatePointsInRelatedParticipantScores(programmingExerciseBeforeUpdate, updatedProgrammingExercise);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedProgrammingExercise.getTitle()))
-                .body(savedProgrammingExercise);
+        return ResponseEntity.ok(savedProgrammingExercise);
     }
 
     /**
@@ -749,5 +750,27 @@ public class ProgrammingExerciseResource {
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/solution-file-names
+     *
+     * Returns the solution repository file names for a given programming exercise.
+     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * the solution participation id is not known for the client.
+     * @param exerciseId the exercise for which the solution repository files should be retrieved
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping(SOLUTION_REPOSITORY_FILE_NAMES)
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ModelAndView redirectGetSolutionRepositoryFilesWithoutContent(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest solution repository file names for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/file-names");
     }
 }

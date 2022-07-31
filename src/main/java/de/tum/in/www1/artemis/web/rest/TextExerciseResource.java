@@ -162,8 +162,7 @@ public class TextExerciseResource {
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
         groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
 
-        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
     /**
@@ -215,7 +214,7 @@ public class TextExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
+        return ResponseEntity.ok(updatedTextExercise);
     }
 
     /**
@@ -423,8 +422,7 @@ public class TextExerciseResource {
 
         final var newTextExercise = textExerciseImportService.importTextExercise(originalTextExercise, importedExercise);
         textExerciseRepository.save(newTextExercise);
-        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newTextExercise.getId().toString())).body(newTextExercise);
+        return ResponseEntity.created(new URI("/api/text-exercises/" + newTextExercise.getId())).body(newTextExercise);
     }
 
     /**
@@ -436,6 +434,7 @@ public class TextExerciseResource {
      */
     @PostMapping("/text-exercises/{exerciseId}/export-submissions")
     @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Resource> exportSubmissions(@PathVariable long exerciseId, @RequestBody SubmissionExportOptionsDTO submissionExportOptions) {
         TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, textExercise, null);
@@ -465,15 +464,9 @@ public class TextExerciseResource {
         log.debug("REST request to get the latest plagiarism result for the text exercise with id: {}", exerciseId);
         TextExercise textExercise = textExerciseRepository.findByIdWithStudentParticipationsAndSubmissionsElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
-        var plagiarismResult = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
-        if (plagiarismResult != null) {
-            for (var comparison : plagiarismResult.getComparisons()) {
-                comparison.setPlagiarismResult(null);
-                comparison.getSubmissionA().setPlagiarismComparison(null);
-                comparison.getSubmissionB().setPlagiarismComparison(null);
-            }
-        }
-        return ResponseEntity.ok((TextPlagiarismResult) plagiarismResult);
+        var plagiarismResult = (TextPlagiarismResult) plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
+        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        return ResponseEntity.ok(plagiarismResult);
     }
 
     /**
@@ -496,21 +489,17 @@ public class TextExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, textExercise, null);
         log.info("Start textPlagiarismDetectionService.checkPlagiarism for exercise {}", exerciseId);
         long start = System.nanoTime();
-        TextPlagiarismResult result = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
-        log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, result.getComparisons().size(),
+        var plagiarismResult = textPlagiarismDetectionService.checkPlagiarism(textExercise, similarityThreshold, minimumScore, minimumSize);
+        log.info("Finished textPlagiarismDetectionService.checkPlagiarism for exercise {} with {} comparisons in {}", exerciseId, plagiarismResult.getComparisons().size(),
                 TimeLogUtil.formatDurationFrom(start));
         // TODO: limit the amount temporarily because of database issues
-        result.sortAndLimit(100);
-        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", result.getComparisons().size());
+        plagiarismResult.sortAndLimit(100);
+        log.info("Limited number of comparisons to {} to avoid performance issues when saving to database", plagiarismResult.getComparisons().size());
         start = System.nanoTime();
-        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(result);
+        plagiarismResultRepository.savePlagiarismResultAndRemovePrevious(plagiarismResult);
         log.info("Finished plagiarismResultRepository.savePlagiarismResultAndRemovePrevious call in {}", TimeLogUtil.formatDurationFrom(start));
-        for (var comparison : result.getComparisons()) {
-            comparison.setPlagiarismResult(null);
-            comparison.getSubmissionA().setPlagiarismComparison(null);
-            comparison.getSubmissionB().setPlagiarismComparison(null);
-        }
-        return ResponseEntity.ok(result);
+        plagiarismResultRepository.prepareResultForClient(plagiarismResult);
+        return ResponseEntity.ok(plagiarismResult);
     }
 
     /**

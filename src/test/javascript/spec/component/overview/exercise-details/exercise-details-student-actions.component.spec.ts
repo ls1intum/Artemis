@@ -169,6 +169,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it('should not allow to publish a build plan for text exercises', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;
-        expect(comp.publishBuildPlanUrl()).toBe(undefined);
+        expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
 });

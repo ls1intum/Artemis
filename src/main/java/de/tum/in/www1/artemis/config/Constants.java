@@ -55,7 +55,7 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -95,6 +95,9 @@ public final class Constants {
 
     // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
+
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
 
     public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
@@ -163,6 +166,12 @@ public final class Constants {
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
 
+    public static final String PREPARE_EXERCISE_START = "PREPARE_EXERCISE_START";
+
+    public static final String GENERATE_STUDENT_EXAMS = "GENERATE_STUDENT_EXAMS";
+
+    public static final String GENERATE_MISSING_STUDENT_EXAMS = "GENERATE_MISSING_STUDENT_EXAMS";
+
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
     public static final String DELETE_TEAM = "DELETE_TEAM";
@@ -213,7 +222,7 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
-    public static final long MONITORING_CACHE_RESET_DELAY = 1000 * 60 * 30; // 30 minutes in milliseconds
+    public static final long MONITORING_CACHE_RESET_DELAY = 60 * 30; // 30 minutes in seconds
 
     public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
 
@@ -238,6 +247,8 @@ public final class Constants {
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
+
+    public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
 
     /**
      * Size of an unsigned tinyInt in SQL, that is used in the database
