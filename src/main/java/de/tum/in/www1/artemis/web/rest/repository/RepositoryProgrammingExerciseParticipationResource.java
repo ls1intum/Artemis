@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.exam.ExamSubmissionService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.service.plagiarism.PlagiarismService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.web.rest.dto.FileMove;
 import de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTO;
@@ -55,11 +56,13 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
 
     private final ParticipationRepository participationRepository;
 
+    private final PlagiarismService plagiarismService;
+
     public RepositoryProgrammingExerciseParticipationResource(UserRepository userRepository, AuthorizationCheckService authCheckService, GitService gitService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RepositoryService repositoryService,
             ProgrammingExerciseParticipationService participationService, ProgrammingExerciseRepository programmingExerciseRepository,
             ParticipationRepository participationRepository, ExamSubmissionService examSubmissionService, BuildLogEntryService buildLogService,
-            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService) {
+            ProgrammingSubmissionRepository programmingSubmissionRepository, SubmissionPolicyService submissionPolicyService, PlagiarismService plagiarismService) {
         super(userRepository, authCheckService, gitService, continuousIntegrationService, repositoryService, versionControlService, programmingExerciseRepository);
         this.participationService = participationService;
         this.examSubmissionService = examSubmissionService;
@@ -67,6 +70,7 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.submissionPolicyService = submissionPolicyService;
         this.participationRepository = participationRepository;
+        this.plagiarismService = plagiarismService;
     }
 
     @Override
@@ -86,9 +90,9 @@ public class RepositoryProgrammingExerciseParticipationResource extends Reposito
         if (programmingExerciseRepository.findWithSubmissionPolicyById(programmingExercise.getId()).get().getSubmissionPolicy() instanceof LockRepositoryPolicy policy) {
             lockRepositoryPolicyEnforced = submissionPolicyService.isParticipationLocked(policy, participation);
         }
-        // Error case 3: The user does not have permissions to push into the repository.
+        // Error case 3: The user does not have permissions to push into the repository and the user is not notified for a related plagiarism case.
         boolean hasPermissions = participationService.canAccessParticipation(programmingParticipation);
-        if (!hasPermissions) {
+        if (!hasPermissions && !plagiarismService.isUserNotifiedByInstructor(participationId, userRepository.getUser().getLogin())) {
             throw new IllegalAccessException();
         }
         // Error case 4: The user's participation repository is locked.
