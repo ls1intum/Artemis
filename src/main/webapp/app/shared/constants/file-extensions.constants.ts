@@ -1,3 +1,4 @@
+// NOTE: this list has to be kept in sync with the extensions defined in FileResource.java
 export const FILE_EXTENSIONS = [
     'png',
     'jpg',

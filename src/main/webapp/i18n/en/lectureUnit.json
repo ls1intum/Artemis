@@ -131,7 +131,7 @@
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
                 "chooseFile": "Choose File",
-                "fileLimitation": "Max. file size 10 mb",
+                "fileLimitation": "Max. file size 10 MB",
                 "fileFormat": "Supported Types"
             },
             "editAttachmentUnit": {
