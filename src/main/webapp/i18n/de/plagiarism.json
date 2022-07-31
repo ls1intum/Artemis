@@ -66,7 +66,7 @@
                     "confirmationTitle": "Bestätige das Urteil",
                     "confirmationText": "Bist du sicher, dass du dieses Urteil fällen willst? Dies kann nicht rückgängig gemacht werden.",
                     "tooltip": "Dieses Urteil fällen?",
-                    "studentNotNotified": "Du musst den Studenten vor der Urteilsfindung benachrichtigen."
+                    "tooltipStudentNotNotified": "Du musst den Studierenden vor der Urteilsfindung benachrichtigen."
                 },
                 "exercise": "Betroffene Übung",
                 "comparisons": "Vergleiche",
