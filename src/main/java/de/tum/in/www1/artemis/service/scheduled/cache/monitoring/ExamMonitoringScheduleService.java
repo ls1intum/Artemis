@@ -42,13 +42,13 @@ public class ExamMonitoringScheduleService {
 
     private final Logger logger = LoggerFactory.getLogger(ExamMonitoringScheduleService.class);
 
-    private static final long MONITORING_THREE_HOURS_DELAY = 60 * 60 * 3;
+    private static final long STATISTICS_THREE_HOURS_DELAY = 60 * 60 * 3;
 
     private final ExamCache examCache;
 
     private final TaskScheduler scheduler;
 
-    private final Map<Long, ScheduledFuture<?>> scheduledExamMonitoring = new HashMap<>();
+    private final Map<Long, ScheduledFuture<?>> scheduledExamLiveStatistics = new HashMap<>();
 
     private final Environment env;
 
@@ -192,11 +192,11 @@ public class ExamMonitoringScheduleService {
             }
             // 3 am after the end of the exam
             ZonedDateTime endOfExamDay = exam.getEndDate().toLocalDate().atTime(LocalTime.MAX).atZone(ZoneId.systemDefault());
-            var schedulingTime = endOfExamDay.plus(MONITORING_THREE_HOURS_DELAY, ChronoUnit.SECONDS);
+            var schedulingTime = endOfExamDay.plus(STATISTICS_THREE_HOURS_DELAY, ChronoUnit.SECONDS);
             var scheduledFuture = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
 
-            scheduledExamMonitoring.put(examId, scheduledFuture);
-            logger.info("Schedule task for Exam Monitoring ({}) at {}.", examId, schedulingTime);
+            scheduledExamLiveStatistics.put(examId, scheduledFuture);
+            logger.info("Schedule task for Exam Live Statistics ({}) at {}.", examId, schedulingTime);
         }
         catch (@SuppressWarnings("unused") DuplicateTaskException e) {
             logger.info("Exam {} monitoring save task already registered", examId);
@@ -210,11 +210,11 @@ public class ExamMonitoringScheduleService {
      * @param examId specific exam
      */
     public void cancelExamMonitoringTask(final long examId) {
-        ScheduledFuture<?> future = scheduledExamMonitoring.get(examId);
+        ScheduledFuture<?> future = scheduledExamLiveStatistics.get(examId);
         if (future != null) {
             logger.info("Cancelling scheduled task for Exam Monitoring ({}).", examId);
             future.cancel(true);
-            scheduledExamMonitoring.remove(examId);
+            scheduledExamLiveStatistics.remove(examId);
         }
         // We want to clear the activities from the cache
         executeExamActivitySaveTask(examId);
