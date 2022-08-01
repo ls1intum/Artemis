@@ -1,9 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -536,29 +533,42 @@ public class PostService extends PostingService {
     }
 
     /**
-     * helper method to retrieve groups and authorities of all posting authors in a list of Posts
-     * @param postsInCourse list of posts with answers whose authors are to be populated with their groups and authorities
+     * helper method that fetches groups and authorities of all posting authors in a list of Posts
+     * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
      */
     private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
-        // sets author roles to display user authority icon on posting headers
+        // prepares a unique set of userIds that authored the current list of postings
+        Set userIds = new HashSet<Long>();
         postsInCourse.forEach(post -> {
+            userIds.add(post.getAuthor().getId());
+            post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
+        });
+
+        // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
+        Set<User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds);
+
+        // sets respective author role to display user authority icon on posting headers
+        postsInCourse.forEach(post -> {
+            post.setAuthor(authors.stream().filter(user -> user.getId().equals(post.getAuthor().getId())).findAny().orElseThrow());
             setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-            post.getAnswers().forEach(answerPost -> setAuthorRoleForPosting(answerPost, post.getCoursePostingBelongsTo()));
+            post.getAnswers().forEach(answerPost -> {
+                answerPost.setAuthor(authors.stream().filter(user -> user.getId().equals(answerPost.getAuthor().getId())).findAny().orElseThrow());
+                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
+            });
         });
     }
 
     /**
-     * fetches and sets groups and authorities of posting author, which are used to display author role icon in the posting header
-     * @param posting       posting to fetch groups and authorities
-     * @param postingCourse course that the post belons to, must be explicitly fetched and provided for new post creation
+     *
+     * @param posting       posting to assign autherRole
+     * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
      */
     private void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
-        User author = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(posting.getAuthor().getId());
-
-        if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, author)) {
+        if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, posting.getAuthor())) {
             posting.setAuthorRole(UserRole.INSTRUCTOR);
         }
-        else if (authorizationCheckService.isTeachingAssistantInCourse(postingCourse, author) || authorizationCheckService.isEditorInCourse(postingCourse, author)) {
+        else if (authorizationCheckService.isTeachingAssistantInCourse(postingCourse, posting.getAuthor())
+                || authorizationCheckService.isEditorInCourse(postingCourse, posting.getAuthor())) {
             posting.setAuthorRole(UserRole.TUTOR);
         }
         else {
