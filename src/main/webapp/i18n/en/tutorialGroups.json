@@ -5,6 +5,18 @@
             "manageTutorialGroups": {
                 "title": "Tutorial Groups Management"
             }
+        },
+        "createTutorialGroup": {
+            "title": "Create Tutorial Group"
+        },
+        "editTutorialGroup": {
+            "title": "Edit Tutorial Group"
+        },
+        "tutorialGroupForm": {
+            "title": "Title",
+            "titlePlaceholder": "Group 1: Monday 12:00 - 13:00",
+            "titleRequiredValidationError": "Title is required.",
+            "titleMaxLengthValidationError": "Title can be max 255 characters long."
         }
     }
 }

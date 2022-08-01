@@ -5,6 +5,18 @@
             "manageTutorialGroups": {
                 "title": "Übungsgruppen Verwaltung"
             }
+        },
+        "createTutorialGroup": {
+            "title": "Übungsgruppe erstellen"
+        },
+        "editTutorialGroup": {
+            "title": "Übungsgruppe editieren"
+        },
+        "tutorialGroupForm": {
+            "title": "Titel",
+            "titlePlaceholder": "Gruppe 1: Montag 12:00 - 13:00",
+            "titleRequiredValidationError": "Titel ist pflicht.",
+            "titleMaxLengthValidationError": "Titel kann max. 255 Zeichen lang sein."
         }
     }
 }
