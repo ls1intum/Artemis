@@ -146,7 +146,7 @@ public class ModelingExerciseResource {
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
-        groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(modelingExercise);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
@@ -209,8 +209,7 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
-                instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
 
         return ResponseEntity.ok(updatedModelingExercise);
     }

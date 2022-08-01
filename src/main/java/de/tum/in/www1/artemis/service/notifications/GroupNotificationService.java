@@ -43,14 +43,18 @@ public class GroupNotificationService {
 
     private final SingleUserNotificationService singleUserNotificationService;
 
+    private final InstanceMessageSendService instanceMessageSendService;
+
     public GroupNotificationService(GroupNotificationRepository groupNotificationRepository, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            MailService mailService, NotificationSettingsService notificationSettingsService, SingleUserNotificationService singleUserNotificationService) {
+            MailService mailService, NotificationSettingsService notificationSettingsService, SingleUserNotificationService singleUserNotificationService,
+            InstanceMessageSendService instanceMessageSendService) {
         this.groupNotificationRepository = groupNotificationRepository;
         this.messagingTemplate = messagingTemplate;
         this.userRepository = userRepository;
         this.mailService = mailService;
         this.notificationSettingsService = notificationSettingsService;
         this.singleUserNotificationService = singleUserNotificationService;
+        this.instanceMessageSendService = instanceMessageSendService;
     }
 
     /**
@@ -58,19 +62,17 @@ public class GroupNotificationService {
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
      * @param notificationText holds the custom change message for the notification process
-     * @param instanceMessageSendService can initiate a scheduled notification
      */
-    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText,
-            InstanceMessageSendService instanceMessageSendService) {
+    public void checkAndCreateAppropriateNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate, String notificationText) {
 
         // send exercise update notification
         notifyAboutExerciseUpdate(exerciseAfterUpdate, notificationText);
 
         // handle and check exercise released notification
-        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, instanceMessageSendService);
+        checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate);
 
         // handle and check assessed exercise submission notification
-        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate, instanceMessageSendService);
+        checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(exerciseBeforeUpdate, exerciseAfterUpdate);
     }
 
     /**
@@ -78,10 +80,8 @@ public class GroupNotificationService {
      *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
-     * @param instanceMessageSendService can initiate a scheduled notification
      */
-    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate,
-            InstanceMessageSendService instanceMessageSendService) {
+    private void checkAndCreateExerciseReleasedNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
 
         final ZonedDateTime initialReleaseDate = exerciseBeforeUpdate.getReleaseDate();
         final ZonedDateTime updatedReleaseDate = exerciseAfterUpdate.getReleaseDate();
@@ -134,7 +134,7 @@ public class GroupNotificationService {
         }
 
         if (shouldNotifyAboutRelease) {
-            checkNotificationForExerciseRelease(exerciseAfterUpdate, instanceMessageSendService);
+            checkNotificationForExerciseRelease(exerciseAfterUpdate);
         }
     }
 
@@ -143,10 +143,8 @@ public class GroupNotificationService {
      *
      * @param exerciseBeforeUpdate is the initial exercise before it gets updated
      * @param exerciseAfterUpdate is the updated exercise (needed to check potential difference in release date)
-     * @param instanceMessageSendService can initiate a scheduled notification
      */
-    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate,
-            InstanceMessageSendService instanceMessageSendService) {
+    private void checkAndCreateAssessedExerciseSubmissionNotificationsWhenUpdatingExercise(Exercise exerciseBeforeUpdate, Exercise exerciseAfterUpdate) {
         final ZonedDateTime initialAssessmentDueDate = exerciseBeforeUpdate.getAssessmentDueDate();
         final ZonedDateTime updatedAssessmentDueDate = exerciseAfterUpdate.getAssessmentDueDate();
         ZonedDateTime timeNow = ZonedDateTime.now();
@@ -164,7 +162,6 @@ public class GroupNotificationService {
         }
         if (updatedAssessmentDueDate != null && updatedAssessmentDueDate.isAfter(timeNow)) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exerciseAfterUpdate.getId());
-            return;
         }
     }
 
@@ -190,11 +187,10 @@ public class GroupNotificationService {
      * E.g. ExerciseReleased notification or AssessedExerciseSubmission notification
      *
      * @param exercise that is created
-     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
      */
-    public void checkNotificationsForNewExercise(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
-        checkNotificationForExerciseRelease(exercise, instanceMessageSendService);
-        checkNotificationForAssessmentDueDate(exercise, instanceMessageSendService);
+    public void checkNotificationsForNewExercise(Exercise exercise) {
+        checkNotificationForExerciseRelease(exercise);
+        checkNotificationForAssessmentDueDate(exercise);
     }
 
     /**
@@ -202,9 +198,8 @@ public class GroupNotificationService {
      * The exercise update might have changed the release date, so the scheduled notification that informs the users about the release of this exercise has to be updated
      *
      * @param exercise that is created or updated
-     * @param instanceMessageSendService that will call the service to update the scheduled exercise-created notification
      */
-    private void checkNotificationForExerciseRelease(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+    private void checkNotificationForExerciseRelease(Exercise exercise) {
         // Only notify students and tutors when the exercise is created for a course
         if (exercise.isCourseExercise()) {
             if (exercise.getReleaseDate() == null || !exercise.getReleaseDate().isAfter(ZonedDateTime.now())) {
@@ -221,9 +216,8 @@ public class GroupNotificationService {
      * Used when a new exercise is created.
      *
      * @param exercise that is created
-     * @param instanceMessageSendService that will call the service scheduled a notification
      */
-    private void checkNotificationForAssessmentDueDate(Exercise exercise, InstanceMessageSendService instanceMessageSendService) {
+    private void checkNotificationForAssessmentDueDate(Exercise exercise) {
         if (exercise.isCourseExercise() && exercise.getAssessmentDueDate() != null && exercise.getAssessmentDueDate().isAfter(ZonedDateTime.now())) {
             instanceMessageSendService.sendAssessedExerciseSubmissionNotificationSchedule(exercise.getId());
         }

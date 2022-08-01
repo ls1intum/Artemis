@@ -221,7 +221,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     @Test
     void testCheckNotificationForExerciseRelease_undefinedReleaseDate() {
-        groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(exercise);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -231,7 +231,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_currentOrPastReleaseDate() {
         exercise.setReleaseDate(CURRENT_TIME);
-        groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(exercise);
         verify(groupNotificationService, times(1)).notifyAllGroupsAboutReleasedExercise(any());
     }
 
@@ -241,7 +241,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     void testCheckNotificationForExerciseRelease_futureReleaseDate() {
         exercise.setReleaseDate(FUTURE_TIME);
-        groupNotificationService.checkNotificationsForNewExercise(exercise, instanceMessageSendService);
+        groupNotificationService.checkNotificationsForNewExercise(exercise);
         verify(instanceMessageSendService, times(1)).sendExerciseReleaseNotificationSchedule(any());
     }
 
@@ -258,7 +258,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         updatedExercise.setReleaseDate(dateOfUpdatedExercise);
         updatedExercise.setAssessmentDueDate(dateOfUpdatedExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT, instanceMessageSendService);
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(exercise, updatedExercise, NOTIFICATION_TEXT);
 
         verify(groupNotificationService, times(1)).notifyAboutExerciseUpdate(any(), any());
 

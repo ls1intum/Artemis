@@ -186,11 +186,8 @@ public class ProgrammingExerciseService {
         // The creation of the webhooks must occur after the initial push, because the participation is
         // not yet saved in the database, so we cannot save the submission accordingly (see ProgrammingSubmissionService.notifyPush)
         versionControlService.get().addWebHooksForExercise(programmingExercise);
-
         scheduleOperations(programmingExercise.getId());
-
-        groupNotificationService.checkNotificationsForNewExercise(programmingExercise, instanceMessageSendService);
-
+        groupNotificationService.checkNotificationsForNewExercise(programmingExercise);
         return programmingExercise;
     }
 
@@ -421,15 +418,10 @@ public class ProgrammingExerciseService {
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(savedProgrammingExercise, programmingExerciseBeforeUpdate.getDueDate());
-
         programmingExerciseTaskService.updateTasksFromProblemStatement(savedProgrammingExercise);
-
         // TODO: in case of an exam exercise, this is not necessary
         scheduleOperations(programmingExercise.getId());
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
-                instanceMessageSendService);
-
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 
@@ -744,12 +736,8 @@ public class ProgrammingExerciseService {
         programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
 
         programmingExercise.validateDates();
-
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
-                instanceMessageSendService);
-
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText);
         return savedProgrammingExercise;
     }
 

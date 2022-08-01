@@ -160,8 +160,7 @@ public class TextExerciseResource {
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
-        groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
-
+        groupNotificationService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
@@ -210,10 +209,7 @@ public class TextExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
-                instanceMessageSendService);
-
+        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
         return ResponseEntity.ok(updatedTextExercise);
     }
 
