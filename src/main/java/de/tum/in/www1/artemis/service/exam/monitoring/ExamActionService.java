@@ -28,7 +28,7 @@ public class ExamActionService {
     }
 
     /**
-     * To avoid direct access to the {@link ExamActionRepository}, we use delegation save the {@link ExamAction}s.
+     * To avoid direct access to the {@link ExamActionRepository}, we use delegation to save the {@link ExamAction}s.
      *
      * @param examActions {@link ExamAction}s to save
      * @return saved {@link ExamAction}s
