@@ -1,1 +1,28 @@
-<p>tutorial-groups-management works!</p>
+<div *ngIf="isLoading" class="d-flex justify-content-center">
+    <div class="spinner-border" role="status">
+        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+    </div>
+</div>
+
+<div *ngIf="!isLoading">
+    <div class="table-responsive">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th><span>ID</span></th>
+                    <th><span>Title</span></th>
+                    <th><span>Teaching Assistant</span></th>
+                    <th><span>Number of Registered Students</span></th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId" id="tutorial-group-row-{{ tutorialGroup.id }}">
+                    <td>{{ tutorialGroup.id }}</td>
+                    <td>{{ tutorialGroup?.title }}</td>
+                    <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
+                    <td>{{ tutorialGroup.registeredStudents == undefined ? 0 : tutorialGroup.registeredStudents?.length }}</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
