@@ -390,8 +390,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         final var participation = optionalParticipation.get();
         participation.setBuildPlanId(null);
         programmingExerciseStudentParticipationRepository.save(participation);
-        // doReturn(Optional.of(submission)).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
-        // TODO: configure the database so that the above mock can be safely deleted
         return participation;
     }
 
@@ -414,8 +412,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-        // doReturn(Optional.empty()).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
-        // TODO: configure the database so that the above mock can be safely deleted
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());

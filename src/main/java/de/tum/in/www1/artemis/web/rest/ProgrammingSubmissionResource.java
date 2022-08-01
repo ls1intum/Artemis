@@ -137,7 +137,7 @@ public class ProgrammingSubmissionResource {
             throw ex;
         }
 
-        // TODO: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
+        // Note: we should not really return status code other than 200, because Bitbucket might kill the webhook, if there are too many errors
         return ResponseEntity.status(HttpStatus.OK).build();
     }
 
