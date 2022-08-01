@@ -40,7 +40,6 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
         return findByIdWithSubmissions(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
     }
 
-    // TODO add a new method which loads the comparison together with the 2 submissions and their elements, but be careful that it does not load too many elements
     @Query("""
             SELECT DISTINCT comparison FROM PlagiarismComparison comparison
             LEFT JOIN FETCH comparison.submissionA submissionA

@@ -19,7 +19,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseInstructorDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
-    let savePlagiarismCaseVerdictSpy: jest.SpyInstance;
+    let saveVerdictSpy: jest.SpyInstance;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1, plagiarismCaseId: 1 }) } } as any as ActivatedRoute;
 
@@ -54,7 +54,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component = fixture.componentInstance;
         plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
         jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForInstructor').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
-        savePlagiarismCaseVerdictSpy = jest.spyOn(plagiarismCasesService, 'savePlagiarismCaseVerdict');
+        saveVerdictSpy = jest.spyOn(plagiarismCasesService, 'saveVerdict');
     });
 
     afterEach(() => {
@@ -70,8 +70,10 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should save plagiarism case plagiarism verdict', fakeAsync(() => {
-        savePlagiarismCaseVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
+        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.courseId = 1;
+        component.posts = [];
+        component.posts.push({ id: 1 });
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
         component.saveVerdict();
@@ -79,8 +81,19 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
     }));
 
+    it('should save plagiarism case plagiarism verdict (not notified yet)', fakeAsync(() => {
+        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
+        component.courseId = 1;
+        component.plagiarismCaseId = 1;
+        component.plagiarismCase = { id: 1 };
+        component.saveVerdict();
+        tick();
+        // the verdict is not available yet, because the spy function is not invoked
+        expect(component.plagiarismCase).toEqual({ id: 1 });
+    }));
+
     it('should save plagiarism case warning verdict', fakeAsync(() => {
-        savePlagiarismCaseVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCase>>);
+        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
@@ -91,9 +104,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should save plagiarism case point deduction verdict', fakeAsync(() => {
-        savePlagiarismCaseVerdictSpy.mockReturnValue(
-            of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCase>>,
-        );
+        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
