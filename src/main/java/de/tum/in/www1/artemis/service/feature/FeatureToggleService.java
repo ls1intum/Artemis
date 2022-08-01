@@ -7,10 +7,8 @@ import org.springframework.stereotype.Service;
 
 import com.hazelcast.core.HazelcastInstance;
 
-import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 @Service
 public class FeatureToggleService {
@@ -19,17 +17,14 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final InstanceMessageSendService instanceMessageSendService;
-
-    private final ExamRepository examRepository;
+    private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
     private final Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, InstanceMessageSendService instanceMessageSendService, ExamRepository examRepository,
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, ExamMonitoringScheduleService examMonitoringScheduleService,
             HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
-        this.instanceMessageSendService = instanceMessageSendService;
-        this.examRepository = examRepository;
+        this.examMonitoringScheduleService = examMonitoringScheduleService;
 
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
@@ -60,7 +55,8 @@ public class FeatureToggleService {
      */
     public void disableFeature(Feature feature) {
         if (feature == Feature.ExamLiveStatistics) {
-            this.disableExamLiveStatistics();
+            // We want to clear all the data, but keep the settings.
+            examMonitoringScheduleService.clearAllExamMonitoringData();
         }
         features.put(feature, false);
         sendUpdate();
@@ -108,20 +104,5 @@ public class FeatureToggleService {
      */
     public List<Feature> disabledFeatures() {
         return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
-    }
-
-    /**
-     * Used to disable the exam live statistics for all exams and then clear the cache.
-     */
-    private void disableExamLiveStatistics() {
-        List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
-        for (var exam : exams) {
-            // Updates all exams
-            exam.setMonitoring(false);
-            examRepository.save(exam);
-
-            // Cancels all exam monitoring tasks and deletes the cache
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(exam.getId());
-        }
     }
 }
