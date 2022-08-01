@@ -11,6 +11,7 @@ import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs/esm';
 import { faClipboard, faEye, faListAlt, faTable, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-exam-detail',
@@ -45,6 +46,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
         private accountService: AccountService,
         private examManagementService: ExamManagementService,
         private router: Router,
+        private alertService: AlertService,
     ) {}
 
     /**
@@ -83,6 +85,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             next: (res: HttpResponse<Exam>) => {
                 this.dialogErrorSource.next('');
                 this.exam = res.body!;
+                this.alertService.success('artemisApp.examManagement.reset.success');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });

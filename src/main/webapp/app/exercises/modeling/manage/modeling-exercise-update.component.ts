@@ -11,7 +11,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -203,17 +203,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-
-        switch (this.editType) {
-            case EditType.CREATE:
-            case EditType.IMPORT:
-                // Passing exercise since it is required for navigation to the example submission dashboard.
-                navigateToExampleSubmissions(this.router, exercise);
-                break;
-            case EditType.UPDATE:
-                this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-                break;
-        }
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse): void {

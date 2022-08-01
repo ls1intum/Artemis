@@ -16,7 +16,7 @@ Enabling Communication
 ^^^^^^^^^^^^^^^^^^^^^^
 
 Artemis courses will by default enable all the communication features.
-In case you do not want to provide users with these features, you can disable this feature on course creation by unchecking the respective checkbox (``Enable postings by students``) - it can also be edited afterwards.
+In case you do not want to provide users with these features, you can disable this feature on course creation by unchecking the respective checkbox (``Enable communication features``) - it can also be edited afterwards.
 
 Lecture Posts
 ^^^^^^^^^^^^^
@@ -43,8 +43,8 @@ Exemplary exercise detail page with posts:
 Course-wide Posts & Course Communication Overview
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Besides lecture or exercise related questions, Artemis offers a third type of posts: posts with course-wide topics, such as ``Organization`` or ``Tech Support``.
-These posts can only be created on the course communication overview which is shown in the screenshot below.
+Besides lecture or exercise related questions, Artemis offers a third post type: posts with course-wide topics, such as ``Organization`` or ``Tech Support``.
+These posts can only be created on the course communication overview, which is shown in the screenshot below.
 
 The ``Communication`` space of an Artemis course serves as overview for *all* posts in a course.
 Hence, course-wide posts as well as exercise posts and lecture posts are listed.
@@ -53,40 +53,42 @@ Here, users can easily query, sort, and filter existing posts.
 |course-posts|
 
 Features for Users
-------------------
+^^^^^^^^^^^^^^^^^^
 
 This section captures the most important features that are offered to any Artemis user.
 
 Search, Filter and Sort Posts
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------
 
 On the course communication overview, a user can query *all* existing posts by different criteria.
 This can be a text-based search, context filters (i.e., a certain lecture, exercise or course-wide topic), or other post characteristics such as if it is already resolved.
 By using different sort configurations, users can find the information they are looking for at the top of the list: for example the post that got the most votes, or the post that was created most recently.
 
+A simplified version of this feature is available on the exercise and lecture details page as well.
+
 React on Posts
-^^^^^^^^^^^^^^
+--------------
 
 To foster interaction we integrate the well-known emoji reaction bar.
 Each user in the course can react on every post by making use of the emoji selection button.
-The ``+`` emoji serves as up-voting reaction, which influences the display order.
+The ``+`` emoji serves as up-voting reaction, which influences the display order of posts.
 
 Reference Posts
-^^^^^^^^^^^^^^^
+---------------
 
 If users want to refer to other posts, they can integrate a simple pattern including the hashtag (``#``) combined with the post identifier.
 A post's identifier is appended to the post title (such as seen in the screenshots above).
 
 When clicking a reference used in a post's text, the user is navigated to the referenced post.
 
-Prevent Duplicated Posts
-^^^^^^^^^^^^^^^^^^^^^^^^
+Prevent Post Duplication
+------------------------
 
 In order to prevent duplicated questions from being posted, we integrate a duplication check that runs during post creation.
-We strongly recommend users that create a post, to check the automatically provided list of similar posts to find out if the question in mind has already been asked and resolved in the best case.
+We strongly recommend users that create a post, to check the automatically provided list of similar posts to find out whether the question in mind has already been asked and resolved in the best case.
 
 Mark Your Post As Resolved
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+--------------------------
 
 Marking a post as resolved will indicate to other users that the posted question is resolved and does not need any further input.
 This can be done by clicking the checkmark next to the answer post.
@@ -95,43 +97,43 @@ This is helpful for moderators to identify open questions, e.g., by applying the
 It also highlights the correct answer for other students that have a similar problem and search for a suitable solution.
 
 Tag Your Post
-^^^^^^^^^^^^^
+-------------
 
 When creating a post, users can choose to add arbitrary tags.
 Tagging a post will further narrow down the post purpose or content in precise and descriptive keywords, that might follow a course-specific taxonomy.
 
 Features for Moderators
------------------------
+^^^^^^^^^^^^^^^^^^^^^^^
 
 The following features are only available for moderators, not for students.
 
 Move Posts
-^^^^^^^^^^
+----------
 
 Tutors can change the context (lecture, exercise, course-wide topic) in the edit mode of the post.
 By changing the context, for example from a certain exercise to a course-wide topic, the post is automatically moved.
 In the example at hand, the post will not be shown on the according exercise page anymore, but rather only in the course-wide communication overview, associated with that certain course-wide topic.
 
 Pin Posts
-^^^^^^^^^^
+---------
 
 By clicking the pushpin icon next to the reaction button of a post, a moderator can *pin* the post.
 As a consequence, the post is displayed at the top of any post list to receive higher attention.
 
 Archive Posts
-^^^^^^^^^^^^^
+-------------
 
 As a complement to pinning, i.e., highlighting posts, a moderator can archive posts and thereby put them at the bottom of a post list.
 This can be achieved by clicking the folder icon next to the reaction button.
 Moderators should be aware that this reduces the visibility of the post.
 
 Features for Instructors
-------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 The following feature is only available for instructors that act as moderators.
 
 Post Announcements
-^^^^^^^^^^^^^^^^^^
+------------------
 
 Instructors can create course-wide posts that serve as *Announcements*.
 They target every course participant and have higher relevance than normal posts.

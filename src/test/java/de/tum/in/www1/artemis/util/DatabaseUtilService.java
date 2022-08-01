@@ -1999,6 +1999,71 @@ public class DatabaseUtilService {
         return course;
     }
 
+    public Course addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(String similarSubmissionText, int studentsAmount) {
+        Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
+        addUsers(studentsAmount, 1, 1, 1);
+
+        // Add text exercise to the course
+        TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
+        textExercise.setTitle("Finished");
+        textExercise.getCategories().add("Text");
+        course.addExercises(textExercise);
+        courseRepo.save(course);
+        exerciseRepo.save(textExercise);
+
+        Set<StudentParticipation> participations = new HashSet<>();
+
+        for (int i = 0; i < studentsAmount; i++) {
+            User participant = getUserByLogin("student" + (i + 1));
+            StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, textExercise, participant);
+            participation.setParticipant(participant);
+            TextSubmission submission = ModelFactory.generateTextSubmission(similarSubmissionText, Language.ENGLISH, true);
+            participation = studentParticipationRepo.save(participation);
+            submission.setParticipation(participation);
+            submissionRepository.save(submission);
+
+            participation.setSubmissions(Set.of(submission));
+            participations.add(participation);
+        }
+
+        textExercise.participations(participations);
+        exerciseRepo.save(textExercise);
+
+        return course;
+    }
+
+    public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String similarSubmissionModel, int studentsAmount, Course course) {
+
+        // Add text exercise to the course
+        ModelingExercise exercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
+        exercise.setTitle("finished");
+        exercise.getCategories().add("Model");
+        course.addExercises(exercise);
+
+        courseRepo.save(course);
+        exerciseRepo.save(exercise);
+
+        Set<StudentParticipation> participations = new HashSet<>();
+
+        for (int i = 0; i < studentsAmount; i++) {
+            User participant = getUserByLogin("student" + (i + 1));
+            StudentParticipation participation = ModelFactory.generateStudentParticipation(InitializationState.FINISHED, exercise, participant);
+            participation.setParticipant(participant);
+            ModelingSubmission submission = ModelFactory.generateModelingSubmission(similarSubmissionModel, true);
+            participation = studentParticipationRepo.save(participation);
+            submission.setParticipation(participation);
+            submissionRepository.save(submission);
+
+            participation.setSubmissions(Set.of(submission));
+            participations.add(participation);
+        }
+
+        exercise.participations(participations);
+        exerciseRepo.save(exercise);
+
+        return course;
+    }
+
     public Course addCourseWithDifferentModelingExercises() {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
@@ -2489,7 +2554,8 @@ public class DatabaseUtilService {
                     StudentParticipation participation = createAndSaveParticipationForExercise(exercise, "student" + j);
                     assertThat(modelForModelingExercise).isNotEmpty();
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(modelForModelingExercise.get(), true);
-                    modelSubmissionService.save(submission, (ModelingExercise) exercise, "student" + j);
+                    var user = getUserByLogin("student" + j);
+                    modelSubmissionService.handleModelingSubmission(submission, (ModelingExercise) exercise, user);
                     studentParticipationRepo.save(participation);
                 }
                 return course;
@@ -2607,7 +2673,8 @@ public class DatabaseUtilService {
                 for (int j = 1; j <= numberOfSubmissionPerExercise; j++) {
                     StudentParticipation participation = createAndSaveParticipationForExercise(modelingExercise, "student" + j);
                     ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
-                    modelSubmissionService.save(submission, modelingExercise, "student" + j);
+                    var user = getUserByLogin("student" + j);
+                    modelSubmissionService.handleModelingSubmission(submission, modelingExercise, user);
                     studentParticipationRepo.save(participation);
                     if (numberOfAssessments >= j) {
                         Result result = generateResult(submission, currentUser);
@@ -2706,7 +2773,8 @@ public class DatabaseUtilService {
     public ModelingSubmission addModelingSubmissionWithEmptyResult(ModelingExercise exercise, String model, String login) {
         StudentParticipation participation = createAndSaveParticipationForExercise(exercise, login);
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(model, true);
-        submission = modelSubmissionService.save(submission, exercise, login);
+        var user = getUserByLogin(login);
+        submission = modelSubmissionService.handleModelingSubmission(submission, exercise, user);
         Result result = new Result();
         result = resultRepo.save(result);
         result.setSubmission(submission);

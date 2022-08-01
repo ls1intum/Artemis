@@ -12,7 +12,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { NgForm } from '@angular/forms';
-import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -183,17 +183,7 @@ export class TextExerciseUpdateComponent implements OnInit {
     private onSaveSuccess(exercise: TextExercise) {
         this.eventManager.broadcast({ name: 'textExerciseListModification', content: 'OK' });
         this.isSaving = false;
-
-        switch (this.editType) {
-            case EditType.CREATE:
-            case EditType.IMPORT:
-                // Passing exercise since it is required for navigation to the example submission dashboard.
-                navigateToExampleSubmissions(this.router, exercise);
-                break;
-            case EditType.UPDATE:
-                this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
-                break;
-        }
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse) {
