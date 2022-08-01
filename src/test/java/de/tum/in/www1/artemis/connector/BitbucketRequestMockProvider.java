@@ -467,9 +467,8 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockPutDefaultBranch(String projectKey) throws BitbucketException {
-        var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
-
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+        var defaultBranchPatternUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(defaultBranchPatternUrl))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
