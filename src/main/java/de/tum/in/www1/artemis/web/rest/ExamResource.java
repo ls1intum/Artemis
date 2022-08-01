@@ -40,6 +40,8 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.*;
@@ -213,7 +215,7 @@ public class ExamResource {
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -727,6 +729,10 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
+
+        // Reset existing student exams & participations in case they already exist
+        examService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
+
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
@@ -1088,6 +1094,7 @@ public class ExamResource {
      */
     @PutMapping("/courses/{courseId}/exams/{examId}/archive")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.Exports)
     public ResponseEntity<Void> archiveExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.info("REST request to archive exam : {}", examId);
 

@@ -49,13 +49,13 @@ describe('Text exercise management', () => {
         const exampleSolution = 'E = mc^2';
         textCreation.typeProblemStatement(problemStatement);
         textCreation.typeExampleSolution(exampleSolution);
-        cy.get('#example-submission-message').should('be.visible');
         let exercise: TextExercise;
         textCreation.create().then((request: Interception) => {
             exercise = request.response!.body;
         });
 
         // Create an example submission
+        cy.get('#example-submissions-button').click();
         exampleSubmissions.clickCreateExampleSubmission();
         exampleSubmissionCreation.showsExerciseTitle(exerciseTitle);
         exampleSubmissionCreation.showsProblemStatement(problemStatement);
