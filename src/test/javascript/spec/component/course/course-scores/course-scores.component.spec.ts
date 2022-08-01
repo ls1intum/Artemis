@@ -2,7 +2,7 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
+import { MockLanguageHelper, MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { User } from 'app/core/user/user.model';
 import { CourseScoresComponent, HighlightType } from 'app/course/course-scores/course-scores.component';
 import { EMAIL_KEY, NAME_KEY, COURSE_OVERALL_POINTS_KEY, COURSE_OVERALL_SCORE_KEY, USERNAME_KEY } from 'app/shared/export/export-constants';
@@ -34,6 +34,7 @@ import { ExerciseTypeStatisticsMap } from 'app/course/course-scores/exercise-typ
 import { CsvDecimalSeparator, CsvExportOptions, CsvFieldSeparator, CsvQuoteStrings } from 'app/shared/export/export-modal.component';
 import { ExportButtonComponent } from 'app/shared/export/export-button.component';
 import { CommonSpreadsheetCellObject } from 'app/shared/export/excel-export-row-builder';
+import { JhiLanguageHelper } from 'app/core/language/language.helper';
 
 describe('CourseScoresComponent', () => {
     let fixture: ComponentFixture<CourseScoresComponent>;
@@ -251,6 +252,7 @@ describe('CourseScoresComponent', () => {
                     useValue: { params: of({ courseId: 1 }) },
                 },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
                 MockProvider(ParticipantScoresService),
                 MockProvider(GradingSystemService, {
                     findGradingScaleForCourse: () => {
@@ -361,8 +363,8 @@ describe('CourseScoresComponent', () => {
     it('should make duplicated titles unique', () => {
         jest.spyOn(courseService, 'findWithExercises').mockReturnValue(of(new HttpResponse({ body: course })));
         fixture.detectChanges();
-        expect(quizIncludedWith10Points0BonusPoints.title).toEqual(`exercise (id=2)`);
-        expect(textIncludedWith10Points10BonusPoints.title).toEqual(`exercise (id=1)`);
+        expect(quizIncludedWith10Points0BonusPoints.title).toBe(`exercise (id=2)`);
+        expect(textIncludedWith10Points10BonusPoints.title).toBe(`exercise (id=1)`);
     });
 
     it('should group exercises and calculate exercise max score', () => {
@@ -381,14 +383,14 @@ describe('CourseScoresComponent', () => {
         fixture.detectChanges();
 
         expect(component.students[0].pointsPerExerciseType).toEqual(pointsOfStudent1);
-        expect(component.students[0].numberOfParticipatedExercises).toEqual(3);
-        expect(component.students[0].numberOfSuccessfulExercises).toEqual(3);
-        expect(component.students[0].overallPoints).toEqual(40);
+        expect(component.students[0].numberOfParticipatedExercises).toBe(3);
+        expect(component.students[0].numberOfSuccessfulExercises).toBe(3);
+        expect(component.students[0].overallPoints).toBe(40);
 
         expect(component.students[1].pointsPerExerciseType).toEqual(pointsOfStudent2);
-        expect(component.students[1].numberOfParticipatedExercises).toEqual(2);
-        expect(component.students[1].numberOfSuccessfulExercises).toEqual(1);
-        expect(component.students[1].overallPoints).toEqual(15);
+        expect(component.students[1].numberOfParticipatedExercises).toBe(2);
+        expect(component.students[1].numberOfSuccessfulExercises).toBe(1);
+        expect(component.students[1].overallPoints).toBe(15);
 
         expect(component.exportReady).toBeTrue();
     });
@@ -473,7 +475,7 @@ describe('CourseScoresComponent', () => {
         const user2Row = generatedRows[1];
         validateUserExportRow(user2Row, user2.name!, user2.login!, user2.email!, '0', '0%', '5', '5', '50%', '0', '0%', '10', '0%', '15', '50%');
         const maxRow = generatedRows[3];
-        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toEqual('30');
+        expect(maxRow[COURSE_OVERALL_POINTS_KEY]).toBe('30');
     });
 
     it('should set grading scale properties correctly', () => {
@@ -498,8 +500,8 @@ describe('CourseScoresComponent', () => {
         expect(component.gradingScaleExists).toBeTrue();
         expect(component.gradingScale).toEqual(gradingScale);
         expect(component.isBonus).toBeFalse();
-        expect(component.maxGrade).toEqual('A');
-        expect(component.averageGrade).toEqual('A');
+        expect(component.maxGrade).toBe('A');
+        expect(component.averageGrade).toBe('A');
     });
 
     it('should set highlighting to default if current highlighting is deselected', () => {
@@ -509,7 +511,7 @@ describe('CourseScoresComponent', () => {
         component.highlightBar(HighlightType.AVERAGE);
 
         expect(component.highlightedType).toBe(HighlightType.NONE);
-        expect(component.valueToHighlight).toBe(undefined);
+        expect(component.valueToHighlight).toBeUndefined();
     });
 
     it('should highlight the median correctly', () => {

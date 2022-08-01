@@ -132,24 +132,24 @@ describe('Submission Service', () => {
 
         submission.results?.unshift(firstResult);
 
-        expect(secondFeedback.copiedFeedbackId).toBe(undefined);
+        expect(secondFeedback.copiedFeedbackId).toBeUndefined();
 
         const latestResultFeedbacks = getLatestSubmissionResult(submission)!.feedbacks!;
         latestResultFeedbacks?.push(secondFeedback);
 
         // Copy checking should not be done for correction round 0.
         service.handleFeedbackCorrectionRoundTag(0, submission);
-        expect(secondFeedback.copiedFeedbackId).toBe(undefined);
+        expect(secondFeedback.copiedFeedbackId).toBeUndefined();
 
         // Only the second feedback has identical values to the first one, the other feedback should remain untouched.
         service.handleFeedbackCorrectionRoundTag(1, submission);
-        expect(latestResultFeedbacks[0].copiedFeedbackId).toBe(undefined);
+        expect(latestResultFeedbacks[0].copiedFeedbackId).toBeUndefined();
         expect(secondFeedback.copiedFeedbackId).toBe(firstFeedback.id);
 
         secondFeedback.text = 'Feedback changed';
         // Feedback.text is changed so the Feedback is not a direct copy anymore.
         service.handleFeedbackCorrectionRoundTag(2, submission);
-        expect(secondFeedback.copiedFeedbackId).toBe(undefined);
+        expect(secondFeedback.copiedFeedbackId).toBeUndefined();
     });
 
     it('should convert results date from server', () => {
@@ -159,7 +159,7 @@ describe('Submission Service', () => {
         const result = submission.results![0];
         result.completionDate = dateStr as any; // String should be converted to proper type by the tested service.
 
-        service.convertResultsDateFromServer(submission.results);
+        service.convertResultArrayDatesFromServer(submission.results);
 
         expect(result.completionDate).toEqual(date);
     });

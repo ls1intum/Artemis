@@ -8,11 +8,13 @@ import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
+import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
 
 /**
@@ -24,8 +26,18 @@ public class ExamActivityResource {
 
     private final ExamMonitoringScheduleService examMonitoringScheduleService;
 
-    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService) {
+    private final InstanceMessageSendService instanceMessageSendService;
+
+    private final ExamAccessService examAccessService;
+
+    private final ExamRepository examRepository;
+
+    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService, InstanceMessageSendService instanceMessageSendService,
+            ExamAccessService examAccessService, ExamRepository examRepository) {
         this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.instanceMessageSendService = instanceMessageSendService;
+        this.examAccessService = examAccessService;
+        this.examRepository = examRepository;
     }
 
     /**
@@ -49,5 +61,33 @@ public class ExamActivityResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
         return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
+    }
+
+    /**
+     * PUT api/courses/{courseId}/exams/{examId}/statistics: disable or enable the monitoring
+     *
+     * @param courseId the course to which the exam belongs to
+     * @param examId the exam to which the student exams belong to
+     * @param monitoring new status of the monitoring
+     * @return all exam actions of the exam
+     */
+    @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Boolean> updateMonitoring(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean monitoring) {
+        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
+
+        Exam exam = examRepository.findByIdElseThrow(examId);
+        exam.setMonitoring(monitoring);
+        Exam result = examRepository.save(exam);
+
+        if (result.isMonitoring()) {
+            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+        }
+        else {
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
+        }
+        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), result.isMonitoring());
+
+        return ResponseEntity.ok().body(result.isMonitoring());
     }
 }

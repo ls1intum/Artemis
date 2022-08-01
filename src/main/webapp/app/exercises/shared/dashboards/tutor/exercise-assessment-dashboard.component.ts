@@ -71,7 +71,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exerciseGroupId: number;
     isExamMode = false;
     isTestRun = false;
-    isAtLeastInstructor = false;
     isLoading = false;
 
     statsForDashboard = new StatsForDashboard();
@@ -146,7 +145,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
-    view: [number, number] = [350, 150];
+    view: [number, number] = [330, 150];
     legendPosition = LegendPosition.Below;
     assessments: any[];
     customColors: any[];
@@ -275,7 +274,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:

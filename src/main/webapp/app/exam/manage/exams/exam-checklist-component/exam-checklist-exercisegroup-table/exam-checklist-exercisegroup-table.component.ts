@@ -19,6 +19,7 @@ export class ExamChecklistExerciseGroupTableComponent implements OnChanges {
     faExclamationTriangle = faExclamationTriangle;
 
     ngOnChanges() {
+        this.exerciseGroupVariantColumns = []; // Clear any previously existing entries
         if (this.exerciseGroups) {
             let exerciseGroupIndex = 1;
             this.exerciseGroups.forEach((exerciseGroup) => {

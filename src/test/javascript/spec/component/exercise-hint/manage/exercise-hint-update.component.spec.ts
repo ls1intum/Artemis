@@ -1,7 +1,7 @@
 import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder, FormsModule } from '@angular/forms';
 import { of } from 'rxjs';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 
 import { ExerciseHintUpdateComponent } from 'app/exercises/shared/exercise-hint/manage/exercise-hint-update.component';
 import { ArtemisTestModule } from '../../../test.module';
@@ -32,8 +32,11 @@ describe('ExerciseHint Management Update Component', () => {
     task2.taskName = 'Task 2';
     task2.testCases = [new ProgrammingExerciseTestCase(), new ProgrammingExerciseTestCase()];
 
+    const programmingExercise = new ProgrammingExercise(undefined, undefined);
+    programmingExercise.id = 15;
+
     const exerciseHint = new ExerciseHint();
-    const route = { data: of({ exerciseHint }), params: of({ courseId: 12, exerciseId: 15 }) } as any as ActivatedRoute;
+    const route = { data: of({ exerciseHint, exercise: programmingExercise }), params: of({ courseId: 12 }) } as any as ActivatedRoute;
 
     beforeEach(fakeAsync(() => {
         TestBed.configureTestingModule({
@@ -67,24 +70,12 @@ describe('ExerciseHint Management Update Component', () => {
         const exercise = new ProgrammingExercise(undefined, undefined);
         exercise.programmingLanguage = ProgrammingLanguage.JAVA;
         exercise.id = 15;
-        const headers = new HttpHeaders().append('link', 'link;link');
-        const findByExerciseIdSpy = jest.spyOn(programmingExerciseService, 'find').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: exercise,
-                    headers,
-                }),
-            ),
-        );
 
         comp.ngOnInit();
 
-        expect(findByExerciseIdSpy).toHaveBeenCalledOnce();
-        expect(findByExerciseIdSpy).toHaveBeenCalledWith(15);
-        expect(comp.exerciseHint.exercise).toEqual(exercise);
+        expect(comp.exercise?.id).toBe(15);
         expect(comp.exerciseHint).toEqual(exerciseHint);
         expect(comp.courseId).toBe(12);
-        expect(comp.exerciseId).toBe(15);
     });
 
     it('should load and set tasks for exercise hint', fakeAsync(() => {
@@ -124,13 +115,14 @@ describe('ExerciseHint Management Update Component', () => {
             jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
             comp.courseId = 1;
-            comp.exerciseId = 2;
+            comp.exercise = programmingExercise;
+
             // WHEN
             comp.save();
             tick(); // simulate async
 
             // THEN
-            expect(service.update).toHaveBeenCalledWith(2, entity);
+            expect(service.update).toHaveBeenCalledWith(15, entity);
             expect(comp.isSaving).toBeFalse();
         }));
 
@@ -141,13 +133,14 @@ describe('ExerciseHint Management Update Component', () => {
             jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.exerciseHint = entity;
             comp.courseId = 1;
-            comp.exerciseId = 2;
+            comp.exercise = programmingExercise;
+
             // WHEN
             comp.save();
             tick(); // simulate async
 
             // THEN
-            expect(service.create).toHaveBeenCalledWith(2, entity);
+            expect(service.create).toHaveBeenCalledWith(15, entity);
             expect(comp.isSaving).toBeFalse();
         }));
     });

@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute } from '@angular/router';
-import { catchError, map, Observable, of, Subscription, tap } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { EditorMode, MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
@@ -13,8 +13,11 @@ import { ProgrammingExerciseService } from 'app/exercises/programming/manage/ser
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
-import { onError } from 'app/shared/util/global.utils';
-import { Exercise } from 'app/entities/exercise.model';
+import { ManualSolutionEntryCreationModalComponent } from 'app/exercises/programming/hestia/generation-overview/manual-solution-entry-creation-modal/manual-solution-entry-creation-modal.component';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { CodeHint } from 'app/entities/hestia/code-hint-model';
+
+const DEFAULT_DISPLAY_THRESHOLD = 3;
 
 @Component({
     selector: 'jhi-exercise-hint-update',
@@ -25,7 +28,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     MarkdownEditorHeight = MarkdownEditorHeight;
 
     courseId: number;
-    exerciseId: number;
+    exercise: ProgrammingExercise;
     readonly HintType = HintType;
     exerciseHint = new ExerciseHint();
     solutionEntries: ProgrammingExerciseSolutionEntry[];
@@ -47,6 +50,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     constructor(
         private route: ActivatedRoute,
         protected alertService: AlertService,
+        private modalService: NgbModal,
         protected exerciseHintService: ExerciseHintService,
         private programmingExerciseService: ProgrammingExerciseService,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -58,29 +62,15 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     ngOnInit() {
         this.paramSub = this.route.params.subscribe((params) => {
             this.courseId = params['courseId'];
-            this.exerciseId = params['exerciseId'];
             this.isSaving = false;
         });
-        this.route.data.subscribe(({ exerciseHint }) => {
+        this.route.data.subscribe(({ exerciseHint, exercise }) => {
+            this.exercise = exercise;
+            exerciseHint.exercise = exercise;
             this.exerciseHint = exerciseHint;
+            this.exerciseHint.displayThreshold = this.exerciseHint.displayThreshold ?? DEFAULT_DISPLAY_THRESHOLD;
 
-            if (!this.exerciseHint.exercise) {
-                this.programmingExerciseService
-                    .find(this.exerciseId)
-                    .pipe(
-                        map(({ body }) => body),
-                        tap((res: Exercise) => {
-                            this.exerciseHint.exercise = res;
-                        }),
-                        catchError((error: HttpErrorResponse) => {
-                            onError(this.alertService, error);
-                            return of(null);
-                        }),
-                    )
-                    .subscribe(() => {});
-            }
-
-            this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exerciseId).subscribe((tasks) => {
+            this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.exercise.id!).subscribe((tasks) => {
                 this.tasks = tasks;
 
                 const selectedTask = this.tasks.find((task) => task.id === this.exerciseHint.programmingExerciseTask?.id);
@@ -90,6 +80,18 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
                     this.exerciseHint.programmingExerciseTask = this.tasks[0];
                 }
             });
+        });
+    }
+
+    openManualEntryCreationModal() {
+        const codeHint = this.exerciseHint as CodeHint;
+        const testCasesForCurrentTask = codeHint.programmingExerciseTask?.testCases ?? [];
+        const modalRef: NgbModalRef = this.modalService.open(ManualSolutionEntryCreationModalComponent as Component, { size: 'lg', backdrop: 'static' });
+        modalRef.componentInstance.exerciseId = this.exercise.id!;
+        modalRef.componentInstance.codeHint = codeHint;
+        modalRef.componentInstance.testCases = testCasesForCurrentTask;
+        modalRef.componentInstance.onEntryCreated.subscribe((createdEntry: ProgrammingExerciseSolutionEntry) => {
+            codeHint!.solutionEntries!.push(createdEntry);
         });
     }
 
@@ -117,7 +119,7 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
      */
     previousState() {
         this.navigationUtilService.navigateBackWithOptional(
-            ['course-management', this.courseId.toString(), 'programming-exercises', this.exerciseId.toString(), 'hints'],
+            ['course-management', this.courseId.toString(), 'programming-exercises', this.exercise.id!.toString(), 'hints'],
             this.exerciseHint.id?.toString(),
         );
     }
@@ -128,9 +130,9 @@ export class ExerciseHintUpdateComponent implements OnInit, OnDestroy {
     save() {
         this.isSaving = true;
         if (this.exerciseHint.id !== undefined) {
-            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exerciseId, this.exerciseHint));
+            this.subscribeToSaveResponse(this.exerciseHintService.update(this.exercise.id!, this.exerciseHint));
         } else {
-            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exerciseId, this.exerciseHint));
+            this.subscribeToSaveResponse(this.exerciseHintService.create(this.exercise.id!, this.exerciseHint));
         }
     }
 

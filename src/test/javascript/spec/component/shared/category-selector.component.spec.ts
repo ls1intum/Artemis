@@ -120,7 +120,7 @@ describe('Category Selector Component', () => {
         expect(comp.categories).toEqual([category6, { category: 'category9', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'category9', color: categoryColor }]);
         expect(comp.categoryInput.nativeElement.value).toBe('');
-        expect(comp.categoryCtrl.value).toBe(null);
+        expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should not create new item on select', () => {
@@ -133,7 +133,7 @@ describe('Category Selector Component', () => {
         expect(comp.categories).toEqual([category6, category7]);
         expect(emitSpy).toHaveBeenCalledWith([category6, category7]);
         expect(comp.categoryInput.nativeElement.value).toBe('');
-        expect(comp.categoryCtrl.value).toBe(null);
+        expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should not create duplicate item on add', () => {
@@ -144,7 +144,7 @@ describe('Category Selector Component', () => {
 
         expect(comp.categories).toEqual([category6]);
         expect(emitSpy).not.toHaveBeenCalledOnce();
-        expect(comp.categoryCtrl.value).toBe(null);
+        expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should save exiting category on add', () => {
@@ -156,7 +156,7 @@ describe('Category Selector Component', () => {
 
         expect(comp.categories).toEqual([category6, category8]);
         expect(emitSpy).toHaveBeenCalledWith([category6, category8]);
-        expect(comp.categoryCtrl.value).toBe(null);
+        expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should create new item on add for existing categories', () => {
@@ -169,7 +169,7 @@ describe('Category Selector Component', () => {
         const categoryColor = comp.categories[1].color;
         expect(comp.categories).toEqual([category6, { category: 'category9', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([category6, { category: 'category9', color: categoryColor }]);
-        expect(comp.categoryCtrl.value).toBe(null);
+        expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should create new item on add for empty categories', () => {
@@ -181,7 +181,7 @@ describe('Category Selector Component', () => {
         const categoryColor = comp.categories[0].color;
         expect(comp.categories).toEqual([{ category: 'category6', color: categoryColor }]);
         expect(emitSpy).toHaveBeenCalledWith([{ category: 'category6', color: categoryColor }]);
-        expect(comp.categoryCtrl.value).toBe(null);
+        expect(comp.categoryCtrl.value).toBeNull();
     });
 
     it('should set categories for autocomplete on changes', () => {

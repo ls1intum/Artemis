@@ -81,6 +81,6 @@ describe('Course Management Exercises Component', () => {
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
         expect(comp.showSearch).toBeTrue();
-        expect(searchBar).not.toBe(null);
+        expect(searchBar).not.toBeNull();
     });
 });

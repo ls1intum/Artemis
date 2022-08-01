@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
  * The service is not directly injected / used here as it listens to Hibernate events, so we just apply
  * CRUD operations on the entities it supports.
  */
-public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private CacheManager cacheManager;
@@ -53,12 +53,12 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     private ExerciseHintRepository exerciseHintRepository;
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
-    public void testEvictsTitleOnUpdateTitleOrDeleteCourse() {
+    void testEvictsTitleOnUpdateTitleOrDeleteCourse() {
         var course = database.addEmptyCourse();
         testCacheEvicted("courseTitle", () -> new Tuple<>(course.getId(), course.getTitle()), List.of(
                 // Should evict as we change the title
@@ -81,7 +81,7 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    public void testEvictsTitleOnUpdateTitleOrDeleteExercise() {
+    void testEvictsTitleOnUpdateTitleOrDeleteExercise() {
         var course = database.addCourseWithOneReleasedTextExercise();
         var exercise = course.getExercises().stream().findAny().orElseThrow();
         testCacheEvicted("exerciseTitle", () -> new Tuple<>(exercise.getId(), exercise.getTitle()), List.of(
@@ -105,7 +105,7 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    public void testEvictsTitleOnUpdateTitleOrDeleteLecture() {
+    void testEvictsTitleOnUpdateTitleOrDeleteLecture() {
         var lecture = database.createCourseWithLecture(true);
         testCacheEvicted("lectureTitle", () -> new Tuple<>(lecture.getId(), lecture.getTitle()), List.of(
                 // Should evict as we change the title
@@ -128,7 +128,7 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    public void testEvictsTitleOnUpdateNameOrDeleteOrganization() {
+    void testEvictsTitleOnUpdateNameOrDeleteOrganization() {
         var org = database.createOrganization();
         testCacheEvicted("organizationTitle", () -> new Tuple<>(org.getId(), org.getName()), List.of(
                 // Should evict as we change the name
@@ -151,7 +151,7 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    public void testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram() {
+    void testEvictsTitleOnUpdateTitleOrDeleteApollonDiagram() {
         var apollonDiagram = apollonDiagramRepository.save(ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1"));
         testCacheEvicted("diagramTitle", () -> new Tuple<>(apollonDiagram.getId(), apollonDiagram.getTitle()), List.of(
                 // Should evict as we change the title
@@ -174,7 +174,7 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    public void testEvictsTitleOnUpdateTitleOrDeleteExam() {
+    void testEvictsTitleOnUpdateTitleOrDeleteExam() {
         var course = database.createCourse();
         var exam = database.addExam(course);
         testCacheEvicted("examTitle", () -> new Tuple<>(exam.getId(), exam.getTitle()), List.of(
@@ -198,7 +198,7 @@ public class TitleCacheEvictionServiceTest extends AbstractSpringIntegrationBamb
     }
 
     @Test
-    public void testEvictsTitleOnUpdateTitleOrDeleteExerciseHint() {
+    void testEvictsTitleOnUpdateTitleOrDeleteExerciseHint() {
         var course = database.addCourseWithOneProgrammingExercise();
         var exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
         database.addHintsToExercise(exercise);

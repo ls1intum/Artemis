@@ -1,10 +1,10 @@
 import { Injectable } from '@angular/core';
 import { Observable, of, Subject, throwError } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse, HttpParams } from '@angular/common/http';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { QuizSubmission } from 'app/entities/quiz/quiz-submission.model';
-import { catchError, map } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { Exam } from 'app/entities/exam.model';
 import dayjs from 'dayjs/esm';
@@ -35,9 +35,11 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server or localstorage. Will also mark the student exam as started
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
+     * @param studentExamId the id of the student Exam which should be loaded
+     * @returns the studentExam with Exercises for the conduction-phase
      */
-    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/conduction';
+    public loadStudentExamWithExercisesForConduction(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/conduction';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -56,9 +58,11 @@ export class ExamParticipationService {
      * Retrieves a {@link StudentExam} from server or localstorage for display of the summary.
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
+     * @param studentExamId the id of the studentExam
+     * @returns a studentExam with Exercises for the summary-phase
      */
-    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number): Observable<StudentExam> {
-        const url = this.getResourceURL(courseId, examId) + '/student-exams/summary';
+    public loadStudentExamWithExercisesForSummary(courseId: number, examId: number, studentExamId: number): Observable<StudentExam> {
+        const url = this.getResourceURL(courseId, examId) + '/student-exams/' + studentExamId + '/summary';
         return this.getStudentExamFromServer(url, courseId, examId);
     }
 
@@ -98,7 +102,7 @@ export class ExamParticipationService {
     }
 
     /**
-     * Loads {@link Exam} object from server
+     * Loads {@link StudentExam} object from server
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
      */
@@ -125,6 +129,25 @@ export class ExamParticipationService {
     }
 
     /**
+     * Loads {@link StudentExam} objects linked to a test exam per user and per course from server
+     * @param courseId the id of the course we are interested
+     * @returns a List of all StudentExams without Exercises per User and Course
+     */
+    public loadStudentExamsForTestExamsPerCourseAndPerUserForOverviewPage(courseId: number): Observable<StudentExam[]> {
+        const url = `${SERVER_API_URL}api/courses/${courseId}/test-exams-per-user`;
+        return this.httpClient
+            .get<StudentExam[]>(url, { observe: 'response' })
+            .pipe(map((studentExam: HttpResponse<StudentExam[]>) => this.processListOfStudentExamsFromServer(studentExam)));
+    }
+
+    private processListOfStudentExamsFromServer(studentExamsResponse: HttpResponse<StudentExam[]>) {
+        studentExamsResponse.body!.forEach((studentExam) => {
+            return ExamParticipationService.convertStudentExamDateFromServer(studentExam);
+        });
+        return studentExamsResponse.body!;
+    }
+
+    /**
      * Submits {@link StudentExam} - the exam cannot be updated afterwards anymore
      * @param courseId the id of the course the exam is created in
      * @param examId the id of the exam
@@ -140,6 +163,7 @@ export class ExamParticipationService {
             map((submittedStudentExam: StudentExam) => {
                 return ExamParticipationService.convertStudentExamFromServer(submittedStudentExam);
             }),
+            tap((submittedStudentExam: StudentExam) => this.currentlyLoadedStudentExam.next(submittedStudentExam)),
             catchError((error: HttpErrorResponse) => {
                 if (error.status === 403 && error.headers.get('x-null-error') === 'error.submissionNotInTime') {
                     return throwError(() => new Error('artemisApp.studentExam.submissionNotInTime'));
@@ -246,6 +270,8 @@ export class ExamParticipationService {
 
     private static convertStudentExamDateFromServer(studentExam: StudentExam): StudentExam {
         studentExam.exam = ExamParticipationService.convertExamDateFromServer(studentExam.exam);
+        studentExam.submissionDate = studentExam.submissionDate && dayjs(studentExam.submissionDate);
+        studentExam.startedDate = studentExam.startedDate && dayjs(studentExam.startedDate);
         return studentExam;
     }
 

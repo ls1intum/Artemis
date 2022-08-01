@@ -1,0 +1,20 @@
+<h5 class="d-flex mt-0 mb-0">
+    <ng-container *ngIf="isTestExam; else realExam">
+        <div class="d-flex badge bg-info">
+            <fa-icon class="me-1 text-white" [icon]="faInfoCircle"></fa-icon>
+            <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusTestExam"></span>
+        </div>
+    </ng-container>
+    <ng-template #realExam>
+        <div *ngIf="hasStudentsWithoutExam; else allStudentsHaveExams" class="d-flex badge bg-warning">
+            <fa-icon class="me-1 text-white" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.studentExams.studentExamStatusWarningTooltip' | artemisTranslate"></fa-icon>
+            <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusWarning"></span>
+        </div>
+        <ng-template #allStudentsHaveExams>
+            <div class="d-flex badge bg-success">
+                <fa-icon class="me-1 text-white" [icon]="faCheckCircle"></fa-icon>
+                <span class="ms-1" jhiTranslate="artemisApp.studentExams.studentExamStatusSuccess"></span>
+            </div>
+        </ng-template>
+    </ng-template>
+</h5>

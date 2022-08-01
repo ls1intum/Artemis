@@ -1,7 +1,6 @@
 .bar-chart {
     width: 100% !important;
     height: 100% !important;
-    min-height: 200px;
 
     :host::ng-deep .legend-labels {
         background-color: var(--exam-monitoring-card-footer-background-color) !important;
@@ -14,5 +13,28 @@
 
     :host::ng-deep .legend-labels {
         background-color: var(--exam-monitoring-card-footer-background-color) !important;
+    }
+}
+
+.doughnut-chart {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex;
+    justify-content: center;
+
+    :host::ng-deep .legend-labels {
+        background-color: var(--exam-monitoring-card-footer-background-color) !important;
+    }
+}
+
+.doughnut-chart-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+
+    .doughnut-chart-text {
+        position: absolute;
+        min-height: 50px;
     }
 }

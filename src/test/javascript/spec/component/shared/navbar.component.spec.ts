@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Router, UrlSerializer } from '@angular/router';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ActivatedRoute, Router, UrlSerializer } from '@angular/router';
 import { NgbCollapse, NgbDropdown } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
@@ -23,8 +23,16 @@ import { ArtemisTestModule } from '../../test.module';
 import { MockRouterLinkActiveOptionsDirective, MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { JhiConnectionWarningComponent } from 'app/shared/connection-warning/connection-warning.component';
+import { AccountService } from 'app/core/auth/account.service';
+import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { ThemeSwitchComponent } from 'app/core/theme/theme-switch.component';
+import { Authority } from 'app/shared/constants/authority.constants';
+import { User } from 'app/core/user/user.model';
+import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
+import dayjs from 'dayjs/esm';
+import { StudentExam } from 'app/entities/student-exam.model';
+import { MockActivatedRoute } from '../../helpers/mocks/activated-route/mock-activated-route';
 
 class MockBreadcrumb {
     label: string;
@@ -82,6 +90,7 @@ describe('NavbarComponent', () => {
             ],
             providers: [
                 MockProvider(UrlSerializer),
+                MockProvider(MockAccountService),
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
@@ -111,7 +120,34 @@ describe('NavbarComponent', () => {
         expect(component).not.toBeNull();
     });
 
-    it('should build breadcrumbs for students', () => {
+    it('should make api call when logged in user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledWith('elvish');
+    });
+
+    it('should not make api call when anonymous user changes language', () => {
+        const languageService = fixture.debugElement.injector.get(TranslateService);
+        const useSpy = jest.spyOn(languageService, 'use');
+        const accountService = fixture.debugElement.injector.get(AccountService);
+        const languageChangeSpy = jest.spyOn(accountService, 'updateLanguage');
+
+        fixture.detectChanges();
+        component.currAccount = undefined;
+        component.changeLanguage('elvish');
+
+        expect(useSpy).toHaveBeenCalledWith('elvish');
+        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
+    });
+
+    it('should not build breadcrumbs for students', () => {
         const testUrl = '/courses/1/exercises';
         router.setUrl(testUrl);
 
@@ -190,6 +226,34 @@ describe('NavbarComponent', () => {
 
         expect(component.breadcrumbs[0]).toEqual({ label: 'route-without-translation', translate: false, uri: '/admin/route-without-translation/' } as MockBreadcrumb);
     });
+
+    it('should set the exam active state correctly', fakeAsync(() => {
+        const now = dayjs();
+        const examParticipationService = TestBed.inject(ExamParticipationService);
+        const activatedRoute = TestBed.inject(ActivatedRoute) as MockActivatedRoute;
+
+        fixture.detectChanges();
+        activatedRoute.setParameters({ examId: 1 });
+        router.setUrl('/course/2/exams/1');
+
+        examParticipationService.currentlyLoadedStudentExam.next({
+            workingTime: 60,
+            exam: {
+                id: 1,
+                startDate: now.add(1, 'minute'),
+                endDate: now.add(2, 'minutes'),
+                gracePeriod: 180,
+            },
+        } as StudentExam);
+
+        expect(component.isExamActive).toBeFalse();
+        tick(61000);
+        expect(component.isExamActive).toBeTrue();
+        tick(61000);
+        expect(component.isExamActive).toBeTrue();
+        tick(180000);
+        expect(component.isExamActive).toBeFalse();
+    }));
 
     describe('Special Cases for Breadcrumbs', () => {
         it('programming exercise import', () => {
@@ -399,7 +463,7 @@ describe('NavbarComponent', () => {
             expect(component.breadcrumbs[5]).toEqual(editorSubmissionCrumb);
         });
 
-        it('modeling exercise example submission', () => {
+        it('existing modeling exercise example submission', () => {
             const testUrl = '/course-management/1/modeling-exercises/2/example-submissions/3';
             router.setUrl(testUrl);
 
@@ -579,5 +643,34 @@ describe('NavbarComponent', () => {
                 expect(component.breadcrumbs[3]).toMatchObject({ uri: '/courses/1/exercises/2/', label: 'Test Exercise' });
             },
         );
+    });
+
+    it.each([
+        { width: 1200, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 1100, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 600, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true } },
+        { width: 550, account: { login: 'test' }, roles: [Authority.ADMIN], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+        { width: 1000, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 850, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 600, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true } },
+        { width: 470, account: { login: 'test' }, roles: [Authority.INSTRUCTOR], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+        { width: 800, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 650, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 600, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: true } },
+        { width: 470, account: { login: 'test' }, roles: [Authority.USER], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+        { width: 520, account: undefined, roles: [], expected: { isCollapsed: false, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 500, account: undefined, roles: [], expected: { isCollapsed: true, isNavbarNavVertical: false, iconsMovedToMenu: false } },
+        { width: 450, account: undefined, roles: [], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: false } },
+        { width: 400, account: undefined, roles: [], expected: { isCollapsed: true, isNavbarNavVertical: true, iconsMovedToMenu: true } },
+    ])('should calculate correct breakpoints', ({ width, account, roles, expected }) => {
+        const accountService = TestBed.inject(AccountService);
+        jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockImplementation((authArray) => authArray.some((auth) => (roles as string[]).includes(auth)));
+
+        component.currAccount = account as User;
+        window['innerWidth'] = width;
+
+        component.onResize();
+
+        expect({ isCollapsed: component.isCollapsed, isNavbarNavVertical: component.isNavbarNavVertical, iconsMovedToMenu: component.iconsMovedToMenu }).toEqual(expected);
     });
 });

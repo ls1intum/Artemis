@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
 import { ApollonDiagramDetailComponent } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram-detail.component';
 import { TranslateService } from '@ngx-translate/core';
-import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { MockLanguageHelper, MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import * as testClassDiagram from '../../util/modeling/test-models/class-diagram.json';
 import { UMLModel } from '@ls1intum/apollon';
@@ -55,6 +55,7 @@ describe('ApollonDiagramDetail Component', () => {
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
+                { provide: JhiLanguageHelper, useClass: MockLanguageHelper },
             ],
             schemas: [],
         })
@@ -95,7 +96,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.ngOnInit();
         // ApollonEditor is the child
         tick(500);
-        expect(div.children.length).toEqual(1);
+        expect(div.children).toHaveLength(1);
 
         // create spy after ngOnInit
         jest.spyOn(global, 'clearInterval');
@@ -103,9 +104,9 @@ describe('ApollonDiagramDetail Component', () => {
         // test
         fixture.componentInstance.ngOnDestroy();
         tick(500);
-        expect(div.children.length).toEqual(0);
-        expect(clearInterval).toBeCalledTimes(1);
-        expect(clearInterval).toBeCalledWith(fixture.componentInstance.autoSaveInterval);
+        expect(div.children).toHaveLength(0);
+        expect(clearInterval).toHaveBeenCalledTimes(1);
+        expect(clearInterval).toHaveBeenCalledWith(fixture.componentInstance.autoSaveInterval);
     }));
 
     it('initializeApollonEditor', fakeAsync(() => {
@@ -126,7 +127,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.apollonDiagram = diagram;
         fixture.componentInstance.initializeApollonEditor(model);
         // ApollonEditor is the child
-        expect(div.children.length).toEqual(1);
+        expect(div.children).toHaveLength(1);
 
         // set selection
         fixture.componentInstance.apollonEditor!.selection = { elements: model.elements.map((element) => element.id), relationships: [] };
@@ -136,7 +137,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.downloadSelection().then(() => {
             tick(500);
             // last task when downloading file
-            expect(window.URL.revokeObjectURL).toBeCalled();
+            expect(window.URL.revokeObjectURL).toHaveBeenCalled();
         });
     }));
 
@@ -155,7 +156,7 @@ describe('ApollonDiagramDetail Component', () => {
         // test
         fixture.componentInstance.saveDiagram();
         tick(500);
-        expect(updateStub).toBeCalled();
+        expect(updateStub).toHaveBeenCalled();
         flush();
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
@@ -180,7 +181,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         // test
         fixture.componentInstance.generateExercise().then(() => {
-            expect(successSpy).toBeCalled();
+            expect(successSpy).toHaveBeenCalled();
         });
         tick(500);
         flush();

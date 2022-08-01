@@ -1,7 +1,24 @@
 <div>
     <h2 id="page-heading">
         <span jhiTranslate="artemisApp.exerciseHint.home.title">Exercise Hints</span>
-        <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-exercise-hint" routerLink="new">
+
+        <a
+            *ngIf="exercise?.programmingLanguage === ProgrammingLanguage.JAVA"
+            id="jh-code-hints"
+            [class]="containsCodeHints ? 'btn-secondary' : 'btn-primary'"
+            class="btn float-end jh-create-entity create-exercise-hint"
+            routerLink="code-hint-management"
+        >
+            <div *ngIf="containsCodeHints">
+                <fa-icon [icon]="faWrench"></fa-icon>
+                <span>Manage Code Hints</span>
+            </div>
+            <div *ngIf="!containsCodeHints">
+                <fa-icon [icon]="faArrowsRotate"></fa-icon>
+                <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
+            </div>
+        </a>
+        <a id="jh-create-entity" class="btn btn-primary float-end jh-create-entity create-exercise-hint mx-2" routerLink="new">
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.exerciseHint.home.createLabel"> Create new Exercise Hint </span>
         </a>

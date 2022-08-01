@@ -93,7 +93,7 @@ describe('Exercise Service', () => {
         expect(exercise.assessmentDueDateError).toBeTrue();
     });
 
-    it('should validate empty example solution publication date', () => {
+    it('should validate empty example solution publication date with assessment due date', () => {
         // Set flags to opposite of what is expected so we know they are changed.
         exercise.dueDateError = true;
         exercise.assessmentDueDateError = true;

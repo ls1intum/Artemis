@@ -293,8 +293,9 @@ public class ProgrammingSubmissionResource {
             log.info("create new programmingSubmission with commitHash: {} for exercise {}", lastCommitHash, exerciseId);
         }
         catch (Exception ex) {
-            log.debug("Commit hash could not be parsed for from test repository from exercise " + exerciseId
-                    + ", the submission will be created with the latest commitHash of the solution repository.", ex);
+            log.debug(
+                    "Commit hash could not be parsed from test repository from exercise {}, the submission will be created with the latest commit hash of the solution repository.",
+                    exerciseId, ex);
         }
 
         // When the tests were changed, the solution repository will be built. We therefore create a submission for the solution participation.
@@ -431,7 +432,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
-        this.programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
+        programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());

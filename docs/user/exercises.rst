@@ -7,6 +7,7 @@ A general explanation of the exercises in Artemis:
 
 .. toctree::
    exercises/general
+   exercises/assessment
 
 Artemis supports the following exercises:
 
@@ -17,3 +18,4 @@ Artemis supports the following exercises:
    exercises/modeling
    exercises/textual
    exercises/file-upload
+   exercises/team-exercises

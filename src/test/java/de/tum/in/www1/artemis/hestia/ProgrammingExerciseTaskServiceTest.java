@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.hestia;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
-public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseTaskService programmingExerciseTaskService;
@@ -60,12 +59,12 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
-    public void testNewExercise() {
+    void testNewExercise() {
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(2);
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         assertThat(tasks).hasSize(2).anyMatch(programmingExerciseTask -> checkTaskEqual(programmingExerciseTask, "Task 1", "testClass[BubbleSort]"))
@@ -73,7 +72,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     }
 
     @Test
-    public void testAddTask() {
+    void testAddTask() {
         var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
                 .collect(Collectors.toSet());
 
@@ -94,13 +93,13 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     }
 
     @Test
-    public void testRemoveAllTasks() {
+    void testRemoveAllTasks() {
         updateProblemStatement("Empty");
         assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
     }
 
     @Test
-    public void testReduceToOneTask() {
+    void testReduceToOneTask() {
         updateProblemStatement("[task][Task 1](testClass[BubbleSort],testMethods[Context], testMethods[Policy])");
         assertThat(programmingExerciseTaskRepository.findAll()).hasSize(1);
         var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
@@ -117,7 +116,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
      * Tests that renaming a task does not remove and read the task, but instead updates it
      */
     @Test
-    public void testRenameTask() {
+    void testRenameTask() {
         var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
                 .collect(Collectors.toSet());
 
@@ -142,7 +141,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
      * Tests that not changing any tasks in the problem statement will not update any tasks
      */
     @Test
-    public void testNoChanges() {
+    void testNoChanges() {
         var previousTaskIds = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId()).stream().map(ProgrammingExerciseTask::getId)
                 .collect(Collectors.toSet());
 
@@ -160,7 +159,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     }
 
     @Test
-    public void testDeleteWithCodeHints() {
+    void testDeleteWithCodeHints() {
         var task = programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId()).stream().filter(task1 -> "Task 1".equals(task1.getTaskName())).findFirst()
                 .orElse(null);
         assertThat(task).isNotNull();
@@ -177,8 +176,8 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
     }
 
     @Test
-    public void testParseTestCaseNames() {
-        List<String> testCaseNames = List.of("testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]");
+    void testParseTestCaseNames() {
+        String[] testCaseNames = new String[] { "testClass[BubbleSort]", "testWithBraces()", "testParametrized(Parameter1, 2)[1]" };
         for (var name : testCaseNames) {
             var testCase = new ProgrammingExerciseTestCase();
             testCase.setExercise(programmingExercise);
@@ -194,7 +193,7 @@ public class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegratio
         var actualTaskWithTestCases = programmingExerciseTaskRepository.findByIdWithTestCaseAndSolutionEntriesElseThrow(actualTasks.get(0).getId());
         assertThat(actualTaskWithTestCases.getTaskName()).isEqualTo("Task 1");
         var actualTestCaseNames = actualTaskWithTestCases.getTestCases().stream().map(ProgrammingExerciseTestCase::getTestName).toList();
-        assertThat(actualTestCaseNames).isEqualTo(testCaseNames);
+        assertThat(actualTestCaseNames).containsExactlyInAnyOrder(testCaseNames);
     }
 
     private boolean checkTaskEqual(ProgrammingExerciseTask task, String expectedName, String expectedTestName) {

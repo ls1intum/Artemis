@@ -13,7 +13,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
-public class PetriNetTest extends AbstractUMLDiagramTest {
+class PetriNetTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityPetriNet_equalModels() {

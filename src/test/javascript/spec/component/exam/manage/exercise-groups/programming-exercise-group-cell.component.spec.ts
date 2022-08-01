@@ -62,7 +62,7 @@ describe('Programming Exercise Group Cell Component', () => {
         comp.displayShortName = true;
         fixture.detectChanges();
         const div = fixture.debugElement.query(By.css('div:first-child'));
-        expect(div).not.toBe(null);
+        expect(div).not.toBeNull();
         expect(div.nativeElement.textContent).toContain(exercise.shortName);
     });
 
@@ -70,7 +70,7 @@ describe('Programming Exercise Group Cell Component', () => {
         comp.displayRepositoryUrl = true;
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('a'));
-        expect(span).not.toBe(undefined);
+        expect(span).toBeDefined();
         expect(span.nativeElement.textContent).toBe('Template');
         expect(span.nativeElement.href).toBe(exercise.templateParticipation!.repositoryUrl);
     });
@@ -80,11 +80,11 @@ describe('Programming Exercise Group Cell Component', () => {
         fixture.detectChanges();
 
         const div0 = fixture.debugElement.query(By.css('div > div > div:first-child'));
-        expect(div0).not.toBe(null);
+        expect(div0).not.toBeNull();
         expect(div0.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.offlineIde : true');
 
         const div1 = fixture.debugElement.query(By.css('div > div > div:nth-child(2)'));
-        expect(div1).not.toBe(null);
+        expect(div1).not.toBeNull();
         expect(div1.nativeElement.textContent?.trim()).toBe('artemisApp.programmingExercise.onlineEditor : true');
     });
 });

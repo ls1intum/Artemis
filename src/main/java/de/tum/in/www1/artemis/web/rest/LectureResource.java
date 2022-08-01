@@ -2,9 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
@@ -90,8 +88,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
     /**
@@ -117,7 +114,7 @@ public class LectureResource {
         lecture.setLectureUnits(originalLecture.getLectureUnits());
 
         Lecture result = lectureRepository.save(lecture);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, lecture.getId().toString())).body(result);
+        return ResponseEntity.ok().body(result);
     }
 
     /**
@@ -202,8 +199,7 @@ public class LectureResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, destinationCourse, user);
 
         final var result = lectureImportService.importLecture(sourceLecture, destinationCourse);
-        return ResponseEntity.created(new URI("/api/lectures/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/lectures/" + result.getId())).body(result);
     }
 
     /**
@@ -275,7 +271,7 @@ public class LectureResource {
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
             }
-        }).collect(Collectors.toList());
+        }).collect(Collectors.toCollection(ArrayList::new));
 
         lecture.setLectureUnits(lectureUnitsUserIsAllowedToSee);
         return lecture;

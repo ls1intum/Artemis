@@ -15,7 +15,7 @@ import de.tum.in.www1.artemis.domain.participation.SolutionProgrammingExercisePa
 import de.tum.in.www1.artemis.domain.participation.TemplateProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 
-public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private final VcsRepositoryUrl repositoryUrl1 = new VcsRepositoryUrl("https://ab123cd@bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab123cd");
 
@@ -40,7 +40,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testGetRepositorySlugFromRepositoryUrl() {
+    void testGetRepositorySlugFromRepositoryUrl() {
         String repoSlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl1);
         assertThat(repoSlug).isEqualTo("RMEXERCISE-ab123cd");
         repoSlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl2);
@@ -54,7 +54,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testGetRepositoryPathFromRepositoryUrl() {
+    void testGetRepositoryPathFromRepositoryUrl() {
         String repoSlug = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl1);
         assertThat(repoSlug).isEqualTo("EIST2016RME/RMEXERCISE-ab123cd");
         repoSlug = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl2);
@@ -68,7 +68,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testProjectKeyFromRepositoryUrl() {
+    void testProjectKeyFromRepositoryUrl() {
         String repoSlug = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl1);
         assertThat(repoSlug).isEqualTo("EIST2016RME");
         repoSlug = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl2);
@@ -82,7 +82,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testGetFolderNameForRepositoryUrl() {
+    void testGetFolderNameForRepositoryUrl() {
         assertThat(repositoryUrl1.folderNameForRepositoryUrl()).isEqualTo("/EIST2016RME/RMEXERCISE-ab123cd");
         assertThat(repositoryUrl2.folderNameForRepositoryUrl()).isEqualTo("/EIST2016RME/RMEXERCISE-ab123cd");
         assertThat(repositoryUrl3.folderNameForRepositoryUrl()).isEqualTo("/TESTADAPTER/testadapter-exercise");
@@ -93,7 +93,7 @@ public class UrlServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     }
 
     @Test
-    public void testUserIndependentRepositoryUrl() {
+    void testUserIndependentRepositoryUrl() {
         var solutionProgrammingExerciseParticipation = new SolutionProgrammingExerciseParticipation();
         solutionProgrammingExerciseParticipation.setRepositoryUrl(repositoryUrl1.toString());
         assertThat(solutionProgrammingExerciseParticipation.getUserIndependentRepositoryUrl()).isEqualTo("https://bitbucket.ase.in.tum.de/scm/EIST2016RME/RMEXERCISE-ab123cd");

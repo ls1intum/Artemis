@@ -65,7 +65,7 @@ describe('Alert Overlay Component Tests', () => {
         fixture.detectChanges();
 
         const btn = fixture.debugElement.query(By.css('.btn'));
-        expect(btn).not.toBe(null);
+        expect(btn).not.toBeNull();
 
         btn.nativeElement.click();
 
@@ -87,7 +87,7 @@ describe('Alert Overlay Component Tests', () => {
         fixture.detectChanges();
 
         const btn = fixture.debugElement.query(By.css('jhi-close-circle'));
-        expect(btn).not.toBe(null);
+        expect(btn).not.toBeNull();
 
         btn.nativeElement.click();
 
@@ -106,6 +106,6 @@ describe('Alert Overlay Component Tests', () => {
         });
 
         const btn = fixture.debugElement.query(By.css('jhi-close-circle'));
-        expect(btn).toBe(null);
+        expect(btn).toBeNull();
     });
 });

@@ -9,6 +9,6 @@ import { MatExpansionModule } from '@angular/material/expansion';
 @NgModule({
     imports: [ArtemisSharedModule, AceEditorModule, MatExpansionModule],
     declarations: [TestwiseCoverageFileComponent, TestwiseCoverageReportComponent, TestwiseCoverageReportModalComponent],
-    exports: [TestwiseCoverageFileComponent, TestwiseCoverageReportModalComponent],
+    exports: [TestwiseCoverageFileComponent, TestwiseCoverageReportModalComponent, TestwiseCoverageReportComponent],
 })
 export class TestwiseCoverageReportModule {}

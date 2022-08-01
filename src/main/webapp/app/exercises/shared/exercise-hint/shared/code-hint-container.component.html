@@ -1,13 +1,24 @@
 <div *ngFor="let solutionEntry of sortedSolutionEntries">
-    <div class="mb-3">
+    <div class="d-flex flex-row mb-3">
         <jhi-solution-entry
+            class="flex-grow-1"
             [solutionEntry]="solutionEntry"
             [enableEditing]="enableEditing"
-            [dialogError]="dialogError$"
             (onRemoveEntry)="removeEntryFromCodeHint(solutionEntry.id!)"
         ></jhi-solution-entry>
+        <div *ngIf="enableEditing" class="ps-2 flex-grow-0">
+            <button
+                jhiDeleteButton
+                [entityTitle]="solutionEntry.id!.toString()"
+                deleteQuestion="artemisApp.codeHint.removeEntryQuestion"
+                (delete)="removeEntryFromCodeHint(solutionEntry.id!)"
+                [dialogError]="dialogError$"
+            >
+                <fa-icon [icon]="faTimes"></fa-icon>
+            </button>
+        </div>
     </div>
 </div>
 <div *ngIf="!sortedSolutionEntries.length">
-    <span jhiTranslate="artemisApp.codeHint.noEntries">This code hint has no solution entries.</span>
+    <span jhiTranslate="artemisApp.codeHint.noEntries">This code hint has no Solution Code Snippets.</span>
 </div>

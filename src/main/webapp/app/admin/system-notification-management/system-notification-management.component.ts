@@ -15,18 +15,28 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { ParseLinks } from 'app/core/util/parse-links.service';
 import { faEye, faPlus, faSort, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 
+enum NotificationState {
+    SCHEDULED = 'SCHEDULED',
+    ACTIVE = 'ACTIVE',
+    EXPIRED = 'EXPIRED',
+}
+
 @Component({
     selector: 'jhi-system-notification-management',
     templateUrl: './system-notification-management.component.html',
 })
 export class SystemNotificationManagementComponent implements OnInit, OnDestroy {
+    readonly SCHEDULED = NotificationState.SCHEDULED;
+    readonly ACTIVE = NotificationState.ACTIVE;
+    readonly EXPIRED = NotificationState.EXPIRED;
+
     currentAccount: User;
     notifications: SystemNotification[];
     error: string;
     success: string;
     routeData: Subscription;
     links: any;
-    predicate: string;
+    predicate = 'notificationDate';
     previousPage: number;
     reverse: boolean;
 
@@ -134,11 +144,17 @@ export class SystemNotificationManagementComponent implements OnInit, OnDestroy 
     }
 
     /**
-     * Checks if notification is still relevant
+     * Checks if notification is currently active, expired or scheduled
      * @param systemNotification which relevance will be checked
      */
-    isNotificationActive(systemNotification: SystemNotification) {
-        return systemNotification.notificationDate!.isBefore(dayjs()) && systemNotification.expireDate!.isAfter(dayjs());
+    getNotificationState(systemNotification: SystemNotification): NotificationState {
+        if (systemNotification.notificationDate!.isAfter(dayjs())) {
+            return NotificationState.SCHEDULED;
+        } else if (systemNotification.expireDate?.isAfter(dayjs()) ?? true) {
+            return NotificationState.ACTIVE;
+        } else {
+            return NotificationState.EXPIRED;
+        }
     }
 
     /**

@@ -58,7 +58,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
     }
 
     @AfterEach
-    public void clearAuthentication() {
+    void clearAuthentication() {
         TestSecurityContextHolder.clearContext();
         this.database.resetDatabase();
     }
@@ -69,7 +69,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong.
      */
     @Test
-    public void testValidSaml2Registration() throws Exception {
+    void testValidSaml2Registration() throws Exception {
         assertStudentNotExists();
 
         authenticate(createPrincipal(STUDENT_REGISTRATION_NUMBER));
@@ -84,7 +84,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong.
      */
     @Test
-    public void testValidSaml2RegistrationExtractingRegistrationNumber() throws Exception {
+    void testValidSaml2RegistrationExtractingRegistrationNumber() throws Exception {
         assertStudentNotExists();
 
         authenticate(createPrincipal("somePrefix1234someSuffix"));
@@ -99,7 +99,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong.
      */
     @Test
-    public void testValidSaml2RegistrationNonMatchingRegistrationNumberExtraction() throws Exception {
+    void testValidSaml2RegistrationNonMatchingRegistrationNumberExtraction() throws Exception {
         assertStudentNotExists();
 
         authenticate(createPrincipal("nonMatchingRegNum"));
@@ -114,7 +114,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong.
      */
     @Test
-    public void testValidSaml2RegistrationEmptyRegistrationNumber() throws Exception {
+    void testValidSaml2RegistrationEmptyRegistrationNumber() throws Exception {
         assertStudentNotExists();
 
         authenticate(createPrincipal(""));
@@ -129,7 +129,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong.
      */
     @Test
-    public void testValidSaml2Login() throws Exception {
+    void testValidSaml2Login() throws Exception {
         assertStudentNotExists();
 
         // Other mail than in #createPrincipal for identification of user
@@ -151,7 +151,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong.
      */
     @Test
-    public void testPasswordLoginAfterShibbolethRegistration() throws Exception {
+    void testPasswordLoginAfterShibbolethRegistration() throws Exception {
         assertStudentNotExists();
 
         // Create user
@@ -189,7 +189,7 @@ public class UserSaml2IntegrationTest extends AbstractSpringIntegrationGitlabCIG
      * @throws Exception if something went wrong
      */
     @Test
-    public void testInvalidAuthenticationSaml2Login() throws Exception {
+    void testInvalidAuthenticationSaml2Login() throws Exception {
         assertStudentNotExists();
         // Test whether authorizeSAML2 generates a no token
         request.post("/api/saml2", Boolean.FALSE, HttpStatus.UNAUTHORIZED);

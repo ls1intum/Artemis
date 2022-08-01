@@ -9,7 +9,6 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -28,9 +27,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     readonly pageType = PageType.PLAGIARISM_CASE;
     private postsSubscription: Subscription;
     posts: Post[];
-
-    // Icons
-    faPlus = faPlus;
 
     constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
 
@@ -65,7 +61,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     savePointDeductionVerdict(): void {
         this.plagiarismCasesService
-            .savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
                 verdictPointDeduction: this.verdictPointDeduction,
             })
@@ -85,7 +81,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveWarningVerdict(): void {
         this.plagiarismCasesService
-            .savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
                 verdictMessage: this.verdictMessage,
             })
@@ -103,13 +99,27 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * saves the verdict of the plagiarism case as PLAGIARISM
      */
     saveVerdict(): void {
-        this.plagiarismCasesService.savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+        if (!this.isStudentNotified()) {
+            return;
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
                 this.plagiarismCase.verdictBy = res.body!.verdictBy;
                 this.plagiarismCase.verdictDate = res.body!.verdictDate;
             },
         });
+    }
+
+    isStudentNotified() {
+        return this.posts?.length > 0;
+    }
+
+    onStudentNotified(post: Post) {
+        if (!this.posts) {
+            this.posts = [];
+        }
+        this.posts.push(post);
     }
 
     /**

@@ -13,8 +13,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockRouter } from '../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { TextExercise } from 'app/entities/text-exercise.model';
 import { Course } from 'app/entities/course.model';
+import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 
 describe('Participation Service', () => {
     let service: ParticipationService;
@@ -94,12 +94,12 @@ describe('Participation Service', () => {
     it('should delete for guided tour', fakeAsync(() => {
         service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
         let request = httpMock.expectOne({ method: 'DELETE' });
-        expect(request.request.params.keys().length).toEqual(0);
+        expect(request.request.params.keys()).toHaveLength(0);
 
         service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok));
         request = httpMock.expectOne({ method: 'DELETE' });
-        expect(request.request.params.keys().length).toEqual(1);
-        expect(request.request.params.get('a')).toEqual('param');
+        expect(request.request.params.keys()).toHaveLength(1);
+        expect(request.request.params.get('a')).toBe('param');
     }));
 
     it('should cleanup build plan', fakeAsync(() => {
@@ -107,7 +107,7 @@ describe('Participation Service', () => {
         httpMock.expectOne({ method: 'PUT' });
     }));
 
-    it('should merge student participations', fakeAsync(() => {
+    it('should merge student participations for programming exercises', fakeAsync(() => {
         const participation1: ProgrammingExerciseStudentParticipation = {
             id: 1,
             type: ParticipationType.PROGRAMMING,
@@ -182,9 +182,10 @@ describe('Participation Service', () => {
     }));
 
     it('should update a Participation', fakeAsync(() => {
-        const exercise = new TextExercise(new Course(), undefined);
+        const exercise = new ProgrammingExercise(new Course(), undefined);
         exercise.id = 1;
         exercise.categories = undefined;
+        exercise.exampleSolutionPublicationDate = undefined;
 
         const returnedFromService = Object.assign(
             {

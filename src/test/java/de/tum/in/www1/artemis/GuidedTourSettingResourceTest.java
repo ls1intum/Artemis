@@ -14,19 +14,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.GuidedTourSetting;
 import de.tum.in.www1.artemis.domain.User;
 
-public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(1, 0, 0, 0);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
-    public Set<GuidedTourSetting> createGuidedTourSettings() {
+    private Set<GuidedTourSetting> createGuidedTourSettings() {
         Set<GuidedTourSetting> guidedTourSettingSet = new HashSet<>();
 
         GuidedTourSetting guidedTourSetting1 = new GuidedTourSetting();
@@ -46,14 +46,14 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1")
-    public void guidedTourSettingsIsInitiallyNull() throws Exception {
+    void guidedTourSettingsIsInitiallyNull() throws Exception {
         User user = request.get("/api/account", HttpStatus.OK, User.class);
         assertThat(user.getGuidedTourSettings()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void updateGuidedTourSettings() throws Exception {
+    void updateGuidedTourSettings() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         Set<?> serverGuidedTourSettings = request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         assertThat(serverGuidedTourSettings).hasSize(2);
@@ -64,7 +64,7 @@ public class GuidedTourSettingResourceTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1")
-    public void deleteGuidedTourSetting() throws Exception {
+    void deleteGuidedTourSetting() throws Exception {
         Set<GuidedTourSetting> guidedTourSettingSet = this.createGuidedTourSettings();
         request.putWithResponseBody("/api/guided-tour-settings", guidedTourSettingSet, Set.class, HttpStatus.OK);
         request.delete("/api/guided-tour-settings/new_tour", HttpStatus.OK);

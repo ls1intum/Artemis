@@ -98,7 +98,8 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     }
 
     @Override
-    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans) throws Exception {
+    public void mockConnectorRequestsForImport(ProgrammingExercise sourceExercise, ProgrammingExercise exerciseToBeImported, boolean recreateBuildPlans, boolean addAuxRepos)
+            throws Exception {
         mockImportRepositories(exerciseToBeImported);
         doNothing().when(gitService).pushSourceToTargetRepo(any(), any());
     }
