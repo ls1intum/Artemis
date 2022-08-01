@@ -335,7 +335,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = "student2", roles = "USER")
     void testGetFilesAsDifferentStudentForbidden() throws Exception {
         request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
     }
@@ -346,7 +346,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         programmingExerciseRepository.save(programmingExercise);
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
-        request.get(studentRepoBaseUrl + programmingExercise.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
     }
 
     private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
