@@ -53,7 +53,6 @@ describe('CreateTutorialGroupComponent', () => {
                     },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
