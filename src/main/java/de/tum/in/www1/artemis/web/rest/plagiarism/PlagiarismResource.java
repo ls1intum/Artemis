@@ -32,7 +32,7 @@ public class PlagiarismResource {
 
     private final CourseRepository courseRepository;
 
-    private final AuthorizationCheckService authenticationCheckService;
+    private final AuthorizationCheckService authCheckService;
 
     private final UserRepository userRepository;
 
@@ -46,12 +46,16 @@ public class PlagiarismResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authenticationCheckService, UserRepository userRepository, PlagiarismService plagiarismService,
-            PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
+    // correspond to the translation files (suffix) used in the client
+    private static final String YOUR_SUBMISSION = "Your submission";
+
+    private static final String OTHER_SUBMISSION = "Other submission";
+
+    public PlagiarismResource(PlagiarismComparisonRepository plagiarismComparisonRepository, CourseRepository courseRepository, AuthorizationCheckService authCheckService,
+            UserRepository userRepository, PlagiarismService plagiarismService, PlagiarismResultRepository plagiarismResultRepository, ExerciseRepository exerciseRepository) {
         this.plagiarismComparisonRepository = plagiarismComparisonRepository;
         this.courseRepository = courseRepository;
-        this.authenticationCheckService = authenticationCheckService;
+        this.authCheckService = authCheckService;
         this.userRepository = userRepository;
         this.plagiarismService = plagiarismService;
         this.plagiarismResultRepository = plagiarismResultRepository;
@@ -73,8 +77,7 @@ public class PlagiarismResource {
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
         log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        User user = userRepository.getUserWithGroupsAndAuthorities();
-        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, user);
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
         // TODO: this check can take up to a few seconds in the worst case, we should do it directly in the database
         var comparison = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparisonId);
@@ -93,33 +96,60 @@ public class PlagiarismResource {
      *
      * @param courseId the id of the course
      * @param comparisonId the id of the PlagiarismComparison
-     * @param studentLogin optional login of the student
      * @return the PlagiarismComparison
      * @throws AccessForbiddenException if the requesting user is not affected by the plagiarism case.
      */
     @GetMapping("courses/{courseId}/plagiarism-comparisons/{comparisonId}/for-split-view")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId,
-            @RequestParam(value = "studentLogin", required = false) String studentLogin) {
-        var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
-        var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
+    public ResponseEntity<PlagiarismComparison<?>> getPlagiarismComparisonForSplitView(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") Long comparisonId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
-        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Only students registered for this course can access this plagiarism comparison.");
-        }
+        var comparisonA = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsAElseThrow(comparisonId);
+        var comparisonB = plagiarismComparisonRepository.findByIdWithSubmissionsStudentsAndElementsBElseThrow(comparisonId);
+
         if (!Objects.equals(comparisonA.getPlagiarismResult().getExercise().getCourseViaExerciseGroupOrCourseMember().getId(), courseId)) {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
         comparisonA.setSubmissionB(comparisonB.getSubmissionB());
-        if (studentLogin != null) {
-            comparisonA = this.plagiarismService.anonymizeComparisonForStudent(comparisonA, studentLogin);
+        if (authCheckService.isOnlyStudentInCourse(course, user)) {
+            // Note: this calls also checks that the student is allowed to see the complaint, and throws otherwise
+            checkStudentAccess(comparisonA, user.getLogin());
         }
+
+        // hide unnecessary details
         comparisonA.getSubmissionA().setPlagiarismComparison(null);
+        comparisonA.getSubmissionA().setPlagiarismCase(null);
         comparisonA.getSubmissionB().setPlagiarismComparison(null);
+        comparisonA.getSubmissionB().setPlagiarismCase(null);
+
+        // hide the chain to plagiarism result, exercise and course to avoid leaks and keep the response small
+        comparisonA.setPlagiarismResult(null);
         return ResponseEntity.ok(comparisonA);
+    }
+
+    /**
+     * Check if the passed userLogin is related to the plagiarism comparison. If this is not the case, the user is now allowed to access.
+     * Also anonymizes the comparison for the student view.
+     * A student should not have sensitive information (e.g. the userLogin of the other student)
+     *
+     * @param comparison to anonymize.
+     * @param userLogin of the student asking to see his plagiarism comparison.
+     */
+    private void checkStudentAccess(PlagiarismComparison<?> comparison, String userLogin) {
+        if (comparison.getSubmissionA().getStudentLogin().equals(userLogin)) {
+            comparison.getSubmissionA().setStudentLogin(YOUR_SUBMISSION);
+            comparison.getSubmissionB().setStudentLogin(OTHER_SUBMISSION);
+        }
+        else if (comparison.getSubmissionB().getStudentLogin().equals(userLogin)) {
+            comparison.getSubmissionA().setStudentLogin(OTHER_SUBMISSION);
+            comparison.getSubmissionB().setStudentLogin(YOUR_SUBMISSION);
+        }
+        else {
+            throw new AccessForbiddenException("This plagiarism comparison is not related to the requesting user.");
+        }
     }
 
     /**
@@ -137,9 +167,8 @@ public class PlagiarismResource {
             @RequestParam() boolean deleteAll) {
         log.info("REST request to clean up plagiarism comparisons for exercise with id: {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
-        if (!authenticationCheckService.isAtLeastInstructorForExercise(exercise)) {
-            throw new AccessForbiddenException("Only instructors for this course can access these plaiarism results and comparisons.");
-        }
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
+
         if (deleteAll) {
             // delete all elements for the given exercise
             plagiarismResultRepository.deletePlagiarismResultsByExerciseId(exerciseId);
