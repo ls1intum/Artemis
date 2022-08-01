@@ -11,8 +11,8 @@ Overview
 
 Conducting a file upload exercise consists of 3 steps:
 
-1. Setup of the exercie in Artemis
-2. Submission of a student
+1. Setup of the exercise in Artemis
+2. Submission by a student
 3. Assessment by the staff
 
 Setup
@@ -20,24 +20,24 @@ Setup
 
 The following sections describe the supported features and the process of creating a new file upload exercise.
 
-- Open |course-management|
-- Navigate into **Exercises** of your preferred course
+- Open |course-management|.
+- Navigate into **Exercises** of your preferred course.
 
     .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
 
-- Click on **Create new file upload exercise**
+- Click on **Create a new file upload exercise**.
 
     .. figure:: file-upload/create-new-file-upload-exercise.png
               :align: center
 
-- Fill out all mandatory values and click on |save|
-- The exercise specific **File Pattern** defines which file types students can upload as solution. The input field accepts all file endings without leading dot separated by commas.
+- Fill out all mandatory values and click on |save|.
+- The exercise-specific **File Pattern** defines which file types students can upload as solution. The input field accepts all file endings without leading dot separated by commas.
 
     .. figure::  file-upload/file-upload-exercise-creation-pattern.png
               :align: center
 
-- Result: **File Upload Exercise**
+- Result: **File Upload Exercise**.
 
     .. figure:: file-upload/course-dashboard-exercise-file-upload.png
               :align: center
@@ -48,13 +48,13 @@ The following sections describe the supported features and the process of creati
 Student Submission
 ------------------
 
-- When the exercise is released the students can upload the requested file.
+- When the exercise is released, the students can upload the requested file.
 - They can choose a file with |browse| and then submit the file with |submit|.
 
     .. figure:: file-upload/file-upload-exercise-student-view.png
               :align: center
 
-- After a file was uploaded it can then be downloaded again with the link below.
+- After a file is uploaded it can then be downloaded again by clicking on **Download file**.
 
     .. figure:: file-upload/file-upload-exercise-student-view-submitted.png
               :align: center
@@ -62,8 +62,8 @@ Student Submission
 Assessment
 ----------
 
-- When the due date is over you can assess the submissions. From the assessment dashboard go to exercise assessment dashboard of the file upload exercise.
-- There you can assess the submitted student submissions, by first downloading the file, and then creating feedback with points.
+- When the due date is over, you can assess the submissions. From the assessment dashboard, go to exercise the assessment dashboard of the file upload exercise.
+- There you can assess the submitted student submissions, by first downloading the file, and then adding feedback with points.
 
     .. figure:: file-upload/file-upload-exercise-assessment.png
               :align: center
