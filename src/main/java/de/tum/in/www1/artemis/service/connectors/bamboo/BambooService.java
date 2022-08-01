@@ -160,7 +160,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 var repositoryUrl = participation.getVcsRepositoryUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
-                // notifyPush in ProgrammingSubmissionService
+                // processNewProgrammingSubmission in ProgrammingSubmissionService
                 gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, true, null);
 
                 if (exercise == null) {

@@ -13,7 +13,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -391,8 +390,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         final var participation = optionalParticipation.get();
         participation.setBuildPlanId(null);
         programmingExerciseStudentParticipationRepository.save(participation);
-        doReturn(Optional.of(submission)).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
-
+        // doReturn(Optional.of(submission)).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
+        // TODO: configure the database so that the above mock can be safely deleted
         return participation;
     }
 
@@ -415,7 +414,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-        doReturn(Optional.empty()).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
+        // doReturn(Optional.empty()).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
+        // TODO: configure the database so that the above mock can be safely deleted
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
