@@ -821,28 +821,24 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testInstructorSearchTermMatchesId() throws Exception {
+    void testSearchTermMatchesId() throws Exception {
         database.resetDatabase();
         database.addUsers(1, 1, 0, 1);
-        testSearchTermMatchesId();
-    }
-
-    @Test
-    @WithMockUser(username = "admin", roles = "ADMIN")
-    void testAdminSearchTermMatchesId() throws Exception {
-        database.resetDatabase();
-        database.addUsers(1, 1, 0, 1);
-        testSearchTermMatchesId();
-    }
-
-    private void testSearchTermMatchesId() throws Exception {
         final Course course = database.addEmptyCourse();
         final var now = ZonedDateTime.now();
         QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
         exercise.setTitle("LoremIpsum");
         exercise = quizExerciseRepository.save(exercise);
+        // test as instructor
+        testSearchTermMatchesIdHelper(exercise.getId());
 
-        final var searchTerm = database.configureSearch(exercise.getId().toString());
+        // test as admin
+        database.changeUser("admin");
+        testSearchTermMatchesIdHelper(exercise.getId());
+    }
+
+    private void testSearchTermMatchesIdHelper(Long id) throws Exception {
+        final var searchTerm = database.configureSearch(id.toString());
         final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }
