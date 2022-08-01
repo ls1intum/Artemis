@@ -559,8 +559,8 @@ public class PostService extends PostingService {
     }
 
     /**
-     *
-     * @param posting       posting to assign autherRole
+     * helper method that assigns authorRoles of postings in accordance to user groups and authorities
+     * @param posting       posting to assign authorRole
      * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
      */
     private void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
