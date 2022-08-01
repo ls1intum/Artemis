@@ -7,20 +7,20 @@
                     <div class="d-flex flex-row align-items-center">
                         <h2 class="mb-1" jhiTranslate="artemisApp.examMonitoring.title"></h2>
                         <span
-                            [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'enabled' : 'disabled')"
+                            [jhiTranslate]="'artemisApp.examMonitoring.' + (this.examMonitoringGloballyEnabled && this.exam.monitoring ? 'enabled' : 'disabled')"
                             class="badge ms-2 exam-monitoring-badge align-items-center"
-                            [class.bg-danger]="!this.exam.monitoring"
-                            [class.bg-success]="this.exam.monitoring"
+                            [class.bg-danger]="!this.examMonitoringGloballyEnabled || !this.exam.monitoring"
+                            [class.bg-success]="this.examMonitoringGloballyEnabled && this.exam.monitoring"
                         ></span>
                     </div>
                     <button
                         class="hand btn btn-primary"
-                        [class.btn-success]="!this.exam.monitoring"
-                        [class.btn-danger]="this.exam.monitoring"
+                        [class.btn-success]="!this.examMonitoringGloballyEnabled || !this.exam.monitoring"
+                        [class.btn-danger]="this.examMonitoringGloballyEnabled && this.exam.monitoring"
                         (click)="updateMonitoring()"
                         [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
                     >
-                        <span [jhiTranslate]="'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'disable' : 'enable')">Enable</span>
+                        <span [jhiTranslate]="'artemisApp.examMonitoring.' + (this.examMonitoringGloballyEnabled && this.exam.monitoring ? 'disable' : 'enable')">Enable</span>
                     </button>
                 </div>
             </div>
@@ -57,7 +57,7 @@
                 </div>
             </div>
         </div>
-        <div *ngIf="exam.monitoring" class="position-relative">
+        <div *ngIf="this.examMonitoringGloballyEnabled && exam.monitoring" class="position-relative">
             <router-outlet></router-outlet>
         </div>
     </div>
