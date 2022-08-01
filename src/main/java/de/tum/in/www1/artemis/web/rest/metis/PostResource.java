@@ -52,8 +52,7 @@ public class PostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Post> createPost(@PathVariable Long courseId, @Valid @RequestBody Post post) throws URISyntaxException {
         Post createdPost = postService.createPost(courseId, post);
-        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, postService.getEntityName(), createdPost.getId().toString())).body(createdPost);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "/posts/" + createdPost.getId())).body(createdPost);
     }
 
     /**

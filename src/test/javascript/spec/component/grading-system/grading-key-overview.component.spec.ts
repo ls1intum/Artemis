@@ -87,10 +87,10 @@ describe('GradeKeyOverviewComponent', () => {
 
         expect(fixture).toBeTruthy();
         expect(comp).toBeTruthy();
-        expect(comp.examId).toEqual(123);
-        expect(comp.courseId).toEqual(345);
-        expect(comp.studentGrade).toEqual('2.0');
-        expect(comp.title).toEqual('Title');
+        expect(comp.examId).toBe(123);
+        expect(comp.courseId).toBe(345);
+        expect(comp.studentGrade).toBe('2.0');
+        expect(comp.title).toBe('Title');
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeTrue();
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
@@ -126,7 +126,7 @@ describe('GradeKeyOverviewComponent', () => {
 
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();
-        expect(comp.round(5)).toEqual(5);
-        expect(comp.round(3.33333333333333333)).toEqual(3.33);
+        expect(comp.round(5)).toBe(5);
+        expect(comp.round(3.33333333333333333)).toBe(3.33);
     });
 });

@@ -611,7 +611,7 @@ describe('ExamParticipationComponent', () => {
         comp.exam = new Exam();
         comp.onPageChange(exerciseChange);
         expect(triggerSpy).toHaveBeenCalledWith(true, false);
-        expect(comp.exerciseIndex).toEqual(1);
+        expect(comp.exerciseIndex).toBe(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
 });

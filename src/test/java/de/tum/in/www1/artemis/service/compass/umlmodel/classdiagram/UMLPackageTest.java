@@ -12,7 +12,7 @@ import org.mockito.MockitoAnnotations;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-public class UMLPackageTest {
+class UMLPackageTest {
 
     private UMLPackage umlPackage;
 

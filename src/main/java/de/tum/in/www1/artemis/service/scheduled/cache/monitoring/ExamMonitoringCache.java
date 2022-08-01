@@ -1,13 +1,10 @@
 package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.UnaryOperator;
 
 import com.hazelcast.config.Config;
-import com.hazelcast.scheduledexecutor.ScheduledTaskHandler;
 
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.service.scheduled.cache.Cache;
@@ -46,16 +43,6 @@ abstract class ExamMonitoringCache implements Cache {
      */
     abstract void updateActivity(Long activityId, UnaryOperator<ExamActivity> writeOperation);
 
-    /**
-     * The scheduled save tasks of the ExamActivity
-     */
-    abstract List<ScheduledTaskHandler> getExamActivitySaveHandler();
-
-    /**
-     * Set the scheduled save tasks of the ExamActivity
-     */
-    abstract void setExamActivitySaveHandler(List<ScheduledTaskHandler> examActivitySaveHandler);
-
     @Override
     public final int hashCode() {
         return Objects.hashCode(examId);
@@ -89,9 +76,5 @@ abstract class ExamMonitoringCache implements Cache {
 
     static void registerSerializers(Config config) {
         ExamMonitoringDistributedCache.registerSerializer(config);
-    }
-
-    static List<ScheduledTaskHandler> getEmptyExamActivitySaveHandler() {
-        return new ArrayList<>(0);
     }
 }

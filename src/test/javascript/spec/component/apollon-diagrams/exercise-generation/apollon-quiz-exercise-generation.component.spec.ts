@@ -104,6 +104,6 @@ describe('ApollonQuizExerciseGeneration Component', () => {
 
         // test
         await fixture.componentInstance.save();
-        expect(ngbModalSpy).toBeCalledTimes(1);
+        expect(ngbModalSpy).toHaveBeenCalledTimes(1);
     });
 });

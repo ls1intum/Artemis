@@ -140,7 +140,7 @@ public class OrganizationResource {
         log.debug("REST request to add new organization : {}", organization);
         Organization created = organizationService.add(organization);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, created.getName())).body(created);
+        return ResponseEntity.ok().body(created);
     }
 
     /**
@@ -162,7 +162,7 @@ public class OrganizationResource {
         }
         organizationRepository.findByIdElseThrow(organization.getId());
         Organization updated = organizationService.update(organization);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
+        return ResponseEntity.ok(updated);
     }
 
     /**

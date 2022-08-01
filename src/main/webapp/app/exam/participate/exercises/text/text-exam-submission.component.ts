@@ -10,6 +10,7 @@ import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { ExamSubmissionComponent } from 'app/exam/participate/exercises/exam-submission.component';
 import { Submission } from 'app/entities/submission.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-text-editor-exam',
@@ -25,6 +26,7 @@ export class TextExamSubmissionComponent extends ExamSubmissionComponent impleme
     exercise: Exercise;
 
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
 
     // answer represents the view state
     answer: string;

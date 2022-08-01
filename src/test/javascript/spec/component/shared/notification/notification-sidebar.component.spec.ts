@@ -5,7 +5,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
-import { NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
+import { LAST_READ_STORAGE_KEY, NotificationSidebarComponent, reloadNotificationSideBarMessage } from 'app/shared/notification/notification-sidebar/notification-sidebar.component';
 import { NotificationService } from 'app/shared/notification/notification.service';
 import { ArtemisTestModule } from '../../../test.module';
 import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storage.service';
@@ -36,6 +36,7 @@ describe('Notification Sidebar Component', () => {
     let accountService: AccountService;
     let userService: UserService;
     let userSettingsService: UserSettingsService;
+    let sessionStorageService: SessionStorageService;
 
     const notificationNow = { id: 1, notificationDate: dayjs() } as Notification;
     const notificationPast = { id: 2, notificationDate: dayjs().subtract(2, 'day') } as Notification;
@@ -88,6 +89,7 @@ describe('Notification Sidebar Component', () => {
                 accountService = TestBed.inject(AccountService);
                 userService = TestBed.inject(UserService);
                 userSettingsService = TestBed.inject(UserSettingsService);
+                sessionStorageService = TestBed.inject(SessionStorageService);
 
                 const loadSettingsStub = jest.spyOn(userSettingsService, 'loadSettings');
                 loadSettingsStub.mockReturnValue(of(new HttpResponse({ body: receivedNotificationSettings })));
@@ -95,14 +97,31 @@ describe('Notification Sidebar Component', () => {
     });
 
     describe('Initialization', () => {
-        it('should set last notification read', () => {
-            const lastNotificationRead = dayjs();
-            const getAuthenticationStateStub = jest.spyOn(accountService, 'getAuthenticationState');
-            getAuthenticationStateStub.mockReturnValue(of({ lastNotificationRead } as User));
+        const referenceDate = dayjs();
+
+        it.each([
+            { userDate: referenceDate, storageDate: undefined, expectedDate: referenceDate },
+            { userDate: undefined, storageDate: referenceDate, expectedDate: referenceDate },
+            { userDate: referenceDate, storageDate: referenceDate.add(5, 'minutes'), expectedDate: referenceDate.add(5, 'minutes') },
+            { userDate: referenceDate, storageDate: referenceDate.subtract(5, 'minutes'), expectedDate: referenceDate },
+        ])('should set the correct last notification read', ({ userDate, storageDate, expectedDate }) => {
+            const getAuthenticationStateStub = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of({ lastNotificationRead: userDate } as User));
+            const sessionStorageSub = jest.spyOn(sessionStorageService, 'retrieve').mockReturnValue((storageDate as dayjs.Dayjs | undefined)?.toISOString());
 
             notificationSidebarComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).toHaveBeenCalledOnce();
-            expect(notificationSidebarComponent.lastNotificationRead).toBe(lastNotificationRead);
+            expect(getAuthenticationStateStub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledWith(LAST_READ_STORAGE_KEY);
+            expect(notificationSidebarComponent.lastNotificationRead).toEqual(expectedDate);
+        });
+
+        it('should clear the session storage last notification read date if the user logs out', () => {
+            const getAuthenticationStateStub = jest.spyOn(accountService, 'getAuthenticationState').mockReturnValue(of(undefined));
+            const sessionStorageSub = jest.spyOn(sessionStorageService, 'clear');
+            notificationSidebarComponent.ngOnInit();
+            expect(getAuthenticationStateStub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledOnce();
+            expect(sessionStorageSub).toHaveBeenCalledWith(LAST_READ_STORAGE_KEY);
         });
 
         it('should query notifications', () => {
@@ -198,7 +217,7 @@ describe('Notification Sidebar Component', () => {
             const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse(notifications)));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).toBe(notifications.length);
+            expect(notificationSidebarComponent.notifications).toHaveLength(notifications.length);
         });
 
         it('should update sorted notifications array after new notifications were loaded', () => {
@@ -223,7 +242,7 @@ describe('Notification Sidebar Component', () => {
             const queryNotificationsFilteredBySettingsStub = jest.spyOn(notificationService, 'queryNotificationsFilteredBySettings');
             queryNotificationsFilteredBySettingsStub.mockReturnValue(of(generateQueryResponse([notificationNow])));
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).toBe(1);
+            expect(notificationSidebarComponent.notifications).toHaveLength(1);
             expect(notificationSidebarComponent.totalNotifications).toBe(1);
         });
 
@@ -232,7 +251,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.totalNotifications = 1;
             replaceSubscribeToNotificationUpdates();
             notificationSidebarComponent.ngOnInit();
-            expect(notificationSidebarComponent.notifications.length).toBe(1);
+            expect(notificationSidebarComponent.notifications).toHaveLength(1);
             expect(notificationSidebarComponent.totalNotifications).toBe(1);
         });
 
@@ -261,7 +280,7 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.recentNotificationCount = 2;
             notificationSidebarComponentFixture.detectChanges();
             const plus = notificationSidebarComponentFixture.debugElement.query(By.css('.bg-danger > span'));
-            expect(plus).not.toBe(null);
+            expect(plus).not.toBeNull();
         });
     });
 
@@ -270,14 +289,14 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.notifications = [];
             notificationSidebarComponentFixture.detectChanges();
             const noNotificationsMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.no-notifications');
-            expect(noNotificationsMessage).not.toBe(null);
+            expect(noNotificationsMessage).not.toBeNull();
         });
 
         it('should show loading spinner when more notifications are loaded', () => {
             notificationSidebarComponent.loading = true;
             notificationSidebarComponentFixture.detectChanges();
             const loadingSpinner = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.loading-spinner');
-            expect(loadingSpinner).not.toBe(null);
+            expect(loadingSpinner).not.toBeNull();
         });
 
         it('should show all notifications loaded message when all notifications are loaded', () => {
@@ -285,14 +304,14 @@ describe('Notification Sidebar Component', () => {
             notificationSidebarComponent.totalNotifications = 1;
             notificationSidebarComponentFixture.detectChanges();
             const allLoadedMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.all-loaded');
-            expect(allLoadedMessage).not.toBe(null);
+            expect(allLoadedMessage).not.toBeNull();
         });
 
         it('should show error message when loading of notifications failed', () => {
             notificationSidebarComponent.error = 'error';
             notificationSidebarComponentFixture.detectChanges();
             const errorMessage = notificationSidebarComponentFixture.debugElement.nativeElement.querySelector('.alert-danger');
-            expect(errorMessage).not.toBe(null);
+            expect(errorMessage).not.toBeNull();
         });
 
         it('should toggle which notifications are displayed (hide until property) when user clicks on archive button', () => {

@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.AuxiliaryRepositoryRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.CourseService;
@@ -78,11 +79,13 @@ public class ProgrammingExerciseExportImportResource {
 
     private final SubmissionPolicyService submissionPolicyService;
 
+    private final ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
     public ProgrammingExerciseExportImportResource(ProgrammingExerciseRepository programmingExerciseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseService programmingExerciseService,
-            ProgrammingExerciseImportService programmingExerciseImportService, ProgrammingExerciseExportService programmingExerciseExportService,
-            Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, TemplateUpgradePolicy templateUpgradePolicy,
-            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService) {
+            AuthorizationCheckService authCheckService, CourseService courseService, ProgrammingExerciseImportService programmingExerciseImportService,
+            ProgrammingExerciseExportService programmingExerciseExportService, Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService,
+            AuxiliaryRepositoryRepository auxiliaryRepositoryRepository, SubmissionPolicyService submissionPolicyService,
+            ProgrammingExerciseTaskRepository programmingExerciseTaskRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.userRepository = userRepository;
         this.courseService = courseService;
@@ -92,6 +95,7 @@ public class ProgrammingExerciseExportImportResource {
         this.programmingLanguageFeatureService = programmingLanguageFeatureService;
         this.auxiliaryRepositoryRepository = auxiliaryRepositoryRepository;
         this.submissionPolicyService = submissionPolicyService;
+        this.programmingExerciseTaskRepository = programmingExerciseTaskRepository;
     }
 
     /**
@@ -146,8 +150,12 @@ public class ProgrammingExerciseExportImportResource {
         programmingExerciseRepository.validateCourseSettings(newExercise, course);
 
         final var originalProgrammingExercise = programmingExerciseRepository
-                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxReposAndTasksWithTestCases(sourceExerciseId)
+                .findByIdWithEagerTestCasesStaticCodeAnalysisCategoriesHintsAndTemplateAndSolutionParticipationsAndAuxRepos(sourceExerciseId)
                 .orElseThrow(() -> new EntityNotFoundException("ProgrammingExercise", sourceExerciseId));
+
+        // Fetching the tasks separately, as putting it in the query above leads to Hibernate duplicating the tasks.
+        var templateTasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(originalProgrammingExercise.getId());
+        originalProgrammingExercise.setTasks(new ArrayList<>(templateTasks));
 
         // The static code analysis flag can only change, if the build plans are recreated and the template is upgraded
         if (newExercise.isStaticCodeAnalysisEnabled() != originalProgrammingExercise.isStaticCodeAnalysisEnabled() && !(recreateBuildPlans && updateTemplate)) {
@@ -196,7 +204,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_INSTRUCTOR_EXERCISE)
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.ProgrammingExercises)
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorExercise(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, programmingExercise, null);
@@ -227,7 +235,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_INSTRUCTOR_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.ProgrammingExercises)
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorRepository(@PathVariable long exerciseId, @PathVariable RepositoryType repositoryType) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -248,7 +256,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_INSTRUCTOR_AUXILIARY_REPOSITORY)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.ProgrammingExercises)
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportInstructorAuxiliaryRepository(@PathVariable long exerciseId, @PathVariable long repositoryId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, programmingExercise, null);
@@ -294,7 +302,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPANTS)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.ProgrammingExercises)
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByStudentLogins(@PathVariable long exerciseId, @PathVariable String participantIdentifiers,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
@@ -339,7 +347,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @PostMapping(EXPORT_SUBMISSIONS_BY_PARTICIPATIONS)
     @PreAuthorize("hasRole('TA')")
-    @FeatureToggle(Feature.ProgrammingExercises)
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSubmissionsByParticipationIds(@PathVariable long exerciseId, @PathVariable String participationIds,
             @RequestBody RepositoryExportOptionsDTO repositoryExportOptions) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdWithStudentParticipationsAndLegalSubmissionsElseThrow(exerciseId);
@@ -398,7 +406,7 @@ public class ProgrammingExerciseExportImportResource {
      */
     @GetMapping(EXPORT_SOLUTION_REPOSITORY)
     @PreAuthorize("hasRole('USER')")
-    @FeatureToggle(Feature.ProgrammingExercises)
+    @FeatureToggle({ Feature.ProgrammingExercises, Feature.Exports })
     public ResponseEntity<Resource> exportSolutionRepository(@PathVariable long exerciseId) throws IOException {
         var programmingExercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
         Role atLeastRole = programmingExercise.isExampleSolutionPublished() ? Role.STUDENT : Role.TEACHING_ASSISTANT;

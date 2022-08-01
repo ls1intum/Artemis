@@ -144,7 +144,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.uploadBackground();
         tick();
 
-        expect(component.backgroundFile).toBe(undefined);
+        expect(component.backgroundFile).toBeUndefined();
         expect(component.question.backgroundFilePath).toBe(newPath);
         expect(component.isUploadingBackgroundFile).toBeFalse();
     }));
@@ -217,7 +217,7 @@ describe('DragAndDropQuestionEditComponent', () => {
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
         expect(component.draggingState).toBe(DragState.NONE);
-        expect(component.currentDropLocation).toBe(undefined);
+        expect(component.currentDropLocation).toBeUndefined();
 
         component.draggingState = DragState.CREATE;
         const lengthOfElement = 15;
@@ -230,7 +230,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.mouseUp();
 
         expect(component.draggingState).toBe(DragState.NONE);
-        expect(component.currentDropLocation).toBe(undefined);
+        expect(component.currentDropLocation).toBeUndefined();
         expect(component.question.correctMappings).toBeArrayOfSize(0);
         expect(component.question.dropLocations).toEqual([alternativeDropLocation]);
     });
@@ -361,7 +361,7 @@ describe('DragAndDropQuestionEditComponent', () => {
             expect(expectedItem!.pictureFilePath).toBe('alwaysGoYourPath');
             expect(questionUpdatedSpy).toHaveBeenCalledOnce();
             expect(component.dragItemFileName).toBe('');
-            expect(component.dragItemFile).toBe(undefined);
+            expect(component.dragItemFile).toBeUndefined();
             jest.restoreAllMocks();
 
             mockReturnValue = Promise.reject({ path: newPath });
@@ -557,7 +557,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.togglePreview();
 
         expect(component.showPreview).toBeFalse();
-        expect(component.question.text).toBe(undefined);
+        expect(component.question.text).toBeUndefined();
     });
 
     it('should detect changes in markdown and edit accordingly', () => {
@@ -568,7 +568,7 @@ describe('DragAndDropQuestionEditComponent', () => {
         component.changesInMarkdown();
 
         expect(questionUpdatedSpy).toHaveBeenCalledOnce();
-        expect(component.question.text).toBe(undefined);
+        expect(component.question.text).toBeUndefined();
     });
 
     it('should detect domain commands', () => {

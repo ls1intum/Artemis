@@ -166,6 +166,7 @@ http://pmd.sourceforge.net/ruleset/2.0.0 ">
     <rule ref="category/java/performance.xml/UseStringBufferLength"/>
     <rule ref="category/java/errorprone.xml/UselessOperationOnImmutable"/>
     <rule ref="category/java/codestyle.xml/UselessQualifiedThis"/>
+    <rule ref="category/java/bestpractices.xml/JUnit5TestShouldBePackagePrivate" />
     <rule name="DontUseCollectorsToList"
           language="java"
           message="Don't use Collectors.toList()"

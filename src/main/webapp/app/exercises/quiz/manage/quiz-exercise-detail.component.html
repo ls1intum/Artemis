@@ -323,15 +323,14 @@
                                 *ngIf="quizExercise.course || quizExercise.exerciseGroup"
                                 class="btn btn-default"
                                 [ngClass]="{ 'btn-secondary': !pendingChangesCache, 'btn-danger': pendingChangesCache }"
-                                (click)="cancel()"
+                                (click)="previousState()"
                                 jhiTranslate="{{ pendingChangesCache ? 'entity.action.cancel' : 'entity.action.back' }}"
                             ></button>
                             <button
                                 id="quiz-save"
                                 class="btn btn-success"
                                 (click)="save()"
-                                [disabled]="isSaving || quizExercise.dueDateError || hasErrorInQuizBatches()"
-                                [ngClass]="{ disabled: !pendingChangesCache || !quizIsValid || hasSavedQuizStarted || isSaving }"
+                                [disabled]="isSaveDisabled()"
                                 jhiTranslate="entity.action.save"
                                 [ngbTooltip]="quizIsValid ? '' : tooltipTranslate"
                                 tooltip-placement="top-right"
