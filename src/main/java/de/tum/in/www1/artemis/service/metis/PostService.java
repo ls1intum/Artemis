@@ -57,14 +57,12 @@ public class PostService extends PostingService {
 
     private final PlagiarismCaseService plagiarismCaseService;
 
-    private final AuthorizationCheckService authorizationCheckService;
-
     private final PostSimilarityComparisonStrategy postContentCompareStrategy;
 
     protected PostService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository, PostRepository postRepository,
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
-            PlagiarismCaseRepository plagiarismCaseRepository, AuthorizationCheckService authorizationCheckService1) {
+            PlagiarismCaseRepository plagiarismCaseRepository) {
         super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
@@ -72,7 +70,6 @@ public class PostService extends PostingService {
         this.groupNotificationService = groupNotificationService;
         this.postContentCompareStrategy = postContentCompareStrategy;
         this.plagiarismCaseService = plagiarismCaseService;
-        this.authorizationCheckService = authorizationCheckService1;
     }
 
     /**
