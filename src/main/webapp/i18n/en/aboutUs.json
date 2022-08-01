@@ -41,7 +41,7 @@
             "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
         },
         "integratedMarkdownEditor": {
-            "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links."
+            "text": "<a href={{ markdownEditorUrl }}>Integrated Markdown Editor:</a> Markdown is used to format text content across the platform using an integrated markdown editor."
         },
         "plagiarismChecks": {
             "text": "<a href={{ plagiarismChecksUrl }}>Plagiarism checks</a> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."

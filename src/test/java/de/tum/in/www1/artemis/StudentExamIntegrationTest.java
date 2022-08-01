@@ -1592,12 +1592,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         // users tries to access exam summary after results are published
         database.changeUser(studentExam.getUser().getLogin());
-
-        User student3 = database.getUserByLogin("student2");
-
+        User student3 = database.getUserByLogin("student3");
         request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student3.getId(), HttpStatus.FORBIDDEN,
                 StudentExamWithGradeDTO.class);
-
     }
 
     @Test

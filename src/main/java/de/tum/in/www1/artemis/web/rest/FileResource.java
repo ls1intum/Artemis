@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.Serializable;
 import java.net.FileNameMap;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -34,6 +35,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.lecture.AttachmentUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
@@ -42,6 +44,9 @@ import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
 
 /**
  * REST controller for managing Files.
@@ -58,6 +63,8 @@ public class FileResource {
 
     private final LectureRepository lectureRepository;
 
+    private final AttachmentRepository attachmentRepository;
+
     private final AttachmentUnitRepository attachmentUnitRepository;
 
     private final CourseRepository courseRepository;
@@ -72,6 +79,8 @@ public class FileResource {
 
     private final UserRepository userRepository;
 
+    private static final int FILE_ACCESS_TOKEN_VALIDITY = 30;
+
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
 
@@ -84,7 +93,7 @@ public class FileResource {
     }
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
-            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository,
+            FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserRepository userRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
@@ -92,6 +101,7 @@ public class FileResource {
         this.tokenProvider = tokenProvider;
         this.fileUploadSubmissionRepository = fileUploadSubmissionRepository;
         this.fileUploadExerciseRepository = fileUploadExerciseRepository;
+        this.attachmentRepository = attachmentRepository;
         this.attachmentUnitRepository = attachmentUnitRepository;
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
@@ -101,7 +111,7 @@ public class FileResource {
     /**
      * POST /fileUpload : Upload a new file.
      *
-     * @param file The file to save
+     * @param file         The file to save
      * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
@@ -130,7 +140,7 @@ public class FileResource {
     /**
      * POST /markdown-file-upload : Upload a new file for markdown.
      *
-     * @param file The file to save
+     * @param file         The file to save
      * @param keepFileName specifies if original file name should be kept
      * @return The path of the file
      * @throws URISyntaxException if response path can't be converted into URI
@@ -159,8 +169,8 @@ public class FileResource {
     /**
      * GET /files/templates/:filename : Get the template file with the given filename
      *
-     * @param filename The filename of the file to get
-     * @param language The programming language for which the template file should be returned
+     * @param filename    The filename of the file to get
+     * @param language    The programming language for which the template file should be returned
      * @param projectType The project type for which the template file should be returned. If omitted, a default depending on the language will be used.
      * @return The requested file, or 404 if the file doesn't exist
      */
@@ -222,9 +232,9 @@ public class FileResource {
     /**
      * GET /files/file-upload/submission/:submissionId/:filename : Get the file upload exercise submission file
      *
-     * @param submissionId id of the submission, the file belongs to
-     * @param exerciseId id of the exercise, the file belongs to
-     * @param filename  the filename of the file
+     * @param submissionId         id of the submission, the file belongs to
+     * @param exerciseId           id of the exercise, the file belongs to
+     * @param filename             the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
@@ -233,18 +243,19 @@ public class FileResource {
     public ResponseEntity<byte[]> getFileUploadSubmission(@PathVariable Long exerciseId, @PathVariable Long submissionId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
-        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+
+        var requiredClaims = Map.of(TokenProvider.EXERCISE_ID_KEY, exerciseId.intValue(), TokenProvider.SUBMISSION_ID_KEY, submissionId.intValue(), TokenProvider.FILENAME_KEY,
+                TokenProvider.DOWNLOAD_FILE + filename);
+
+        if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the file in the corresponding exercise";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
 
-        Optional<FileUploadSubmission> optionalSubmission = fileUploadSubmissionRepository.findById(submissionId);
-        Optional<FileUploadExercise> optionalFileUploadExercise = fileUploadExerciseRepository.findById(exerciseId);
-        if (optionalSubmission.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        return buildFileResponse(FileUploadSubmission.buildFilePath(optionalFileUploadExercise.get().getId(), optionalSubmission.get().getId()), filename);
+        FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
+        FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+        return buildFileResponse(FileUploadSubmission.buildFilePath(exercise.getId(), submission.getId()), filename);
     }
 
     /**
@@ -262,26 +273,46 @@ public class FileResource {
     }
 
     /**
-     * GET /files/attachments/access-token/{filename:.+} : Generates an access token that is valid for 30 seconds and given filename
+     * GET files/file-upload-exercises/:exerciseId/submissions/:submissionId/:filename/access-token : Generates an access token that is valid for 30 seconds and given exerciseId and submissionId
      *
-     * @param filename name of the file, the access token is for
+     * @param exerciseId   ID of the exercise the submission belongs to
+     * @param submissionId ID of the submission the access token is for
+     * @param filename     The filename of the file
      * @return The generated access token
      */
-    @GetMapping("files/attachments/access-token/{filename:.+}")
+    @GetMapping("files/file-upload-exercises/{exerciseId}/submissions/{submissionId}/{filename:.+}/access-token")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<String> getTemporaryFileAccessToken(@PathVariable String filename) {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        // TODO: we should check that the filename actually exists in the context in Artemis, ideally we also verify that the user has access to this file already here
-        if (filename == null) {
+    public ResponseEntity<String> getTemporaryFileUploadExerciseSubmissionAccessToken(@PathVariable Long exerciseId, @PathVariable Long submissionId,
+            @PathVariable String filename) {
+        log.debug("REST request to get an access_token for a file upload exercise submission with exerciseId: {} and submissionId {}", exerciseId, submissionId);
+
+        FileUploadSubmission submission = fileUploadSubmissionRepository.findByIdElseThrow(submissionId);
+        FileUploadExercise exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
+
+        // check if the participation is a StudentParticipation before the following cast
+        if (!(submission.getParticipation() instanceof StudentParticipation)) {
             return ResponseEntity.badRequest().build();
         }
-        try {
-            String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, 30, filename);
-            return ResponseEntity.ok(temporaryAccessToken);
+        // user or team members that submitted the exercise
+        Set<User> usersOfTheSubmission = ((StudentParticipation) submission.getParticipation()).getStudents();
+        if (usersOfTheSubmission.isEmpty()) {
+            return ResponseEntity.badRequest().build();
         }
-        catch (IllegalAccessException e) {
+
+        User requestingUser = userRepository.getUserWithGroupsAndAuthorities();
+        // auth check - either the user that submitted the exercise or the requesting user is at least a tutor for the exercise
+        if (!usersOfTheSubmission.contains(requestingUser) && !authCheckService.isAtLeastTeachingAssistantForExercise(exercise)) {
             throw new AccessForbiddenException();
         }
+
+        Claims claims = Jwts.claims();
+        claims.put(TokenProvider.EXERCISE_ID_KEY, exerciseId);
+        claims.put(TokenProvider.SUBMISSION_ID_KEY, submissionId);
+        claims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, claims);
+        return ResponseEntity.ok(temporaryAccessToken);
     }
 
     /**
@@ -297,7 +328,7 @@ public class FileResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, courseRepository.findByIdElseThrow(courseId), null);
 
         try {
-            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, 30, courseId);
+            String temporaryAccessToken = tokenProvider.createFileTokenForCourseWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, courseId);
             return ResponseEntity.ok(temporaryAccessToken);
         }
         catch (IllegalAccessException e) {
@@ -306,10 +337,45 @@ public class FileResource {
     }
 
     /**
-     * GET /files/course/icons/:lectureId/:filename : Get the lecture attachment
+     * GET /files/attachments/lecture/:lectureId/:filename/access-token : Get an access-token for the lecture attachment
      *
      * @param lectureId ID of the lecture, the attachment belongs to
      * @param filename  the filename of the file
+     * @return The generated access token, 403 if the user has no access to the course
+     */
+    @GetMapping("files/attachments/lecture/{lectureId}/{filename:.+}/access-token")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTemporaryAccessTokenForLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename) {
+        log.debug("REST request to get an access-token for lecture attachment file : {}", filename);
+
+        List<Attachment> lectureAttachments = attachmentRepository.findAllByLectureId(lectureId);
+        Attachment attachment = lectureAttachments.stream().filter(lectureAttachment -> filename.equals(Path.of(lectureAttachment.getLink()).getFileName().toString())).findAny()
+                .orElseThrow(() -> new EntityNotFoundException("Attachment", filename));
+
+        // get the course for a lecture attachment
+        Lecture lecture = attachment.getLecture();
+        Course course = lecture.getCourse();
+
+        // check if the user is authorized to access the requested attachment unit
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+
+        Claims claims = Jwts.claims();
+        claims.put(TokenProvider.LECTURE_ID_KEY, lecture.getId());
+        claims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, claims);
+        return ResponseEntity.ok(temporaryAccessToken);
+    }
+
+    /**
+     * GET /files/attachments/lecture/:lectureId/:filename : Get the lecture attachment
+     *
+     * @param lectureId            ID of the lecture, the attachment belongs to
+     * @param filename             the filename of the file
      * @param temporaryAccessToken The access token is required to authenticate the user that accesses it
      * @return The requested file, 403 if the logged-in user is not allowed to access it, or 404 if the file doesn't exist
      */
@@ -317,16 +383,17 @@ public class FileResource {
     @PreAuthorize("permitAll()")
     public ResponseEntity<byte[]> getLectureAttachment(@PathVariable Long lectureId, @PathVariable String filename, @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
-        Optional<Lecture> optionalLecture = lectureRepository.findById(lectureId);
-        if (optionalLecture.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+        // required claims to access this resource
+        var requiredClaims = Map.of(TokenProvider.LECTURE_ID_KEY, lectureId.intValue(), TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+
+        if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding lecture";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(optionalLecture.get().getId())).toString(), filename);
+        // if the token is valid and includes the required claims, fetch the lecture and build the response
+        Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
+        return buildFileResponse(Path.of(FilePathService.getLectureAttachmentFilePath(), String.valueOf(lecture.getId())).toString(), filename);
     }
 
     /**
@@ -374,6 +441,39 @@ public class FileResource {
     }
 
     /**
+     * GET /files/attachments/attachment-unit/:attachmentUnitId/:filename/access-token : Get an access-token for the attachment unit
+     *
+     * @param attachmentUnitId ID of the attachment unit, the attachment belongs to
+     * @param filename         the filename of the file
+     * @return The generated access token, 403 if the user has no access to the course
+     */
+    @GetMapping("files/attachments/attachment-unit/{attachmentUnitId}/{filename:.+}/access-token")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTemporaryAccessTokenForAttachmentUnit(@PathVariable Long attachmentUnitId, @PathVariable String filename) {
+        log.debug("REST request to get an access-token for attachment unit file : {}", filename);
+
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+
+        // get the course for a lecture's attachment unit
+        Attachment attachment = attachmentUnit.getAttachment();
+        Course course = attachmentUnit.getLecture().getCourse();
+
+        // check if the user is authorized to access the requested attachment unit
+        if (!checkAttachmentAuthorization(course, attachment)) {
+            throw new AccessForbiddenException();
+        }
+
+        Claims claims = Jwts.claims();
+        claims.put(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnit.getId());
+        claims.put(TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        String temporaryAccessToken = tokenProvider.createFileTokenWithCustomDuration(authentication, FILE_ACCESS_TOKEN_VALIDITY, claims);
+        return ResponseEntity.ok(temporaryAccessToken);
+    }
+
+    /**
      * GET files/attachments/attachment-unit/:attachmentUnitId/:filename : Get the lecture unit attachment
      *
      * @param attachmentUnitId     ID of the attachment unit, the attachment belongs to
@@ -386,27 +486,45 @@ public class FileResource {
     public ResponseEntity<byte[]> getAttachmentUnitAttachment(@PathVariable Long attachmentUnitId, @PathVariable String filename,
             @RequestParam("access_token") String temporaryAccessToken) {
         log.debug("REST request to get file : {}", filename);
-        Optional<AttachmentUnit> optionalAttachmentUnit = attachmentUnitRepository.findById(attachmentUnitId);
-        if (optionalAttachmentUnit.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        if (!validateTemporaryAccessToken(temporaryAccessToken, filename)) {
+
+        // required claims to access this resource
+        var requiredClaims = Map.of(TokenProvider.ATTACHMENT_UNIT_ID_KEY, attachmentUnitId.intValue(), TokenProvider.FILENAME_KEY, TokenProvider.DOWNLOAD_FILE + filename);
+
+        if (!validateTemporaryAccessToken(temporaryAccessToken, requiredClaims)) {
             // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
             String errorMessage = "You don't have the access rights for this file! Please login to Artemis and download the attachment in the corresponding attachmentUnit";
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
         }
-        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(optionalAttachmentUnit.get().getId())).toString(), filename);
+        // if the token is valid and includes the required claims, fetch the attachment unit and build the response
+        AttachmentUnit attachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
+        return buildFileResponse(Path.of(FilePathService.getAttachmentUnitFilePath(), String.valueOf(attachmentUnit.getId())).toString(), filename);
+    }
+
+    /**
+     * Checks if the user is authorized to access an attachment
+     *
+     * @param course     the course to check if the user is part of it
+     * @param attachment the attachment for which the authentication should be checked
+     * @return true if the user is authorized to access the attachment, otherwise false is returned
+     */
+    private boolean checkAttachmentAuthorization(Course course, Attachment attachment) {
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, null);
+        if (!attachment.isVisibleToStudents() && !authCheckService.isAtLeastTeachingAssistantInCourse(course, null)) {
+            log.info("User not authorized to access attachment");
+            return false;
+        }
+        return true;
     }
 
     /**
      * Validates temporary access token
      *
      * @param temporaryAccessToken token to be validated
-     * @param filename             the name of the file
+     * @param customClaims         the claims that the access token has to contain
      * @return true if temporaryAccessToken is valid for this file, false otherwise
      */
-    private boolean validateTemporaryAccessToken(String temporaryAccessToken, String filename) {
-        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, TokenProvider.DOWNLOAD_FILE, filename)) {
+    private boolean validateTemporaryAccessToken(String temporaryAccessToken, Map<String, ? extends Serializable> customClaims) {
+        if (temporaryAccessToken == null || !this.tokenProvider.validateTokenForAuthorityAndFile(temporaryAccessToken, customClaims)) {
             log.info("Attachment with invalid token was accessed");
             return false;
         }
