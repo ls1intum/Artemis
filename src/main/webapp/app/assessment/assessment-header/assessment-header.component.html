@@ -32,11 +32,11 @@
             *ngIf="
                 isAssessor &&
                 exercise &&
-                !exercise?.isAtLeastInstructor &&
+                !exercise.isAtLeastInstructor &&
                 hasComplaint &&
                 complaintType != ComplaintType.COMPLAINT &&
                 !complaintHandled &&
-                exercise?.assessmentType !== AssessmentType.AUTOMATIC
+                exercise.assessmentType !== AssessmentType.AUTOMATIC
             "
             class="m-2"
             style="font-size: 65%"
@@ -49,12 +49,12 @@
             *ngIf="
                 isAssessor &&
                 exercise &&
-                !exercise?.isAtLeastInstructor &&
+                !exercise.isAtLeastInstructor &&
                 hasComplaint &&
                 complaintType != ComplaintType.COMPLAINT &&
-                exercise?.assessmentType === AssessmentType.AUTOMATIC &&
+                exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
-                !exercise?.teamMode
+                !exercise.teamMode
             "
             class="m-2"
             style="font-size: 65%"
@@ -64,7 +64,7 @@
         </span>
         <span
             id="teamComplaint"
-            *ngIf="isAssessor && exercise && !exercise?.isAtLeastInstructor && hasComplaint && complaintType == ComplaintType.COMPLAINT && !complaintHandled && exercise?.teamMode"
+            *ngIf="isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintType == ComplaintType.COMPLAINT && !complaintHandled && exercise.teamMode"
             class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.teamComplaint"
@@ -76,12 +76,12 @@
             *ngIf="
                 isAssessor &&
                 exercise &&
-                !exercise?.isAtLeastInstructor &&
+                !exercise.isAtLeastInstructor &&
                 hasComplaint &&
                 complaintType == ComplaintType.COMPLAINT &&
-                exercise?.assessmentType === AssessmentType.AUTOMATIC &&
+                exercise.assessmentType === AssessmentType.AUTOMATIC &&
                 !complaintHandled &&
-                !exercise?.teamMode
+                !exercise.teamMode
             "
             class="m-2"
             style="font-size: 65%"
@@ -94,12 +94,12 @@
             *ngIf="
                 isAssessor &&
                 exercise &&
-                !exercise?.isAtLeastInstructor &&
+                !exercise.isAtLeastInstructor &&
                 hasComplaint &&
-                exercise?.assessmentType !== AssessmentType.AUTOMATIC &&
+                exercise.assessmentType !== AssessmentType.AUTOMATIC &&
                 complaintType == ComplaintType.COMPLAINT &&
                 !complaintHandled &&
-                !exercise?.teamMode
+                !exercise.teamMode
             "
             class="m-2"
             style="font-size: 65%"
@@ -109,7 +109,7 @@
         </span>
         <span
             id="assessmentReadOnlyHandled"
-            *ngIf="isAssessor && exercise && !exercise?.isAtLeastInstructor && hasComplaint && complaintHandled && !exercise?.teamMode"
+            *ngIf="isAssessor && exercise && !exercise.isAtLeastInstructor && hasComplaint && complaintHandled && !exercise.teamMode"
             class="m-2"
             style="font-size: 65%"
             jhiTranslate="artemisApp.assessment.assessmentReadOnlyHandledComplaint"

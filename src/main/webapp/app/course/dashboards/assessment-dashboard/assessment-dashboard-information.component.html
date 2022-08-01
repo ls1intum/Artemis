@@ -44,7 +44,7 @@
                                 {{ complaints.tutor }}
                             </a>
                         </div>
-                        <div *ngIf="course && !course?.isAtLeastInstructor">
+                        <div *ngIf="course && !course.isAtLeastInstructor">
                             {{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) |
                             <a [routerLink]="complaintsLink" [queryParams]="{ tutorId: tutorId }">
                                 {{ complaints.tutor }}
@@ -66,7 +66,7 @@
                                 {{ moreFeedbackRequests.tutor }}
                             </a>
                         </div>
-                        <div *ngIf="course && !course?.isAtLeastInstructor">
+                        <div *ngIf="course && !course.isAtLeastInstructor">
                             {{ moreFeedbackRequests.done }} / {{ moreFeedbackRequests.total }} ({{ moreFeedbackRequests.doneToTotalPercentage }}) |
                             <a [routerLink]="moreFeedbackRequestsLink" [queryParams]="{ tutorId: tutorId }">
                                 {{ moreFeedbackRequests.tutor }}
@@ -89,7 +89,7 @@
                     <div class="col-7">{{ 'artemisApp.exerciseAssessmentDashboard.ratings' | artemisTranslate }}</div>
                     <div class="col-5">
                         <a *ngIf="course?.isAtLeastInstructor" [routerLink]="ratingsLink"> {{ ratings.total }} </a>
-                        <span *ngIf="course && !course?.isAtLeastInstructor"> {{ ratings.total }} </span> |
+                        <span *ngIf="course && !course.isAtLeastInstructor"> {{ ratings.total }} </span> |
                         {{ ratings.tutor }}
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                         </div>
                         <!-- TODO: make those links work (REST calls to fetch for individual students do not exist yet) -->
                         <!-- this value is not yet available for exam mode. As soon as the leaderboards exist add it again. {{ complaints.tutor }} -->
-                        <div *ngIf="course && !course?.isAtLeastInstructor">{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
+                        <div *ngIf="course && !course.isAtLeastInstructor">{{ complaints.done }} / {{ complaints.total }} ({{ complaints.doneToTotalPercentage }}) | -</div>
                     </div>
                 </div>
                 <div class="row g-0 mb-1">

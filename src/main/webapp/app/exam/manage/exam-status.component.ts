@@ -144,7 +144,7 @@ export class ExamStatusComponent implements OnChanges {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         if (this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
-        } else if (this.examAlreadyEnded() && (!this.course?.isAtLeastInstructor || this.examPreparationFinished)) {
+        } else if (this.examAlreadyEnded() && ((this.course && !this.course.isAtLeastInstructor) || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;
