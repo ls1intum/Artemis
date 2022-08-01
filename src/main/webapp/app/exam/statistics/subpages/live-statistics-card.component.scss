@@ -1,0 +1,29 @@
+.live-statistics-card {
+    a,
+    a:hover,
+    a:visited,
+    a:active {
+        color: inherit !important;
+        text-decoration: none !important;
+    }
+
+    .live-statistics-card-header {
+        border-bottom: 2px solid var(--primary);
+        background: var(--exam-live-statistics-card-footer-background-color);
+    }
+
+    .live-statistics-card-header-pointer {
+        cursor: pointer;
+    }
+
+    .live-statistics-card-content {
+        border-left: 2px solid var(--exam-live-statistics-card-footer-background-color);
+        border-right: 2px solid var(--exam-live-statistics-card-footer-background-color);
+    }
+
+    .live-statistics-card-footer {
+        min-height: 50px;
+        border-top: 2px solid var(--primary);
+        background: var(--exam-live-statistics-card-footer-background-color);
+    }
+}

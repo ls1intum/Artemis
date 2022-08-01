@@ -114,15 +114,15 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendExamMonitoringSchedule(Long examId) {
-        log.info("Sending schedule for exam monitoring {} to broker.", examId);
-        sendMessageDelayed("exam-monitoring-schedule", examId);
+    public void sendExamLiveStatisticsSchedule(Long examId) {
+        log.info("Sending schedule for exam live statistics {} to broker.", examId);
+        sendMessageDelayed("exam-live-statistics-schedule", examId);
     }
 
     @Override
-    public void sendExamMonitoringScheduleCancel(Long examId) {
-        log.info("Sending schedule cancel for exam monitoring {} to broker.", examId);
-        sendMessageDelayed("exam-monitoring-schedule-cancel", examId);
+    public void sendExamLiveStatisticsScheduleCancel(Long examId) {
+        log.info("Sending schedule cancel for exam live statistics {} to broker.", examId);
+        sendMessageDelayed("exam-live-statistics-schedule-cancel", examId);
     }
 
     private void sendMessageDelayed(String destination, Long exerciseId) {

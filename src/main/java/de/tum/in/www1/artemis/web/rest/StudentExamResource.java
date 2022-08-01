@@ -195,7 +195,7 @@ public class StudentExamResource {
         studentExam.setWorkingTime(workingTime);
         var savedStudentExam = studentExamRepository.save(studentExam);
 
-        instanceMessageSendService.sendExamMonitoringSchedule(examId);
+        instanceMessageSendService.sendExamLiveStatisticsSchedule(examId);
 
         return ResponseEntity.ok(savedStudentExam);
     }

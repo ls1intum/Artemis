@@ -348,7 +348,7 @@
             "confirmationEndText": "Bestätigungstext zum Klausurende",
             "assessmentDashboard": "Bewertung",
             "examChecklist": "Klausurcheckliste",
-            "examMonitoring": "Klausur Live Statistik",
+            "examLiveStatistics": "Klausur Live Statistik",
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
@@ -364,7 +364,7 @@
             "import": {
                 "search": "Suche nach einer Klausur"
             },
-            "monitoring": {
+            "liveStatistics": {
                 "enable": {
                     "title": "Klausur Live Statistik aktivieren",
                     "description": "Die Klausur Live Statistik sammelt die Interaktionen der Studierenden mit der Klausur und bietet dadurch weitere Möglichkeiten für Statistiken."
@@ -480,7 +480,7 @@
                     "generateStudentExams": "Generierung aller Klausuren",
                     "prepareExerciseStart": "Vorbereitung des Aufgabenstarts",
                     "examDetails": "Ausfüllen aller Klausurdetails",
-                    "examMonitoring": "Klausur Live Statistik Ansicht",
+                    "examLiveStatistics": "Klausur Live Statistik Ansicht",
                     "conductExam": "Abhalten der Klausur",
                     "assessAllSubmissions": "Bewertung aller Abgaben",
                     "publishResults": "Veröffentlichung der Ergebnisse",
@@ -495,7 +495,7 @@
                     "generateStudentExams": "Du musst die individuellen Klausuren der Studierenden vor Start der Klausur generieren. Die Arbeitszeit kann dabei individuell angepasst werden.\nZudem werden alle Commits des Templates von Programmieraufgaben in einem Commit zusammengefasst.",
                     "prepareExerciseStart": "Du musst die Aufgaben vor Beginn der Klausur vorbereiten.",
                     "examDetails": "Alle relevanten Details der Klausur müssen vor dem Start der Korrektur eingetragen sein.",
-                    "examMonitoring": "Sie können die Aktionen der Studierenden während der Prüfung einsehen und die daraus resultierenden Daten analysieren. Um diese Funktion zu nutzen, müssen Sie sie in der Prüfungskonfiguration aktivieren.",
+                    "examLiveStatistics": "Sie können die Aktionen der Studierenden während der Prüfung einsehen und die daraus resultierenden Daten analysieren. Um diese Funktion zu nutzen, müssen Sie sie in der Prüfungskonfiguration aktivieren.",
                     "conductExam": "In der Studierenden-Klausurübersicht sieht man, welche Studierende ihre Klausur bereits abgegeben haben.",
                     "assessAllSubmissions": "Die Anzahl der Korrekturrunden der Aufgaben entspricht der in der Klausur angegebenen Anzahl von Korrekturrunden.",
                     "publishResults": "Das Veröffentlichen der Ergebnisse macht diese zugänglich für die Teilnehmenden der Klausur.",
@@ -537,7 +537,7 @@
                 }
             }
         },
-        "examMonitoring": {
+        "examLiveStatistics": {
             "title": "Klausur Live Statistik",
             "description": "Die Klausur Live Statistik Ansicht erlaubt es die Aktionen der Studierenden während der Klausur einzusehen und die daraus resultierenden Daten zu analysieren.",
             "enable": "Aktivieren",

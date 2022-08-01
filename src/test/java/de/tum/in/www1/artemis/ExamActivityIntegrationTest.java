@@ -24,18 +24,18 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
-import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
-import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
+import de.tum.in.www1.artemis.domain.exam.statistics.ExamAction;
+import de.tum.in.www1.artemis.domain.exam.statistics.actions.*;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.statistics.ExamLiveStatisticsScheduleService;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
 class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
-    private ExamMonitoringScheduleService examMonitoringScheduleService;
+    private ExamLiveStatisticsScheduleService examLiveStatisticsScheduleService;
 
     @Autowired
     protected RequestUtilService request;
@@ -60,7 +60,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         List<User> users = database.addUsers(15, 5, 0, 1);
         course = database.addEmptyCourse();
         exam = database.addActiveExamWithRegisteredUser(course, users.get(0));
-        exam.setMonitoring(true);
+        exam.setLiveStatistics(true);
         exam = examRepository.save(exam);
         studentExam = database.addStudentExam(exam);
         studentExam.setWorkingTime(7200);
@@ -71,8 +71,8 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @AfterEach
     void tearDown() throws Exception {
         database.resetDatabase();
-        examMonitoringScheduleService.stopSchedule();
-        examMonitoringScheduleService.clearAllExamMonitoringData();
+        examLiveStatisticsScheduleService.stopSchedule();
+        examLiveStatisticsScheduleService.clearAllExamLiveStatisticsData();
     }
 
     private ExamAction createExamActionBasedOnType(ExamActionType examActionType) {
@@ -120,7 +120,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/live-statistics-action", examAction);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -130,9 +130,9 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/live-statistics-action", examAction);
 
-        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        var examActivity = examLiveStatisticsScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
         assertThat(examActivity.getExamActions().size()).isEqualTo(1);
         assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
@@ -145,11 +145,11 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/live-statistics-action", examAction);
 
-        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+        examLiveStatisticsScheduleService.executeExamActivitySaveTask(exam.getId());
 
-        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        var examActivity = examLiveStatisticsScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNull();
     }
 
@@ -160,32 +160,32 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (ExamAction examAction : examActions) {
             examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-            verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
+            verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/live-statistics-action", examAction);
         }
 
-        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        var examActivity = examLiveStatisticsScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
 
         assertThat(examActivity).isNotNull();
         assertThat(examActivity.getExamActions().size()).isEqualTo(examActions.size());
 
-        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+        examLiveStatisticsScheduleService.executeExamActivitySaveTask(exam.getId());
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "student1", roles = "USER")
     @EnumSource(ExamActionType.class)
-    void testExamWithMonitoringDisabled(ExamActionType examActionType) {
+    void testExamWithLiveStatisticsDisabled(ExamActionType examActionType) {
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
-        exam.setMonitoring(false);
+        exam.setLiveStatistics(false);
         examRepository.save(exam);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/live-statistics-action", examAction);
 
         // Currently, we don't apply any filtering - so there should be an activity and action in the cache
-        var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
+        var examActivity = examLiveStatisticsScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
         assertThat(examActivity.getExamActions().size()).isEqualTo(1);
         assertThat(new ArrayList<>(examActivity.getExamActions()).get(0).getType()).isEqualTo(examActionType);
@@ -199,7 +199,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/live-statistics-action", examAction);
 
         List<ExamAction> examActions = request.getList("/api/exams/" + exam.getId() + "/load-actions", HttpStatus.OK, ExamAction.class);
 
@@ -216,13 +216,13 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @WithMockUser(username = "admin", roles = "ADMIN")
     @ValueSource(booleans = { true, false })
-    void testUpdateMonitoring(boolean monitoring) throws Exception {
-        exam.setMonitoring(!monitoring);
+    void testUpdateLiveStatistics(boolean liveStatistics) throws Exception {
+        exam.setLiveStatistics(!liveStatistics);
         exam = examRepository.save(exam);
 
-        var result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", monitoring, Boolean.class, HttpStatus.OK);
+        var result = request.putWithResponseBody("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/statistics", liveStatistics, Boolean.class, HttpStatus.OK);
 
-        assertEquals(result, monitoring);
-        assertEquals(examRepository.findByIdElseThrow(exam.getId()).isMonitoring(), monitoring);
+        assertEquals(result, liveStatistics);
+        assertEquals(examRepository.findByIdElseThrow(exam.getId()).isLiveStatistics(), liveStatistics);
     }
 }

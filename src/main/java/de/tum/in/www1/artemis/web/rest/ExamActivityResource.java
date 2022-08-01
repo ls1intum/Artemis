@@ -11,11 +11,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.exam.Exam;
-import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
+import de.tum.in.www1.artemis.domain.exam.statistics.ExamAction;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.statistics.ExamLiveStatisticsScheduleService;
 
 /**
  * (Websocket) controller for managing ExamActivityResource.
@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringS
 @Controller
 public class ExamActivityResource {
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+    private final ExamLiveStatisticsScheduleService examLiveStatisticsScheduleService;
 
     private final InstanceMessageSendService instanceMessageSendService;
 
@@ -32,9 +32,9 @@ public class ExamActivityResource {
 
     private final ExamRepository examRepository;
 
-    public ExamActivityResource(ExamMonitoringScheduleService examMonitoringScheduleService, InstanceMessageSendService instanceMessageSendService,
+    public ExamActivityResource(ExamLiveStatisticsScheduleService examLiveStatisticsScheduleService, InstanceMessageSendService instanceMessageSendService,
             ExamAccessService examAccessService, ExamRepository examRepository) {
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.examLiveStatisticsScheduleService = examLiveStatisticsScheduleService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.examAccessService = examAccessService;
         this.examRepository = examRepository;
@@ -46,9 +46,9 @@ public class ExamActivityResource {
      * @param examId    the exam to which the student exams belong to
      * @param action    action performed by the user
      */
-    @MessageMapping("/topic/exams/{examId}/exam-live-statistics-actions")
+    @MessageMapping("/topic/exams/{examId}/live-statistics-actions")
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
-        examMonitoringScheduleService.addExamActions(examId, action);
+        examLiveStatisticsScheduleService.addExamActions(examId, action);
     }
 
     /**
@@ -60,34 +60,34 @@ public class ExamActivityResource {
     @GetMapping("api/exams/{examId}/load-actions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
-        return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
+        return ResponseEntity.ok().body(examLiveStatisticsScheduleService.getAllExamActions(examId));
     }
 
     /**
-     * PUT api/courses/{courseId}/exams/{examId}/statistics: disable or enable the monitoring
+     * PUT api/courses/{courseId}/exams/{examId}/statistics: disable or enable the exam live statistics
      *
      * @param courseId the course to which the exam belongs to
      * @param examId the exam to which the student exams belong to
-     * @param monitoring new status of the monitoring
+     * @param liveStatistics new status of the liveStatistics
      * @return all exam actions of the exam
      */
     @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Boolean> updateMonitoring(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean monitoring) {
+    public ResponseEntity<Boolean> updateLiveStatistics(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean liveStatistics) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         Exam exam = examRepository.findByIdElseThrow(examId);
-        exam.setMonitoring(monitoring);
+        exam.setLiveStatistics(liveStatistics);
         Exam result = examRepository.save(exam);
 
-        if (result.isMonitoring()) {
-            instanceMessageSendService.sendExamMonitoringSchedule(result.getId());
+        if (result.isLiveStatistics()) {
+            instanceMessageSendService.sendExamLiveStatisticsSchedule(result.getId());
         }
         else {
-            instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
+            instanceMessageSendService.sendExamLiveStatisticsScheduleCancel(result.getId());
         }
-        examMonitoringScheduleService.notifyExamLiveStatisticsUpdate(result.getId(), result.isMonitoring());
+        examLiveStatisticsScheduleService.notifyExamLiveStatisticsUpdate(result.getId(), result.isLiveStatistics());
 
-        return ResponseEntity.ok().body(result.isMonitoring());
+        return ResponseEntity.ok().body(result.isLiveStatistics());
     }
 }

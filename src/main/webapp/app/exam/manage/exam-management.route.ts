@@ -125,8 +125,8 @@ export const examManagementRoute: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':examId/monitoring',
-        loadChildren: () => import('../monitoring/exam-monitoring.module').then((m) => m.ArtemisExamMonitoringModule),
+        path: ':examId/live-statistics',
+        loadChildren: () => import('../statistics/exam-live-statistics.module').then((m) => m.ArtemisExamLiveStatisticsModule),
     },
     {
         path: ':examId/participant-scores',

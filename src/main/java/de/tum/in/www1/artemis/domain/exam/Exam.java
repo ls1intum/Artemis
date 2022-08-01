@@ -36,10 +36,10 @@ public class Exam extends DomainObject {
     private boolean testExam;
 
     /**
-     * This boolean indicates whether monitoring is enabled
+     * This boolean indicates whether live statistics is enabled
      */
-    @Column(name = "monitoring")
-    private boolean monitoring;
+    @Column(name = "live_statistics")
+    private boolean liveStatistics;
 
     /**
      * student can see the exam in the UI from this date onwards
@@ -165,12 +165,12 @@ public class Exam extends DomainObject {
         this.testExam = testExam;
     }
 
-    public boolean isMonitoring() {
-        return monitoring;
+    public boolean isLiveStatistics() {
+        return liveStatistics;
     }
 
-    public void setMonitoring(boolean monitoring) {
-        this.monitoring = monitoring;
+    public void setLiveStatistics(boolean liveStatistics) {
+        this.liveStatistics = liveStatistics;
     }
 
     @NotNull

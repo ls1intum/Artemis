@@ -1,0 +1,28 @@
+.exam-live-statistics-description {
+    font-size: 16px;
+}
+
+.exam-live-statistics-side-panel {
+    min-width: 400px;
+    max-width: 500px;
+}
+
+.exam-live-statistics-badge {
+    font-size: 10px;
+    height: 20px;
+}
+
+.exam-live-statistics-side-panel-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
+}
+
+@media (max-width: 767px) {
+    .exam-live-statistics-side-panel-container {
+        padding-top: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+}

@@ -349,7 +349,7 @@
             "confirmationEndText": "Exam end confirmation text",
             "assessmentDashboard": "Assessment",
             "examChecklist": "Exam Checklist",
-            "examMonitoring": "Exam live statistics",
+            "examLiveStatistics": "Exam live statistics",
             "studentExams": "Student Exams",
             "students": "Students",
             "gradingSystem": "Grading Key",
@@ -365,7 +365,7 @@
             "import": {
                 "search": "Search for exam"
             },
-            "monitoring": {
+            "live-statistics": {
                 "enable": {
                     "title": "Enable exam live statistics",
                     "description": "The exam live statistics collects the student's interactions with the exam and provides further opportunities for statistics."
@@ -481,7 +481,7 @@
                     "generateStudentExams": "Generate all student exams",
                     "prepareExerciseStart": "Prepare exercise start",
                     "examDetails": "Fill out all exam details",
-                    "examMonitoring": "Exam live statistics dashboard",
+                    "examLiveStatistics": "Exam live statistics dashboard",
                     "conductExam": "Conduct the exam",
                     "assessAllSubmissions": "Assess all submissions",
                     "publishResults": "Publish the exam results",
@@ -496,7 +496,7 @@
                     "generateStudentExams": "You need to generate exams for all registered students before starting the exam. Their working time can be adjusted individually.\nAdditionally, the commits of the templates in programming exercises will be combined into one commit.",
                     "prepareExerciseStart": "You need to prepare the exercises before the exam starts.",
                     "examDetails": "Before conducting an exam, please make sure to have filled out all exam details. (Start text, dates, etc.)",
-                    "examMonitoring": "You can view students' actions during the exam and analyze the resulting data. To use this feature, you must enable it in the exam configuration.",
+                    "examLiveStatistics": "You can view students' actions during the exam and analyze the resulting data. To use this feature, you must enable it in the exam configuration.",
                     "conductExam": "On the student exam page you can see which students have already submitted their exam.",
                     "assessAllSubmissions": "The number of correction rounds per exercise depends on the exam's number of correction rounds.",
                     "publishResults": "Publishing the results makes them available to students. Student exams are published on the publishing date for results within the exam.",

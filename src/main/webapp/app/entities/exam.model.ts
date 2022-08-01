@@ -46,7 +46,7 @@ export class Exam implements BaseEntity {
 
     public latestIndividualEndDate?: dayjs.Dayjs;
 
-    public monitoring?: boolean;
+    public liveStatistics?: boolean;
 
     constructor() {
         this.randomizeExerciseOrder = false; // default value (set by server)
@@ -58,6 +58,6 @@ export class Exam implements BaseEntity {
         // helper attributes (calculated by the server at the time of the last request)
         this.visible = false;
         this.started = false;
-        this.monitoring = false;
+        this.liveStatistics = false;
     }
 }
