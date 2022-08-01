@@ -535,7 +535,7 @@ public class PostService extends PostingService {
      */
     private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
         // prepares a unique set of userIds that authored the current list of postings
-        Set userIds = new HashSet<Long>();
+        Set<Long> userIds = new HashSet<>();
         postsInCourse.forEach(post -> {
             userIds.add(post.getAuthor().getId());
             post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
