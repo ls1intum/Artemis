@@ -54,6 +54,7 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
+        System.out.println(feature);
         if (feature == Feature.ExamLiveStatistics) {
             // We want to clear all the data, but keep the settings.
             examMonitoringScheduleService.clearAllExamMonitoringData();
@@ -69,6 +70,11 @@ public class FeatureToggleService {
      * @param features A map of features (feature -> shouldBeActivated)
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
+        var examLiveStatistics = features.get(Feature.ExamLiveStatistics);
+        if (examLiveStatistics != null && !examLiveStatistics) {
+            // We want to clear all the data, but keep the settings.
+            examMonitoringScheduleService.clearAllExamMonitoringData();
+        }
         this.features.putAll(features);
         sendUpdate();
     }
