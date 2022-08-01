@@ -55,7 +55,7 @@
                 </td>
                 <td>{{ tutor.points }}</td>
                 <td>{{ tutor.numberOfAssessments }}</td>
-                <ng-container *ngIf="!course?.isAtLeastInstructor; else atLeastInstructor">
+                <ng-container *ngIf="course && !course?.isAtLeastInstructor; else atLeastInstructor">
                     <td>{{ tutor.numberOfAcceptedComplaints }}</td>
                     <td *ngIf="!isExamMode">{{ tutor.numberOfNotAnsweredMoreFeedbackRequests }}</td>
                 </ng-container>
