@@ -215,7 +215,7 @@ public class ExamResource {
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**

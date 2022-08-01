@@ -8,6 +8,7 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
@@ -42,9 +44,6 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private CourseRepository courseRepo;
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -153,6 +152,17 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
     void createModelingSubmission_studentNotInCourse() throws Exception {
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(validModel, true);
         request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1")
+    void saveAndSubmitModelingSubmission_tooLarge() throws Exception {
+        database.createAndSaveParticipationForExercise(classExercise, "student1");
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(emptyModel, false);
+        char[] chars = new char[(int) (Constants.MAX_SUBMISSION_TEXT_LENGTH + 1)];
+        Arrays.fill(chars, 'a');
+        submission.setModel(new String(chars));
+        request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission, ModelingSubmission.class, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
     @Test

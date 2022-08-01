@@ -30,6 +30,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course } from 'app/entities/course.model';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
+import { MAX_SUBMISSION_TEXT_LENGTH } from 'app/shared/constants/input.constants';
 
 @Component({
     templateUrl: './text-editor.component.html',
@@ -38,6 +39,7 @@ import { faListAlt } from '@fortawesome/free-regular-svg-icons';
 })
 export class TextEditorComponent implements OnInit, OnDestroy, ComponentCanDeactivate {
     readonly ButtonType = ButtonType;
+    readonly maxCharacterCount = MAX_SUBMISSION_TEXT_LENGTH;
     textExercise: TextExercise;
     participation: StudentParticipation;
     result: Result;

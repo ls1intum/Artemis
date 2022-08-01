@@ -162,7 +162,7 @@ public class OrganizationResource {
         }
         organizationRepository.findByIdElseThrow(organization.getId());
         Organization updated = organizationService.update(organization);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updated.getName())).body(updated);
+        return ResponseEntity.ok(updated);
     }
 
     /**

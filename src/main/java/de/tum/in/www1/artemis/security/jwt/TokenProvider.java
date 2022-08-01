@@ -1,10 +1,13 @@
 package de.tum.in.www1.artemis.security.jwt;
 
+import java.io.Serializable;
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import javax.annotation.PostConstruct;
@@ -33,9 +36,17 @@ public class TokenProvider {
 
     private static final String AUTHORITIES_KEY = "auth";
 
-    private static final String FILENAME_KEY = "filename";
+    public static final String FILENAME_KEY = "filename";
 
-    private static final String COURSE_ID_KEY = "courseId";
+    public static final String COURSE_ID_KEY = "courseId";
+
+    public static final String LECTURE_ID_KEY = "lectureId";
+
+    public static final String ATTACHMENT_UNIT_ID_KEY = "attachmentUnitId";
+
+    public static final String EXERCISE_ID_KEY = "exerciseId";
+
+    public static final String SUBMISSION_ID_KEY = "submissionId";
 
     public static final String DOWNLOAD_FILE = "FILE_DOWNLOAD";
 
@@ -76,8 +87,9 @@ public class TokenProvider {
 
     /**
      * Create JWT Token a fully populated <code>Authentication</code> object.
+     *
      * @param authentication Authentication Object
-     * @param rememberMe Determines Token lifetime (30 minutes vs 30 days)
+     * @param rememberMe     Determines Token lifetime (30 minutes vs 30 days)
      * @return JWT Token
      */
     public String createToken(Authentication authentication, boolean rememberMe) {
@@ -96,32 +108,26 @@ public class TokenProvider {
     }
 
     /**
-     * Generates an access token that allows a user to download a file. This token is only valid for the given validity period.
+     * Generates an access token with custom claims that allows a user to download a file. This token is only valid for the given validity period.
      *
-     * @param authentication Currently active authentication mostly the currently logged-in user
+     * @param authentication            Currently active authentication mostly the currently logged-in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
-     * @param fileName The name of the file, which the token belongs to
+     * @param customClaims              The claims that are included in the token
      * @return File access token as a JWT token
      */
-    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, String fileName) throws IllegalAccessException {
-        // Note: we want to prevent issues with authentication here. Filenames should never contain commas!
-        if (fileName.contains(",")) {
-            throw new IllegalAccessException("File names cannot include commas");
-        }
-        String fileNameValue = DOWNLOAD_FILE + fileName;
-
+    public String createFileTokenWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Claims customClaims) {
         long now = (new Date()).getTime();
         Date validity = new Date(now + durationValidityInSeconds * 1000);
 
-        return Jwts.builder().setSubject(authentication.getName()).claim(FILENAME_KEY, fileNameValue).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
+        return Jwts.builder().setSubject(authentication.getName()).addClaims(customClaims).signWith(key, SignatureAlgorithm.HS512).setExpiration(validity).compact();
     }
 
     /**
      * Generates an access token that allows a user to download a file of a course. This token is only valid for the given validity period.
      *
-     * @param authentication Currently active authentication mostly the currently logged-in user
+     * @param authentication            Currently active authentication mostly the currently logged-in user
      * @param durationValidityInSeconds The duration how long the access token should be valid
-     * @param courseId The id of the course, which the token belongs to
+     * @param courseId                  The id of the course, which the token belongs to
      * @return File access token as a JWT token
      */
     public String createFileTokenForCourseWithCustomDuration(Authentication authentication, Integer durationValidityInSeconds, Long courseId) throws IllegalAccessException {
@@ -133,6 +139,7 @@ public class TokenProvider {
 
     /**
      * Convert JWT Authorization Token into UsernamePasswordAuthenticationToken, including a USer object and its authorities
+     *
      * @param token JWT Authorization Token
      * @return UsernamePasswordAuthenticationToken
      */
@@ -151,25 +158,25 @@ public class TokenProvider {
     }
 
     /**
-     * Checks if a certain downloadFileKey and filename is inside the JWT token. Also validates the JWT token if it is still valid.
+     * Checks if custom claims are inside the signed JWT token. Also validates the JWT token if it is still valid.
      *
-     * @param authToken The token that has to be checked
-     * @param downloadFileKey What downloadFileKey should be included in the token
-     * @param fileName The name of the file the token belongs to
+     * @param authToken      The token that has to be checked
+     * @param requiredClaims The claims that should be included in the token
      * @return true if everything matches
      */
-    public boolean validateTokenForAuthorityAndFile(String authToken, String downloadFileKey, String fileName) {
-        if (!validateJwsToken(authToken)) {
+    public boolean validateTokenForAuthorityAndFile(String authToken, Map<String, ? extends Serializable> requiredClaims) {
+        if (!validateJwsToken(authToken) || requiredClaims.isEmpty()) {
             return false;
         }
-        try {
-            String fileNameToken = (String) parseClaims(authToken).get(FILENAME_KEY);
-            return fileNameToken.contains(downloadFileKey + fileName);
+
+        Claims tokenClaims = parseClaims(authToken);
+
+        for (var requiredClaim : requiredClaims.entrySet()) {
+            if (!Objects.equals(tokenClaims.get(requiredClaim.getKey()), requiredClaim.getValue())) {
+                return false;
+            }
         }
-        catch (Exception e) {
-            log.warn("Invalid action validateTokenForAuthorityAndFile: ", e);
-        }
-        return false;
+        return true;
     }
 
     /**
@@ -195,6 +202,7 @@ public class TokenProvider {
 
     /**
      * Validate an JWT Authorization Token
+     *
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
@@ -204,6 +212,7 @@ public class TokenProvider {
 
     /**
      * Validate an JWT Authorization Token
+     *
      * @param authToken JWT Authorization Token
      * @return boolean indicating if token is valid
      */
