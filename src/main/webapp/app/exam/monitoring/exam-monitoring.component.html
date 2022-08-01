@@ -7,7 +7,11 @@
                     <div class="d-flex flex-row align-items-center">
                         <h2 class="mb-1" jhiTranslate="artemisApp.examMonitoring.title"></h2>
                         <span
-                            [jhiTranslate]="'artemisApp.examMonitoring.' + (this.examMonitoringGloballyEnabled && this.exam.monitoring ? 'enabled' : 'disabled')"
+                            [jhiTranslate]="
+                                !this.examMonitoringGloballyEnabled
+                                    ? 'artemisApp.examMonitoring.globallyDisabled'
+                                    : 'artemisApp.examMonitoring.' + (this.examMonitoringGloballyEnabled && this.exam.monitoring ? 'enabled' : 'disabled')
+                            "
                             class="badge ms-2 exam-monitoring-badge align-items-center"
                             [class.bg-danger]="!this.examMonitoringGloballyEnabled || !this.exam.monitoring"
                             [class.bg-success]="this.examMonitoringGloballyEnabled && this.exam.monitoring"

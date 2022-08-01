@@ -54,7 +54,6 @@ public class FeatureToggleService {
      * @param feature The feature that should be disabled
      */
     public void disableFeature(Feature feature) {
-        System.out.println(feature);
         if (feature == Feature.ExamLiveStatistics) {
             // We want to clear all the data, but keep the settings.
             examMonitoringScheduleService.clearAllExamMonitoringData();
