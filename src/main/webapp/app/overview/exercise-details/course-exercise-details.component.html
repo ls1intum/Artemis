@@ -13,19 +13,7 @@
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
-        <!-- These buttons will be only shown in dev environment and if the programming exercise has no
-        connection to the VCS and CI
-        This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">Submission</button>
-        <button
-            class="dev-button"
-            [disabled]="!wasSubmissionSimulated"
-            *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable"
-            (click)="simulateResult()"
-        >
-            Result
-        </button>
-        <a *ngIf="plagiarismCase" class="btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
+        <a *ngIf="plagiarismCaseId" class="btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseId]">
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
         <jhi-submission-result-status

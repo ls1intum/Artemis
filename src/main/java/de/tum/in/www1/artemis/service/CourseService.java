@@ -187,18 +187,18 @@ public class CourseService {
      * Get all courses for the given user
      *
      * @param user the user entity
-     * @return the list of all courses for the user
+     * @return an unmodifiable list of all courses for the user
      */
     public List<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toList());
+                .filter(course -> isCourseVisibleForUser(user, course)).toList();
     }
 
     /**
      * Get all courses with exercises, lectures  and exams (filtered for given user)
      *
      * @param user the user entity
-     * @return the list of all courses including exercises, lectures and exams for the user
+     * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         return courseRepository.findAllActiveWithLecturesAndExams().stream()
@@ -211,7 +211,7 @@ public class CourseService {
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
                         course.setExams(examRepository.filterVisibleExams(course.getExams()));
                     }
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     private boolean isCourseVisibleForUser(User user, Course course) {

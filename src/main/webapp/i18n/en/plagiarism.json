@@ -65,7 +65,8 @@
                     "pointDeduction": "Point deduction",
                     "confirmationTitle": "Confirm plagiarism verdict",
                     "confirmationText": "Are you sure you want to set this verdict? This action cannot be undone.",
-                    "tooltip": "Set this verdict?"
+                    "tooltip": "Set this verdict?",
+                    "tooltipStudentNotNotified": "You must notify the student before determining the verdict."
                 },
                 "exercise": "Affected exercise",
                 "comparisons": "Comparisons",
@@ -79,7 +80,8 @@
                 "notNotified": "Not yet notified",
                 "respondedByStudent": "Student has given a statement",
                 "notResponded": "Not yet responded",
-                "noCases": "No plagiarism cases in this course"
+                "noCases": "No plagiarism cases in this course",
+                "notifyStudent": "Notify student"
             },
             "cases": {
                 "pageTitle": "Plagiarism Cases",

@@ -55,7 +55,7 @@ describe('LtiInitializerComponent', () => {
         expect(initializeLTIUserStub).not.toHaveBeenCalled();
         expect(infoSpy).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
-        expect(comp.modalRef).toBe(undefined);
+        expect(comp.modalRef).toBeUndefined();
     });
 
     it('should initialize and display with flag', () => {
@@ -67,7 +67,7 @@ describe('LtiInitializerComponent', () => {
         expect(initializeLTIUserStub).toHaveBeenCalledOnce();
         expect(infoSpy).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
-        expect(comp.modalRef).not.toBe(undefined); // External reference
+        expect(comp.modalRef).toBeDefined(); // External reference
     });
 
     it('should end initialization without password', () => {
@@ -78,6 +78,6 @@ describe('LtiInitializerComponent', () => {
         expect(initializeLTIUserStub).toHaveBeenCalledOnce();
         expect(infoSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(comp.modalRef).toBe(undefined);
+        expect(comp.modalRef).toBeUndefined();
     });
 });

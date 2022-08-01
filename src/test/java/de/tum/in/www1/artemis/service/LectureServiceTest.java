@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
-public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private LectureService lectureService;
@@ -41,7 +41,7 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
     private Attachment testAttachment;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         List<User> users = database.addUsers(1, 0, 1, 0);
         this.student = users.get(0);
         this.editor = users.get(1);
@@ -60,13 +60,13 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testFilterActiveAttachments_editor() {
+    void testFilterActiveAttachments_editor() {
         Set<Lecture> testLectures = lectureService.filterActiveAttachments(this.course.getLectures(), editor);
         Lecture testLecture = testLectures.stream().filter(l -> l.getId() == this.lecture.getId()).findFirst().get();
         assertThat(testLecture).isNotNull();
@@ -75,7 +75,7 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
-    public void testFilterActiveAttachments_student() {
+    void testFilterActiveAttachments_student() {
         Set<Lecture> testLectures = lectureService.filterActiveAttachments(this.course.getLectures(), student);
         Lecture testLecture = testLectures.stream().filter(l -> l.getId() == this.lecture.getId()).findFirst().get();
         assertThat(testLecture).isNotNull();
@@ -87,7 +87,7 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testPageableResults() {
+    void testPageableResults() {
         PageableSearchDTO<String> pageable = this.database.configureLectureSearch(lecture.getTitle());
         pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
         pageable.setPageSize(1);
@@ -108,7 +108,7 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testGetLecturesPageable() {
+    void testGetLecturesPageable() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), editor);
         assertThat(result.getNumberOfPages()).isEqualTo(1);
         assertThat(result.getResultsOnPage()).contains(lecture);
@@ -116,7 +116,7 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
-    public void testGetLecturesPageable_notFound() {
+    void testGetLecturesPageable_notFound() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser("VeryLongNameThatDoesNotExist", editor);
         assertThat(result.getNumberOfPages()).isEqualTo(0);
         assertThat(result.getResultsOnPage()).isEmpty();
@@ -124,7 +124,7 @@ public class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
-    public void testGetLecturesPageable_unauthorized() {
+    void testGetLecturesPageable_unauthorized() {
         SearchResultPageDTO<Lecture> result = searchQueryWithUser(lecture.getTitle(), student);
         assertThat(result.getNumberOfPages()).isEqualTo(0);
         assertThat(result.getResultsOnPage()).isEmpty();

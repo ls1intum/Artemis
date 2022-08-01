@@ -1,12 +1,12 @@
 import { Component, OnInit } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { FileUploadExerciseService } from './file-upload-exercise.service';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
-import { IncludedInOverallScore } from 'app/entities/exercise.model';
+import { Exercise, IncludedInOverallScore } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
@@ -49,6 +49,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         private modalService: NgbModal,
         private popupService: ExerciseUpdateWarningService,
         private activatedRoute: ActivatedRoute,
+        private router: Router,
         private courseService: CourseManagementService,
         private exerciseService: ExerciseService,
         private alertService: AlertService,
@@ -91,7 +92,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.fileUploadExercise);
@@ -101,7 +102,7 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.isSaving = true;
 
         this.saveCommand.save(this.fileUploadExercise, this.notificationText).subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (exercise: Exercise) => this.onSaveSuccess(exercise),
             error: (res: HttpErrorResponse) => this.onSaveError(res),
             complete: () => {
                 this.isSaving = false;
@@ -123,9 +124,9 @@ export class FileUploadExerciseUpdateComponent implements OnInit {
         this.fileUploadExercise.categories = categories;
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exercise: Exercise) {
         this.isSaving = false;
-        this.previousState();
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse) {

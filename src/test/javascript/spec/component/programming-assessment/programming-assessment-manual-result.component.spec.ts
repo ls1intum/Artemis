@@ -233,7 +233,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
 
     it('should use jhi-assessment-layout', () => {
         const assessmentLayout = fixture.debugElement.query(By.directive(AssessmentLayoutComponent));
-        expect(assessmentLayout).not.toBe(undefined);
+        expect(assessmentLayout).toBeDefined();
     });
 
     it('should show complaint for result with complaint and check assessor', fakeAsync(() => {
@@ -244,12 +244,12 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
         expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
         expect(comp.isAssessor).toBeTrue();
-        expect(comp.complaint).not.toBe(null);
+        expect(comp.complaint).not.toBeNull();
         fixture.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
-        expect(complaintsForm).not.toBe(null);
-        expect(comp.complaint).not.toBe(null);
+        expect(complaintsForm).not.toBeNull();
+        expect(comp.complaint).not.toBeNull();
 
         // Wait until periodic timer has passed out
         tick(100);
@@ -277,11 +277,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         expect(getIdentityStub).toHaveBeenCalledOnce();
         expect(lockAndGetProgrammingSubmissionParticipationStub).toHaveBeenCalledOnce();
         expect(findBySubmissionIdStub).toHaveBeenCalledOnce();
-        expect(comp.complaint).toBe(undefined);
+        expect(comp.complaint).toBeUndefined();
         fixture.detectChanges();
 
         const complaintsForm = debugElement.query(By.css('jhi-complaints-for-tutor-form'));
-        expect(complaintsForm).toBe(null);
+        expect(complaintsForm).toBeNull();
 
         // Wait until periodic timer has passed out
         tick(100);
@@ -369,7 +369,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         tick(100);
 
         // Should calculate the score
-        expect(comp.submission?.results?.[0].score).not.toBe(undefined);
+        expect(comp.submission?.results?.[0].score).toBeDefined();
     }));
 
     it('should save and submit manual result', fakeAsync(() => {
@@ -382,11 +382,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.save();
         const alertElement = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks?.length).toBe(3);
+        expect(comp.manualResult?.feedbacks).toHaveLength(3);
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBeTrue();
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBeTrue();
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBeTrue();
-        expect(alertElement).not.toBe(null);
+        expect(alertElement).not.toBeNull();
 
         // Reset feedbacks
         comp.manualResult!.feedbacks! = [];
@@ -394,11 +394,11 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         comp.submit();
         const alertElementSubmit = debugElement.queryAll(By.css('jhi-alert'));
 
-        expect(comp.manualResult?.feedbacks?.length).toBe(3);
+        expect(comp.manualResult?.feedbacks).toHaveLength(3);
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.AUTOMATIC)).toBeTrue();
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL)).toBeTrue();
         expect(comp.manualResult?.feedbacks!.some((feedback) => feedback.type === FeedbackType.MANUAL_UNREFERENCED)).toBeTrue();
-        expect(alertElementSubmit).not.toBe(null);
+        expect(alertElementSubmit).not.toBeNull();
         flush();
     }));
 
@@ -483,7 +483,7 @@ describe('CodeEditorTutorAssessmentContainerComponent', () => {
         codeEditorFileBrowserComp.isLoadingFiles = false;
         fixture.detectChanges();
         const browserComponent = fixture.debugElement.query(By.directive(CodeEditorFileBrowserComponent)).componentInstance;
-        expect(browserComponent).not.toBe(undefined);
+        expect(browserComponent).toBeDefined();
         expect(browserComponent.filesTreeViewItem).toHaveLength(1);
 
         const codeEditorAceComp = fixture.debugElement.query(By.directive(CodeEditorAceComponent)).componentInstance;

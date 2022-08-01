@@ -1,7 +1,7 @@
 <div class="row justify-content-center">
     <div class="col-11">
         <div *ngIf="exam">
-            <h2>
+            <h2 id="exam-detail-title">
                 <span class="badge bg-success" *ngIf="!exam.testExam">{{ 'artemisApp.examManagement.testExam.realExam' | artemisTranslate }}</span>
                 <span class="badge bg-primary" *ngIf="exam.testExam">{{ 'artemisApp.examManagement.testExam.testExam' | artemisTranslate }}</span>
                 {{ exam.title }}
@@ -39,7 +39,7 @@
                     <fa-icon [icon]="faUser"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
                 </a>
-                <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
+                <a id="students-button" *ngIf="!exam.testExam" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
                     <fa-icon [icon]="faUser"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>

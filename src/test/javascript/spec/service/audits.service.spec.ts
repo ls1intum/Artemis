@@ -45,7 +45,7 @@ describe('Audits Service', () => {
         it('should propagate not found response', fakeAsync(() => {
             service.query({}).subscribe({
                 error: (_error: any) => {
-                    expect(_error.status).toEqual(404);
+                    expect(_error.status).toBe(404);
                 },
             });
 

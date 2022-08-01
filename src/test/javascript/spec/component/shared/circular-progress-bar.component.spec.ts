@@ -34,8 +34,8 @@ describe('CircularProgressBarComponent', () => {
         const rightSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-right > .progress-bar-circle');
         const leftBorderColor = leftSideCircle.style['border-color'];
         const rightBorderColor = rightSideCircle.style['border-color'];
-        expect(leftBorderColor).toEqual('#00ff00');
-        expect(rightBorderColor).toEqual('#00ff00');
+        expect(leftBorderColor).toBe('#00ff00');
+        expect(rightBorderColor).toBe('#00ff00');
     });
 
     it('should be completely red when progress is 0%', () => {
@@ -46,8 +46,8 @@ describe('CircularProgressBarComponent', () => {
         const rightSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-right > .progress-bar-circle');
         const leftBorderColor = leftSideCircle.style['border-color'];
         const rightBorderColor = rightSideCircle.style['border-color'];
-        expect(leftBorderColor).toEqual('#ff0000');
-        expect(rightBorderColor).toEqual('#ff0000');
+        expect(leftBorderColor).toBe('#ff0000');
+        expect(rightBorderColor).toBe('#ff0000');
     });
 
     it('should be yellow when progress is 50%', () => {
@@ -58,7 +58,7 @@ describe('CircularProgressBarComponent', () => {
         const rightSideCircle = circularProgressBarComponentFixture.debugElement.nativeElement.querySelector('.progress-right > .progress-bar-circle');
         const leftBorderColor = leftSideCircle.style['border-color'];
         const rightBorderColor = rightSideCircle.style['border-color'];
-        expect(leftBorderColor).toEqual('#ffff00');
-        expect(rightBorderColor).toEqual('#ffff00');
+        expect(leftBorderColor).toBe('#ffff00');
+        expect(rightBorderColor).toBe('#ffff00');
     });
 });

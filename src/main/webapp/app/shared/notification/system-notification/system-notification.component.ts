@@ -6,9 +6,11 @@ import { AccountService } from 'app/core/auth/account.service';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { User } from 'app/core/user/user.model';
 import { SystemNotificationService } from 'app/shared/notification/system-notification/system-notification.service';
-import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { faExclamationTriangle, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
+import { faExclamationTriangle, faInfoCircle, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { filter, Subscription } from 'rxjs';
+import { convertDateFromServer } from 'app/utils/date.utils';
+
+export const WEBSOCKET_CHANNEL = '/topic/system-notification';
 
 @Component({
     selector: 'jhi-system-notification',
@@ -18,11 +20,18 @@ import { filter, Subscription } from 'rxjs';
 export class SystemNotificationComponent implements OnInit, OnDestroy {
     readonly INFO = SystemNotificationType.INFO;
     readonly WARNING = SystemNotificationType.WARNING;
-    notification: SystemNotification | undefined;
-    alertClass: string;
-    alertIcon: IconProp;
-    websocketChannel: string;
+
+    notifications: SystemNotification[] = [];
+    notificationsToDisplay: SystemNotification[] = [];
+    closedIds: number[] = [];
     websocketStatusSubscription?: Subscription;
+
+    nextUpdateFuture?: ReturnType<typeof setTimeout>;
+
+    // Icons
+    faExclamationTriangle = faExclamationTriangle;
+    faInfoCircle = faInfoCircle;
+    faTimes = faTimes;
 
     constructor(
         private route: ActivatedRoute,
@@ -35,10 +44,11 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
         this.loadActiveNotification();
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
-                // maybe use connectedPromise as a set function
                 setTimeout(() => {
                     this.websocketStatusSubscription = this.jhiWebsocketService.connectionState.pipe(filter((status) => status.connected)).subscribe(() => this.subscribeSocket());
                 }, 500);
+            } else {
+                this.websocketStatusSubscription?.unsubscribe();
             }
         });
     }
@@ -48,69 +58,60 @@ export class SystemNotificationComponent implements OnInit, OnDestroy {
     }
 
     private loadActiveNotification() {
-        this.systemNotificationService.getActiveNotification().subscribe((notification: SystemNotification) => {
-            if (notification) {
-                this.notification = notification;
-                this.setAlertClass();
-                this.setAlertIcon();
-            } else {
-                this.notification = undefined;
-            }
+        this.systemNotificationService.getActiveNotifications().subscribe((notifications: SystemNotification[]) => {
+            this.notifications = notifications;
+            this.selectVisibleNotificationsAndScheduleUpdate();
         });
     }
 
+    /**
+     * Listens to updates of the system notification array on the websocket.
+     * The server submits the entire list of relevant system notifications if they are updated
+     * @private
+     */
     private subscribeSocket() {
-        this.websocketChannel = '/topic/system-notification';
-        this.jhiWebsocketService.subscribe(this.websocketChannel);
-        this.jhiWebsocketService.receive(this.websocketChannel).subscribe((systemNotification: SystemNotification | string) => {
-            // as we cannot send null as websocket payload (this is not supported), we send a string 'deleted' in case the system notification was deleted
-            if (systemNotification === 'deleted') {
-                this.loadActiveNotification();
-                return;
-            }
-            systemNotification = systemNotification as SystemNotification;
-            systemNotification.notificationDate = systemNotification.notificationDate ? dayjs(systemNotification.notificationDate) : undefined;
-            systemNotification.expireDate = systemNotification.expireDate ? dayjs(systemNotification.expireDate) : undefined;
-            if (!this.notification) {
-                this.checkNotificationDates(systemNotification);
-            } else {
-                if (this.notification.id === systemNotification.id) {
-                    this.checkNotificationDates(systemNotification);
-                } else if (systemNotification.notificationDate!.isBefore(this.notification.notificationDate!) && systemNotification.expireDate!.isAfter(dayjs())) {
-                    this.checkNotificationDates(systemNotification);
-                }
-            }
+        this.jhiWebsocketService.subscribe(WEBSOCKET_CHANNEL);
+        this.jhiWebsocketService.receive(WEBSOCKET_CHANNEL).subscribe((notifications: SystemNotification[]) => {
+            notifications.forEach((notification) => {
+                notification.notificationDate = convertDateFromServer(notification.notificationDate);
+                notification.expireDate = convertDateFromServer(notification.expireDate);
+            });
+            this.notifications = notifications;
+            this.closedIds = [];
+            this.selectVisibleNotificationsAndScheduleUpdate();
         });
     }
 
-    private checkNotificationDates(systemNotification: SystemNotification) {
-        if (systemNotification.expireDate!.isAfter(dayjs()) && systemNotification.notificationDate!.isBefore(dayjs())) {
-            this.notification = systemNotification;
-            this.setAlertClass();
-            this.setAlertIcon();
-        } else {
-            this.loadActiveNotification();
-            return;
+    /**
+     * Schedule a change detection cycle of this component at the next date that changes
+     * @private
+     */
+    private selectVisibleNotificationsAndScheduleUpdate() {
+        const now = dayjs();
+        this.notificationsToDisplay = this.notifications
+            .filter((notification) => !this.closedIds.includes(notification.id!))
+            .filter((notification) => notification.notificationDate?.isSameOrBefore(now) && (notification.expireDate?.isAfter(now) ?? true));
+
+        if (this.nextUpdateFuture) {
+            clearTimeout(this.nextUpdateFuture);
+            this.nextUpdateFuture = undefined;
+        }
+
+        const nextRelevantTimestamp = this.notifications
+            .flatMap((notification) => [notification.expireDate, notification.notificationDate])
+            .filter((date) => date?.isAfter(now))
+            .map((date) => date!)
+            .reduce((previous, current) => (previous ? dayjs.min(previous, current) : current), undefined);
+
+        if (nextRelevantTimestamp) {
+            this.nextUpdateFuture = setTimeout(() => {
+                this.selectVisibleNotificationsAndScheduleUpdate();
+            }, nextRelevantTimestamp.diff(now));
         }
     }
 
-    private setAlertClass(): void {
-        if (this.notification) {
-            if (this.notification.type === SystemNotificationType.WARNING) {
-                this.alertClass = 'alert-warning';
-            } else {
-                this.alertClass = 'alert-info';
-            }
-        }
-    }
-
-    private setAlertIcon(): void {
-        if (this.notification) {
-            if (this.notification.type === SystemNotificationType.WARNING) {
-                this.alertIcon = faExclamationTriangle;
-            } else {
-                this.alertIcon = faInfoCircle;
-            }
-        }
+    close(notification: SystemNotification) {
+        this.closedIds.push(notification.id!);
+        this.selectVisibleNotificationsAndScheduleUpdate();
     }
 }

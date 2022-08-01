@@ -68,7 +68,7 @@ describe('ParticipantScoresAverageTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).toEqual(8);
+        expect(cellElements).toHaveLength(8);
         expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreAverageDTO.userName);
         expect(cellElements[1].nativeElement.innerHTML).toContain('');
         expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageScore.toString());

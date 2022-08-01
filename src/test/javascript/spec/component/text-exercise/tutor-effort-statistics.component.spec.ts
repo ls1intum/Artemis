@@ -128,10 +128,10 @@ describe('TutorEffortStatisticsComponent', () => {
         const totalTimeSpent = compiled.querySelector('[jhiTranslate$=totalTimeSpent]');
         const averageTime = compiled.querySelector('[jhiTranslate$=averageTime]');
         const numberOfTutorsInvolved = compiled.querySelector('[jhiTranslate$=numberOfTutorsInvolved]');
-        expect(numberOfSubmissionsAssessed).not.toBe(null);
-        expect(totalTimeSpent).not.toBe(null);
-        expect(averageTime).not.toBe(null);
-        expect(numberOfTutorsInvolved).not.toBe(null);
+        expect(numberOfSubmissionsAssessed).not.toBeNull();
+        expect(totalTimeSpent).not.toBeNull();
+        expect(averageTime).not.toBeNull();
+        expect(numberOfTutorsInvolved).not.toBeNull();
     });
 
     it('should show the no data message if tutor efforts list is empty', () => {
@@ -139,8 +139,8 @@ describe('TutorEffortStatisticsComponent', () => {
         fixture.detectChanges();
         const noData = compiled.querySelector('[jhiTranslate$=noData]');
         const numberOfSubmissionsAssessed = compiled.querySelector('[jhiTranslate$=numberOfSubmissionsAssessed]');
-        expect(noData).not.toBe(null);
-        expect(numberOfSubmissionsAssessed).toBe(null);
+        expect(noData).not.toBeNull();
+        expect(numberOfSubmissionsAssessed).toBeNull();
     });
 
     it('should delegate the user correctly', () => {

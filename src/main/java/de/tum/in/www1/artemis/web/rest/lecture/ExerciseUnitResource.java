@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
@@ -74,8 +73,7 @@ public class ExerciseUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         ExerciseUnit persistedExerciseUnit = (ExerciseUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
-        return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedExerciseUnit);
+        return ResponseEntity.created(new URI("/api/exercise-units/" + persistedExerciseUnit.getId())).body(persistedExerciseUnit);
     }
 
     /**

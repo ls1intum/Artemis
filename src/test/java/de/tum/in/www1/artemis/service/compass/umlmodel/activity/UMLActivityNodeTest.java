@@ -11,7 +11,7 @@ import org.mockito.MockitoAnnotations;
 
 import me.xdrop.fuzzywuzzy.FuzzySearch;
 
-public class UMLActivityNodeTest {
+class UMLActivityNodeTest {
 
     private UMLActivityNode activityNode;
 

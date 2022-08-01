@@ -237,7 +237,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(component.upcomingExercises.length).toBe(5);
+        expect(component.upcomingExercises).toHaveLength(5);
     });
 
     it('should filter optional exercises', () => {

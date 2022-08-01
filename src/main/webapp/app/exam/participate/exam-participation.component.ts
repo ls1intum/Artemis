@@ -452,6 +452,11 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         if (this.handInEarly) {
             // update local studentExam for later sync with server if the student wants to hand in early
             this.updateLocalStudentExam();
+            try {
+                this.triggerSave(true, false);
+            } catch (error) {
+                captureException(error);
+            }
             this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new HandedInEarlyAction(), this.connected);
         } else if (this.studentExam?.exercises && this.activeExamPage) {
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
@@ -772,6 +777,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     if (programmingSubmissionObj.submission) {
                         // delete backwards reference so that it is still serializable
                         const submissionCopy = cloneDeep(programmingSubmissionObj.submission);
+
+                        this.examMonitoringService.handleAndSaveActionEvent(
+                            this.exam,
+                            this.studentExam,
+                            new SavedExerciseAction(false, submissionCopy.id, exerciseId, submissionCopy.buildFailed ?? false, false),
+                            this.connected,
+                            submissionCopy.submissionDate,
+                        );
+
                         /**
                          * Syncs the navigation bar correctly when the student only uses an IDE or the code editor.
                          * In case a student uses both, un-submitted changes in the code editor take precedence.

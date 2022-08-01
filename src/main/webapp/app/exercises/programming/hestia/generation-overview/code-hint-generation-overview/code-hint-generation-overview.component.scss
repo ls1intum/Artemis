@@ -1,0 +1,49 @@
+.button-row {
+    & > button {
+        margin-right: 5px;
+    }
+}
+
+.status-wrapper {
+    flex-grow: 3;
+}
+
+.butonene-wr .btn[disabled] {
+    pointer-events: all !important;
+}
+
+.mat-expansion-panel.code-hint-creation-expansion-panel-wrapper,
+.mat-expansion-panel.code-hint-creation-expansion-panel-wrapper-header {
+    .mat-expansion-panel-header {
+        padding: 10px 10px 10px 0;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.25);
+    }
+
+    .mat-expansion-panel-header-title,
+    .mat-expansion-panel-header-description {
+        flex-basis: 0;
+    }
+
+    .mat-expansion-panel-header-description {
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+/* prevent resizing of opened expansion panels */
+.mat-expansion-panel-spacing {
+    margin: 0;
+}
+
+.mat-expansion-panel.code-hint-creation-expansion-panel-wrapper-header {
+    .mat-expansion-panel-header {
+        border-bottom: 2px solid;
+    }
+
+    font-weight: bold;
+    cursor: default;
+}
+
+.sort-icon {
+    cursor: pointer;
+}

@@ -1,0 +1,65 @@
+.code-hint-generation-wrapper {
+    display: flex;
+    justify-content: space-between;
+
+    .planned,
+    .finished,
+    .check {
+        color: var(--success);
+    }
+
+    .unset {
+        color: var(--secondary);
+    }
+
+    .current {
+        color: var(--warning);
+    }
+
+    li {
+        display: list-item !important;
+    }
+
+    .connector {
+        width: 100%;
+        min-width: 50px;
+        border-top: 2px solid;
+        margin-top: 1em;
+    }
+}
+
+.status-step {
+    width: 25px;
+    overflow-x: visible;
+    justify-content: flex-start;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+    .status-step-content {
+        min-width: fit-content;
+        white-space: nowrap;
+
+        .selected-label {
+            font-weight: bold;
+        }
+    }
+
+    .header-icon {
+        z-index: 2;
+        font-size: 2em;
+
+        & > fa-icon {
+            cursor: pointer;
+            background-color: var(--programming-exercise-instruction-step-wizard-card-header-background);
+            width: 30px;
+            height: 30px;
+            text-align: center;
+            padding: 6px 0;
+            font-size: 12px;
+            line-height: 1.428571429;
+            border-radius: 15px;
+            border-color: var(--programming-exercise-instruction-step-wizard-btn-border-color);
+        }
+    }
+}

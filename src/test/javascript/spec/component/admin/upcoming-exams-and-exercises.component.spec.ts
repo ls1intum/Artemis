@@ -43,7 +43,7 @@ describe('UpcomingExamsAndExercisesComponent', () => {
             component.ngOnInit();
 
             // THEN
-            expect(component.upcomingExercises.length).toEqual(2);
+            expect(component.upcomingExercises).toHaveLength(2);
         });
     });
 });

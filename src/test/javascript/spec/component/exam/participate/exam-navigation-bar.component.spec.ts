@@ -99,7 +99,7 @@ describe('Exam Navigation Bar Component', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
         jest.spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toEqual(0);
+        expect(comp.exerciseIndex).toBe(0);
 
         const exerciseIndex = 1;
         const force = false;
@@ -115,14 +115,14 @@ describe('Exam Navigation Bar Component', () => {
         jest.spyOn(comp.onPageChanged, 'emit');
         jest.spyOn(comp, 'setExerciseButtonStatus');
 
-        expect(comp.exerciseIndex).toEqual(0);
+        expect(comp.exerciseIndex).toBe(0);
 
         const exerciseIndex = 5;
         const force = false;
 
         comp.changePage(false, exerciseIndex, force);
 
-        expect(comp.exerciseIndex).toEqual(0);
+        expect(comp.exerciseIndex).toBe(0);
         expect(comp.onPageChanged.emit).not.toHaveBeenCalled();
         expect(comp.setExerciseButtonStatus).not.toHaveBeenCalledWith(exerciseIndex);
     });
@@ -164,19 +164,17 @@ describe('Exam Navigation Bar Component', () => {
     });
 
     it('should hand in the exam early', () => {
-        jest.spyOn(comp, 'saveExercise');
         jest.spyOn(comp.onExamHandInEarly, 'emit');
 
         comp.handInEarly();
 
-        expect(comp.saveExercise).toHaveBeenCalled();
         expect(comp.onExamHandInEarly.emit).toHaveBeenCalled();
     });
 
     it('should set the exercise button status for undefined submission', () => {
         const result = comp.setExerciseButtonStatus(1);
 
-        expect(result).toEqual('synced');
+        expect(result).toBe('synced');
     });
 
     it('should set the exercise button status for submitted submission', () => {
@@ -185,7 +183,7 @@ describe('Exam Navigation Bar Component', () => {
         const result = comp.setExerciseButtonStatus(0);
 
         expect(comp.icon).toEqual(faEdit);
-        expect(result).toEqual('notSynced');
+        expect(result).toBe('notSynced');
     });
 
     it('should set the exercise button status for submitted and synced submission active', () => {
@@ -193,7 +191,7 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.setExerciseButtonStatus(0);
 
-        expect(result).toEqual('synced active');
+        expect(result).toBe('synced active');
     });
 
     it('should set the exercise button status for submitted and synced submission not active', () => {
@@ -201,13 +199,13 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.setExerciseButtonStatus(1);
 
-        expect(result).toEqual('synced');
+        expect(result).toBe('synced');
     });
 
     it('should get the exercise button tooltip without submission', () => {
         const result = comp.getExerciseButtonTooltip(comp.exercises[1]);
 
-        expect(result).toEqual('synced');
+        expect(result).toBe('synced');
     });
 
     it('should get the exercise button tooltip with submitted and synced submission', () => {
@@ -215,7 +213,7 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
-        expect(result).toEqual('submitted');
+        expect(result).toBe('submitted');
     });
 
     it('should get the exercise button tooltip with submitted submission', () => {
@@ -223,7 +221,7 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
-        expect(result).toEqual('notSavedOrSubmitted');
+        expect(result).toBe('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with submission', () => {
@@ -231,7 +229,7 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
-        expect(result).toEqual('notSavedOrSubmitted');
+        expect(result).toBe('notSavedOrSubmitted');
     });
 
     it('should get the exercise button tooltip with synced submission', () => {
@@ -239,7 +237,7 @@ describe('Exam Navigation Bar Component', () => {
 
         const result = comp.getExerciseButtonTooltip(comp.exercises[0]);
 
-        expect(result).toEqual('notSubmitted');
+        expect(result).toBe('notSubmitted');
     });
 
     it('should navigate to other Exercise', () => {

@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ApollonDiagramRepository apollonDiagramRepository;
@@ -39,7 +39,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     private Course course2;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(1, 1, 0, 1);
         userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
         userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
@@ -53,7 +53,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
         apollonDiagram = null;
         apollonDiagramRepository.deleteAll();
@@ -61,7 +61,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateApollonDiagram_CREATED() throws Exception {
+    void testCreateApollonDiagram_CREATED() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram response = request.postWithResponseBody("/api/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.CREATED);
         assertThat(response.getTitle()).as("title is the same").isEqualTo(apollonDiagram.getTitle());
@@ -69,7 +69,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testCreateApollonDiagram_BAD_REQUEST() throws Exception {
+    void testCreateApollonDiagram_BAD_REQUEST() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagram.setId(1L);
         request.post("/api/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.BAD_REQUEST);
@@ -77,14 +77,14 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testCreateApollonDiagram_AccessForbidden() throws Exception {
+    void testCreateApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         request.postWithResponseBody("/api/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, ApollonDiagram.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateApollonDiagram_OK() throws Exception {
+    void testUpdateApollonDiagram_OK() throws Exception {
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
@@ -97,14 +97,14 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testUpdateApollonDiagram_CREATED() throws Exception {
+    void testUpdateApollonDiagram_CREATED() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         request.put("/api/course/" + course1.getId() + "/apollon-diagrams", apollonDiagram, HttpStatus.CREATED);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testUpdateApollonDiagram_AccessForbidden() throws Exception {
+    void testUpdateApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram = apollonDiagramRepository.save(apollonDiagram);
         apollonDiagram.setTitle("updated title");
         apollonDiagram.setDiagramType(DiagramType.ClassDiagram);
@@ -114,7 +114,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetDiagramsByCourse() throws Exception {
+    void testGetDiagramsByCourse() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
         List<ApollonDiagram> responseCourse1 = request.getList("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.OK, ApollonDiagram.class);
@@ -142,7 +142,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testGetDiagramsByCourse_AccessForbidden() throws Exception {
+    void testGetDiagramsByCourse_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         apollonDiagramRepository.save(apollonDiagram);
         request.get("/api/course/" + course1.getId() + "/apollon-diagrams", HttpStatus.FORBIDDEN, List.class);
@@ -151,7 +151,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetApollonDiagram() throws Exception {
+    void testGetApollonDiagram() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
 
@@ -162,7 +162,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testGetApollonDiagram_AccessForbidden() throws Exception {
+    void testGetApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
 
@@ -171,7 +171,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testDeleteApollonDiagram() throws Exception {
+    void testDeleteApollonDiagram() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
         request.delete("/api/course/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.OK);
@@ -180,7 +180,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
-    public void testDeleteApollonDiagram_AccessForbidden() throws Exception {
+    void testDeleteApollonDiagram_AccessForbidden() throws Exception {
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
         request.delete("/api/course/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.FORBIDDEN);
@@ -188,19 +188,19 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetDiagramTitleAsInstructor() throws Exception {
+    void testGetDiagramTitleAsInstructor() throws Exception {
         testGetDiagramTitle();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetDiagramTitleAsTeachingAssistant() throws Exception {
+    void testGetDiagramTitleAsTeachingAssistant() throws Exception {
         testGetDiagramTitle();
     }
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
-    public void testGetDiagramTitleAsUser() throws Exception {
+    void testGetDiagramTitleAsUser() throws Exception {
         testGetDiagramTitle();
     }
 
@@ -214,7 +214,7 @@ public class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegra
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
-    public void testGetDiagramTitleForNonExistingDiagram() throws Exception {
+    void testGetDiagramTitleForNonExistingDiagram() throws Exception {
         request.get("/api/apollon-diagrams/12312312412/title", HttpStatus.NOT_FOUND, String.class);
     }
 }

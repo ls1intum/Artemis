@@ -87,6 +87,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
             "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
@@ -259,13 +260,13 @@
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
             "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
-            "startExerciseSuccess": "{{number}} exercises successfully prepared!",
+            "startExerciseSuccess": "The exercises will now be prepared. This may take a while.",
             "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
-            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.\n\nNote that existing participations and submissions will also be removed!",
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
-            "studentExamStatusTestExam": "StudentExams are automatically created once a student requests to start a Test Exam",
+            "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -290,6 +291,15 @@
                 "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
+            },
+            "exercisePreparationProgress": {
+                "label": "Exercise preparation progress:",
+                "failed": "failed",
+                "remaining": "remaining",
+                "finished": "Finished",
+                "noeta": "No ETA",
+                "participations": "Participations",
+                "exams": "Exams"
             }
         },
         "examManagement": {
@@ -304,6 +314,7 @@
             },
             "title": "Exam Management",
             "createExam": "Create a new exam",
+            "importExam": "Import an exam",
             "editExam": "Edit an existing exam",
             "courseTitle": "Course Title",
             "examId": "Exam ID",
@@ -351,6 +362,9 @@
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
             },
+            "import": {
+                "search": "Search for exam"
+            },
             "monitoring": {
                 "enable": {
                     "title": "Enable exam live statistics",
@@ -383,7 +397,6 @@
                 "showAllUsers": "Show all students",
                 "searchForUsers": "Register a student for this exam by searching for login or name",
                 "searchNoResults": "No students found",
-                "testExamSelfRegistration": "Students are automatically registered for the Test Exam when starting a Test Exam",
                 "login": "Login",
                 "name": "Name",
                 "firstName": "First name",
@@ -401,7 +414,11 @@
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
+                "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "selectExerciseGroup": "Select Exercise Groups",
+                "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
+                "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
                 "type": "Type",
                 "title": "Title",
                 "points": "Points",
@@ -417,7 +434,20 @@
                 "addFileUploadExercise": "Add File Upload Exercise",
                 "addModelingExercise": "Add Modeling Exercise",
                 "addProgrammingExercise": "Add Programming Exercise",
-                "orderCouldNotBeSaved": "The order could not be saved"
+                "orderCouldNotBeSaved": "The order could not be saved",
+                "importModal": {
+                    "title": "Import Exam Exercises",
+                    "explanation": "Select the individual exercises, which should be imported alongside the exam, by clicking on it",
+                    "selected": "Selected",
+                    "exerciseGroupTooltip": "The title of an exercise group can be changed before the import",
+                    "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
+                    "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! The short name must begin with a letter, must not contain any special characters and must be at least 3 characters long",
+                    "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
+                    "invalidExerciseConfiguration": "One or more of the values specified are invalid. Please change them before importing",
+                    "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
+                    "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups."
+                },
+                "importSuccessful": "Exercise Groups successfully imported!"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
@@ -425,7 +455,8 @@
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "success": "The exam has been successfully reset."
             },
             "checklist": {
                 "title": "Exam Checklist",
@@ -439,7 +470,10 @@
                 "goTo": "Page",
                 "testExam": {
                     "title": "Test Exam Checklist",
-                    "introduction": "This page gives an overview over the various steps when creating a Test Exam."
+                    "introduction": "This page gives an overview over the various steps when creating a test exam.",
+                    "detailsHintForTestExams": "For test exams, the following applies",
+                    "studentRegistration": "Students are automatically registered for the test exam when starting a test exam",
+                    "instantResults": "The results are automatically published once a student submits the exam"
                 },
                 "tableItem": {
                     "register": "Register students for the exam",
@@ -544,7 +578,12 @@
                     "studentExamId": "Exam-ID",
                     "timestamp": "Timestamp",
                     "type": "Category",
-                    "detail": "Detail"
+                    "detail": "Detail",
+                    "forced": "Forced",
+                    "failed": "Failed",
+                    "automatically": "Automatically",
+                    "connected": "Connected",
+                    "notConnected": "Not connected"
                 }
             },
             "charts": {

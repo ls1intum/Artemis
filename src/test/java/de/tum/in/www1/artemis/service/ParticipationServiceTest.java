@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
-public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private ParticipationService participationService;
@@ -58,7 +58,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
      */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCreateParticipationForExternalSubmission() throws Exception {
+    void testCreateParticipationForExternalSubmission() throws Exception {
         Optional<User> student = userRepository.findOneWithGroupsAndAuthoritiesByLogin("student1");
         var someURL = new VcsRepositoryUrl("http://vcs.fake.fake");
         // Copy Repository in ParticipationService#copyRepository(..)
@@ -83,7 +83,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testStartExerciseWithInitializationDate_newParticipation() {
+    void testStartExerciseWithInitializationDate_newParticipation() {
         Course course = database.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
         Participant participant = database.getUserByLogin("student1");
@@ -100,7 +100,7 @@ public class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGi
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testStartExercise_newParticipation() {
+    void testStartExercise_newParticipation() {
         Course course = database.addCourseWithOneReleasedTextExercise();
         Exercise modelling = course.getExercises().iterator().next();
         Participant participant = database.getUserByLogin("student1");

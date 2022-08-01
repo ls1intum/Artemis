@@ -22,7 +22,7 @@
             },
             "noResult": "No graded result",
             "resultString": "Result Text",
-            "resultStringBuildFailed": "Build Failed",
+            "resultStringBuildFailed": "Build failed",
             "resultStringBuildSuccessfulNoTests": "Build successful, no tests executed",
             "resultStringBuildSuccessfulTests": "{{ numberOfTestsPassed }} of {{ numberOfTestsTotal }} passed",
             "resultStringNonProgramming": "Score {{ relativeScore }}%, {{ points }} of {{ maxPoints }} points",

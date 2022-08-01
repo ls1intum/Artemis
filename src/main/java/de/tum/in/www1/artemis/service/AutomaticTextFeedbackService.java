@@ -1,9 +1,9 @@
 package de.tum.in.www1.artemis.service;
 
 import static java.util.Comparator.comparing;
-import static java.util.stream.Collectors.toList;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
@@ -86,7 +86,7 @@ public class AutomaticTextFeedbackService {
             }
 
             return null;
-        }).filter(Objects::nonNull).collect(toList());
+        }).filter(Objects::nonNull).collect(Collectors.toCollection(ArrayList::new));
 
         result.setFeedbacks(suggestedFeedback);
     }
