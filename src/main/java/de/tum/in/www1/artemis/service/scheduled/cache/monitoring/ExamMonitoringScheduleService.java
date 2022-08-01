@@ -132,18 +132,18 @@ public class ExamMonitoringScheduleService {
             });
 
             // send message to subscribers
-            messagingService.sendMessage("/topic/exams/" + examId + "/monitoring-action", action);
+            messagingService.sendMessage("/topic/exams/" + examId + "/exam-live-statistics-action", action);
         }
     }
 
     /**
-     * Used to update monitoring during the exam.
+     * Used to update the exam live statistics during the exam.
      *
-     * @param examId        identifies the cache
-     * @param monitoring    new exam action
+     * @param examId identifies the cache
+     * @param examLiveStatistics status of the exam live statistics
      */
-    public void notifyMonitoringUpdate(Long examId, boolean monitoring) {
-        messagingService.sendMessage("/topic/exams/" + examId + "/monitoring-update", monitoring);
+    public void notifyExamLiveStatisticsUpdate(Long examId, boolean examLiveStatistics) {
+        messagingService.sendMessage("/topic/exams/" + examId + "/exam-live-statistics-update", examLiveStatistics);
     }
 
     /**

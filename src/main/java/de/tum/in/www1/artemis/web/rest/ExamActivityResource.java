@@ -46,7 +46,7 @@ public class ExamActivityResource {
      * @param examId    the exam to which the student exams belong to
      * @param action    action performed by the user
      */
-    @MessageMapping("/topic/exams/{examId}/monitoring-actions")
+    @MessageMapping("/topic/exams/{examId}/exam-live-statistics-actions")
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
         examMonitoringScheduleService.addExamActions(examId, action);
     }
@@ -86,7 +86,7 @@ public class ExamActivityResource {
         else {
             instanceMessageSendService.sendExamMonitoringScheduleCancel(result.getId());
         }
-        examMonitoringScheduleService.notifyMonitoringUpdate(result.getId(), result.isMonitoring());
+        examMonitoringScheduleService.notifyExamLiveStatisticsUpdate(result.getId(), result.isMonitoring());
 
         return ResponseEntity.ok().body(result.isMonitoring());
     }

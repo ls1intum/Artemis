@@ -317,14 +317,14 @@ describe('ExamActionService', () => {
 
     // topics
     it('should get correct exam monitoring action topic', () => {
-        expect(EXAM_MONITORING_ACTION_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/monitoring-action`);
+        expect(EXAM_MONITORING_ACTION_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/exam-live-statistics-action`);
     });
 
     it('should get correct exam monitoring actions topic', () => {
-        expect(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/monitoring-actions`);
+        expect(EXAM_MONITORING_ACTIONS_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/exam-live-statistics-actions`);
     });
 
     it('should get correct exam monitoring status topic', () => {
-        expect(EXAM_MONITORING_STATUS_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/monitoring-update`);
+        expect(EXAM_MONITORING_STATUS_TOPIC(exam.id!)).toBe(`/topic/exams/${exam.id!}/exam-live-statistics-update`);
     });
 });

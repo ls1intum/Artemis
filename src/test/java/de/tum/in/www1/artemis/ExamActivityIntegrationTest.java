@@ -120,7 +120,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/monitoring-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -130,7 +130,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/monitoring-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
         assertThat(examActivity).isNotNull();
@@ -145,7 +145,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExamAction examAction = createExamActionBasedOnType(examActionType);
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/monitoring-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
 
         examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
 
@@ -160,7 +160,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         for (ExamAction examAction : examActions) {
             examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
-            verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/monitoring-action", examAction);
+            verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
         }
 
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
@@ -182,7 +182,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/monitoring-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
 
         // Currently, we don't apply any filtering - so there should be an activity and action in the cache
         var examActivity = examMonitoringScheduleService.getExamActivityFromCache(exam.getId(), studentExam.getId());
@@ -199,7 +199,7 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         examActivityResource.updatePerformedExamActions(exam.getId(), examAction);
 
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/monitoring-action", examAction);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam.getId() + "/exam-live-statistics-action", examAction);
 
         List<ExamAction> examActions = request.getList("/api/exams/" + exam.getId() + "/load-actions", HttpStatus.OK, ExamAction.class);
 

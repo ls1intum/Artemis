@@ -2581,12 +2581,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam1.setMonitoring(true);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
 
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam1.getId() + "/monitoring-update", true);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam1.getId() + "/exam-live-statistics-update", true);
 
         exam1.setMonitoring(false);
         request.putWithResponseBody("/api/courses/" + course1.getId() + "/exams", exam1, Exam.class, HttpStatus.OK);
 
-        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam1.getId() + "/monitoring-update", false);
+        verify(this.websocketMessagingService).sendMessage("/topic/exams/" + exam1.getId() + "/exam-live-statistics-update", false);
     }
 
     // ExamRegistration Service - checkRegistrationOrRegisterStudentToTestExam
