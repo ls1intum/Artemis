@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
+import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_MODEL_LENGTH;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -343,7 +343,7 @@ public class ModelingSubmissionResource extends AbstractSubmissionResource {
      * @param modelingSubmission the modeling submission
      */
     private void checkModelLength(ModelingSubmission modelingSubmission) {
-        if (modelingSubmission.getModel() != null && modelingSubmission.getModel().length() > MAX_SUBMISSION_TEXT_LENGTH) {
+        if (modelingSubmission.getModel() != null && modelingSubmission.getModel().length() > MAX_SUBMISSION_MODEL_LENGTH) {
             throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "A modeling submission cannot contain more than 30000 characters");
         }
     }
