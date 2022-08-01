@@ -9,18 +9,9 @@ Markdown Support
 
 `Markdown <https://daringfireball.net/projects/markdown/>`__ is an easy-to-read, easy-to-write syntax for formatting plain text.
 
+A markdown playground can be found  `here <http://demo.showdownjs.com/>`__.
+
 Artemis extends the basic `Markdown <https://daringfireball.net/projects/markdown/>`__ syntax to support Artemis-specific features. This Artemis flavored Markdown is used to format text content across the platform using an integrated markdown editor.
-
-Supported Syntax
-^^^^^^^^^^^^^^^^^^^^^^^^^^
-
-The integrated markdown editor uses `Showdown <https://github.com/showdownjs/showdown>`__. A quick description of the supported syntax can be found `here <https://github.com/showdownjs/showdown/wiki/Showdown's-Markdown-syntax>`__. 
-
-The following Showdown extensions are activated:
-
-- `Showdown Katex <https://obedm503.github.io/showdown-katex>`__ to render LaTeX math and AsciiMath using KaTeX.
-- `Showdown Highlight <https://github.com/Bloggify/showdown-highlight>`__ for syntax highlighting in code blocks.
-
 
 Integrated Markdown Editor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -57,3 +48,13 @@ Markdown is also supported in the context of :ref:`communicating<communication>`
 
 .. |markdown-post-preview| image:: markdown-support/markdown-post-extensions-preview.png
     :width: 500
+
+Supported Syntax
+^^^^^^^^^^^^^^^^
+
+The integrated markdown editor uses `Showdown <https://github.com/showdownjs/showdown>`__. A quick description of the supported syntax can be found `here <https://github.com/showdownjs/showdown/wiki/Showdown's-Markdown-syntax>`__.
+
+The following Showdown extensions are activated:
+
+- `Showdown Katex <https://obedm503.github.io/showdown-katex>`__ to render LaTeX math and AsciiMath using KaTeX.
+- `Showdown Highlight <https://github.com/Bloggify/showdown-highlight>`__ for syntax highlighting in code blocks.
