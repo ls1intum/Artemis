@@ -5,6 +5,8 @@ export interface TutorialGroupFormData {
     title?: string;
 }
 
+const nonWhitespaceRegExp: RegExp = new RegExp('\\S');
+
 @Component({
     selector: 'jhi-tutorial-group-form',
     templateUrl: './tutorial-group-form.component.html',
@@ -42,7 +44,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         }
 
         this.form = this.fb.group({
-            title: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
         });
     }
 
