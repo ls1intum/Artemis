@@ -12,6 +12,7 @@ import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/edit-tutorial-group/edit-tutorial-group.component';
+import { LoadingIndicatorContainerStubComponent } from '../../helpers/stubs/loading-indicator-container-stub.component';
 
 @Component({ selector: 'jhi-tutorial-group-form', template: '' })
 class TutorialGroupFormStubComponent {
@@ -19,13 +20,6 @@ class TutorialGroupFormStubComponent {
     @Input() formData: TutorialGroupFormData;
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
 }
-
-@Component({ selector: 'jhi-loading-indicator-container', template: '<ng-content></ng-content>' })
-class LoadingIndicatorContainerStubComponent {
-    @Input()
-    isLoading = false;
-}
-
 describe('EditTutorialGroupComponent', () => {
     let editTutorialGroupComponentFixture: ComponentFixture<EditTutorialGroupComponent>;
     let editTutorialGroupComponent: EditTutorialGroupComponent;

@@ -12,17 +12,12 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group.model';
 import { By } from '@angular/platform-browser';
+import { LoadingIndicatorContainerStubComponent } from '../../helpers/stubs/loading-indicator-container-stub.component';
 
 @Component({ selector: 'jhi-tutorial-group-form', template: '' })
 class TutorialGroupFormStubComponent {
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
-}
-
-@Component({ selector: 'jhi-loading-indicator-container', template: '<ng-content></ng-content>' })
-class LoadingIndicatorContainerStubComponent {
-    @Input()
-    isLoading = false;
 }
 
 describe('CreateTutorialGroupComponent', () => {
