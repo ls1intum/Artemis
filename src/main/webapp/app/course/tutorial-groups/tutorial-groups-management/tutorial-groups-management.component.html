@@ -1,28 +1,40 @@
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
-    </div>
-</div>
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <h4>Tutorial Groups</h4>
+                <div>
+                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'create']">
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span> Create Tutorial Group</span>
+                    </a>
+                </div>
+            </div>
 
-<div *ngIf="!isLoading">
-    <div class="table-responsive">
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th><span>ID</span></th>
-                    <th><span>Title</span></th>
-                    <th><span>Teaching Assistant</span></th>
-                    <th><span>Number of Registered Students</span></th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId" id="tutorial-group-row-{{ tutorialGroup.id }}">
-                    <td>{{ tutorialGroup.id }}</td>
-                    <td>{{ tutorialGroup?.title }}</td>
-                    <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
-                    <td>{{ tutorialGroup.registeredStudents == undefined ? 0 : tutorialGroup.registeredStudents?.length }}</td>
-                </tr>
-            </tbody>
-        </table>
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th><span>ID</span></th>
+                            <th><span>Title</span></th>
+                            <th><span>Teaching Assistant</span></th>
+                            <th><span>Number of Registered Students</span></th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId" id="tutorial-group-row-{{ tutorialGroup.id }}">
+                            <td>{{ tutorialGroup.id }}</td>
+                            <td>{{ tutorialGroup?.title }}</td>
+                            <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
+                            <td>{{ tutorialGroup.registeredStudents == undefined ? 0 : tutorialGroup.registeredStudents?.length }}</td>
+                            <td>
+                                <jhi-tutorial-group-row-buttons [courseId]="courseId" [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-row-buttons>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
-</div>
+</jhi-loading-indicator-container>

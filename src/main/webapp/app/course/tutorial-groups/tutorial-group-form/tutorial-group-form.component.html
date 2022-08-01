@@ -1,0 +1,25 @@
+<form class="row">
+    <div class="col-12">
+        <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <div class="form-group">
+                <label class="required" for="title">{{ 'artemisApp.tutorialGroupForm.title' | artemisTranslate }}*</label>
+                <input type="text" class="form-control" id="title" formControlName="title" [placeholder]="'artemisApp.tutorialGroupForm.titlePlaceholder' | artemisTranslate" />
+                <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="titleControl?.errors?.required">
+                        {{ 'artemisApp.tutorialGroupForm.titleRequiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.maxlength">
+                        {{ 'artemisApp.tutorialGroupForm.titleMaxLengthValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</form>

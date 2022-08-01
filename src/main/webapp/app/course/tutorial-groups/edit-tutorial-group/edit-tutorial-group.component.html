@@ -1,0 +1,4 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <h3>{{ 'artemisApp.editTutorialGroup.title' | artemisTranslate }}</h3>
+    <jhi-tutorial-group-form [formData]="formData" [isEditMode]="true" (formSubmitted)="updateTutorialGroup($event)"> </jhi-tutorial-group-form>
+</jhi-loading-indicator-container>

@@ -6,16 +6,18 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-group
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { map, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
-    styleUrls: ['./tutorial-groups-management.component.scss'],
 })
 export class TutorialGroupsManagementComponent implements OnInit {
     courseId: number;
     isLoading = false;
     tutorialGroups: TutorialGroup[];
+
+    faPlus = faPlus;
 
     constructor(private tutorialGroupService: TutorialGroupsService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
 

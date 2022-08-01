@@ -17,6 +17,8 @@ import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
+import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/create-tutorial-group/create-tutorial-group.component';
+import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/edit-tutorial-group/edit-tutorial-group.component';
 
 export const courseManagementState: Routes = [
     {
@@ -166,9 +168,36 @@ export const courseManagementState: Routes = [
                 component: TutorialGroupsManagementComponent,
                 data: {
                     authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                    pageTitle: 'artemisApp.learningGoal.manageLearningGoals.title',
+                    pageTitle: 'artemisApp.tutorialGroups.manageTutorialGroups.title',
                 },
                 canActivate: [UserRouteAccessService],
+            },
+            {
+                // Create a new path without a component defined to prevent the TutorialsGroupManagementComponent from being always rendered
+                path: 'tutorial-groups-management',
+                data: {
+                    pageTitle: 'artemisApp.tutorialGroups.manageTutorialGroups.title',
+                },
+                children: [
+                    {
+                        path: 'create',
+                        component: CreateTutorialGroupComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.createTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: ':tutorialGroupId/edit',
+                        component: EditTutorialGroupComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.editTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                ],
             },
         ],
     },

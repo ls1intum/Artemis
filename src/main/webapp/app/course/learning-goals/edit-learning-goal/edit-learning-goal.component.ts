@@ -64,7 +64,6 @@ export class EditLearningGoalComponent implements OnInit {
                             }
                         }
                     }
-
                     this.formData = {
                         title: this.learningGoal.title,
                         description: this.learningGoal.description,
