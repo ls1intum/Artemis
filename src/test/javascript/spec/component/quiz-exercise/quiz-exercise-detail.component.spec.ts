@@ -429,10 +429,7 @@ describe('QuizExercise Management Detail Component', () => {
                 resetQuizExercise();
                 comp.quizExercise = quizExercise;
                 comp.quizExercise.course = course;
-                expect(comp.entity).toBeUndefined();
                 comp.init();
-                expect(comp.entity).toEqual(quizExercise);
-                expect(prepareEntitySpy).toHaveBeenCalledWith(comp.quizExercise);
                 expect(comp.savedEntity).toEqual(quizExercise);
             });
 
@@ -645,26 +642,32 @@ describe('QuizExercise Management Detail Component', () => {
         });
 
         describe('add questions without quizExercise', () => {
+            let initializeNewQuizExerciseStub: jest.SpyInstance;
+
             beforeEach(() => {
-                comp.entity = quizExercise;
+                initializeNewQuizExerciseStub = jest.spyOn(comp, 'initializeNewQuizExercise').mockImplementation();
+                initializeNewQuizExerciseStub.mockReturnValue(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding MC question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addMultipleChoiceQuestion();
-                expect(comp.quizExercise).toEqual(comp.entity);
+                expect(initializeNewQuizExerciseStub).toBeCalled();
+                expect(comp.quizExercise).toEqual(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding Dnd question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addDragAndDropQuestion();
-                expect(comp.quizExercise).toEqual(comp.entity);
+                expect(initializeNewQuizExerciseStub).toBeCalled();
+                expect(comp.quizExercise).toEqual(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding SA question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addShortAnswerQuestion();
-                expect(comp.quizExercise).toEqual(comp.entity);
+                expect(initializeNewQuizExerciseStub).toBeCalled();
+                expect(comp.quizExercise).toEqual(quizExercise);
             });
         });
 
@@ -1439,7 +1442,6 @@ describe('QuizExercise Management Detail Component', () => {
 
             it('should initialize quizExercise if it is not', () => {
                 comp.courses = [course];
-                comp.entity = quizExercise;
                 expect(comp.quizExercise).toBeUndefined();
                 comp.showHideExistingQuestions();
                 expect(comp.quizExercise).toBeDefined();
