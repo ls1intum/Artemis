@@ -391,7 +391,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
         // Check if all files exist
         for (String key : files.keySet()) {
-            assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + key))).isTrue();
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
         }
     }
 
