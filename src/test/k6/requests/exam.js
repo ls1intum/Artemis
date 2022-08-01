@@ -1,6 +1,7 @@
 import {
     EVALUATE_QUIZ_EXAM,
     EXAM_CONDUCTION,
+    EXAM_START,
     EXAM_STUDENTS,
     EXAMS,
     EXERCISE_GROUPS,
@@ -81,8 +82,15 @@ export function startExercises(artemis, exam) {
     console.log('Start exercises for exam ' + exam.id + ' status: ' + res[0].status);
 }
 
-export function getExamForUser(artemis, courseId, examId) {
-    const res = artemis.get(EXAM_CONDUCTION(courseId, examId));
+export function startStudentExamForUser(artemis, courseId, examId) {
+    const res = artemis.get(EXAM_START(courseId, examId));
+    console.log('Started student exam for exam ' + examId + ' status: ' + res[0].status);
+
+    return JSON.parse(res[0].body);
+}
+
+export function getExamForUser(artemis, courseId, examId, studentExamId) {
+    const res = artemis.get(EXAM_CONDUCTION(courseId, examId, studentExamId));
     console.log('Retrieved student exam for exam ' + examId + ' status: ' + res[0].status);
 
     return JSON.parse(res[0].body);

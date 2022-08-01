@@ -4,7 +4,7 @@ import { faCheckDouble, faFileUpload, faFont, faKeyboard, faProjectDiagram } fro
 import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { ExerciseGroup } from 'app/entities/exercise-group.model';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 
 @Component({
     selector: 'jhi-exam-exercise-import',
@@ -27,7 +27,7 @@ export class ExamExerciseImportComponent implements OnInit {
 
     // Patterns
     // length of < 3 is also accepted in order to provide more accurate validation error messages
-    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
+    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
     readonly titleNamePattern = RegExp('^[a-zA-Z0-9-_ ]+'); // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     // Icons

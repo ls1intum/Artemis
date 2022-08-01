@@ -62,7 +62,7 @@
                     <ngb-progressbar
                         class=""
                         [value]="exercisePreparationStatus.finished!"
-                        [max]="exercisePreparationStatus.overall! - exercisePreparationStatus.failed! ?? 0"
+                        [max]="exercisePreparationStatus.overall ? exercisePreparationStatus.overall - exercisePreparationStatus.failed! : 0"
                         [animated]="true"
                         [height]="'2em'"
                         type="success"
