@@ -62,7 +62,6 @@ public class ExamActivityResource {
      */
     @GetMapping("api/exam-monitoring/{examId}/load-actions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.ExamLiveStatistics)
     public ResponseEntity<List<ExamAction>> loadAllActions(@PathVariable Long examId) {
         return ResponseEntity.ok().body(examMonitoringScheduleService.getAllExamActions(examId));
     }

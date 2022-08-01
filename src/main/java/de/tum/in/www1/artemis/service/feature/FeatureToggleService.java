@@ -60,19 +60,8 @@ public class FeatureToggleService {
      */
     public void disableFeature(Feature feature) {
         if (feature == Feature.ExamLiveStatistics) {
-            List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
-            for (var exam : exams) {
-                // Updates all exams
-                exam.setMonitoring(false);
-                examRepository.save(exam);
-
-                // Cancels all exam monitoring tasks and deletes the cache
-                instanceMessageSendService.sendExamMonitoringScheduleCancel(exam.getId());
-            }
+            this.disableExamLiveStatistics();
         }
-        /*
-         * cache Quiz: TODO: - Stop all scheduled tasks - Clear the cache
-         */
         features.put(feature, false);
         sendUpdate();
     }
@@ -119,5 +108,20 @@ public class FeatureToggleService {
      */
     public List<Feature> disabledFeatures() {
         return features.entrySet().stream().filter(feature -> Boolean.FALSE.equals(feature.getValue())).map(Map.Entry::getKey).toList();
+    }
+
+    /**
+     * Used to disable the exam live statistics for all exams and then clear the cache.
+     */
+    private void disableExamLiveStatistics() {
+        List<Exam> exams = examRepository.findAllCurrentAndUpcomingExams().stream().filter(Exam::isMonitoring).toList();
+        for (var exam : exams) {
+            // Updates all exams
+            exam.setMonitoring(false);
+            examRepository.save(exam);
+
+            // Cancels all exam monitoring tasks and deletes the cache
+            instanceMessageSendService.sendExamMonitoringScheduleCancel(exam.getId());
+        }
     }
 }
