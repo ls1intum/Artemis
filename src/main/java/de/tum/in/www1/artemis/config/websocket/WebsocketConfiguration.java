@@ -274,6 +274,11 @@ public class WebsocketConfiguration extends DelegatingWebSocketMessageBrokerConf
                 }
             }
 
+            // Students should be able to subscribe to the update
+            if (destination.endsWith("live-statistics-update")) {
+                return true;
+            }
+
             var examId = getExamIdFromExamRootDestination(destination);
             if (examId.isPresent()) {
                 var exam = examRepository.findByIdElseThrow(examId.get());
