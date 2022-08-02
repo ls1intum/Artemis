@@ -404,7 +404,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.debug("Process cached quiz submissions");
+        log.info("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Cache cache : quizCache.getAllCaches()) {
@@ -415,7 +415,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
+                    log.info("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }
