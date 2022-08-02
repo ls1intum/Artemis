@@ -143,7 +143,7 @@ public class PlagiarismCaseResource {
             }
         }
         // in all other cases the response is empty
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(null);
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
