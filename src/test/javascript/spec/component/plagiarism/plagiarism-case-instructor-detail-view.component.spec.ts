@@ -81,16 +81,12 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
     }));
 
-    it('should save plagiarism case plagiarism verdict (not notified yet)', fakeAsync(() => {
-        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
+    it('should throw when saving plagiarism case plagiarism verdict before student is notified', () => {
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
-        component.saveVerdict();
-        tick();
-        // the verdict is not available yet, because the spy function is not invoked
-        expect(component.plagiarismCase).toEqual({ id: 1 });
-    }));
+        expect(() => component.saveVerdict()).toThrow(Error);
+    });
 
     it('should save plagiarism case plagiarism verdict', fakeAsync(() => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);

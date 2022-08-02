@@ -61,7 +61,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     savePointDeductionVerdict(): void {
         if (!this.isStudentNotified()) {
-            return;
+            throw new Error('Cannot call savePointDeductionVerdict before student is notified');
         }
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
@@ -84,7 +84,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveWarningVerdict(): void {
         if (!this.isStudentNotified()) {
-            return;
+            throw new Error('Cannot call saveWarningVerdict before student is notified');
         }
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
@@ -106,7 +106,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveVerdict(): void {
         if (!this.isStudentNotified()) {
-            return;
+            throw new Error('Cannot call saveVerdict before student is notified');
         }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
