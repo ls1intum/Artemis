@@ -23,6 +23,9 @@ export class PlagiarismCaseVerdictComponent {
             case PlagiarismVerdict.WARNING: {
                 return 'artemisApp.plagiarism.plagiarismCases.verdict.warning';
             }
+            case PlagiarismVerdict.NO_PLAGIARISM: {
+                return 'artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism';
+            }
             default: {
                 return 'artemisApp.plagiarism.plagiarismCases.verdict.none';
             }
