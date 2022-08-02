@@ -47,7 +47,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             },
         });
         this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
-            const filteredPosts = posts?.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
+            const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
 
             // Handle post deletion case by checking if unfiltered posts are empty.
             if (filteredPosts.length > 0 || posts.length === 0) {

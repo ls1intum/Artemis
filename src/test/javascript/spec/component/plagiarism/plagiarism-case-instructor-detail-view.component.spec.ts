@@ -133,7 +133,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.posts).toHaveLength(0);
+        expect(component.posts).toBeEmpty();
 
         const relevantPost = { id: 1, plagiarismCase: { id: component.plagiarismCaseId } };
         postsSubject.next([relevantPost]);
@@ -160,7 +160,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.ngOnInit();
         tick();
 
-        expect(component.posts).toHaveLength(0);
+        expect(component.posts).toBeEmpty();
 
         const relevantPost = { id: 1, plagiarismCase: { id: component.plagiarismCaseId } };
         postsSubject.next([relevantPost]);
@@ -170,6 +170,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.posts[0].id).toBe(relevantPost.id);
 
         postsSubject.next([]);
-        expect(component.posts).toHaveLength(0);
+        expect(component.posts).toBeEmpty();
     }));
 });
