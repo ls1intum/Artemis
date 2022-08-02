@@ -19,6 +19,8 @@ export class GitDiffReportComponent implements OnInit {
     @Input()
     filePaths: string[];
 
+    // TODO: Make this configurable by the user
+    numberOfContextLines = 3;
     entries: ProgrammingExerciseGitDiffEntry[];
     entriesByPath: Map<string, ProgrammingExerciseGitDiffEntry[]>;
     addedLineCount: number;
@@ -27,6 +29,7 @@ export class GitDiffReportComponent implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
+        // Sort the diff entries by file path and start lines
         this.entries = this.report.entries.sort((a, b) => {
             const filePathA = a.filePath ?? a.previousFilePath;
             const filePathB = b.filePath ?? b.previousFilePath;
@@ -61,8 +64,10 @@ export class GitDiffReportComponent implements OnInit {
             })
             .filter((line) => line && line.trim().length !== 0).length;
 
+        // Create a set of all file paths
         this.filePaths = [...new Set([...this.templateFileContentByPath.keys(), ...this.solutionFileContentByPath.keys()])].sort();
 
+        // Group the diff entries by file path
         this.entriesByPath = new Map<string, ProgrammingExerciseGitDiffEntry[]>();
         [...this.templateFileContentByPath.keys()].forEach((filePath) => {
             this.entriesByPath.set(
@@ -76,7 +81,5 @@ export class GitDiffReportComponent implements OnInit {
                 this.entries.filter((entry) => entry.filePath === filePath),
             );
         });
-
-        console.log(this.entries);
     }
 }

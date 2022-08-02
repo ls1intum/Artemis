@@ -1,8 +1,7 @@
 .git-diff-file {
     .removed-line {
         position: absolute;
-        background: var(--git-diff-viewer-removed-line-background); //rgba(248, 81, 73, 0.5);
-        z-index: 20;
+        background: var(--git-diff-viewer-removed-line-background);
     }
 
     .removed-line-gutter {
@@ -11,62 +10,24 @@
 
     .added-line {
         position: absolute;
-        background: var(--git-diff-viewer-added-line-background); //rgba(63, 185, 80, 0.5);
-        z-index: 20;
+        background: var(--git-diff-viewer-added-line-background);
     }
 
     .added-line-gutter {
-        background: var(--git-diff-viewer-added-line-gutter-background); //rgba(63, 185, 80, 0.5);
+        background: var(--git-diff-viewer-added-line-gutter-background);
     }
 
     .placeholder-line {
         position: absolute;
-        background: var(--git-diff-viewer-placeholder-line-background); //rgba(201, 201, 201, 0.5);
-        z-index: 20;
+        background: var(--git-diff-viewer-placeholder-line-background);
     }
 
     .placeholder-line-gutter {
-        background: var(--git-diff-viewer-placeholder-line-gutter-background); //rgba(201, 201, 201, 0.5);
+        background: var(--git-diff-viewer-placeholder-line-gutter-background);
     }
 
     .col {
         padding-right: calc(var(--bs-gutter-x) * 0.15);
         padding-left: calc(var(--bs-gutter-x) * 0.15);
     }
-}
-
-.modified-line {
-    position: absolute;
-    background: rgba(255, 193, 7, 0.5);
-    z-index: 8;
-}
-
-.removed-line-dark {
-    position: absolute;
-    background: rgba(248, 81, 73, 0.15);
-    z-index: 8;
-}
-
-.added-line-dark {
-    position: absolute;
-    background: rgba(63, 185, 80, 0.15); // rgba(46, 160, 67, 0.15)
-    z-index: 8;
-}
-
-.modified-line-dark {
-    position: absolute;
-    background: rgba(255, 193, 7, 0.15);
-    z-index: 8;
-}
-
-.placeholder-line {
-    position: absolute;
-    background: rgba(201, 201, 201, 0.5);
-    z-index: 20;
-}
-
-.placeholder-line-dark {
-    position: absolute;
-    background: rgba(201, 201, 201, 0.15);
-    z-index: 8;
 }

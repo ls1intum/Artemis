@@ -150,11 +150,6 @@
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                         </button>
                     </span>
-                    <span *ngIf="programmingExercise.isAtLeastTutor" class="me-1">
-                        <button [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises" type="button" (click)="getTasks()" class="btn btn-success btn-sm">
-                            <span>Show tasks</span>
-                        </button>
-                    </span>
                 </div>
                 <div *ngIf="programmingExercise.isAtLeastEditor">
                     <span

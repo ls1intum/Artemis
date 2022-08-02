@@ -426,14 +426,6 @@ export class ProgrammingExerciseDetailComponent implements OnInit, OnDestroy {
         }
     }
 
-    getTasks(): void {
-        if (this.programmingExercise?.id) {
-            this.programmingExerciseService.getTasksAndTestsExtractedFromProblemStatement(this.programmingExercise.id).subscribe((tasks) => {
-                this.alertService.success(`There are ${tasks.length} tasks for this exercise.`);
-            });
-        }
-    }
-
     /**
      * Shows the git-diff in a modal.
      */

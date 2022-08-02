@@ -1,8 +1,7 @@
 import { Component, Input, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
 import { AceEditorComponent } from 'app/shared/markdown-editor/ace-editor/ace-editor.component';
-import { ThemeService } from 'app/core/theme/theme.service';
 import { ProgrammingExerciseGitDiffEntry } from 'app/entities/hestia/programming-exercise-git-diff-entry.model';
-import ace, { acequire, Editor } from 'brace';
+import ace, { acequire } from 'brace';
 
 @Component({
     selector: 'jhi-git-diff-file',
@@ -42,11 +41,34 @@ export class GitDiffFileComponent implements OnInit {
 
     readonly aceModeList = acequire('ace/ext/modelist');
 
-    constructor(private themeService: ThemeService) {}
-
     ngOnInit(): void {
         ace.Range = ace.acequire('ace/range').Range;
 
+        // Create a clone of the diff entries to prevent modifications to the original diff entries
+        this.diffEntries = this.diffEntries.map((entry) => ({ ...entry }));
+
+        this.determineFilePaths();
+        this.createLineArrays();
+        this.determineActualStartLine();
+        this.determineEndLines();
+
+        this.processEntriesWithDeletions();
+        this.processEntriesWithAdditions();
+        this.processEntriesWithChanges();
+
+        this.actualEndLine = Math.min(Math.max(this.templateLines.length, this.solutionLines.length), Math.max(this.previousEndLine, this.endLine));
+
+        this.setupEditor(this.editorPrevious);
+        this.setupEditor(this.editorNow);
+        this.renderTemplateFile();
+        this.renderSolutionFile();
+    }
+
+    /**
+     * Determines the previous and current file path of the current file
+     * @private
+     */
+    private determineFilePaths() {
         this.filePath = this.diffEntries
             .map((entry) => entry.filePath)
             .filter((filePath) => filePath)
@@ -56,12 +78,30 @@ export class GitDiffFileComponent implements OnInit {
             .map((entry) => entry.previousFilePath)
             .filter((filePath) => filePath)
             .first();
+    }
 
+    /**
+     * Splits the content of the template and solution files into an array of lines
+     * @private
+     */
+    private createLineArrays() {
         this.templateLines = this.templateFileContent?.split('\n') ?? [];
         this.solutionLines = this.solutionFileContent?.split('\n') ?? [];
-        this.solutionLines.pop();
-        this.templateLines.pop();
+        // Pop the last lines if they are empty, as these are irrelevant and not included in the diff entries
+        if (this.templateLines.last() === '') {
+            this.templateLines.pop();
+        }
+        if (this.solutionLines.last() === '') {
+            this.solutionLines.pop();
+        }
+    }
 
+    /**
+     * Determines the first line that should be displayed.
+     * Compares the previous and current start line and takes the minimum of both and offsets it by the number of context lines.
+     * @private
+     */
+    private determineActualStartLine() {
         this.actualStartLine = Math.max(
             0,
             Math.min(
@@ -70,10 +110,26 @@ export class GitDiffFileComponent implements OnInit {
                 this.numberOfContextLines -
                 1,
         );
+    }
 
+    /**
+     * Determines the last line that should be displayed.
+     * Compares the previous and current last line (extracted from the diff entries)
+     * and takes the maximum of both and offsets it by the number of context lines.
+     * @private
+     */
+    private determineEndLines() {
         this.previousEndLine = Math.max(...this.diffEntries.map((entry) => (entry.previousStartLine ?? 0) + (entry.previousLineCount ?? 0))) + this.numberOfContextLines - 1;
         this.endLine = Math.max(...this.diffEntries.map((entry) => (entry.startLine ?? 0) + (entry.lineCount ?? 0))) + this.numberOfContextLines - 1;
+    }
 
+    /**
+     * Processes all git-diff entries with deletions. Counterpart of processEntriesWithAdditions.
+     * Adds empty lines to the solution file to match the number of lines that are deleted in the template file.
+     * Also, accordingly offsets the start line of the entries that come after the added empty lines.
+     * @private
+     */
+    private processEntriesWithDeletions() {
         this.diffEntries
             .filter((entry) => entry.previousStartLine && entry.previousLineCount && !entry.startLine && !entry.lineCount)
             .forEach((entry) => {
@@ -89,7 +145,15 @@ export class GitDiffFileComponent implements OnInit {
                         entry2.startLine! += entry.previousLineCount!;
                     });
             });
+    }
 
+    /**
+     * Processes all git-diff entries with additions. Counterpart of processEntriesWithDeletions.
+     * Adds empty lines to the template file to match the number of lines that are added in the solution file.
+     * Also, accordingly offsets the start line of the entries that come after the added empty lines.
+     * @private
+     */
+    private processEntriesWithAdditions() {
         this.diffEntries
             .filter((entry) => !entry.previousStartLine && !entry.previousLineCount && entry.startLine && entry.lineCount)
             .forEach((entry) => {
@@ -101,11 +165,20 @@ export class GitDiffFileComponent implements OnInit {
                         entry2.previousStartLine! += entry.lineCount!;
                     });
             });
+    }
 
+    /**
+     * Processes all git-diff entries with changes (deletion and addition).
+     * Adds empty lines to the template/solution file to match the number of lines that are added/removed in the solution/template file.
+     * Also, accordingly offsets the start line of the entries that come after the added empty lines.
+     * @private
+     */
+    private processEntriesWithChanges() {
         this.diffEntries
             .filter((entry) => entry.previousStartLine && entry.previousLineCount && entry.startLine && entry.lineCount)
             .forEach((entry) => {
                 if (entry.previousLineCount! < entry.lineCount!) {
+                    // There are more added lines than deleted lines -> add empty lines to the template file
                     this.templateLines = [
                         ...this.templateLines.slice(0, entry.startLine! + entry.previousLineCount! - 1),
                         ...Array(entry.lineCount! - entry.previousLineCount!).fill(undefined),
@@ -117,6 +190,7 @@ export class GitDiffFileComponent implements OnInit {
                             entry2.previousStartLine! += entry.lineCount! - entry.previousLineCount!;
                         });
                 } else {
+                    // There are more deleted lines than added lines -> add empty lines to the solution file
                     this.solutionLines = [
                         ...this.solutionLines.slice(0, entry.previousStartLine! + entry.lineCount! - 1),
                         ...Array(entry.previousLineCount! - entry.lineCount!).fill(undefined),
@@ -129,24 +203,13 @@ export class GitDiffFileComponent implements OnInit {
                         });
                 }
             });
-
-        this.actualEndLine = Math.min(Math.max(this.templateLines.length, this.solutionLines.length), Math.max(this.previousEndLine, this.endLine));
-
-        this.solutionFileContent = this.solutionLines
-            .slice(this.actualStartLine, this.actualEndLine)
-            .map((line) => line ?? '')
-            .join('\n');
-        this.templateFileContent = this.templateLines
-            .slice(this.actualStartLine, this.actualEndLine)
-            .map((line) => line ?? '')
-            .join('\n');
-
-        this.setupEditor(this.editorPrevious);
-        this.setupEditor(this.editorNow);
-        this.renderTemplateFile();
-        this.renderSolutionFile();
     }
 
+    /**
+     * Sets up an ace editor for the template or solution file.
+     * @param editor The editor to set up.
+     * @private
+     */
     private setupEditor(editor: AceEditorComponent): void {
         editor.getEditor().setOptions({
             animatedScroll: true,
@@ -161,12 +224,24 @@ export class GitDiffFileComponent implements OnInit {
         editor.setMode(editorMode);
     }
 
+    /**
+     * Renders the content of the template file in the template editor.
+     * Sets the content of the editor and colors the lines that were removed red.
+     * All empty lines added in the processEntries methods are colored gray.
+     * @private
+     */
     private renderTemplateFile() {
         const session = this.editorPrevious.getEditor().getSession();
-        session.setValue(this.templateFileContent ?? '');
+        session.setValue(
+            this.templateLines
+                .slice(this.actualStartLine, this.actualEndLine)
+                .map((line) => line ?? '')
+                .join('\n'),
+        );
 
         Object.entries(session.getMarkers() ?? {}).forEach(([, v]) => session.removeMarker((v as any).id));
 
+        // Adds the red coloring to the code and the gutter
         this.diffEntries
             .filter((entry) => entry.previousStartLine !== undefined && entry.previousLineCount !== undefined)
             .map((entry) => {
@@ -179,6 +254,7 @@ export class GitDiffFileComponent implements OnInit {
                 }
             });
 
+        // Adds the gray coloring to the code and the gutter
         this.templateLines.forEach((line, index) => {
             if (line === undefined) {
                 const actualLine = index - this.actualStartLine;
@@ -193,6 +269,7 @@ export class GitDiffFileComponent implements OnInit {
         const copyActualStartLine = this.actualStartLine;
         let rowNumber: number;
 
+        // Takes care of the correct numbering of the lines, as empty lines added by the processEntries methods are not counted
         session.gutterRenderer = {
             getWidth(session2: any, lastLineNumber: number, config: any) {
                 return Math.max(
@@ -211,12 +288,24 @@ export class GitDiffFileComponent implements OnInit {
         this.editorPrevious.getEditor().resize();
     }
 
+    /**
+     * Renders the content of the solution file in the solution editor.
+     * Sets the content of the editor and colors the lines that were added green.
+     * All empty lines added in the processEntries methods are colored gray.
+     * @private
+     */
     private renderSolutionFile() {
         const session = this.editorNow.getEditor().getSession();
-        session.setValue(this.solutionFileContent ?? '');
+        session.setValue(
+            this.solutionLines
+                .slice(this.actualStartLine, this.actualEndLine)
+                .map((line) => line ?? '')
+                .join('\n'),
+        );
 
         Object.entries(session.getMarkers() ?? {}).forEach(([, v]) => session.removeMarker((v as any).id));
 
+        // Adds the red coloring to the code and the gutter
         this.diffEntries
             .filter((entry) => entry.startLine && entry.lineCount)
             .map((entry) => {
@@ -229,6 +318,7 @@ export class GitDiffFileComponent implements OnInit {
                 }
             });
 
+        // Adds the gray coloring to the code and the gutter
         this.solutionLines.forEach((line, index) => {
             if (line === undefined) {
                 const actualLine = index - this.actualStartLine;
@@ -243,6 +333,7 @@ export class GitDiffFileComponent implements OnInit {
         const copyActualStartLine = this.actualStartLine;
         let rowNumber: number;
 
+        // Takes care of the correct numbering of the lines, as empty lines added by the processEntries methods are not counted
         session.gutterRenderer = {
             getWidth(session2: any, lastLineNumber: number, config: any) {
                 return Math.max(

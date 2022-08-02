@@ -1,7 +1,7 @@
 <div class="row border-bottom">
-    <div class="col-6"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.template">Template</h4></div>
-    <div class="col-3"><h4 jhiTranslate="artemisApp.programmingExercise.diffReport.solution">Solution</h4></div>
-    <div class="col-3 text-end fw-bold">
+    <div class="col-6"><h4 class="ps-2" jhiTranslate="artemisApp.programmingExercise.diffReport.template">Template</h4></div>
+    <div class="col-2"><h4 class="ps-2" jhiTranslate="artemisApp.programmingExercise.diffReport.solution">Solution</h4></div>
+    <div class="col-4 text-end fw-bold">
         <jhi-git-diff-line-stat
             [addedLineCount]="addedLineCount"
             [removedLineCount]="removedLineCount"
@@ -15,5 +15,6 @@
         [diffEntries]="entriesByPath.get(filePath) ?? []"
         [templateFileContent]="templateFileContentByPath.get(filePath)"
         [solutionFileContent]="solutionFileContentByPath.get(filePath)"
+        [numberOfContextLines]="numberOfContextLines"
     ></jhi-git-diff-file-panel>
 </div>

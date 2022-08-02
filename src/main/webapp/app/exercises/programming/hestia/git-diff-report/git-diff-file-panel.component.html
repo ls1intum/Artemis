@@ -9,7 +9,12 @@
                     </ng-template>
                 </div>
                 <div>
-                    <jhi-git-diff-line-stat [addedLineCount]="addedLineCount" [removedLineCount]="removedLineCount"></jhi-git-diff-line-stat>
+                    <jhi-git-diff-line-stat
+                        [addedLineCount]="addedLineCount"
+                        [removedLineCount]="removedLineCount"
+                        ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipFullReport' | artemisTranslate }}"
+                    >
+                    </jhi-git-diff-line-stat>
                     <button ngbPanelToggle class="btn ms-1 pe-3">
                         <fa-icon [icon]="opened ? faAngleUp : faAngleDown"></fa-icon>
                     </button>
