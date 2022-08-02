@@ -122,7 +122,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveNoPlagiarismVerdict(): void {
         if (!this.isStudentNotified()) {
-            return;
+            throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
         }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
