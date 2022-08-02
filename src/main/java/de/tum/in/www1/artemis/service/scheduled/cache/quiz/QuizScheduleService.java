@@ -189,6 +189,7 @@ public class QuizScheduleService {
         }
         QuizExercise quizExercise = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getExercise();
         if (quizExercise == null) {
+            log.warn("QuizExercise with {} not found in cache, reload from database. This should NOT happen!", quizExerciseId);
             quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
             if (quizExercise != null) {
                 updateQuizExercise(quizExercise);
@@ -202,7 +203,8 @@ public class QuizScheduleService {
      *
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
-    public void updateQuizExercise(QuizExercise quizExercise) {
+    public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
+        log.info("updateQuizExercise invoked for {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
 
@@ -309,9 +311,9 @@ public class QuizScheduleService {
                     // this is expected if we run on multiple nodes
                 }
             }
+            // Do that at the end because this runs asynchronously and could interfere with the cache write above
+            updateQuizExercise(quizExercise);
         }
-        // Do that at the end because this runs asynchronously and could interfere with the cache write above
-        updateQuizExercise(quizExercise);
     }
 
     /**
@@ -354,7 +356,7 @@ public class QuizScheduleService {
             log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
-        log.debug("Sending quiz {} start", quizExerciseId);
+        log.info("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         updateQuizExercise(quizExercise);
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
