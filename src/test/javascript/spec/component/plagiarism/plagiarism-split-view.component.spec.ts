@@ -226,4 +226,35 @@ describe('Plagiarism Split View Component', () => {
 
         expect(result).toEqual(mappedElements);
     });
+
+    it('should map matches to elements even if matches are out of bounds', () => {
+        submissionA.elements = [
+            { file: '', column: 1, line: 1 },
+            { file: '', column: 2, line: 2 },
+            { file: '', column: 3, line: 3 },
+            { file: '', column: 4, line: 4 },
+            { file: '', column: 5, line: 5 },
+            { file: '', column: 6, line: 6 },
+            { file: '', column: 7, line: 7 },
+            { file: '', column: 8, line: 8 },
+            { file: '', column: 9, line: 9 },
+            { file: '', column: 10, line: 10 },
+        ] as TextSubmissionElement[];
+        const matches = [
+            { start: 0, length: 2 },
+            { start: 0, length: 0 },
+            { start: submissionA.elements.length + 1, length: 3 }, // Faulty data
+            { start: 3, length: 3 },
+        ];
+        const mappedElements = new Map();
+        mappedElements.set('none', [
+            { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
+            { from: undefined, to: undefined }, // Faulty but better than crashing.
+            { from: { file: '', column: 4, line: 4 }, to: { file: '', column: 6, line: 6 } },
+        ]);
+
+        const result = comp.mapMatchesToElements(matches, submissionA);
+
+        expect(result).toEqual(mappedElements);
+    });
 });
