@@ -54,6 +54,7 @@
                 "pageTitle": "Plagiarism Cases",
                 "plagiarismCases": "Plagiarism Cases",
                 "plagiarismCase": "Plagiarism Case",
+                "resolvedPlagiarismCase": "Resolved Plagiarism Case",
                 "verdict": {
                     "verdict": "Verdict",
                     "text": "Decide what the consequences of the plagiarism are:",

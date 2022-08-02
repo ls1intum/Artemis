@@ -54,6 +54,7 @@
                 "pageTitle": "Plagiatsfälle",
                 "plagiarismCases": "Plagiatsfälle",
                 "plagiarismCase": "Plagiatsfall",
+                "resolvedPlagiarismCase": "Gelöster Plagiatsfall",
                 "verdict": {
                     "verdict": "Urteil",
                     "text": "Entscheide die Konsequenten des Plagiatsfalls:",
