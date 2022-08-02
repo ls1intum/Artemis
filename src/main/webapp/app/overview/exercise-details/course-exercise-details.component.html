@@ -16,7 +16,7 @@
         <a
             *ngIf="plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM"
             class="btn btn-danger btn-sm me-2"
-            [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo]"
+            [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]"
         >
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
@@ -279,8 +279,8 @@
             ></jhi-exercise-hint-button-overlay>
             <a
                 *ngIf="plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM"
-                class="btn info btn-sm me-2"
-                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo]"
+                class="btn btn-info btn-sm me-2"
+                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]"
             >
                 <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase">Resolved Plagiarism Case</span>
             </a>
