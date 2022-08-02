@@ -205,7 +205,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         List<String> logs = new ArrayList<>();
         logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
