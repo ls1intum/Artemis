@@ -4,6 +4,8 @@
             "plagiarismDetection": "Plagiatskontrolle",
             "confirm": "Bestätigen",
             "deny": "Ablehnen",
+            "denyAfterConfirmModalTitle": "Wechsel von Bestätigen zu Ablehnen",
+            "denyAfterConfirmModalText": "Bist du dir sicher, dass du die Entscheidung von \"Bestätigung des Plagiats\" in \"Ablehnung\" ändern möchtest? Dadurch wird der entsprechende Plagiatsfall einschließlich der Kommunikation mit dem/der Schüler/in und des Urteils gelöscht und kann nicht rückgängig gemacht werden.",
             "warning": "Die Bestätigung/Ablehnung eines Plagiats geht beim Neuladen der Seite verloren.",
             "inspection": "Plagiatskontrolle",
             "plagiarism": "Plagiat",

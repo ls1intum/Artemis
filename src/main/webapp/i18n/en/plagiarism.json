@@ -4,6 +4,8 @@
             "plagiarismDetection": "Plagiarism Detection",
             "confirm": "Confirm",
             "deny": "Deny",
+            "denyAfterConfirmModalTitle": "Change from confirm to deny",
+            "denyAfterConfirmModalText": "Are you sure that you want to change the decision from confirming the plagiarism to denying it? This will delete the corresponding plagiarism case incl. the communication with the student and the verdict and cannot be undone.",
             "warning": "Confirmation/Denial of plagiarism will be lost when refreshing the page.",
             "inspection": "Plagiarism Inspection",
             "plagiarism": "Plagiarism",
