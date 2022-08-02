@@ -29,10 +29,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.BuildLogStatisticsEntryService;
 import de.tum.in.www1.artemis.service.connectors.AbstractContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.CIPermission;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -63,9 +63,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            BuildLogStatisticsEntryService buildLogStatisticsEntryService, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
             JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryService, restTemplate, shortTimeoutRestTemplate);
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -207,7 +207,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(scaStarted, scaFinished);
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
 
-        buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
                 dependenciesDownloadedCount);
     }
 

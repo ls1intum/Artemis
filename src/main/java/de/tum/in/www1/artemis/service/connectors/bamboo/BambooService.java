@@ -46,10 +46,10 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipat
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
-import de.tum.in.www1.artemis.service.BuildLogStatisticsEntryService;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.*;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.*;
@@ -81,8 +81,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
             UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
-            BuildLogStatisticsEntryService buildLogStatisticsEntryService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryService, restTemplate, shortTimeoutRestTemplate);
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
@@ -379,7 +379,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         var scaDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(scaStarted, scaFinished);
         var totalJobDuration = new BuildLogStatisticsEntry.BuildJobPartDuration(jobStarted, jobFinished);
 
-        buildLogStatisticsEntryService.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
                 dependenciesDownloadedCount);
     }
 
