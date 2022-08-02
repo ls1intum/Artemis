@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -542,14 +543,15 @@ public class PostService extends PostingService {
         });
 
         // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
-        Set<User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds);
+        // converts fetched set to hashmap type for performant matching of authors
+        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(user -> user.getId(), Function.identity()));
 
         // sets respective author role to display user authority icon on posting headers
         postsInCourse.forEach(post -> {
-            post.setAuthor(authors.stream().filter(user -> user.getId().equals(post.getAuthor().getId())).findAny().orElseThrow());
+            post.setAuthor(authors.get(post.getAuthor().getId()));
             setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
             post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthor(authors.stream().filter(user -> user.getId().equals(answerPost.getAuthor().getId())).findAny().orElseThrow());
+                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
                 setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
             });
         });
