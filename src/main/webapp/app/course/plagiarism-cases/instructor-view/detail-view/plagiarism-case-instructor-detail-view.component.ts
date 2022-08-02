@@ -9,6 +9,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -28,7 +29,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -46,8 +47,15 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.createEmptyPost();
             },
         });
-        this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts;
+        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+            const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
+
+            // Handle post deletion case by checking if unfiltered posts are empty.
+            if (filteredPosts.length > 0 || posts.length === 0) {
+                // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
+                // when "posts.length > 0 && filteredPosts.length === 0".
+                this.posts = filteredPosts;
+            }
         });
     }
 
@@ -142,6 +150,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             this.posts = [];
         }
         this.posts.push(post);
+        this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
     }
 
     /**
