@@ -64,7 +64,7 @@
                     "plagiarism": "Unterschleid",
                     "warning": "Warnung",
                     "pointDeduction": "Punktabzug",
-                    "noPlagiarism": "Kein Unterschleid",
+                    "noPlagiarism": "Kein Plagiat",
                     "confirmationTitle": "Bestätige das Urteil",
                     "confirmationText": "Bist du sicher, dass du dieses Urteil fällen willst? Dies kann nicht rückgängig gemacht werden.",
                     "tooltip": "Dieses Urteil fällen?",
@@ -83,7 +83,7 @@
                 "respondedByStudent": "Studierende:r hat eine Aussage gemacht",
                 "notResponded": "Noch nicht beantwortet",
                 "noCases": "Keine Plagiatsfälle in diesem Kurs",
-                "notifyStudent": "Studierende:r benachrichtigen",
+                "notifyStudent": "Studierende:n benachrichtigen",
                 "studentNotified": "Studierende:r wurde benachrichtigt."
             },
             "cases": {
