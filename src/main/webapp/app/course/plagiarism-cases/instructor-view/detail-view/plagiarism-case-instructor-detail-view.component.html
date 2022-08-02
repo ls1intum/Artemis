@@ -99,6 +99,20 @@
                     (onConfirm)="saveVerdict()"
                 ></jhi-confirm-button>
             </div>
+            <div
+                class="col-3 d-flex flex-column"
+                [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
+            >
+                <jhi-confirm-button
+                    title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
+                    confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                    confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                    tooltip="artemisApp.plagiarism.plagiarismCases.verdict.tooltip"
+                    [translateText]="true"
+                    [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
+                    (onConfirm)="saveNoPlagiarismVerdict()"
+                ></jhi-confirm-button>
+            </div>
         </div>
         <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h2>
         <div class="row">

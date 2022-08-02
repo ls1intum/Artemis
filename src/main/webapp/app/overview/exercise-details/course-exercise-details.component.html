@@ -13,7 +13,11 @@
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
-        <a *ngIf="plagiarismCaseId" class="btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseId]">
+        <a
+            *ngIf="plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM"
+            class="btn btn-danger btn-sm me-2"
+            [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo]"
+        >
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
         <jhi-submission-result-status
@@ -273,6 +277,13 @@
                 [activatedExerciseHints]="activatedExerciseHints"
                 (onHintActivated)="onHintActivated($event)"
             ></jhi-exercise-hint-button-overlay>
+            <a
+                *ngIf="plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM"
+                class="btn info btn-sm me-2"
+                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo]"
+            >
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase">Resolved Plagiarism Case</span>
+            </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
             <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>

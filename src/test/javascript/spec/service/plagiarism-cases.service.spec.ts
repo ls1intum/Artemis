@@ -106,7 +106,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism cases for course for student', fakeAsync(() => {
         const returnedFromService = plagiarismCase1;
-        service.getPlagiarismCaseIdForStudent(1, 1).pipe(take(1)).subscribe();
+        service.getPlagiarismCaseInfoForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);

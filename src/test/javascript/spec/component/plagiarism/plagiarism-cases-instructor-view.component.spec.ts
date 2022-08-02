@@ -71,6 +71,13 @@ describe('Plagiarism Cases Student View Component', () => {
         student: { id: 4, login: 'Student 2' },
         exercise: exercise2,
     } as PlagiarismCase;
+    const plagiarismCase5 = {
+        id: 5,
+        student: { id: 5, login: 'Student 2' },
+        exercise: exercise2,
+        verdict: PlagiarismVerdict.NO_PLAGIARISM,
+        post: { id: 3 },
+    } as PlagiarismCase;
 
     beforeEach(() => {
         TestBed.configureTestingModule({

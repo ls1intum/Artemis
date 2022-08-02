@@ -63,6 +63,7 @@
                     "plagiarism": "Plagiarism",
                     "warning": "Warning",
                     "pointDeduction": "Point deduction",
+                    "noPlagiarism": "No Plagiarism",
                     "confirmationTitle": "Confirm plagiarism verdict",
                     "confirmationText": "Are you sure you want to set this verdict? This action cannot be undone.",
                     "tooltip": "Set this verdict?",
@@ -81,7 +82,8 @@
                 "respondedByStudent": "Student has given a statement",
                 "notResponded": "Not yet responded",
                 "noCases": "No plagiarism cases in this course",
-                "notifyStudent": "Notify student"
+                "notifyStudent": "Notify student",
+                "studentNotified": "Student has been notified."
             },
             "cases": {
                 "pageTitle": "Plagiarism Cases",
