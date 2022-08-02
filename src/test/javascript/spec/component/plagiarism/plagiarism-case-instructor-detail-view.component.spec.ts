@@ -3,7 +3,7 @@ import { PlagiarismCaseInstructorDetailViewComponent } from 'app/course/plagiari
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
+import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { HttpResponse } from '@angular/common/http';
@@ -17,7 +17,6 @@ import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.s
 import { Post } from 'app/entities/metis/post.model';
 import { AlertService } from 'app/core/util/alert.service';
 import { MockProvider } from 'ng-mocks';
-import { MockRouter } from '../../helpers/mocks/mock-router';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -51,7 +50,6 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MetisService },
-                { provide: Router, useClass: MockRouter },
                 MockProvider(AlertService),
             ],
         }).compileComponents();
@@ -129,10 +127,8 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should notify student', () => {
         const successSpy = jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
-        const navigateSpy = jest.spyOn(fixture.debugElement.injector.get(Router), 'navigate');
 
-        const courseId = 1;
-        component.courseId = courseId;
+        component.courseId = 1;
         const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;
         component.onStudentNotified(newPost);
 
@@ -141,8 +137,5 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
         expect(successSpy).toHaveBeenCalledOnce();
         expect(successSpy).toHaveBeenCalledWith('artemisApp.plagiarism.plagiarismCases.studentNotified');
-
-        expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'plagiarism-cases']);
     });
 });

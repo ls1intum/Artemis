@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
@@ -29,13 +29,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
-    constructor(
-        protected metisService: MetisService,
-        private plagiarismCasesService: PlagiarismCasesService,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private router: Router,
-    ) {}
+    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -128,7 +122,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         }
         this.posts.push(post);
         this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
-        this.router.navigate(['/course-management', this.courseId, 'plagiarism-cases']);
     }
 
     /**
