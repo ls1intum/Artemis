@@ -114,7 +114,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             if (length === 0) {
                 return;
             }
-            const file = submission.elements![start].file || 'none';
+            const file = submission.elements![start]?.file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
                 filesToMatchedElements.set(file, []);

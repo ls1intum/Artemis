@@ -9,6 +9,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { captureException } from '@sentry/angular';
 
 type FilesWithType = { [p: string]: FileType };
 
@@ -209,6 +210,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const offsets = new Array(rows.length).fill(0);
 
         matches.forEach(({ from, to }) => {
+            if (!from) {
+                captureException(new Error('"from" is not defined in insertMatchTokens'));
+                return;
+            }
+            if (!to) {
+                captureException(new Error('"to" is not defined in insertMatchTokens'));
+                return;
+            }
+
             const idxLineFrom = from.line - 1;
             const idxLineTo = to.line - 1;
 
