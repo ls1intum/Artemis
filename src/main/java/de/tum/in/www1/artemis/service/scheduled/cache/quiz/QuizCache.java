@@ -92,7 +92,7 @@ final class QuizCache extends CacheHandler<Long> {
     }
 
     /**
-     * Updates the cached {@link QuizExercise} object, mainly to prevent load on the DB.
+     * Updates the cached {@link QuizExercise} object, mainly to prevent load on the database.
      *
      * @param quizExercise the new quiz exercise object
      */
