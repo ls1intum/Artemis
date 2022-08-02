@@ -358,22 +358,15 @@ public class BambooService extends AbstractContinuousIntegrationService {
             return;
         }
 
-        ZonedDateTime jobStarted = null;
-        ZonedDateTime agentSetupCompleted = null;
-        ZonedDateTime testsStarted = null;
-        ZonedDateTime testsFinished = null;
-        ZonedDateTime scaStarted = null;
-        ZonedDateTime scaFinished = null;
-        ZonedDateTime jobFinished = null;
-        Integer dependenciesDownloadedCount = null;
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
+        ZonedDateTime agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
+        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
+        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
+        ZonedDateTime scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
+        ZonedDateTime scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
+        ZonedDateTime jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
 
-        jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
-        agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
-        testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
-        testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
-        scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
-        scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
-        jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
+        Integer dependenciesDownloadedCount = null;
 
         // If the projectType is null, this is an old (Maven-only) exercise
         if (projectType == null || projectType.isMaven()) {

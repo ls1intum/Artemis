@@ -1842,32 +1842,32 @@ public class ProgrammingExerciseTestService {
     }
 
     // TEST
-    public void buildLogStatistics_unauthorized() throws Exception {
+    void buildLogStatistics_unauthorized() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.FORBIDDEN, BuildLogStatisticsDTO.class);
     }
 
     // TEST
-    public void buildLogStatistics_noStatistics() throws Exception {
+    void buildLogStatistics_noStatistics() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
         assertThat(statistics.getBuildCount()).isEqualTo(0);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(null);
-        assertThat(statistics.getTestDuration()).isEqualTo(null);
-        assertThat(statistics.getScaDuration()).isEqualTo(null);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(null);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(null);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
     }
 
     // TEST
-    public void buildLogStatistics() throws Exception {
+    void buildLogStatistics() throws Exception {
         exercise = programmingExerciseRepository.save(ModelFactory.generateProgrammingExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(7), course));
         var participation = createStudentParticipationWithSubmission(INDIVIDUAL);
         var submission1 = database.createProgrammingSubmission(participation, false);
         var submission2 = database.createProgrammingSubmission(participation, false);
 
         buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 10, 20, 30, 60, 5));
-        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission1, 8, 15, null, 30, 0));
+        buildLogStatisticsEntryRepository.save(new BuildLogStatisticsEntry(submission2, 8, 15, null, 30, 0));
 
         var statistics = request.get("/api/programming-exercises/" + exercise.getId() + "/build-log-statistics", HttpStatus.OK, BuildLogStatisticsDTO.class);
         assertThat(statistics.getBuildCount()).isEqualTo(2);

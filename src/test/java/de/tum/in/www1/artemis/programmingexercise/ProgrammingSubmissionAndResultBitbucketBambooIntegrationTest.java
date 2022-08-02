@@ -684,7 +684,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(statistics.getBuildCount()).isEqualTo(1);
         assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
         assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isEqualTo(null);
+        assertThat(statistics.getScaDuration()).isNull();
         assertThat(statistics.getTotalJobDuration()).isEqualTo(120);
         assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
     }
@@ -724,12 +724,12 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(null);
-        assertThat(statistics.getTestDuration()).isEqualTo(null);
-        assertThat(statistics.getScaDuration()).isEqualTo(null);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(null);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(null);
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
     }
 
     @NotNull

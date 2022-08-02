@@ -142,7 +142,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         List<String> logs = new ArrayList<>();
         logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
@@ -160,7 +160,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(statistics.getBuildCount()).isEqualTo(1);
         assertThat(statistics.getAgentSetupDuration()).isEqualTo(90);
         assertThat(statistics.getTestDuration()).isEqualTo(10);
-        assertThat(statistics.getScaDuration()).isEqualTo(null);
+        assertThat(statistics.getScaDuration()).isNull();
         assertThat(statistics.getTotalJobDuration()).isEqualTo(110);
         assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(1);
     }
@@ -221,12 +221,12 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isEqualTo(1);
-        assertThat(statistics.getAgentSetupDuration()).isEqualTo(null);
-        assertThat(statistics.getTestDuration()).isEqualTo(null);
-        assertThat(statistics.getScaDuration()).isEqualTo(null);
-        assertThat(statistics.getTotalJobDuration()).isEqualTo(null);
-        assertThat(statistics.getDependenciesDownloadedCount()).isEqualTo(null);
+        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isNull();
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isNull();
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
     }
 
     private static Stream<Arguments> shouldSaveBuildLogsOnStudentParticipationArguments() {

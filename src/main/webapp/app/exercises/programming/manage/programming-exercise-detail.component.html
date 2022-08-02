@@ -566,18 +566,12 @@
                             </thead>
                             <tbody>
                                 <tr>
-                                    <td>{{ programmingExercise.buildLogStatistics.buildCount ? programmingExercise.buildLogStatistics.buildCount : 0 }}</td>
+                                    <td>{{ programmingExercise.buildLogStatistics.buildCount ?? 0 }}</td>
                                     <td>{{ programmingExercise.buildLogStatistics.agentSetupDuration ? programmingExercise.buildLogStatistics.agentSetupDuration + 's' : '-' }}</td>
                                     <td>{{ programmingExercise.buildLogStatistics.testDuration ? programmingExercise.buildLogStatistics.testDuration + 's' : '-' }}</td>
                                     <td>{{ programmingExercise.buildLogStatistics.scaDuration ? programmingExercise.buildLogStatistics.scaDuration + 's' : '-' }}</td>
                                     <td>{{ programmingExercise.buildLogStatistics.totalJobDuration ? programmingExercise.buildLogStatistics.totalJobDuration + 's' : '-' }}</td>
-                                    <td>
-                                        {{
-                                            programmingExercise.buildLogStatistics.dependenciesDownloadedCount
-                                                ? programmingExercise.buildLogStatistics.dependenciesDownloadedCount
-                                                : '-'
-                                        }}
-                                    </td>
+                                    <td>{{ programmingExercise.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
                                 </tr>
                             </tbody>
                         </table>

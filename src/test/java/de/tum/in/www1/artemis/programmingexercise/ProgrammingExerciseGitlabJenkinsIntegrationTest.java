@@ -385,19 +385,19 @@ class ProgrammingExerciseGitlabJenkinsIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testBuildLogStatistics_unauthorized() throws Exception {
+    void testBuildLogStatistics_unauthorized() throws Exception {
         programmingExerciseTestService.buildLogStatistics_unauthorized();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testBuildLogStatistics_noStatistics() throws Exception {
+    void testBuildLogStatistics_noStatistics() throws Exception {
         programmingExerciseTestService.buildLogStatistics_noStatistics();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testBuildLogStatistics() throws Exception {
+    void testBuildLogStatistics() throws Exception {
         programmingExerciseTestService.buildLogStatistics();
     }
 }
