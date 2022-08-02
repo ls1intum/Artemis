@@ -5,6 +5,10 @@
         </div>
         <li [ngbNavItem]="i" class="col px-0">
             <a ngbNavLink class="btn-sm text-dark text-center">{{ 'artemisApp.plagiarism.plagiarismCases.comparison' | artemisTranslate }} {{ i + 1 }}</a>
+            <div class="my-2" style="font-size: large; text-align: center">
+                {{ 'artemisApp.plagiarism.plagiarismCases.overallSimilarity' | artemisTranslate }}:
+                <strong>{{ submission.plagiarismComparison.similarity?.toFixed(1) }}%</strong>
+            </div>
             <ng-template ngbNavContent>
                 <jhi-plagiarism-split-view
                     [comparison]="submission.plagiarismComparison!"
