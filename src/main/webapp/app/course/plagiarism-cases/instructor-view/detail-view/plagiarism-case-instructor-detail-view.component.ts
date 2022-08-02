@@ -51,6 +51,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
             // Handle post deletion case by checking if unfiltered posts are empty.
             if (filteredPosts.length > 0 || posts.length === 0) {
+                // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
+                // when "posts.length > 0 && filteredPosts.length === 0".
                 this.posts = filteredPosts;
             }
         });
