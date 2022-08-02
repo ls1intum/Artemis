@@ -73,7 +73,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
         component.courseId = 1;
         component.posts = [];
-        component.posts.push({ id: 1 });
+        component.posts.push({ id: 1, plagiarismCase: { id: 1 } });
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
         component.saveVerdict();
@@ -92,8 +92,20 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.plagiarismCase).toEqual({ id: 1 });
     }));
 
+    it('should save plagiarism case plagiarism verdict', fakeAsync(() => {
+        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
+        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
+        component.courseId = 1;
+        component.plagiarismCaseId = 1;
+        component.plagiarismCase = { id: 1 };
+        component.saveVerdict();
+        tick();
+        expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.PLAGIARISM });
+    }));
+
     it('should save plagiarism case warning verdict', fakeAsync(() => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.WARNING, verdictMessage: 'message' } }) as Observable<HttpResponse<PlagiarismCase>>);
+        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
@@ -105,6 +117,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
 
     it('should save plagiarism case point deduction verdict', fakeAsync(() => {
         saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 } }) as Observable<HttpResponse<PlagiarismCase>>);
+        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
         component.courseId = 1;
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
@@ -112,6 +125,17 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.savePointDeductionVerdict();
         tick();
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.POINT_DEDUCTION, verdictPointDeduction: 80 });
+    }));
+
+    it('should save plagiarism case no plagiarism verdict', fakeAsync(() => {
+        saveVerdictSpy.mockReturnValue(of({ body: { verdict: PlagiarismVerdict.NO_PLAGIARISM } }) as Observable<HttpResponse<PlagiarismCase>>);
+        component.posts = [{ id: 1, plagiarismCase: { id: 1 } }];
+        component.courseId = 1;
+        component.plagiarismCaseId = 1;
+        component.plagiarismCase = { id: 1 };
+        component.saveNoPlagiarismVerdict();
+        tick();
+        expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
     }));
 
     it('should create empty post', () => {

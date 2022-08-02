@@ -136,9 +136,10 @@ public class PlagiarismCaseResource {
             var plagiarismCase = plagiarismCaseOptional.get();
             // the following line is already checked in the SQL statement, but we want to ensure it 100%
             if (plagiarismCase.getPost() != null) {
-                // Note: we only return the ID to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the detail page
+                // Note: we only return the ID and verdict to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the
+                // detail page
                 // all other information might be irrelevant or sensitive and could lead to longer loading times
-                PlagiarismCaseInfoDTO plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict());
+                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict());
                 return ResponseEntity.ok(plagiarismCaseInfoDTO);
             }
         }
