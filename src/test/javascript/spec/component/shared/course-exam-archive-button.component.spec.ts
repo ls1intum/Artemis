@@ -73,7 +73,7 @@ describe('Course Exam Archive Button Component', () => {
         it('should just return', fakeAsync(() => {
             comp.ngOnInit();
             tick();
-            expect(comp.archiveButtonText).toEqual('');
+            expect(comp.archiveButtonText).toBe('');
         }));
     });
 
@@ -196,7 +196,7 @@ describe('Course Exam Archive Button Component', () => {
 
             expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
-            expect(alertServiceSpy).toBeCalled();
+            expect(alertServiceSpy).toHaveBeenCalled();
             expect(comp.course).toBeDefined();
         }));
 
@@ -247,7 +247,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.archiveMode = 'Exam';
             comp.cleanupCourse();
 
-            expect(cleanupStub).toBeCalledTimes(0);
+            expect(cleanupStub).toHaveBeenCalledTimes(0);
             expect(comp.canCleanupCourse()).toBeFalse();
         }));
 
@@ -280,7 +280,7 @@ describe('Course Exam Archive Button Component', () => {
 
             expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
-            expect(alertServiceSpy).toBeCalled();
+            expect(alertServiceSpy).toHaveBeenCalled();
             expect(comp.exam).toBeDefined();
         }));
     });

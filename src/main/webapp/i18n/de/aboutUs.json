@@ -26,7 +26,7 @@
             "text": "<a href={{ gradingUrl }}>Benotung:</a> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
         },
         "assessment": {
-            "text": "<b>Bewertung:</b> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
+            "text": "<a href={{ assessmentUrl }}>Bewertung:</a> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
         },
         "communication": {
             "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
@@ -41,10 +41,10 @@
             "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
         },
         "integratedMarkdownEditor": {
-            "text": "<b>Integrierter Markdown-Editor:</b> Die Lehrenden können Problemstellungen im Markdown-Format definieren und zudem Bilder und Links integrieren."
+            "text": "<a href={{ markdownEditorUrl }}>Integrierter Markdown-Editor:</a> Markdown wird verwendet, um Textinhalte auf der Plattform mit einem integrierten Markdown-Editor zu formatieren."
         },
         "plagiarismChecks": {
-            "text": "<b>Plagiatsüberprüfungen:</b> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
+            "text": "<a href={{ plagiarismChecksUrl }}>Plagiatsüberprüfungen:</a> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
         },
         "learningAnalytics": {
             "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."

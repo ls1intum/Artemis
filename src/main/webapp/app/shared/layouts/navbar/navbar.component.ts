@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { of, Subscription } from 'rxjs';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
@@ -13,7 +13,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -54,6 +53,7 @@ import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { onError } from 'app/shared/util/global.utils';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -78,6 +78,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isCollapsed: boolean;
     iconsMovedToMenu: boolean;
     isNavbarNavVertical: boolean;
+    isExamActive = false;
+    examActiveCheckFuture?: ReturnType<typeof setTimeout>;
 
     // Icons
     faBars = faBars;
@@ -103,7 +105,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    private exam?: Exam;
+    private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
     private lastRouteUrlSegment: string;
@@ -135,7 +137,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-        this.getExamId();
+        this.subscribeToNavigationEventsForExamId();
         this.onResize();
     }
 
@@ -194,7 +196,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
             .subscribe();
 
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
-            this.exam = studentExam.exam;
+            this.studentExam = studentExam;
+            this.checkExamActive();
         });
 
         this.buildBreadcrumbs(this.router.url);
@@ -207,6 +210,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.routerEventSubscription) {
             this.routerEventSubscription.unsubscribe();
+        }
+        if (this.examActiveCheckFuture) {
+            clearTimeout(this.examActiveCheckFuture);
         }
     }
 
@@ -329,11 +335,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         // Temporarily restrict routes
         if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management') && !fullURI.startsWith('/courses')) {
-            return;
-        }
-
-        // Hide breadcrumbs in exam mode to avoid that students accidentally leave it
-        if (this.examModeActive()) {
             return;
         }
 
@@ -528,6 +529,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
                     // - Don't display '<type>-exercises' because it has no associated route
                     break;
+                } else if (this.lastRouteUrlSegment === 'exams' && segment === 'import') {
+                    // This route is only used internally when opening the exam import modal and therefore shouldn't be displayed.
+                    // When opening the exam-update.component, the id of the to be imported exam is appended (-> case `import`).
+                    break;
                 }
 
                 this.addTranslationAsCrumb(currentPath, segment);
@@ -694,39 +699,60 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * get exam id from current route
+     * Subscribes to navigation end events to look for an exam id in the URL which indicates that we're in the student view of an exam.
      */
-    getExamId() {
-        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event) => {
-            const examId = of(event).pipe(
-                map(() => this.route.root),
-                map((root) => root.firstChild),
-                switchMap((firstChild) => {
-                    if (firstChild) {
-                        return firstChild?.paramMap.pipe(map((paramMap) => paramMap.get('examId')));
-                    } else {
-                        return of(null);
-                    }
-                }),
-            );
-            examId.subscribe((id) => {
-                if (id !== null && !event.url.includes('management')) {
-                    this.examId = +id;
-                } else {
-                    this.examId = undefined;
-                }
+    subscribeToNavigationEventsForExamId() {
+        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+            if (event.url.includes('management')) {
+                this.examId = undefined;
+                return;
+            }
+
+            this.route.root.firstChild?.paramMap.pipe(map((params) => params.get('examId'))).subscribe((examId) => {
+                this.examId = examId ? Number(examId) : undefined;
+                this.checkExamActive();
             });
         });
     }
 
     /**
-     * check if exam mode is active
+     * Check if the student is currently working on an active exam.
+     * If yes, hide some elements like notifications and breadcrumbs.
+     * Schedules a check for this at the next relevant timestamp (exam start or exam end, whichever comes next)
      */
-    examModeActive(): boolean {
-        if (this.exam && this.exam.id === this.examId && this.exam.startDate && this.exam.endDate) {
-            return this.serverDateService.now().isBetween(this.exam.startDate, this.exam.endDate);
+    checkExamActive() {
+        if (this.examActiveCheckFuture) {
+            clearTimeout(this.examActiveCheckFuture);
+            this.examActiveCheckFuture = undefined;
         }
-        return false;
+
+        if (
+            this.studentExam?.exam &&
+            this.studentExam.exam.id === this.examId &&
+            !this.studentExam.exam.testExam &&
+            !this.studentExam.testRun &&
+            this.studentExam.exam.startDate &&
+            this.studentExam.exam.endDate &&
+            !this.studentExam.submitted
+        ) {
+            const serverTime = this.serverDateService.now();
+            // As end date, we use the working time of this student plus the grace period
+            const workingTime = this.studentExam.workingTime ?? this.studentExam.exam.workingTime;
+            const examEndWithGracePeriod = (workingTime ? this.studentExam.exam.startDate.add(workingTime, 'seconds') : this.studentExam.exam.endDate).add(
+                this.studentExam.exam.gracePeriod ?? 0,
+                'seconds',
+            );
+            this.isExamActive = serverTime.isBetween(this.studentExam.exam.startDate, examEndWithGracePeriod);
+
+            const timeUntilStart = this.studentExam.exam.startDate.diff(serverTime);
+            const timeUntilEnd = examEndWithGracePeriod.diff(serverTime);
+            const timeUntilNextChange = timeUntilStart >= 0 ? timeUntilStart : timeUntilEnd;
+            if (timeUntilNextChange > 0) {
+                this.examActiveCheckFuture = setTimeout(this.checkExamActive.bind(this), timeUntilNextChange + 100);
+            }
+        } else {
+            this.isExamActive = false;
+        }
     }
 }
 

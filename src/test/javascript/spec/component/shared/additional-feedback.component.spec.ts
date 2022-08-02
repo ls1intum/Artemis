@@ -32,7 +32,7 @@ describe('AdditionalFeedbackComponent', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(comp).not.toBe(undefined);
+        expect(comp).toBeDefined();
     });
 
     it('should translate points', () => {

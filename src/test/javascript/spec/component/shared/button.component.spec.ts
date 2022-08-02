@@ -61,13 +61,13 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const title = getTitle();
-        expect(title).not.toBe(null);
+        expect(title).not.toBeNull();
 
         const icon = getIcon();
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
 
         const loadingIcon = getLoading();
-        expect(loadingIcon).toBe(null);
+        expect(loadingIcon).toBeNull();
     });
 
     it('should render button without icon and with title', () => {
@@ -76,13 +76,13 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const title = getTitle();
-        expect(title).not.toBe(null);
+        expect(title).not.toBeNull();
 
         const icon = getIcon();
-        expect(icon).toBe(null);
+        expect(icon).toBeNull();
 
         const loadingIcon = getLoading();
-        expect(loadingIcon).toBe(null);
+        expect(loadingIcon).toBeNull();
     });
 
     it('should render button with icon and without title', () => {
@@ -91,13 +91,13 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const title = getTitle();
-        expect(title).toBe(null);
+        expect(title).toBeNull();
 
         const icon = getIcon();
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
 
         const loadingIcon = getLoading();
-        expect(loadingIcon).toBe(null);
+        expect(loadingIcon).toBeNull();
     });
 
     it('should disable complete button if disabled is set', fakeAsync(() => {
@@ -108,7 +108,7 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const button = getButton();
-        expect(button).not.toBe(null);
+        expect(button).not.toBeNull();
         expect(button.disabled).toBeTrue();
         button.click();
         tick();
@@ -124,7 +124,7 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const button = getButton();
-        expect(button).not.toBe(null);
+        expect(button).not.toBeNull();
         expect(button.disabled).toBeFalse();
         button.click();
         tick();
@@ -140,10 +140,10 @@ describe('ButtonComponent', () => {
         fixture.detectChanges();
 
         const button = getButton();
-        expect(button).not.toBe(null);
+        expect(button).not.toBeNull();
         expect(button.disabled).toBeTrue();
         const loadingIcon = getLoading();
-        expect(loadingIcon).not.toBe(null);
+        expect(loadingIcon).not.toBeNull();
 
         button.click();
         tick();

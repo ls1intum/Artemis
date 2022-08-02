@@ -46,12 +46,14 @@ import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
+import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTask;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 import de.tum.in.www1.artemis.exception.GitException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.CourseExamExportService;
 import de.tum.in.www1.artemis.service.ParticipationService;
@@ -151,6 +153,12 @@ public class ProgrammingExerciseTestService {
 
     @Autowired
     private JavaTemplateUpgradeService javaTemplateUpgradeService;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
+
+    @Autowired
+    private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
 
     @Autowired
     private UrlService urlService;
@@ -462,6 +470,15 @@ public class ProgrammingExerciseTestService {
 
         // Setup exercises for import
         database.addTestCasesToProgrammingExercise(sourceExercise);
+        database.addTasksToProgrammingExercise(sourceExercise);
+        // Manually add task
+        var task = new ProgrammingExerciseTask();
+        task.setTaskName("Task 1");
+        task.setExercise(sourceExercise);
+        task.setTestCases(programmingExerciseTestCaseRepository.findByExerciseId(sourceExercise.getId()));
+        sourceExercise.setTasks(Collections.singletonList(task));
+        programmingExerciseTaskRepository.save(task);
+        programmingExerciseRepository.save(sourceExercise);
         database.addHintsToExercise(sourceExercise);
 
         // Reset because we will add mocks for new requests
@@ -491,6 +508,9 @@ public class ProgrammingExerciseTestService {
         var importedExercise = request.postWithResponseBody(ROOT + IMPORT.replace("{sourceExerciseId}", sourceExercise.getId().toString()), exerciseToBeImported,
                 ProgrammingExercise.class, params, HttpStatus.OK);
         importedExercise = database.loadProgrammingExerciseWithEagerReferences(importedExercise);
+
+        // Check that the tasks were imported correctly (see #5474)
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(importedExercise.getId())).hasSameSizeAs(sourceExercise.getTasks());
 
         // TODO: check why the assertions do not work correctly
         // Assert correct creation of test cases

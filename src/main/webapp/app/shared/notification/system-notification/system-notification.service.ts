@@ -64,13 +64,13 @@ export class SystemNotificationService {
     }
 
     /**
-     * If the user is not authenticated we do an explicit request for an active system notification. Otherwise get recent system notifications.
+     * Fetch active and future notifications from the server.
      */
-    getActiveNotification(): Observable<SystemNotification | null> {
+    getActiveNotifications(): Observable<SystemNotification[]> {
         return this.http
-            .get<SystemNotification>(`${this.resourceUrl}/active-notification`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertSystemNotificationResponseDatesFromServer(res)))
-            .pipe(map((res) => res.body));
+            .get<SystemNotification[]>(`${this.resourceUrl}/active`, { observe: 'response' })
+            .pipe(map((res: EntityArrayResponseType) => this.convertSystemNotificationArrayResponseDatesFromServer(res)))
+            .pipe(map((res) => res.body || []));
     }
 
     /**

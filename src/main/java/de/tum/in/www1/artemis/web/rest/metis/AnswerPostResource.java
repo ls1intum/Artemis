@@ -41,9 +41,7 @@ public class AnswerPostResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<AnswerPost> createAnswerPost(@PathVariable Long courseId, @RequestBody AnswerPost answerPost) throws URISyntaxException {
         AnswerPost createdAnswerPost = answerPostService.createAnswerPost(courseId, answerPost);
-        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, answerPostService.getEntityName(), createdAnswerPost.getId().toString()))
-                .body(createdAnswerPost);
+        return ResponseEntity.created(new URI("/api/courses" + courseId + "/answer-posts/" + createdAnswerPost.getId())).body(createdAnswerPost);
     }
 
     /**

@@ -26,7 +26,7 @@
             "text": "<a href={{ gradingUrl }}>Grading:</a> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
         },
         "assessment": {
-            "text": "<b>Assessment:</b> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
+            "text": "<a href={{ assessmentUrl }}>Assessment:</a> Double-blind grading with structured criteria, integrated training, a leader board, ratings, and complaints improve consistency and fairness."
         },
         "communication": {
             "text": "<a href={{ communicationUrl }}>Communication:</a> Post announcements. Ask questions, post comments, and react to other posts. Filter unanswered questions."
@@ -41,10 +41,10 @@
             "text": "<a href={{ lecturesUrl }}>Lectures:</a> Upload lecture slides for multiple units, integrate video streams, lecture recordings, and exercises into lectures, and define learning goals."
         },
         "integratedMarkdownEditor": {
-            "text": "<b>Integrated markdown editor:</b> Instructors define problem statements using Markdown to easily format the text and integrate images and links."
+            "text": "<a href={{ markdownEditorUrl }}>Integrated Markdown Editor:</a> Markdown is used to format text content across the platform using an integrated markdown editor."
         },
         "plagiarismChecks": {
-            "text": "<b>Plagiarism checks</b> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
+            "text": "<a href={{ plagiarismChecksUrl }}>Plagiarism checks</a> for programming exercises (based on <a href={{ jPlagUrl }}>JPlag</a>), text exercises, and modeling exercises."
         },
         "learningAnalytics": {
             "text": "<a href={{ learningAnalyticsUrl }}>Learning analytics:</a> Statistics to compare based on the course average. Evaluate the average performance based on exercises and learning goals."

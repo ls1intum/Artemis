@@ -92,7 +92,7 @@ describe('ProgrammingAssessmentRepoExportDialogComponent', () => {
 
     it('test initialization', () => {
         fixture.detectChanges();
-        expect(comp.exerciseId).toEqual(42);
+        expect(comp.exerciseId).toBe(42);
     });
 
     it('Exercise service should find the correct programming exercise', () => {

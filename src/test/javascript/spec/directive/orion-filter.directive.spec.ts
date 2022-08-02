@@ -36,11 +36,11 @@ describe('OrionFilterDirective', () => {
         tick();
 
         const shownDiv = debugElement.query(By.css('#shown'));
-        expect(shownDiv).not.toBe(null);
+        expect(shownDiv).not.toBeNull();
         expect(shownDiv.nativeElement.style.display).toBe('');
 
         const hiddenDiv = debugElement.query(By.css('#hidden'));
-        expect(hiddenDiv).not.toBe(null);
+        expect(hiddenDiv).not.toBeNull();
         expect(hiddenDiv.nativeElement.style.display).toBe('none');
     }));
 
@@ -53,11 +53,11 @@ describe('OrionFilterDirective', () => {
         tick();
 
         const shownDiv = debugElement.query(By.css('#shown'));
-        expect(shownDiv).not.toBe(null);
+        expect(shownDiv).not.toBeNull();
         expect(shownDiv.nativeElement.style.display).toBe('none');
 
         const hiddenDiv = debugElement.query(By.css('#hidden'));
-        expect(hiddenDiv).not.toBe(null);
+        expect(hiddenDiv).not.toBeNull();
         expect(hiddenDiv.nativeElement.style.display).toBe('');
     }));
 });

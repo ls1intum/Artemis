@@ -26,21 +26,6 @@ class CourseLectureRowStubComponent {
     @Input() course: Course;
 }
 
-class MockActivatedRoute {
-    parent: any;
-    params: any;
-
-    constructor(options: { parent?: any; params?: any }) {
-        this.parent = options.parent;
-        this.params = options.params;
-    }
-}
-
-const mockActivatedRoute = new MockActivatedRoute({
-    parent: new MockActivatedRoute({
-        params: of({ courseId: '1' }),
-    }),
-});
 describe('CourseLectures', () => {
     let courseLecturesComponentFixture: ComponentFixture<CourseLecturesComponent>;
     let courseLecturesComponent: CourseLecturesComponent;
@@ -94,10 +79,13 @@ describe('CourseLectures', () => {
                 MockProvider(ExerciseService),
                 {
                     provide: ActivatedRoute,
-                    useValue: mockActivatedRoute,
+                    useValue: {
+                        parent: {
+                            params: of({ courseId: '1' }),
+                        },
+                    },
                 },
             ],
-            schemas: [],
         })
             .compileComponents()
             .then(() => {
@@ -112,7 +100,7 @@ describe('CourseLectures', () => {
 
     it('should initialize', () => {
         courseLecturesComponentFixture.detectChanges();
-        expect(courseLecturesComponent).not.toBe(null);
+        expect(courseLecturesComponent).not.toBeNull();
         courseLecturesComponent.ngOnDestroy();
     });
 

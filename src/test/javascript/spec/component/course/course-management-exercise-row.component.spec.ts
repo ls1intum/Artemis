@@ -55,6 +55,6 @@ describe('CourseManagementExerciseRowComponent', () => {
         component.ngOnChanges();
         component.statistic = exerciseStatisticsDTO;
         component.ngOnChanges();
-        expect(component.averageScoreNumerator).toEqual(5);
+        expect(component.averageScoreNumerator).toBe(5);
     });
 });

@@ -107,7 +107,7 @@ describe('ComplaintsStudentViewComponent', () => {
             tick(100);
 
             expectExamDefault();
-            expect(component.complaint).toBe(undefined);
+            expect(component.complaint).toBeUndefined();
             expect(complaintBySubmissionMock).toHaveBeenCalledOnce();
             expect(numberOfAllowedComplaintsMock).toHaveBeenCalledOnce();
             expect(userMock).toHaveBeenCalledOnce();
@@ -181,7 +181,7 @@ describe('ComplaintsStudentViewComponent', () => {
     describe('Course mode', () => {
         it('should initialize', fakeAsync(() => {
             testInitWithResultStub(of());
-            expect(component.complaint).toBe(undefined);
+            expect(component.complaint).toBeUndefined();
         }));
 
         it('should initialize with complaint', fakeAsync(() => {
@@ -311,7 +311,7 @@ describe('ComplaintsStudentViewComponent', () => {
         expect(component.submission).toStrictEqual(submission);
         expect(component.course).toStrictEqual(course);
         expect(component.showSection).toBeTrue();
-        expect(component.formComplaintType).toBe(undefined);
+        expect(component.formComplaintType).toBeUndefined();
         expect(component.remainingNumberOfComplaints).toStrictEqual(numberOfComplaints);
         expect(component.isCorrectUserToFileAction).toBeTrue();
         expect(result.participation).toStrictEqual(participation);

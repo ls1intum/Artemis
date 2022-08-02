@@ -188,7 +188,7 @@ public class ProgrammingExerciseGradingService {
         return submissions.stream().filter(theSubmission -> {
             var commitHash = buildResult.getCommitHash(theSubmission.getType());
             return commitHash.isPresent() && commitHash.get().equals(theSubmission.getCommitHash());
-        }).max(Comparator.comparing(ProgrammingSubmission::getSubmissionDate));
+        }).max(Comparator.naturalOrder());
     }
 
     @NotNull

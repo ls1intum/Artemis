@@ -92,8 +92,8 @@ describe('Team Submission Sync Component', () => {
         expect(receiveSubmissionEventEmitter).toHaveBeenCalledWith(submissionSyncPayload?.submission);
 
         // checks for setupSender
-        expect(textSubmissionWithParticipation).not.toBe(undefined);
-        expect(textSubmissionWithParticipation?.participation?.exercise).toBe(undefined);
+        expect(textSubmissionWithParticipation).toBeDefined();
+        expect(textSubmissionWithParticipation?.participation?.exercise).toBeUndefined();
         expect(textSubmissionWithParticipation?.participation?.submissions).toBeEmpty();
         expect(websocketSendSpy).toHaveBeenCalledOnce();
         expect(websocketSendSpy).toHaveBeenCalledWith(expectedWebsocketTopic + '/update', textSubmissionWithParticipation);

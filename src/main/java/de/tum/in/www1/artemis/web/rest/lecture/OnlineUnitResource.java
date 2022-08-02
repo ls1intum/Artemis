@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
@@ -102,7 +101,7 @@ public class OnlineUnitResource {
         }
 
         OnlineUnit result = onlineUnitRepository.save(onlineUnit);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, onlineUnit.getId().toString())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -137,8 +136,7 @@ public class OnlineUnitResource {
         lecture.addLectureUnit(persistedOnlineUnit);
         lectureRepository.save(lecture);
 
-        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(persistedOnlineUnit);
+        return ResponseEntity.created(new URI("/api/online-units/" + persistedOnlineUnit.getId())).body(persistedOnlineUnit);
     }
 
     /**
