@@ -9,6 +9,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -28,7 +29,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -127,6 +128,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             this.posts = [];
         }
         this.posts.push(post);
+        this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
     }
 
     /**

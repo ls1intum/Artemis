@@ -14,8 +14,10 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { MetisService } from 'app/shared/metis/metis.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
-import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 import { Post } from 'app/entities/metis/post.model';
+import { AlertService } from 'app/core/util/alert.service';
+import { MockProvider } from 'ng-mocks';
+import { MockMetisService } from '../../helpers/mocks/service/mock-metis-service.service';
 
 describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCaseInstructorDetailViewComponent;
@@ -49,6 +51,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
                 { provide: MetisService, useClass: MockMetisService },
+                MockProvider(AlertService),
             ],
         }).compileComponents();
 
@@ -121,6 +124,20 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
         expect(component.createdPost.title).toBe('Plagiarism Case Test Exercise');
+    });
+
+    it('should notify student', () => {
+        const successSpy = jest.spyOn(fixture.debugElement.injector.get(AlertService), 'success');
+
+        component.courseId = 1;
+        const newPost = { id: 3, plagiarismCase: { id: 1 } } as Post;
+        component.onStudentNotified(newPost);
+
+        expect(component.posts).toHaveLength(1);
+        expect(component.posts[0].id).toBe(newPost.id);
+
+        expect(successSpy).toHaveBeenCalledOnce();
+        expect(successSpy).toHaveBeenCalledWith('artemisApp.plagiarism.plagiarismCases.studentNotified');
     });
 
     it('should not display post unrelated to the current plagiarism case', fakeAsync(() => {
