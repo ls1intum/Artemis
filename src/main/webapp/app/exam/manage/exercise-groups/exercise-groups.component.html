@@ -59,7 +59,12 @@
                             <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" id="add-quiz-exercise">
+                        <a
+                            *ngIf="course?.isAtLeastEditor"
+                            [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']"
+                            class="btn btn-info btn-sm me-1 mb-1"
+                            [id]="'add-quiz-exercise-group-' + i"
+                        >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addQuizExercise' | artemisTranslate }}</span>
@@ -71,7 +76,12 @@
                             <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.textExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
-                        <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" id="add-text-exercise">
+                        <a
+                            *ngIf="course?.isAtLeastEditor"
+                            [routerLink]="[exerciseGroup.id, 'text-exercises', 'new']"
+                            class="btn btn-info btn-sm me-1 mb-1"
+                            [id]="'add-text-exercise-group-' + i"
+                        >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.examManagement.exerciseGroup.addTextExercise' | artemisTranslate }}</span>
@@ -87,7 +97,7 @@
                             *ngIf="course?.isAtLeastEditor"
                             [routerLink]="[exerciseGroup.id, 'modeling-exercises', 'new']"
                             class="btn btn-info btn-sm me-1 mb-1"
-                            id="add-modeling-exercise"
+                            [id]="'add-modeling-exercise-group-' + i"
                         >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faProjectDiagram"></fa-icon>
@@ -104,7 +114,7 @@
                             *ngIf="course?.isAtLeastEditor"
                             [routerLink]="[exerciseGroup.id, 'programming-exercises', 'new']"
                             class="btn btn-info btn-sm me-1 mb-1"
-                            id="add-programming-exercise"
+                            [id]="'add-programming-exercise-group-' + i"
                         >
                             <fa-icon [icon]="faPlus"></fa-icon>
                             <fa-icon class="d-xl-none" [icon]="faKeyboard"></fa-icon>

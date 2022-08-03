@@ -14,20 +14,20 @@ export class ExamExerciseGroupsPage {
         cy.get('#create-new-group').click();
     }
 
-    clickAddTextExercise() {
-        cy.get('#add-text-exercise').click();
+    clickAddTextExercise(groupIndex = 0) {
+        cy.get('#add-text-exercise-group-' + groupIndex).click();
     }
 
-    clickAddModelingExercise() {
-        cy.get('#add-modeling-exercise').click();
+    clickAddModelingExercise(groupIndex = 0) {
+        cy.get('#add-modeling-exercise-group-' + groupIndex).click();
     }
 
-    clickAddQuizExercise() {
-        cy.get('#add-quiz-exercise').click();
+    clickAddQuizExercise(groupIndex = 0) {
+        cy.get('#add-quiz-exercise-group-' + groupIndex).click();
     }
 
-    clickAddProgrammingExercise() {
-        cy.get('#add-programming-exercise').click();
+    clickAddProgrammingExercise(groupIndex = 0) {
+        cy.get('#add-programming-exercise-group-' + groupIndex).click();
     }
 
     visitPageViaUrl(courseId: number, examId: number) {

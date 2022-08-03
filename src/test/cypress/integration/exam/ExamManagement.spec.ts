@@ -64,7 +64,7 @@ describe('Exam management', () => {
     it('Adds a text exercise', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddTextExercise();
+        exerciseGroups.clickAddTextExercise(0);
         const textExerciseTitle = 'text' + uid;
         textCreation.typeTitle(textExerciseTitle);
         textCreation.typeMaxPoints(10);
@@ -76,7 +76,7 @@ describe('Exam management', () => {
     it('Adds a quiz exercise', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddQuizExercise();
+        exerciseGroups.clickAddQuizExercise(0);
         const quizExerciseTitle = 'quiz' + uid;
         quizCreation.setTitle(quizExerciseTitle);
         quizCreation.addMultipleChoiceQuestion(quizExerciseTitle, 10);
@@ -88,7 +88,7 @@ describe('Exam management', () => {
     it('Adds a modeling exercise', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddModelingExercise();
+        exerciseGroups.clickAddModelingExercise(0);
         const modelingExerciseTitle = 'modeling' + uid;
         modelingCreation.setTitle(modelingExerciseTitle);
         modelingCreation.setPoints(10);
@@ -100,7 +100,7 @@ describe('Exam management', () => {
     it('Adds a programming exercise', () => {
         cy.visit(`/course-management/${course.id}/exams`);
         examManagement.openExerciseGroups(exam.id!);
-        exerciseGroups.clickAddProgrammingExercise();
+        exerciseGroups.clickAddProgrammingExercise(0);
         const programmingExerciseTitle = 'programming' + uid;
         programmingCreation.setTitle(programmingExerciseTitle);
         programmingCreation.setShortName(programmingExerciseTitle);
