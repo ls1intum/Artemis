@@ -37,9 +37,7 @@ describe('CreateAttachmentUnitComponent', () => {
             imports: [],
             declarations: [AttachmentUnitFormStubComponent, LectureUnitLayoutStubComponent, CreateAttachmentUnitComponent],
             providers: [
-                MockProvider(AttachmentService),
                 MockProvider(AttachmentUnitService),
-                MockProvider(FileUploaderService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -138,7 +136,6 @@ describe('CreateAttachmentUnitComponent', () => {
         createAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(createAttachmentUnitStub).toHaveBeenCalledWith(formData, 1);
             expect(navigateSpy).toHaveBeenCalledOnce();
-            navigateSpy.mockRestore();
         });
     }));
 });

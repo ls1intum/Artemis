@@ -28,14 +28,7 @@ export class CreateAttachmentUnitComponent implements OnInit {
     lectureId: number;
     courseId: number;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentService: AttachmentService,
-        private fileUploaderService: FileUploaderService,
-        private attachmentUnitService: AttachmentUnitService,
-        private alertService: AlertService,
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private attachmentUnitService: AttachmentUnitService, private alertService: AlertService) {}
 
     ngOnInit() {
         const lectureRoute = this.activatedRoute.parent!.parent!;
