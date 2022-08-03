@@ -34,6 +34,7 @@ import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/heading
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
+import { v4 as uuid } from 'uuid';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -164,7 +165,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
     faGripLines = faGripLines;
     faAngleRight = faAngleRight;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
+    uniqueMarkdownEditorId: string;
+
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+    }
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -253,9 +258,10 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     setupResizable(): void {
         // unregister previously set event listeners for class elements
-        interact('.markdown-editor').unset();
+        const selector = '#' + this.uniqueMarkdownEditorId;
+        interact(selector).unset();
 
-        this.interactResizable = interact('.markdown-editor')
+        this.interactResizable = interact(selector)
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
@@ -273,12 +279,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.aceEditorContainer.getEditor().resize();
             })
-            .on('resizemove', function (event: any) {
+            .on('resizemove', (event: any) => {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
+                this.aceEditorContainer.getEditor().resize();
             });
     }
 
