@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
@@ -38,6 +40,8 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RestController
 @RequestMapping("api/")
 public class FileUploadSubmissionResource extends AbstractSubmissionResource {
+
+    private static final String ENTITY_NAME = "fileUploadSubmission";
 
     private final Logger log = LoggerFactory.getLogger(FileUploadSubmissionResource.class);
 
@@ -74,7 +78,6 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      * POST exercises/:exerciseId/file-upload-submissions : Create a new fileUploadSubmission
      *
      * @param exerciseId of the file upload exercise a submission should be created for
-     * @param principal the identity of the logged-in user - provided by Spring
      * @param fileUploadSubmission the fileUploadSubmission to create
      * @param file The uploaded file belonging to the submission
      *
@@ -83,14 +86,20 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
      */
     @PostMapping("exercises/{exerciseId}/file-upload-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable long exerciseId, Principal principal,
-            @RequestPart("submission") FileUploadSubmission fileUploadSubmission, @RequestPart("file") MultipartFile file) {
-        log.debug("REST request to submit new FileUploadSubmission : {}", fileUploadSubmission);
-        long start = System.currentTimeMillis();
+    public ResponseEntity<FileUploadSubmission> createFileUploadSubmission(@PathVariable long exerciseId, @RequestPart("submission") FileUploadSubmission fileUploadSubmission,
+            @RequestPart("file") MultipartFile file) {
+        log.debug("REST request to submit new file upload submission : {}", fileUploadSubmission);
+        return handleFileUploadSubmission(exerciseId, fileUploadSubmission, file);
+    }
 
+    @NotNull
+    private ResponseEntity<FileUploadSubmission> handleFileUploadSubmission(long exerciseId, FileUploadSubmission fileUploadSubmission, MultipartFile file) {
+        long start = System.currentTimeMillis();
+        checkFileLength(file);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
         final var exercise = fileUploadExerciseRepository.findByIdElseThrow(exerciseId);
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+
+        checkFilePattern(file, exercise);
 
         // if there is a participation that has an exercise linked to it,
         // the exercise needs to be the same as the one referenced in the path via exerciseId
@@ -104,57 +113,50 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
 
         // Prevent multiple submissions (currently only for exam submissions)
         fileUploadSubmission = (FileUploadSubmission) examSubmissionService.preventMultipleSubmissions(exercise, fileUploadSubmission, user);
-
         // Check if the user is allowed to submit
         fileUploadSubmissionService.checkSubmissionAllowanceElseThrow(exercise, fileUploadSubmission, user);
 
-        // Check the file size
-        if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
-            // NOTE: Maximum file size for submission is 8 MB
-            return ResponseEntity.status(413).headers(HeaderUtil.createAlert(applicationName, "The maximum file size is 8 MB!", "fileUploadSubmissionFileTooBig")).build();
+        final FileUploadSubmission submission;
+        try {
+            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, user);
+        }
+        catch (IOException e) {
+            throw new BadRequestAlertException("The uploaded file could not be saved on the server", ENTITY_NAME, "cantSaveFile");
+        }
+        catch (EmptyFileException e) {
+            throw new BadRequestAlertException("The uploaded file is empty", ENTITY_NAME, "cantSaveFile");
         }
 
+        fileUploadSubmissionService.hideDetails(submission, user);
+        long end = System.currentTimeMillis();
+        if (exercise.isCourseExercise()) {
+            // only notify users in course exercises about successful submissions
+            singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(exercise, user);
+        }
+        log.info("handleFileUploadSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
+        return ResponseEntity.ok(submission);
+    }
+
+    private static void checkFilePattern(MultipartFile file, FileUploadExercise exercise) {
         // Check the pattern
         final String[] splittedFileName = file.getOriginalFilename().split("\\.");
         final String fileSuffix = splittedFileName[splittedFileName.length - 1].toLowerCase();
         final String filePattern = String.join("|", exercise.getFilePattern().toLowerCase().replaceAll("\\s", "").split(","));
         if (!fileSuffix.matches(filePattern)) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                    .headers(HeaderUtil.createAlert(applicationName, "The uploaded file has the wrong type!", "fileUploadSubmissionIllegalFileType")).build();
+            throw new BadRequestAlertException("The uploaded file has the wrong type!", ENTITY_NAME, "fileUploadSubmissionIllegalFileType");
         }
-
-        final FileUploadSubmission submission;
-        try {
-            submission = fileUploadSubmissionService.handleFileUploadSubmission(fileUploadSubmission, file, exercise, principal);
-        }
-        catch (IOException e) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "cantSaveFile", "The uploaded file could not be saved on the server"))
-                    .build();
-        }
-
-        catch (EmptyFileException e) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, "fileUploadSubmission", "emptyFile", "The uploaded file is empty"))
-                    .build();
-        }
-
-        this.fileUploadSubmissionService.hideDetails(submission, user);
-        long end = System.currentTimeMillis();
-        singleUserNotificationService.notifyUserAboutSuccessfulFileUploadSubmission(exercise, user);
-        log.info("submitFileUploadExercise took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
-        return ResponseEntity.ok(submission);
     }
 
     /**
-     * GET file-upload-submissions/:submissionId : get the fileUploadSubmissions by its id. Is used by tutors when assessing submissions.
-     * In case an instructor calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
-     * If neither resultId nor correctionRound is set, the first correctionRound is used.
-     *
-     * @param submissionId of the fileUploadSubmission to retrieve
-     * @param correctionRound of the result we want to receive
-     * @param resultId for which we want to get the submission
-     * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
-     */
+         * GET file-upload-submissions/:submissionId : get the fileUploadSubmissions by its id. Is used by tutors when assessing submissions.
+         * In case an instructor calls, the resultId is used first. If the resultId is not set, the correctionRound is used.
+         * If neither resultId nor correctionRound is set, the first correctionRound is used.
+         *
+         * @param submissionId of the fileUploadSubmission to retrieve
+         * @param correctionRound of the result we want to receive
+         * @param resultId for which we want to get the submission
+         * @return the ResponseEntity with status 200 (OK) and with body the fileUploadSubmission, or with status 404 (Not Found)
+         */
     @GetMapping("file-upload-submissions/{submissionId}")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<FileUploadSubmission> getFileUploadSubmission(@PathVariable Long submissionId,
@@ -319,5 +321,17 @@ public class FileUploadSubmissionResource extends AbstractSubmissionResource {
         }
 
         return ResponseEntity.ok(fileUploadSubmission);
+    }
+
+    /**
+     * Throws IllegalArgumentException if the file length is over MAX_SUBMISSION_FILE_SIZE.
+     * @param file the file in the file upload submission
+     */
+    private void checkFileLength(MultipartFile file) {
+        // Check the file size
+        if (file.getSize() > Constants.MAX_SUBMISSION_FILE_SIZE) {
+            // NOTE: Maximum file size for submission is MAX_SUBMISSION_FILE_SIZE
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "The maximum file size is " + Constants.MAX_SUBMISSION_FILE_SIZE + " MB!");
+        }
     }
 }

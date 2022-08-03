@@ -49,6 +49,7 @@
             "assessingExampleSubmission": "Beispielabgaben bewerten",
             "assessExampleSubmission": "Bewertete Beispielabgabe",
             "studentsSubmissions": "Abgaben der Studierenden",
+            "studentsSubmissionsExam": "Abgaben der Studierenden, Korrekturrunde: {{round}}",
             "testRunSubmissions": "Testlaufabgaben",
             "submissionDate": "Abgabedatum",
             "responseTime": "Bearbeitungszeit",
@@ -101,6 +102,7 @@
             "noSubmissionsInfo": "In dieser Korrekturrunde kannst du 0 Einreichungen korrigieren. {{notYetAssessed}} Einreichungen sind noch nicht korrigiert, davon sind {{lockedSubmissionsByOtherTutor}} von anderen Tutor:innen gesperrt",
             "noSubmissionsInfoSecondCorrection": " und {{firstRoundAssessments}} wurden von dir in der ersten Korrekturrunde korrigiert. ",
             "noSubmissionsBecauseFirstAssessedByYourself": "Nur Einreichungen, die du nicht selbst in der ersten Korrekturrunde bearbeitet hast, können korrigiert werden.",
+            "correctionRoundNotYetEnabled": "Diese Korrekturrunde wurde noch nicht freigegeben.",
             "openAssessments": "Offene Abgaben",
             "closedAssessments": "Bewertete Abgaben",
             "ratings": "Ratings"
