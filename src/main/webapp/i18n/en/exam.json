@@ -719,7 +719,8 @@
                 "planned": "Planned",
                 "running": "Running",
                 "finished": "Finished",
-                "complaints": "Complaints"
+                "complaints": "Complaints",
+                "complaintsCount": "({{ done }} out of {{ total}})"
             }
         }
     }
