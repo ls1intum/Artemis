@@ -3,15 +3,15 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import dayjs from 'dayjs/esm';
 import { AttachmentUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/attachmentUnit.service';
-import { concatMap, finalize } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { combineLatest } from 'rxjs';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 @Component({
     selector: 'jhi-create-attachment-unit',
@@ -47,12 +47,12 @@ export class CreateAttachmentUnitComponent implements OnInit {
         this.attachmentToCreate = new Attachment();
     }
 
-    createAttachmentUnit(formData: AttachmentUnitFormData): void {
-        if (!formData?.formProperties?.name || !formData?.fileProperties?.file || !formData?.fileProperties?.fileName) {
+    createAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData): void {
+        if (!attachmentUnitFormData?.formProperties?.name || !attachmentUnitFormData?.fileProperties?.file || !attachmentUnitFormData?.fileProperties?.fileName) {
             return;
         }
-        const { description, name, releaseDate } = formData.formProperties;
-        const { file, fileName } = formData.fileProperties;
+        const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
+        const { file, fileName } = attachmentUnitFormData.fileProperties;
         // === Setting attachment ===
 
         if (name) {
@@ -71,35 +71,16 @@ export class CreateAttachmentUnitComponent implements OnInit {
         }
 
         this.isLoading = true;
-        this.fileUploaderService.uploadFile(file, fileName, { keepFileName: true }).then(
-            (result) => {
-                // update link to the path provided by the server
-                this.attachmentToCreate.link = result.path;
-                this.attachmentUnitService
-                    .create(this.attachmentUnitToCreate!, this.lectureId)
-                    .pipe(
-                        concatMap((response: HttpResponse<AttachmentUnit>) => {
-                            this.attachmentToCreate.attachmentUnit = response.body!;
-                            return this.attachmentService.create(this.attachmentToCreate);
-                        }),
-                    )
-                    .pipe(
-                        finalize(() => {
-                            this.isLoading = false;
-                        }),
-                    )
-                    .subscribe({
-                        next: () => {
-                            this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
-                        },
-                        error: (res: HttpErrorResponse) => onError(this.alertService, res),
-                    });
-            },
-            (error) => {
-                // displaying the file upload error in the form but not resetting the form
-                this.attachmentUnitForm.setFileUploadError(error.message);
-                this.isLoading = false;
-            },
-        );
+
+        const formData = new FormData();
+        formData.append('file', file, fileName);
+        formData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(this.attachmentToCreate)).toString('base64'), 'application/json'));
+        formData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(this.attachmentUnitToCreate)).toString('base64'), 'application/json'));
+
+        this.attachmentUnitService.create(formData, this.lectureId).subscribe({
+            next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            complete: () => (this.isLoading = false),
+        });
     }
 }

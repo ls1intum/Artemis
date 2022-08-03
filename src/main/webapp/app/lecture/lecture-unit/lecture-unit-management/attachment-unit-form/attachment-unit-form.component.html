@@ -52,12 +52,7 @@
                         />
                     </div>
                 </div>
-                <ng-container *ngIf="fileUploadErrorMessage">
-                    <div id="too-large-file-alert" class="alert alert-danger">
-                        {{ fileUploadErrorMessage }}
-                    </div>
-                </ng-container>
-                <div *ngIf="fileName === fileNamePlaceholder && fileInputTouched && !this.fileUploadErrorMessage" class="alert alert-danger">
+                <div *ngIf="fileName === fileNamePlaceholder && fileInputTouched" class="alert alert-danger">
                     {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate }}
                 </div>
             </div>

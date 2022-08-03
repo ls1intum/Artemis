@@ -65,7 +65,7 @@ describe('AttachmentUnitService', () => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
-            .create(new AttachmentUnit(), 1)
+            .createOld(new AttachmentUnit(), 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'POST' });
@@ -77,7 +77,7 @@ describe('AttachmentUnitService', () => {
         const returnedFromService = { ...elemDefault, name: 'Test' };
         const expected = { ...returnedFromService };
         service
-            .update(expected, 1)
+            .updateOld(expected, 1)
             .pipe(take(1))
             .subscribe((resp) => (expectedResult = resp));
         const req = httpMock.expectOne({ method: 'PUT' });

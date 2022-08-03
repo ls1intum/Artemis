@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -33,6 +34,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
@@ -40,6 +42,8 @@ import com.ibm.icu.text.CharsetDetector;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class FileService implements DisposableBean {
@@ -49,6 +53,17 @@ public class FileService implements DisposableBean {
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    // NOTE: this list has to be the same as in file-uploader.service.ts
+    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
+
+    public void addAllowedFileExtension(String fileExtension) {
+        this.allowedFileExtensions.add(fileExtension);
+    }
+
+    public void addRemoveFileExtension(String fileExtension) {
+        this.allowedFileExtensions.remove(fileExtension);
+    }
 
     /**
      * Filenames for which the template filename differs from the filename it should have in the repository.
@@ -99,6 +114,88 @@ public class FileService implements DisposableBean {
     public void resetOnPath(String path) {
         log.info("Invalidate files cache for {}", path);
         // Intentionally blank
+    }
+
+    /**
+     * Helper method which handles the file creation for both normal file uploads and for markdown
+     * @param file The file to be uploaded
+     * @param keepFileName specifies if original file name should be kept
+     * @param markdown boolean which is set to true, when we are uploading a file within the markdown editor
+     * @return The path of the file
+     */
+    @NotNull
+    public String handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) {
+        // NOTE: Maximum file size is set in resources/config/application.yml
+        // Currently set to 10 MB
+
+        // check for file type
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new IllegalArgumentException("Filename cannot be null");
+        }
+        // sanitize the filename and replace all invalid characters with "_"
+        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
+        String fileExtension = FilenameUtils.getExtension(filename);
+        if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            throw new BadRequestException("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
+        }
+
+        final String filePath;
+        final String fileNameAddition;
+        final StringBuilder responsePath = new StringBuilder();
+
+        // set the appropriate values depending on the use case
+        if (markdown) {
+            filePath = FilePathService.getMarkdownFilePath();
+            fileNameAddition = "Markdown_";
+            responsePath.append("/api/files/markdown/");
+        }
+        else {
+            filePath = FilePathService.getTempFilePath();
+            fileNameAddition = "Temp_";
+            responsePath.append("/api/files/temp/");
+        }
+
+        try {
+            // create folder if necessary
+            File folder;
+            folder = new File(filePath);
+            if (!folder.exists()) {
+                if (!folder.mkdirs()) {
+                    log.error("Could not create directory: {}", filePath);
+                    throw new InternalServerErrorException("Could not create directory");
+                }
+            }
+
+            // create file (generate new filename, if file already exists)
+            boolean fileCreated;
+            File newFile;
+
+            do {
+                if (!keepFileName) {
+                    filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
+                            + "." + fileExtension;
+                }
+                String path = Path.of(filePath, filename).toString();
+
+                newFile = new File(path);
+                if (keepFileName && newFile.exists()) {
+                    newFile.delete();
+                }
+                fileCreated = newFile.createNewFile();
+            }
+            while (!fileCreated);
+            responsePath.append(filename);
+
+            // copy contents of uploaded file into newly created file
+            Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+
+            return responsePath.toString();
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+            throw new InternalServerErrorException("Could not create file");
+        }
     }
 
     /**

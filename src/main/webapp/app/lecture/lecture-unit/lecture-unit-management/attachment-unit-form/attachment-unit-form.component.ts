@@ -86,7 +86,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     onFileChange(event: any): void {
         if (event.target.files.length) {
-            this.fileUploadErrorMessage = undefined; // removes the file size error message when the user selects a new file
             const fileList = event.target.files;
             this.file = fileList[0];
             this.fileName = this.file['name'];
@@ -114,14 +113,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || this.fileUploadErrorMessage || this.fileName === this.fileNamePlaceholder);
-    }
-
-    // will be called from parent component to set the form error when the file upload failed
-    setFileUploadError(errorMessage: string) {
-        this.fileUploadErrorMessage = errorMessage;
-        this.fileInput.nativeElement.value = '';
-        this.fileName = this.fileNamePlaceholder;
+        return !(this.form.invalid || this.fileName === this.fileNamePlaceholder);
     }
 
     submitForm() {

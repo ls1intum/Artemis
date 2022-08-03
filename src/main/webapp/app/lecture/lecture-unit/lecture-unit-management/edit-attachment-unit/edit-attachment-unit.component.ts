@@ -12,6 +12,7 @@ import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { AttachmentService } from 'app/lecture/attachment.service';
 import { forkJoin, combineLatest } from 'rxjs';
 import dayjs from 'dayjs/esm';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
@@ -76,9 +77,9 @@ export class EditAttachmentUnitComponent implements OnInit {
             });
     }
 
-    updateAttachmentUnit(formData: AttachmentUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText } = formData.formProperties;
-        const { file, fileName } = formData.fileProperties;
+    updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
+        const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
+        const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -93,6 +94,20 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachmentUnit.description = description;
 
         this.isLoading = true;
+
+        const formData = new FormData();
+        if (file) {
+            formData.append('file', file, fileName);
+        }
+        formData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(this.attachment)).toString('base64'), 'application/json'));
+        formData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(this.attachmentUnit)).toString('base64'), 'application/json'));
+
+        this.attachmentUnitService.update(this.lectureId, this.attachmentUnit.id!, formData, this.notificationText).subscribe({
+            next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+            error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            complete: () => (this.isLoading = false),
+        });
+
         // when the file has changed the new file needs to be uploaded first before making the put request
         if (file) {
             this.fileUploaderService.uploadFile(file, fileName, { keepFileName: true }).then(
@@ -106,7 +121,6 @@ export class EditAttachmentUnitComponent implements OnInit {
                 },
                 (error) => {
                     // displaying the file upload error in the form but not resetting the form
-                    this.attachmentUnitForm.setFileUploadError(error.message);
                     this.isLoading = false;
                 },
             );
@@ -116,7 +130,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     }
 
     performUpdate() {
-        const attachmentUnitObservable = this.attachmentUnitService.update(this.attachmentUnit, this.lectureId);
+        const attachmentUnitObservable = this.attachmentUnitService.updateOld(this.attachmentUnit, this.lectureId);
         const requestOptions = {} as any;
         if (this.notificationText) {
             requestOptions.notificationText = this.notificationText;

@@ -345,7 +345,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetLectureAttachment_mimeType() throws Exception {
         // add a new file type to allow to check the mime type detection in FileResource with an exotic extension
-        fileResource.addAllowedFileExtension("exotic");
+        fileService.addAllowedFileExtension("exotic");
 
         Attachment attachment = createLectureWithAttachment("attachment.exotic", HttpStatus.CREATED);
         String attachmentPath = attachment.getLink();
@@ -354,7 +354,7 @@ class FileIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         String receivedAttachment = request.get(attachmentPath + "?access_token=" + accessToken, HttpStatus.OK, String.class);
         assertThat(receivedAttachment).isEqualTo("some data");
 
-        fileResource.addRemoveFileExtension("exotic");
+        fileService.addRemoveFileExtension("exotic");
     }
 
     private Attachment createLectureWithAttachment(String filename, HttpStatus expectedStatus) throws Exception {
