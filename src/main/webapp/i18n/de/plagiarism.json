@@ -4,6 +4,8 @@
             "plagiarismDetection": "Plagiatskontrolle",
             "confirm": "Bestätigen",
             "deny": "Ablehnen",
+            "denyAfterConfirmModalTitle": "Wechsel von Bestätigen zu Ablehnen",
+            "denyAfterConfirmModalText": "Bist du dir sicher, dass du die Entscheidung von \"Bestätigung des Plagiats\" in \"Ablehnung\" ändern möchtest? Dadurch wird der entsprechende Plagiatsfall einschließlich der Kommunikation mit dem/der Studierenden und des Urteils gelöscht und kann nicht rückgängig gemacht werden.",
             "warning": "Die Bestätigung/Ablehnung eines Plagiats geht beim Neuladen der Seite verloren.",
             "inspection": "Plagiatskontrolle",
             "plagiarism": "Plagiat",
@@ -54,6 +56,7 @@
                 "pageTitle": "Plagiatsfälle",
                 "plagiarismCases": "Plagiatsfälle",
                 "plagiarismCase": "Plagiatsfall",
+                "resolvedPlagiarismCase": "Gelöster Plagiatsfall",
                 "verdict": {
                     "verdict": "Urteil",
                     "text": "Entscheide die Konsequenten des Plagiatsfalls:",
@@ -63,6 +66,7 @@
                     "plagiarism": "Unterschleif",
                     "warning": "Warnung",
                     "pointDeduction": "Punktabzug",
+                    "noPlagiarism": "Kein Plagiat",
                     "confirmationTitle": "Bestätige das Urteil",
                     "confirmationText": "Bist du sicher, dass du dieses Urteil fällen willst? Dies kann nicht rückgängig gemacht werden.",
                     "tooltip": "Dieses Urteil fällen?",
@@ -81,7 +85,7 @@
                 "respondedByStudent": "Studierende:r hat eine Aussage gemacht",
                 "notResponded": "Noch nicht beantwortet",
                 "noCases": "Keine Plagiatsfälle in diesem Kurs",
-                "notifyStudent": "Studierende:r benachrichtigen",
+                "notifyStudent": "Studierende:n benachrichtigen",
                 "studentNotified": "Studierende:r wurde benachrichtigt."
             },
             "cases": {

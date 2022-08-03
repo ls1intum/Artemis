@@ -10,6 +10,8 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { Course } from 'app/entities/course.model';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -23,7 +25,7 @@ export class PlagiarismHeaderComponent {
 
     readonly plagiarismStatus = PlagiarismStatus;
 
-    constructor(private plagiarismCasesService: PlagiarismCasesService) {}
+    constructor(private plagiarismCasesService: PlagiarismCasesService, private modalService: NgbModal) {}
 
     /**
      * Set the status of the currently selected comparison to CONFIRMED.
@@ -36,7 +38,19 @@ export class PlagiarismHeaderComponent {
      * Set the status of the currently selected comparison to DENIED.
      */
     denyPlagiarism() {
-        this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
+        if (this.comparison.status === PlagiarismStatus.CONFIRMED) {
+            this.askForConfirmation(() => this.updatePlagiarismStatus(PlagiarismStatus.DENIED));
+        } else {
+            this.updatePlagiarismStatus(PlagiarismStatus.DENIED);
+        }
+    }
+
+    private askForConfirmation(onConfirm: () => void) {
+        const modalRef = this.modalService.open(ConfirmAutofocusModalComponent, { keyboard: true, size: 'lg' });
+        modalRef.componentInstance.title = 'artemisApp.plagiarism.denyAfterConfirmModalTitle';
+        modalRef.componentInstance.text = 'artemisApp.plagiarism.denyAfterConfirmModalText';
+        modalRef.componentInstance.translateText = true;
+        modalRef.result.then(onConfirm);
     }
 
     /**

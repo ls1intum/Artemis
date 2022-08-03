@@ -49,6 +49,8 @@ import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -59,6 +61,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
+    readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
     readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
     readonly QUIZ = ExerciseType.QUIZ;
@@ -91,7 +94,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
-    plagiarismCaseId?: number;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
 
@@ -189,8 +192,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
         });
-        this.plagiarismCaseService.getPlagiarismCaseIdForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<number>) => {
-            this.plagiarismCaseId = res.body ?? undefined;
+        this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
+            this.plagiarismCaseInfo = res.body ?? undefined;
         });
     }
 

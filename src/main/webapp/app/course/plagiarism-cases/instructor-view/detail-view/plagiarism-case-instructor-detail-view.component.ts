@@ -68,6 +68,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * and saves the point deduction in percent
      */
     savePointDeductionVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call savePointDeductionVerdict before student is notified');
+        }
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
@@ -88,6 +91,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * and saves the warning message
      */
     saveWarningVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveWarningVerdict before student is notified');
+        }
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
@@ -108,9 +114,25 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveVerdict(): void {
         if (!this.isStudentNotified()) {
-            return;
+            throw new Error('Cannot call saveVerdict before student is notified');
         }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+            next: (res: HttpResponse<PlagiarismCase>) => {
+                this.plagiarismCase.verdict = res.body!.verdict;
+                this.plagiarismCase.verdictBy = res.body!.verdictBy;
+                this.plagiarismCase.verdictDate = res.body!.verdictDate;
+            },
+        });
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as NO_PLAGIARISM
+     */
+    saveNoPlagiarismVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
                 this.plagiarismCase.verdictBy = res.body!.verdictBy;
