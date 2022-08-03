@@ -230,8 +230,6 @@ public final class Constants {
 
     public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";
 
-    public static final String HAZELCAST_MONITORING_SCHEDULER = "monitoringScheduleServiceExecutor";
-
     public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;

@@ -544,6 +544,7 @@
             "enable": "Aktivieren",
             "disable": "Deaktivieren",
             "enabled": "Aktiviert",
+            "globallyDisabled": "Global deaktiviert",
             "disabled": "Deaktiviert",
             "table": {
                 "panelHeader": "Klausurinformationen",
