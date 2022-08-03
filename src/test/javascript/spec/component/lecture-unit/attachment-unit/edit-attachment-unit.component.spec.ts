@@ -1,7 +1,7 @@
 import dayjs from 'dayjs/esm';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -15,6 +15,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { base64StringToBlob } from 'app/utils/blob-util';
 
 @Component({ selector: 'jhi-attachment-unit-form', template: '' })
 class AttachmentUnitFormStubComponent {
@@ -36,26 +37,22 @@ class LectureUnitLayoutStubComponent {
 
 describe('EditAttachmentUnitComponent', () => {
     let editAttachmentUnitComponentFixture: ComponentFixture<EditAttachmentUnitComponent>;
-    let editAttachmentUnitComponent: EditAttachmentUnitComponent;
 
-    let fileUploadService;
-    let attachmentService;
     let attachmentUnitService;
     let router: Router;
-    let uploadFileSpy: jest.SpyInstance;
-    let updateAttachmentSpy: jest.SpyInstance;
+    let navigateSpy: jest.SpyInstance;
     let updateAttachmentUnitSpy: jest.SpyInstance;
     let attachment: Attachment;
     let attachmentUnit: AttachmentUnit;
+    let baseFormData: FormData;
+    let fakeBlob: Blob;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [AttachmentUnitFormStubComponent, LectureUnitLayoutStubComponent, EditAttachmentUnitComponent],
             providers: [
-                MockProvider(AttachmentService),
                 MockProvider(AttachmentUnitService),
-                MockProvider(FileUploaderService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -89,10 +86,7 @@ describe('EditAttachmentUnitComponent', () => {
             .compileComponents()
             .then(() => {
                 editAttachmentUnitComponentFixture = TestBed.createComponent(EditAttachmentUnitComponent);
-                editAttachmentUnitComponent = editAttachmentUnitComponentFixture.componentInstance;
                 router = TestBed.inject(Router);
-                fileUploadService = TestBed.inject(FileUploaderService);
-                attachmentService = TestBed.inject(AttachmentService);
                 attachmentUnitService = TestBed.inject(AttachmentUnitService);
 
                 attachment = new Attachment();
@@ -108,6 +102,15 @@ describe('EditAttachmentUnitComponent', () => {
                 attachmentUnit.id = 1;
                 attachmentUnit.description = 'lorem ipsum';
                 attachmentUnit.attachment = attachment;
+
+                fakeBlob = new Blob([''], { type: 'application/pdf' });
+                fakeBlob['name'] = 'Test-File.pdf';
+
+                baseFormData = new FormData();
+                baseFormData.append('file', fakeBlob, 'updated file');
+                baseFormData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(attachment)).toString('base64')));
+                baseFormData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(attachmentUnit)).toString('base64')));
+
                 jest.spyOn(attachmentUnitService, 'findById').mockReturnValue(
                     of(
                         new HttpResponse({
@@ -116,19 +119,13 @@ describe('EditAttachmentUnitComponent', () => {
                         }),
                     ),
                 );
-                uploadFileSpy = jest.spyOn(fileUploadService, 'uploadFile');
                 updateAttachmentUnitSpy = jest.spyOn(attachmentUnitService, 'update');
-                updateAttachmentSpy = jest.spyOn(attachmentService, 'update');
+                navigateSpy = jest.spyOn(router, 'navigate');
             });
     });
 
     afterEach(() => {
         jest.restoreAllMocks();
-    });
-
-    it('should initialize', () => {
-        editAttachmentUnitComponentFixture.detectChanges();
-        expect(editAttachmentUnitComponent).not.toBeNull();
     });
 
     it('should set form data correctly', () => {
@@ -146,125 +143,94 @@ describe('EditAttachmentUnitComponent', () => {
         expect(attachmentUnitFormStubComponent.formData.fileProperties.file).toBeUndefined();
     });
 
-    it('should upload file before performing update when file HAS changed', () => {
+    it('should update attachment unit with file change without notification', () => {
         editAttachmentUnitComponentFixture.detectChanges();
         const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = editAttachmentUnitComponentFixture.debugElement.query(
             By.directive(AttachmentUnitFormStubComponent),
         ).componentInstance;
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        const formData: AttachmentUnitFormData = {
+        const fileName = 'updated file';
+
+        const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
                 name: attachment.name,
                 description: attachmentUnit.description,
                 releaseDate: attachment.releaseDate,
                 version: 1,
-                updateNotificationText: 'UPDATED FILE',
+                updateNotificationText: undefined,
             },
             fileProperties: {
                 file: fakeBlob,
-                fileName: 'updated file',
+                fileName,
             },
         };
 
-        uploadFileSpy.mockReturnValue(Promise.resolve({ path: '/path/to/new/file' }));
-        attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-        expect(uploadFileSpy).toHaveBeenCalledWith(fakeBlob, formData.fileProperties.fileName, { keepFileName: true });
+        updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
+        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        editAttachmentUnitComponentFixture.detectChanges();
+
+        expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, undefined);
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should not update file before performing update when file HAS NOT changed', () => {
+    it('should update attachment unit with file change with notification', () => {
         editAttachmentUnitComponentFixture.detectChanges();
         const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = editAttachmentUnitComponentFixture.debugElement.query(
             By.directive(AttachmentUnitFormStubComponent),
         ).componentInstance;
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        const formData: AttachmentUnitFormData = {
+        const fileName = 'updated file';
+
+        const notification = 'test notification';
+
+        const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
                 name: attachment.name,
                 description: attachmentUnit.description,
                 releaseDate: attachment.releaseDate,
                 version: 1,
-                updateNotificationText: 'UPDATED FILE',
+                updateNotificationText: notification,
             },
             fileProperties: {
-                file: undefined,
-                fileName: undefined,
+                file: fakeBlob,
+                fileName,
             },
         };
 
-        attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-        expect(uploadFileSpy).toHaveBeenCalledTimes(0);
+        updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
+        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
+        editAttachmentUnitComponentFixture.detectChanges();
+
+        expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, baseFormData, notification);
+        expect(navigateSpy).toHaveBeenCalledOnce();
     });
 
-    it('should set file file upload error on form', fakeAsync(() => {
+    it('should update attachment unit without file change without notification', () => {
         editAttachmentUnitComponentFixture.detectChanges();
         const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = editAttachmentUnitComponentFixture.debugElement.query(
             By.directive(AttachmentUnitFormStubComponent),
         ).componentInstance;
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        const formData: AttachmentUnitFormData = {
+        const attachmentUnitFormData: AttachmentUnitFormData = {
             formProperties: {
                 name: attachment.name,
                 description: attachmentUnit.description,
                 releaseDate: attachment.releaseDate,
                 version: 1,
-                updateNotificationText: 'UPDATED FILE',
+                updateNotificationText: undefined,
             },
-            fileProperties: {
-                file: fakeBlob,
-                fileName: 'updated filename',
-            },
+            fileProperties: {},
         };
 
-        const performUpdateSpy = jest.spyOn(editAttachmentUnitComponent, 'performUpdate');
-        uploadFileSpy.mockReturnValue(Promise.reject(new Error('some error')));
-        attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-        editAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(attachmentUnitFormStubComponent.errorMessage).toBe('some error');
-            expect(performUpdateSpy).toHaveBeenCalledTimes(0);
-            performUpdateSpy.mockRestore();
-        });
-    }));
+        const formData = new FormData();
+        formData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(attachment)).toString('base64')));
+        formData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(attachmentUnit)).toString('base64')));
 
-    it('should send PUT request for attachment and attachment unit upon form submission and navigate', fakeAsync(() => {
+        updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
+        attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);
         editAttachmentUnitComponentFixture.detectChanges();
-        const attachmentUnitFormStubComponent: AttachmentUnitFormStubComponent = editAttachmentUnitComponentFixture.debugElement.query(
-            By.directive(AttachmentUnitFormStubComponent),
-        ).componentInstance;
 
-        const fakeBlob = new Blob([''], { type: 'application/pdf' });
-        fakeBlob['name'] = 'Test-File.pdf';
-        const formData: AttachmentUnitFormData = {
-            formProperties: {
-                name: attachment.name,
-                description: attachmentUnit.description,
-                releaseDate: attachment.releaseDate,
-                version: 1,
-                updateNotificationText: 'UPDATED FILE',
-            },
-            fileProperties: {
-                file: fakeBlob,
-                fileName: 'updated filename',
-            },
-        };
-
-        uploadFileSpy.mockReturnValue(Promise.resolve({ path: '/path/to/new/file' }));
-        updateAttachmentSpy.mockReturnValue(of(new Attachment()));
-        updateAttachmentUnitSpy.mockReturnValue(of(new AttachmentUnit()));
-        const navigateSpy = jest.spyOn(router, 'navigate');
-
-        attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-
-        editAttachmentUnitComponentFixture.whenStable().then(() => {
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            expect(updateAttachmentUnitSpy).toHaveBeenCalledOnce();
-            expect(updateAttachmentSpy).toHaveBeenCalledOnce();
-            navigateSpy.mockRestore();
-        });
-    }));
+        expect(updateAttachmentUnitSpy).toHaveBeenCalledWith(1, 1, formData, undefined);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+    });
 });

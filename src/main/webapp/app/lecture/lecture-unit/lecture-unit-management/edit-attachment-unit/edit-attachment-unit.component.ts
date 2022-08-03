@@ -29,14 +29,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     lectureId: number;
     notificationText: string;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private attachmentService: AttachmentService,
-        private alertService: AlertService,
-        private fileUploaderService: FileUploaderService,
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private attachmentUnitService: AttachmentUnitService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -107,44 +100,5 @@ export class EditAttachmentUnitComponent implements OnInit {
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
             complete: () => (this.isLoading = false),
         });
-
-        // when the file has changed the new file needs to be uploaded first before making the put request
-        if (file) {
-            this.fileUploaderService.uploadFile(file, fileName, { keepFileName: true }).then(
-                (result) => {
-                    // we only update the version when the underlying file has changed
-                    this.attachment.version = this.attachment.version! + 1;
-                    this.attachment.uploadDate = dayjs();
-                    // update link to the path provided by the server
-                    this.attachment.link = result.path;
-                    this.performUpdate();
-                },
-                (error) => {
-                    // displaying the file upload error in the form but not resetting the form
-                    this.isLoading = false;
-                },
-            );
-        } else {
-            this.performUpdate();
-        }
-    }
-
-    performUpdate() {
-        const attachmentUnitObservable = this.attachmentUnitService.updateOld(this.attachmentUnit, this.lectureId);
-        const requestOptions = {} as any;
-        if (this.notificationText) {
-            requestOptions.notificationText = this.notificationText;
-        }
-        const attachmentObservable = this.attachmentService.update(this.attachment, requestOptions);
-        forkJoin([attachmentUnitObservable, attachmentObservable])
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                    this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
-                }),
-            )
-            .subscribe({
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
     }
 }
