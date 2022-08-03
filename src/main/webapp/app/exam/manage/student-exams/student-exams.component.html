@@ -151,12 +151,14 @@
             <ngx-datatable-column prop="workingTime" [minWidth]="170" [width]="170">
                 <ng-template ngx-datatable-header-template>
                     <span class="datatable-header-cell-wrapper" (click)="controls.onSort('workingTime')">
-                        <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
+                        <span *ngIf="!isTestExam" class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.workingTime"> Working time </span>
+                        <span *ngIf="isTestExam" class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.studentExams.usedWorkingTime"> Used Working time </span>
                         <fa-icon [icon]="controls.iconForSortPropField('workingTime')"></fa-icon>
                     </span>
                 </ng-template>
                 <ng-template ngx-datatable-cell-template let-value="value" let-row="row">
-                    <jhi-student-exam-working-time [studentExam]="row"></jhi-student-exam-working-time>
+                    <jhi-testexam-working-time *ngIf="isTestExam" [studentExam]="row"></jhi-testexam-working-time>
+                    <jhi-student-exam-working-time *ngIf="!isTestExam" [studentExam]="row"></jhi-student-exam-working-time>
                 </ng-template>
             </ngx-datatable-column>
 
