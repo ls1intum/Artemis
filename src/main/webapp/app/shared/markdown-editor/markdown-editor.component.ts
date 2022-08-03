@@ -257,8 +257,11 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        // unregister previously set event listeners for class elements
+        // Use a unique, random ID to select the editor
+        // This is required to select the correct one in case multiple editors are used at the same time
         const selector = '#' + this.uniqueMarkdownEditorId;
+
+        // unregister previously set event listeners for class elements
         interact(selector).unset();
 
         this.interactResizable = interact(selector)
