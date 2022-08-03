@@ -70,7 +70,7 @@ public class FeatureToggleService {
      */
     public void updateFeatureToggles(final Map<Feature, Boolean> features) {
         var examLiveStatistics = features.get(Feature.ExamLiveStatistics);
-        if (examLiveStatistics != null && !examLiveStatistics) {
+        if (Boolean.FALSE.equals(examLiveStatistics)) {
             // We want to clear all the data, but keep the settings.
             examMonitoringScheduleService.clearAllExamMonitoringData();
         }

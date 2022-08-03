@@ -10,7 +10,7 @@
                             [jhiTranslate]="
                                 !this.examMonitoringGloballyEnabled
                                     ? 'artemisApp.examMonitoring.globallyDisabled'
-                                    : 'artemisApp.examMonitoring.' + (this.examMonitoringGloballyEnabled && this.exam.monitoring ? 'enabled' : 'disabled')
+                                    : 'artemisApp.examMonitoring.' + (this.exam.monitoring ? 'enabled' : 'disabled')
                             "
                             class="badge ms-2 exam-monitoring-badge align-items-center"
                             [class.bg-danger]="!this.examMonitoringGloballyEnabled || !this.exam.monitoring"
