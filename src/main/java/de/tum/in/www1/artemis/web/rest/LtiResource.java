@@ -142,10 +142,23 @@ public class LtiResource {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String jwt = tokenProvider.createToken(authentication, true);
-
         log.debug("created jwt token: {}", jwt);
 
-        // Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
+        sendRedirect(request, response, exercise, jwt);
+    }
+
+    /**
+     * Redirects the launch request to Artemis.
+     * Note: The following redirect URL has to match the URL in user-route-access-service.ts in the method canActivate(...)
+     *
+     * @param request       HTTP request
+     * @param response      HTTP response
+     * @param exercise      The exercise to redirect to
+     * @param jwt           jwt
+     * @throws IOException  If an input or output exception occurs
+     *
+     */
+    private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise, String jwt) throws IOException {
 
         UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
         if (request.getServerPort() != 80 && request.getServerPort() != 443) {
