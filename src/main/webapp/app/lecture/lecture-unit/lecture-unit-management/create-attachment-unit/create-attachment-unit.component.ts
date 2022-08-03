@@ -53,8 +53,8 @@ export class CreateAttachmentUnitComponent implements OnInit {
         }
         const { description, name, releaseDate } = attachmentUnitFormData.formProperties;
         const { file, fileName } = attachmentUnitFormData.fileProperties;
-        // === Setting attachment ===
 
+        // === Setting attachment ===
         if (name) {
             this.attachmentToCreate.name = name;
         }
