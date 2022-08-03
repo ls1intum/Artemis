@@ -65,7 +65,8 @@
                     "pointDeduction": "Punktabzug",
                     "confirmationTitle": "Bestätige das Urteil",
                     "confirmationText": "Bist du sicher, dass du dieses Urteil fällen willst? Dies kann nicht rückgängig gemacht werden.",
-                    "tooltip": "Dieses Urteil fällen?"
+                    "tooltip": "Dieses Urteil fällen?",
+                    "tooltipStudentNotNotified": "Du musst den Studierenden vor der Urteilsfindung benachrichtigen."
                 },
                 "exercise": "Betroffene Übung",
                 "comparisons": "Vergleiche",
@@ -79,7 +80,9 @@
                 "notNotified": "Noch nicht benachrichtigt",
                 "respondedByStudent": "Studierende:r hat eine Aussage gemacht",
                 "notResponded": "Noch nicht beantwortet",
-                "noCases": "Keine Plagiatsfälle in diesem Kurs"
+                "noCases": "Keine Plagiatsfälle in diesem Kurs",
+                "notifyStudent": "Studierende:r benachrichtigen",
+                "studentNotified": "Studierende:r wurde benachrichtigt."
             },
             "cases": {
                 "pageTitle": "Plagiatsfälle",

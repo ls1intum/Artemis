@@ -214,7 +214,7 @@ public class TextExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textExercise.getId().toString())).body(updatedTextExercise);
+        return ResponseEntity.ok(updatedTextExercise);
     }
 
     /**
