@@ -98,47 +98,6 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
         assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
     }
 
-    private String ps = """
-            # Obverver Pattern
-
-            The city of Munich wants to contribute to a sustainable environment by offering innovative, safe, and user-friendly means of transport: the PEVolve system. Riders use a mobile app on their smartphone to rent three types of personal electric vehicles (PEVs): E-Moped, E-Bikes (electronic bicycle/pedelec), and E-Kickscooter.
-            Each PEV has internet access and reports its location regularly so that riders can locate nearby PEVs with the mobile app.
-            Riders have to set up an online account for payment within the app before they can use it to rent a PEV or reserve it for later use.
-            Riders may bring their own helmet to ride an E-Bike. For E-Kickscooters, the age limit is 16 and riders must bring their own helmets to be allowed to ride.
-            An E-Moped rider needs to have a valid driver's license and may take one additional rider on the back seat. The helmets are included.
-            You are a software engineer and part of the development team at the e-beiksters GmbH, which was contracted by the city of Munich to set up and maintain its fleet of PEVs.
-
-            ### Your Task
-
-            Riders want to see in real time, which PEVs are available for rent. Use the `Notification + push` variant of the `Observer Pattern` to observe available and rented PEVs:
-
-            1. [task][Implement Subject and Observer using Java generics.](test_structure_abstractClass(), test_structure_subscribe(), test_structure_unsubscribe())
-              An `Observer<T>` can `subscribe` and `unsubscribe` by calling the correspoding methods on `Subject<T>`.
-            2. [task][The Observer<T> can be updated by the update(T) method](test_structure_update(), test_structure_interface())
-            3. [task][The Subject<T> can notifyObservers() with the changes returned by its abstract method getUpdate().](test_structure_notifyObservers(), test_structure_getUpdate(), test_functionality_observer_1(), test_functionality_observer_2())
-            4. [task][The changes passed to the riders need to be represented by a new class.](test_structure_updateClass(), test_structure_isSubject(), test_structure_overrideGetUpdate(), test_structure_overrideUpdate(), test_structure_isObserver(), test_structure_genericSuperinterface(), test_structure_genericSuperclass())
-              Create a class that references a `PEV` whose availability changed and has a `boolean` attribute that tells if the PEV has now become available or not. \s
-              Modify `Rider` and `PEV` to realize the notification and push observer pattern with the new class.
-            5. [task][Add the observer pattern to the PEV system](test_behavior_basic(), test_behavior_moreSteps(), test_behavior_unsubscribe())\s
-              When the `lock()` or `unlock()` method is called on a `PEV`, a subscribed `Rider` should be notified using the already provided method `notifyAvailabilityChanged()` in `Rider`.
-
-
-            #### Notes
-            - The template provides an `Application` class that contains a `main()` method that allows you to test the implementation locally.\s
-            - Pay close attention to what functionality is already provided in the template to avoid redundant implementations!
-
-            """;
-
-    @Test
-    void testTest() {
-        updateProblemStatement(ps);
-        var tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
-        assertThat(tasks).hasSize(5);
-        updateProblemStatement(ps);
-        tasks = programmingExerciseTaskRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
-        assertThat(tasks).hasSize(5);
-    }
-
     @Test
     void testReduceToOneTask() {
         updateProblemStatement("[task][Task 1](testClass[BubbleSort],testMethods[Context], testMethods[Policy])");
