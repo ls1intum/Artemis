@@ -34,6 +34,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.QuizBatchJoinDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -816,6 +817,34 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise = quizExerciseService.save(quizExercise);
         request.get("/api/quiz-exercises/" + quizExercise.getId(), HttpStatus.FORBIDDEN, QuizExercise.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testInstructorSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    private void testSearchTermMatchesId() throws Exception {
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
+        exercise.setTitle("LoremIpsum");
+        exercise = quizExerciseRepository.save(exercise);
+
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
+        final var searchResult = request.get("/api/quiz-exercises", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage()).hasSize(1);
     }
 
     @Test

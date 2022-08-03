@@ -952,10 +952,8 @@ public class ProgrammingExerciseService {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
 
-        final var exercisePage = authCheckService.isAdmin(user)
-                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
-                        pageable)
-                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+        final var exercisePage = authCheckService.isAdmin(user) ? programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable)
+                : programmingExerciseRepository.queryBySearchTermInCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
 
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }

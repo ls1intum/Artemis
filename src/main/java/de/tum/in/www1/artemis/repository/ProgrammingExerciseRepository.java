@@ -216,28 +216,34 @@ public interface ProgrammingExerciseRepository extends JpaRepository<Programming
      * Query which fetches all the programming exercises for which the user is instructor in the course and matching the search criteria.
      * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
      *
-     * @param partialTitle       exercise title search term
-     * @param partialCourseTitle course title search term
-     * @param groups             user groups
-     * @param pageable           Pageable
+     * @param searchTerm search term
+     * @param groups     user groups
+     * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
-            SELECT pe FROM ProgrammingExercise pe
-            WHERE (pe.id IN
-                    (SELECT coursePe.id FROM ProgrammingExercise coursePe
-                    WHERE (coursePe.course.instructorGroupName IN :groups OR coursePe.course.editorGroupName IN :groups)
-                    AND (coursePe.title LIKE %:partialTitle% OR coursePe.course.title LIKE %:partialCourseTitle%))
-                OR pe.id IN
-                    (SELECT coursePe.id FROM ProgrammingExercise coursePe
-                    WHERE (coursePe.exerciseGroup.exam.course.instructorGroupName IN :groups OR coursePe.exerciseGroup.exam.course.editorGroupName IN :groups)
-                    AND (coursePe.title LIKE %:partialTitle% OR coursePe.exerciseGroup.exam.course.title LIKE %:partialCourseTitle%)))
+                SELECT exercise FROM ProgrammingExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
+                    WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+                    AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
+                    WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
                         """)
-    Page<ProgrammingExercise> findByTitleInExerciseOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
-            @Param("partialCourseTitle") String partialCourseTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<ProgrammingExercise> queryBySearchTermInCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
-    Page<ProgrammingExercise> findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(String partialTitle,
-            String partialCourseTitle, Pageable pageable);
+    @Query("""
+            SELECT exercise FROM ProgrammingExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM ProgrammingExercise courseExercise
+                    WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM ProgrammingExercise examExercise
+                    WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                        """)
+    Page<ProgrammingExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     @Query("""
             SELECT p FROM ProgrammingExercise p

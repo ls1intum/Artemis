@@ -564,7 +564,7 @@ public class QuizExerciseResource {
     }
 
     /**
-     * Search for all quiz exercises by title and course title. The result is pageable since there
+     * Search for all quiz exercises by id, title and course title. The result is pageable since there
      * might be hundreds of exercises in the DB.
      *
      * @param search The pageable search containing the page size, page number and query string
