@@ -32,13 +32,13 @@ export class DiffGenerationStepComponent implements OnInit {
                 this.exerciseService.getTemplateRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
                     next: (response: Map<string, string>) => {
                         this.templateFileContentByPath = response;
-                        this.isLoading = this.solutionFileContentByPath !== undefined;
+                        this.isLoading = this.solutionFileContentByPath === undefined;
                     },
                 });
                 this.exerciseService.getSolutionRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
                     next: (response: Map<string, string>) => {
                         this.solutionFileContentByPath = response;
-                        this.isLoading = this.templateFileContentByPath !== undefined;
+                        this.isLoading = this.templateFileContentByPath === undefined;
                     },
                 });
             },

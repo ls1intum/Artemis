@@ -15,6 +15,7 @@ describe('DiffGenerationStep Component', () => {
     let onGitDiffLoadedSpy: jest.SpyInstance;
 
     let exercise: ProgrammingExercise;
+    let fileContentByPath: Map<string, string>;
     let gitDiffReport: ProgrammingExerciseGitDiffReport;
 
     beforeEach(() => {
@@ -32,6 +33,10 @@ describe('DiffGenerationStep Component', () => {
         exercise.id = 1;
         comp.exercise = exercise;
 
+        fileContentByPath = new Map<string, string>();
+        fileContentByPath.set('A.java', 'abc');
+        fileContentByPath.set('B.java', 'def');
+
         gitDiffReport = new ProgrammingExerciseGitDiffReport();
         gitDiffReport.programmingExercise = exercise;
     });
@@ -41,12 +46,18 @@ describe('DiffGenerationStep Component', () => {
     });
 
     it('should load all code hints on init', () => {
-        const loadFilesSpy = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        const loadTemplateFilesSpy = jest.spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(fileContentByPath));
+        const loadSolutionFilesSpy = jest.spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(of(fileContentByPath));
+        const loadReportSpy = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
 
         comp.ngOnInit();
 
-        expect(loadFilesSpy).toHaveBeenCalledOnce();
-        expect(loadFilesSpy).toHaveBeenCalledWith(1);
+        expect(loadTemplateFilesSpy).toHaveBeenCalledOnce();
+        expect(loadTemplateFilesSpy).toHaveBeenCalledWith(1);
+        expect(loadSolutionFilesSpy).toHaveBeenCalledOnce();
+        expect(loadSolutionFilesSpy).toHaveBeenCalledWith(1);
+        expect(loadReportSpy).toHaveBeenCalledOnce();
+        expect(loadReportSpy).toHaveBeenCalledWith(1);
 
         expect(comp.gitDiffReport).toEqual(gitDiffReport);
         expect(comp.isLoading).toBeFalse();
