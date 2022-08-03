@@ -60,7 +60,7 @@
                     "verdictDate": "Entschieden am ",
                     "verdictBy": "Entschieden von ",
                     "none": "Noch kein Urteil",
-                    "plagiarism": "Unterschleid",
+                    "plagiarism": "Unterschleif",
                     "warning": "Warnung",
                     "pointDeduction": "Punktabzug",
                     "confirmationTitle": "Bestätige das Urteil",
@@ -81,7 +81,8 @@
                 "respondedByStudent": "Studierende:r hat eine Aussage gemacht",
                 "notResponded": "Noch nicht beantwortet",
                 "noCases": "Keine Plagiatsfälle in diesem Kurs",
-                "notifyStudent": "Studierende:r benachrichtigen"
+                "notifyStudent": "Studierende:r benachrichtigen",
+                "studentNotified": "Studierende:r wurde benachrichtigt."
             },
             "cases": {
                 "pageTitle": "Plagiatsfälle",

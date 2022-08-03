@@ -56,12 +56,10 @@ public class ModelingExerciseService {
         final var searchTerm = search.getSearchTerm();
         final Page<ModelingExercise> exercisePage;
         if (authCheckService.isAdmin(user)) {
-            exercisePage = modelingExerciseRepository
-                    .findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContainingOrExerciseGroup_Exam_TitleIgnoreCaseContainingOrExerciseGroup_Exam_Course_TitleIgnoreCaseContaining(
-                            searchTerm, searchTerm, searchTerm, searchTerm, pageable);
+            exercisePage = modelingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
         }
         else {
-            exercisePage = modelingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+            exercisePage = modelingExerciseRepository.queryBySearchTermInCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
