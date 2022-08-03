@@ -57,8 +57,8 @@ describe('Component Tests', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.getBeans).toHaveBeenCalled();
-                expect(service.getPropertySources).toHaveBeenCalled();
+                expect(service.getBeans).toHaveBeenCalledOnce();
+                expect(service.getPropertySources).toHaveBeenCalledOnce();
                 expect(comp.allBeans).toEqual(beans);
                 expect(comp.beans).toEqual(beans);
                 expect(comp.propertySources).toEqual(propertySources);

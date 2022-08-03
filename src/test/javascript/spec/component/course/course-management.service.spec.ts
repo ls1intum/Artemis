@@ -79,9 +79,9 @@ describe('Course Management Service', () => {
     };
 
     const expectAccessRightsToBeCalled = () => {
-        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalled();
-        expect(isAtLeastEditorInCourseSpy).toHaveBeenCalled();
-        expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalled();
+        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalledOnce();
+        expect(isAtLeastEditorInCourseSpy).toHaveBeenCalledOnce();
+        expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalledOnce();
     };
 
     const requestAndExpectDateConversion = (method: string, url: string, flushedObject: any = returnedFromService, courseToCheck: Course, checkAccessRights?: boolean) => {

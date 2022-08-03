@@ -136,7 +136,7 @@ describe('AuditsComponent', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.query).toHaveBeenCalled();
+            expect(service.query).toHaveBeenCalledOnce();
             expect(comp.audits).toEqual(expect.objectContaining([audit]));
             expect(comp.totalItems).toBe(1);
         });

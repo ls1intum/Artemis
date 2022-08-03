@@ -91,9 +91,9 @@ describe('User Management Update Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.authorities).toHaveBeenCalled();
+                expect(service.authorities).toHaveBeenCalledOnce();
                 expect(comp.authorities).toEqual(['USER']);
-                expect(getAllSpy).toHaveBeenCalled();
+                expect(getAllSpy).toHaveBeenCalledOnce();
             }),
         ));
 

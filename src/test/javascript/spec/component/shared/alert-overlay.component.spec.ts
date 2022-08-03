@@ -36,7 +36,7 @@ describe('Alert Overlay Component Tests', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(getStub).toHaveBeenCalled();
+        expect(getStub).toHaveBeenCalledOnce();
     });
 
     it('Should close all alerts on destroy', () => {
@@ -46,7 +46,7 @@ describe('Alert Overlay Component Tests', () => {
         comp.ngOnDestroy();
 
         // THEN
-        expect(clearStub).toHaveBeenCalled();
+        expect(clearStub).toHaveBeenCalledOnce();
     });
 
     it('Should call action callback if button is clicked', () => {

@@ -168,9 +168,9 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalled();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalled();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
+        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
     it('Should call load Course methods on init', async () => {
@@ -183,9 +183,9 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalled();
-        expect(subscribeForQuizChangesStub).toHaveBeenCalled();
-        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
+        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
+        expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
     it('should have visible exams', () => {
@@ -259,8 +259,8 @@ describe('CourseOverviewComponent', () => {
         component.ngOnInit();
         component.subscribeForQuizChanges();
 
-        expect(jhiWebsocketServiceSubscribeStub).toHaveBeenCalled();
-        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalled();
+        expect(jhiWebsocketServiceSubscribeStub).toHaveBeenCalledOnce();
+        expect(jhiWebsocketServiceReceiveStub).toHaveBeenCalledOnce();
     });
 
     it('should do ngOnDestroy', () => {
@@ -270,7 +270,7 @@ describe('CourseOverviewComponent', () => {
         component.subscribeForQuizChanges(); // to have quizExercisesChannel set
         component.ngOnDestroy();
 
-        expect(jhiWebsocketServiceStub).toHaveBeenCalled();
+        expect(jhiWebsocketServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should render controls if child has configuration', () => {

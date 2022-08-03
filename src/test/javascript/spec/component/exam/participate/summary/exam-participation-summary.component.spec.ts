@@ -214,7 +214,7 @@ describe('ExamParticipationSummaryComponent', () => {
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
         tick();
-        expect(printStub).toHaveBeenCalled();
+        expect(printStub).toHaveBeenCalledOnce();
         printStub.mockRestore();
     }));
 

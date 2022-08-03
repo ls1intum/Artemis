@@ -114,7 +114,7 @@ describe('Course Management Detail Component', () => {
     it('should destroy event subscriber onDestroy', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
-        expect(destroySpy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 
     it('should broadcast course modification on delete', () => {

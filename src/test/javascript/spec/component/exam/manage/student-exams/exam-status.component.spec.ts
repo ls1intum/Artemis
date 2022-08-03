@@ -91,6 +91,7 @@ describe('ExamStatusComponent', () => {
     it('should set examConductionState correctly if exam is finished', () => {
         prepareForExamConductionStateTest(dayjs().add(-2, DateOffsetType.DAYS), -1, DateOffsetType.DAYS);
         component.mandatoryPreparationFinished = true;
+        component.course = { isAtLeastInstructor: true } as Course;
         component.ngOnChanges();
 
         expect(component.examConductionState).toBe(ExamConductionState.FINISHED);

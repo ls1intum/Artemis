@@ -122,7 +122,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         it('should call updateViewFromSubmission', () => {
             const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
-            expect(updateViewStub).toHaveBeenCalled();
+            expect(updateViewStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -288,7 +288,7 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.submissionFile = new File([], 'name.png');
             expect(comp.studentSubmission.filePath).not.toEqual(newFilePath);
             comp.saveUploadedFile();
-            expect(updateStub).toHaveBeenCalled();
+            expect(updateStub).toHaveBeenCalledOnce();
             expect(comp.studentSubmission.filePath).toEqual(newFilePath);
         });
     });

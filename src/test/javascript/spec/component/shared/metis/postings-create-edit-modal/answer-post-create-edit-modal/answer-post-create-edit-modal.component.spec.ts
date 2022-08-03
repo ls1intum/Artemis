@@ -65,7 +65,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         component.createEditAnswerPostContainerRef = viewContainerRef;
         fixture.detectChanges();
         component.open();
-        expect(viewContainerRefCreateEmbeddedView).toHaveBeenCalled();
+        expect(viewContainerRefCreateEmbeddedView).toHaveBeenCalledOnce();
     });
 
     it('should invoke clear embedded view', () => {
