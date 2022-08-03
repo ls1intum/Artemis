@@ -148,7 +148,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             case ExerciseType.MODELING:
                 return 'modeling-exercises';
             case ExerciseType.PROGRAMMING:
-                return 'programming-exercises/';
+                return 'programming-exercises';
             default:
                 throw Error('Unexpected exercise type ' + exerciseType);
         }
