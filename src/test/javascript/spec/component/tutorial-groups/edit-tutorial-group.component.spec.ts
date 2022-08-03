@@ -94,7 +94,7 @@ describe('EditTutorialGroupComponent', () => {
 
         editTutorialGroupComponentFixture.detectChanges();
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupOfResponse);
-        expect(findByIdStub).toHaveBeenCalledOnce();
+        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
         expect(editTutorialGroupComponent.formData.title).toEqual(tutorialGroupOfResponse.title);
         expect(tutorialGroupFormStubComponent.formData).toEqual(editTutorialGroupComponent.formData);
     });
@@ -114,7 +114,7 @@ describe('EditTutorialGroupComponent', () => {
         const findByIdStub = jest.spyOn(tutorialGroupService, 'findById').mockReturnValue(of(findByIdResponse));
 
         editTutorialGroupComponentFixture.detectChanges();
-        expect(findByIdStub).toHaveBeenCalledOnce();
+        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupInDatabase);
 
         const changedTutorialGroup: TutorialGroup = {

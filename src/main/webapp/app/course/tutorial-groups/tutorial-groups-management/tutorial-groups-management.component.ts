@@ -22,8 +22,8 @@ export class TutorialGroupsManagementComponent implements OnInit {
     constructor(private tutorialGroupService: TutorialGroupsService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent!.params.subscribe((params) => {
-            this.courseId = +params['courseId'];
+        this.activatedRoute.parent!.paramMap.subscribe((parentParams) => {
+            this.courseId = Number(parentParams.get('courseId'));
             if (this.courseId) {
                 this.loadTutorialGroups();
             }
