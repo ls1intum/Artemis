@@ -103,7 +103,7 @@ describe('ModelingExerciseImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledTimes(0);
+            expect(searchForExercisesStub).not.toHaveBeenCalled();
             tick(290);
             expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
             expect(comp.searchTerm).toEqual(givenSearchTerm);

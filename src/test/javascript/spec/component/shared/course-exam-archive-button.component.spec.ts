@@ -247,7 +247,7 @@ describe('Course Exam Archive Button Component', () => {
             comp.archiveMode = 'Exam';
             comp.cleanupCourse();
 
-            expect(cleanupStub).toHaveBeenCalledTimes(0);
+            expect(cleanupStub).not.toHaveBeenCalled();
             expect(comp.canCleanupCourse()).toBeFalse();
         }));
 

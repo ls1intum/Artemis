@@ -132,7 +132,7 @@ describe('Submission Export Dialog Component', () => {
 
             expect(exportSubmissionServiceMock).toHaveBeenCalledOnce();
             expect(exportSubmissionServiceMock).toHaveBeenCalledWith(exerciseId, invalidExerciseType, submissionExportOptions);
-            expect(handleExportResponseMock).toHaveBeenCalledTimes(0);
+            expect(handleExportResponseMock).not.toHaveBeenCalled();
         });
     });
 });

@@ -121,7 +121,7 @@ describe('CourseParticipantScores', () => {
         expect(component.avgRatedScore).toBe(99);
         expect(findAllOfCourseSpy).toHaveBeenCalledOnce();
         expect(findAverageOfCoursePerParticipantSpy).toHaveBeenCalledOnce();
-        expect(findAverageOfCourseSpy).toHaveBeenCalledOnce();
+        expect(findAverageOfCourseSpy).toHaveBeenCalledTimes(2);
         expect(findGradingScaleForCourseSpy).toHaveBeenCalledOnce();
     });
 });

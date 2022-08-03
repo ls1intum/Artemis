@@ -143,7 +143,7 @@ describe('Text Submission Viewer Component', () => {
 
         comp.handleFileSelect(fileName);
 
-        expect(repositoryService.getFile).toHaveBeenCalledTimes(0);
+        expect(repositoryService.getFile).not.toHaveBeenCalled();
         expect(comp.currentFile).toEqual(fileName);
     });
 

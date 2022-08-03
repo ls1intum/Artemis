@@ -136,7 +136,7 @@ describe('TextExercise Import Component', () => {
         expect(comp.searchTerm).toBe(expectedSearchTerm);
 
         // It should wait first before executing search.
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
 
         tick(300);
 

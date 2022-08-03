@@ -173,7 +173,7 @@ describe('CourseOverviewComponent', () => {
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });
 
-    it('Should call load Course methods on init', async () => {
+    it('should call load Course methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
@@ -183,7 +183,7 @@ describe('CourseOverviewComponent', () => {
 
         await component.ngOnInit();
 
-        expect(getCourseStub).toHaveBeenCalledOnce();
+        expect(getCourseStub).toHaveBeenCalledTimes(2);
         expect(subscribeForQuizChangesStub).toHaveBeenCalledOnce();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalledOnce();
     });

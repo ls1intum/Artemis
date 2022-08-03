@@ -129,7 +129,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.exercise = textExercise;
                 component.deleteExercise();
                 expect(deleteTextExerciseStub).toHaveBeenCalledOnce();
-                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
             });
         });
         describe('deleteModelingExercise', () => {
@@ -146,7 +146,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.exercise = modelingExercise;
                 component.deleteExercise();
                 expect(deleteModelingExerciseStub).toHaveBeenCalledOnce();
-                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
             });
         });
         describe('deleteFileUploadExercise', () => {
@@ -163,7 +163,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.exercise = fileUploadExercise;
                 component.deleteExercise();
                 expect(deleteFileUploadExerciseStub).toHaveBeenCalledOnce();
-                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
             });
         });
         describe('should deleteQuizExercise', () => {
@@ -180,7 +180,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
                 component.exercise = quizExercise;
                 component.deleteExercise();
                 expect(deleteQuizExerciseStub).toHaveBeenCalledOnce();
-                expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
+                expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
             });
         });
     });
@@ -198,7 +198,7 @@ describe('ExamExerciseRowButtonsComponent', () => {
             component.exercise = programmingExercise;
             component.deleteProgrammingExercise({});
             expect(deleteProgrammingExerciseStub).toHaveBeenCalledOnce();
-            expect(onDeleteExerciseEmitSpy).toHaveBeenCalledTimes(0);
+            expect(onDeleteExerciseEmitSpy).not.toHaveBeenCalled();
         });
     });
     describe('exportQuizById', () => {

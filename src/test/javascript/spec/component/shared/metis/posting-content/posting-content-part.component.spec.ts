@@ -106,7 +106,7 @@ describe('PostingContentPartComponent', () => {
             // on click should navigate to referenced post within current tab
             referenceLink.click();
             expect(navigateByUrlSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).toHaveBeenCalledTimes(0);
+            expect(openAttachmentSpy).not.toHaveBeenCalled();
         });
 
         it.each([
@@ -140,7 +140,7 @@ describe('PostingContentPartComponent', () => {
             // on click should navigate to referenced artifact within current tab
             referenceLink.click();
             expect(navigateByUrlSpy).toHaveBeenCalledOnce();
-            expect(openAttachmentSpy).toHaveBeenCalledTimes(0);
+            expect(openAttachmentSpy).not.toHaveBeenCalled();
         });
 
         it('should contain a reference to attachment with icon', () => {

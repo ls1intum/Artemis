@@ -279,7 +279,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         it('should just return if submissionFile is undefined', () => {
             const updateStub = jest.spyOn(fileUploadSubmissionService, 'update');
             comp.saveUploadedFile();
-            expect(updateStub).toHaveBeenCalledTimes(0);
+            expect(updateStub).not.toHaveBeenCalled();
         });
 
         it('should save if submissionFile is defined', () => {

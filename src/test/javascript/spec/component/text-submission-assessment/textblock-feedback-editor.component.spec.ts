@@ -162,7 +162,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         jest.spyOn(component['textareaElement'], 'focus');
         component.focus();
 
-        expect(component['textareaElement'].focus).toHaveBeenCalledTimes(0);
+        expect(component['textareaElement'].focus).not.toHaveBeenCalled();
     });
 
     it('should call escKeyup when keyEvent', () => {

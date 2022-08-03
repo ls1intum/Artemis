@@ -86,7 +86,7 @@ describe('TextAssessmentAnalytics Service', () => {
         const subscribeToRouteParameters = jest.spyOn<any, any>(service, 'subscribeToRouteParameters');
         service.analyticsEnabled = false;
         service.setComponentRoute(new ActivatedRoute());
-        expect(subscribeToRouteParameters).toHaveBeenCalledTimes(0);
+        expect(subscribeToRouteParameters).not.toHaveBeenCalled();
     }));
 
     afterEach(() => {

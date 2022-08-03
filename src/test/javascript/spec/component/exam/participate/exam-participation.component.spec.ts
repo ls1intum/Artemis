@@ -202,7 +202,7 @@ describe('ExamParticipationComponent', () => {
         studentExam.ended = true;
         studentExam.submitted = true;
         comp.ngOnInit();
-        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamSpy).toHaveBeenCalledTimes(2);
         expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
         expect(comp.studentExam).toEqual(studentExamWithExercises);
         expect(comp.studentExam).not.toEqual(studentExam);

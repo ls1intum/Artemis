@@ -54,8 +54,8 @@ describe('VideoUnitFormComponent', () => {
         submitButton.click();
 
         return videoUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledTimes(0);
-            expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -79,8 +79,8 @@ describe('VideoUnitFormComponent', () => {
         submitButton.click();
 
         return videoUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledTimes(0);
-            expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
     });
 

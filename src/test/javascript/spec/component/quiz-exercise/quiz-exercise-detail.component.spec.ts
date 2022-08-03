@@ -1541,7 +1541,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not call any functions without import file', async () => {
                 comp.importFile = undefined;
                 await comp.importQuiz();
-                jestExpect(readAsText).toHaveBeenCalledTimes(0);
+                jestExpect(readAsText).not.toHaveBeenCalled();
                 expect(generateFileReaderStub).not.toHaveBeenCalled();
                 expect(comp.importFile).toBeUndefined();
             });

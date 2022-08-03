@@ -151,8 +151,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
-        expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
+        expect(exampleSubmissionService.get).not.toHaveBeenCalled();
+        expect(assessmentsService.getExampleResult).not.toHaveBeenCalled();
         expect(comp.state.constructor.name).toBe('NewState');
     }));
 

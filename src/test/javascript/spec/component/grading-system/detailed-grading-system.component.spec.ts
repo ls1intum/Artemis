@@ -277,8 +277,8 @@ describe('Detailed Grading System Component', () => {
 
         comp.delete();
 
-        expect(gradingSystemDeleteForCourseSpy).toHaveBeenCalledTimes(0);
-        expect(gradingSystemDeleteForExamSpy).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForCourseSpy).not.toHaveBeenCalled();
+        expect(gradingSystemDeleteForExamSpy).not.toHaveBeenCalled();
     });
 
     it('should delete grading scale for course', () => {

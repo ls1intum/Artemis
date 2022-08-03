@@ -121,7 +121,7 @@ describe('ExamParticipantScores', () => {
         expect(component.avgRatedScore).toBe(99);
         expect(findAllOfExamStub).toHaveBeenCalledOnce();
         expect(findAverageOfExamPerParticipantStub).toHaveBeenCalledOnce();
-        expect(findAverageOfExamStub).toHaveBeenCalledOnce();
+        expect(findAverageOfExamStub).toHaveBeenCalledTimes(2);
         expect(findGradingScaleForExamStub).toHaveBeenCalledOnce();
     });
 });

@@ -99,7 +99,7 @@ describe('ProgrammingExercise Edit Selected Component', () => {
             expect(programmingExerciseService.updateTimeline).toHaveBeenCalledWith(entityOne, {});
             expect(comp.failureOccurred).toBeTrue();
             expect(comp.isSaving).toBeFalse();
-            expect(comp.closeModal).toHaveBeenCalledTimes(0);
+            expect(comp.closeModal).not.toHaveBeenCalled();
         }));
     });
 });

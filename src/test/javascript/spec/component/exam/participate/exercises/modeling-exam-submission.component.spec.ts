@@ -188,7 +188,7 @@ describe('ModelingExamSubmissionComponent', () => {
             comp.explanationText = explanationText;
             comp.updateSubmissionFromView();
             expect(comp.studentSubmission.model).toEqual(JSON.stringify(newModel));
-            expect(currentModelStub).toHaveBeenCalledOnce();
+            expect(currentModelStub).toHaveBeenCalledTimes(2);
             expect(comp.studentSubmission.explanationText).toEqual(explanationText);
         });
     });

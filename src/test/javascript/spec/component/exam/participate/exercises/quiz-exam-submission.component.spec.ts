@@ -159,7 +159,7 @@ describe('QuizExamSubmissionComponent', () => {
         component.navigateToQuestion(1);
         component.exercise = exercise;
         fixture.detectChanges();
-        expect(getNavigationStub).toHaveBeenCalledOnce();
+        expect(getNavigationStub).toHaveBeenCalledTimes(2);
         expect(yOffsetStub).toHaveBeenCalledOnce();
         expect(windowSpy).toHaveBeenCalledOnce();
     });
