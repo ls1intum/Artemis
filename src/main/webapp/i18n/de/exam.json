@@ -274,7 +274,7 @@
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
             "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
             "setWorkingTime": "Absolut:",
-            "usedWorkingTime": "Genutzte Arbeitszeit:",
+            "usedWorkingTime": "Genutzte Bearbeitungszeit",
             "setWorkingTimeRelative": "Verlängerung relativ zur normalen Bearbeitungszeit:",
             "removeAllStudents": {
                 "title": "Entferne alle Studierenden",

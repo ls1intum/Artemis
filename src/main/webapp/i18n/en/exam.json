@@ -276,7 +276,7 @@
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
             "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
             "setWorkingTime": "Absolute:",
-            "usedWorkingTime": "Used working time:",
+            "usedWorkingTime": "Used working time",
             "setWorkingTimeRelative": "Addition relative to regular working time:",
             "removeAllStudents": {
                 "title": "Remove all students",
