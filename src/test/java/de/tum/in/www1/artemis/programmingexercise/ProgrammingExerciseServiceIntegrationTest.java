@@ -24,6 +24,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -39,6 +40,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private Course additionalEmptyCourse;
 
@@ -183,6 +187,24 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         final var searchTerm = database.configureSearch(exercise.getId().toString());
         final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
         assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
     }
 
     @Test
