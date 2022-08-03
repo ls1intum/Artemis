@@ -1,3 +1,5 @@
+.. _quiz:
+
 Quiz exercise
 =============
 .. contents:: Content of this document

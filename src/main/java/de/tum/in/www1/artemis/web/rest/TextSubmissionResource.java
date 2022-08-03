@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.web.rest;
 
-import java.security.Principal;
+import static de.tum.in.www1.artemis.config.Constants.MAX_SUBMISSION_TEXT_LENGTH;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -8,9 +9,11 @@ import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -86,66 +89,58 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * POST /exercises/{exerciseId}/text-submissions : Create a new textSubmission. This is called when a student saves his/her answer
      *
      * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
      * @param textSubmission the textSubmission to create
      * @return the ResponseEntity with status 200 (OK) and the Result as its body, or with status 4xx if the request is invalid
      */
     @PostMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
-        log.debug("REST request to save TextSubmission : {}", textSubmission);
+    public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @RequestBody TextSubmission textSubmission) {
+        log.debug("REST request to save text submission : {}", textSubmission);
         if (textSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new textSubmission cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idexists");
         }
-
-        checkTextLength(textSubmission);
-
-        return handleTextSubmission(exerciseId, principal, textSubmission);
+        return handleTextSubmission(exerciseId, textSubmission);
     }
 
     /**
-     * PUT /exercises/{exerciseId}/text-submissions : Updates an existing textSubmission. This function is called by the text editor for saving and submitting text submissions. The
-     * submit specific handling occurs in the TextSubmissionService.save() function.
+     * PUT /exercises/{exerciseId}/text-submissions : Updates an existing text submission or creates a new one.
+     * This function is called by the text editor for saving and submitting text submissions.
+     * The submit specific handling occurs in the TextSubmissionService.createTextSubmission() and save() methods.
      *
      * @param exerciseId     the id of the exercise for which to init a participation
-     * @param principal      the current user principal
      * @param textSubmission the textSubmission to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated textSubmission, or with status 400 (Bad Request) if the textSubmission is not valid, or with status
      *         500 (Internal Server Error) if the textSubmission couldn't be updated
      */
     @PutMapping("/exercises/{exerciseId}/text-submissions")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable Long exerciseId, Principal principal, @RequestBody TextSubmission textSubmission) {
-        log.debug("REST request to update TextSubmission : {}", textSubmission);
+    public ResponseEntity<TextSubmission> updateTextSubmission(@PathVariable long exerciseId, @RequestBody TextSubmission textSubmission) {
+        log.debug("REST request to update text submission: {}", textSubmission);
         if (textSubmission.getId() == null) {
-            return createTextSubmission(exerciseId, principal, textSubmission);
+            return createTextSubmission(exerciseId, textSubmission);
         }
-
-        checkTextLength(textSubmission);
-
-        return handleTextSubmission(exerciseId, principal, textSubmission);
+        return handleTextSubmission(exerciseId, textSubmission);
     }
 
     @NotNull
-    private ResponseEntity<TextSubmission> handleTextSubmission(Long exerciseId, Principal principal, TextSubmission textSubmission) {
+    private ResponseEntity<TextSubmission> handleTextSubmission(long exerciseId, TextSubmission textSubmission) {
         long start = System.currentTimeMillis();
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        final TextExercise textExercise = textExerciseRepository.findByIdElseThrow(exerciseId);
+        checkTextLength(textSubmission);
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        final var exercise = textExerciseRepository.findByIdElseThrow(exerciseId);
 
         // Apply further checks if it is an exam submission
-        examSubmissionService.checkSubmissionAllowanceElseThrow(textExercise, user);
+        examSubmissionService.checkSubmissionAllowanceElseThrow(exercise, user);
 
         // Prevent multiple submissions (currently only for exam submissions)
-        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(textExercise, textSubmission, user);
+        textSubmission = (TextSubmission) examSubmissionService.preventMultipleSubmissions(exercise, textSubmission, user);
         // Check if the user is allowed to submit
-        textSubmissionService.checkSubmissionAllowanceElseThrow(textExercise, textSubmission, user);
+        textSubmissionService.checkSubmissionAllowanceElseThrow(exercise, textSubmission, user);
 
-        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, principal);
-
-        this.textSubmissionService.hideDetails(textSubmission, user);
+        textSubmission = textSubmissionService.handleTextSubmission(textSubmission, exercise, user);
+        textSubmissionService.hideDetails(textSubmission, user);
         long end = System.currentTimeMillis();
-        log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, principal.getName());
-
+        log.info("handleTextSubmission took {}ms for exercise {} and user {}", end - start, exerciseId, user.getLogin());
         return ResponseEntity.ok(textSubmission);
     }
 
@@ -157,13 +152,13 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      */
     @GetMapping("/text-submissions/{submissionId}")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable Long submissionId) {
-        log.debug("REST request to get TextSubmission : {}", submissionId);
+    public ResponseEntity<TextSubmission> getTextSubmissionWithResults(@PathVariable long submissionId) {
+        log.debug("REST request to get text submission: {}", submissionId);
         var textSubmission = textSubmissionRepository.findWithEagerResultsById(submissionId).orElseThrow(() -> new EntityNotFoundException("TextSubmission", submissionId));
 
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(textSubmission.getParticipation().getExercise())) {
             // anonymize and throw exception if not authorized to view submission
-            plagiarismService.anonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin());
+            plagiarismService.checkAccessAndAnonymizeSubmissionForStudent(textSubmission, userRepository.getUser().getLogin());
             return ResponseEntity.ok(textSubmission);
         }
 
@@ -235,15 +230,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
             textAssessmentService.prepareSubmissionForAssessment(textSubmission, textSubmission.getResultForCorrectionRound(correctionRound));
         }
         else {
-            Optional<TextSubmission> optionalTextSubmission;
-            if (skipAssessmentOrderOptimization) {
-                optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, true, exercise.isExamExercise(),
-                        correctionRound);
-            }
-            else {
-                optionalTextSubmission = this.textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise, exercise.isExamExercise(),
-                        correctionRound);
-            }
+            Optional<TextSubmission> optionalTextSubmission = textSubmissionService.getRandomTextSubmissionEligibleForNewAssessment((TextExercise) exercise,
+                    skipAssessmentOrderOptimization, exercise.isExamExercise(), correctionRound);
             if (optionalTextSubmission.isEmpty()) {
                 // TODO: in this case we should simply return an empty response, because this is not an error if all submissions have been corrected
                 throw new EntityNotFoundException("No submission found to be assessed");
@@ -276,8 +264,8 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
      * @param textSubmission the text submission
      */
     private void checkTextLength(TextSubmission textSubmission) {
-        if (textSubmission.getText() != null && textSubmission.getText().length() > 30000) {
-            throw new BadRequestAlertException("Submission cannot contain more than 30000 characters", ENTITY_NAME, "textSubmissionTooLong");
+        if (textSubmission.getText() != null && textSubmission.getText().length() > MAX_SUBMISSION_TEXT_LENGTH) {
+            throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE, "A text submission cannot contain more than 30000 characters");
         }
     }
 }
