@@ -545,6 +545,7 @@
             "enable": "Enable",
             "disable": "Disable",
             "enabled": "Enabled",
+            "globallyDisabled": "Globally disabled",
             "disabled": "Disabled",
             "table": {
                 "panelHeader": "Exam Information",
