@@ -31,8 +31,8 @@ export class GitDiffReportComponent implements OnInit {
     ngOnInit(): void {
         // Sort the diff entries by file path and start lines
         this.entries = this.report.entries.sort((a, b) => {
-            const filePathA = a.filePath ?? a.previousFilePath;
-            const filePathB = b.filePath ?? b.previousFilePath;
+            const filePathA = a.filePath ?? a.previousFilePath ?? '';
+            const filePathB = b.filePath ?? b.previousFilePath ?? '';
             if (filePathA < filePathB) {
                 return -1;
             }
@@ -57,7 +57,7 @@ export class GitDiffReportComponent implements OnInit {
             .flatMap((entry) => {
                 if (entry && entry.previousFilePath && entry.previousStartLine && entry.previousLineCount) {
                     return this.templateFileContentByPath
-                        .get(entry.filePath)
+                        .get(entry.previousFilePath!)
                         ?.split('\n')
                         .slice(entry.previousStartLine - 1, entry.previousStartLine + entry.previousLineCount - 1);
                 }

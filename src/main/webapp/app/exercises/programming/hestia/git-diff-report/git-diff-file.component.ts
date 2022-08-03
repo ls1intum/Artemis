@@ -52,9 +52,7 @@ export class GitDiffFileComponent implements OnInit {
         this.determineActualStartLine();
         this.determineEndLines();
 
-        this.processEntriesWithDeletions();
-        this.processEntriesWithAdditions();
-        this.processEntriesWithChanges();
+        this.processEntries();
 
         this.actualEndLine = Math.min(Math.max(this.templateLines.length, this.solutionLines.length), Math.max(this.previousEndLine, this.endLine));
 
@@ -124,85 +122,89 @@ export class GitDiffFileComponent implements OnInit {
     }
 
     /**
-     * Processes all git-diff entries with deletions. Counterpart of processEntriesWithAdditions.
+     * Processes all git-diff entries by delegating to the appropriate processing method for each entry type.
+     * @private
+     */
+    private processEntries() {
+        this.diffEntries.forEach((entry) => {
+            if (entry.previousStartLine && entry.previousLineCount && !entry.startLine && !entry.lineCount) {
+                this.processEntryWithDeletion(entry);
+            } else if (!entry.previousStartLine && !entry.previousLineCount && entry.startLine && entry.lineCount) {
+                this.processEntryWithAddition(entry);
+            } else if (entry.previousStartLine && entry.previousLineCount && entry.startLine && entry.lineCount) {
+                this.processEntryWithChange(entry);
+            }
+        });
+    }
+
+    /**
+     * Processes a git-diff entry with a deletion. Counterpart of processEntryWithAddition.
      * Adds empty lines to the solution file to match the number of lines that are deleted in the template file.
      * Also, accordingly offsets the start line of the entries that come after the added empty lines.
      * @private
      */
-    private processEntriesWithDeletions() {
+    private processEntryWithDeletion(entry: ProgrammingExerciseGitDiffEntry) {
+        this.solutionLines = [
+            ...this.solutionLines.slice(0, entry.previousStartLine! - 1),
+            ...Array(entry.previousLineCount).fill(undefined),
+            ...this.solutionLines.slice(entry.previousStartLine! - 1),
+        ];
+        this.endLine += entry.previousLineCount!;
         this.diffEntries
-            .filter((entry) => entry.previousStartLine && entry.previousLineCount && !entry.startLine && !entry.lineCount)
-            .forEach((entry) => {
-                this.solutionLines = [
-                    ...this.solutionLines.slice(0, entry.previousStartLine! - 1),
-                    ...Array(entry.previousLineCount).fill(undefined),
-                    ...this.solutionLines.slice(entry.previousStartLine! - 1),
-                ];
-                this.endLine += entry.previousLineCount!;
-                this.diffEntries
-                    .filter((entry2) => entry2.startLine && entry2.lineCount && entry2.startLine >= entry.previousStartLine!)
-                    .forEach((entry2) => {
-                        entry2.startLine! += entry.previousLineCount!;
-                    });
+            .filter((entry2) => entry2.startLine && entry2.lineCount && entry2.startLine >= entry.previousStartLine!)
+            .forEach((entry2) => {
+                entry2.startLine! += entry.previousLineCount!;
             });
     }
 
     /**
-     * Processes all git-diff entries with additions. Counterpart of processEntriesWithDeletions.
+     * Processes a git-diff entries with an addition. Counterpart of processEntryWithDeletion.
      * Adds empty lines to the template file to match the number of lines that are added in the solution file.
      * Also, accordingly offsets the start line of the entries that come after the added empty lines.
      * @private
      */
-    private processEntriesWithAdditions() {
+    private processEntryWithAddition(entry: ProgrammingExerciseGitDiffEntry) {
+        this.templateLines = [...this.templateLines.slice(0, entry.startLine! - 1), ...Array(entry.lineCount).fill(undefined), ...this.templateLines.slice(entry.startLine! - 1)];
+        this.previousEndLine += entry.lineCount!;
         this.diffEntries
-            .filter((entry) => !entry.previousStartLine && !entry.previousLineCount && entry.startLine && entry.lineCount)
-            .forEach((entry) => {
-                this.templateLines = [...this.templateLines.slice(0, entry.startLine!), ...Array(entry.lineCount).fill(undefined), ...this.templateLines.slice(entry.startLine!)];
-                this.previousEndLine += entry.lineCount!;
-                this.diffEntries
-                    .filter((entry2) => entry2.previousStartLine && entry2.previousLineCount && entry2.previousStartLine >= entry.startLine!)
-                    .forEach((entry2) => {
-                        entry2.previousStartLine! += entry.lineCount!;
-                    });
+            .filter((entry2) => entry2.previousStartLine && entry2.previousLineCount && entry2.previousStartLine >= entry.startLine!)
+            .forEach((entry2) => {
+                entry2.previousStartLine! += entry.lineCount!;
             });
     }
 
     /**
-     * Processes all git-diff entries with changes (deletion and addition).
+     * Processes a git-diff entry with a change (deletion and addition).
      * Adds empty lines to the template/solution file to match the number of lines that are added/removed in the solution/template file.
      * Also, accordingly offsets the start line of the entries that come after the added empty lines.
      * @private
      */
-    private processEntriesWithChanges() {
-        this.diffEntries
-            .filter((entry) => entry.previousStartLine && entry.previousLineCount && entry.startLine && entry.lineCount)
-            .forEach((entry) => {
-                if (entry.previousLineCount! < entry.lineCount!) {
-                    // There are more added lines than deleted lines -> add empty lines to the template file
-                    this.templateLines = [
-                        ...this.templateLines.slice(0, entry.startLine! + entry.previousLineCount! - 1),
-                        ...Array(entry.lineCount! - entry.previousLineCount!).fill(undefined),
-                        ...this.templateLines.slice(entry.startLine! + entry.previousLineCount! - 1),
-                    ];
-                    this.diffEntries
-                        .filter((entry2) => entry2.previousStartLine && entry2.previousLineCount && entry2.previousStartLine > entry.startLine!)
-                        .forEach((entry2) => {
-                            entry2.previousStartLine! += entry.lineCount! - entry.previousLineCount!;
-                        });
-                } else {
-                    // There are more deleted lines than added lines -> add empty lines to the solution file
-                    this.solutionLines = [
-                        ...this.solutionLines.slice(0, entry.previousStartLine! + entry.lineCount! - 1),
-                        ...Array(entry.previousLineCount! - entry.lineCount!).fill(undefined),
-                        ...this.solutionLines.slice(entry.previousStartLine! + entry.lineCount! - 1),
-                    ];
-                    this.diffEntries
-                        .filter((entry2) => entry2.startLine && entry2.lineCount && entry2.startLine > entry.previousStartLine!)
-                        .forEach((entry2) => {
-                            entry2.startLine! += entry.previousLineCount! - entry.lineCount!;
-                        });
-                }
-            });
+    private processEntryWithChange(entry: ProgrammingExerciseGitDiffEntry) {
+        if (entry.previousLineCount! < entry.lineCount!) {
+            // There are more added lines than deleted lines -> add empty lines to the template file
+            this.templateLines = [
+                ...this.templateLines.slice(0, entry.startLine! + entry.previousLineCount! - 1),
+                ...Array(entry.lineCount! - entry.previousLineCount!).fill(undefined),
+                ...this.templateLines.slice(entry.startLine! + entry.previousLineCount! - 1),
+            ];
+            this.diffEntries
+                .filter((entry2) => entry2.previousStartLine && entry2.previousLineCount && entry2.previousStartLine > entry.startLine!)
+                .forEach((entry2) => {
+                    entry2.previousStartLine! += entry.lineCount! - entry.previousLineCount!;
+                });
+        } else {
+            // There are more deleted lines than added lines -> add empty lines to the solution file
+            this.solutionLines = [
+                ...this.solutionLines.slice(0, entry.previousStartLine! + entry.lineCount! - 1),
+                ...Array(entry.previousLineCount! - entry.lineCount!).fill(undefined),
+                ...this.solutionLines.slice(entry.previousStartLine! + entry.lineCount! - 1),
+            ];
+            this.diffEntries
+                .filter((entry2) => entry2.startLine && entry2.lineCount && entry2.startLine > entry.previousStartLine!)
+                .forEach((entry2) => {
+                    entry2.startLine! += entry.previousLineCount! - entry.lineCount!;
+                });
+        }
     }
 
     /**
@@ -267,14 +269,15 @@ export class GitDiffFileComponent implements OnInit {
         // Copy the lines here, as otherwise they may be undefined in the gutter
         const templateLinesCopy = this.templateLines;
         const copyActualStartLine = this.actualStartLine;
+        const copyActualEndLine = this.actualEndLine;
         let rowNumber: number;
 
         // Takes care of the correct numbering of the lines, as empty lines added by the processEntries methods are not counted
         session.gutterRenderer = {
             getWidth(session2: any, lastLineNumber: number, config: any) {
                 return Math.max(
-                    ...Array.from({ length: templateLinesCopy.length }, (_, index) => index + 1).map((lineNumber) => {
-                        return this.getText(session, lineNumber).toString().length * config.characterWidth;
+                    ...Array.from({ length: copyActualEndLine - copyActualStartLine }, (_, index) => index + 1).map((lineNumber) => {
+                        return this.getText(session, lineNumber + copyActualStartLine - 1).toString().length * config.characterWidth;
                     }),
                 );
             },
@@ -331,14 +334,15 @@ export class GitDiffFileComponent implements OnInit {
         // Copy the lines here, as otherwise they may be undefined in the gutter
         const solutionLinesCopy = this.solutionLines;
         const copyActualStartLine = this.actualStartLine;
+        const copyActualEndLine = this.actualEndLine;
         let rowNumber: number;
 
         // Takes care of the correct numbering of the lines, as empty lines added by the processEntries methods are not counted
         session.gutterRenderer = {
             getWidth(session2: any, lastLineNumber: number, config: any) {
                 return Math.max(
-                    ...Array.from({ length: solutionLinesCopy.length }, (_, index) => index + 1).map((lineNumber) => {
-                        return this.getText(session, lineNumber).toString().length * config.characterWidth;
+                    ...Array.from({ length: copyActualEndLine - copyActualStartLine }, (_, index) => index + 1).map((lineNumber) => {
+                        return this.getText(session, lineNumber + copyActualStartLine - 1).toString().length * config.characterWidth;
                     }),
                 );
             },
