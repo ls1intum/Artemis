@@ -9,6 +9,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -28,7 +29,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -46,8 +47,15 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.createEmptyPost();
             },
         });
-        this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts;
+        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+            const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
+
+            // Handle post deletion case by checking if unfiltered posts are empty.
+            if (filteredPosts.length > 0 || posts.length === 0) {
+                // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
+                // when "posts.length > 0 && filteredPosts.length === 0".
+                this.posts = filteredPosts;
+            }
         });
     }
 
@@ -60,6 +68,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * and saves the point deduction in percent
      */
     savePointDeductionVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call savePointDeductionVerdict before student is notified');
+        }
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
@@ -80,6 +91,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * and saves the warning message
      */
     saveWarningVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveWarningVerdict before student is notified');
+        }
         this.plagiarismCasesService
             .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
@@ -100,9 +114,25 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      */
     saveVerdict(): void {
         if (!this.isStudentNotified()) {
-            return;
+            throw new Error('Cannot call saveVerdict before student is notified');
         }
         this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+            next: (res: HttpResponse<PlagiarismCase>) => {
+                this.plagiarismCase.verdict = res.body!.verdict;
+                this.plagiarismCase.verdictBy = res.body!.verdictBy;
+                this.plagiarismCase.verdictDate = res.body!.verdictDate;
+            },
+        });
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as NO_PLAGIARISM
+     */
+    saveNoPlagiarismVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
                 this.plagiarismCase.verdictBy = res.body!.verdictBy;
@@ -120,6 +150,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             this.posts = [];
         }
         this.posts.push(post);
+        this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
     }
 
     /**

@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -23,6 +24,7 @@ import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
@@ -38,6 +40,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private Course additionalEmptyCourse;
 
@@ -154,6 +159,52 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         final var search = database.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testInstructorSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    private void testSearchTermMatchesId() throws Exception {
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
+        exercise.setTitle("LoremIpsum");
+        exercise = programmingExerciseRepository.save(exercise);
+
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
+        final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
     }
 
     @Test

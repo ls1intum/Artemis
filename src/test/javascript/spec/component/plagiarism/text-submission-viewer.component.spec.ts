@@ -10,7 +10,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -118,7 +118,8 @@ describe('Text Submission Viewer Component', () => {
     });
 
     it('handles file selection', () => {
-        comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
+        const submissionId = 1;
+        comp.plagiarismSubmission = { submissionId } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
         const expectedHeaders = new HttpHeaders().append('content-type', 'text/plain');
@@ -127,7 +128,8 @@ describe('Text Submission Viewer Component', () => {
 
         comp.handleFileSelect(fileName);
 
-        expect(repositoryService.getFile).toHaveBeenCalledWith(fileName);
+        const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
+        expect(repositoryService.getFile).toHaveBeenCalledWith(fileName, expectedDomain);
         expect(comp.currentFile).toEqual(fileName);
     });
 

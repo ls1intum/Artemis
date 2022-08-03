@@ -6,7 +6,7 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
 import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
 import { captureException } from '@sentry/angular';
@@ -89,8 +89,8 @@ export class TextSubmissionViewerComponent implements OnChanges {
     private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
         this.isProgrammingExercise = true;
 
-        this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }]);
-        this.repositoryService.getRepositoryContent().subscribe({
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
+        this.repositoryService.getRepositoryContent(domain).subscribe({
             next: (files) => {
                 this.loading = false;
                 this.files = this.programmingExerciseFilesWithMatches(files);
@@ -163,16 +163,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.currentFile = file;
         this.loading = true;
 
-        this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }];
 
-        this.repositoryService.getFileHeaders(file).subscribe((response) => {
+        this.repositoryService.getFileHeaders(file, domain).subscribe((response) => {
             const contentType = response.headers.get('content-type');
             if (contentType && !contentType.startsWith('text')) {
                 this.binaryFile = true;
                 this.loading = false;
             } else {
                 this.binaryFile = false;
-                this.repositoryService.getFile(file).subscribe({
+                this.repositoryService.getFile(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
                         this.fileContent = this.insertMatchTokens(fileContent);

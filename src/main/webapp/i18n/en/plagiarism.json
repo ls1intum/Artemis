@@ -4,6 +4,8 @@
             "plagiarismDetection": "Plagiarism Detection",
             "confirm": "Confirm",
             "deny": "Deny",
+            "denyAfterConfirmModalTitle": "Change from confirm to deny",
+            "denyAfterConfirmModalText": "Are you sure that you want to change the decision from confirming the plagiarism to denying it? This will delete the corresponding plagiarism case incl. the communication with the student and the verdict and cannot be undone.",
             "warning": "Confirmation/Denial of plagiarism will be lost when refreshing the page.",
             "inspection": "Plagiarism Inspection",
             "plagiarism": "Plagiarism",
@@ -54,6 +56,7 @@
                 "pageTitle": "Plagiarism Cases",
                 "plagiarismCases": "Plagiarism Cases",
                 "plagiarismCase": "Plagiarism Case",
+                "resolvedPlagiarismCase": "Resolved Plagiarism Case",
                 "verdict": {
                     "verdict": "Verdict",
                     "text": "Decide what the consequences of the plagiarism are:",
@@ -63,6 +66,7 @@
                     "plagiarism": "Plagiarism",
                     "warning": "Warning",
                     "pointDeduction": "Point deduction",
+                    "noPlagiarism": "No Plagiarism",
                     "confirmationTitle": "Confirm plagiarism verdict",
                     "confirmationText": "Are you sure you want to set this verdict? This action cannot be undone.",
                     "tooltip": "Set this verdict?",
@@ -82,7 +86,8 @@
                 "respondedByStudent": "Student has given a statement",
                 "notResponded": "Not yet responded",
                 "noCases": "No plagiarism cases in this course",
-                "notifyStudent": "Notify student"
+                "notifyStudent": "Notify student",
+                "studentNotified": "Student has been notified."
             },
             "cases": {
                 "pageTitle": "Plagiarism Cases",
