@@ -75,6 +75,7 @@
                 "exercise": "Affected exercise",
                 "comparisons": "Comparisons",
                 "comparison": "Comparison",
+                "overallSimilarity": "Overall Similarity",
                 "conversation": "Notification and Statement",
                 "casesWithVerdict": "Cases with verdict",
                 "casesWithPost": "Students notified",

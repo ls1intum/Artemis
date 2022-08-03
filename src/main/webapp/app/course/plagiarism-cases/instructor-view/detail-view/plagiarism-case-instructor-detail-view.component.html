@@ -8,6 +8,13 @@
                     <h5 class="text-center">
                         <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
                         {{ plagiarismCase.exercise!.title }}
+                        <a
+                            *ngIf="plagiarismCase?.exercise"
+                            class="btn btn-primary btn-sm mx-2"
+                            [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
+                        >
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection">Plagiarism Detection</span>
+                        </a>
                     </h5>
                 </div>
             </div>
