@@ -145,10 +145,4 @@ describe('AttachmentUnitFormComponent', () => {
         fileInput.dispatchEvent(new Event('change'));
         expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
-
-    it('sets file upload error correctly', () => {
-        attachmentUnitFormComponentFixture.detectChanges();
-        attachmentUnitFormComponent.setFileUploadError('lorem ipsum');
-        expect(attachmentUnitFormComponent.fileUploadErrorMessage).toBe('lorem ipsum');
-    });
 });

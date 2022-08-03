@@ -35,7 +35,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
 
-    fileUploadErrorMessage?: string;
     farQuestionCircle = faQuestionCircle;
     fileSizeLimitation?: string;
     fileLimitations?: string;
