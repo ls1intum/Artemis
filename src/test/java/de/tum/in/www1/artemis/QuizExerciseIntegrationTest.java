@@ -854,23 +854,18 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCourseAndExamFiltersAsInstructor() throws Exception {
-        ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
-        quizExercise = database.createQuizForExam(exerciseGroup);
-        quizExercise.setTitle("Ankh-Morpork");
-        quizExerciseRepository.save(quizExercise);
-
-        final Course course = database.addEmptyCourse();
-        final var now = ZonedDateTime.now();
-        QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
-        exercise.setTitle("Ankh");
-        quizExerciseRepository.save(exercise);
-
+        setupFilterTestCase();
         exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/");
     }
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testCourseAndExamFiltersAsAdmin() throws Exception {
+        setupFilterTestCase();
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/");
+    }
+
+    private void setupFilterTestCase() {
         ExerciseGroup exerciseGroup = database.addExerciseGroupWithExamAndCourse(true);
         quizExercise = database.createQuizForExam(exerciseGroup);
         quizExercise.setTitle("Ankh-Morpork");
@@ -881,8 +876,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         QuizExercise exercise = ModelFactory.generateQuizExercise(now.minusDays(1), now.minusHours(2), QuizMode.INDIVIDUAL, course);
         exercise.setTitle("Ankh");
         quizExerciseRepository.save(exercise);
-
-        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/quiz-exercises/");
     }
 
     @Test
