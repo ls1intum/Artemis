@@ -31,7 +31,7 @@ describe('QuizExercise Paging Service', () => {
         const searchResult = { resultsOnPage: [new QuizExercise(undefined, undefined)], numberOfPages: 5 };
         const pageable = { pageSize: 2, page: 3, sortingOrder: SortingOrder.DESCENDING, searchTerm: 'testSearchTerm', sortedColumn: 'testSortedColumn' };
         service
-            .searchForExercises(pageable)
+            .searchForExercises(pageable, true, true)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toEqual(searchResult));
         const req = httpMock.expectOne({ method: 'GET' });
@@ -40,6 +40,8 @@ describe('QuizExercise Paging Service', () => {
         expect(req.request.params.get('sortingOrder')).toBe(SortingOrder.DESCENDING);
         expect(req.request.params.get('searchTerm')).toBe('testSearchTerm');
         expect(req.request.params.get('sortedColumn')).toBe('testSortedColumn');
+        expect(req.request.params.get('isCourseFilter')).toBe('true');
+        expect(req.request.params.get('isExamFilter')).toBe('true');
         req.flush(searchResult);
         tick();
     }));

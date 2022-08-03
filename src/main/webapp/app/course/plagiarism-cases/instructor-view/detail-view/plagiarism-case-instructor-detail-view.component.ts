@@ -3,13 +3,13 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { getIcon } from 'app/entities/exercise.model';
+import { ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -29,10 +29,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
-    // Icons
-    faPlus = faPlus;
-
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute) {}
+    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -50,8 +47,15 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
                 this.createEmptyPost();
             },
         });
-        this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
-            this.posts = posts;
+        this.postsSubscription = this.metisService.posts.subscribe((posts: Post[]) => {
+            const filteredPosts = posts.filter((post) => post.plagiarismCase?.id === this.plagiarismCaseId);
+
+            // Handle post deletion case by checking if unfiltered posts are empty.
+            if (filteredPosts.length > 0 || posts.length === 0) {
+                // Note: "filteredPosts.length > 0 || posts.length === 0" behaves differently than filteredPosts.length >= 0
+                // when "posts.length > 0 && filteredPosts.length === 0".
+                this.posts = filteredPosts;
+            }
         });
     }
 
@@ -64,8 +68,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * and saves the point deduction in percent
      */
     savePointDeductionVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call savePointDeductionVerdict before student is notified');
+        }
         this.plagiarismCasesService
-            .savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.POINT_DEDUCTION,
                 verdictPointDeduction: this.verdictPointDeduction,
             })
@@ -84,8 +91,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * and saves the warning message
      */
     saveWarningVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveWarningVerdict before student is notified');
+        }
         this.plagiarismCasesService
-            .savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, {
+            .saveVerdict(this.courseId, this.plagiarismCaseId, {
                 verdict: PlagiarismVerdict.WARNING,
                 verdictMessage: this.verdictMessage,
             })
@@ -103,13 +113,44 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * saves the verdict of the plagiarism case as PLAGIARISM
      */
     saveVerdict(): void {
-        this.plagiarismCasesService.savePlagiarismCaseVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveVerdict before student is notified');
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.PLAGIARISM }).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase.verdict = res.body!.verdict;
                 this.plagiarismCase.verdictBy = res.body!.verdictBy;
                 this.plagiarismCase.verdictDate = res.body!.verdictDate;
             },
         });
+    }
+
+    /**
+     * saves the verdict of the plagiarism case as NO_PLAGIARISM
+     */
+    saveNoPlagiarismVerdict(): void {
+        if (!this.isStudentNotified()) {
+            throw new Error('Cannot call saveNoPlagiarismVerdict before student is notified');
+        }
+        this.plagiarismCasesService.saveVerdict(this.courseId, this.plagiarismCaseId, { verdict: PlagiarismVerdict.NO_PLAGIARISM }).subscribe({
+            next: (res: HttpResponse<PlagiarismCase>) => {
+                this.plagiarismCase.verdict = res.body!.verdict;
+                this.plagiarismCase.verdictBy = res.body!.verdictBy;
+                this.plagiarismCase.verdictDate = res.body!.verdictDate;
+            },
+        });
+    }
+
+    isStudentNotified() {
+        return this.posts?.length > 0;
+    }
+
+    onStudentNotified(post: Post) {
+        if (!this.posts) {
+            this.posts = [];
+        }
+        this.posts.push(post);
+        this.alertService.success('artemisApp.plagiarism.plagiarismCases.studentNotified');
     }
 
     /**
@@ -125,6 +166,23 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             this.plagiarismCase.exercise!.course!.title
         }, we have concluded that you have committed plagiarism.\nThis is not only a violation of principles of good student practice but also of the “Student Code of Conduct” of the faculty of computer science that you have agreed upon. You can check the Student conduct code [here](https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf) §22.1 of the “Allgemeine Studien- und Prüfungsordnung (APSO)” [“General Examination and Study Regulations”] regulates consequences for such cases. You can find the APSO [here](https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1).\nYou have one week to provide a statement about this situation.`;
         this.createdPost.title = `Plagiarism Case ${this.plagiarismCase.exercise!.title}`;
+    }
+
+    /**
+     * Get the url segment for different types of exercises.
+     * @param exerciseType type of exercise
+     */
+    getExerciseUrlSegment(exerciseType?: ExerciseType) {
+        switch (exerciseType) {
+            case ExerciseType.TEXT:
+                return 'text-exercises';
+            case ExerciseType.MODELING:
+                return 'modeling-exercises';
+            case ExerciseType.PROGRAMMING:
+                return 'programming-exercises';
+            default:
+                throw Error('Unexpected exercise type ' + exerciseType);
+        }
     }
 
     /**

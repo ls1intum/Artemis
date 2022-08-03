@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
@@ -95,7 +94,7 @@ public class AttachmentUnitResource {
         attachmentUnit.setAttachment(originalAttachmentUnit.getAttachment());
 
         AttachmentUnit result = attachmentUnitRepository.save(attachmentUnit);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, attachmentUnit.getId().toString())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -130,7 +129,6 @@ public class AttachmentUnitResource {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);
-        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(attachmentUnit);
+        return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId())).body(attachmentUnit);
     }
 }

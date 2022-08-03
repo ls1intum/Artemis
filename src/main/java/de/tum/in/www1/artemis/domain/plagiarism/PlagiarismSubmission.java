@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
@@ -37,11 +38,13 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
      * a single submission of a student, since the participation ID is required to properly fetch the
      * corresponding repository's contents.
      */
+    @Column(name = "submission_id")
     private long submissionId;
 
     /**
      * Login of the student who created the submission.
      */
+    @Column(name = "student_login")
     private String studentLogin;
 
     /**
@@ -54,6 +57,10 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
     @ManyToOne
     private PlagiarismCase plagiarismCase;
 
+    /**
+     * We maintain a bidirectional relationship manually with submissionA and submissionB
+     */
+    @JsonIgnoreProperties({ "submissionA", "submissionB" })
     @OneToOne(targetEntity = PlagiarismComparison.class)
     @JoinColumn(name = "plagiarism_comparison_id")
     private PlagiarismComparison<E> plagiarismComparison;
@@ -64,11 +71,13 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
      * For modeling submissions, this is the number of modeling elements. For text and programming
      * submissions, this is the number of words or tokens.
      */
+    @Column(name = "size")
     private int size;
 
     /**
      * Result score of the related submission.
      */
+    @Column(name = "score")
     private Double score;
 
     /**
@@ -98,7 +107,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
 
         submission.setStudentLogin(studentLogin);
         submission.setElements(StreamSupport.stream(jplagSubmission.getTokenList().allTokens().spliterator(), false).filter(Objects::nonNull)
-                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission)).collect(Collectors.toList()));
+                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission)).collect(Collectors.toCollection(ArrayList::new)));
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO

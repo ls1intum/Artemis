@@ -1,6 +1,5 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { ProgrammingExerciseParticipationType } from 'app/entities/programming-exercise-participation.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
@@ -30,7 +29,7 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
         this.programmingExercise = exercise as ProgrammingExercise;
     }
 
-    constructor(private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils, private profileService: ProfileService) {}
+    constructor(private profileService: ProfileService) {}
 
     ngOnInit(): void {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
@@ -52,18 +51,4 @@ export class ProgrammingExerciseGroupCellComponent implements OnInit {
             }
         });
     }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * Checks if the url includes the string "nolocalsetup', which is an indication
-     * that the particular programming exercise has no local setup
-     * This functionality is only for testing purposes (noVersionControlAndContinuousIntegrationAvailable)
-     * @param urlToCheck the url which will be checked if it contains the substring
-     */
-    noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck: string): boolean {
-        return this.programmingExerciseSimulationUtils.noVersionControlAndContinuousIntegrationAvailableCheck(urlToCheck);
-    }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

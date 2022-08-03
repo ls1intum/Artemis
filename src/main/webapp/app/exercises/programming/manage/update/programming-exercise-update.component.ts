@@ -15,11 +15,10 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, IncludedInOverallScore, resetDates, ValidationReason } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -85,14 +84,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
 
     // length of < 3 is also accepted in order to provide more accurate validation error messages
-    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
+    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
-    public isBamboo: boolean;
 
     public supportsJava = true;
     public supportsPython = false;
@@ -139,7 +137,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
         private profileService: ProfileService,
-        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -400,7 +397,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
-                this.isBamboo = profileInfo.activeProfiles.includes('bamboo');
             }
         });
 
@@ -457,7 +453,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.programmingExercise);
@@ -529,9 +525,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
-        } else if (this.programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
-            // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
@@ -539,14 +532,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving = false;
-        this.previousState();
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse) {

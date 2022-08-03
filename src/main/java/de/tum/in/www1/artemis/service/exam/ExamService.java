@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.exam;
 
+import static de.tum.in.www1.artemis.config.Constants.EXAM_EXERCISE_START_STATUS;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
 
 import java.io.IOException;
@@ -17,6 +18,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
+import org.springframework.cache.CacheManager;
+import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -35,7 +38,10 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
-import de.tum.in.www1.artemis.service.*;
+import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.CourseExamExportService;
+import de.tum.in.www1.artemis.service.ExerciseDeletionService;
+import de.tum.in.www1.artemis.service.TutorLeaderboardService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
@@ -43,6 +49,7 @@ import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 /**
  * Service Implementation for managing exams.
@@ -93,12 +100,17 @@ public class ExamService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
+    private final AuthorizationCheckService authorizationCheckService;
+
+    private final CacheManager cacheManager;
+
     public ExamService(ExerciseDeletionService exerciseDeletionService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
             UserRepository userRepository, ProgrammingExerciseRepository programmingExerciseRepository, QuizExerciseRepository quizExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, CourseExamExportService courseExamExportService, GitService gitService,
-            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository) {
+            GroupNotificationService groupNotificationService, GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authorizationCheckService,
+            CacheManager cacheManager) {
         this.exerciseDeletionService = exerciseDeletionService;
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
@@ -118,6 +130,8 @@ public class ExamService {
         this.groupNotificationService = groupNotificationService;
         this.gitService = gitService;
         this.gradingScaleRepository = gradingScaleRepository;
+        this.authorizationCheckService = authorizationCheckService;
+        this.cacheManager = cacheManager;
     }
 
     /**
@@ -209,6 +223,30 @@ public class ExamService {
             if (exerciseGroup != null) {
                 for (Exercise exercise : exerciseGroup.getExercises()) {
                     exerciseDeletionService.reset(exercise);
+                }
+            }
+        }
+        studentExamRepository.deleteAll(exam.getStudentExams());
+
+        var studentExamExercisePreparationCache = cacheManager.getCache(EXAM_EXERCISE_START_STATUS);
+        if (studentExamExercisePreparationCache != null) {
+            studentExamExercisePreparationCache.evict(examId);
+        }
+    }
+
+    /**
+     * Deletes student exams and existing participations for an exam.
+     *
+     * @param examId the ID of the exam where the student exams and participations should be deleted
+     */
+    public void deleteStudentExamsAndExistingParticipationsForExam(@NotNull Long examId) {
+        User user = userRepository.getUser();
+        Exam exam = examRepository.findOneWithEagerExercisesGroupsAndStudentExams(examId);
+        log.info("User {} has requested to delete existing student exams and participations for exam {}", user.getLogin(), exam.getTitle());
+        for (ExerciseGroup exerciseGroup : exam.getExerciseGroups()) {
+            if (exerciseGroup != null) {
+                for (Exercise exercise : exerciseGroup.getExercises()) {
+                    exerciseDeletionService.deletePlagiarismResultsAndParticipations(exercise);
                 }
             }
         }
@@ -730,11 +768,10 @@ public class ExamService {
     /**
      * Evaluates all the quiz exercises of an exam
      *
-     * @param examId id of the exam for which the quiz exercises should be evaluated
+     * @param exam the exam for which the quiz exercises should be evaluated (including exercises)
      * @return number of evaluated exercises
      */
-    public Integer evaluateQuizExercises(Long examId) {
-        var exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
+    public Integer evaluateQuizExercises(Exam exam) {
 
         // Collect all quiz exercises for the given exam
         Set<QuizExercise> quizExercises = new HashSet<>();
@@ -747,10 +784,10 @@ public class ExamService {
         }
 
         long start = System.nanoTime();
-        log.info("Evaluating {} quiz exercises in exam {}", quizExercises.size(), examId);
+        log.info("Evaluating {} quiz exercises in exam {}", quizExercises.size(), exam.getId());
         // Evaluate all quizzes for that exercise
         quizExercises.forEach(quiz -> examQuizService.evaluateQuizAndUpdateStatistics(quiz.getId()));
-        log.info("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), examId, TimeLogUtil.formatDurationFrom(start));
+        log.info("Evaluated {} quiz exercises in exam {} in {}", quizExercises.size(), exam.getId(), TimeLogUtil.formatDurationFrom(start));
 
         return quizExercises.size();
     }
@@ -939,5 +976,38 @@ public class ExamService {
         // for all modeling exercises in the exam, send their ids for scheduling
         exam.getExerciseGroups().stream().flatMap(group -> group.getExercises().stream()).filter(exercise -> exercise instanceof ModelingExercise).map(Exercise::getId)
                 .forEach(instanceMessageSendService::sendModelingExerciseSchedule);
+    }
+
+    /**
+     * Search for all exams fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exams if there are that many in Artemis.
+     *
+     * @param search        The search query defining the search term and the size of the returned page
+     * @param user          The user for whom to fetch all available exercises
+     * @param withExercises If only exams with exercises should be searched
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<Exam> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user, final boolean withExercises) {
+        final var pageable = PageUtil.createExamPageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<Exam> examPage;
+        if (authorizationCheckService.isAdmin(user)) {
+            if (withExercises) {
+                examPage = examRepository.queryNonEmptyBySearchTermInAllCourses(searchTerm, pageable);
+            }
+            else {
+                examPage = examRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            }
+        }
+        else {
+            if (withExercises) {
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else {
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
+            }
+        }
+        return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());
     }
 }

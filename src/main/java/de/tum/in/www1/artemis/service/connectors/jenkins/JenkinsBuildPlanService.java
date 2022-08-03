@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.offbytwo.jenkins.JenkinsServer;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
@@ -100,10 +101,12 @@ public class JenkinsBuildPlanService {
         ProgrammingLanguage programmingLanguage = exercise.getProgrammingLanguage();
         boolean staticCodeAnalysisEnabled = exercise.isStaticCodeAnalysisEnabled();
         boolean isSequentialTestRuns = exercise.hasSequentialTestRuns();
+        var isSolutionPlan = planKey.equals(BuildPlanType.SOLUTION.getName());
+        var testwiseCoverageAnalysisEnabled = exercise.isTestwiseCoverageEnabled() && isSolutionPlan;
 
         final var configBuilder = builderFor(programmingLanguage, exercise.getProjectType());
         Document jobConfig = configBuilder.buildBasicConfig(programmingLanguage, Optional.ofNullable(exercise.getProjectType()), internalRepositoryUrls, staticCodeAnalysisEnabled,
-                isSequentialTestRuns);
+                isSequentialTestRuns, testwiseCoverageAnalysisEnabled);
 
         String jobFolder = exercise.getProjectKey();
         String job = jobFolder + "-" + planKey;

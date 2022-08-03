@@ -16,11 +16,17 @@ export class ExamInformationComponent implements OnInit {
     normalWorkingTime?: number;
     additionalWorkingTime?: number;
     isExamOverMultipleDays: boolean;
+    isTestExam?: boolean;
+    currentDate?: dayjs.Dayjs;
 
     ngOnInit(): void {
         this.examEndDate = endTime(this.exam, this.studentExam);
         this.normalWorkingTime = normalWorkingTime(this.exam);
         this.additionalWorkingTime = getAdditionalWorkingTime(this.exam, this.studentExam);
         this.isExamOverMultipleDays = isExamOverMultipleDays(this.exam, this.studentExam);
+        this.isTestExam = this.exam?.testExam;
+        if (this.isTestExam) {
+            this.currentDate = dayjs();
+        }
     }
 }

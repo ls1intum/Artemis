@@ -47,6 +47,8 @@
         "submissionPolicyToggleFailedPolicyNotExist": "The submission policy could not be toggled, because the programming exercise does not have a submission policy.",
         "submissionPolicyActiveNull": "Submission policies must be activated or deactivated. Activation cannot be null.",
         "submissionPolicyUpdateFailedPolicyNotExist": "The submission policy could not be updated, because the programming exercise does not have a submission policy.",
-        "oneActivePlagiarismCheck": "Please wait until the current plagiarism check in this course has finished until you start another one."
+        "oneActivePlagiarismCheck": "Please wait until the current plagiarism check in this course has finished until you start another one.",
+        "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
+        "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date."
     }
 }

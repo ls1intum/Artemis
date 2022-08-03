@@ -6,7 +6,15 @@
     <div class="modal-body">
         <div class="form-group form-inline">
             <span jhiTranslate="artemisApp.exercise.import.search">Search for exercise</span>:
-            <input class="form-control ms-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <input class="form-control mx-2" type="text" name="searchExcercise" [(ngModel)]="searchTerm" />
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="courseFilter" [checked]="isCourseFilter" [disabled]="!isExamFilter" (change)="onCourseFilterChange()" />
+                <label class="form-check-label" for="courseFilter" jhiTranslate="artemisApp.exercise.import.searchInCourses">Search in courses?</label>
+            </div>
+            <div class="form-check form-check-inline">
+                <input class="form-check-input" type="checkbox" id="examFilter" [checked]="isExamFilter" [disabled]="!isCourseFilter" (change)="onExamFilterChange()" />
+                <label class="form-check-label" for="examFilter" jhiTranslate="artemisApp.exercise.import.searchInExams">Search in exams?</label>
+            </div>
             <span class="ms-3" *ngIf="loading" jhiTranslate="artemisApp.exercise.import.loading">Loading...</span>
         </div>
         <table class="table table-striped flex">
@@ -21,10 +29,12 @@
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="{{ column.COURSE_TITLE }}" class="col-4">
-                        <span jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                        <span [hidden]="!isCourseFilter" jhiTranslate="artemisApp.exercise.import.table.course">Course</span>
+                        <span [hidden]="!(isCourseFilter && isExamFilter)"> | </span>
+                        <span [hidden]="!isExamFilter" jhiTranslate="artemisApp.exercise.import.table.exam">Course</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
-                    <th class="col-2">
+                    <th class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
                         <span jhiTranslate="artemisApp.exercise.import.table.examQuestion">Exam Question</span>
                     </th>
                     <th class="col-1"></th>
@@ -33,7 +43,7 @@
             <tbody>
                 <tr *ngFor="let exercise of content.resultsOnPage; trackBy: trackId" class="flex-row">
                     <td class="col-1">
-                        <span>{{ exercise.id }}</span>
+                        <span [class.ngb-highlight]="'' + exercise.id === searchTerm"> {{ exercise.id }}</span>
                     </td>
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise.title" [term]="searchTerm"></ngb-highlight>
@@ -41,7 +51,7 @@
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exercise | courseTitle" [term]="searchTerm"></ngb-highlight>
                     </td>
-                    <td class="col-2">
+                    <td class="col-2" [hidden]="!(isCourseFilter && isExamFilter)">
                         <div style="text-align: center; vertical-align: middle">
                             <fa-icon *ngIf="exercise.exerciseGroup" [icon]="faCheck"></fa-icon>
                         </div>

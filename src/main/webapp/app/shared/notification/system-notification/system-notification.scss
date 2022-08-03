@@ -1,4 +1,92 @@
-.system-notification-panel {
-    margin-bottom: 0.5rem;
-    margin-top: 0.5rem !important;
+.system-notification {
+    width: 100%;
+    padding: 5px 20px 5px 10px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    animation: 0.25s ease init-max-height;
+    animation-fill-mode: both;
+    transform-origin: top;
+
+    &.info {
+        color: var(--artemis-alert-info-color);
+        background: var(--artemis-alert-info-background);
+
+        .ng-fa-icon {
+            color: var(--artemis-alert-info-border);
+        }
+    }
+
+    &.warning {
+        color: var(--artemis-alert-warning-color);
+        background: var(--artemis-alert-warning-background);
+
+        .ng-fa-icon {
+            color: var(--artemis-alert-warning-border);
+        }
+    }
+
+    .notification-text {
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+
+        .notification-title {
+            font-weight: bold;
+            white-space: nowrap;
+            margin: 0 10px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+
+            .ng-fa-icon {
+                font-size: 20px;
+                animation-delay: 0.2s;
+            }
+
+            > span {
+                animation-delay: 0.28s;
+            }
+        }
+
+        .notification-content {
+            animation-delay: 0.36s;
+        }
+    }
+
+    .left-slide-in {
+        animation: 0.5s cubic-bezier(0.16, 1, 0.3, 1) left-slide-in;
+        animation-fill-mode: both;
+    }
+
+    .notification-close {
+        cursor: pointer;
+    }
+}
+
+@keyframes left-slide-in {
+    0% {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes init-max-height {
+    0% {
+        opacity: 0;
+        transform: scaleY(0);
+    }
+
+    100% {
+        opacity: 1;
+        transform: scaleY(1);
+    }
 }

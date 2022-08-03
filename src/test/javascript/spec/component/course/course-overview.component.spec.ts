@@ -285,7 +285,7 @@ describe('CourseOverviewComponent', () => {
         stubSubComponent.detectChanges();
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
-        expect(expectedButton).not.toBe(null);
+        expect(expectedButton).not.toBeNull();
         expect(expectedButton.nativeElement.innerHTML).toBe('TestButton');
     });
 });

@@ -10,6 +10,8 @@ import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -67,6 +69,64 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
             where TYPE(ex) = QuizExercise
             """)
     List<Exam> findAllWithQuizExercisesWithEagerExerciseGroupsAndExercises();
+
+    /**
+     * Query which fetches all the exams for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param groups     user groups
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE e.course.instructorGroupName IN :groups
+                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+              """)
+    Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams with at least one exercise group for which the user is instructor in the course and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param groups     user groups
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE e.course.instructorGroupName IN :groups
+                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+                    AND e.exerciseGroups IS NOT EMPTY
+              """)
+    Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams for an admin and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+              """)
+    Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    /**
+     * Query which fetches all the exams with at least one exercise Group for an admin and matching the search criteria.
+     *
+     * @param searchTerm search term
+     * @param pageable   Pageable
+     * @return Page with search results
+     */
+    @Query("""
+            SELECT DISTINCT e FROM Exam e
+                    WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
+                    AND e.exerciseGroups IS NOT EMPTY
+              """)
+    Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects
@@ -188,7 +248,7 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
      * @param exams Exams for which to compute and set the number of registered users
      */
     default void setNumberOfRegisteredUsersForExams(List<Exam> exams) {
-        List<Long> examIds = exams.stream().map(Exam::getId).collect(Collectors.toList());
+        List<Long> examIds = exams.stream().map(Exam::getId).toList();
         List<long[]> examIdAndRegisteredUsersCountPairs = countRegisteredUsersByExamIds(examIds);
         Map<Long, Integer> registeredUsersCountMap = convertListOfCountsIntoMap(examIdAndRegisteredUsersCountPairs);
         exams.forEach(exam -> exam.setNumberOfRegisteredUsers(registeredUsersCountMap.get(exam.getId()).longValue()));

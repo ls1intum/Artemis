@@ -37,7 +37,7 @@ import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
  * Tests {@link AccountResource}. Several Tests rely on overwriting AccountResource.registrationEnabled and other attributes with reflections. Any changes to the internal
  * structure will cause these tests to fail.
  */
-public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AccountResource accountResource;
@@ -52,12 +52,12 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     private PasswordService passwordService;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
         bitbucketRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         bitbucketRequestMockProvider.reset();
         database.resetDatabase();
     }
@@ -76,7 +76,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccount() throws Exception {
+    void registerAccount() throws Exception {
         String login = "abd123cd";
         String password = getValidPassword();
         // setup user
@@ -93,7 +93,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountTooLongPassword() throws Exception {
+    void registerAccountTooLongPassword() throws Exception {
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
@@ -105,7 +105,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountTooShortPassword() throws Exception {
+    void registerAccountTooShortPassword() throws Exception {
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
@@ -121,7 +121,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountEmptyPassword() throws Exception {
+    void registerAccountEmptyPassword() throws Exception {
         // setup user
         User user = ModelFactory.generateActivatedUser("ab123cd");
         ManagedUserVM userVM = new ManagedUserVM(user);
@@ -132,7 +132,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountRegistrationDisabled() throws Throwable {
+    void registerAccountRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -145,7 +145,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountRegistrationConfigEmpty() throws Throwable {
+    void registerAccountRegistrationConfigEmpty() throws Throwable {
         ConfigUtil.testWithChangedConfig(accountResource, "registrationEnabled", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -158,7 +158,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountInvalidEmail() throws Throwable {
+    void registerAccountInvalidEmail() throws Throwable {
         // Inject email-pattern to be independent of the config
         ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.of(Pattern.compile("[a-zA-Z0-9_\\-.+]+@[a-zA-Z0-9_\\-.]+\\.[a-zA-Z]{2,5}")), () -> {
             // setup user
@@ -173,7 +173,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void registerAccountEmptyEmailPattern() throws Throwable {
+    void registerAccountEmptyEmailPattern() throws Throwable {
         ConfigUtil.testWithChangedConfig(accountResource, "allowedEmailPattern", Optional.empty(), () -> {
             // setup user
             User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -187,7 +187,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void activateAccount() throws Exception {
+    void activateAccount() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -209,7 +209,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void activateAccountRegistrationDisabled() throws Throwable {
+    void activateAccountRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
             String testActivationKey = "testActivationKey";
 
@@ -221,7 +221,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void activateAccountNoUser() throws Exception {
+    void activateAccountNoUser() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("key", "");
         request.get("/api/activate", HttpStatus.INTERNAL_SERVER_ERROR, String.class, params);
@@ -229,20 +229,20 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser("authenticatedUser")
-    public void isAuthenticated() throws Exception {
+    void isAuthenticated() throws Exception {
         String userLogin = request.get("/api/authenticate", HttpStatus.OK, String.class);
         assertThat(userLogin).isNotNull().isEqualTo("authenticatedUser");
     }
 
     @Test
-    public void isAuthenticatedWithoutLoggedInUser() throws Exception {
+    void isAuthenticatedWithoutLoggedInUser() throws Exception {
         String user = request.get("/api/authenticate", HttpStatus.OK, String.class);
         assertThat(user).isEmpty();
     }
 
     @Test
     @WithMockUser("authenticateduser")
-    public void getAccount() throws Exception {
+    void getAccount() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         userRepository.save(user);
@@ -252,14 +252,14 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithAnonymousUser
-    public void getAccountWithoutLoggedInUser() throws Exception {
+    void getAccountWithoutLoggedInUser() throws Exception {
         UserDTO user = request.get("/api/account", HttpStatus.UNAUTHORIZED, UserDTO.class);
         assertThat(user).isNull();
     }
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void saveAccount() throws Exception {
+    void saveAccount() throws Exception {
         String updatedFirstName = "UpdatedFirstName";
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -282,7 +282,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void saveAccountRegistrationDisabled() throws Throwable {
+    void saveAccountRegistrationDisabled() throws Throwable {
         testWithRegistrationDisabled(() -> {
             // create user in repo
             User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -299,7 +299,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void saveAccountEmailInUse() throws Exception {
+    void saveAccountEmailInUse() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
@@ -316,7 +316,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changePassword() throws Exception {
+    void changePassword() throws Exception {
         // Password Data
         String updatedPassword = "12345678password-reset-init.component.spec.ts";
         // create user in repo
@@ -338,7 +338,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changePasswordExternalUser() throws Throwable {
+    void changePasswordExternalUser() throws Throwable {
         String newPassword = getValidPassword();
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -359,7 +359,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changePasswordInvalidPassword() throws Exception {
+    void changePasswordInvalidPassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         userCreationService.createUser(new ManagedUserVM(user));
@@ -372,7 +372,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changePasswordSamePassword() throws Exception {
+    void changePasswordSamePassword() throws Exception {
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
         userCreationService.createUser(new ManagedUserVM(user));
@@ -384,7 +384,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changeLanguageKey() throws Exception {
+    void changeLanguageKey() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         user.setLangKey("en");
@@ -403,7 +403,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser(username = "authenticateduser")
-    public void changeLanguageKeyNotSupported() throws Exception {
+    void changeLanguageKeyNotSupported() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         user.setLangKey("en");
@@ -416,7 +416,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordResetByEmail() throws Exception {
+    void passwordResetByEmail() throws Exception {
         String newPassword = getValidPassword();
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -437,7 +437,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordResetByUsername() throws Exception {
+    void passwordResetByUsername() throws Exception {
         String newPassword = getValidPassword();
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
@@ -482,7 +482,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordResetInvalidEmail() throws Exception {
+    void passwordResetInvalidEmail() throws Exception {
         // create user in repo
         User user = ModelFactory.generateActivatedUser("authenticateduser");
         bitbucketRequestMockProvider.mockUserExists("authenticateduser");
@@ -507,7 +507,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
     }
 
     @Test
-    public void passwordResetInitUserExternal() throws Throwable {
+    void passwordResetInitUserExternal() throws Throwable {
         String login = "testLogin";
         String email = "test@mail.com";
         User user = new User();
@@ -523,7 +523,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser("authenticateduser")
-    public void passwordResetFinishInvalidPassword() throws Throwable {
+    void passwordResetFinishInvalidPassword() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword("");
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.BAD_REQUEST, null);
@@ -531,7 +531,7 @@ public class AccountResourceIntegrationTest extends AbstractSpringIntegrationBam
 
     @Test
     @WithMockUser("authenticateduser")
-    public void passwordResetFinishInvalidKey() throws Throwable {
+    void passwordResetFinishInvalidKey() throws Throwable {
         KeyAndPasswordVM finishResetData = new KeyAndPasswordVM();
         finishResetData.setNewPassword(getValidPassword());
         request.postWithoutLocation("/api/account/reset-password/finish", finishResetData, HttpStatus.FORBIDDEN, null);

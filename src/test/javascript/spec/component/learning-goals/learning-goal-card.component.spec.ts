@@ -60,7 +60,7 @@ describe('LearningGoalCardComponent', () => {
         expect(learningGoalCardComponent.isProgressAvailable).toBeTrue();
         const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent)).componentInstance;
         expect(circularProgress).toBeDefined();
-        expect(circularProgress.progressInPercent).toEqual(50);
+        expect(circularProgress.progressInPercent).toBe(50);
     });
 
     it('should not display progress bar when progress is not available', () => {
