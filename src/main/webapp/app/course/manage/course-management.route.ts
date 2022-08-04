@@ -17,8 +17,8 @@ import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
-import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/create-tutorial-group/create-tutorial-group.component';
-import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/edit-tutorial-group/edit-tutorial-group.component';
+import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
+import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 
 export const courseManagementState: Routes = [
     {

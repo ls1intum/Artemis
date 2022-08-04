@@ -4,7 +4,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -28,13 +28,14 @@ export class CreateTutorialGroupComponent implements OnInit {
 
     createTutorialGroup(formData: TutorialGroupFormData) {
         // required fields
-        if (!formData?.title) {
+        if (!formData?.title || !formData?.teachingAssistant) {
             return;
         }
 
-        const { title } = formData;
+        const { title, teachingAssistant } = formData;
 
-        this.tutorialGroupToCreate.title = title || undefined;
+        this.tutorialGroupToCreate.title = title;
+        this.tutorialGroupToCreate.teachingAssistant = teachingAssistant;
 
         this.isLoading = true;
 

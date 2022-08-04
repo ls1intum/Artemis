@@ -44,6 +44,7 @@ export class EditTutorialGroupComponent implements OnInit {
                     }
                     this.formData = {
                         title: this.tutorialGroup.title,
+                        teachingAssistant: this.tutorialGroup.teachingAssistant,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -51,8 +52,14 @@ export class EditTutorialGroupComponent implements OnInit {
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
-        const { title } = formData;
+        // required fields
+        if (!formData?.title || !formData?.teachingAssistant) {
+            return;
+        }
+
+        const { title, teachingAssistant } = formData;
         this.tutorialGroup.title = title;
+        this.tutorialGroup.teachingAssistant = teachingAssistant;
 
         this.isLoading = true;
         this.tutorialGroupService

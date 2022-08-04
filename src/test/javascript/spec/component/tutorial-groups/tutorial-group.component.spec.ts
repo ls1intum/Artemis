@@ -2,7 +2,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockPipe } from 'ng-mocks';
-import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-group-form/tutorial-group-form.component';
+import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 
 describe('TutorialGroupFormComponent', () => {
     let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;

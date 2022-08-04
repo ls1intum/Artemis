@@ -13,10 +13,19 @@
             "title": "Edit Tutorial Group"
         },
         "tutorialGroupForm": {
-            "title": "Title",
-            "titlePlaceholder": "Group 1: Monday 12:00 - 13:00",
-            "titleRequiredValidationError": "Title is required.",
-            "titleMaxLengthValidationError": "Title can be max 255 characters long."
+            "titleInput": {
+                "label": "Title",
+                "placeholder": "Group 1: Monday 12:00 - 13:00",
+                "requiredValidationError": "Title is required.",
+                "maxLengthValidationError": "Title can be max 255 characters long."
+            },
+            "teachingAssistantInput": {
+                "label": "Teaching Assistant",
+                "placeholder": "Select a teaching assistant that will be responsible for this group.",
+                "loadingText": "Loading teaching assistants...",
+                "notFoundText": "No teaching assistants found in this course.",
+                "requiredValidationError": "A tutorial groups needs a teaching assistant assigned."
+            }
         }
     }
 }

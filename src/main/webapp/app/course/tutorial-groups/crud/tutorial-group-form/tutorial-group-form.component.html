@@ -1,0 +1,55 @@
+<form class="row">
+    <div class="col-12">
+        <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <div class="form-group">
+                <label class="required" for="title">{{ 'artemisApp.tutorialGroupForm.titleInput.label' | artemisTranslate }}</label>
+                <input
+                    type="text"
+                    class="form-control"
+                    id="title"
+                    formControlName="title"
+                    [placeholder]="'artemisApp.tutorialGroupForm.titleInput.placeholder' | artemisTranslate"
+                />
+                <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="titleControl?.errors?.required || titleControl?.errors?.pattern">
+                        {{ 'artemisApp.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="titleControl?.errors?.maxlength">
+                        {{ 'artemisApp.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="required" for="teachingAssistant">{{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.label' | artemisTranslate }}</label>
+                <ng-select
+                    id="teachingAssistant"
+                    [items]="teachingAssistants$ | async"
+                    [loading]="teachingAssistantsAreLoading"
+                    [loadingText]="'artemisApp.tutorialGroupForm.teachingAssistantsLoading' | artemisTranslate"
+                    [placeholder]="'artemisApp.tutorialGroupForm.teachingAssistantInput.placeholder' | artemisTranslate"
+                    [notFoundText]="'artemisApp.tutorialGroupForm.teachingAssistantInput.notFoundText' | artemisTranslate"
+                    formControlName="teachingAssistant"
+                    bindLabel="label"
+                >
+                    <ng-template ng-option-tmp let-item="item" let-search="searchTerm">
+                        <div><ngb-highlight [result]="item.label" [term]="search"></ngb-highlight></div>
+                        <small><b>Id:</b> {{ item.id }} | <b>E-Mail:</b> {{ item.email }}</small>
+                    </ng-template>
+                </ng-select>
+                <div *ngIf="teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="teachingAssistantControl?.errors?.required">
+                        {{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</form>
