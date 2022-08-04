@@ -517,6 +517,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
 
+        if (this.backupExercise.auxiliaryRepositories !== this.programmingExercise.auxiliaryRepositories) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.programmingExercise.auxiliaryRepository.warning',
+            });
+        }
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
