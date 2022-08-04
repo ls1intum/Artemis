@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled.cache.monitoring;
 
 import java.util.function.UnaryOperator;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -31,6 +32,15 @@ final class ExamCache extends CacheHandler<Long> {
     @Override
     protected Cache emptyCacheValue() {
         return ExamMonitoringCache.empty();
+    }
+
+    /**
+     * Configures Hazelcast for the ExamCache before the HazelcastInstance is created.
+     *
+     * @param config the {@link Config} the ExamCache-specific configuration should be added to
+     */
+    static void configureHazelcast(Config config) {
+        ExamMonitoringCache.registerSerializers(config);
     }
 
     @Override

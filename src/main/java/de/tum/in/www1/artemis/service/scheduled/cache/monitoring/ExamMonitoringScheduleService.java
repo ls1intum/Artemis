@@ -13,6 +13,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
 
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.scheduledexecutor.DuplicateTaskException;
 
@@ -60,6 +61,15 @@ public class ExamMonitoringScheduleService {
         this.examRepository = examRepository;
         this.studentExamRepository = studentExamRepository;
         this.messagingService = messagingService;
+    }
+
+    /**
+     * Configures Hazelcast for the ExamActivityService before the HazelcastInstance is created.
+     *
+     * @param config the {@link Config} the ExamActivityService-specific configuration should be added to
+     */
+    public static void configureHazelcast(Config config) {
+        ExamCache.configureHazelcast(config);
     }
 
     /**
