@@ -164,7 +164,7 @@ describe('ExamMonitoringService', () => {
         const handleActionEventSpy = jest.spyOn(examMonitoringService, 'handleActionEvent').mockImplementation(() => {});
         const saveActionsSpy = jest.spyOn(examMonitoringService, 'saveActions').mockImplementation(() => {});
 
-        examMonitoringService.handleAndSaveActionEvent(exam, studentExam, action, true);
+        examMonitoringService.handleAndSaveActionEvent(exam, studentExam, action, true, true);
 
         expect(handleActionEventSpy).toHaveBeenCalledOnce();
         expect(handleActionEventSpy).toHaveBeenCalledWith(studentExam, action, exam.monitoring, undefined);

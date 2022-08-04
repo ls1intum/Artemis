@@ -45,6 +45,8 @@ import {
 } from 'app/entities/exam-user-activity.model';
 import { ExamMonitoringService } from 'app/exam/monitoring/exam-monitoring.service';
 import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { tap } from 'rxjs/operators';
 
 type GenerateParticipationStatus = 'generating' | 'failed' | 'success';
 
@@ -119,6 +121,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
     private programmingSubmissionSubscriptions: Subscription[] = [];
 
     loadingExam: boolean;
+    examMonitoringGloballyEnabled: boolean;
 
     generateParticipationStatus: BehaviorSubject<GenerateParticipationStatus> = new BehaviorSubject('success');
 
@@ -137,6 +140,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseExerciseService: CourseExerciseService,
         private examMonitoringService: ExamMonitoringService,
         private examActionService: ExamActionService,
+        private featureToggleService: FeatureToggleService,
     ) {
         // show only one synchronization error every 5s
         this.errorSubscription = this.synchronizationAlert.pipe(throttleTime(5000)).subscribe(() => {
@@ -219,6 +223,15 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                     error: () => (this.loadingExam = false),
                 });
             }
+            // Receive whether the exam monitoring is globally enabled or not
+            this.featureToggleService
+                .getFeatureToggleActive(FeatureToggle.ExamLiveStatistics)
+                .pipe(
+                    tap((active) => {
+                        this.examMonitoringGloballyEnabled = active;
+                    }),
+                )
+                .subscribe();
         });
 
         // listen to connect / disconnect events
@@ -227,7 +240,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
 
             // Monitor connection update
             if (this.studentExam) {
-                this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new ConnectionUpdatedAction(status.connected), this.connected);
+                this.examMonitoringService.handleAndSaveActionEvent(
+                    this.exam,
+                    this.studentExam,
+                    new ConnectionUpdatedAction(status.connected),
+                    this.connected,
+                    this.examMonitoringGloballyEnabled,
+                );
             }
         });
     }
@@ -271,7 +290,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam = studentExam;
 
             // Monitor exam start
-            this.examMonitoringService.handleAndSaveActionEvent(this.exam, studentExam, new StartedExamAction(studentExam.examSessions?.last()?.id), this.connected);
+            this.examMonitoringService.handleAndSaveActionEvent(
+                this.exam,
+                studentExam,
+                new StartedExamAction(studentExam.examSessions?.last()?.id),
+                this.connected,
+                this.examMonitoringGloballyEnabled,
+            );
 
             // provide exam-participation.service with exerciseId information (e.g. needed for exam notifications)
             const exercises: Exercise[] = this.studentExam.exercises!;
@@ -355,7 +380,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * triggered after student accepted exam end terms, will make final call to update submission on server
      */
     onExamEndConfirmed() {
-        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new EndedExamAction(), this.connected);
+        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new EndedExamAction(), this.connected, this.examMonitoringGloballyEnabled);
 
         // temporary lock the submit button in order to protect against spam
         this.handInPossible = false;
@@ -436,7 +461,6 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
      * called when exam ended because the working time is over
      */
     examEnded() {
-        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new EndedExamAction(), this.connected);
         if (this.autoSaveInterval) {
             window.clearInterval(this.autoSaveInterval);
         }
@@ -457,13 +481,25 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             } catch (error) {
                 captureException(error);
             }
-            this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new HandedInEarlyAction(), this.connected);
+            this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new HandedInEarlyAction(), this.connected, this.examMonitoringGloballyEnabled);
         } else if (this.studentExam?.exercises && this.activeExamPage) {
             const index = this.studentExam.exercises.findIndex((exercise) => !this.activeExamPage.isOverviewPage && exercise.id === this.activeExamPage.exercise!.id);
             this.exerciseIndex = index ? index : 0;
-            this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new ContinuedAfterHandedInEarlyAction(), this.connected);
+            this.examMonitoringService.handleAndSaveActionEvent(
+                this.exam,
+                this.studentExam,
+                new ContinuedAfterHandedInEarlyAction(),
+                this.connected,
+                this.examMonitoringGloballyEnabled,
+            );
             const exerciseId = this.studentExam.exercises[index]?.id;
-            this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(exerciseId), this.connected);
+            this.examMonitoringService.handleAndSaveActionEvent(
+                this.exam,
+                this.studentExam,
+                new SwitchedExerciseAction(exerciseId),
+                this.connected,
+                this.examMonitoringGloballyEnabled,
+            );
         }
     }
 
@@ -546,7 +582,13 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             // an error here should never lead to the wrong exercise being shown
             captureException(error);
         }
-        this.examMonitoringService.handleAndSaveActionEvent(this.exam, this.studentExam, new SwitchedExerciseAction(exerciseChange.exercise?.id), this.connected);
+        this.examMonitoringService.handleAndSaveActionEvent(
+            this.exam,
+            this.studentExam,
+            new SwitchedExerciseAction(exerciseChange.exercise?.id),
+            this.connected,
+            this.examMonitoringGloballyEnabled,
+        );
         if (!exerciseChange.overViewChange) {
             this.initializeExercise(exerciseChange.exercise!);
         } else {
@@ -723,6 +765,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam,
             new SavedExerciseAction(lastSavedForced, submission.id, exerciseId, false, lastSavedAutomatically),
             this.connected,
+            this.examMonitoringGloballyEnabled,
             timestamp,
         );
         submission.isSynced = true;
@@ -736,6 +779,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
             this.studentExam,
             new SavedExerciseAction(lastSavedForced, undefined, exerciseId, true, lastSavedAutomatically),
             this.connected,
+            this.examMonitoringGloballyEnabled,
             timestamp,
         );
 
@@ -783,6 +827,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                             this.studentExam,
                             new SavedExerciseAction(false, submissionCopy.id, exerciseId, submissionCopy.buildFailed ?? false, false),
                             this.connected,
+                            this.examMonitoringGloballyEnabled,
                             submissionCopy.submissionDate,
                         );
 

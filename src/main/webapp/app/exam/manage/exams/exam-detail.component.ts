@@ -40,6 +40,8 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faClipboard = faClipboard;
     faThList = faThList;
 
+    isAdmin = false;
+
     constructor(
         private route: ActivatedRoute,
         private artemisMarkdown: ArtemisMarkdownService,
@@ -60,6 +62,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
             this.formattedEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.endText);
             this.formattedConfirmationEndText = this.artemisMarkdown.safeHtmlForMarkdown(this.exam.confirmationEndText);
             this.isExamOver = !!this.exam.endDate?.isBefore(dayjs());
+            this.isAdmin = this.accountService.isAdmin();
         });
     }
 
