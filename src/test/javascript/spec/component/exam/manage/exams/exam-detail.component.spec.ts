@@ -28,7 +28,7 @@ import { of } from 'rxjs';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/core/util/alert.service';
-import {ArtemisDurationFromSecondsPipe} from "app/shared/pipes/artemis-duration-from-seconds.pipe";
+import {ArtemisDurationFromSecondsPipe} from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 
 @Component({
     template: '',
