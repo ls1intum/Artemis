@@ -192,19 +192,6 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateAttachmentUnit_noId_shouldReturnBadRequest() throws Exception {
-        persistAttachmentUnitWithLecture();
-
-        this.attachment.setAttachmentUnit(this.attachmentUnit);
-        this.attachment = attachmentRepository.save(attachment);
-        this.attachmentUnit.setDescription("Changed");
-        this.attachmentUnit.setId(null);
-        this.attachmentUnit = request.putWithResponseBody("/api/lectures/" + lecture1.getId() + "/attachment-units", this.attachmentUnit, AttachmentUnit.class,
-                HttpStatus.BAD_REQUEST);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
         persistAttachmentUnitWithLecture();
 
