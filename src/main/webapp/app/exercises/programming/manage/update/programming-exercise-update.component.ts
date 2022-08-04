@@ -36,10 +36,9 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
-
-    FeatureToggle = FeatureToggle;
-    ProgrammingLanguage = ProgrammingLanguage;
-    ProjectType = ProjectType;
+    readonly FeatureToggle = FeatureToggle;
+    readonly ProgrammingLanguage = ProgrammingLanguage;
+    readonly ProjectType = ProjectType;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -517,7 +516,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
             });
         }
 
-        if (this.backupExercise.auxiliaryRepositories !== this.programmingExercise.auxiliaryRepositories) {
+        if (this.backupExercise?.auxiliaryRepositories !== this.programmingExercise.auxiliaryRepositories && this.programmingExercise.id) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
                 message: 'artemisApp.programmingExercise.auxiliaryRepository.warning',
