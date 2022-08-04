@@ -168,34 +168,37 @@ export class CodeEditorRepositoryFileService extends DomainDependentEndpointServ
         this.fileUpdateUrl = `${this.restResourceUrl}/files`;
     }
 
-    getRepositoryContent = () => {
-        return this.http.get<{ [fileName: string]: FileType }>(`${this.restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
+    getRepositoryContent = (domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http.get<{ [fileName: string]: FileType }>(`${restResourceUrl}/files`).pipe(handleErrorResponse<{ [fileName: string]: FileType }>(this.conflictService));
     };
 
     /**
      * Gets the files of the repository and checks whether they were changed during a student participation.
      */
-    getFilesWithInformationAboutChange = () => {
-        return this.http
-            .get<{ [fileName: string]: boolean }>(`${this.restResourceUrl}/files-change`)
-            .pipe(handleErrorResponse<{ [fileName: string]: boolean }>(this.conflictService));
+    getFilesWithInformationAboutChange = (domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http.get<{ [fileName: string]: boolean }>(`${restResourceUrl}/files-change`).pipe(handleErrorResponse<{ [fileName: string]: boolean }>(this.conflictService));
     };
 
-    getFile = (fileName: string) => {
-        return this.http.get(`${this.restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
+    getFile = (fileName: string, domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http.get(`${restResourceUrl}/file`, { params: new HttpParams().set('file', fileName), responseType: 'text' }).pipe(
             map((data) => ({ fileContent: data })),
             handleErrorResponse<{ fileContent: string }>(this.conflictService),
         );
     };
 
-    getFileHeaders = (fileName: string) => {
+    getFileHeaders = (fileName: string, domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
         return this.http
-            .head<Blob>(`${this.restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
+            .head<Blob>(`${restResourceUrl}/file`, { observe: 'response', params: new HttpParams().set('file', fileName) })
             .pipe(handleErrorResponse(this.conflictService));
     };
 
-    getFilesWithContent = () => {
-        return this.http.get(`${this.restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
+    getFilesWithContent = (domain?: DomainChange) => {
+        const restResourceUrl = domain ? this.calculateRestResourceURL(domain) : this.restResourceUrl;
+        return this.http.get(`${restResourceUrl}/files-content`).pipe(handleErrorResponse<{ [fileName: string]: string }>(this.conflictService));
     };
 
     createFile = (fileName: string) => {

@@ -82,7 +82,8 @@ public class FileResource {
     private static final int FILE_ACCESS_TOKEN_VALIDITY = 30;
 
     // NOTE: this list has to be the same as in file-uploader.service.ts
-    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
+    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip", "doc", "docx", "csv", "xls", "xlsx", "ppt", "pptx",
+            "pages", "rtf", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odf"));
 
     public void addAllowedFileExtension(String fileExtension) {
         this.allowedFileExtensions.add(fileExtension);
