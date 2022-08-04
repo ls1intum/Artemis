@@ -41,9 +41,18 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismSubmission;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismComparisonRepository;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
 import de.tum.in.www1.artemis.util.GitUtilService;
 import de.tum.in.www1.artemis.util.LocalRepository;
@@ -70,6 +79,15 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Autowired
     private ProgrammingExerciseParticipationService programmingExerciseParticipationService;
+
+    @Autowired
+    private PlagiarismComparisonRepository plagiarismComparisonRepository;
+
+    @Autowired
+    private PlagiarismCaseRepository plagiarismCaseRepository;
+
+    @Autowired
+    private PostRepository postRepository;
 
     private ProgrammingExercise programmingExercise;
 
@@ -103,7 +121,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @BeforeEach
     void setup() throws Exception {
-        database.addUsers(1, 1, 1, 1);
+        database.addUsers(2, 1, 1, 1);
         database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
@@ -309,6 +327,81 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetFile() throws Exception {
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        assertThat(file).isNotEmpty();
+        assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    void testGetFilesAsDifferentStudentForbidden() throws Exception {
+        request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    void testGetFileAsDifferentStudentForbidden() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.FORBIDDEN, byte[].class, params);
+    }
+
+    private void addPlagiarismCaseToProgrammingExercise(String studentLoginWithoutPost, String studentLoginWithPost) {
+        var textPlagiarismResult = database.createTextPlagiarismResultForExercise(programmingExercise);
+        var plagiarismComparison = new PlagiarismComparison<TextSubmissionElement>();
+        plagiarismComparison.setPlagiarismResult(textPlagiarismResult);
+        plagiarismComparison.setStatus(PlagiarismStatus.CONFIRMED);
+
+        var plagiarismSubmissionA = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionA.setStudentLogin(studentLoginWithoutPost);
+        plagiarismSubmissionA.setSubmissionId(participation.getId());
+
+        var plagiarismSubmissionB = new PlagiarismSubmission<TextSubmissionElement>();
+        plagiarismSubmissionB.setStudentLogin(studentLoginWithPost);
+        plagiarismSubmissionB.setSubmissionId(participation.getId() + 1);
+
+        plagiarismComparison.setSubmissionA(plagiarismSubmissionA);
+        plagiarismComparison.setSubmissionB(plagiarismSubmissionB);
+
+        PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
+
+        Post post = new Post();
+        post.setAuthor(database.getUserByLogin("instructor1"));
+        post.setTitle("Title Plagiarism Case Post");
+        post.setContent("Content Plagiarism Case Post");
+        post.setVisibleForStudents(true);
+        post.setPlagiarismCase(plagiarismCase);
+        postRepository.save(post);
+
+        plagiarismSubmissionB.setPlagiarismCase(plagiarismCase);
+        plagiarismComparisonRepository.save(plagiarismComparison);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetFilesAsDifferentStudentWithRelevantPlagiarismCase() throws Exception {
+        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student2", roles = "USER")
+    void testGetFileAsDifferentStudentWithRelevantPlagiarismCase() throws Exception {
+        programmingExerciseRepository.save(programmingExercise);
+
+        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
         var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);

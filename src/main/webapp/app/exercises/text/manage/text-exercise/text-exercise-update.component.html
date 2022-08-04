@@ -172,15 +172,6 @@
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise"></jhi-grading-instructions-details>
         </div>
-        <div class="form-group" *ngIf="isImport || !textExercise.id">
-            <label class="form-control-label" jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</label>
-            <div
-                id="example-submission-message"
-                class="alert alert-info"
-                *ngIf="!textExercise.id || isImport"
-                jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"
-            ></div>
-        </div>
         <div class="form-group" *ngIf="textExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />

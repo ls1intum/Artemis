@@ -221,8 +221,7 @@ public class LearningGoalResource {
 
         LearningGoal updatedLearningGoal = learningGoalRepository.save(learningGoalFromDb);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, updatedLearningGoal.getId().toString()))
-                .body(updatedLearningGoal);
+        return ResponseEntity.ok(updatedLearningGoal);
     }
 
     /**

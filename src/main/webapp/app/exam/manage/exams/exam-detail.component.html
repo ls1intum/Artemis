@@ -8,40 +8,40 @@
             </h2>
             <hr />
             <div *ngIf="exam.course?.isAtLeastInstructor">
-                <a [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
-                    <fa-icon [icon]="faTable"></fa-icon>
-                    <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
+                <a id="exercises-button-groups" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faListAlt"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
                 </a>
-                <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
-                    <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
+                <a id="students-button" *ngIf="!exam.testExam" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faUser"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
                 </a>
                 <a id="studentExamsButton" [routerLink]="getExamRoutesByIdentifier('student-exams')" class="btn btn-info mt-1">
                     <fa-icon [icon]="faEye"></fa-icon>
                     <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.studentExams' | artemisTranslate }}</span>
                 </a>
+                <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faUser"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
+                </a>
                 <a id="assessment-dashboard-button" *ngIf="!exam.testExam" [routerLink]="getExamRoutesByIdentifier('assessment-dashboard')" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faThList"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.assessmentDashboard' | artemisTranslate }}</span>
-                </a>
-                <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="faEye"></fa-icon>
-                    <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
                 <a *ngIf="!exam.testExam" [routerLink]="getExamRoutesByIdentifier('grading-system')" class="btn btn-info mt-1">
                     <fa-icon [icon]="faClipboard"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.gradingSystem' | artemisTranslate }}</span>
                 </a>
-                <a id="exercises-button-groups" type="submit" [routerLink]="getExamRoutesByIdentifier('exercise-groups')" class="btn btn-primary mt-1">
-                    <fa-icon [icon]="faListAlt"></fa-icon>
-                    <span>{{ 'artemisApp.examManagement.exerciseGroups' | artemisTranslate }}</span>
+                <a id="scores-button" [routerLink]="getExamRoutesByIdentifier('scores')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faEye"></fa-icon>
+                    <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
-                <a id="testrun-button" [routerLink]="getExamRoutesByIdentifier('test-runs')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="faUser"></fa-icon>
-                    <span>{{ 'artemisApp.examManagement.testRun.testRun' | artemisTranslate }}</span>
+                <a *ngIf="isAdmin" [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
+                    <fa-icon [icon]="faTable"></fa-icon>
+                    <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
-                <a id="students-button" [routerLink]="getExamRoutesByIdentifier('students')" class="btn btn-info mt-1">
-                    <fa-icon [icon]="faUser"></fa-icon>
-                    <span>{{ 'artemisApp.examManagement.students' | artemisTranslate }}</span>
+                <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
+                    <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
                 <button
                     jhiDeleteButton
