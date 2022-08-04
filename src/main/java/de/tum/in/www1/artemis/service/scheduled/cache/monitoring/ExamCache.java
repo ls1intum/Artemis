@@ -20,7 +20,7 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an
  * {@linkplain #performCacheWriteIfPresent(Long, UnaryOperator) if-present variant}).
  * <p>
- * Additionally, we don't need any near ache configuration since reloading all actions from the cache is a very rare case.
+ * Additionally, we don't need any near cache configuration since reloading all actions from the cache is a very rare case.
  */
 final class ExamCache extends CacheHandler<Long> {
 
