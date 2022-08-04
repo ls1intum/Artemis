@@ -1,3 +1,5 @@
+.. _admin_access_rights:
+
 Access Rights
 =============
 

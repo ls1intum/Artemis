@@ -54,6 +54,8 @@ For programming exercises, this is done via instructor-written test cases that a
 Instructors can enable complaints for automatically graded programming exercises.
 
 
+.. _exercise_complaints:
+
 Complaints
 ----------
 
@@ -74,6 +76,9 @@ Only if the tutor accepts the complaint, they can modify the assessment's score.
 The instructor can set a maximum number of allowed complaints per course. These so-called tokens are used for each complaint.
 The token is given back to the student if the tutor accepts the complaint.
 This means a student can submit as many complaints as they want, as long as they are accepted.
+
+
+.. _exercise_more_feedback_request:
 
 More Feedback Requests
 ^^^^^^^^^^^^^^^^^^^^^^
