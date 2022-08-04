@@ -249,6 +249,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testNotifyUserAboutNewPossiblePlagiarismCase() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("student1");
+        // TODO: set a meaningful post into the plagiarismCase
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
         verifyEmail();
@@ -261,6 +262,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
     void testNotifyUserAboutFinalPlagiarismState() {
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("student1");
+        // TODO: set a meaningful verdict into the plagiarismCase
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
         verifyEmail();

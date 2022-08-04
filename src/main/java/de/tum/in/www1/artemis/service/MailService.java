@@ -234,6 +234,8 @@ public class MailService {
             case FILE_SUBMISSION_SUCCESSFUL -> templateEngine.process("mail/notification/fileSubmissionSuccessfulEmail", context);
             case EXERCISE_SUBMISSION_ASSESSED -> templateEngine.process("mail/notification/exerciseSubmissionAssessedEmail", context);
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
+            case NEW_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
+            case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }
