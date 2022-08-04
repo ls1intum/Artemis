@@ -52,8 +52,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
     private Exercise exercise;
 
-    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison;
-
     private PlagiarismCase plagiarismCase;
 
     private Result result;
@@ -92,7 +90,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         TextPlagiarismResult plagiarismResult = new TextPlagiarismResult();
         plagiarismResult.setExercise(exercise);
 
-        plagiarismComparison = new PlagiarismComparison<>();
+        PlagiarismComparison<TextSubmissionElement> plagiarismComparison = new PlagiarismComparison<>();
         plagiarismComparison.setSubmissionA(plagiarismSubmission);
         plagiarismComparison.setPlagiarismResult(plagiarismResult);
 
@@ -253,6 +251,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         database.changeUser("student1");
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
+        verifyEmail();
     }
 
     /**
@@ -264,6 +263,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         database.changeUser("student1");
         singleUserNotificationService.notifyUserAboutPlagiarismCaseVerdict(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(PLAGIARISM_CASE_VERDICT_STUDENT_TITLE);
+        verifyEmail();
     }
 
     /**
