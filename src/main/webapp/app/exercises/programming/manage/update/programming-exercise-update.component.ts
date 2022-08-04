@@ -517,10 +517,12 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         }
 
         // If the auxiliary repositories were edited after the creation of the exercise, the changes have to be done manually in the VCS and CIS
-        const changedAuxiliaryRepository = this.programmingExercise.auxiliaryRepositories?.some((auxRepo, index) => {
-            const otherAuxRepo = this.backupExercise?.auxiliaryRepositories?.[index];
-            return !otherAuxRepo || auxRepo.name !== otherAuxRepo.name || auxRepo.checkoutDirectory !== otherAuxRepo.checkoutDirectory;
-        });
+        const changedAuxiliaryRepository =
+            (this.programmingExercise.auxiliaryRepositories?.length ?? 0) > (this.backupExercise?.auxiliaryRepositories?.length ?? 0) ||
+            this.programmingExercise.auxiliaryRepositories?.some((auxRepo, index) => {
+                const otherAuxRepo = this.backupExercise?.auxiliaryRepositories?.[index];
+                return !otherAuxRepo || auxRepo.name !== otherAuxRepo.name || auxRepo.checkoutDirectory !== otherAuxRepo.checkoutDirectory;
+            });
         if (changedAuxiliaryRepository && this.programmingExercise.id) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
