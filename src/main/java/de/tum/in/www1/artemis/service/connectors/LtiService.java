@@ -216,7 +216,7 @@ public class LtiService {
         }
 
         final String username = createUsernameFromLaunchRequest(launchRequest);
-        final String fullname = launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id();
+        final String fullname = getUserFullNameFromLaunchRequest(launchRequest);
 
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
         // Check if lookup by email is enabled
@@ -237,11 +237,26 @@ public class LtiService {
         return Optional.empty();
     }
 
+    /**
+     * Gets the fullname for the user considering the requests sent by the different LTI consumers
+     */
+    private String getUserFullNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+        if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+            return launchRequest.getLis_person_sourcedid();
+        }
+        else if (!StringUtils.isEmpty(launchRequest.getLis_person_name_full())) {
+            return launchRequest.getLis_person_name_full();
+        }
+        return launchRequest.getUser_id();
+    }
+
     @NotNull
     private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String fullname) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
+            // TODO: Generic user creation: newUser = userCreationService.createUser(launchRequest.getLis_person_name_full(), null, groups,
+            // launchRequest.getLis_person_name_given(), launchRequest.getLis_person_name_family(), email, null, null, Constants.DEFAULT_LANGUAGE, true);
             if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
                 groups.add(USER_GROUP_NAME_EDX.get());
                 newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, Constants.DEFAULT_LANGUAGE, true);
@@ -286,6 +301,7 @@ public class LtiService {
     @NotNull
     private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
         final String username;
+        // TODO: This should be generic, why do we consider the context_label and create specific groups?
         if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent() && USER_PREFIX_EDX.isPresent()) {
             username = USER_PREFIX_EDX.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
         }
@@ -294,7 +310,6 @@ public class LtiService {
         }
         else {
             username = launchRequest.getLis_person_contact_email_primary();
-            // TODO: This should be generic!
             // throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest);
         }
 

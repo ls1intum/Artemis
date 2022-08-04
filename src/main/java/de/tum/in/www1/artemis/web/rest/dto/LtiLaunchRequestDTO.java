@@ -10,6 +10,12 @@ public class LtiLaunchRequestDTO {
 
     private String lis_person_sourcedid;
 
+    private String lis_person_name_given;
+
+    private String lis_person_name_family;
+
+    private String lis_person_name_full;
+
     private String lis_person_contact_email_primary;
 
     private String lis_outcome_service_url;
@@ -77,6 +83,30 @@ public class LtiLaunchRequestDTO {
 
     public void setLis_person_sourcedid(String lis_person_sourcedid) {
         this.lis_person_sourcedid = lis_person_sourcedid;
+    }
+
+    public String getLis_person_name_given() {
+        return lis_person_name_given;
+    }
+
+    public void setLis_person_name_given(String lis_person_name_given) {
+        this.lis_person_name_given = lis_person_name_given;
+    }
+
+    public String getLis_person_name_family() {
+        return lis_person_name_family;
+    }
+
+    public void setLis_person_name_family(String lis_person_name_family) {
+        this.lis_person_name_family = lis_person_name_family;
+    }
+
+    public String getLis_person_name_full() {
+        return lis_person_name_full;
+    }
+
+    public void setLis_person_name_full(String lis_person_name_full) {
+        this.lis_person_name_full = lis_person_name_full;
     }
 
     public String getLis_person_contact_email_primary() {
@@ -233,8 +263,9 @@ public class LtiLaunchRequestDTO {
 
     @Override
     public String toString() {
-        return "LtiLaunchRequest{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary + '\''
-                + ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' + ", lti_message_type='" + lti_message_type + '\'' + ", lti_version='" + lti_version + '\''
+        return "LtiLaunchRequest{" + "lis_person_sourcedid='" + lis_person_sourcedid + '\'' + "lis_person_name_given='" + lis_person_name_given + '\'' + "lis_person_name_family='"
+                + lis_person_name_family + '\'' + "lis_person_name_full='" + lis_person_name_full + '\'' + ", lis_person_contact_email_primary='" + lis_person_contact_email_primary
+                + '\'' + ", lis_outcome_service_url='" + lis_outcome_service_url + '\'' + ", lti_message_type='" + lti_message_type + '\'' + ", lti_version='" + lti_version + '\''
                 + ", context_id='" + context_id + '\'' + ", context_label='" + context_label + '\'' + ", oauth_version='" + oauth_version + '\'' + ", oauth_signature_method='"
                 + oauth_signature_method + '\'' + ", oauth_timestamp=" + oauth_timestamp + ", roles='" + roles + '\'' + ", launch_presentation_locale='"
                 + launch_presentation_locale + '\'' + ", custom_component_display_name='" + custom_component_display_name + '\'' + ", launch_presentation_return_url='"
