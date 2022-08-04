@@ -130,7 +130,7 @@
                     <span *ngIf="exam.examStudentReviewEnd; else examStudentReviewEndNotSet">{{ exam.examStudentReviewEnd | artemisDate }}</span>
                     <ng-template #examStudentReviewEndNotSet><span jhiTranslate="artemisApp.exercise.dateNotSet"></span></ng-template>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.exam.overview.workingTime">Working Time</span></dt>
+                <dt><span jhiTranslate="artemisApp.examManagement.workingTime">Working Time</span></dt>
                 <dd>
                     <span>{{ exam.workingTime! | artemisDurationFromSeconds: true }}</span>
                 </dd>
