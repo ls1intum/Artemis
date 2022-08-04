@@ -59,12 +59,14 @@ Complaints
 
 After receiving an assessment, students can complain once about the assessment of an exercise if the instructor enabled this option and the students think the assessment is erroneous.
 The student has to write an additional text when submitting a complaint to justify the reevaluation.
+
     .. figure:: assessment/complaint.png
             :alt: The student complains about the assessment of an exercise
             :align: center
 
 A complaint leads to a reevaluation of the submission by another tutor. This tutor sees the existing assessment and the complaint reason. The tutor can then either accept or reject the complaint.
 Only if the tutor accepts the complaint, they can modify the assessment's score.
+
     .. figure:: assessment/complaint_response.png
         :alt: A tutor answers the complaint of a student
         :align: center
