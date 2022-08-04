@@ -519,7 +519,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         if (this.backupExercise?.auxiliaryRepositories !== this.programmingExercise.auxiliaryRepositories && this.programmingExercise.id) {
             this.alertService.addAlert({
                 type: AlertType.WARNING,
-                message: 'artemisApp.programmingExercise.auxiliaryRepository.warning',
+                message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
             });
         }
 
