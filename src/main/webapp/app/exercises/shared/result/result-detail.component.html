@@ -7,10 +7,10 @@
     <div *ngIf="messageKey" class="mb-3"><h6 [innerHTML]="messageKey | artemisTranslate"></h6></div>
     <!-- for missing results this view shows the details of the previews result.
     since you cannot see the result string in this case, we need to show it here -->
-    <ng-container *ngIf="resultString && resultIconClass && textColorClass && templateStatus === ResultTemplateStatus.MISSING && !filteredFeedbackList?.length">
+    <span [ngClass]="textColorClass" *ngIf="resultString && resultIconClass && textColorClass && templateStatus === ResultTemplateStatus.MISSING && !filteredFeedbackList?.length">
         <fa-icon [icon]="resultIconClass" size="lg"></fa-icon>
-        <span [ngClass]="textColorClass" class="result" container="body">{{ resultString }}</span>
-    </ng-container>
+        <span class="result" container="body">{{ resultString }}</span>
+    </span>
     <div *ngIf="showMissingAutomaticFeedbackInformation" class="mb-3">
         <h6 [innerHTML]="'artemisApp.result.afterDueDateFeedbackHidden' | artemisTranslate: { date: latestIndividualDueDate }"></h6>
     </div>
