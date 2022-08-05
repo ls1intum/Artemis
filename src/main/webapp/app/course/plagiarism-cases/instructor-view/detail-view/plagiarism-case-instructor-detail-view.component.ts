@@ -10,20 +10,30 @@ import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { faCheck, faInfo, faUser } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
+    styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
     providers: [MetisService],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
+    exerciseTitle: string | undefined;
+
     verdictPointDeduction = 0;
     verdictMessage = '';
     createdPost: Post;
+
+    activeTab = 1;
+
     getIcon = getIcon;
+    faUser = faUser;
+    faInfo = faInfo;
+    faCheck = faCheck;
 
     readonly pageType = PageType.PLAGIARISM_CASE;
     private postsSubscription: Subscription;
@@ -37,6 +47,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId, this.plagiarismCaseId).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase = res.body!;
+                this.exerciseTitle =
+                    this.plagiarismCase.exercise!.title!.length > 40 ? this.plagiarismCase.exercise?.title?.slice(0, 35) + '…' : this.plagiarismCase.exercise?.title;
+
                 this.verdictMessage = this.plagiarismCase.verdictMessage ?? '';
                 this.verdictPointDeduction = this.plagiarismCase.verdictPointDeduction ?? 0;
                 this.metisService.setCourse(this.plagiarismCase.exercise!.course!);
@@ -159,13 +172,26 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
      * it has an example text for the instructor and a default title containing the exercise title
      **/
     createEmptyPost(): void {
+        const studentName = this.plagiarismCase.student!.name;
+        const courseTitle =
+            this.plagiarismCase.exercise!.course!.title!.length > 40
+                ? this.plagiarismCase.exercise!.course!.title?.slice(0, 35) + '…'
+                : this.plagiarismCase.exercise!.course!.title;
+        const codeOfConductLink =
+            'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf';
+        const apoLink =
+            'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1';
+
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
-        this.createdPost.content = `Dear ${this.plagiarismCase.student!.name},\nAfter a meticulous review of your final submission for the ${
-            this.plagiarismCase.exercise!.title
-        } in the course ${
-            this.plagiarismCase.exercise!.course!.title
-        }, we have concluded that you have committed plagiarism.\nThis is not only a violation of principles of good student practice but also of the “Student Code of Conduct” of the faculty of computer science that you have agreed upon. You can check the Student conduct code [here](https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf) §22.1 of the “Allgemeine Studien- und Prüfungsordnung (APSO)” [“General Examination and Study Regulations”] regulates consequences for such cases. You can find the APSO [here](https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1).\nYou have one week to provide a statement about this situation.`;
-        this.createdPost.title = `Plagiarism Case ${this.plagiarismCase.exercise!.title}`;
+        // Note the limit of 1.000 characters for the post's content
+        this.createdPost.content =
+            `Dear ${studentName},\n\n` +
+            `After a meticulous review of your final submission for the exercise “${this.exerciseTitle}“ in the course “${courseTitle}“, we have concluded ` +
+            `that you have committed plagiarism.\nThis is not only a violation of principles of good student practice but also of the ` +
+            `[Student Code of Conduct](${codeOfConductLink}) of the faculty of computer science that you have agreed upon. ` +
+            `The *[Allgemeine Studien- und Prüfungsordnung](${apoLink})* (General Examination and Study Regulations) regulates consequences for such cases in §22.1.\n\n` +
+            `**You have one week to provide a statement about this situation.**`;
+        this.createdPost.title = `Plagiarism Case: ${this.exerciseTitle}`;
     }
 
     /**

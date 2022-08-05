@@ -1,19 +1,19 @@
-<ng-container *ngIf="plagiarismCase">
-    <div class="row my-2 justify-content-center">
-        <div class="col-8 badge py-2" [ngClass]="verdictBadgeClass">
-            {{ verdictTranslationString | artemisTranslate }}
-        </div>
-        <ng-container *ngIf="plagiarismCase.verdict">
-            <div class="col-12 text-center mt-1">
-                {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdictDate' | artemisTranslate }} {{ plagiarismCase.verdictDate | artemisDate }}
-            </div>
-            <div class="col-12 text-center mt-1">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdictBy' | artemisTranslate }} {{ plagiarismCase.verdictBy!.name }}</div>
-            <ng-container *ngIf="!hideDetails">
-                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION" class="col-12 text-center mt-1">{{ plagiarismCase.verdictPointDeduction }}%</div>
-                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.WARNING" class="col-12 text-center mt-1">
-                    {{ plagiarismCase.verdictMessage }}
-                </div>
-            </ng-container>
-        </ng-container>
+<ng-container *ngIf="plagiarismCase" class="my-1">
+    <div *ngIf="!plagiarismCase.verdict; else verdict" class="badge bg-secondary py-2">
+        <h5 class="mb-0">
+            {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ 'artemisApp.plagiarism.plagiarismCases.verdict.none' | artemisTranslate }}
+        </h5>
     </div>
+
+    <ng-template #verdict>
+        <div
+            class="badge bg-danger py-2"
+            ngbTooltip="{{
+                'artemisApp.plagiarism.plagiarismCases.verdict.description'
+                    | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
+            }}"
+        >
+            <h5 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ verdictTranslationString | artemisTranslate }}</h5>
+        </div>
+    </ng-template>
 </ng-container>

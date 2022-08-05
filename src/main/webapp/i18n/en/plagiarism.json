@@ -60,8 +60,7 @@
                 "verdict": {
                     "verdict": "Verdict",
                     "text": "Decide what the consequences of the plagiarism are:",
-                    "verdictDate": "Decided at ",
-                    "verdictBy": "Decided by ",
+                    "description": "Decided on {{ date }} by {{ user }}",
                     "none": "No verdict yet",
                     "plagiarism": "Plagiarism",
                     "warning": "Warning",
@@ -70,7 +69,8 @@
                     "confirmationTitle": "Confirm plagiarism verdict",
                     "confirmationText": "Are you sure you want to set this verdict? This action cannot be undone.",
                     "tooltip": "Set this verdict?",
-                    "tooltipStudentNotNotified": "You must notify the student before determining the verdict."
+                    "studentNotNotified": "You must notify the student before determining the verdict.",
+                    "alreadyDecided": "An instructor already determined a verdict for this plagiarism case."
                 },
                 "exercise": "Affected exercise",
                 "comparisons": "Comparisons",

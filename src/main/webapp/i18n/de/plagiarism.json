@@ -60,8 +60,7 @@
                 "verdict": {
                     "verdict": "Urteil",
                     "text": "Entscheide die Konsequenten des Plagiatsfalls:",
-                    "verdictDate": "Entschieden am ",
-                    "verdictBy": "Entschieden von ",
+                    "description": "Entschieden am {{ date }} von {{ user }}",
                     "none": "Noch kein Urteil",
                     "plagiarism": "Unterschleif",
                     "warning": "Warnung",
@@ -70,7 +69,8 @@
                     "confirmationTitle": "Bestätige das Urteil",
                     "confirmationText": "Bist du sicher, dass du dieses Urteil fällen willst? Dies kann nicht rückgängig gemacht werden.",
                     "tooltip": "Dieses Urteil fällen?",
-                    "tooltipStudentNotNotified": "Du musst den Studierenden vor der Urteilsfindung benachrichtigen."
+                    "studentNotNotified": "Du musst den Studierenden vor der Urteilsfindung benachrichtigen.",
+                    "alreadyDecided": "Ein Instruktor hat bereits ein Urteil in diesem Plagiatsfall gefällt."
                 },
                 "exercise": "Betroffene Übung",
                 "comparisons": "Vergleiche",
