@@ -166,8 +166,8 @@ describe('Monitoring charts helper methods', () => {
 
         insertNgxDataAndColorForExerciseMap(exam, exerciseAmountMap, ngxData, ngxColor);
         expect(ngxData).toEqual([
-            { name: exercise1.title, value: 1 },
-            { name: exercise2.title, value: 1 },
+            { name: `${exercise1.title} (${exercise1.id})`, value: 1 },
+            { name: `${exercise2.title} (${exercise2.id})`, value: 1 },
         ]);
         expect(ngxColor.domain).toEqual([getColor(0), getColor(0)]);
     });

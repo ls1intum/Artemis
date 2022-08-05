@@ -329,6 +329,9 @@ Summary
 
    Complaining about the Assessment of a Text Exercise
 
+
+.. _exam_grades:
+
 Grades
 ^^^^^^
 - When your exam has been graded, you can view your result on the exam scores page.
