@@ -78,7 +78,7 @@
                     "tooltipOnlineIde": "Für deine letzte Einreichung konnte kein Ergebnis gefunden / nicht rechtzeitig generiert werden. Bitte überprüfe deinen Code soweit möglich manuell."
                 }
             },
-            "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.",
+            "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung. Pushe einen neuen Commit, um einen weiteren Build zu starten.",
             "seeMore": "Mehr anzeigen",
             "noFeedback": "Kein Feedback verfügbar",
             "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein."

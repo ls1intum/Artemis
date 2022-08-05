@@ -78,7 +78,7 @@
                     "tooltipOnlineIde": "No result was found / could be generated in time for your most recent submission. Please check your code manually as far as possible."
                 }
             },
-            "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission.",
+            "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission. Commit and push again to start a new build.",
             "seeMore": "See more",
             "noFeedback": "No feedback available",
             "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}."
