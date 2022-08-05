@@ -173,7 +173,7 @@ public abstract class AssessmentResource {
         var user = userRepository.getUserWithGroupsAndAuthorities();
         var isAtLeastEditor = authCheckService.isAtLeastEditorForExercise(exercise, user);
         var isAtLeastTutor = authCheckService.isAtLeastTeachingAssistantForExercise(exercise, user);
-        // It is allowed to get the example assessment, if the user is an instructor or
+        // It is allowed to get the example assessment, if the user is at least an editor or
         // if the user is a tutor and the submission is not used for tutorial in the assessment dashboard
         // The reason is that example submissions with isTutorial = false should be shown immediately (with the assessment) to the tutor and
         // for example submission with isTutorial = true, the assessment should not be shown to the tutor. Instead, the tutor should try to assess it him/herself
