@@ -36,6 +36,8 @@ import { NgxChartsMultiSeriesDataEntry } from 'app/shared/chart/ngx-charts-datat
 import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Course } from 'app/entities/course.model';
 import dayjs from 'dayjs/esm';
+import { ResultTemplateStatus } from 'app/exercises/shared/result/result.component';
+import { IconProp } from '@fortawesome/fontawesome-svg-core';
 
 export enum FeedbackItemType {
     Issue,
@@ -69,6 +71,7 @@ export class ResultDetailComponent implements OnInit {
     readonly AssessmentType = AssessmentType;
     readonly ExerciseType = ExerciseType;
     readonly FeedbackItemType = FeedbackItemType;
+    readonly ResultTemplateStatus = ResultTemplateStatus;
     readonly roundScoreSpecifiedByCourseSettings = roundValueSpecifiedByCourseSettings;
 
     @Input() exercise?: Exercise;
@@ -78,6 +81,10 @@ export class ResultDetailComponent implements OnInit {
     @Input() showTestDetails = false;
     @Input() showScoreChart = false;
     @Input() exerciseType: ExerciseType;
+    @Input() resultString: string;
+    @Input() textColorClass: string;
+    @Input() resultIconClass: IconProp;
+    @Input() templateStatus: ResultTemplateStatus;
     /**
      * Translate key for an HTML message that is displayed at the top of the result details, if defined.
      */

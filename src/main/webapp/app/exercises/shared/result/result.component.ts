@@ -352,6 +352,10 @@ export class ResultComponent implements OnInit, OnChanges {
         const componentInstance: ResultDetailComponent = modalRef.componentInstance;
         componentInstance.exercise = this.exercise;
         componentInstance.result = result;
+        componentInstance.resultString = this.resultString;
+        componentInstance.textColorClass = this.textColorClass;
+        componentInstance.resultIconClass = this.resultIconClass;
+        componentInstance.templateStatus = this.templateStatus;
         componentInstance.showTestDetails =
             (this.exercise?.type === ExerciseType.PROGRAMMING && (this.exercise as ProgrammingExercise).showTestNamesToStudents) || this.showTestDetails;
         if (this.exercise) {
