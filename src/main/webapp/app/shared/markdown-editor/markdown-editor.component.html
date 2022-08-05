@@ -4,7 +4,7 @@
         <ng-container ngbNavItem="editor_edit">
             <a ngbNavLink class="btn-sm text-normal" *ngIf="showEditButton">{{ 'entity.action.edit' | artemisTranslate }}</a>
             <ng-template ngbNavContent>
-                <div class="height-100 border-0 markdown-editor d-flex flex-column">
+                <div class="height-100 border-0 markdown-editor d-flex flex-column" [id]="uniqueMarkdownEditorId">
                     <jhi-ace-editor
                         #aceEditor
                         [mode]="aceEditorOptions.mode"

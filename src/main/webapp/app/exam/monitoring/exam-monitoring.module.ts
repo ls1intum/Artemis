@@ -27,6 +27,7 @@ import { ExerciseDetailTemplateChartComponent } from 'app/exam/monitoring/charts
 import { ExerciseDetailSubmissionChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-submission-chart.component';
 import { ExerciseDetailNavigationChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-navigation-chart.component';
 import { ExerciseDetailCurrentChartComponent } from 'app/exam/monitoring/charts/exercise-detail/exercise-detail-current-chart.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...examMonitoringState];
 
@@ -41,6 +42,7 @@ const ENTITY_STATES = [...examMonitoringState];
         ArtemisSharedComponentModule,
         ArtemisDataTableModule,
         NgxDatatableModule,
+        FeatureToggleModule,
     ],
     declarations: [
         ExamMonitoringComponent,

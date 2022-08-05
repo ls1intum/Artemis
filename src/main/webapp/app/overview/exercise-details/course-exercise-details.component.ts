@@ -43,13 +43,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -60,6 +61,7 @@ const MAX_RESULT_HISTORY_LENGTH = 5;
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
+    readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
     readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
     readonly QUIZ = ExerciseType.QUIZ;
@@ -92,7 +94,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
-    plagiarismCase?: PlagiarismCase;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
 
@@ -108,7 +110,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-    public wasSubmissionSimulated = false;
 
     // Icons
     faBook = faBook;
@@ -117,7 +118,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faListAlt = faListAlt;
     faSignal = faSignal;
-    faExternalLinkAlt = faExternalLinkAlt;
     faFileSignature = faFileSignature;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
@@ -192,8 +192,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
         });
-        this.plagiarismCaseService.getPlagiarismCaseForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCase>) => {
-            this.plagiarismCase = res.body!;
+        this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
+            this.plagiarismCaseInfo = res.body ?? undefined;
         });
     }
 
@@ -416,13 +416,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                 });
         }
-    }
-
-    /**
-     * Navigates to the previous page or, if no previous navigation happened, to the courses exercise overview
-     */
-    backToCourse() {
-        this.navigationUtilService.navigateBack(['courses', this.courseId.toString(), 'exercises']);
     }
 
     exerciseRatedBadge(result: Result): string {

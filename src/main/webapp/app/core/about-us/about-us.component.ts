@@ -36,7 +36,7 @@ export class AboutUsComponent implements OnInit {
         ['notifications', { notificationsURL: 'https://docs.artemis.ase.in.tum.de/user/notifications' }],
         ['teamExercises', { teamExercisesUrl: 'https://docs.artemis.ase.in.tum.de/user/exercises/team-exercises/' }],
         ['lectures', { lecturesUrl: 'https://docs.artemis.ase.in.tum.de/user/lectures/' }],
-        ['integratedMarkdownEditor', {}],
+        ['integratedMarkdownEditor', { markdownEditorUrl: 'https://docs.artemis.ase.in.tum.de/user/markdown-support/' }],
         ['plagiarismChecks', { jPlagUrl: 'https://github.com/jplag/JPlag/', plagiarismChecksUrl: 'https://docs.artemis.ase.in.tum.de/user/plagiarism-check/' }],
         ['learningAnalytics', { learningAnalyticsUrl: 'https://docs.artemis.ase.in.tum.de/user/learning-analytics/' }],
         ['scalable', { scalingUrl: 'https://docs.artemis.ase.in.tum.de/user/scaling/' }],

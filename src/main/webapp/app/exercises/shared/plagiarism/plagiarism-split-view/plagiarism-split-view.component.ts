@@ -24,7 +24,6 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
     @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
-    @Input() studentLogin: string;
     @Input() sortByStudentLogin: string;
 
     @ViewChildren(SplitPaneDirective) panes!: QueryList<SplitPaneDirective>;
@@ -68,19 +67,35 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
 
         if (changes.comparison) {
             this.plagiarismCasesService
-                .getPlagiarismComparisonForSplitView(this.exercise.course?.id!, changes.comparison.currentValue.id, this.studentLogin)
+                .getPlagiarismComparisonForSplitView(this.exercise.course?.id!, changes.comparison.currentValue.id)
                 .subscribe((resp: HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>) => {
                     this.plagiarismComparison = resp.body!;
                     if (this.sortByStudentLogin && this.sortByStudentLogin === this.plagiarismComparison.submissionB.studentLogin) {
-                        const temp = this.plagiarismComparison.submissionA;
-                        this.plagiarismComparison.submissionA = this.plagiarismComparison.submissionB;
-                        this.plagiarismComparison.submissionB = temp;
+                        this.swapSubmissions(this.plagiarismComparison);
                     }
                     if (this.isProgrammingOrTextExercise) {
                         this.parseTextMatches(this.plagiarismComparison as PlagiarismComparison<TextSubmissionElement>);
                     }
                 });
         }
+    }
+
+    /**
+     * Swaps fields of A with fields of B in-place.
+     * More specifically, swaps submissionA with submissionB and startA with startB in matches.
+     * @param plagiarismComparison plagiarism comparison that will be modified in-place
+     * @private
+     */
+    private swapSubmissions(plagiarismComparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>) {
+        const temp = plagiarismComparison.submissionA;
+        plagiarismComparison.submissionA = plagiarismComparison.submissionB;
+        plagiarismComparison.submissionB = temp;
+
+        plagiarismComparison.matches.forEach((match) => {
+            const tempStart = match.startA;
+            match.startA = match.startB;
+            match.startB = tempStart;
+        });
     }
 
     parseTextMatches({ submissionA, submissionB, matches }: PlagiarismComparison<TextSubmissionElement>) {
@@ -115,7 +130,7 @@ export class PlagiarismSplitViewComponent implements AfterViewInit, OnChanges, O
             if (length === 0) {
                 return;
             }
-            const file = submission.elements![start].file || 'none';
+            const file = submission.elements![start]?.file || 'none';
 
             if (!filesToMatchedElements.has(file)) {
                 filesToMatchedElements.set(file, []);
