@@ -12,7 +12,7 @@
             )}">Notification Content for Plagiarism Verdict
             </span>
         <div class="bordered-content">
-            <p th:utext="${notificationSubject.getVerdict()}">Verdict</p>
+            <p th:utext="${notificationSubject.getVerdict().getEmailMessage()}">Verdict</p>
         </div>
         <th:block th:replace="mail/notification/fragments :: openInArtemisButton"/>
     </div>
