@@ -1,7 +1,7 @@
 .. _learning-analytics:
 
 Learning Analytics
-=====
+==================
 
 .. contents:: Content of this document
     :local:
@@ -16,7 +16,7 @@ It allows instructors to evaluate the average student performance based on exerc
     To preserve the individual's data privacy, Artemis calculates the data on the fly and only shows aggregated data to instructors so that it's not possible to track an individual student within the learning analytics modules.
 
 Learning Analytics for Students
-------------------
+-------------------------------
 Students can access their individual learning analytics for a specific course by navigating to the course's ``Statistics`` page.
 
 |students-statistics|
@@ -50,7 +50,7 @@ When clicking on a learning goal, a modal opens and shows detailed statistics ab
 |students-learning-goals-statistics-detail|
 
 Learning Analytics for Instructors
-------------------
+----------------------------------
 Artemis provides instructors with several different learning analytics, which are detailed in this section.
 Key statistics such as the number of total assessments or the average student score are already displayed on the course's main page.
 
