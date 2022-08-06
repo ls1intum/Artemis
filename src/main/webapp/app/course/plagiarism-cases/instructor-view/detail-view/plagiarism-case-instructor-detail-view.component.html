@@ -56,10 +56,7 @@
                         <span class="input-group-text">%</span>
                     </div>
                 </div>
-                <div
-                    class="row justify-content-center mt-2"
-                    [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
-                >
+                <div class="row justify-content-center mt-2">
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction"
                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
@@ -76,10 +73,7 @@
                 <div class="row justify-content-center">
                     <textarea class="col" [(ngModel)]="verdictMessage" [disabled]="!!plagiarismCase.verdict" [readonly]="!!plagiarismCase.verdict"></textarea>
                 </div>
-                <div
-                    class="row justify-content-center mt-2"
-                    [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
-                >
+                <div class="row justify-content-center mt-2">
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.warning"
                         confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
@@ -92,10 +86,7 @@
                     ></jhi-confirm-button>
                 </div>
             </div>
-            <div
-                class="col-3 d-flex flex-column"
-                [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
-            >
+            <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
@@ -109,10 +100,7 @@
                     ></jhi-confirm-button>
                 </div>
             </div>
-            <div
-                class="col-3 d-flex flex-column"
-                [ngbTooltip]="isStudentNotified() ? undefined : ('artemisApp.plagiarism.plagiarismCases.verdict.tooltipStudentNotNotified' | artemisTranslate)"
-            >
+            <div class="col-3 d-flex flex-column">
                 <div class="row justify-content-center">
                     <jhi-confirm-button
                         title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
