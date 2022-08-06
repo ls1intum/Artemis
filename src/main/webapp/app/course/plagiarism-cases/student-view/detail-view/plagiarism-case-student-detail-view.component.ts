@@ -9,6 +9,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
 import { PageType } from 'app/shared/metis/metis.util';
 import { faUser } from '@fortawesome/free-solid-svg-icons';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 
 @Component({
     selector: 'jhi-plagiarism-case-student-detail-view',
@@ -23,6 +24,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     exerciseTitle: string | undefined;
 
     private paramSubscription: Subscription;
+    readonly plagiarismVerdict = PlagiarismVerdict;
 
     getIcon = getIcon;
     faUser = faUser;

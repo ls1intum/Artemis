@@ -80,7 +80,7 @@
                 <div class="verdict-container">
                     <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" [destroyOnHide]="false" class="nav-tabs">
                         <li [ngbNavItem]="1">
-                            <a ngbNavLink>Plagiarism</a>
+                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism">Plagiarism</a>
                             <ng-template ngbNavContent>
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription' | artemisTranslate }}</p>
                                 <div class="form-inline">
@@ -106,7 +106,7 @@
                             </ng-template>
                         </li>
                         <li [ngbNavItem]="2">
-                            <a ngbNavLink>Point Deduction</a>
+                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction">Point Deduction</a>
                             <ng-template ngbNavContent>
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription' | artemisTranslate }}</p>
                                 <div class="form-inline">
@@ -136,7 +136,7 @@
                             </ng-template>
                         </li>
                         <li [ngbNavItem]="3">
-                            <a ngbNavLink>Warning</a>
+                            <a ngbNavLink jhiTranslate="artemisApp.plagiarism.plagiarismCases.verdict.warning">Warning</a>
                             <ng-template ngbNavContent>
                                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warningDescription' | artemisTranslate }}</p>
                                 <div class="form">

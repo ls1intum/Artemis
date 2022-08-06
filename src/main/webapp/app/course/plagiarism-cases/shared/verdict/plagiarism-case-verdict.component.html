@@ -7,7 +7,8 @@
 
     <ng-template #verdict>
         <div
-            class="badge bg-danger py-2"
+            class="badge py-2"
+            [class]="plagiarismCase.verdict == plagiarismVerdict.NO_PLAGIARISM ? 'bg-success' : 'bg-danger'"
             ngbTooltip="{{
                 'artemisApp.plagiarism.plagiarismCases.verdict.description'
                     | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }

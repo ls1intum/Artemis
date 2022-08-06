@@ -27,6 +27,17 @@
         </div>
 
         <div class="case-body">
+            <section *ngIf="plagiarismCase.verdict">
+                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION" class="alert alert-danger">
+                    <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate }}</h5>
+                    <p class="mb-0">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
+                </div>
+                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.WARNING" class="alert alert-danger">
+                    <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warning' | artemisTranslate }}</h5>
+                    <p class="mb-0">{{ plagiarismCase.verdictMessage }}</p>
+                </div>
+            </section>
+
             <section>
                 <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
                 <div class="row">
