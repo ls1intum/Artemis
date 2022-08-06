@@ -32,8 +32,12 @@
     z-index: 999;
     transition: 0.3s;
     overflow-y: hidden;
+    color: var(--bs-body-color);
     background-color: var(--notification-sb-background);
     box-shadow: 0 0 20px 0 var(--notification-sb-box-shadow);
+    > *:hover {
+        color: var(--bs-body-color);
+    }
     &.show {
         right: 0;
         transition: 0.3s;
