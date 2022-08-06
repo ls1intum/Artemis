@@ -128,10 +128,14 @@ describe('Plagiarism Cases Instructor View Component', () => {
     }));
 
     it('should create empty post', () => {
+        plagiarismCase.exercise!.title = 'Test Exercise ' + 'a'.repeat(100);
+        plagiarismCase.exercise!.course!.title = 'Test Course ' + 'a'.repeat(100);
         component.plagiarismCase = plagiarismCase;
+        component.ngOnInit();
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
-        expect(component.createdPost.title).toBe('Plagiarism Case Test Exercise');
+        expect(component.createdPost.title).toBe('Plagiarism Case: Test Exercise aaaaaaaaaaaaaaaaaaaaa…');
+        expect(component.createdPost.content!.length).toBeLessThan(1000);
     });
 
     it('should notify student', () => {
