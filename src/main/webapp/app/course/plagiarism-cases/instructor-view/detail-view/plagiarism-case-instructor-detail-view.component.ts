@@ -10,7 +10,7 @@ import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faCheck, faInfo, faUser } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -32,6 +32,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     getIcon = getIcon;
     faUser = faUser;
+    faPrint = faPrint;
     faInfo = faInfo;
     faCheck = faCheck;
 
@@ -214,7 +215,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     /**
      * exports the plagiarism case with all relevant information as PDF
      */
-    exportPlagiarismCase(): void {
-        // TODO: export the plagiarism case as a PDF with all relevant information
+    printPlagiarismCase(): void {
+        window.print();
     }
 }

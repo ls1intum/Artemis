@@ -18,17 +18,44 @@
                         {{ exerciseTitle }}
                     </p>
                 </div>
-                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
-                    <a class="btn btn-secondary" [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]">
-                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise">Affected exercise</span>
-                    </a>
+                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
+                    <button class="btn btn-secondary my-1" (click)="printPlagiarismCase()">
+                        <fa-icon [icon]="faPrint"></fa-icon>
+                    </button>
 
-                    <a
-                        class="btn btn-primary m-1"
-                        [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
-                    >
-                        <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection">Plagiarism Detection</span>
-                    </a>
+                    <div class="btn-group m-1">
+                        <a
+                            class="btn btn-primary d-print-none"
+                            [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]"
+                        >
+                            <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise">Affected exercise</span>
+                        </a>
+
+                        <div class="btn-group" ngbDropdown role="group" aria-label="Button group with nested dropdown">
+                            <button type="button" class="btn btn-primary d-print-none dropdown-toggle-split" ngbDropdownToggle></button>
+                            <div class="dropdown-menu" ngbDropdownMenu>
+                                <a
+                                    ngbDropdownItem
+                                    [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id, 'plagiarism']"
+                                >
+                                    <span jhiTranslate="artemisApp.plagiarism.plagiarismDetection">Plagiarism Detection</span>
+                                </a>
+
+                                <a
+                                    ngbDropdownItem
+                                    [routerLink]="[
+                                        '/course-management',
+                                        courseId,
+                                        getExerciseUrlSegment(plagiarismCase.exercise!.type),
+                                        plagiarismCase.exercise!.id,
+                                        'submissions'
+                                    ]"
+                                >
+                                    <span jhiTranslate="artemisApp.plagiarism.submissions">Student Submissions</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -46,15 +73,42 @@
                     </div>
                 </div>
             </section>
-            <section>
+            <section class="d-print-none">
                 <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}</h2>
                 <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.text' | artemisTranslate }}</p>
 
                 <div class="verdict-container">
                     <ul ngbNav #nav="ngbNav" [(activeId)]="activeTab" [destroyOnHide]="false" class="nav-tabs">
                         <li [ngbNavItem]="1">
+                            <a ngbNavLink>Plagiarism</a>
+                            <ng-template ngbNavContent>
+                                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarismDescription' | artemisTranslate }}</p>
+                                <div class="form-inline">
+                                    <jhi-confirm-button
+                                        title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
+                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                                        [translateText]="true"
+                                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
+                                        (onConfirm)="saveVerdict()"
+                                    ></jhi-confirm-button>
+
+                                    <jhi-confirm-button
+                                        title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
+                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
+                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
+                                        class="mx-1"
+                                        [translateText]="true"
+                                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
+                                        (onConfirm)="saveNoPlagiarismVerdict()"
+                                    ></jhi-confirm-button>
+                                </div>
+                            </ng-template>
+                        </li>
+                        <li [ngbNavItem]="2">
                             <a ngbNavLink>Point Deduction</a>
                             <ng-template ngbNavContent>
+                                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeductionDescription' | artemisTranslate }}</p>
                                 <div class="form-inline">
                                     <div class="input-group w-auto">
                                         <input
@@ -81,9 +135,10 @@
                                 </div>
                             </ng-template>
                         </li>
-                        <li [ngbNavItem]="2">
+                        <li [ngbNavItem]="3">
                             <a ngbNavLink>Warning</a>
                             <ng-template ngbNavContent>
+                                <p>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warningDescription' | artemisTranslate }}</p>
                                 <div class="form">
                                     <div class="form-group">
                                         <textarea
@@ -105,31 +160,6 @@
                                         [translateText]="true"
                                         [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
                                         (onConfirm)="saveWarningVerdict()"
-                                    ></jhi-confirm-button>
-                                </div>
-                            </ng-template>
-                        </li>
-                        <li [ngbNavItem]="3">
-                            <a ngbNavLink>Plagiarism</a>
-                            <ng-template ngbNavContent>
-                                <div class="form-inline">
-                                    <jhi-confirm-button
-                                        title="artemisApp.plagiarism.plagiarismCases.verdict.plagiarism"
-                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
-                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
-                                        [translateText]="true"
-                                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
-                                        (onConfirm)="saveVerdict()"
-                                    ></jhi-confirm-button>
-
-                                    <jhi-confirm-button
-                                        title="artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism"
-                                        confirmationText="artemisApp.plagiarism.plagiarismCases.verdict.confirmationText"
-                                        confirmationTitle="artemisApp.plagiarism.plagiarismCases.verdict.confirmationTitle"
-                                        class="mx-1"
-                                        [translateText]="true"
-                                        [disabled]="!!plagiarismCase.verdict || !isStudentNotified()"
-                                        (onConfirm)="saveNoPlagiarismVerdict()"
                                     ></jhi-confirm-button>
                                 </div>
                             </ng-template>

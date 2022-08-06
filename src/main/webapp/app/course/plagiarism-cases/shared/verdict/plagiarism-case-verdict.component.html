@@ -1,8 +1,8 @@
 <ng-container *ngIf="plagiarismCase" class="my-1">
     <div *ngIf="!plagiarismCase.verdict; else verdict" class="badge bg-secondary py-2">
-        <h5 class="mb-0">
+        <h6 class="mb-0">
             {{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ 'artemisApp.plagiarism.plagiarismCases.verdict.none' | artemisTranslate }}
-        </h5>
+        </h6>
     </div>
 
     <ng-template #verdict>
@@ -13,7 +13,7 @@
                     | artemisTranslate: { date: plagiarismCase.verdictDate | artemisDate, user: plagiarismCase.verdictBy?.name }
             }}"
         >
-            <h5 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ verdictTranslationString | artemisTranslate }}</h5>
+            <h6 class="mb-0">{{ 'artemisApp.plagiarism.plagiarismCases.verdict.verdict' | artemisTranslate }}: {{ verdictTranslationString | artemisTranslate }}</h6>
         </div>
     </ng-template>
 </ng-container>
