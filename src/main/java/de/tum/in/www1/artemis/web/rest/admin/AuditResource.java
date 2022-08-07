@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.admin;
 
 import java.time.Instant;
 import java.time.LocalDate;
@@ -24,9 +24,8 @@ import tech.jhipster.web.util.ResponseUtil;
  * REST controller for getting the audit events.
  */
 @RestController
-@RequestMapping("/management/audits")
+@RequestMapping("api/admin/audits")
 @EnforceAdmin
-// TODO: /admin
 public class AuditResource {
 
     private final AuditEventService auditEventService;
