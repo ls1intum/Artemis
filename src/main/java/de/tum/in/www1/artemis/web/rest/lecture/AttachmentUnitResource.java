@@ -67,7 +67,7 @@ public class AttachmentUnitResource {
      * GET /lectures/:lectureId/attachment-units/:attachmentUnitId : gets the attachment unit with the specified id
      *
      * @param attachmentUnitId the id of the attachmentUnit to retrieve
-     * @param lectureId the id of the lecture to which the unit belongs
+     * @param lectureId        the id of the lecture to which the unit belongs
      * @return the ResponseEntity with status 200 (OK) and with body the attachment unit, or with status 404 (Not Found)
      */
     @GetMapping("/lectures/{lectureId}/attachment-units/{attachmentUnitId}")
@@ -88,10 +88,15 @@ public class AttachmentUnitResource {
     }
 
     /**
-     * PUT /lectures/:lectureId/attachment-units/:attachmentUnitId : Updates an existing attachment unit .
+     * PUT /lectures/:lectureId/attachment-units/:attachmentUnitId : Updates an existing attachment unit
      *
-     * @param lectureId      the id of the lecture to which the attachment unit belongs to update
-     * @param attachmentUnit the attachment unit to update
+     * @param lectureId        the id of the lecture to which the attachment unit belongs to update
+     * @param attachmentUnitId the id of the attachment unit to update
+     * @param attachmentUnit   the attachment unit with updated content
+     * @param attachment       the attachment with updated content
+     * @param file             the optional file to upload
+     * @param keepFilename     specifies if the original filename should be kept or not
+     * @param notificationText the text to be used for the notification. No notification will be sent if the parameter is not set
      * @return the ResponseEntity with status 200 (OK) and with body the updated attachmentUnit
      */
     @PutMapping(value = "/lectures/{lectureId}/attachment-units/{attachmentUnitId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -152,6 +157,9 @@ public class AttachmentUnitResource {
      *
      * @param lectureId      the id of the lecture to which the attachment unit should be added
      * @param attachmentUnit the attachment unit that should be created
+     * @param attachment     the attachment that should be created
+     * @param file           the file to upload
+     * @param keepFilename   specifies if the original filename should be kept or not
      * @return the ResponseEntity with status 201 (Created) and with body the new attachment unit
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
