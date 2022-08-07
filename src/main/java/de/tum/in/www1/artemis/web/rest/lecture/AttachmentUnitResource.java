@@ -98,7 +98,7 @@ public class AttachmentUnitResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<AttachmentUnit> updateAttachmentUnit(@PathVariable Long lectureId, @PathVariable Long attachmentUnitId, @RequestPart AttachmentUnit attachmentUnit,
             @RequestPart Attachment attachment, @RequestPart(required = false) MultipartFile file, @RequestParam(defaultValue = "false") boolean keepFilename,
-            @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
+            @RequestParam(value = "notificationText", required = false) String notificationText) {
         log.debug("REST request to update an attachment unit : {}", attachmentUnit);
         AttachmentUnit existingAttachmentUnit = attachmentUnitRepository.findByIdElseThrow(attachmentUnitId);
         if (existingAttachmentUnit.getLecture() == null || existingAttachmentUnit.getLecture().getCourse() == null) {
@@ -135,7 +135,9 @@ public class AttachmentUnitResource {
         }
 
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-        this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(savedAttachment.getLink()));
+        if (file != null && !file.isEmpty()) {
+            this.cacheManager.getCache("files").evict(fileService.actualPathForPublicPath(savedAttachment.getLink()));
+        }
         savedAttachmentUnit.setAttachment(savedAttachment);
 
         if (notificationText != null) {
@@ -192,6 +194,7 @@ public class AttachmentUnitResource {
         attachmentUnit.getLecture().setLectureUnits(null);
         attachmentUnit.getLecture().setAttachments(null);
         attachmentUnit.getLecture().setPosts(null);
+        attachmentUnit.setAttachment(result);
         return ResponseEntity.created(new URI("/api/attachment-units/" + attachmentUnit.getId())).body(attachmentUnit);
     }
 }
