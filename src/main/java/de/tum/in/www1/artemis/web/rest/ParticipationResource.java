@@ -52,7 +52,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping(ParticipationResource.Endpoints.ROOT)
-@PreAuthorize("hasRole('ADMIN')")
 public class ParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(ParticipationResource.class);

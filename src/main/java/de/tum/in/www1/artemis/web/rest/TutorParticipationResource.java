@@ -28,7 +28,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
 public class TutorParticipationResource {
 
     private final Logger log = LoggerFactory.getLogger(TutorParticipationResource.class);

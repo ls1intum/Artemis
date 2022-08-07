@@ -33,6 +33,7 @@ import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.CIUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.VcsUserManagementService;
@@ -50,7 +51,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("/api")
-@PreAuthorize("hasRole('ADMIN')")
 public class CourseResource {
 
     private final Logger log = LoggerFactory.getLogger(CourseResource.class);
@@ -114,7 +114,8 @@ public class CourseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("/courses")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    // TODO: /admin
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
@@ -148,21 +149,12 @@ public class CourseResource {
      *
      * @param updatedCourse the course to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated course
-     * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PutMapping("/courses")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) throws URISyntaxException {
+    public ResponseEntity<Course> updateCourse(@RequestBody Course updatedCourse) {
         log.debug("REST request to update Course : {}", updatedCourse);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (updatedCourse.getId() == null) {
-            if (authCheckService.isAdmin(user)) {
-                return createCourse(updatedCourse);
-            }
-            else {
-                throw new AccessForbiddenException();
-            }
-        }
 
         var existingCourse = courseRepository.findByIdWithOrganizationsAndLearningGoalsElseThrow(updatedCourse.getId());
         if (!Objects.equals(existingCourse.getShortName(), updatedCourse.getShortName())) {
@@ -594,7 +586,8 @@ public class CourseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);

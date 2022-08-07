@@ -20,6 +20,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -368,7 +369,8 @@ public class TextExerciseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/text-exercises/{exerciseId}/trigger-automatic-assessment")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    // TODO: /admin
     public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
         instanceMessageSendService.sendTextExerciseInstantClustering(exerciseId);
         return ResponseEntity.ok().build();

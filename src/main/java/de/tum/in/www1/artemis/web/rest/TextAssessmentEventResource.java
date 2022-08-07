@@ -17,6 +17,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
+import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 
 /**
@@ -65,7 +66,8 @@ public class TextAssessmentEventResource {
      * @return returns a List of TextAssessmentEvent's
      */
     @GetMapping("events/{courseId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @EnforceAdmin
+    // TODO /admin
     public ResponseEntity<List<TextAssessmentEvent>> getEventsByCourseId(@PathVariable Long courseId) {
         List<TextAssessmentEvent> events = textAssessmentEventRepository.findAllByCourseId(courseId);
         return ResponseEntity.ok().body(events);
