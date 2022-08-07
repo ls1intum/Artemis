@@ -91,7 +91,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('My Exercise', exercise);
 
-        expect(matchesExercise).toBeTruthy;
+        expect(matchesExercise).toBeTrue();
     });
 
     it('searchMatchesExercise with lowercase term', () => {
@@ -100,7 +100,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my exercise', exercise);
 
-        expect(matchesExercise).toBeTruthy;
+        expect(matchesExercise).toBeTrue();
     });
 
     it('searchMatchesExercise with partial term start', () => {
@@ -109,7 +109,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('my', exercise);
 
-        expect(matchesExercise).toBeTruthy;
+        expect(matchesExercise).toBeTrue();
     });
 
     it('searchMatchesExercise with partial term end', () => {
@@ -118,7 +118,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('ercise', exercise);
 
-        expect(matchesExercise).toBeTruthy;
+        expect(matchesExercise).toBeTrue();
     });
 
     it('searchMatchesExercise without whitespace', () => {
@@ -127,7 +127,7 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('MyExercise', exercise);
 
-        expect(matchesExercise).toBeFalsy;
+        expect(matchesExercise).toBeFalse();
     });
 
     it('searchMatchesExercise with incorrect searchTerm', () => {
@@ -136,20 +136,19 @@ describe('Team Exercise Search Component', () => {
 
         const matchesExercise = comp.searchMatchesExercise('Other Exercise', exercise);
 
-        expect(matchesExercise).toBeFalsy;
+        expect(matchesExercise).toBeFalse();
     });
 
-    it('successfully loads the exercise options', (done) => {
+    it('successfully loads the exercise options', async () => {
         comp.course = new Course();
         comp.course.id = 1;
         comp.ignoreExercises = [];
 
-        expect(comp.exerciseOptions.length).toEqual(0);
+        expect(comp.exerciseOptions).toHaveLength(0);
 
-        comp.loadExerciseOptions().subscribe((exerciseOptions) => {
+        await comp.loadExerciseOptions().subscribe((exerciseOptions) => {
             expect(exerciseOptions).not.toBeNull();
             expect(exerciseOptions!.length).toBeGreaterThan(0);
-            done();
         });
     });
 });

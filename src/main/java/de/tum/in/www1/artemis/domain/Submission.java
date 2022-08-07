@@ -38,7 +38,7 @@ import de.tum.in.www1.artemis.domain.view.QuizView;
         @JsonSubTypes.Type(value = QuizSubmission.class, name = "quiz"), @JsonSubTypes.Type(value = TextSubmission.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadSubmission.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Submission extends DomainObject {
+public abstract class Submission extends DomainObject implements Comparable<Submission> {
 
     @Column(name = "submitted")
     @JsonView(QuizView.Before.class)
@@ -326,5 +326,15 @@ public abstract class Submission extends DomainObject {
     @JsonIgnore
     public Result getResultWithComplaint() {
         return results.stream().filter(result -> Boolean.TRUE.equals(result.hasComplaint())).findFirst().orElse(null);
+    }
+
+    @Override
+    public int compareTo(Submission other) {
+        if (getSubmissionDate() == null || other.getSubmissionDate() == null) {
+            // this case should not happen, but in the rare case we can compare the ids
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getSubmissionDate().compareTo(other.getSubmissionDate());
     }
 }

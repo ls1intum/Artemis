@@ -149,10 +149,10 @@ describe('Notification Popup Component', () => {
             const otherNotification = generateQuizNotification(2);
             notificationPopupComponent.notifications = [otherNotification];
             notificationPopupComponent.ngOnInit();
-            expect(notificationPopupComponent.notifications.length).toEqual(2);
+            expect(notificationPopupComponent.notifications).toHaveLength(2);
             expect(notificationPopupComponent.notifications[0]).toEqual(quizNotification);
             tick(30000);
-            expect(notificationPopupComponent.notifications.length).toEqual(1);
+            expect(notificationPopupComponent.notifications).toHaveLength(1);
             expect(notificationPopupComponent.notifications[0]).toEqual(otherNotification);
         }));
 

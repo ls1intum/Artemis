@@ -15,6 +15,8 @@ import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -36,7 +38,7 @@ import de.tum.in.www1.artemis.util.TextExerciseUtilService;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentDTO;
 import de.tum.in.www1.artemis.web.rest.dto.TextAssessmentUpdateDTO;
 
-public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseRepository exerciseRepo;
@@ -94,7 +96,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     private Course course;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         database.addUsers(2, 3, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
         textExercise = database.findTextExerciseWithTitle(course.getExercises(), "Text");
@@ -103,13 +105,13 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testPrepareSubmissionForAssessment() {
+    void testPrepareSubmissionForAssessment() {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
         textAssessmentService.prepareSubmissionForAssessment(textSubmission, null);
@@ -119,7 +121,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testPrepareSubmissionForAssessmentAutomaticLabel() {
+    void testPrepareSubmissionForAssessmentAutomaticLabel() {
         // create two text blocks
         int submissionCount = 2;
         int submissionSize = 1;
@@ -172,7 +174,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(secondResult.getFeedbacks().get(0).getSuggestedFeedbackReference()).isEqualTo(feedback.getReference());
     }
 
-    public Result createSampleResultForSubmission(Submission submission) {
+    private Result createSampleResultForSubmission(Submission submission) {
         Result result = new Result();
         result.setAssessor(database.getUserByLogin("tutor1"));
         result.setCompletionDate(now());
@@ -183,7 +185,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveParticipationForSubmission_studentHidden() throws Exception {
+    void retrieveParticipationForSubmission_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
 
@@ -199,7 +201,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveParticipationForLockedSubmission() throws Exception {
+    void retrieveParticipationForLockedSubmission() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, false);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor2");
         Result result = textSubmission.getLatestResult();
@@ -213,14 +215,14 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveParticipationForNonExistingSubmission() throws Exception {
+    void retrieveParticipationForNonExistingSubmission() throws Exception {
         StudentParticipation participation = request.get("/api/participations/1/submissions/345395769256365/for-text-assessment", HttpStatus.NOT_FOUND, StudentParticipation.class);
         assertThat(participation).as("participation should not be found").isNull();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteTextExampleAssessment() throws Exception {
+    void testDeleteTextExampleAssessment() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
@@ -234,7 +236,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteTextExampleAssessment_wrongExerciseId() throws Exception {
+    void testDeleteTextExampleAssessment_wrongExerciseId() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
@@ -249,7 +251,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "TA")
-    public void getTextSubmissionWithResultId() throws Exception {
+    void getTextSubmissionWithResultId() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
         submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(1);
@@ -264,7 +266,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getTextSubmissionWithResultIdAsTutor_badRequest() throws Exception {
+    void getTextSubmissionWithResultIdAsTutor_badRequest() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
         submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
@@ -276,7 +278,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void getTextSubmissionWithResultIdAsTutor_wrongParticipationId() throws Exception {
+    void getTextSubmissionWithResultIdAsTutor_wrongParticipationId() throws Exception {
         TextSubmission submission = ModelFactory.generateTextSubmission("asdf", null, true);
         submission = (TextSubmission) database.addSubmissionWithTwoFinishedResultsWithAssessor(textExercise, submission, "student1", "tutor1");
         Result storedResult = submission.getResultForCorrectionRound(0);
@@ -291,7 +293,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
+    void updateTextAssessmentAfterComplaint_wrongParticipationId() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
         Result textAssessment = textSubmission.getLatestResult();
@@ -314,7 +316,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
+    void updateTextAssessmentAfterComplaint_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
         Result textAssessment = textSubmission.getLatestResult();
@@ -338,7 +340,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void updateTextAssessmentAfterComplaint_withTextBlocks() throws Exception {
+    void updateTextAssessmentAfterComplaint_withTextBlocks() throws Exception {
         // Setup
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
@@ -370,7 +372,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(updatedResult).as("updated result found").isNotNull();
     }
 
-    public TextSubmission prepareSubmission() throws Exception {
+    private TextSubmission prepareSubmission() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
@@ -383,7 +385,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void saveTextAssessment_studentHidden() throws Exception {
+    void saveTextAssessment_studentHidden() throws Exception {
         TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -398,7 +400,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void saveTextAssessment_wrongParticipationId() throws Exception {
+    void saveTextAssessment_wrongParticipationId() throws Exception {
 
         TextSubmission submissionWithoutAssessment = prepareSubmission();
 
@@ -414,7 +416,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void submitTextAssessment_studentHidden() throws Exception {
+    void submitTextAssessment_studentHidden() throws Exception {
 
         TextSubmission submissionWithoutAssessment = prepareSubmission();
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -428,7 +430,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void submitTextAssessment_wrongParticipationId() throws Exception {
+    void submitTextAssessment_wrongParticipationId() throws Exception {
         TextSubmission submissionWithoutAssessment = prepareSubmission();
 
         final TextAssessmentDTO textAssessmentDTO = new TextAssessmentDTO();
@@ -443,7 +445,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void setNumberOfAffectedSubmissionsPerBlock_withIdenticalTextBlocks() throws Exception {
+    void setNumberOfAffectedSubmissionsPerBlock_withIdenticalTextBlocks() throws Exception {
         int submissionCount = 5;
         int submissionSize = 1;
         int numberOfBlocksTotally = submissionCount * submissionSize;
@@ -474,7 +476,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getResult_studentHidden() throws Exception {
+    void getResult_studentHidden() throws Exception {
         int submissionCount = 5;
         int submissionSize = 4;
         int[] clusterSizes = new int[] { 4, 5, 10, 1 };
@@ -506,7 +508,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getParticipationForNonTextExercise() throws Exception {
+    void getParticipationForNonTextExercise() throws Exception {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
@@ -522,7 +524,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getDataForTextEditor_assessorHidden() throws Exception {
+    void getDataForTextEditor_assessorHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
 
@@ -535,7 +537,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
+    void getDataForTextEditorForNonTextExercise_badRequest() throws Exception {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(ZonedDateTime.now().minusDays(1), ZonedDateTime.now().plusDays(1),
                 ZonedDateTime.now().plusDays(2), "png,pdf", textExercise.getCourseViaExerciseGroupOrCourseMember());
         exerciseRepo.save(fileUploadExercise);
@@ -548,7 +550,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getDataForTextEditor_hasTextBlocks() throws Exception {
+    void getDataForTextEditor_hasTextBlocks() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         var textBlocks = textExerciseUtilService.generateTextBlocks(1);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
@@ -563,7 +565,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void getDataForTextEditor_asOtherStudent() throws Exception {
+    void getDataForTextEditor_asOtherStudent() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.FORBIDDEN, Participation.class);
@@ -571,7 +573,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getDataForTextEditor_BeforeExamPublishDate_Forbidden() throws Exception {
+    void getDataForTextEditor_BeforeExamPublishDate_Forbidden() throws Exception {
         // create exam
         Exam exam = database.addExamWithExerciseGroup(course, true);
         exam.setStartDate(now().minusHours(2));
@@ -596,7 +598,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getDataForTextEditor_studentHidden() throws Exception {
+    void getDataForTextEditor_studentHidden() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "tutor1");
 
@@ -609,7 +611,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getDataForTextEditor_submissionWithoutResult() throws Exception {
+    void getDataForTextEditor_submissionWithoutResult() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission = database.saveTextSubmission(textExercise, textSubmission, "student1");
         request.get("/api/text-editor/" + textSubmission.getParticipation().getId(), HttpStatus.OK, StudentParticipation.class);
@@ -633,7 +635,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getExampleResultForTutor_wrongExerciseId() throws Exception {
+    void getExampleResultForTutor_wrongExerciseId() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         textSubmission.setExampleSubmission(true);
         textSubmission = database.saveTextSubmissionWithResultAndAssessor(textExercise, textSubmission, "student1", "instructor1");
@@ -647,20 +649,20 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void getExampleResultForTutorAsStudent() throws Exception {
+    void getExampleResultForTutorAsStudent() throws Exception {
         getExampleResultForTutor(HttpStatus.FORBIDDEN, true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getExampleResultForTutorAsTutor() throws Exception {
+    void getExampleResultForTutorAsTutor() throws Exception {
         // TODO: somehow this test fails in IntelliJ but passes when executed on the command line?!?
         getExampleResultForTutor(HttpStatus.OK, true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
+    void getExampleResultForNonExampleSubmissionAsTutor() throws Exception {
         final var result = getExampleResultForTutor(HttpStatus.OK, false);
         assertThat(result).isNull();
     }
@@ -675,94 +677,94 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void cancelOwnAssessmentAsStudent() throws Exception {
+    void cancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void cancelOwnAssessmentAsTutor() throws Exception {
+    void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+    void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+    void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void cancelAssessment_wrongSubmissionId() throws Exception {
+    void cancelAssessment_wrongSubmissionId() throws Exception {
         request.post("/api/participations/1/submissions/100/cancel-assessment", null, HttpStatus.NOT_FOUND);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
+    void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_saveInstructorPossible() throws Exception {
+    void testOverrideAssessment_saveInstructorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
+    void testOverrideAssessment_saveSameTutorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+    void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+    void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+    void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", false);
@@ -770,28 +772,28 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
@@ -799,7 +801,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSubmitAssessment_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+    void testSubmitAssessment_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
@@ -837,7 +839,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSubmitAssessment_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+    void testSubmitAssessment_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         textExercise.setMaxPoints(10.0);
@@ -868,7 +870,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSubmitAssessment_IncludedAsBonusExercise() throws Exception {
+    void testSubmitAssessment_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         textExercise.setMaxPoints(10.0);
@@ -899,7 +901,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSubmitAssessment_NotIncludedExercise() throws Exception {
+    void testSubmitAssessment_NotIncludedExercise() throws Exception {
         // setting up exercise
         textExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         textExercise.setMaxPoints(10.0);
@@ -930,7 +932,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testSubmitAssessment_withResultOver100Percent() throws Exception {
+    void testSubmitAssessment_withResultOver100Percent() throws Exception {
         textExercise = (TextExercise) database.addMaxScoreAndBonusPointsToExercise(textExercise);
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
@@ -996,7 +998,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAtheneEnabled() throws Exception {
+    void testTextBlocksAreConsistentWhenOpeningSameAssessmentTwiceWithAtheneEnabled() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
@@ -1032,7 +1034,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void checkTextSubmissionWithoutAssessmentAndRetrieveParticipationForSubmissionReturnSameBlocksAndFeedback() throws Exception {
+    void checkTextSubmissionWithoutAssessmentAndRetrieveParticipationForSubmissionReturnSameBlocksAndFeedback() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
 
         LinkedMultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
@@ -1094,7 +1096,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void checkTextBlockSavePreservesClusteringInformation() throws Exception {
+    void checkTextBlockSavePreservesClusteringInformation() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
         final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));
 
@@ -1131,7 +1133,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void checkTrackingTokenHeader() throws Exception {
+    void checkTrackingTokenHeader() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("Some text", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
@@ -1146,7 +1148,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveConflictingTextSubmissions() throws Exception {
+    void retrieveConflictingTextSubmissions() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/"
                 + textSubmissions.get(0).getId() + "/feedbacks/" + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.OK,
@@ -1164,7 +1166,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveConflictingTextSubmissions_wrongParticipationId() throws Exception {
+    void retrieveConflictingTextSubmissions_wrongParticipationId() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         long randomId = 54234;
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + randomId + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
@@ -1175,7 +1177,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
+    void retrieveConflictingTextSubmissions_automaticAssessmentDisabled() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         textExercise.setAssessmentType(AssessmentType.MANUAL);
         exerciseRepo.save(textExercise);
@@ -1187,7 +1189,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
+    void retrieveConflictingTextSubmissions_otherTutorForbidden() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/" + textSubmissions.get(0).getId() + "/feedbacks/"
                 + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.FORBIDDEN, TextSubmission.class);
@@ -1195,7 +1197,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void retrieveConflictingTextSubmissions_forNonExistingSubmission() throws Exception {
+    void retrieveConflictingTextSubmissions_forNonExistingSubmission() throws Exception {
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackAndConflicts();
         List<TextSubmission> conflictingTextSubmissions = request.getList("/api/participations/" + textSubmissions.get(0).getParticipation().getId() + "/submissions/123/feedbacks/"
                 + textSubmissions.get(0).getLatestResult().getFeedbacks().get(0).getId() + "/feedback-conflicts", HttpStatus.BAD_REQUEST, TextSubmission.class);
@@ -1204,7 +1206,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflict_tutor() throws Exception {
+    void solveFeedbackConflict_tutor() throws Exception {
         FeedbackConflict feedbackConflict = solveFeedbackConflict(HttpStatus.OK);
         assertThat(feedbackConflict).isNotNull();
         assertThat(feedbackConflict.getSolvedAt()).isNotNull();
@@ -1214,25 +1216,25 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void solveFeedbackConflict_otherTutor() throws Exception {
+    void solveFeedbackConflict_otherTutor() throws Exception {
         solveFeedbackConflict(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void solveFeedbackConflict_instructor() throws Exception {
+    void solveFeedbackConflict_instructor() throws Exception {
         solveFeedbackConflict(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor3", roles = "TA")
-    public void solveFeedbackConflict_forbiddenTutor() throws Exception {
+    void solveFeedbackConflict_forbiddenTutor() throws Exception {
         solveFeedbackConflict(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflict_forNonExistingConflict() throws Exception {
+    void solveFeedbackConflict_forNonExistingConflict() throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
 
         FeedbackConflict feedbackConflict = request.postWithResponseBody("/api/exercises/" + textExercise.getId() + "/feedback-conflicts/2/solve", null, FeedbackConflict.class,
@@ -1242,7 +1244,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void solveFeedbackConflict_wrongExerciseId() throws Exception {
+    void solveFeedbackConflict_wrongExerciseId() throws Exception {
         prepareTextSubmissionsWithFeedbackAndConflicts();
         long randomId = 57456;
         FeedbackConflict feedbackConflict = request.postWithResponseBody(
@@ -1257,10 +1259,11 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
                 null, FeedbackConflict.class, expectedStatus);
     }
 
-    @Test
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @EnumSource(value = AssessmentType.class, names = { "SEMI_AUTOMATIC", "MANUAL" })
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void multipleCorrectionRoundsForExam() throws Exception {
-        // Setup exam with 2 correction rounds and a programming exercise
+    void multipleCorrectionRoundsForExam(AssessmentType assessmentType) throws Exception {
+        // Setup exam with 2 correction rounds and a text exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         Exam exam = database.addExam(textExercise.getCourseViaExerciseGroupOrCourseMember());
         exam.setNumberOfCorrectionRoundsInExam(2);
@@ -1273,6 +1276,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         Exam examWithExerciseGroups = examRepository.findWithExerciseGroupsAndExercisesById(exam.getId()).get();
         exerciseGroup1 = examWithExerciseGroups.getExerciseGroups().get(0);
         TextExercise exercise = ModelFactory.generateTextExerciseForExam(exerciseGroup1);
+        exercise.setAssessmentType(assessmentType);
         exercise = exerciseRepo.save(exercise);
         exerciseGroup1.addExercise(exercise);
 
@@ -1468,7 +1472,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
         return asList(textSubmission1, textSubmission2);
     }
 
-    public void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
+    private void addAssessmentFeedbackAndCheckScore(TextSubmission submissionWithoutAssessment, TextAssessmentDTO textAssessmentDTO, List<Feedback> feedbacks, double pointsAwarded,
             long expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj")
                 .reference(ModelFactory.generateTextBlock(0, 5, "test" + feedbacks.size()).getId()));
@@ -1480,7 +1484,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testdeleteResult() throws Exception {
+    void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("text", 1);
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));
@@ -1500,7 +1504,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testFeedbackIdIsSetCorrectly() throws Exception {
+    void testFeedbackIdIsSetCorrectly() throws Exception {
         TextSubmission textSubmission = ModelFactory.generateTextSubmission("This is Part 1, and this is Part 2. There is also Part 3.", Language.ENGLISH, true);
         database.saveTextSubmission(textExercise, textSubmission, "student1");
         exerciseDueDatePassed();
@@ -1530,7 +1534,7 @@ public class TextAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testConsecutiveSaveFailsAfterAddingOrRemovingReferencedFeedback() throws Exception {
+    void testConsecutiveSaveFailsAfterAddingOrRemovingReferencedFeedback() throws Exception {
 
         List<TextSubmission> textSubmissions = prepareTextSubmissionsWithFeedbackForAutomaticFeedback();
         final Map<String, TextBlock> blocksSubmission1 = textSubmissions.get(0).getBlocks().stream().collect(Collectors.toMap(TextBlock::getId, block -> block));

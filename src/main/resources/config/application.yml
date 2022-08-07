@@ -83,7 +83,7 @@ management:
         enable:
             http: true
             jvm: true
-            logback: true
+            logback: false
             process: true
             system: true
         distribution:
@@ -180,6 +180,15 @@ spring:
         phone:
             home:
                 enabled: false
+    autoconfigure:
+        # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
+        # They can be included once they are processed
+        exclude:
+          - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
 
 hazelcast:
     phone:
@@ -220,7 +229,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     text-assessment-analytics-enabled: false
-    browser-fingerprints-enabled: true
+    student-exam-store-session-data: true
 
 # ===================================================================
 # JHipster specific properties

@@ -36,7 +36,7 @@
             <tbody>
                 <tr *ngFor="let exam of content.resultsOnPage; trackBy: trackId" class="flex-row">
                     <td class="col-1">
-                        <span>{{ exam.id }}</span>
+                        <span [class.ngb-highlight]="'' + exam.id === searchTerm"> {{ exam.id }}</span>
                     </td>
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exam.title" [term]="searchTerm"></ngb-highlight>
@@ -80,7 +80,7 @@
                     The import of the exercise groups and the exercises is currently done on the server. This may take some time
                 </p>
             </div>
-            <jhi-exam-exercise-import [exam]="exam!"></jhi-exam-exercise-import>
+            <jhi-exam-exercise-import [exam]="exam!" [importInSameCourse]="isImportInSameCourse"></jhi-exam-exercise-import>
         </div>
         <div class="modal-footer">
             <jhi-button

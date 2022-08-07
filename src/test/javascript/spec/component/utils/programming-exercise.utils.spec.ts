@@ -160,43 +160,43 @@ describe('ProgrammingExerciseUtils URL utils', () => {
     it('Should return undefined commit url with non-programming participation type', () => {
         participationType = ParticipationType.STUDENT;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined repository url for student participation', () => {
         repositoryUrl = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined participation type', () => {
         participationType = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined project key', () => {
         projectKey = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined participant identifier for student participation', () => {
         participantIdentifier = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined commit hash url template', () => {
         commitHashURLTemplate = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined participation', () => {
         generateParticipationAndSubmission();
         participation = undefined;
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 });
 

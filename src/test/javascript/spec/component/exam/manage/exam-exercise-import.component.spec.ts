@@ -81,14 +81,14 @@ describe('Exam Exercise Import Component', () => {
         component.importInSameCourse = false;
         component.ngOnInit();
 
-        expect(component.selectedExercises.size).toEqual(5);
+        expect(component.selectedExercises.size).toBe(5);
         expect(component.selectedExercises.get(exerciseGroup1)).toEqual(new Set<Exercise>().add(modelingExercise));
         expect(component.selectedExercises.get(exerciseGroup2)).toEqual(new Set<Exercise>().add(textExercise).add(textExercise2));
         expect(component.selectedExercises.get(exerciseGroup3)).toEqual(new Set<Exercise>().add(programmingExercise));
         expect(component.selectedExercises.get(exerciseGroup4)).toEqual(new Set<Exercise>().add(quizExercise));
         expect(component.selectedExercises.get(exerciseGroup5)).toEqual(new Set<Exercise>().add(fileUploadExercise));
 
-        expect(component.containsProgrammingExercises.size).toEqual(5);
+        expect(component.containsProgrammingExercises.size).toBe(5);
         expect(component.containsProgrammingExercises.get(exerciseGroup3)).toBeTrue();
         expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBeFalse();
         expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBeFalse();
@@ -96,7 +96,7 @@ describe('Exam Exercise Import Component', () => {
         expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBeFalse();
 
         // For importInSameCourse = false, this should be preliminary empty
-        expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(0);
+        expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(0);
     });
 
     it('should initialize ngOnInit with titleAndShortNameOfProgrammingExercises', () => {
@@ -104,14 +104,14 @@ describe('Exam Exercise Import Component', () => {
         component.importInSameCourse = true;
         component.ngOnInit();
 
-        expect(component.selectedExercises.size).toEqual(5);
+        expect(component.selectedExercises.size).toBe(5);
         expect(component.selectedExercises.get(exerciseGroup1)).toEqual(new Set<Exercise>().add(modelingExercise));
         expect(component.selectedExercises.get(exerciseGroup2)).toEqual(new Set<Exercise>().add(textExercise).add(textExercise2));
         expect(component.selectedExercises.get(exerciseGroup3)).toEqual(new Set<Exercise>().add(programmingExercise));
         expect(component.selectedExercises.get(exerciseGroup4)).toEqual(new Set<Exercise>().add(quizExercise));
         expect(component.selectedExercises.get(exerciseGroup5)).toEqual(new Set<Exercise>().add(fileUploadExercise));
 
-        expect(component.containsProgrammingExercises.size).toEqual(5);
+        expect(component.containsProgrammingExercises.size).toBe(5);
         expect(component.containsProgrammingExercises.get(exerciseGroup3)).toBeTrue();
         expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBeFalse();
         expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBeFalse();
@@ -119,10 +119,10 @@ describe('Exam Exercise Import Component', () => {
         expect(component.containsProgrammingExercises.get(exerciseGroup5)).toBeFalse();
 
         // For importInSameCourse = true, this should be initialized
-        expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(1);
+        expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(1);
         expect(component.titleAndShortNameOfProgrammingExercises.get(programmingExercise.id!)).toEqual([programmingExercise.title, programmingExercise.shortName]);
-        expect(component.getPlaceholderTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.title);
-        expect(component.getPlaceholderShortNameOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.shortName);
+        expect(component.getBlocklistTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.title);
+        expect(component.getBlocklistShortNameOfProgrammingExercise(programmingExercise.id!)).toEqual(programmingExercise.shortName);
     });
 
     it('should initialize maps when updateMapsAfterRejectedImport is called', () => {
@@ -131,7 +131,7 @@ describe('Exam Exercise Import Component', () => {
         // Step 1: Initialize the component
         component.ngOnInit();
         // As importInSameCourse = false, this should be preliminary empty
-        expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(0);
+        expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(0);
 
         // Needed to test the titleAndShortNameOfProgrammingExercises
         const formerProgrammingExerciseTitle = programmingExercise.title;
@@ -151,11 +151,11 @@ describe('Exam Exercise Import Component', () => {
         component.updateMapsAfterRejectedImport();
 
         // Check if titleAndShortNameOfProgrammingExercises contains the rejected title + shortName
-        expect(component.titleAndShortNameOfProgrammingExercises.size).toEqual(1);
-        expect(component.getPlaceholderTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(formerProgrammingExerciseTitle);
+        expect(component.titleAndShortNameOfProgrammingExercises.size).toBe(1);
+        expect(component.getBlocklistTitleOfProgrammingExercise(programmingExercise.id!)).toEqual(formerProgrammingExerciseTitle);
         expect(component.titleAndShortNameOfProgrammingExercises.get(programmingExercise.id!)).toEqual([formerProgrammingExerciseTitle, formerProgrammingExerciseShortName]);
 
-        expect(component.selectedExercises.size).toEqual(5);
+        expect(component.selectedExercises.size).toBe(5);
         expect(component.selectedExercises.get(exerciseGroup1)).toEqual(new Set<Exercise>().add(modelingExercise));
         expect(component.selectedExercises.get(exerciseGroup2)).toEqual(new Set<Exercise>().add(textExercise).add(textExercise2));
         // Contains "new" / rejected exercise group
@@ -163,7 +163,7 @@ describe('Exam Exercise Import Component', () => {
         expect(component.selectedExercises.get(exerciseGroup4)).toEqual(new Set<Exercise>().add(quizExercise));
         expect(component.selectedExercises.get(exerciseGroup5)).toEqual(new Set<Exercise>().add(fileUploadExercise));
 
-        expect(component.containsProgrammingExercises.size).toEqual(5);
+        expect(component.containsProgrammingExercises.size).toBe(5);
         expect(component.containsProgrammingExercises.get(exerciseGroup3Rejected)).toBeTrue();
         expect(component.containsProgrammingExercises.get(exerciseGroup1)).toBeFalse();
         expect(component.containsProgrammingExercises.get(exerciseGroup2)).toBeFalse();
@@ -215,9 +215,9 @@ describe('Exam Exercise Import Component', () => {
         expect(component.exerciseIsSelected(programmingExercise, exerciseGroup3)).toBeTrue();
     });
 
-    it('should correctly return an empty string when titleAndShortNameOfProgrammingExercises do not contain exercise ', () => {
-        expect(component.getPlaceholderTitleOfProgrammingExercise(55)).toEqual('');
-        expect(component.getPlaceholderShortNameOfProgrammingExercise(55)).toEqual('');
+    it('should correctly return an empty string when titleAndShortNameOfProgrammingExercises do not contain exercise', () => {
+        expect(component.getBlocklistTitleOfProgrammingExercise(55)).toBe('');
+        expect(component.getBlocklistShortNameOfProgrammingExercise(55)).toBe('');
     });
 
     it('should correctly map selected Exercises To Exercise Groups', () => {

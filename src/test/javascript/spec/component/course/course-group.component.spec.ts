@@ -89,7 +89,7 @@ describe('Course Management Detail Component', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CourseGroupComponent).not.toBe(null);
+        expect(CourseGroupComponent).not.toBeNull();
     });
 
     describe('OnInit', () => {

@@ -43,6 +43,7 @@ export class ExamImportComponent implements OnInit {
     exam?: Exam;
     loading = false;
     isImportingExercises = false;
+    isImportInSameCourse = false;
 
     content: SearchResult<Exam>;
     total = 0;
@@ -80,6 +81,7 @@ export class ExamImportComponent implements OnInit {
         this.examManagementService.findWithExercisesAndWithoutCourseId(exam.id!).subscribe({
             next: (examRes: HttpResponse<Exam>) => {
                 this.exam = examRes.body!;
+                this.isImportInSameCourse = this.exam.course?.id === this.targetCourseId;
             },
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
         });

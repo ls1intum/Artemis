@@ -88,7 +88,7 @@ describe('ProgrammingExerciseGradingService', () => {
 
         expect(getStub).toHaveBeenCalledOnce();
         expect(testCasesExercise1).toEqual(testCases1);
-        expect(testCasesExercise2).toBe(undefined);
+        expect(testCasesExercise2).toBeUndefined();
 
         gradingService
             .subscribeForTestCases(exercise2.id)

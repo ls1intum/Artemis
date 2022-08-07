@@ -86,21 +86,25 @@ describe('AttachmentUnitComponent', () => {
         expect(downloadFileStub).toHaveBeenCalledOnce();
     });
 
-    it('should call completion callback when downloaded', (done) => {
-        attachmentUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(attachmentUnit);
-            expect(event.completed).toBeTrue();
-            done();
+    it('should call completion callback when downloaded', () => {
+        return new Promise<void>((done) => {
+            attachmentUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(attachmentUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            attachmentUnitComponent.downloadAttachment();
         });
-        attachmentUnitComponent.downloadAttachment();
     }, 1000);
 
-    it('should call completion callback when clicked', (done) => {
-        attachmentUnitComponent.onCompletion.subscribe((event) => {
-            expect(event.lectureUnit).toEqual(attachmentUnit);
-            expect(event.completed).toBeFalse();
-            done();
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            attachmentUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(attachmentUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            attachmentUnitComponent.handleClick(new Event('click'), false);
         });
-        attachmentUnitComponent.handleClick(new Event('click'), false);
     }, 1000);
 });

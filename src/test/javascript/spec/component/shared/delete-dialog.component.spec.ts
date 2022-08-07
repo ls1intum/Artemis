@@ -81,7 +81,7 @@ describe('DeleteDialogComponent', () => {
 
         // User entered correct tile
         comp.confirmEntityName = 'title';
-        expect(comp.confirmEntityName).toEqual('title');
+        expect(comp.confirmEntityName).toBe('title');
         fixture.detectChanges();
         submitButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(submitButton.nativeElement.disabled).toBeFalse();

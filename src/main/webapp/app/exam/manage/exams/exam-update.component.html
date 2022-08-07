@@ -34,7 +34,13 @@
             </div>
             <div class="form-group">
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" [checked]="exam.monitoring" (change)="exam.monitoring = !exam.monitoring" />
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="exam.monitoring"
+                        (change)="exam.monitoring = !exam.monitoring"
+                        [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
+                    />
                     <label class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
                 </div>
@@ -145,7 +151,7 @@
                 <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation">
                     Select the individual exercises, which should be imported alongside the exam, by clicking on it
                 </p>
-                <jhi-exam-exercise-import [exam]="exam"></jhi-exam-exercise-import>
+                <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse"></jhi-exam-exercise-import>
             </div>
 
             <!-- Section exam assessment and student review

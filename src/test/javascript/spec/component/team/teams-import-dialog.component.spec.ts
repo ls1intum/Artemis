@@ -122,7 +122,7 @@ describe('TeamsImportDialogComponent', () => {
             const sourceExercise = mockSourceExercise;
             comp.sourceTeams = [];
             comp.loadSourceTeams(sourceExercise);
-            expect(comp.sourceTeams).toBe(undefined);
+            expect(comp.sourceTeams).toBeUndefined();
             expect(comp.loadingSourceTeams).toBeFalse();
             expect(comp.loadingSourceTeamsFailed).toBeTrue();
             expect(teamServiceStub).toHaveBeenCalledWith(sourceExercise.id);
@@ -130,7 +130,7 @@ describe('TeamsImportDialogComponent', () => {
         });
     });
 
-    describe('loadSourceTeams', () => {
+    describe('loadSourceStub and initImportStrategy', () => {
         let loadSourceStub: jest.SpyInstance;
         let initImportStrategyStub: jest.SpyInstance;
 
@@ -162,7 +162,7 @@ describe('TeamsImportDialogComponent', () => {
 
         it('should set import strategy to undefined if there are teams', () => {
             comp.initImportStrategy();
-            expect(comp.importStrategy).toBe(undefined);
+            expect(comp.importStrategy).toBeUndefined();
         });
     });
 
@@ -366,7 +366,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('should set import strategy to given import strategy', () => {
-            expect(comp.importStrategy).toBe(undefined);
+            expect(comp.importStrategy).toBeUndefined();
             comp.updateImportStrategy(TeamImportStrategyType.CREATE_ONLY);
             expect(comp.importStrategy).toBe(TeamImportStrategyType.CREATE_ONLY);
             comp.updateImportStrategy(TeamImportStrategyType.PURGE_EXISTING);
@@ -401,7 +401,7 @@ describe('TeamsImportDialogComponent', () => {
             });
         });
 
-        describe('import from exercise', () => {
+        describe('import from exercise without showing', () => {
             beforeEach(() => {
                 resetComponent();
                 comp.sourceExercise = undefined;
@@ -694,8 +694,8 @@ describe('TeamsImportDialogComponent', () => {
     describe('setShowImportFromExercise', () => {
         let initImportStrategyStub: jest.SpyInstance;
         const expectValuesToBeReset = () => {
-            expect(comp.sourceTeams).toBe(undefined);
-            expect(comp.sourceExercise).toBe(undefined);
+            expect(comp.sourceTeams).toBeUndefined();
+            expect(comp.sourceExercise).toBeUndefined();
             expect(comp.isImporting).toBeFalse();
             expect(comp.conflictingLoginsSet).toEqual(new Set(logins));
             expect(comp.conflictingRegistrationNumbersSet).toEqual(new Set(registrationNumbers));

@@ -67,7 +67,7 @@ describe('OrganizationManagementComponent', () => {
 
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(component.organizations.length).toBe(2);
+        expect(component.organizations).toHaveLength(2);
         expect(component.organizations[0].numberOfUsers).toBe(1);
         expect(component.organizations[0].numberOfCourses).toBe(1);
         expect(component.organizations[1].numberOfUsers).toBe(2);
@@ -86,7 +86,7 @@ describe('OrganizationManagementComponent', () => {
         fixture.detectChanges();
         tick();
         expect(component).not.toBeNull();
-        expect(component.organizations.length).toEqual(0);
+        expect(component.organizations).toHaveLength(0);
     }));
 
     it('should track id', fakeAsync(() => {
@@ -94,6 +94,6 @@ describe('OrganizationManagementComponent', () => {
         organization1.id = 5;
         organization1.name = 'orgOne';
 
-        expect(component.trackIdentity(0, organization1)).toEqual(5);
+        expect(component.trackIdentity(0, organization1)).toBe(5);
     }));
 });

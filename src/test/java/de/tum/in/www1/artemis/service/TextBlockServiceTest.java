@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 import de.tum.in.www1.artemis.domain.TextBlock;
 import de.tum.in.www1.artemis.domain.TextSubmission;
 
-public class TextBlockServiceTest {
+class TextBlockServiceTest {
 
     private TextBlockService textBlockService;
 
@@ -22,7 +22,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void splitSubmissionIntoBlocksForEmptyText() {
+    void splitSubmissionIntoBlocksForEmptyText() {
         TextSubmission submission = new TextSubmission(0L);
         var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
         assertThat(textBlocks).isEmpty();
@@ -41,7 +41,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void splitSubmissionIntoBlocksForSingleSentence() {
+    void splitSubmissionIntoBlocksForSingleSentence() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World.");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
@@ -50,7 +50,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void splitSubmissionIntoBlocksForTwoSentencesWithoutNewLine() {
+    void splitSubmissionIntoBlocksForTwoSentencesWithoutNewLine() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World. This is a Test.");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
@@ -58,7 +58,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void splitSubmissionsIntoBlocksForManySentencesWithNewlinesWithoutFullstop() {
+    void splitSubmissionsIntoBlocksForManySentencesWithNewlinesWithoutFullstop() {
         final TextSubmission submission = new TextSubmission(0L).text("Hello World. This is a Test\n\n\nAnother Test");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
@@ -66,7 +66,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void splitSubmissionIntoBlocksForManySentencesWithoutPunctuation() {
+    void splitSubmissionIntoBlocksForManySentencesWithoutPunctuation() {
         final TextSubmission submission = new TextSubmission(0L).text("Example:\nThis is the first example\n\nSection 2:\n- Here is a list\n- Of many bullet  points\n\n");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
@@ -78,7 +78,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void respectLeadingWhitespace() {
+    void respectLeadingWhitespace() {
         final var submission = new TextSubmission(0L).text("   Test.");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
@@ -90,7 +90,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void respectLeadingTabs() {
+    void respectLeadingTabs() {
         final var submission = new TextSubmission(0L).text("\t\t\tTest.");
         final var textBlocks = textBlockService.splitSubmissionIntoBlocks(submission);
 
@@ -102,7 +102,7 @@ public class TextBlockServiceTest {
     }
 
     @Test
-    public void splitAssemblaCodeLinesIntoTextBlocks() {
+    void splitAssemblaCodeLinesIntoTextBlocks() {
         final var submission = new TextSubmission(0L).text("""
                 \t\t\tALLOC 3\t\t\t\t\t\t\tLOAD 0
                 \t\t\tREAD\t\t\t\t\t\t\tLOAD 2

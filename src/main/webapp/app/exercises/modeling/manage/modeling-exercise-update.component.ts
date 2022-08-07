@@ -11,7 +11,7 @@ import { KatexCommand } from 'app/shared/markdown-editor/commands/katex.command'
 import { AssessmentType } from 'app/entities/assessment-type.model';
 import { switchMap, tap } from 'rxjs/operators';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
-import { ArtemisNavigationUtilService, navigateToExampleSubmissions } from 'app/utils/navigation.utils';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -185,7 +185,7 @@ export class ModelingExerciseUpdateComponent implements OnInit {
         new SaveExerciseCommand(this.modalService, this.popupService, this.modelingExerciseService, this.backupExercise, this.editType, this.alertService)
             .save(this.modelingExercise, this.notificationText)
             .subscribe({
-                next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise.id!),
+                next: (exercise: ModelingExercise) => this.onSaveSuccess(exercise),
                 error: (error: HttpErrorResponse) => this.onSaveError(error),
                 complete: () => {
                     this.isSaving = false;
@@ -194,26 +194,16 @@ export class ModelingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.modelingExercise);
     }
 
-    private onSaveSuccess(exerciseId: number): void {
+    private onSaveSuccess(exercise: ModelingExercise): void {
         this.eventManager.broadcast({ name: 'modelingExerciseListModification', content: 'OK' });
         this.isSaving = false;
-
-        switch (this.editType) {
-            case EditType.CREATE:
-            case EditType.IMPORT:
-                // Passing exerciseId since it is required for navigation to the example submission dashboard.
-                navigateToExampleSubmissions(this.router, { ...this.modelingExercise, id: exerciseId });
-                break;
-            case EditType.UPDATE:
-                this.previousState();
-                break;
-        }
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse): void {

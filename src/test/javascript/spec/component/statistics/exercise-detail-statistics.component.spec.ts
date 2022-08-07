@@ -61,8 +61,8 @@ describe('ExerciseDetailStatisticsComponent', () => {
 
     it('should initialize chart data', () => {
         fixture.detectChanges();
-        expect(component.doughnutStats.absoluteAveragePoints).toEqual(5);
-        expect(component.doughnutStats.participationsInPercent).toEqual(100);
-        expect(component.doughnutStats.resolvedPostsInPercent).toEqual(50);
+        expect(component.doughnutStats.absoluteAveragePoints).toBe(5);
+        expect(component.doughnutStats.participationsInPercent).toBe(100);
+        expect(component.doughnutStats.resolvedPostsInPercent).toBe(50);
     });
 });

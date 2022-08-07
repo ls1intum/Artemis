@@ -8,7 +8,7 @@ import { DragAndDropQuestionUtil } from 'app/exercises/quiz/shared/drag-and-drop
 import { ShortAnswerQuestionUtil } from 'app/exercises/quiz/shared/short-answer-question-util.service';
 import { TranslateService } from '@ngx-translate/core';
 import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { Duration, Option } from './quiz-exercise-interfaces';
+import { Duration } from './quiz-exercise-interfaces';
 import { NgbDate, NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import dayjs from 'dayjs/esm';
 import { Location } from '@angular/common';
@@ -42,6 +42,7 @@ import { round } from 'app/shared/util/utils';
 import { onError } from 'app/shared/util/global.utils';
 import { QuizExerciseValidationDirective } from 'app/exercises/quiz/manage/quiz-exercise-validation.directive';
 import { faExclamationCircle, faPlus, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
 @Component({
     selector: 'jhi-quiz-exercise-detail',
@@ -66,8 +67,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     courseRepository: CourseManagementService;
     notificationText?: string;
 
-    // TODO: why do we have entity, savedEntity and quizExercise?
-    entity: QuizExercise;
+    isImport = false;
 
     /** Constants for 'Add existing questions' and 'Import file' features **/
     showExistingQuestions = false;
@@ -97,11 +97,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     isSaving = false;
     scheduleQuizStart = false;
 
-    /** Status Options **/
-    statusOptionsVisible: Option[] = [new Option(false, 'Hidden'), new Option(true, 'Visible')];
-    statusOptionsPractice: Option[] = [new Option(false, 'Closed'), new Option(true, 'Open for Practice')];
-    statusOptionsActive: Option[] = [new Option(true, 'Active')];
-
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
@@ -115,8 +110,6 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     faExclamationCircle = faExclamationCircle;
 
     readonly QuizMode = QuizMode;
-
-    private initCompleted: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -134,6 +127,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         private modalService: NgbModal,
         public changeDetector: ChangeDetectorRef,
         private exerciseGroupService: ExerciseGroupService,
+        private navigationUtilService: ArtemisNavigationUtilService,
     ) {
         super();
     }
@@ -180,6 +174,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                             this.init();
                         } else if (this.quizExercise) {
                             this.quizExercise.exerciseGroup = this.exerciseGroup;
+                            this.savedEntity.exerciseGroup = this.exerciseGroup;
                         }
                     });
                 } else {
@@ -188,6 +183,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
                         this.init();
                     } else if (this.quizExercise) {
                         this.quizExercise.course = this.course;
+                        this.savedEntity.course = this.course;
                     }
                 }
             });
@@ -207,32 +203,34 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
+     * Initializes and returns a new quiz exercise
+     */
+    initializeNewQuizExercise(): QuizExercise {
+        const newQuiz = new QuizExercise(undefined, undefined);
+        newQuiz.title = '';
+        newQuiz.duration = 600;
+        newQuiz.isOpenForPractice = false;
+        newQuiz.releaseDate = dayjs();
+        newQuiz.randomizeQuestionOrder = true;
+        newQuiz.quizQuestions = [];
+        newQuiz.quizMode = QuizMode.SYNCHRONIZED;
+        newQuiz.allowedNumberOfAttempts = 1;
+        this.prepareEntity(newQuiz);
+        return newQuiz;
+    }
+
+    /**
      * Initializes local constants and prepares the QuizExercise entity
      */
     init(): void {
-        if (this.quizExercise) {
-            this.entity = this.quizExercise;
-        } else {
-            this.entity = new QuizExercise(undefined, undefined);
-            this.entity.title = '';
-            this.entity.duration = 600;
-            this.entity.isOpenForPractice = false;
-            this.entity.releaseDate = dayjs();
-            this.entity.randomizeQuestionOrder = true;
-            this.entity.quizQuestions = [];
-            this.entity.quizMode = QuizMode.SYNCHRONIZED;
-            this.entity.allowedNumberOfAttempts = 1;
-            this.quizExercise = this.entity;
+        if (!this.quizExercise) {
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         if (this.isImport || this.isExamMode) {
             this.quizExercise.quizBatches = [];
             resetDates(this.quizExercise);
         }
-
-        this.prepareEntity(this.entity);
-        // Assign savedEntity to identify local changes
-        this.savedEntity = this.entity.id && !this.isImport ? cloneDeep(this.entity) : new QuizExercise(undefined, undefined);
 
         if (this.isExamMode) {
             this.quizExercise.course = undefined;
@@ -261,21 +259,19 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         }
         this.scheduleQuizStart = (this.quizExercise.quizBatches?.length ?? 0) > 0;
         this.updateDuration();
+        this.exerciseService.validateDate(this.quizExercise);
+
+        // Assign savedEntity to identify local changes
+        this.savedEntity = this.quizExercise.id && !this.isImport ? cloneDeep(this.quizExercise) : new QuizExercise(undefined, undefined);
+
         this.cacheValidation();
-        this.initCompleted = true;
     }
 
     /**
      * Validates if the date is correct
      */
     validateDate() {
-        if (this.initCompleted) {
-            // TODO: quiz cleanup: this makes the exercise dirty and attempts to prevent leaving.
-            // Currently initCompleted field is used to prevent marking the exercise dirty on initialization.
-            // However making a change and undoing it still has the issue.
-            // Additionally, quiz exercises are for some reason the only exercise type the has the unsaved changes warning.
-            this.exerciseService.validateDate(this.quizExercise);
-        }
+        this.exerciseService.validateDate(this.quizExercise);
         const dueDate = this.quizExercise.quizMode === QuizMode.SYNCHRONIZED ? null : this.quizExercise.dueDate;
         this.quizExercise?.quizBatches?.forEach((batch) => {
             const startTime = dayjs(batch.startTime);
@@ -384,7 +380,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     addMultipleChoiceQuestion() {
         if (this.quizExercise == undefined) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         const mcQuestion = new MultipleChoiceQuestion();
@@ -415,7 +411,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     addDragAndDropQuestion(): void {
         if (this.quizExercise == undefined) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         const dndQuestion = new DragAndDropQuestion();
@@ -437,7 +433,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     addShortAnswerQuestion(): void {
         if (this.quizExercise == undefined) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         const shortAnswerQuestion = new ShortAnswerQuestion();
@@ -474,7 +470,7 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
      */
     showHideExistingQuestions(): void {
         if (!this.quizExercise) {
-            this.quizExercise = this.entity;
+            this.quizExercise = this.initializeNewQuizExercise();
         }
 
         // If courses are not populated, then populate list of courses
@@ -887,13 +883,15 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         this.isSaving = false;
         this.pendingChangesCache = false;
         this.prepareEntity(quizExercise);
-        this.savedEntity = cloneDeep(quizExercise);
         this.quizExercise = quizExercise;
+        this.exerciseService.validateDate(this.quizExercise);
+        this.savedEntity = cloneDeep(quizExercise);
         this.changeDetector.detectChanges();
 
-        // Navigate back
+        // Navigate back only if it's an import
+        // If we edit the exercise, a user might just want to save the current state of the added quiz questions without going back
         if (this.isImport) {
-            this.cancel();
+            this.previousState();
         }
     }
 
@@ -995,14 +993,10 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
     }
 
     /**
-     * Navigate back
+     * Navigate back to the overview
      */
-    cancel(): void {
-        if (!this.isExamMode) {
-            this.router.navigate(['/course-management', this.courseId, 'quiz-exercises']);
-        } else {
-            this.router.navigate(['/course-management', this.courseId, 'exams', this.examId, 'exercise-groups']);
-        }
+    previousState(): void {
+        this.navigationUtilService.navigateBackFromExerciseUpdate(this.quizExercise);
     }
 
     /**
@@ -1045,7 +1039,12 @@ export class QuizExerciseDetailComponent extends QuizExerciseValidationDirective
         return super.computeInvalidReasons().concat(invalidReasons);
     }
 
-    hasErrorInQuizBatches() {
-        return this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
+    isSaveDisabled(): boolean {
+        // tslint:disable-next-line:max-line-length
+        return this.isSaving || !this.pendingChangesCache || !this.quizIsValid || this.hasSavedQuizStarted || this.quizExercise.dueDateError || this.hasErrorInQuizBatches();
+    }
+
+    hasErrorInQuizBatches(): boolean {
+        return !!this.quizExercise?.quizBatches?.some((batch) => batch.startTimeError);
     }
 }

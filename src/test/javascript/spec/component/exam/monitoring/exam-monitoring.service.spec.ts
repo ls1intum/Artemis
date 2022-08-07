@@ -164,7 +164,7 @@ describe('ExamMonitoringService', () => {
         const handleActionEventSpy = jest.spyOn(examMonitoringService, 'handleActionEvent').mockImplementation(() => {});
         const saveActionsSpy = jest.spyOn(examMonitoringService, 'saveActions').mockImplementation(() => {});
 
-        examMonitoringService.handleAndSaveActionEvent(exam, studentExam, action, true);
+        examMonitoringService.handleAndSaveActionEvent(exam, studentExam, action, true, true);
 
         expect(handleActionEventSpy).toHaveBeenCalledOnce();
         expect(handleActionEventSpy).toHaveBeenCalledWith(studentExam, action, exam.monitoring, undefined);
@@ -195,7 +195,7 @@ describe('ExamMonitoringService', () => {
 
         examMonitoringService.getExamBehaviorSubject(exam.id!);
 
-        expect(examMonitoringService.getExamBehaviorSubject(exam.id!)).toEqual(undefined);
+        expect(examMonitoringService.getExamBehaviorSubject(exam.id!)).toBeUndefined();
 
         const subject = new BehaviorSubject(exam);
         examObservables.set(exam.id!, subject);
@@ -218,6 +218,6 @@ describe('ExamMonitoringService', () => {
 
     // url
     it('should get correct exam monitoring update url', () => {
-        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toEqual(`${SERVER_API_URL}/api/courses/${exam.course?.id!}/exams/${exam.id!}/statistics`);
+        expect(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!)).toBe(`${SERVER_API_URL}/api/courses/${exam.course?.id!}/exams/${exam.id!}/statistics`);
     });
 });

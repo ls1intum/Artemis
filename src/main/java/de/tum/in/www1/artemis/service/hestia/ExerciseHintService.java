@@ -222,7 +222,7 @@ public class ExerciseHintService {
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
         var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacksElseThrow(exercise.getId(), student.getId());
-        return studentParticipation.getSubmissions().stream().sorted(Comparator.comparing(Submission::getSubmissionDate, Comparator.reverseOrder())).toList();
+        return studentParticipation.getSubmissions().stream().sorted(Comparator.reverseOrder()).toList();
     }
 
     private int subsequentNumberOfSubmissionsForTaskWithStatus(List<Submission> submissions, ProgrammingExerciseTask task, boolean successful) {
