@@ -8,10 +8,7 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { forkJoin, combineLatest } from 'rxjs';
-import dayjs from 'dayjs/esm';
+import { combineLatest } from 'rxjs';
 import { base64StringToBlob } from 'app/utils/blob-util';
 
 @Component({

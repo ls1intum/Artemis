@@ -1,7 +1,5 @@
 import { Component, OnInit, ViewChild } from '@angular/core';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';

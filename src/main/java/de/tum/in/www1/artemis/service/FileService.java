@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service;
 
+import static java.nio.file.StandardCopyOption.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
@@ -7,7 +8,6 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -188,12 +188,12 @@ public class FileService implements DisposableBean {
             responsePath.append(filename);
 
             // copy contents of uploaded file into newly created file
-            Files.copy(file.getInputStream(), newFile.toPath(), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
 
             return responsePath.toString();
         }
         catch (IOException e) {
-            e.printStackTrace();
+            log.error("Could not save file", e);
             throw new InternalServerErrorException("Could not create file");
         }
     }
@@ -486,7 +486,7 @@ public class FileService implements DisposableBean {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
             // make gradlew executable
             if (targetFilePath.endsWith("gradlew")) {
                 copyPath.toFile().setExecutable(true);
