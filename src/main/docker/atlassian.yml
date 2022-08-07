@@ -48,7 +48,7 @@ services:
             - BAMBOO_SERVER=http://bamboo:8085
         networks:
             artemis:
-                ipv4_address: 198.18.0.5
+                ipv4_address: 172.20.0.5
 
 networks:
   artemis:
