@@ -389,7 +389,7 @@ class GradingScaleIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void testDeleteCourseDeletesGradingScale() throws Exception {
         gradingScaleRepository.save(courseGradingScale);
 
-        request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+        request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
 
         Optional<GradingScale> foundGradingScale = gradingScaleRepository.findByCourseId(course.getId());
         assertThat(foundGradingScale).isEmpty();

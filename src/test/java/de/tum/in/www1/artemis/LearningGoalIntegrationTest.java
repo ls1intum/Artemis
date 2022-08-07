@@ -404,7 +404,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
-        request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
+        request.delete("/api/admin/courses/" + idOfCourse, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
     }
 
