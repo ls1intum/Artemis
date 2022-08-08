@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @Entity
@@ -29,6 +30,8 @@ public class TutorialGroup extends DomainObject {
 
     @ManyToMany
     @JoinTable(name = "tutorial_group_registered_student", joinColumns = @JoinColumn(name = "tutorial_group_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "registered_student_id", referencedColumnName = "id"))
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    @JsonIgnoreProperties("registeredTutorialGroups")
     private Set<User> registeredStudents = new HashSet<>();
 
     public String getTitle() {

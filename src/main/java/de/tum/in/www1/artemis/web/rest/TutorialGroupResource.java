@@ -4,15 +4,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
+import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
@@ -20,11 +23,19 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorialGroupService;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
 public class TutorialGroupResource {
+
+    @Value("${jhipster.clientApp.name}")
+    private String applicationName;
+
+    private static final String ENTITY_NAME = "tutorialGroup";
 
     private final Logger log = LoggerFactory.getLogger(TutorialGroupResource.class);
 
@@ -45,6 +56,19 @@ public class TutorialGroupResource {
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
+    }
+
+    /**
+     * GET /tutorial-groups/:tutorialGroupId/title : Returns the title of the tutorial-group with the given id
+     *
+     * @param tutorialGroupId the id of the exam
+     * @return the title of the exam wrapped in an ResponseEntity or 404 Not Found if no exam with that id exists
+     */
+    @GetMapping(value = "/tutorial-groups/{tutorialGroupId}/title")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<String> getTutorialGroupTitle(@PathVariable Long tutorialGroupId) {
+        final var title = tutorialGroupRepository.getTutorialGroupTitle(tutorialGroupId);
+        return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
     }
 
     /**
@@ -114,6 +138,16 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(tutorialGroup);
     }
 
+    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deleteTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
+        log.info("REST request to delete a TutorialGroup : {}", tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
+        tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
+        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, tutorialGroupFromDatabase.getTitle())).build();
+    }
+
     /**
      * PUT /courses/:courseId/tutorial-groups : Updates an existing tutorial group
      *
@@ -140,15 +174,71 @@ public class TutorialGroupResource {
 
         tutorialGroupFromDatabase.setTitle(tutorialGroup.getTitle());
         tutorialGroupFromDatabase.setTeachingAssistant(tutorialGroup.getTeachingAssistant());
-        tutorialGroupFromDatabase.setRegisteredStudents(tutorialGroup.getRegisteredStudents());
 
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
 
         return ResponseEntity.ok(updatedTutorialGroup);
     }
 
-    private void checkTutorialCourseIdMatchesPathId(Long courseId, TutorialGroup tutorialGroupFromDatabase) {
-        if (!tutorialGroupFromDatabase.getCourse().getId().equals(courseId)) {
+    @DeleteMapping(value = "/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> deregisterStudentFromTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
+        log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
+
+        Optional<User> studentToDeregisterFromTutorialGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        if (studentToDeregisterFromTutorialGroup.isEmpty()) {
+            throw new EntityNotFoundException("User", studentLogin);
+        }
+        tutorialGroupService.deregisterStudent(studentToDeregisterFromTutorialGroup.get(), tutorialGroupFromDatabase);
+        return ResponseEntity.ok().body(null);
+    }
+
+    @PostMapping(value = "/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<Void> registerStudentToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
+        log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
+
+        Optional<User> studentToDeregisterFromTutorialGroup = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        if (studentToDeregisterFromTutorialGroup.isEmpty()) {
+            throw new EntityNotFoundException("User", studentLogin);
+        }
+        tutorialGroupService.registerStudent(studentToDeregisterFromTutorialGroup.get(), tutorialGroupFromDatabase);
+        return ResponseEntity.ok().body(null);
+    }
+
+    /**
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/register-multiple/" : Register multiple users to the tutorial group
+     * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
+     * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
+     * <p>
+     * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
+     * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
+     *
+     * @param courseId        the id of the course
+     * @param tutorialGroupId the id of the tutorial group to which the users should be registered to
+     * @param studentDtos     the list of students (with at least registration number) who should get access to the course
+     * @return the list of students who could not be registered for the tutorial group, because they could NOT be found in the Artemis database and could NOT be found in the TUM LDAP
+     */
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody List<StudentDTO> studentDtos) {
+        log.debug("REST request to register {} to tutorial group {} of course {}", studentDtos, tutorialGroupId, courseId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
+        List<StudentDTO> notFoundStudentsDtos = tutorialGroupService.registerMultipleStudents(courseId, tutorialGroupId, studentDtos);
+        return ResponseEntity.ok().body(notFoundStudentsDtos);
+    }
+
+    private void checkTutorialCourseIdMatchesPathId(Long courseIdFromPath, TutorialGroup tutorialGroupFromDatabase) {
+        if (!tutorialGroupFromDatabase.getCourse().getId().equals(courseIdFromPath)) {
             throw new ConflictException("The tutorial group does not belong to the correct course", "TutorialGroup", "tutorialGroupWrongCourse");
         }
     }

@@ -145,6 +145,10 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnoreProperties("user")
     private Set<Organization> organizations = new HashSet<>();
 
+    @ManyToMany(mappedBy = "registeredStudents")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    public Set<TutorialGroup> registeredTutorialGroups = new HashSet<>();
+
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<LectureUnitCompletion> completedLectureUnits = new HashSet<>();
 
@@ -379,5 +383,13 @@ public class User extends AbstractAuditingEntity implements Participant {
 
     public void setVcsAccessToken(@Nullable String vcsAccessToken) {
         this.vcsAccessToken = vcsAccessToken;
+    }
+
+    public Set<TutorialGroup> getRegisteredTutorialGroups() {
+        return registeredTutorialGroups;
+    }
+
+    public void setRegisteredTutorialGroups(Set<TutorialGroup> registeredTutorialGroups) {
+        this.registeredTutorialGroups = registeredTutorialGroups;
     }
 }
