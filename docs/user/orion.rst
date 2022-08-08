@@ -71,7 +71,7 @@ Exercise Creation in Orion
 
 Instructors can set up programming exercises via Orion by performing the following steps:
 
- 1. The exercise needs to be created as described at the `exercise creation <https://artemis-platform.readthedocs.io/en/latest/user/exercises/programming/#exercise-creation>`_ of programming exercises, step 1 and 2.
+ 1. The exercise needs to be created as described at the :ref:`exercise creation <programming_exercise_creation>` of programming exercises, step 1 and 2.
  2. After the creation, navigate to the instructor exercise overview using the integrated browser.
  3. Each programming exercise provides a button to edit the exercise in Orion |edit-in-intellij-button|. The button is rightmost in the table and might require scrolling. Clicking it downloads the template, solution and test repository of the exercise.
  4. Edit the repository files in IntelliJ.

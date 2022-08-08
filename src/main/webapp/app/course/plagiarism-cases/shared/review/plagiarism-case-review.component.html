@@ -1,7 +1,11 @@
 <ul ngbNav #nav="ngbNav" class="nav-tabs row" [destroyOnHide]="false">
     <ng-container *ngFor="let submission of plagiarismCase.plagiarismSubmissions; let i = index">
         <li [ngbNavItem]="i" class="col px-0">
-            <a ngbNavLink class="btn-sm text-dark text-center">{{ 'artemisApp.plagiarism.plagiarismCases.comparison' | artemisTranslate }} {{ i + 1 }}</a>
+            <a ngbNavLink class="btn-sm text-center">{{ 'artemisApp.plagiarism.plagiarismCases.comparison' | artemisTranslate }} {{ i + 1 }}</a>
+            <div class="my-2 text-center fs-5">
+                {{ 'artemisApp.plagiarism.plagiarismCases.overallSimilarity' | artemisTranslate }}:
+                <strong>{{ submission.plagiarismComparison.similarity?.toFixed(1) }}%</strong>
+            </div>
             <ng-template ngbNavContent>
                 <jhi-plagiarism-split-view
                     [comparison]="submission.plagiarismComparison!"

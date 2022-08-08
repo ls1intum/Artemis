@@ -56,7 +56,7 @@
                     <div class="btn-group-vertical me-1 mb-1" *jhiHasAnyAuthority="['ROLE_ADMIN', 'ROLE_INSTRUCTOR', 'ROLE_EDITOR']" style="justify-content: end">
                         <a *ngIf="course?.isAtLeastEditor" (click)="openImportModal(exerciseGroup, exerciseType.QUIZ)" class="btn btn-info btn-sm me-1 mb-1">
                             <fa-icon [icon]="faPlus"></fa-icon>
-                            <fa-icon class="d-xl-none" [icon]="faFont"></fa-icon>
+                            <fa-icon class="d-xl-none" [icon]="faCheckDouble"></fa-icon>
                             <span class="d-none d-xl-inline">{{ 'artemisApp.quizExercise.home.importLabel' | artemisTranslate }}</span>
                         </a>
                         <a *ngIf="course?.isAtLeastEditor" [routerLink]="[exerciseGroup.id, 'quiz-exercises', 'new']" class="btn btn-info btn-sm me-1 mb-1" style="max-height: 44%">
