@@ -19,21 +19,21 @@ export class FileUploaderService {
     constructor(private http: HttpClient) {}
 
     /**
-     * Upload a generic file to the server.
+     * Uploads a generic file to the server.
      */
     uploadFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         return this.handleFileUpload('/api/fileUpload', file, fileName, options);
     }
 
     /**
-     * Upload a markdown file to the server.
+     * Uploads a file for the markdown editor to the server.
      */
     uploadMarkdownFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         return this.handleFileUpload('/api/markdown-file-upload', file, fileName, options);
     }
 
     /**
-     * Function which uploads a file. It checks for supported file extensions and file size.
+     * Uploads a file to the server. It verifies the file extensions and file size.
      * @param endpoint The API endpoint to upload the file to
      * @param file The file to upload
      * @param fileName The name of the file

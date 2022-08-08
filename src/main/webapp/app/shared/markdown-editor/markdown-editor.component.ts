@@ -158,7 +158,6 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     @Input()
     enableFileUpload = true;
-    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
     // Icons
     faQuestionCircle = faQuestionCircle;
@@ -457,33 +456,25 @@ export class MarkdownEditorComponent implements AfterViewInit {
     embedFiles(files: File[]): void {
         const aceEditor = this.aceEditorContainer.getEditor();
         files.forEach((file: File) => {
-            const extension = file.name.split('.').pop()!.toLocaleLowerCase();
-            if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
-                const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: errorMessage,
-                    disableTranslation: true,
-                });
-            } else {
-                this.fileUploaderService.uploadMarkdownFile(file).then(
-                    (res) => {
-                        let textToAdd = `[${file.name}](${res.path})\n`;
-                        if (extension !== 'pdf') {
-                            textToAdd = '!' + textToAdd;
-                        }
+            this.fileUploaderService.uploadMarkdownFile(file).then(
+                (res) => {
+                    const extension = file.name.split('.').pop()!.toLocaleLowerCase();
 
-                        aceEditor.insert(textToAdd);
-                    },
-                    (error: Error) => {
-                        this.alertService.addAlert({
-                            type: AlertType.DANGER,
-                            message: error.message,
-                            disableTranslation: true,
-                        });
-                    },
-                );
-            }
+                    let textToAdd = `[${file.name}](${res.path})\n`;
+                    if (extension !== 'pdf') {
+                        textToAdd = '!' + textToAdd;
+                    }
+
+                    aceEditor.insert(textToAdd);
+                },
+                (error: Error) => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: error.message,
+                        disableTranslation: true,
+                    });
+                },
+            );
         });
     }
 
