@@ -8,7 +8,7 @@ import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroup } from 'app/entities/tutorial-group.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { LoadingIndicatorContainerStubComponent } from '../../helpers/stubs/loading-indicator-container-stub.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';

@@ -1,8 +1,15 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockPipe } from 'ng-mocks';
-import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { MockPipe, MockProvider } from 'ng-mocks';
+import { TutorialGroupFormComponent, TutorialGroupFormData, UserWithLabel } from 'app/course/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { AlertService } from 'app/core/util/alert.service';
+import { of } from 'rxjs';
+import { CourseGroup } from 'app/entities/course.model';
+import { HttpResponse } from '@angular/common/http';
+import { NgSelectModule } from '@ng-select/ng-select';
+import { User } from 'app/core/user/user.model';
 
 describe('TutorialGroupFormComponent', () => {
     let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;
@@ -10,8 +17,16 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ReactiveFormsModule, FormsModule, NgSelectModule],
             declarations: [TutorialGroupFormComponent, MockPipe(ArtemisTranslatePipe)],
+            providers: [
+                MockProvider(CourseManagementService, {
+                    getAllUsersInCourseGroup: (courseId: number, courseGroup: CourseGroup) => {
+                        return of(new HttpResponse({ body: [] }));
+                    },
+                }),
+                MockProvider(AlertService),
+            ],
         })
             .compileComponents()
             .then(() => {
@@ -51,7 +66,11 @@ describe('TutorialGroupFormComponent', () => {
     it('should submit valid form', () => {
         tutorialGroupFormComponentFixture.detectChanges();
         const exampleTitle = 'test';
+        const exampleTeachingAssistant = new User();
+        exampleTeachingAssistant.login = 'testLogin';
+
         tutorialGroupFormComponent.titleControl!.setValue(exampleTitle);
+        tutorialGroupFormComponent.teachingAssistantControl!.setValue(exampleTeachingAssistant);
 
         tutorialGroupFormComponentFixture.detectChanges();
         expect(tutorialGroupFormComponent.form.valid).toBeTrue();
@@ -66,6 +85,7 @@ describe('TutorialGroupFormComponent', () => {
             expect(submitFormSpy).toHaveBeenCalled();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 title: exampleTitle,
+                teachingAssistant: exampleTeachingAssistant,
             });
 
             submitFormSpy.mockRestore();
@@ -75,8 +95,11 @@ describe('TutorialGroupFormComponent', () => {
 
     it('should correctly set form values in edit mode', () => {
         tutorialGroupFormComponent.isEditMode = true;
+        const exampleTeachingAssistant = new User();
+        exampleTeachingAssistant.login = 'testLogin';
         const formData: TutorialGroupFormData = {
             title: 'test',
+            teachingAssistant: exampleTeachingAssistant,
         };
         tutorialGroupFormComponentFixture.detectChanges();
 
@@ -84,5 +107,7 @@ describe('TutorialGroupFormComponent', () => {
         tutorialGroupFormComponent.ngOnChanges();
 
         expect(tutorialGroupFormComponent.titleControl?.value).toEqual(formData.title);
+        expect(tutorialGroupFormComponent.teachingAssistantControl?.value.login).toEqual(exampleTeachingAssistant.login);
+        expect(tutorialGroupFormComponent.teachingAssistantControl?.value.label).toBe('(testLogin)');
     });
 });

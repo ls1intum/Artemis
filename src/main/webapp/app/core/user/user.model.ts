@@ -1,6 +1,7 @@
 import { Account } from 'app/core/user/account.model';
 import dayjs from 'dayjs/esm';
 import { Organization } from 'app/entities/organization.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 export class User extends Account {
     public id?: number;
@@ -14,6 +15,7 @@ export class User extends Account {
     public visibleRegistrationNumber?: string;
     public password?: string;
     public vcsAccessToken?: string;
+    public registeredTutorialGroups?: TutorialGroup[];
 
     constructor(
         id?: number,

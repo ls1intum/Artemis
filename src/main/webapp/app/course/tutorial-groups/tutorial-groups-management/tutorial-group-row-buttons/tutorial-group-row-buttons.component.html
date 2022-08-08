@@ -1,7 +1,23 @@
 <div class="btn-group flex-btn-group-container">
+    <!-- Registered Students -->
+    <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']" class="btn btn-primary btn-sm me-1">
+        <fa-icon [icon]="faUsers"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="artemisApp.registeredStudents.title">Registered Students</span>
+    </a>
     <!-- Edit -->
     <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']" class="btn btn-warning btn-sm me-1">
         <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </a>
+    <!-- Delete -->
+    <button
+        jhiDeleteButton
+        [entityTitle]="tutorialGroup.title || ''"
+        deleteQuestion="artemisApp.manageTutorialGroups.deleteButton.question"
+        deleteConfirmationText="artemisApp.manageTutorialGroups.deleteButton.typeNameToConfirm"
+        (delete)="deleteTutorialGroup()"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faTimes"></fa-icon>
+    </button>
 </div>

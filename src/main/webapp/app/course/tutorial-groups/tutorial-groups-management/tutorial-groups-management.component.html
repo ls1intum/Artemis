@@ -29,7 +29,11 @@
                             <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
                             <td>{{ tutorialGroup.registeredStudents == undefined ? 0 : tutorialGroup.registeredStudents?.length }}</td>
                             <td>
-                                <jhi-tutorial-group-row-buttons [courseId]="courseId" [tutorialGroup]="tutorialGroup"></jhi-tutorial-group-row-buttons>
+                                <jhi-tutorial-group-row-buttons
+                                    [courseId]="courseId"
+                                    [tutorialGroup]="tutorialGroup"
+                                    (tutorialGroupDeleted)="loadTutorialGroups()"
+                                ></jhi-tutorial-group-row-buttons>
                             </td>
                         </tr>
                     </tbody>

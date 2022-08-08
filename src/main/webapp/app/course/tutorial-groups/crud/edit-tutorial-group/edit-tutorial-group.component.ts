@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroup } from 'app/entities/tutorial-group.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
@@ -37,10 +37,6 @@ export class EditTutorialGroupComponent implements OnInit {
                 next: (tutorialGroupResult) => {
                     if (tutorialGroupResult.body) {
                         this.tutorialGroup = tutorialGroupResult.body;
-                        // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.tutorialGroup.registeredStudents) {
-                            this.tutorialGroup.registeredStudents = [];
-                        }
                     }
                     this.formData = {
                         title: this.tutorialGroup.title,

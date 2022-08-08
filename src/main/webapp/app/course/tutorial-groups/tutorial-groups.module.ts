@@ -6,9 +6,20 @@ import { EditTutorialGroupComponent } from './crud/edit-tutorial-group/edit-tuto
 import { TutorialGroupRowButtonsComponent } from './tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
 import { ArtemisSharedModule } from 'app/shared/shared.module';
 import { RouterModule } from '@angular/router';
+import { RegisteredStudentsComponent } from './registered-students/registered-students.component';
+import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule],
-    declarations: [TutorialGroupsManagementComponent, TutorialGroupFormComponent, CreateTutorialGroupComponent, EditTutorialGroupComponent, TutorialGroupRowButtonsComponent],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule],
+    declarations: [
+        TutorialGroupsManagementComponent,
+        TutorialGroupFormComponent,
+        CreateTutorialGroupComponent,
+        EditTutorialGroupComponent,
+        TutorialGroupRowButtonsComponent,
+        RegisteredStudentsComponent,
+    ],
 })
 export class ArtemisTutorialGroupsModule {}

@@ -1,9 +1,16 @@
 {
     "artemisApp": {
+        "tutorialGroup": {
+            "deleted": "Tutorial group deleted"
+        },
         "tutorialGroups": {
-            "tutorialGroupsButton": "Tutorial Groups",
-            "manageTutorialGroups": {
-                "title": "Tutorial Groups Management"
+            "tutorialGroupsButton": "Tutorial Groups"
+        },
+        "manageTutorialGroups": {
+            "title": "Tutorial Groups Management",
+            "deleteButton": {
+                "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
+                "typeNameToConfirm": "Please enter the title of the tutorial group to confirm."
             }
         },
         "createTutorialGroup": {
@@ -11,6 +18,9 @@
         },
         "editTutorialGroup": {
             "title": "Edit Tutorial Group"
+        },
+        "registeredStudents": {
+            "title": "Registered Students"
         },
         "tutorialGroupForm": {
             "titleInput": {
@@ -25,6 +35,13 @@
                 "loadingText": "Loading teaching assistants...",
                 "notFoundText": "No teaching assistants found in this course.",
                 "requiredValidationError": "A tutorial groups needs a teaching assistant assigned."
+            },
+            "registeredStudentInput": {
+                "label": "Registered Students",
+                "placeholder": "Select a student to register with the tutorial group.",
+                "loadingText": "Loading students...",
+                "notFoundText": "No students found.",
+                "typeToSearchText": "Please enter 3 or more characters"
             }
         }
     }

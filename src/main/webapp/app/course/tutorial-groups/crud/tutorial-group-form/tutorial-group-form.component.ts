@@ -5,7 +5,7 @@ import { CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { map, finalize, Observable, catchError, of } from 'rxjs';
+import { catchError, concat, finalize, map, Observable, of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 
 export interface TutorialGroupFormData {
@@ -70,6 +70,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.formSubmitted.emit(tutorialGroupFormData);
     }
 
+    trackId(index: number, item: User) {
+        return item.id;
+    }
+
     private initializeForm() {
         if (this.form) {
             return;
@@ -107,18 +111,21 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     private getTeachingAssistantsInCourse() {
-        return this.courseManagementService.getAllUsersInCourseGroup(this.courseId, CourseGroup.TUTORS).pipe(
-            catchError((res: HttpErrorResponse) => {
-                onError(this.alertService, res);
-                return of([]);
-            }),
-            map((res: HttpResponse<User[]>) => res.body!),
-            map((user: User[]) => {
-                return user.map((u) => this.createUserWithLabel(u));
-            }),
-            finalize(() => {
-                this.teachingAssistantsAreLoading = false;
-            }),
+        return concat(
+            of([]), // default items
+            this.courseManagementService.getAllUsersInCourseGroup(this.courseId, CourseGroup.TUTORS).pipe(
+                catchError((res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    return of([]);
+                }),
+                map((res: HttpResponse<User[]>) => res.body!),
+                map((user: User[]) => {
+                    return user.map((u) => this.createUserWithLabel(u));
+                }),
+                finalize(() => {
+                    this.teachingAssistantsAreLoading = false;
+                }),
+            ),
         );
     }
 }

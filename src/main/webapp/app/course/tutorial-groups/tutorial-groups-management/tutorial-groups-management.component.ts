@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
@@ -30,7 +30,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
         });
     }
 
-    private loadTutorialGroups() {
+    public loadTutorialGroups() {
         this.isLoading = true;
         this.tutorialGroupService
             .getAllForCourse(this.courseId)

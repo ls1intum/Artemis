@@ -306,6 +306,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
         interval: 'artemisApp.gradingSystem.intervalTab.title',
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         code_hint_management: 'artemisApp.codeHint.management.title',
+        tutorial_groups_management: 'artemisApp.manageTutorialGroups.title',
+        registered_students: 'artemisApp.registeredStudents.title',
     };
 
     studentPathBreadcrumbTranslations = {
@@ -436,6 +438,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'organization-management':
                 this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
+            case 'tutorial-groups-management':
+                this.addResolvedTitleAsCrumb(EntityType.TUTORIAL_GROUP, [Number(segment)], currentPath, segment);
+                break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
                 // This has to go in the future
@@ -451,7 +456,6 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 break;
             // No breadcrumbs for those segments
             case 'goal-management':
-            case 'tutorial-groups-management':
             case 'unit-management':
             case 'exercise-groups':
             case 'student-exams':

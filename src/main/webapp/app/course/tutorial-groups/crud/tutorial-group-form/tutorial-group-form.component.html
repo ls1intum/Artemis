@@ -1,6 +1,7 @@
 <form class="row">
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- Title -->
             <div class="form-group">
                 <label class="required" for="title">{{ 'artemisApp.tutorialGroupForm.titleInput.label' | artemisTranslate }}</label>
                 <input
@@ -19,6 +20,7 @@
                     </div>
                 </div>
             </div>
+            <!-- Teaching Assistant -->
             <div class="form-group">
                 <label class="required" for="teachingAssistant">{{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.label' | artemisTranslate }}</label>
                 <ng-select
@@ -42,7 +44,6 @@
                     </div>
                 </div>
             </div>
-
             <div class="row">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">

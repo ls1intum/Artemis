@@ -2,7 +2,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
-import { TutorialGroup } from 'app/entities/tutorial-group.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;

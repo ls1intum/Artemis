@@ -3,19 +3,21 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { MockRouter } from '../../helpers/mocks/mock-router';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroup } from 'app/entities/tutorial-group.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
-import { LoadingIndicatorContainerStubComponent } from '../../helpers/stubs/loading-indicator-container-stub.component';
+import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
+import { User } from 'app/core/user/user.model';
 
 @Component({ selector: 'jhi-tutorial-group-form', template: '' })
 class TutorialGroupFormStubComponent {
+    @Input() courseId: number;
     @Input() isEditMode = false;
     @Input() formData: TutorialGroupFormData;
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
@@ -102,10 +104,13 @@ describe('EditTutorialGroupComponent', () => {
     it('should send PUT request upon form submission and navigate', () => {
         const router: Router = TestBed.inject(Router);
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        const exampleTeachingAssistant = new User();
+        exampleTeachingAssistant.login = 'testLogin';
 
         const tutorialGroupInDatabase: TutorialGroup = new TutorialGroup();
         tutorialGroupInDatabase.id = 1;
         tutorialGroupInDatabase.title = 'test';
+        tutorialGroupInDatabase.teachingAssistant = exampleTeachingAssistant;
 
         const findByIdResponse: HttpResponse<TutorialGroup> = new HttpResponse({
             body: tutorialGroupInDatabase,
@@ -136,6 +141,7 @@ describe('EditTutorialGroupComponent', () => {
 
         tutorialGroupForm.formSubmitted.emit({
             title: changedTutorialGroup.title,
+            teachingAssistant: exampleTeachingAssistant,
         });
 
         expect(updatedStub).toHaveBeenCalledOnce();

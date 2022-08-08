@@ -20,6 +20,7 @@ import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tu
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
+import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/registered-students/registered-students.component';
 
 export const courseManagementState: Routes = [
     {
@@ -169,7 +170,7 @@ export const courseManagementState: Routes = [
                 component: TutorialGroupsManagementComponent,
                 data: {
                     authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                    pageTitle: 'artemisApp.tutorialGroups.manageTutorialGroups.title',
+                    pageTitle: 'artemisApp.manageTutorialGroups.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -177,7 +178,7 @@ export const courseManagementState: Routes = [
                 // Create a new path without a component defined to prevent the TutorialsGroupManagementComponent from being always rendered
                 path: 'tutorial-groups-management',
                 data: {
-                    pageTitle: 'artemisApp.tutorialGroups.manageTutorialGroups.title',
+                    pageTitle: 'artemisApp.manageTutorialGroups.title',
                 },
                 children: [
                     {
@@ -195,6 +196,15 @@ export const courseManagementState: Routes = [
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
                             pageTitle: 'artemisApp.editTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: ':tutorialGroupId/registered-students',
+                        component: RegisteredStudentsComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.registeredStudents.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
