@@ -8,7 +8,8 @@ import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { faPaperclip, faPencilAlt, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -28,6 +29,8 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     erroredFile?: Blob;
     errorMessage?: string;
 
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -36,6 +39,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faPencilAlt = faPencilAlt;
     faPaperclip = faPaperclip;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         protected activatedRoute: ActivatedRoute,

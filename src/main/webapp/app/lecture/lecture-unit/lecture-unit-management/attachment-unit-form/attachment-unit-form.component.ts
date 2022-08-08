@@ -35,11 +35,10 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
 
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+
     fileUploadErrorMessage?: string;
-    farQuestionCircle = faQuestionCircle;
-    fileSizeLimitation?: string;
-    fileLimitations?: string;
-    fileNamePlaceholder?: string;
+    faQuestionCircle = faQuestionCircle;
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
@@ -52,9 +51,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     fileName?: string;
     fileInputTouched = false;
 
-    constructor(private translateService: TranslateService, private fb: FormBuilder) {
-        this.setTranslationStrings();
-    }
+    constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
     ngOnChanges(): void {
         this.initializeForm();
@@ -65,10 +62,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.initializeForm();
-
-        this.translateService.onLangChange?.subscribe(() => {
-            this.setTranslationStrings();
-        });
     }
 
     private initializeForm() {
@@ -114,14 +107,14 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || this.fileUploadErrorMessage || this.fileName === this.fileNamePlaceholder);
+        return !(this.form.invalid || this.fileUploadErrorMessage || !this.fileName);
     }
 
     // will be called from parent component to set the form error when the file upload failed
     setFileUploadError(errorMessage: string) {
         this.fileUploadErrorMessage = errorMessage;
         this.fileInput.nativeElement.value = '';
-        this.fileName = this.fileNamePlaceholder;
+        this.fileName = undefined;
     }
 
     submitForm() {
@@ -148,15 +141,5 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (formData?.fileProperties?.fileName) {
             this.fileName = formData?.fileProperties?.fileName;
         }
-    }
-
-    /**
-     * Update the translation strings after the application language is changed
-     */
-    private setTranslationStrings() {
-        this.fileSizeLimitation = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation');
-        this.fileLimitations = `${FILE_EXTENSIONS.join(', ')}. ${this.fileSizeLimitation}`;
-        this.fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
-        this.fileName = this.fileNamePlaceholder;
     }
 }
