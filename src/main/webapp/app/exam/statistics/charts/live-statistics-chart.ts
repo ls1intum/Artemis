@@ -150,7 +150,7 @@ export function convertCurrentExercisePerStudentMapToNumberOfStudentsPerExercise
 export function insertNgxDataAndColorForExerciseMap(exam: Exam | undefined, exerciseAmountMap: Map<number, number>, ngxData: NgxChartsEntry[], ngxColor: Color) {
     exam?.exerciseGroups?.forEach((group, index) => {
         group.exercises?.forEach((exercise) => {
-            ngxData.push({ name: exercise.title ?? '', value: exerciseAmountMap.get(exercise.id!) ?? 0 });
+            ngxData.push({ name: `${exercise.title} (${exercise.id})`, value: exerciseAmountMap.get(exercise.id!) ?? 0 });
             ngxColor.domain.push(getColor(index));
         });
     });

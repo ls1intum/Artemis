@@ -274,6 +274,7 @@
             "lockAllRepositoriesSuccess": "Repositories von {{number}} Programmieraufgaben wurden gesperrt.",
             "lockAllRepositoriesFailure": "Es gab einen Fehler beim Sperren der Repositories:\n {{message}}",
             "setWorkingTime": "Absolut:",
+            "usedWorkingTime": "Genutzte Bearbeitungszeit",
             "setWorkingTimeRelative": "Verlängerung relativ zur normalen Bearbeitungszeit:",
             "removeAllStudents": {
                 "title": "Entferne alle Studierenden",
@@ -543,6 +544,7 @@
             "enable": "Aktivieren",
             "disable": "Deaktivieren",
             "enabled": "Aktiviert",
+            "globallyDisabled": "Global deaktiviert",
             "disabled": "Deaktiviert",
             "table": {
                 "panelHeader": "Klausurinformationen",
@@ -718,7 +720,8 @@
                 "planned": "Geplant",
                 "running": "Im Gange",
                 "finished": "Abgeschlossen",
-                "complaints": "Beschwerden"
+                "complaints": "Beschwerden",
+                "complaintsCount": "({{ done }} von {{ total}})"
             }
         }
     }

@@ -14,6 +14,8 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.statistics.ExamAction;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamAccessService;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.scheduled.cache.statistics.ExamLiveStatisticsScheduleService;
 
@@ -47,6 +49,7 @@ public class ExamActivityResource {
      * @param action    action performed by the user
      */
     @MessageMapping("/topic/exams/{examId}/live-statistics-actions")
+    @FeatureToggle(Feature.ExamLiveStatistics)
     public void updatePerformedExamActions(@DestinationVariable Long examId, @Payload ExamAction action) {
         examLiveStatisticsScheduleService.addExamActions(examId, action);
     }
@@ -73,6 +76,7 @@ public class ExamActivityResource {
      */
     @PutMapping("api/courses/{courseId}/exams/{examId}/statistics")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.ExamLiveStatistics)
     public ResponseEntity<Boolean> updateLiveStatistics(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody boolean liveStatistics) {
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 

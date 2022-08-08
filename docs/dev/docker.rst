@@ -15,7 +15,7 @@ There are currently docker containers for:
 - `OCaml <https://github.com/ls1intum/artemis-ocaml-docker>`_
 - `Python <https://github.com/ls1intum/artemis-python-docker>`_
 - `C <https://github.com/ls1intum/artemis-c-docker>`_
-- `Haskell <https://github.com/lukasstevens/docker-fpv-stack>`_ (external)
+- `Haskell <https://github.com/b-fein/artemis-haskell>`_ (external)
 - `Swift <https://github.com/norio-nomura/docker-swiftlint>`_ (external)
 - `Assembler <https://hub.docker.com/r/tizianleonhardt/era-artemis-assembler>`_ (external)
 - `VHDL <https://hub.docker.com/r/tizianleonhardt/era-artemis-vhdl>`_ (external)

@@ -2,7 +2,7 @@ package de.tum.in.www1.artemis.service.scheduled.cache.statistics;
 
 import java.util.function.UnaryOperator;
 
-import com.hazelcast.config.*;
+import com.hazelcast.config.Config;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -20,11 +20,18 @@ import de.tum.in.www1.artemis.service.scheduled.cache.CacheHandler;
  * {@linkplain #getTransientWriteCacheFor(Long) write operations on transient properties} easier and less error-prone;
  * and that allow for {@linkplain #performCacheWrite(Long, UnaryOperator) atomic writes} (including an
  * {@linkplain #performCacheWriteIfPresent(Long, UnaryOperator) if-present variant}).
+ * <p>
+ * Additionally, we don't need any near cache configuration since reloading all actions from the cache is a very rare case.
  */
 final class ExamCache extends CacheHandler<Long> {
 
     public ExamCache(HazelcastInstance hazelcastInstance) {
         super(hazelcastInstance, Constants.HAZELCAST_LIVE_STATISTICS_CACHE);
+    }
+
+    @Override
+    protected Cache emptyCacheValue() {
+        return ExamMonitoringCache.empty();
     }
 
     /**
@@ -34,25 +41,6 @@ final class ExamCache extends CacheHandler<Long> {
      */
     static void configureHazelcast(Config config) {
         ExamLiveStatisticsCache.registerSerializers(config);
-        // Important to avoid continuous serialization and de-serialization and the implications on transient fields
-        // of ExamLiveStatisticsCache
-        // @formatter:off
-        EvictionConfig evictionConfig = new EvictionConfig().setEvictionPolicy(EvictionPolicy.NONE);
-        NearCacheConfig nearCacheConfig = new NearCacheConfig()
-                .setName(Constants.HAZELCAST_LIVE_STATISTICS_CACHE + "-local")
-                .setInMemoryFormat(InMemoryFormat.OBJECT).setSerializeKeys(true)
-                .setInvalidateOnChange(true)
-                .setTimeToLiveSeconds(0)
-                .setMaxIdleSeconds(0)
-                .setEvictionConfig(evictionConfig)
-                .setCacheLocalEntries(true);
-        config.getMapConfig(Constants.HAZELCAST_LIVE_STATISTICS_CACHE).setNearCacheConfig(nearCacheConfig);
-        // @formatter:on
-    }
-
-    @Override
-    protected Cache emptyCacheValue() {
-        return ExamLiveStatisticsCache.empty();
     }
 
     @Override

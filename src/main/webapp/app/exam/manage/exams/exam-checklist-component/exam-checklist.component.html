@@ -343,7 +343,7 @@
                     <span>{{ 'artemisApp.examManagement.checklist.descriptionItem.examLiveStatistics' | artemisTranslate }}</span>
                 </td>
                 <td>
-                    <a [routerLink]="['live-statistics']" class="btn btn-info" id="live-statistics-button-{{ exam.id }}">
+                    <a [routerLink]="['live-statistics']" class="btn btn-info" id="live-statistics-button-{{ exam.id }}" [jhiFeatureToggleLink]="FeatureToggle.ExamLiveStatistics">
                         <fa-icon [icon]="faEye"></fa-icon>
                         <span class="d-none d-md-inline">{{ 'artemisApp.examManagement.examLiveStatistics' | artemisTranslate }}</span>
                     </a>

@@ -90,11 +90,14 @@ export class ExamLiveStatisticsService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param connected true if we have a connection
+     * @param globallyEnabled whether the exam monitoring is globally enabled or not
      * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean, timestamp?: dayjs.Dayjs) {
-        this.handleActionEvent(studentExam, examAction, !!exam.liveStatistics, timestamp);
-        this.saveActions(exam, studentExam, connected);
+    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean, globallyEnabled: boolean, timestamp?: dayjs.Dayjs) {
+        if (globallyEnabled) {
+            this.handleActionEvent(studentExam, examAction, !!exam.liveStatistics, timestamp);
+            this.saveActions(exam, studentExam, connected);
+        }
     }
 
     /**

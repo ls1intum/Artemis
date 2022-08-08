@@ -111,8 +111,8 @@ describe('Exercise Submission Chart Component', () => {
 
         // THEN
         expect(comp.ngxData).toEqual([
-            { name: exercises[0].title!, value: param.expect[0] },
-            { name: exercises[1].title!, value: param.expect[1] },
+            { name: `${exercises[0].title} (${exercises[0].id})`, value: param.expect[0] },
+            { name: `${exercises[1].title} (${exercises[1].id})`, value: param.expect[1] },
         ]);
         expect(comp.ngxColor.domain).toEqual(param.color);
     });

@@ -3,6 +3,9 @@ package de.tum.in.www1.artemis.service.messaging;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+
 /**
  * This service is only present on a node that runs the 'scheduling' profile.
  * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
@@ -102,6 +105,7 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
+    @FeatureToggle(Feature.ExamLiveStatistics)
     public void sendExamLiveStatisticsSchedule(Long examId) {
         // No need to go through the broker, pass it directly
         instanceMessageReceiveService.processScheduleExamLiveStatistics(examId);

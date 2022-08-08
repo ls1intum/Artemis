@@ -96,7 +96,6 @@ public class ExamLiveStatisticsDistributedCache extends ExamLiveStatisticsCache 
     public void updateActivity(Long activityId, UnaryOperator<ExamActivity> writeOperation) {
         activities.lock(activityId);
         try {
-            logger.info("Update activity {}", activityId);
             activities.set(activityId, writeOperation.apply(activities.get(activityId)));
         }
         finally {

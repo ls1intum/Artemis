@@ -108,8 +108,8 @@ describe('Exercise Group Chart Component', () => {
 
         // THEN
         expect(comp.ngxData).toEqual([
-            { name: exerciseGroup1.title!, value: param.expect[0] },
-            { name: exerciseGroup2.title!, value: param.expect[1] },
+            { name: `${exerciseGroup1.title} (${exerciseGroup1.id})`, value: param.expect[0] },
+            { name: `${exerciseGroup2.title} (${exerciseGroup2.id})`, value: param.expect[1] },
         ]);
         expect(comp.ngxColor.domain).toEqual([getColor(0), getColor(1)]);
     });

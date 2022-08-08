@@ -71,6 +71,13 @@ describe('Plagiarism Cases Student View Component', () => {
         student: { id: 4, login: 'Student 2' },
         exercise: exercise2,
     } as PlagiarismCase;
+    const plagiarismCase5 = {
+        id: 5,
+        student: { id: 5, login: 'Student 2' },
+        exercise: exercise2,
+        verdict: PlagiarismVerdict.NO_PLAGIARISM,
+        post: { id: 3 },
+    } as PlagiarismCase;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -104,23 +111,23 @@ describe('Plagiarism Cases Student View Component', () => {
     }));
 
     it('should calculate number of plagiarism cases', () => {
-        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
-        expect(component.numberOfCases(plagiarismCases)).toBe(4);
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4, plagiarismCase5];
+        expect(component.numberOfCases(plagiarismCases)).toBe(5);
     });
 
     it('should calculate number of plagiarism cases with verdict', () => {
-        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
-        expect(component.numberOfCasesWithVerdict(plagiarismCases)).toBe(3);
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4, plagiarismCase5];
+        expect(component.numberOfCasesWithVerdict(plagiarismCases)).toBe(4);
     });
 
     it('should calculate percentage of plagiarism cases with verdict', () => {
-        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
-        expect(component.percentageOfCasesWithVerdict(plagiarismCases)).toBe(75);
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4, plagiarismCase5];
+        expect(component.percentageOfCasesWithVerdict(plagiarismCases)).toBe(80);
     });
 
     it('should calculate number of plagiarism cases with post', () => {
-        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
-        expect(component.numberOfCasesWithPost(plagiarismCases)).toBe(2);
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4, plagiarismCase5];
+        expect(component.numberOfCasesWithPost(plagiarismCases)).toBe(3);
     });
 
     it('should calculate percentage of plagiarism cases with post', () => {
@@ -129,7 +136,7 @@ describe('Plagiarism Cases Student View Component', () => {
     });
 
     it('should calculate number of plagiarism cases with student answer', () => {
-        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4];
+        const plagiarismCases = [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4, plagiarismCase5];
         expect(component.numberOfCasesWithStudentAnswer(plagiarismCases)).toBe(1);
     });
 

@@ -99,6 +99,8 @@ public final class Constants {
     // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
 
+    public static final long MAX_SUBMISSION_MODEL_LENGTH = 100 * 1000; // 100.000 characters
+
     public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
     public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
@@ -228,9 +230,7 @@ public final class Constants {
 
     public static final String HAZELCAST_LIVE_STATISTICS_CACHE = HAZELCAST_LIVE_STATISTICS_PREFIX + "activity-cache";
 
-    public static final String HAZELCAST_LIVE_STATISTICS_SCHEDULER = "liveStatisticsScheduleServiceExecutor";
-
-    public static final int HAZELCAST_LIVE_STATISTICS_CACHE_SERIALIZER_ID = 2;
+    public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 
