@@ -20,6 +20,14 @@
                     </div>
                 </div>
             </div>
+            <!-- -->
+            <div class="form-group">
+                <label>{{ 'artemisApp.tutorialGroupForm.additionalSettings.title' | artemisTranslate }}</label>
+                <div class="form-check form-switch">
+                    <label class="form-check-label" for="isOnline">{{ 'artemisApp.tutorialGroupForm.additionalSettings.isOnlineInput.label' | artemisTranslate }}</label>
+                    <input id="isOnline" type="checkbox" class="form-check-input" formControlName="isOnline" />
+                </div>
+            </div>
             <!-- Teaching Assistant -->
             <div class="form-group">
                 <label class="required" for="teachingAssistant">{{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.label' | artemisTranslate }}</label>
@@ -41,6 +49,69 @@
                 <div *ngIf="teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)" class="alert alert-danger">
                     <div *ngIf="teachingAssistantControl?.errors?.required">
                         {{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!-- Location -->
+            <div class="form-group">
+                <label *ngIf="isOnlineControl!.value" for="location">{{ 'artemisApp.tutorialGroupForm.locationInput.labelOnline' | artemisTranslate }}</label>
+                <label *ngIf="!isOnlineControl!.value" for="location">{{ 'artemisApp.tutorialGroupForm.locationInput.labelOffline' | artemisTranslate }}</label>
+                <textarea
+                    class="form-control"
+                    id="location"
+                    rows="2"
+                    formControlName="location"
+                    [placeholder]="
+                        (isOnlineControl!.value ? 'artemisApp.tutorialGroupForm.locationInput.placeholderOnline' : 'artemisApp.tutorialGroupForm.locationInput.placeholderOffline')
+                            | artemisTranslate
+                    "
+                ></textarea>
+                <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="locationControl?.errors?.maxlength">
+                        {{ 'artemisApp.tutorialGroupForm.locationInput.maxLengthValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Capacity, Language -->
+            <div class="row">
+                <div class="col-auto">
+                    <label for="capacity">{{ 'artemisApp.tutorialGroupForm.capacityInput.label' | artemisTranslate }}</label>
+                    <div class="input-group">
+                        <input id="capacity" type="number" class="form-control" formControlName="capacity" />
+                        <div class="input-group-text">{{ 'artemisApp.tutorialGroupForm.capacityInput.unit' | artemisTranslate }}</div>
+                    </div>
+                </div>
+                <div class="col-auto my-auto">
+                    <label for="language">{{ 'artemisApp.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
+                    <select id="language" class="form-select">
+                        <option [value]="undefined">{{ 'artemisApp.tutorialGroupForm.languageInput.placeholder' | artemisTranslate }}</option>
+                        <option [value]="GERMAN">{{ 'artemisApp.tutorialGroupForm.languageInput.english' | artemisTranslate }}</option>
+                        <option [value]="ENGLISH">{{ 'artemisApp.tutorialGroupForm.languageInput.german' | artemisTranslate }}</option>
+                    </select>
+                </div>
+            </div>
+            <!-- Validation Errors for the smaller input from above-->
+            <div class="form-group">
+                <div *ngIf="capacityControl?.invalid && (capacityControl?.dirty || capacityControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="capacityControl?.errors?.min">
+                        {{ 'artemisApp.tutorialGroupForm.capacityInput.minValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!-- Additional Information -->
+            <div class="form-group">
+                <label for="additionalInformation">{{ 'artemisApp.tutorialGroupForm.additionalInformationInput.label' | artemisTranslate }}</label>
+                <textarea
+                    class="form-control"
+                    id="additionalInformation"
+                    rows="6"
+                    formControlName="additionalInformation"
+                    [placeholder]="'artemisApp.tutorialGroupForm.additionalInformationInput.placeholder' | artemisTranslate"
+                ></textarea>
+                <div *ngIf="additionalInformationControl?.invalid && (additionalInformationControl?.dirty || additionalInformationControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="additionalInformationControl?.errors?.maxlength">
+                        {{ 'artemisApp.tutorialGroupForm.additionalInformationInput.maxLengthValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>

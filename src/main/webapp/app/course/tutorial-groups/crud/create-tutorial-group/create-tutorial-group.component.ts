@@ -32,10 +32,15 @@ export class CreateTutorialGroupComponent implements OnInit {
             return;
         }
 
-        const { title, teachingAssistant } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location } = formData;
 
         this.tutorialGroupToCreate.title = title;
         this.tutorialGroupToCreate.teachingAssistant = teachingAssistant;
+        this.tutorialGroupToCreate.additionalInformation = additionalInformation;
+        this.tutorialGroupToCreate.capacity = capacity;
+        this.tutorialGroupToCreate.isOnline = isOnline;
+        this.tutorialGroupToCreate.language = language;
+        this.tutorialGroupToCreate.location = location;
 
         this.isLoading = true;
 

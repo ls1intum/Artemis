@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -100,7 +101,7 @@ public class TutorialGroupResource {
      */
     @PostMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<TutorialGroup> createTutorialGroup(@PathVariable Long courseId, @RequestBody TutorialGroup tutorialGroup) throws URISyntaxException {
+    public ResponseEntity<TutorialGroup> createTutorialGroup(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
         log.debug("REST request to create TutorialGroup : {}", tutorialGroup);
         if (tutorialGroup.getId() != null) {
             throw new BadRequestException("A new tutorial group cannot already have an ID");
@@ -108,11 +109,10 @@ public class TutorialGroupResource {
 
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        trimTitle(tutorialGroup);
-        checkTitleConstraints(tutorialGroup, course);
-
         tutorialGroup.setCourse(course);
+
+        trimStringFields(tutorialGroup);
+        checkTitleConstraints(tutorialGroup);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
         return ResponseEntity.created(new URI("/api/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
@@ -157,7 +157,7 @@ public class TutorialGroupResource {
      */
     @PutMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<TutorialGroup> updateTutorialGroup(@PathVariable Long courseId, @RequestBody TutorialGroup tutorialGroup) {
+    public ResponseEntity<TutorialGroup> updateTutorialGroup(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) {
         log.debug("REST request to update TutorialGroup : {}", tutorialGroup);
         if (tutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
@@ -167,16 +167,13 @@ public class TutorialGroupResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
-        trimTitle(tutorialGroup);
+        trimStringFields(tutorialGroup);
         if (!tutorialGroupFromDatabase.getTitle().equals(tutorialGroup.getTitle())) {
-            checkTitleConstraints(tutorialGroup, tutorialGroupFromDatabase.getCourse());
+            checkTitleConstraints(tutorialGroup);
         }
-
-        tutorialGroupFromDatabase.setTitle(tutorialGroup.getTitle());
-        tutorialGroupFromDatabase.setTeachingAssistant(tutorialGroup.getTeachingAssistant());
+        overrideValues(tutorialGroup, tutorialGroupFromDatabase);
 
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
-
         return ResponseEntity.ok(updatedTutorialGroup);
     }
 
@@ -243,19 +240,33 @@ public class TutorialGroupResource {
         }
     }
 
-    private void trimTitle(TutorialGroup tutorialGroup) {
+    private void trimStringFields(TutorialGroup tutorialGroup) {
         if (tutorialGroup.getTitle() != null) {
             tutorialGroup.setTitle(tutorialGroup.getTitle().trim());
         }
+        if (tutorialGroup.getAdditionalInformation() != null) {
+            tutorialGroup.setAdditionalInformation(tutorialGroup.getAdditionalInformation().trim());
+        }
     }
 
-    private void checkTitleConstraints(TutorialGroup tutorialGroup, Course course) {
+    private void checkTitleConstraints(TutorialGroup tutorialGroup) {
         if (tutorialGroup.getTitle() == null || tutorialGroup.getTitle().isEmpty()) {
             throw new BadRequestException("A tutorial group must have a title");
         }
-        if (tutorialGroupRepository.findAllByCourseId(course.getId()).stream().map(TutorialGroup::getTitle).anyMatch(title -> title.equals(tutorialGroup.getTitle()))) {
+        if (tutorialGroupRepository.findAllByCourseId(tutorialGroup.getCourse().getId()).stream().map(TutorialGroup::getTitle)
+                .anyMatch(title -> title.equals(tutorialGroup.getTitle()))) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
+    }
+
+    private static void overrideValues(TutorialGroup sourceTutorialGroup, TutorialGroup originalTutorialGroup) {
+        originalTutorialGroup.setTitle(sourceTutorialGroup.getTitle());
+        originalTutorialGroup.setTeachingAssistant(sourceTutorialGroup.getTeachingAssistant());
+        originalTutorialGroup.setAdditionalInformation(sourceTutorialGroup.getAdditionalInformation());
+        originalTutorialGroup.setCapacity(sourceTutorialGroup.getCapacity());
+        originalTutorialGroup.setIsOnline(sourceTutorialGroup.getIsOnline());
+        originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
+        originalTutorialGroup.setLocation(sourceTutorialGroup.getLocation());
     }
 
 }

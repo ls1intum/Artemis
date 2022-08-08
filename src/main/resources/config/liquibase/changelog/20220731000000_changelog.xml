@@ -1,6 +1,17 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
-    <changeSet author="stefanwaldhauser" id="20220731000000">
+
+    <!-- CleanUp for Fresh Start -->
+    <changeSet author="stefanwaldhauser" id="2022073100000-1" >
+        <preConditions onFail="MARK_RAN"><tableExists tableName="tutor_group_students"/></preConditions>
+        <dropTable cascadeConstraints="true" tableName="tutor_group_students"/>
+    </changeSet>
+    <changeSet author="stefanwaldhauser" id="2022073100000-2" >
+        <preConditions onFail="MARK_RAN"><tableExists tableName="tutor_group"/></preConditions>
+        <dropTable cascadeConstraints="true" tableName="tutor_group"/>
+    </changeSet>
+    <!-- Fresh Start -->
+    <changeSet author="stefanwaldhauser" id="2022073100000-3">
         <createTable tableName="tutorial_group">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_groupPK"/>
@@ -8,8 +19,17 @@
             <column name="title" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="teaching_assistant_id" type="BIGINT"/>
+            <column name="teaching_assistant_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="is_online" type="BOOLEAN" defaultValueBoolean="false">
+                <constraints nullable="false"/>
+            </column>
             <column name="course_id" type="BIGINT"/>
+            <column name="additional_information" type="LONGTEXT"/>
+            <column name="language" type="VARCHAR(255)"/>
+            <column name="location" type="LONGTEXT"/>
+            <column name="capacity" type="INT"/>
         </createTable>
 
         <createTable tableName="tutorial_group_registered_student">
@@ -39,17 +59,5 @@
                                  constraintName="fk_tutorial_group_registered_student_registered_student_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="jhi_user" validate="true"/>
-
-
-
-
     </changeSet>
-
-
-
-
-
-
-
-
 </databaseChangeLog>

@@ -41,6 +41,11 @@ export class EditTutorialGroupComponent implements OnInit {
                     this.formData = {
                         title: this.tutorialGroup.title,
                         teachingAssistant: this.tutorialGroup.teachingAssistant,
+                        additionalInformation: this.tutorialGroup.additionalInformation,
+                        capacity: this.tutorialGroup.capacity,
+                        isOnline: this.tutorialGroup.isOnline,
+                        language: this.tutorialGroup.language,
+                        location: this.tutorialGroup.location,
                     };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
@@ -53,9 +58,14 @@ export class EditTutorialGroupComponent implements OnInit {
             return;
         }
 
-        const { title, teachingAssistant } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location } = formData;
         this.tutorialGroup.title = title;
         this.tutorialGroup.teachingAssistant = teachingAssistant;
+        this.tutorialGroup.additionalInformation = additionalInformation;
+        this.tutorialGroup.capacity = capacity;
+        this.tutorialGroup.isOnline = isOnline;
+        this.tutorialGroup.language = language;
+        this.tutorialGroup.location = location;
 
         this.isLoading = true;
         this.tutorialGroupService

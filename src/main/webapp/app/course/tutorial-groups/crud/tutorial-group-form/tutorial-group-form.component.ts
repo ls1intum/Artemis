@@ -7,10 +7,16 @@ import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { catchError, concat, finalize, map, Observable, of } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { Language } from 'app/entities/course.model';
 
 export interface TutorialGroupFormData {
     title?: string;
     teachingAssistant?: User;
+    additionalInformation?: string;
+    capacity?: number;
+    isOnline?: boolean;
+    location?: string;
+    language?: Language;
 }
 
 // user with label for ng-select
@@ -29,7 +35,14 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     formData: TutorialGroupFormData = {
         title: undefined,
         teachingAssistant: undefined,
+        additionalInformation: undefined,
+        capacity: undefined,
+        isOnline: undefined,
+        location: undefined,
+        language: undefined,
     };
+    GERMAN = Language.GERMAN;
+    ENGLISH = Language.ENGLISH;
 
     @Input() courseId: number;
     @Input() isEditMode = false;
@@ -47,6 +60,22 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     get teachingAssistantControl() {
         return this.form.get('teachingAssistant');
+    }
+
+    get additionalInformationControl() {
+        return this.form.get('additionalInformation');
+    }
+
+    get capacityControl() {
+        return this.form.get('capacity');
+    }
+
+    get isOnlineControl() {
+        return this.form.get('isOnline');
+    }
+
+    get locationControl() {
+        return this.form.get('location');
     }
 
     get isSubmitPossible() {
@@ -82,6 +111,11 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.form = this.fb.group({
             title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
             teachingAssistant: [undefined, [Validators.required]],
+            additionalInformation: [undefined, [Validators.maxLength(2000)]],
+            capacity: [undefined, [Validators.min(1)]],
+            isOnline: [false],
+            location: [undefined, [Validators.maxLength(2000)]],
+            language: [undefined],
         });
     }
 
