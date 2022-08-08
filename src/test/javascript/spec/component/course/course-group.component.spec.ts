@@ -6,7 +6,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { User } from 'app/core/user/user.model';
 import { UserService } from 'app/core/user/user.service';
-import { CourseGroupComponent } from 'app/course/manage/course-group.component';
+import { CourseGroupComponent } from 'app/shared/course-group/course-group.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
 import { HasAnyAuthorityDirective } from 'app/shared/auth/has-any-authority.directive';
@@ -160,7 +160,7 @@ describe('Course Management Detail Component', () => {
         beforeEach(() => {
             addUserStub = jest.spyOn(courseService, 'addUserToCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
             user = courseGroupUser;
-            comp.allCourseGroupUsers = [];
+            comp.allGroupUsers = [];
             comp.course = course;
             comp.courseGroup = courseGroup;
         });
@@ -170,17 +170,17 @@ describe('Course Management Detail Component', () => {
             comp.onAutocompleteSelect(user, fake);
             expect(addUserStub).toHaveBeenCalledWith(course.id, courseGroup, user.login);
             expect(addUserStub).toHaveBeenCalledOnce();
-            expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
+            expect(comp.allGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
             expect(fake).toHaveBeenCalledOnce();
         });
 
         it('should call callback if user is already in the group', () => {
             const fake = jest.fn();
-            comp.allCourseGroupUsers = [user];
+            comp.allGroupUsers = [user];
             comp.onAutocompleteSelect(user, fake);
             expect(addUserStub).not.toHaveBeenCalled();
-            expect(comp.allCourseGroupUsers).toEqual([courseGroupUser]);
+            expect(comp.allGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
             expect(fake).toHaveBeenCalledOnce();
         });
@@ -191,7 +191,7 @@ describe('Course Management Detail Component', () => {
 
         beforeEach(() => {
             removeUserStub = jest.spyOn(courseService, 'removeUserFromCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
-            comp.allCourseGroupUsers = [courseGroupUser, courseGroupUser2];
+            comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
             comp.course = course;
             comp.courseGroup = courseGroup;
         });
@@ -200,7 +200,7 @@ describe('Course Management Detail Component', () => {
             comp.removeFromGroup(courseGroupUser);
             expect(removeUserStub).toHaveBeenCalledWith(course.id, courseGroup, courseGroupUser.login);
             expect(removeUserStub).toHaveBeenCalledOnce();
-            expect(comp.allCourseGroupUsers).toEqual([courseGroupUser2]);
+            expect(comp.allGroupUsers).toEqual([courseGroupUser2]);
         });
 
         it('should not do anything if users has no login', () => {
@@ -264,7 +264,7 @@ describe('Course Management Detail Component', () => {
     });
 
     it('should generate csv correctly', () => {
-        comp.allCourseGroupUsers = [courseGroupUser, courseGroupUser2];
+        comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
         comp.courseGroup = CourseGroup.STUDENTS;
         comp.course = course;
         const exportAsCsvMock = jest.spyOn(comp, 'exportAsCsv');

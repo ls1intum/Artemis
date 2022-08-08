@@ -1,24 +1,29 @@
 <div>
     <h2>
-        <span>{{ course?.title }} - </span>
-        <span *ngIf="filteredUsersSize < allCourseGroupUsers.length"> {{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf">out of</span> </span>
-        {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
-        <span class="text-muted">({{ courseGroupName }})</span>
-        <jhi-user-import-button *ngIf="course?.isAtLeastInstructor" class="ms-4" [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="loadAll()"></jhi-user-import-button>
-        <button *ngIf="course?.isAtLeastInstructor && allCourseGroupUsers.length > 0" class="btn btn-primary btn-sm float-end" (click)="exportUserInformation()">
+        <!-- Additional Header NG-Content-->
+        <ng-content></ng-content>
+        <jhi-user-import-button
+            *ngIf="course?.isAtLeastInstructor"
+            class="ms-4"
+            [courseId]="course.id!"
+            [courseGroup]="courseGroup!"
+            (finish)="importFinish.emit()"
+            [tutorialGroup]="tutorialGroup"
+        ></jhi-user-import-button>
+        <button *ngIf="course?.isAtLeastInstructor && allGroupUsers.length > 0" class="btn btn-primary btn-sm float-end" (click)="exportUserInformation()">
             <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
             <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Users</span>
         </button>
     </h2>
     <jhi-data-table
         id="registered-students"
-        [isLoading]="isLoading"
+        [isLoading]="isLoadingAllGroupUsers"
         [isSearching]="isSearching"
         [searchFailed]="searchFailed"
         [searchNoResults]="searchNoResults"
         [isTransitioning]="isTransitioning"
         entityType="user"
-        [allEntities]="allCourseGroupUsers"
+        [allEntities]="allGroupUsers"
         entitiesPerPageTranslation="artemisApp.course.courseGroup.usersPerPage"
         showAllEntitiesTranslation="artemisApp.course.courseGroup.showAllUsers"
         searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"

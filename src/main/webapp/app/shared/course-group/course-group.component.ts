@@ -1,24 +1,18 @@
-import { Component, OnDestroy, OnInit, ViewChild, ViewEncapsulation } from '@angular/core';
-import { Subscription } from 'rxjs';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Observable, of, Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Course, CourseGroup, courseGroups } from 'app/entities/course.model';
-import { capitalize } from 'lodash-es';
+import { Course, CourseGroup } from 'app/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
-import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
-import { AccountService } from 'app/core/auth/account.service';
-import { EventManager } from 'app/core/util/event-manager.service';
 import { ExportToCsv } from 'export-to-csv';
 import { faDownload } from '@fortawesome/free-solid-svg-icons';
 import { faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 const NAME_KEY = 'Name';
 const USERNAME_KEY = 'Username';
@@ -36,23 +30,38 @@ const cssClasses = {
     styleUrls: ['./course-group.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class CourseGroupComponent implements OnInit, OnDestroy {
+export class CourseGroupComponent implements OnDestroy {
     @ViewChild(DataTableComponent) dataTable: DataTableComponent;
 
-    readonly ActionType = ActionType;
-    readonly capitalize = capitalize;
-
+    @Input()
+    allGroupUsers: User[] = [];
+    @Input()
+    isLoadingAllGroupUsers = false;
+    @Input()
+    isAdmin = false;
+    @Input()
     course: Course;
+    @Input()
+    tutorialGroup: TutorialGroup | undefined = undefined;
+    @Input()
     courseGroup: CourseGroup;
-    allCourseGroupUsers: User[] = [];
-    filteredUsersSize = 0;
-    paramSub: Subscription;
+    @Input()
+    exportFileName: string;
+    @Input()
+    addUserToGroup: (login: string) => Observable<any> = () => of({});
+    @Input()
+    removeUserFromGroup: (login: string) => Observable<any> = () => of({});
+    @Input()
+    handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
+
+    @Output()
+    importFinish: EventEmitter<void> = new EventEmitter();
+
+    readonly ActionType = ActionType;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    isAdmin = false;
-    isLoading = false;
     isSearching = false;
     searchFailed = false;
     searchNoResults = false;
@@ -63,50 +72,13 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     faDownload = faDownload;
     faUserSlash = faUserSlash;
 
-    constructor(
-        private router: Router,
-        private route: ActivatedRoute,
-        private alertService: AlertService,
-        private eventManager: EventManager,
-        private courseService: CourseManagementService,
-        private userService: UserService,
-        private accountService: AccountService,
-    ) {}
-
-    /**
-     * Init the course group component by loading all users of course group.
-     */
-    ngOnInit() {
-        this.loadAll();
-    }
+    constructor(private alertService: AlertService, private userService: UserService) {}
 
     /**
      * Unsubscribe dialog error source on component destruction.
      */
     ngOnDestroy() {
         this.dialogErrorSource.unsubscribe();
-    }
-
-    /**
-     * Load all users of given course group.
-     * Redirect to course-management when given course group is in predefined standard course groups.
-     */
-    loadAll() {
-        this.isLoading = true;
-        this.isAdmin = this.accountService.isAdmin();
-        this.route.parent!.data.subscribe(({ course }) => {
-            this.course = course;
-            this.paramSub = this.route.params.subscribe((params) => {
-                this.courseGroup = params['courseGroup'];
-                if (!courseGroups.includes(this.courseGroup)) {
-                    return this.router.navigate(['/course-management']);
-                }
-                this.courseService.getAllUsersInCourseGroup(this.course.id!, this.courseGroup).subscribe((usersResponse) => {
-                    this.allCourseGroupUsers = usersResponse.body!;
-                    this.isLoading = false;
-                });
-            });
-        });
     }
 
     /**
@@ -148,9 +120,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             tap((users) => {
                 setTimeout(() => {
                     for (let i = 0; i < this.dataTable.typeaheadButtons.length; i++) {
-                        const isAlreadyInCourseGroup = this.allCourseGroupUsers.map((user) => user.id).includes(users[i].id);
-                        this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInCourseGroup ? 'users' : 'users-plus']);
-                        if (isAlreadyInCourseGroup) {
+                        const isAlreadyInGroup = this.allGroupUsers.map((user) => user.id).includes(users[i].id);
+                        this.dataTable.typeaheadButtons[i].insertAdjacentHTML('beforeend', iconsAsHTML[isAlreadyInGroup ? 'users' : 'users-plus']);
+                        if (isAlreadyInGroup) {
                             this.dataTable.typeaheadButtons[i].classList.add(cssClasses.alreadyMember);
                         }
                     }
@@ -168,14 +140,14 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     onAutocompleteSelect = (user: User, callback: (user: User) => void): void => {
         // If the user is not part of this course group yet, perform the server call to add them
-        if (!this.allCourseGroupUsers.map((u) => u.id).includes(user.id) && user.login) {
+        if (!this.allGroupUsers.map((u) => u.id).includes(user.id) && user.login) {
             this.isTransitioning = true;
-            this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe({
+            this.addUserToGroup(user.login).subscribe({
                 next: () => {
                     this.isTransitioning = false;
 
                     // Add newly added user to the list of all users in the course group
-                    this.allCourseGroupUsers.push(user);
+                    this.allGroupUsers.push(user);
 
                     // Hand back over to the data table for updating
                     callback(user);
@@ -200,48 +172,15 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      */
     removeFromGroup(user: User) {
         if (user.login) {
-            this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, user.login).subscribe({
+            this.removeUserFromGroup(user.login).subscribe({
                 next: () => {
-                    this.allCourseGroupUsers = this.allCourseGroupUsers.filter((u) => u.login !== user.login);
+                    this.allGroupUsers = this.allGroupUsers.filter((u) => u.login !== user.login);
                     this.dialogErrorSource.next('');
                 },
                 error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
         }
     }
-
-    /**
-     * Property that returns the course group name, e.g. "artemis-test-students"
-     */
-    get courseGroupName() {
-        switch (this.courseGroup) {
-            case CourseGroup.STUDENTS:
-                return this.course.studentGroupName;
-            case CourseGroup.TUTORS:
-                return this.course.teachingAssistantGroupName;
-            case CourseGroup.EDITORS:
-                return this.course.editorGroupName;
-            case CourseGroup.INSTRUCTORS:
-                return this.course.instructorGroupName;
-        }
-    }
-
-    /**
-     * Property that returns the course group entity name, e.g. "students" or "tutors".
-     * If the count of users is exactly 1, singular is used instead of plural.
-     */
-    get courseGroupEntityName(): string {
-        return this.allCourseGroupUsers.length === 1 ? this.courseGroup.slice(0, -1) : this.courseGroup;
-    }
-
-    /**
-     * Update the number of filtered users
-     *
-     * @param filteredUsersSize Total number of users after filters have been applied
-     */
-    handleUsersSizeChange = (filteredUsersSize: number) => {
-        this.filteredUsersSize = filteredUsersSize;
-    };
 
     /**
      * Formats the results in the autocomplete overlay.
@@ -283,9 +222,9 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
     /**
      * Method for exporting the csv with the needed data
      */
-    exportUserInformation() {
-        if (this.allCourseGroupUsers.length > 0) {
-            const rows: any[] = this.allCourseGroupUsers.map((user: User) => {
+    exportUserInformation = () => {
+        if (this.allGroupUsers.length > 0) {
+            const rows: any[] = this.allGroupUsers.map((user: User) => {
                 const data = {};
                 data[NAME_KEY] = user.name?.trim() ?? '';
                 data[USERNAME_KEY] = user.login?.trim() ?? '';
@@ -296,7 +235,7 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
             const keys = [NAME_KEY, USERNAME_KEY, EMAIL_KEY, REGISTRATION_NUMBER_KEY];
             this.exportAsCsv(rows, keys);
         }
-    }
+    };
 
     /**
      * Method for generating the csv file containing the user information
@@ -304,18 +243,18 @@ export class CourseGroupComponent implements OnInit, OnDestroy {
      * @param rows the data to export
      * @param keys the keys of the data
      */
-    exportAsCsv(rows: any[], keys: string[]) {
+    exportAsCsv = (rows: any[], keys: string[]) => {
         const options = {
             fieldSeparator: ';',
             quoteStrings: '"',
             showLabels: true,
             showTitle: false,
-            filename: this.courseGroupEntityName.charAt(0).toUpperCase() + this.courseGroupEntityName.slice(1) + ' ' + this.course.title,
+            filename: this.exportFileName,
             useTextFile: false,
             useBom: true,
             headers: keys,
         };
         const csvExporter = new ExportToCsv(options);
         csvExporter.generateCsv(rows);
-    }
+    };
 }
