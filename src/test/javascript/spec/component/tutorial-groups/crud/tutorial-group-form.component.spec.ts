@@ -65,12 +65,16 @@ describe('TutorialGroupFormComponent', () => {
 
     it('should submit valid form', () => {
         tutorialGroupFormComponentFixture.detectChanges();
-        const exampleTitle = 'test';
         const exampleTeachingAssistant = new User();
         exampleTeachingAssistant.login = 'testLogin';
 
-        tutorialGroupFormComponent.titleControl!.setValue(exampleTitle);
+        tutorialGroupFormComponent.titleControl!.setValue('example');
+        tutorialGroupFormComponent.capacityControl!.setValue(1);
+        tutorialGroupFormComponent.additionalInformationControl!.setValue('example');
+        tutorialGroupFormComponent.isOnlineControl?.setValue(true);
         tutorialGroupFormComponent.teachingAssistantControl!.setValue(exampleTeachingAssistant);
+        tutorialGroupFormComponent.languageControl!.setValue('GERMAN');
+        tutorialGroupFormComponent.locationControl!.setValue('example');
 
         tutorialGroupFormComponentFixture.detectChanges();
         expect(tutorialGroupFormComponent.form.valid).toBeTrue();
@@ -84,8 +88,13 @@ describe('TutorialGroupFormComponent', () => {
         return tutorialGroupFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalled();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
-                title: exampleTitle,
+                title: 'example',
                 teachingAssistant: exampleTeachingAssistant,
+                additionalInformation: 'example',
+                capacity: 1,
+                isOnline: true,
+                language: 'GERMAN',
+                location: 'example',
             });
 
             submitFormSpy.mockRestore();

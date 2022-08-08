@@ -78,6 +78,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         return this.form.get('location');
     }
 
+    get languageControl() {
+        return this.form.get('language');
+    }
+
     get isSubmitPossible() {
         return !this.form.invalid;
     }
