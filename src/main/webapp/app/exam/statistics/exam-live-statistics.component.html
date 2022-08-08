@@ -3,25 +3,30 @@
         <!-- Exam Live Statistics info bar -->
         <div class="course-info-bar">
             <div class="row">
-                <div class="col general-info d-flex justify-content-between">
-                    <div class="d-flex flex-row align-items-center">
-                        <h2 class="mb-1" jhiTranslate="artemisApp.examLiveStatistics.title"></h2>
-                        <span
-                            [jhiTranslate]="'artemisApp.examLiveStatistics.' + (this.exam.liveStatistics ? 'enabled' : 'disabled')"
-                            class="badge ms-2 exam-live-statistics-badge align-items-center"
-                            [class.bg-danger]="!this.exam.liveStatistics"
-                            [class.bg-success]="this.exam.liveStatistics"
-                        ></span>
-                    </div>
-                    <button
-                        class="hand btn btn-primary"
-                        [class.btn-success]="!this.exam.liveStatistics"
-                        [class.btn-danger]="this.exam.liveStatistics"
-                        (click)="updateExamLiveStatistics()"
-                    >
-                        <span [jhiTranslate]="'artemisApp.examLiveStatistics.' + (this.exam.liveStatistics ? 'disable' : 'enable')">Enable</span>
-                    </button>
+                <div class="d-flex flex-row align-items-center">
+                    <h2 class="mb-1" jhiTranslate="artemisApp.examLiveStatistics.title"></h2>
+                    <span
+                        [jhiTranslate]="
+                            !this.examLiveStatisticsGloballyEnabled
+                                ? 'artemisApp.examLiveStatistics.globallyDisabled'
+                                : 'artemisApp.examLiveStatistics.' + (this.exam.liveStatistics ? 'enabled' : 'disabled')
+                        "
+                        class="badge ms-2 exam-live-statistics-badge align-items-center"
+                        [class.bg-danger]="!this.examLiveStatisticsGloballyEnabled || !this.exam.liveStatistics"
+                        [class.bg-success]="this.examLiveStatisticsGloballyEnabled && this.exam.liveStatistics"
+                    ></span>
                 </div>
+                <button
+                    class="hand btn btn-primary"
+                    [class.btn-success]="!this.examLiveStatisticsGloballyEnabled || !this.exam.liveStatistics"
+                    [class.btn-danger]="this.examLiveStatisticsGloballyEnabled && this.exam.liveStatistics"
+                    (click)="updateExamLiveStatistics()"
+                    [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
+                >
+                    <span [jhiTranslate]="'artemisApp.examLiveStatistics.' + (this.examLiveStatisticsGloballyEnabled && this.exam.liveStatistics ? 'disable' : 'enable')"
+                        >Enable</span
+                    >
+                </button>
             </div>
         </div>
 

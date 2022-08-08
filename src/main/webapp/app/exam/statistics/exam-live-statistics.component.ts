@@ -46,7 +46,7 @@ export class ExamLiveStatisticsComponent implements OnInit, OnDestroy {
 
     readonly FeatureToggle = FeatureToggle;
 
-    examMonitoringGloballyEnabled: boolean;
+    examLiveStatisticsGloballyEnabled: boolean;
 
     constructor(
         private route: ActivatedRoute,
@@ -82,7 +82,7 @@ export class ExamLiveStatisticsComponent implements OnInit, OnDestroy {
             .getFeatureToggleActive(FeatureToggle.ExamLiveStatistics)
             .pipe(
                 tap((active) => {
-                    this.examMonitoringGloballyEnabled = active;
+                    this.examLiveStatisticsGloballyEnabled = active;
                 }),
             )
             .subscribe();
