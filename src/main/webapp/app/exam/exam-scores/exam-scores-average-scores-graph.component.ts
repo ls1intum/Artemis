@@ -22,9 +22,9 @@ type NameToValueMap = { [name: string]: any };
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
+    @Input() course: Course;
 
     courseId: number;
-    course?: Course;
     examId: number;
 
     readonly xAxisTickFormatting = axisTickFormattingWithPercentageSign;
@@ -54,7 +54,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
-        this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
         this.initializeChart();
     }
 
