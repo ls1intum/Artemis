@@ -8,7 +8,6 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
@@ -46,7 +45,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         private service: StatisticsService,
         private translateService: TranslateService,
         private localeConversionService: LocaleConversionService,
-        private courseService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
