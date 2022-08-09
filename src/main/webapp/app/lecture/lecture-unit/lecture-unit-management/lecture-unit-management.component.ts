@@ -13,6 +13,7 @@ import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { ExerciseUnit } from 'app/entities/lecture-unit/exerciseUnit.model';
 import { faArrowDown, faArrowUp, faPencilAlt, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 
 @Component({
     selector: 'jhi-lecture-unit-management',
@@ -107,18 +108,9 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             });
     }
 
-    moveUp(index: number): void {
-        if (this.lectureUnits) {
-            [this.lectureUnits[index], this.lectureUnits[index - 1]] = [this.lectureUnits[index - 1], this.lectureUnits[index]];
-        }
-        this.updateOrderSubject.next('up');
-    }
-
-    moveDown(index: number): void {
-        if (this.lectureUnits) {
-            [this.lectureUnits[index], this.lectureUnits[index + 1]] = [this.lectureUnits[index + 1], this.lectureUnits[index]];
-        }
-        this.updateOrderSubject.next('down');
+    drop(event: CdkDragDrop<LectureUnit[]>) {
+        moveItemInArray(this.lectureUnits, event.previousIndex, event.currentIndex);
+        this.updateOrderSubject.next('');
     }
 
     identify(index: number, lectureUnit: LectureUnit) {

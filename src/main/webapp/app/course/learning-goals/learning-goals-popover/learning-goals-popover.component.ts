@@ -15,6 +15,8 @@ export class LearningGoalsPopoverComponent implements OnInit {
     learningGoals: LearningGoal[] = [];
     @Input()
     navigateTo: 'learningGoalManagement' | 'courseLearningGoals' = 'courseLearningGoals';
+    @Input()
+    iconOnly = false;
 
     navigationArray: string[] = [];
 
