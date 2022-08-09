@@ -81,11 +81,11 @@ management:
                 enabled: true
                 step: 60
         enable:
-            http: true
-            jvm: true
-            logback: true
-            process: true
-            system: true
+            http: false
+            jvm: false
+            logback: false
+            process: false
+            system: false
         distribution:
             percentiles-histogram:
                 all: true
@@ -180,6 +180,17 @@ spring:
         phone:
             home:
                 enabled: false
+    autoconfigure:
+        # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
+        # They can be included once they are processed
+        exclude:
+          - org.springframework.boot.actuate.autoconfigure.metrics.SystemMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.cache.CacheMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
 
 hazelcast:
     phone:
