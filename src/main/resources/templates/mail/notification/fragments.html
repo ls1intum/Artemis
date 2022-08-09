@@ -268,6 +268,24 @@
     </th:block>
 </th:block>
 
+<!-- Fragment displaying the translated PlagiarismVerdict (e.g. -> "POINT_DEDUCTION") -->
+<th:block th:fragment="plagiarismVerdictTranslation">
+    <th:block th:switch="${notificationSubject.getVerdict()}">
+        <th:block th:case="'PLAGIARISM'">
+            <span th:utext="#{email.notification.aux.plagiarismVerdict.plagiarism}"/>
+        </th:block>
+        <th:block th:case="'POINT_DEDUCTION'">
+            <span th:utext="#{email.notification.aux.plagiarismVerdict.point.deduction}"/>
+        </th:block>
+        <th:block th:case="'WARNING'">
+            <span th:utext="#{email.notification.aux.plagiarismVerdict.warning}"/>
+        </th:block>
+        <th:block th:case="'NO_PLAGIARISM'">
+            <span th:utext="#{email.notification.aux.plagiarismVerdict.no.plagiarism}"/>
+        </th:block>
+    </th:block>
+</th:block>
+
 <!-- Fragment displaying the difficulty of an exercise (e.g. -> "Difficulty: Medium") -->
 <th:block th:fragment="difficultyTranslation">
     <!-- security check else internal server error -->
