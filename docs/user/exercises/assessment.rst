@@ -54,17 +54,21 @@ For programming exercises, this is done via instructor-written test cases that a
 Instructors can enable complaints for automatically graded programming exercises.
 
 
+.. _exercise_complaints:
+
 Complaints
 ----------
 
 After receiving an assessment, students can complain once about the assessment of an exercise if the instructor enabled this option and the students think the assessment is erroneous.
 The student has to write an additional text when submitting a complaint to justify the reevaluation.
+
     .. figure:: assessment/complaint.png
             :alt: The student complains about the assessment of an exercise
             :align: center
 
 A complaint leads to a reevaluation of the submission by another tutor. This tutor sees the existing assessment and the complaint reason. The tutor can then either accept or reject the complaint.
 Only if the tutor accepts the complaint, they can modify the assessment's score.
+
     .. figure:: assessment/complaint_response.png
         :alt: A tutor answers the complaint of a student
         :align: center
@@ -72,6 +76,9 @@ Only if the tutor accepts the complaint, they can modify the assessment's score.
 The instructor can set a maximum number of allowed complaints per course. These so-called tokens are used for each complaint.
 The token is given back to the student if the tutor accepts the complaint.
 This means a student can submit as many complaints as they want, as long as they are accepted.
+
+
+.. _exercise_more_feedback_request:
 
 More Feedback Requests
 ^^^^^^^^^^^^^^^^^^^^^^

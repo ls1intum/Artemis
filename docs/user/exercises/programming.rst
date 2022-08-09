@@ -64,7 +64,7 @@ Submission Policy Configuration
 
 The following sections explains the configuration options for submission policies:
 
-.. include:: programming-submission-policy-configuration.inc.rst
+.. include:: programming-submission-policy-configuration.inc
 
 Online Editor
 -------------
