@@ -60,7 +60,7 @@ export class BonusService {
      * @param bonus the bonus source to be created
      */
     createBonusForExam(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, bonus, { observe: 'response' });
+        return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
     }
 
     /**
@@ -69,7 +69,7 @@ export class BonusService {
      * @param bonus the bonus source to be updated
      */
     updateBonus(bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.put<Bonus>(`${this.resourceUrl}/bonus`, bonus, { observe: 'response' });
+        return this.http.put<Bonus>(`${this.resourceUrl}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
     }
 
     /**
@@ -126,6 +126,10 @@ export class BonusService {
         const bonusExamples = this.generateExampleExamAndBonusPoints(target, bonus.source);
         bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, target));
         return bonusExamples;
+    }
+
+    private filterBonusForRequest(bonus: Bonus) {
+        return { ...bonus, source: bonus.source ? { id: bonus.source.id } : undefined };
     }
 
     /**

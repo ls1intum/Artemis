@@ -83,7 +83,6 @@ export class BonusComponent implements OnInit {
 
     currentBonusStrategyOption?: BonusStrategyOption;
     currentBonusStrategyDiscreteness?: BonusStrategyDiscreteness;
-    currentCalculationSign?: number;
 
     examples?: BonusExample[] = []; // TODO: Ata Remove empty array
     dynamicExample = new BonusExample(0, 0);
@@ -161,7 +160,6 @@ export class BonusComponent implements OnInit {
 
     private setBonus(bonus: Bonus) {
         this.bonus = bonus;
-        this.currentCalculationSign = Math.sign(bonus.weight!) || undefined;
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:
                 this.currentBonusStrategyOption = BonusStrategyOption.POINTS;
@@ -198,13 +196,7 @@ export class BonusComponent implements OnInit {
         // throw new Error('Unexpected args for convertFromOptionToBonusStrategy'); // TODO: Ata Decide whether remove
     }
 
-    private prepareBonusToSave(bonus: Bonus) {
-        bonus.weight = this.currentCalculationSign;
-        bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
-    }
-
     save(): void {
-        this.prepareBonusToSave(this.bonus);
         this.isLoading = true;
         const saveObservable = this.bonus.id ? this.bonusService.updateBonus(this.bonus) : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
 
