@@ -33,6 +33,8 @@ import { QuizExerciseCreationPage } from './exercises/quiz/QuizExerciseCreationP
 import { TextExerciseCreationPage } from './exercises/text/TextExerciseCreationPage';
 import { TextExerciseExampleSubmissionsPage } from './exercises/text/TextExerciseExampleSubmissionsPage';
 import { TextExerciseExampleSubmissionCreationPage } from './exercises/text/TextExerciseExampleSubmissionCreationPage';
+import { FileUploadEditorPage } from './exercises/file-upload/FileUploadEditorPage';
+import { FileUploadExerciseCreationPage } from './exercises/file-upload/FileUploadExerciseCreationPage';
 import { ExamAssessmentPage } from './assessment/ExamAssessmentPage';
 import { ModelingExerciseFeedbackPage } from './exercises/modeling/ModelingExerciseFeedbackPage';
 import { LectureManagementPage } from './lecture/LectureManagementPage';
@@ -87,6 +89,11 @@ export class ArtemisPageobjects {
             multipleChoice: new MultipleChoiceQuiz(),
             shortAnswer: new ShortAnswerQuiz(),
             dragAndDrop: new DragAndDropQuiz(),
+        },
+        fileUpload: {
+            creation: new FileUploadExerciseCreationPage(),
+            editor: new FileUploadEditorPage(),
+            feedback: new TextExerciseFeedbackPage(),
         },
     };
     assessment = {

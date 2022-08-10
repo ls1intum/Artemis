@@ -1,0 +1,30 @@
+{
+    "mode": "INDIVIDUAL",
+    "includedInOverallScore": "INCLUDED_COMPLETELY",
+    "numberOfAssessmentsOfCorrectionRounds": [
+        {
+            "inTime": 0,
+            "late": 0
+        }
+    ],
+    "studentAssignedTeamIdComputed": false,
+    "secondCorrectionEnabled": false,
+    "type": "file-upload",
+    "bonusPoints": 0,
+    "isAtLeastTutor": false,
+    "isAtLeastEditor": false,
+    "isAtLeastInstructor": false,
+    "teamMode": false,
+    "assessmentDueDateError": false,
+    "dueDateError": false,
+    "exampleSolutionPublicationDateError": false,
+    "exampleSolutionPublicationDateWarning": false,
+    "presentationScoreEnabled": false,
+    "assessmentType": "MANUAL",
+    "title": "File Upload Exercise 1",
+    "filePattern": "pdf",
+    "maxPoints": 10,
+    "problemStatement": "Cypress Problem Statement",
+    "exampleSolution": "Cypress Example Solution",
+    "gradingInstructions": "Cypress Assessment Instructions"
+}

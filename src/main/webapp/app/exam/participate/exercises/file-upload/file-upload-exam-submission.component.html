@@ -19,7 +19,7 @@
                             <input #fileInput id="fileUploadInput" type="file" class="custom-file-input" (change)="setFileSubmissionForExercise($event)" />
                         </div>
                         <div class="col-4">
-                            <button class="btn btn-primary" (click)="saveUploadedFile()">
+                            <button class="btn btn-primary" id="fileUploadSubmit" (click)="saveUploadedFile()">
                                 {{ 'artemisApp.examParticipation.uploadFile' | artemisTranslate }}
                             </button>
                         </div>

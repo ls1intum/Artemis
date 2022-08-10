@@ -26,12 +26,15 @@ const courses = artemis.pageobjects.course.list;
 const courseOverview = artemis.pageobjects.course.overview;
 const examStartEnd = artemis.pageobjects.exam.startEnd;
 const examNavigation = artemis.pageobjects.exam.navigationBar;
+const textEditor = artemis.pageobjects.exercise.text.editor;
 const onlineEditor = artemis.pageobjects.exercise.programming.editor;
 const modelingEditor = artemis.pageobjects.exercise.modeling.editor;
 const multipleChoiceQuiz = artemis.pageobjects.exercise.quiz.multipleChoice;
+const fileUpload = artemis.pageobjects.exercise.fileUpload.editor;
 
 // Common primitives
 const textExerciseTitle = 'Cypress text exercise';
+const fileUploadExerciseTitle = 'Cypress file upload exercise';
 const packageName = 'de.test';
 
 describe('Exam participation', () => {
@@ -47,8 +50,8 @@ describe('Exam participation', () => {
                 .visibleDate(dayjs().subtract(3, 'days'))
                 .startDate(dayjs().subtract(2, 'days'))
                 .endDate(dayjs().add(3, 'days'))
-                .maxPoints(40)
-                .numberOfExercises(4)
+                .maxPoints(50)
+                .numberOfExercises(5)
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
@@ -68,6 +71,9 @@ describe('Exam participation', () => {
                     courseRequests.createQuizExercise({ exerciseGroup: groupResponse.body }, [multipleChoiceTemplate]).then((quizResponse) => {
                         quizExercise = quizResponse.body;
                     });
+                });
+                courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
+                    courseRequests.createFileUploadExercise({ exerciseGroup: groupResponse.body }, fileUploadExerciseTitle);
                 });
                 courseRequests.generateMissingIndividualExams(exam);
                 courseRequests.prepareExerciseStartForExam(exam);
@@ -146,8 +152,11 @@ describe('Exam participation', () => {
         examNavigation.openExerciseAtIndex(3);
     }
 
+    function openFileUploadExercise() {
+        examNavigation.openExerciseAtIndex(4);
+    }
+
     function makeTextExerciseSubmission() {
-        const textEditor = artemis.pageobjects.exercise.text.editor;
         cy.fixture('loremIpsum.txt').then((submissionText) => {
             textEditor.typeSubmission(submissionText);
             // Loading the content of the existing files might take some time so we wait for the return of the request here
@@ -178,6 +187,10 @@ describe('Exam participation', () => {
         for (const option of options) {
             multipleChoiceQuiz.tickAnswerOption(option, quizExercise.quizQuestions![0].id);
         }
+    }
+
+    function makeFileUploadExerciseSubmission() {
+        fileUpload.attachFileExam('pdf-test-file.pdf');
     }
 
     function handInEarly() {

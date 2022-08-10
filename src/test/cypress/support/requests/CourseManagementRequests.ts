@@ -12,6 +12,7 @@ import examTemplate from '../../fixtures/requests/exam_template.json';
 import day from 'dayjs/esm';
 import { CypressCredentials } from '../users';
 import textExerciseTemplate from '../../fixtures/requests/textExercise_template.json';
+import fileUploadExerciseTemplate from '../../fixtures/requests/fileUploadExercise_template.json';
 import modelingExerciseTemplate from '../../fixtures/requests/modelingExercise_template.json';
 import assessment_submission from '../../fixtures/programming_exercise_submissions/assessment/submission.json';
 import quizTemplate from '../../fixtures/quiz_exercise_fixtures/quizExercise_template.json';
@@ -20,6 +21,7 @@ import shortAnswerSubmissionTemplate from '../../fixtures/quiz_exercise_fixtures
 import modelingExerciseSubmissionTemplate from '../../fixtures/exercise/modeling_exercise/modelingSubmission_template.json';
 import lectureTemplate from '../../fixtures/lecture/lecture_template.json';
 import { ModelingExercise } from 'app/entities/modeling-exercise.model';
+import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 
 export const COURSE_BASE = BASE_API + 'courses/';
 export const COURSE_MANAGEMENT_BASE = BASE_API + 'course-management/';
@@ -27,6 +29,7 @@ export const EXERCISE_BASE = BASE_API + 'exercises/';
 export const PROGRAMMING_EXERCISE_BASE = BASE_API + 'programming-exercises/';
 export const QUIZ_EXERCISE_BASE = BASE_API + 'quiz-exercises/';
 export const TEXT_EXERCISE_BASE = BASE_API + 'text-exercises/';
+export const UPLOAD_EXERCISE_BASE = BASE_API + 'file-upload-exercises/';
 export const MODELING_EXERCISE_BASE = BASE_API + 'modeling-exercises';
 
 /**
@@ -245,6 +248,8 @@ export class CourseManagementRequests {
 
     /**
      * add text exercise to an exercise group in exam or to a course
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param title the title for the exercise
      * @returns <Chainable> request response
      */
     createTextExercise(body: { course: Course } | { exerciseGroup: ExerciseGroup }, title = 'Text exercise ' + generateUUID()) {
@@ -269,6 +274,15 @@ export class CourseManagementRequests {
         return cy.request({ method: POST, url: COURSE_BASE + exam.course!.id + '/exams/' + exam.id + '/student-exams/start-exercises' });
     }
 
+    /**
+     * Creates a modeling exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param title the title for the exercise
+     * @param releaseDate time of release for the exercise
+     * @param dueDate when the modeling exercise should be due (default is now + 1 day)
+     * @param assessmentDueDate the due date of the assessment
+     * @returns <Chainable> request response
+     */
     createModelingExercise(
         body: { course: Course } | { exerciseGroup: ExerciseGroup },
         title = 'Cypress modeling exercise ' + generateUUID(),
@@ -386,6 +400,46 @@ export class CourseManagementRequests {
             url: `${COURSE_BASE}${exam.course!.id}/exams/${exam.id}/student-exams/evaluate-quiz-exercises`,
             method: POST,
         });
+    }
+
+    /**
+     * Creates a file upload exercise
+     * @param body an object containing either the course or exercise group the exercise will be added to
+     * @param title the title for the exercise
+     * @returns <Chainable> request response
+     */
+    createFileUploadExercise(
+        body: { course: Course } | { exerciseGroup: ExerciseGroup },
+        title = 'Upload exercise ' + generateUUID(),
+    ): Cypress.Chainable<Cypress.Response<FileUploadExercise>> {
+        const template = { ...fileUploadExerciseTemplate, title };
+        const uploadExercise = Object.assign({}, template, body);
+        return cy.request({ method: POST, url: UPLOAD_EXERCISE_BASE, body: uploadExercise });
+    }
+
+    deleteFileUploadExercise(exerciseID: number) {
+        return cy.request({
+            url: `${UPLOAD_EXERCISE_BASE}/${exerciseID}`,
+            method: DELETE,
+        });
+    }
+
+    makeFileUploadExerciseSubmission(exerciseId: number, file: string) {
+        return cy.request({
+            url: `${EXERCISE_BASE}${exerciseId}/file-upload-submissions`,
+            method: POST,
+            body: { submissionExerciseType: 'file-upload', file, id: null },
+        });
+    }
+
+    updateFileUploadExerciseDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.dueDate = due;
+        return this.updateExercise(exercise, CypressExerciseType.UPLOAD);
+    }
+
+    updateFileUploadExerciseAssessmentDueDate(exercise: FileUploadExercise, due = day()) {
+        exercise.assessmentDueDate = due;
+        return this.updateExercise(exercise, CypressExerciseType.UPLOAD);
     }
 
     makeTextExerciseSubmission(exerciseId: number, text: string) {
@@ -649,4 +703,5 @@ export enum CypressExerciseType {
     MODELING,
     TEXT,
     QUIZ,
+    UPLOAD,
 }
