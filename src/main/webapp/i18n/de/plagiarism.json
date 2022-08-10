@@ -58,6 +58,10 @@
                 "plagiarismCases": "Plagiatsfälle",
                 "plagiarismCase": "Plagiatsfall",
                 "resolvedPlagiarismCase": "Gelöster Plagiatsfall",
+                "notification": {
+                    "title": "Plagiatsfall: {{ exercise }}",
+                    "body": "Hallo {{ student }}, nach einer sorgfältigen Durchsicht Deiner Abgabe zur Übung “{{ exercise }}}“ im Kurs “{{ course }}“ sind wir zu dem Schluss gekommen, dass Du ein Plagiat begangen hast. Dies ist nicht nur ein Verstoß gegen die Grundsätze der guten studentischen Praxis, sondern auch gegen den [Student Code of Conduct]({{ cocLink }}) der Fakultät für Informatik, dem Du zugestimmt hast. Die *[Allgemeine Studien- und Prüfungsordnung]({{ aspoLink }})* regelt in §22.1 die Konsequenzen für solche Fälle. **Du hast eine Woche Zeit, um eine Erklärung abzugeben.**"
+                },
                 "verdict": {
                     "verdict": "Urteil",
                     "text": "Entscheide die Konsequenzen des Plagiatsfalls. Die Entscheidung kann nicht rückgängig gemacht werden.",

@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
 import { ExerciseType, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
@@ -40,7 +41,13 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     private postsSubscription: Subscription;
     posts: Post[];
 
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
+    constructor(
+        protected metisService: MetisService,
+        private plagiarismCasesService: PlagiarismCasesService,
+        private route: ActivatedRoute,
+        private alertService: AlertService,
+        private translateService: TranslateService,
+    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -178,21 +185,19 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             this.plagiarismCase.exercise!.course!.title!.length > 40
                 ? this.plagiarismCase.exercise!.course!.title?.slice(0, 35) + '…'
                 : this.plagiarismCase.exercise!.course!.title;
-        const codeOfConductLink =
-            'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf';
-        const apoLink =
-            'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1';
 
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
         // Note the limit of 1.000 characters for the post's content
-        this.createdPost.content =
-            `Dear ${studentName},\n\n` +
-            `After a meticulous review of your final submission for the exercise “${this.exerciseTitle}“ in the course “${courseTitle}“, we have concluded ` +
-            `that you have committed plagiarism.\nThis is not only a violation of principles of good student practice but also of the ` +
-            `[Student Code of Conduct](${codeOfConductLink}) of the faculty of computer science that you have agreed upon. ` +
-            `The *[Allgemeine Studien- und Prüfungsordnung](${apoLink})* (General Examination and Study Regulations) regulates consequences for such cases in §22.1.\n\n` +
-            `**You have one week to provide a statement about this situation.**`;
-        this.createdPost.title = `Plagiarism Case: ${this.exerciseTitle}`;
+        this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
+            exercise: this.exerciseTitle,
+        });
+        this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
+            student: studentName,
+            exercise: this.exerciseTitle,
+            course: courseTitle,
+            cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
+            aspoLink: 'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1',
+        });
     }
 
     /**
