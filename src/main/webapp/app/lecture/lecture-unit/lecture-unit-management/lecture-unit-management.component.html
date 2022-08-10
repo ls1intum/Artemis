@@ -6,7 +6,7 @@
 
 <div *ngIf="!isLoading && lecture">
     <!-- Lecture Unit Rows-->
-    <div class="w-100 d-flex justify-content-end">
+    <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
         <jhi-unit-creation-card></jhi-unit-creation-card>
     </div>
     <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
@@ -54,7 +54,7 @@
                 <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
                 <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
             </div>
-            <div class="button-column d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-md-4 col-lg-3" role="group">
+            <div class="button-column d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-md-1" role="group">
                 <jhi-learning-goals-popover
                     *ngIf="lecture.course?.id"
                     [courseId]="lecture.course!.id!"
@@ -62,9 +62,14 @@
                     [navigateTo]="'learningGoalManagement'"
                 ></jhi-learning-goals-popover>
                 <div class="d-flex gap-1 w-100">
-                    <a type="button" *ngIf="editButtonAvailable(lectureUnit)" class="btn btn-primary btn-sm edit flex-grow-1" [routerLink]="editButtonRouterLink(lectureUnit)">
+                    <a
+                        type="button"
+                        *ngIf="editButtonAvailable(lectureUnit)"
+                        class="btn btn-primary btn-sm edit flex-grow-1"
+                        [routerLink]="editButtonRouterLink(lectureUnit)"
+                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                    >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
-                        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
                     </a>
                     <button
                         type="button"
@@ -72,6 +77,8 @@
                         *ngIf="lecture.isAtLeastInstructor"
                         jhiDeleteButton
                         [renderButtonStyle]="false"
+                        [renderButtonText]="false"
+                        [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
                         [actionType]="getActionType(lectureUnit)"
                         [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
                         [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
