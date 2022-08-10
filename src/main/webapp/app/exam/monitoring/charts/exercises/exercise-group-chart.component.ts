@@ -44,14 +44,20 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
     override initData() {
         super.initData();
         this.currentExercisePerStudent = getCurrentExercisePerStudent(this.filteredExamActions);
+        const t0 = performance.now();
         this.createChartData();
+        const t1 = performance.now();
+        console.log(`${this.chartIdentifierKey}: Create Chart data took ${t1 - t0} milliseconds.`);
     }
 
     /**
      * Updates the data for the chart.
      */
     override updateData() {
+        const t0 = performance.now();
         this.createChartData();
+        const t1 = performance.now();
+        console.log(`${this.chartIdentifierKey}: Create Chart data took ${t1 - t0} milliseconds.`);
     }
 
     /**

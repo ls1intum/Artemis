@@ -119,6 +119,28 @@ public class ExamMonitoringScheduleService {
         }
     }
 
+    public void addExamActions(Long examId, List<ExamAction> actions) {
+
+        Long studentExamId = actions.get(0).getStudentExamId();
+
+        // Retrieve the activity from the cache
+        ExamActivity examActivity = ((ExamMonitoringCache) examCache.getTransientWriteCacheFor(examId)).getActivities().get(studentExamId);
+
+        if (examActivity == null) {
+            examActivity = new ExamActivity();
+            examActivity.setStudentExamId(studentExamId);
+            // Since we don't store the activity in the database at the moment, we reuse the student exam id
+            examActivity.setId(studentExamId);
+            // TODO: Save Activity
+        }
+
+        examActivity.addExamActions(actions);
+        updateExamActivity(examId, studentExamId, examActivity);
+
+        // send message to subscribers
+        // messagingService.sendMessage("/topic/exam-monitoring/" + examId + "/action", action);
+    }
+
     /**
      * Returns all exam actions.
      *

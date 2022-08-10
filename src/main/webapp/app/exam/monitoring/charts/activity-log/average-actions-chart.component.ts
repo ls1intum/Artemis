@@ -37,14 +37,20 @@ export class AverageActionsChartComponent extends ChartComponent implements OnIn
      */
     override initData() {
         super.initData();
+        const t0 = performance.now();
         this.createChartData();
+        const t1 = performance.now();
+        console.log(`${this.chartIdentifierKey}: Create Chart data took ${t1 - t0} milliseconds.`);
     }
 
     /**
      * Updates the data for the chart.
      */
     override updateData() {
+        const t0 = performance.now();
         this.createChartData();
+        const t1 = performance.now();
+        console.log(`${this.chartIdentifierKey}: Create Chart data took ${t1 - t0} milliseconds.`);
     }
 
     /**

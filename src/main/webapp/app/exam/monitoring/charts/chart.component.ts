@@ -54,10 +54,15 @@ export abstract class ChartComponent {
             this.courseId = Number(params['courseId']);
         });
 
-        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examAction) => {
-            if (examAction && this.filterRenderedData(examAction)) {
-                this.evaluateAndAddAction(examAction);
-            }
+        this.examActionSubscription = this.examActionService.getExamMonitoringObservable(this.examId)?.subscribe((examActions: ExamAction[]) => {
+            const t0 = performance.now();
+            examActions.forEach((action) => {
+                if (action && this.filterRenderedData(action)) {
+                    this.evaluateAndAddAction(action);
+                }
+            });
+            const t1 = performance.now();
+            console.log(`${this.chartIdentifierKey}: Filter and add took ${t1 - t0} milliseconds.`);
         });
     }
 
@@ -80,7 +85,7 @@ export abstract class ChartComponent {
      * Create and initialize the data for the chart.
      */
     initData(): void {
-        this.filteredExamActions.push(...(this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action)));
+        this.filteredExamActions = (this.examActionService.cachedExamActions.get(this.examId) ?? []).filter((action) => this.filterRenderedData(action));
     }
 
     /**
