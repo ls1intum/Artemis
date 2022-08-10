@@ -1,3 +1,4 @@
+
 package de.tum.in.www1.artemis.domain;
 
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;

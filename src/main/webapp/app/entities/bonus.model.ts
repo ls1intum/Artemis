@@ -5,7 +5,7 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 export class Bonus implements BaseEntity {
     public id?: number;
     public bonusStrategy?: BonusStrategy;
-    public calculationSign?: number;
+    public weight?: number;
     public source?: GradingScale;
 
     // public target?: GradingScale; // TODO: Ata: Remove

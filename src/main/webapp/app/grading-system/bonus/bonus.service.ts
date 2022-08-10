@@ -5,7 +5,6 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
-import { captureException } from '@sentry/angular';
 
 export type EntityResponseType = HttpResponse<Bonus>;
 
@@ -125,7 +124,7 @@ export class BonusService {
             throw new Error(`Bonus.source is empty: ${bonus.source}`);
         }
         const bonusExamples = this.generateExampleExamAndBonusPoints(target, bonus.source);
-        bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, target, bonus.source!));
+        bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, target));
         return bonusExamples;
     }
 
@@ -169,26 +168,29 @@ export class BonusService {
         return examples;
     }
 
-    calculateFinalGrade(bonusExample: BonusExample, bonus: Bonus, target: GradeStepsDTO, source: GradingScale) {
+    calculateFinalGrade(bonusExample: BonusExample, bonus: Bonus, target: GradeStepsDTO) {
         const examGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(target.gradeSteps, bonusExample.examStudentPoints, target.maxPoints!);
         bonusExample.examGrade = examGradeStep?.gradeName;
 
+        if (!bonus.source) {
+            return;
+        }
+
         const bonusGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(
-            source.gradeSteps,
+            bonus.source.gradeSteps,
             bonusExample.bonusStudentPoints ?? 0,
-            this.gradingSystemService.getGradingScaleMaxPoints(source),
+            this.gradingSystemService.getGradingScaleMaxPoints(bonus.source),
         );
         bonusExample.bonusGrade = this.gradingSystemService.getNumericValueForGradeName(bonusGradeStep?.gradeName);
 
         this.calculateBonusForStrategy(bonusExample, bonus, target);
-        // bonusExample.calculatedBonus = undefined; // TODO: Ata
     }
 
     calculateBonusForStrategy(bonusExample: BonusExample, bonus: Bonus, target: GradeStepsDTO) {
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:
-                bonusExample.finalPoints = bonusExample.examStudentPoints + (bonus.calculationSign ?? 1) * bonusExample.bonusGrade!;
-                if (this.doesBonusExceedMax(bonusExample.finalPoints, target.maxPoints!, bonus.calculationSign!)) {
+                bonusExample.finalPoints = bonusExample.examStudentPoints + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
+                if (this.doesBonusExceedMax(bonusExample.finalPoints, target.maxPoints!, bonus.weight!)) {
                     bonusExample.finalPoints = target.maxPoints ?? 0;
                 }
                 const finalGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(target.gradeSteps, bonusExample.finalPoints, target.maxPoints!);
@@ -196,10 +198,10 @@ export class BonusService {
                 break;
             case BonusStrategy.GRADES_CONTINUOUS:
                 const examGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(bonusExample.examGrade as string)!;
-                bonusExample.finalGrade = examGradeNumericValue + (bonus.calculationSign ?? 1) * bonusExample.bonusGrade!;
+                bonusExample.finalGrade = examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
                 const maxGrade = this.gradingSystemService.maxGrade(target.gradeSteps);
                 const maxGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(maxGrade)!;
-                if (this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.calculationSign!)) {
+                if (this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!)) {
                     bonusExample.finalGrade = maxGrade;
                 }
                 break;
@@ -209,6 +211,13 @@ export class BonusService {
         }
     }
 
+    /**
+     * Returns true if valueWithBonus exceeds the maxValue in the direction given by calculationSign.
+     * @param valueWithBonus achieved points or numeric grade with bonus applied
+     * @param maxValue max points or max grade (numeric)
+     * @param calculationSign a negative or positive number to indicate decreasing or increasing direction, respectively
+     * @private
+     */
     private doesBonusExceedMax(valueWithBonus: number, maxValue: number, calculationSign: number) {
         return (valueWithBonus - maxValue) * calculationSign! > 0;
     }

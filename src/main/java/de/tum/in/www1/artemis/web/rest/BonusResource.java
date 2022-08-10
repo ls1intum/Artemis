@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.web.rest;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Optional;
-import java.util.Set;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -89,11 +88,11 @@ public class BonusResource {
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Set<Bonus>> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId) {
+    public ResponseEntity<Bonus> getBonusForExam(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get bonus sources for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        Set<Bonus> bonus = bonusRepository.findAllByTargetExamId(examId);
+        var bonus = bonusRepository.findAllByTargetExamId(examId).stream().findAny().orElse(null);
         return ResponseEntity.ok(bonus);
     }
 
@@ -188,6 +187,10 @@ public class BonusResource {
 
         // bonus.setTarget(examGradingScale);
         examGradingScale.getBonusFrom().add(bonus);
+        if (bonus.getSource() != null) {
+            var sourceFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
+            bonus.setSource(sourceFromDb);
+        }
 
         Bonus savedBonus = bonusService.saveBonus(bonus);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))

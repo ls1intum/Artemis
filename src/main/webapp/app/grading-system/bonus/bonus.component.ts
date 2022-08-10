@@ -42,6 +42,7 @@ export class BonusComponent implements OnInit {
     readonly ButtonSize = ButtonSize;
     readonly GradeEditMode = GradeEditMode;
     readonly BonusStrategyOptions = BonusStrategyOption;
+    readonly BonusStrategy = BonusStrategy;
     // readonly BonusStrategyDiscreteness = BonusStrategyDiscreteness;
 
     readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
@@ -151,15 +152,16 @@ export class BonusComponent implements OnInit {
     }
 
     generateExamples() {
-        if (this.bonus.source) {
+        if (this.bonus.source && this.bonus.bonusStrategy) {
             this.examples = this.bonusService.generateBonusExamples(this.bonus, this.examGradeStepsDTO);
+        } else {
+            this.examples = [];
         }
-        return this.examples; // TODO: Ata Remove return and set examples on a suitable hook.
     }
 
     private setBonus(bonus: Bonus) {
         this.bonus = bonus;
-        this.currentCalculationSign = Math.sign(bonus.calculationSign!) || undefined;
+        this.currentCalculationSign = Math.sign(bonus.weight!) || undefined;
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:
                 this.currentBonusStrategyOption = BonusStrategyOption.POINTS;
@@ -197,7 +199,7 @@ export class BonusComponent implements OnInit {
     }
 
     private prepareBonusToSave(bonus: Bonus) {
-        bonus.calculationSign = this.currentCalculationSign;
+        bonus.weight = this.currentCalculationSign;
         bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
     }
 
@@ -299,7 +301,7 @@ export class BonusComponent implements OnInit {
      * to display in the table and sort the grading steps for matching.
      * @param gradingScale the selected bonus source grading scale
      */
-    setBonusSourcePoints(gradingScale: GradingScale) {
+    private setBonusSourcePoints(gradingScale: GradingScale) {
         if (!this.gradingSystemService.hasPointsSet(gradingScale.gradeSteps)) {
             this.gradingSystemService.setGradePoints(gradingScale.gradeSteps, this.getGradingScaleMaxPoints(gradingScale));
         }
@@ -307,6 +309,23 @@ export class BonusComponent implements OnInit {
     }
 
     calculateDynamicExample() {
-        this.bonusService.calculateBonusForStrategy(this.dynamicExample, this.bonus, this.examGradeStepsDTO);
+        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.examGradeStepsDTO);
+    }
+
+    onBonusSourceChange(gradingScale: GradingScale) {
+        this.setBonusSourcePoints(gradingScale);
+        this.generateExamples();
+    }
+
+    /**
+     * Gets the sign of the bonus calculation to display inside the formula.
+     * @param weight a positive or negative number
+     */
+    getCalculationSign(weight: number): string {
+        return weight > 0 ? '+' : '-';
+    }
+
+    maxPossibleGrade() {
+        return this.gradingSystemService.maxGrade(this.examGradeStepsDTO.gradeSteps);
     }
 }
