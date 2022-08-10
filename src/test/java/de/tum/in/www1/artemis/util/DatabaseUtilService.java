@@ -1808,15 +1808,19 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneReleasedModelExerciseWithKnowledge() {
+    public Course addCourseWithOneReleasedModelExerciseWithKnowledge(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        modelingExercise.setTitle("Text");
+        modelingExercise.setTitle(title);
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         course.addExercises(modelingExercise);
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         return course;
+    }
+
+    public Course addCourseWithOneReleasedModelExerciseWithKnowledge() {
+        return addCourseWithOneReleasedModelExerciseWithKnowledge("Text");
     }
 
     public Course addCourseWithOneReleasedTextExercise() {
@@ -1829,17 +1833,21 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
-        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+        populateProgrammingExercise(programmingExercise, shortName, title, false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         return programmingExercise;
+    }
+
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
+        return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM");
     }
 
     public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
@@ -1857,15 +1865,16 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
-                exerciseGroup.getExam().getCourse());
-        classExercise.setTitle("ClassDiagram");
-        classExercise.setExerciseGroup(exerciseGroup);
-
+        ModelingExercise classExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        classExercise.setTitle(title);
         classExercise = modelingExerciseRepository.save(classExercise);
         return classExercise;
+    }
+
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+        return addCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram");
     }
 
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
