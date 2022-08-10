@@ -54,7 +54,7 @@
                 <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
                 <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
             </div>
-            <div class="button-column d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-md-1" role="group">
+            <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
                 <jhi-learning-goals-popover
                     *ngIf="lecture.course?.id"
                     [courseId]="lecture.course!.id!"
