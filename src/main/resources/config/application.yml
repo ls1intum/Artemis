@@ -38,30 +38,31 @@ artemis:
         build:
             images:
                 java:
-                  # possible overrides: maven, gradle
-                  default: "ls1tum/artemis-maven-template:java17-8"
+                    # possible overrides: maven, gradle
+                    default: "ls1tum/artemis-maven-template:java17-8"
+                    other: "asd"
                 kotlin:
-                  # possible overrides: maven, gradle
-                  default: "ls1tum/artemis-maven-template:java17-8"
+                    # possible overrides: maven, gradle
+                    default: "ls1tum/artemis-maven-template:java17-8"
                 empty:
-                  default: "ls1tum/artemis-maven-template:java17-8"
+                    default: "ls1tum/artemis-maven-template:java17-8"
                 python:
-                  default: "ls1tum/artemis-python-docker:latest"
+                    default: "ls1tum/artemis-python-docker:latest"
                 c:
-                  # possible overrides: gcc, fact
-                  default: "ls1tum/artemis-c-docker:latest"
-                  fact: "sharingcodeability/fact:latest"
+                    # possible overrides: gcc, fact
+                    default: "ls1tum/artemis-c-docker:latest"
+                    fact: "sharingcodeability/fact:latest"
                 haskell:
-                  default: "ghcr.io/b-fein/artemis-haskell:main"
+                    default: "ghcr.io/b-fein/artemis-haskell:main"
                 vhdl:
-                  default: "tizianleonhardt/era-artemis-vhdl:latest"
+                    default: "tizianleonhardt/era-artemis-vhdl:latest"
                 assembler:
-                  default: "tizianleonhardt/era-artemis-assembler:latest"
+                    default: "tizianleonhardt/era-artemis-assembler:latest"
                 swift:
-                  # possible overrides: xcode
-                  default: "norionomura/swiftlint:latest"
+                    # possible overrides: xcode
+                    default: "norionomura/swiftlint:latest"
                 ocaml:
-                  default: "ls1tum/artemis-ocaml-docker:v1"
+                    default: "ls1tum/artemis-ocaml-docker:v1"
 
 management:
     endpoints:
