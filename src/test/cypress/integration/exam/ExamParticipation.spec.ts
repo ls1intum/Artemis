@@ -4,17 +4,22 @@ import { GET, BASE_API } from '../../support/constants';
 import { CypressExamBuilder } from '../../support/requests/CourseManagementRequests';
 import { artemis } from '../../support/ArtemisTesting';
 import dayjs from 'dayjs/esm';
-import submission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import successfulSubmission from '../../fixtures/programming_exercise_submissions/all_successful/submission.json';
+import partialSuccessfulSubmission from '../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
+import buildErrorSubmission from '../../fixtures/programming_exercise_submissions/build_error/submission.json';
 import multipleChoiceTemplate from '../../fixtures/quiz_exercise_fixtures/multipleChoiceQuiz_template.json';
 import { Course } from 'app/entities/course.model';
 import { Interception } from 'cypress/types/net-stubbing';
+import { CypressCredentials } from '../../support/users';
 
 // Requests
 const courseRequests = artemis.requests.courseManagement;
 
 // User management
 const users = artemis.users;
-const student = users.getStudentOne();
+const studentOne = users.getStudentOne();
+const studentTwo = users.getStudentTwo();
+const studentThree = users.getStudentThree();
 
 // Pageobjects
 const courses = artemis.pageobjects.course.list;
@@ -47,7 +52,9 @@ describe('Exam participation', () => {
                 .build();
             courseRequests.createExam(examContent).then((examResponse) => {
                 exam = examResponse.body;
-                courseRequests.registerStudentForExam(exam, student);
+                courseRequests.registerStudentForExam(exam, studentOne);
+                courseRequests.registerStudentForExam(exam, studentTwo);
+                courseRequests.registerStudentForExam(exam, studentThree);
                 courseRequests.addExerciseGroupForExam(exam).then((groupResponse) => {
                     courseRequests.createTextExercise({ exerciseGroup: groupResponse.body }, textExerciseTitle);
                 });
@@ -68,21 +75,57 @@ describe('Exam participation', () => {
         });
     });
 
-    it('Participates as a student in a registered exam', () => {
-        startParticipation();
-        openTextExercise();
-        makeTextExerciseSubmission();
-        makeProgrammingExerciseSubmission();
-        openModelingExercise();
-        makeModelingExerciseSubmission();
-        openQuizExercise();
-        makeQuizExerciseSubmission();
+    describe('Student participations', () => {
+        it('Participates as student one in a registered exam', () => {
+            startParticipation(studentOne);
+            openTextExercise();
+            makeTextExerciseSubmission();
+            makeProgrammingExerciseSubmission(successfulSubmission, '100%', '13 of 13 passed');
+            openModelingExercise();
+            makeModelingExerciseSubmission([1, 2, 3]);
+            openQuizExercise();
+            makeQuizExerciseSubmission([0, 2]);
+            openFileUploadExercise();
+            makeFileUploadExerciseSubmission();
 
-        handInEarly();
-        verifyFinalPage();
+            handInEarly();
+            verifyFinalPage();
+        });
+
+        it('Participates as student two in a registered exam', () => {
+            startParticipation(studentTwo);
+            openTextExercise();
+            makeTextExerciseSubmission();
+            makeProgrammingExerciseSubmission(partialSuccessfulSubmission, '46.2%', '6 of 13 passed');
+            openModelingExercise();
+            makeModelingExerciseSubmission([1, 1, 3]);
+            openQuizExercise();
+            makeQuizExerciseSubmission([1, 3]);
+            openFileUploadExercise();
+            makeFileUploadExerciseSubmission();
+
+            handInEarly();
+            verifyFinalPage();
+        });
+
+        it('Participates as student three in a registered exam', () => {
+            startParticipation(studentThree);
+            openTextExercise();
+            makeTextExerciseSubmission();
+            makeProgrammingExerciseSubmission(buildErrorSubmission, '0%', 'Build failed');
+            openModelingExercise();
+            makeModelingExerciseSubmission([3, 3, 3]);
+            openQuizExercise();
+            makeQuizExerciseSubmission([0, 1, 3]);
+            openFileUploadExercise();
+            makeFileUploadExerciseSubmission();
+
+            handInEarly();
+            verifyFinalPage();
+        });
     });
 
-    function startParticipation() {
+    function startParticipation(student: CypressCredentials) {
         cy.login(student, '/');
         courses.openCourse(course.id!);
         courseOverview.openExamsTab();
@@ -114,26 +157,27 @@ describe('Exam participation', () => {
         });
     }
 
-    function makeProgrammingExerciseSubmission() {
+    function makeProgrammingExerciseSubmission(submission: any, result: string, passed: string) {
         onlineEditor.toggleCompressFileTree();
         onlineEditor.deleteFile('Client.java');
         onlineEditor.deleteFile('BubbleSort.java');
         onlineEditor.deleteFile('MergeSort.java');
         onlineEditor.typeSubmission(submission, 'de.test');
         onlineEditor.submit();
-        onlineEditor.getResultScore().contains('100%').should('be.visible');
-        onlineEditor.getResultScore().contains('13 of 13 passed').should('be.visible');
+        onlineEditor.getResultScore().contains(result).should('be.visible');
+        onlineEditor.getResultScore().contains(passed).should('be.visible');
     }
 
-    function makeModelingExerciseSubmission() {
-        modelingEditor.addComponentToModel(1, false);
-        modelingEditor.addComponentToModel(2, false);
-        modelingEditor.addComponentToModel(3, false);
+    function makeModelingExerciseSubmission(components: Array<number>) {
+        for (const component of components) {
+            modelingEditor.addComponentToModel(component, false);
+        }
     }
 
-    function makeQuizExerciseSubmission() {
-        multipleChoiceQuiz.tickAnswerOption(0, quizExercise.quizQuestions![0].id);
-        multipleChoiceQuiz.tickAnswerOption(2, quizExercise.quizQuestions![0].id);
+    function makeQuizExerciseSubmission(options: Array<number>) {
+        for (const option of options) {
+            multipleChoiceQuiz.tickAnswerOption(option, quizExercise.quizQuestions![0].id);
+        }
     }
 
     function handInEarly() {

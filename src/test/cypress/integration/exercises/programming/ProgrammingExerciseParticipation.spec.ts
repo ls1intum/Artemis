@@ -2,6 +2,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { Course } from 'app/entities/course.model';
 import allSuccessful from '../../../fixtures/programming_exercise_submissions/all_successful/submission.json';
 import partiallySuccessful from '../../../fixtures/programming_exercise_submissions/partially_successful/submission.json';
+import buildError from '../../../fixtures/programming_exercise_submissions/build_error/submission.json';
 import { artemis } from '../../../support/ArtemisTesting';
 import { makeSubmissionAndVerifyResults, startParticipationInProgrammingExercise } from '../../../support/pageobjects/exercises/programming/OnlineEditorPage';
 
@@ -64,8 +65,7 @@ describe('Programming exercise participations', () => {
      * Makes a submission, which fails the CI build and asserts that this is highlighted in the UI.
      */
     function makeFailingSubmission() {
-        const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
-        makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, submission, () => {
+        makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, buildError, () => {
             editorPage.getResultScore().contains('Build failed').should('be.visible');
             editorPage.getResultScore().contains('0%').and('be.visible');
         });

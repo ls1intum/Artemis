@@ -610,6 +610,26 @@ export class CypressExamBuilder {
         return this;
     }
 
+    startText(text: string) {
+        this.template.startText = text;
+        return this;
+    }
+
+    endText(text: string) {
+        this.template.endText = text;
+        return this;
+    }
+
+    confirmationStartText(text: string) {
+        this.template.confirmationStartText = text;
+        return this;
+    }
+
+    confirmationEndText(text: string) {
+        this.template.confirmationEndText = text;
+        return this;
+    }
+
     /**
      * @returns the exam object
      */
