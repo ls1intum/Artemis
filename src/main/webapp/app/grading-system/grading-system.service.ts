@@ -6,6 +6,7 @@ import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.mode
 import { map } from 'rxjs/operators';
 import { Course } from 'app/entities/course.model';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { captureException } from '@sentry/angular';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
@@ -252,6 +253,19 @@ export class GradingSystemService {
     }
 
     /**
+     * Finds a matching grade step among the given grade steps by calculating percentage
+     * from the given points and max points.
+     * @see findMatchingGradeStep
+     * @param gradeSteps
+     * @param points
+     * @param maxPoints
+     */
+    findMatchingGradeStepByPoints(gradeSteps: GradeStep[], points: number, maxPoints: number) {
+        const percentage = (points / maxPoints) * 100;
+        return this.findMatchingGradeStep(gradeSteps, percentage);
+    }
+
+    /**
      * Returns the max grade from a given grade step set
      *
      * @param gradeSteps the grade step set
@@ -286,5 +300,38 @@ export class GradingSystemService {
             }
         }
         return gradeSteps.length !== 0;
+    }
+
+    /**
+     * TODO: Ata
+     * @param gradingScale
+     */
+    getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
+        return gradingScale?.exam?.title ?? gradingScale?.course?.title;
+    }
+
+    /**
+     * TODO: Ata
+     * @param gradingScale
+     */
+    getGradingScaleMaxPoints(gradingScale: GradingScale): number {
+        return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
+    }
+
+    /**
+     * TODO: Ata
+     * @param gradeName
+     */
+    getNumericValueForGradeName(gradeName: string | undefined): number | undefined {
+        if (gradeName == undefined) {
+            return undefined;
+        }
+        gradeName = gradeName.replace(',', '.');
+        const numericValue = parseFloat(gradeName);
+        if (isNaN(numericValue)) {
+            captureException(new Error(`Grade name: ${gradeName} cannot be parsed as float`));
+            return undefined;
+        }
+        return numericValue;
     }
 }

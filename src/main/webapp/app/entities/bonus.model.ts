@@ -1,5 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { GradingScale } from 'app/entities/grading-scale.model';
+import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 
 export class Bonus implements BaseEntity {
     public id?: number;
@@ -19,13 +20,11 @@ export enum BonusStrategy {
 }
 
 export class BonusExample {
-    constructor(
-        public examStudentPoints: number,
-        public bonusStudentPoints: number | undefined,
-        public examGrade?: number | string,
-        public bonusGrade?: number | string,
-        public calculatedBonus?: number,
-        public finalPoints?: number,
-        public finalGrade?: number | string,
-    ) {}
+    public examGrade?: number | string;
+    public bonusGrade?: number;
+    // public calculatedBonus?: number;
+    public finalPoints?: number;
+    public finalGrade?: number | string;
+
+    constructor(public examStudentPoints: number, public bonusStudentPoints: number | undefined) {}
 }

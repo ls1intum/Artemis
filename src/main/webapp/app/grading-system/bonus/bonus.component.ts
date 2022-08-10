@@ -3,7 +3,7 @@ import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { ActivatedRoute } from '@angular/router';
-import { Bonus, BonusStrategy } from 'app/entities/bonus.model';
+import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { finalize } from 'rxjs/operators';
 import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
@@ -14,7 +14,7 @@ import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 
-enum BonusStrategyOptions {
+enum BonusStrategyOption {
     GRADES,
     POINTS,
 }
@@ -41,12 +41,12 @@ export class BonusComponent implements OnInit {
 
     readonly ButtonSize = ButtonSize;
     readonly GradeEditMode = GradeEditMode;
-    readonly BonusStrategyOptions = BonusStrategyOptions;
+    readonly BonusStrategyOptions = BonusStrategyOption;
     // readonly BonusStrategyDiscreteness = BonusStrategyDiscreteness;
 
-    readonly bonusStrategyOptions = [BonusStrategyOptions.GRADES, BonusStrategyOptions.POINTS].map((bonusStrategyOption) => ({
+    readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
         value: bonusStrategyOption,
-        labelKey: 'artemisApp.TODO: Ata.' + BonusStrategyOptions[bonusStrategyOption].toLowerCase(),
+        labelKey: 'artemisApp.TODO: Ata.' + BonusStrategyOption[bonusStrategyOption].toLowerCase(),
         btnClass: 'btn-secondary',
     }));
 
@@ -80,9 +80,12 @@ export class BonusComponent implements OnInit {
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
-    currentBonusStrategyOption?: BonusStrategyOptions;
+    currentBonusStrategyOption?: BonusStrategyOption;
     currentBonusStrategyDiscreteness?: BonusStrategyDiscreteness;
     currentCalculationSign?: number;
+
+    examples?: BonusExample[] = []; // TODO: Ata Remove empty array
+    dynamicExample = new BonusExample(0, 0);
 
     bonus = new Bonus();
     invalidBonusMessage?: string;
@@ -147,20 +150,27 @@ export class BonusComponent implements OnInit {
         });
     }
 
+    generateExamples() {
+        if (this.bonus.source) {
+            this.examples = this.bonusService.generateBonusExamples(this.bonus, this.examGradeStepsDTO);
+        }
+        return this.examples; // TODO: Ata Remove return and set examples on a suitable hook.
+    }
+
     private setBonus(bonus: Bonus) {
         this.bonus = bonus;
         this.currentCalculationSign = Math.sign(bonus.calculationSign!) || undefined;
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:
-                this.currentBonusStrategyOption = BonusStrategyOptions.POINTS;
+                this.currentBonusStrategyOption = BonusStrategyOption.POINTS;
                 this.currentBonusStrategyDiscreteness = undefined;
                 break;
             case BonusStrategy.GRADES_CONTINUOUS:
-                this.currentBonusStrategyOption = BonusStrategyOptions.GRADES;
+                this.currentBonusStrategyOption = BonusStrategyOption.GRADES;
                 this.currentBonusStrategyDiscreteness = BonusStrategyDiscreteness.CONTINUOUS;
                 break;
             case BonusStrategy.GRADES_DISCRETE:
-                this.currentBonusStrategyOption = BonusStrategyOptions.GRADES;
+                this.currentBonusStrategyOption = BonusStrategyOption.GRADES;
                 this.currentBonusStrategyDiscreteness = BonusStrategyDiscreteness.DISCRETE;
                 break;
             default:
@@ -169,13 +179,26 @@ export class BonusComponent implements OnInit {
         }
     }
 
+    onBonusStrategyInputChange() {
+        this.bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
+    }
+
+    convertFromInputsToBonusStrategy(
+        bonusStrategyOption: BonusStrategyOption | undefined,
+        bonusStrategyDiscreteness: BonusStrategyDiscreteness | undefined,
+    ): BonusStrategy | undefined {
+        if (bonusStrategyOption === BonusStrategyOption.POINTS) {
+            return BonusStrategy.POINTS;
+        } else if (bonusStrategyOption === BonusStrategyOption.GRADES) {
+            return bonusStrategyDiscreteness === BonusStrategyDiscreteness.DISCRETE ? BonusStrategy.GRADES_DISCRETE : BonusStrategy.GRADES_CONTINUOUS;
+        }
+        return undefined;
+        // throw new Error('Unexpected args for convertFromOptionToBonusStrategy'); // TODO: Ata Decide whether remove
+    }
+
     private prepareBonusToSave(bonus: Bonus) {
         bonus.calculationSign = this.currentCalculationSign;
-        if (this.currentBonusStrategyOption === BonusStrategyOptions.POINTS) {
-            bonus.bonusStrategy = BonusStrategy.POINTS;
-        } else if (this.currentBonusStrategyOption === BonusStrategyOptions.GRADES) {
-            bonus.bonusStrategy = this.currentBonusStrategyDiscreteness === BonusStrategyDiscreteness.DISCRETE ? BonusStrategy.GRADES_DISCRETE : BonusStrategy.GRADES_CONTINUOUS;
-        }
+        bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
     }
 
     save(): void {
@@ -248,12 +271,20 @@ export class BonusComponent implements OnInit {
         return true;
     }
 
+    /**
+     * @see GradingSystemService.getGradingScaleTitle
+     * @param gradingScale
+     */
     getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
-        return gradingScale?.exam?.title ?? gradingScale?.course?.title;
+        return this.gradingSystemService.getGradingScaleTitle(gradingScale);
     }
 
+    /**
+     * @see GradingSystemService.getGradingScaleMaxPoints
+     * @param gradingScale
+     */
     getGradingScaleMaxPoints(gradingScale: GradingScale): number {
-        return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
+        return this.gradingSystemService.getGradingScaleMaxPoints(gradingScale);
     }
 
     /**
@@ -265,12 +296,17 @@ export class BonusComponent implements OnInit {
 
     /**
      * Calculate points for each grade step of the selected gradingScale if they are not already calculated before
-     * to display in the table.
+     * to display in the table and sort the grading steps for matching.
      * @param gradingScale the selected bonus source grading scale
      */
     setBonusSourcePoints(gradingScale: GradingScale) {
         if (!this.gradingSystemService.hasPointsSet(gradingScale.gradeSteps)) {
             this.gradingSystemService.setGradePoints(gradingScale.gradeSteps, this.getGradingScaleMaxPoints(gradingScale));
         }
+        this.gradingSystemService.sortGradeSteps(gradingScale.gradeSteps);
+    }
+
+    calculateDynamicExample() {
+        this.bonusService.calculateBonusForStrategy(this.dynamicExample, this.bonus, this.examGradeStepsDTO);
     }
 }

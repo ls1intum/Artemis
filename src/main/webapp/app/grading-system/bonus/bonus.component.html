@@ -1,23 +1,23 @@
 <div class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
-    <jhi-mode-picker [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption"></jhi-mode-picker>
+    <jhi-mode-picker [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()"></jhi-mode-picker>
 </div>
 <div *ngIf="currentBonusStrategyOption === BonusStrategyOptions.GRADES" class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
-    <jhi-mode-picker [options]="bonusStrategyDiscreteness" [(value)]="currentBonusStrategyDiscreteness"></jhi-mode-picker>
+    <jhi-mode-picker [options]="bonusStrategyDiscreteness" [(value)]="currentBonusStrategyDiscreteness" (valueChange)="onBonusStrategyInputChange()"></jhi-mode-picker>
 </div>
 <div class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
     <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.calculationSign"></jhi-mode-picker>
 </div>
 <div class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.TODO: Ata">Select bonus source</span>
+    <span class="colon-suffix no-flex-shr ink" jhiTranslate="artemisApp.gradingSystem.TODO: Ata">Select bonus source</span>
     <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="setBonusSourcePoints($event)" title="Select bonus source">
         <option *ngFor="let sourceGradingScale of sourceGradingScales" [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
     </select>
 </div>
 <h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
-<div *ngIf="bonus.source?.gradeSteps" style="font-size: 1.1em">
+<div *ngIf="bonus.source?.gradeSteps" class="fs-5">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
     <table class="table table-striped">
         <thead>
@@ -41,6 +41,39 @@
     </table>
 </div>
 <h6>{{ 'artemisApp.TODO: Ata Formula' | artemisTranslate }}</h6>
+<div *ngIf="examples" class="fs-5">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Inclusivity</span>
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>{{ 'artemisApp.TODO: Ata examStudentPoints' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.TODO: Ata examGrade' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.TODO: Ata bonusStudentPoints' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.TODO: Ata bonusGrade' | artemisTranslate }}</th>
+                <th *ngIf="currentBonusStrategyOption == BonusStrategyOptions.POINTS">{{ 'artemisApp.TODO: Ata finalPoints' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.TODO: Ata finalGrade' | artemisTranslate }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr *ngFor="let example of generateExamples()">
+                <td>{{ example.examStudentPoints }}</td>
+                <td>{{ example.examGrade }}</td>
+                <td>{{ example.bonusStudentPoints }}</td>
+                <td>{{ example.bonusGrade }}</td>
+                <td *ngIf="currentBonusStrategyOption == BonusStrategyOptions.POINTS">{{ example.finalPoints }}</td>
+                <td>{{ example.finalGrade }}</td>
+            </tr>
+            <tr>
+                <td><input [(ngModel)]="dynamicExample.examStudentPoints" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
+                <td>{{ dynamicExample.examGrade }}</td>
+                <td><input [(ngModel)]="dynamicExample.bonusStudentPoints" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
+                <td>{{ dynamicExample.bonusGrade }}</td>
+                <td *ngIf="currentBonusStrategyOption == BonusStrategyOptions.POINTS">{{ dynamicExample.finalPoints }}{{ dynamicExample.bonusGrade }}</td>
+                <td>{{ dynamicExample.finalGrade }}{{ dynamicExample.bonusGrade }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 <div>
     <button (click)="save()" [disabled]="isLoading || !isFormValid()" class="btn btn-primary mr-1 mb-1" type="button">
         <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
