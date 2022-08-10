@@ -9,10 +9,11 @@ import java.util.function.Predicate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 
-class ProgrammingLanguageConfigurationTest {
+class ProgrammingLanguageConfigurationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String OVERRIDDEN_IMAGE_NAME = "overridden_image";
 
