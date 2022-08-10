@@ -270,7 +270,7 @@
 
 <!-- Fragment displaying the translated PlagiarismVerdict (e.g. -> "POINT_DEDUCTION") -->
 <th:block th:fragment="plagiarismVerdictTranslation">
-    <th:block th:switch="${notificationSubject.getVerdict()}">
+    <th:block th:switch="${notificationSubject.getVerdict().toString()}">
         <th:block th:case="'PLAGIARISM'">
             <span th:utext="#{email.notification.aux.plagiarismVerdict.plagiarism}"/>
         </th:block>
