@@ -17,6 +17,8 @@ public class HibernateQueryInterceptor extends EmptyInterceptor {
 
     /**
      * Get the query count for the considered thread
+     *
+     * @return Long the amount of queries that have been perofrmed since the count was started
      */
     public Long getQueryCount() {
         return threadQueryCount.get();

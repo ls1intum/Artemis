@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepo;
@@ -31,7 +31,7 @@ public class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbu
     private final static int numberOfInstructors = 1;
 
     @BeforeEach
-    public void setup() {
+    void setup() {
 
         database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
 
@@ -41,13 +41,13 @@ public class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
+    void testGetAllCoursesForDashboardRealisticQueryCount() throws Exception {
         // Tests the amount of DB calls for a 'realistic' call to courses/for-dashboard. We should aim to maintain or lower the amount of DB calls, and be aware if they increase
         database.createMultipleCoursesWithAllExercisesAndLectures(10, 10);
 
