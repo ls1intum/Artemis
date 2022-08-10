@@ -201,7 +201,7 @@ public class MailService {
 
         if (notificationSubject instanceof Exercise exercise) {
             context.setVariable(EXERCISE_TYPE, exercise.getExerciseType());
-            context = checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
+            checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
         }
         if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
             context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
@@ -252,7 +252,7 @@ public class MailService {
      * @param recipientStudent who will receive the email
      * @return the updated context
      */
-    private Context checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
+    private void checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
         if (notificationType.equals(EXERCISE_SUBMISSION_ASSESSED)) {
             StudentParticipation studentParticipation = exercise.getStudentParticipations().stream()
                     .filter(participation -> participation.getStudent().orElseThrow().equals(recipientStudent)).findFirst().orElseThrow();
@@ -260,7 +260,6 @@ public class MailService {
             context.setVariable(ASSESSED_SCORE, score);
             context.setVariable(RELATIVE_SCORE, exercise.getMaxPoints() / score);
         }
-        return context;
     }
 
     @Async
