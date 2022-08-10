@@ -34,7 +34,7 @@ jest.mock('export-to-csv', () => ({
     })),
 }));
 
-describe('Course Management Detail Component', () => {
+describe('Course Group Component', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
     let courseService: CourseManagementService;
@@ -89,18 +89,7 @@ describe('Course Management Detail Component', () => {
 
     it('should initialize', () => {
         fixture.detectChanges();
-        expect(CourseGroupComponent).not.toBeNull();
-    });
-
-    describe('OnInit', () => {
-        it('should load all course group users', () => {
-            const getUsersStub = jest.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
-            fixture.detectChanges();
-            comp.ngOnInit();
-            expect(comp.course).toEqual(course);
-            expect(comp.courseGroup).toEqual(courseGroup);
-            expect(getUsersStub).toHaveBeenCalledTimes(2);
-        });
+        expect(comp).not.toBeNull();
     });
 
     describe('searchAllUsers', () => {
@@ -158,7 +147,7 @@ describe('Course Management Detail Component', () => {
         let user: User;
 
         beforeEach(() => {
-            addUserStub = jest.spyOn(courseService, 'addUserToCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
+            addUserStub = jest.spyOn(comp, 'addUserToGroup').mockReturnValue(of({}));
             user = courseGroupUser;
             comp.allGroupUsers = [];
             comp.course = course;
@@ -168,7 +157,7 @@ describe('Course Management Detail Component', () => {
         it('should add the selected user to course group', () => {
             const fake = jest.fn();
             comp.onAutocompleteSelect(user, fake);
-            expect(addUserStub).toHaveBeenCalledWith(course.id, courseGroup, user.login);
+            expect(addUserStub).toHaveBeenCalledWith(user.login);
             expect(addUserStub).toHaveBeenCalledOnce();
             expect(comp.allGroupUsers).toEqual([courseGroupUser]);
             expect(fake).toHaveBeenCalledWith(user);
@@ -190,7 +179,7 @@ describe('Course Management Detail Component', () => {
         let removeUserStub: jest.SpyInstance;
 
         beforeEach(() => {
-            removeUserStub = jest.spyOn(courseService, 'removeUserFromCourseGroup').mockReturnValue(of(new HttpResponse<void>()));
+            removeUserStub = jest.spyOn(comp, 'removeUserFromGroup').mockReturnValue(of({}));
             comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
             comp.course = course;
             comp.courseGroup = courseGroup;
@@ -198,7 +187,7 @@ describe('Course Management Detail Component', () => {
 
         it('should given user from group', () => {
             comp.removeFromGroup(courseGroupUser);
-            expect(removeUserStub).toHaveBeenCalledWith(course.id, courseGroup, courseGroupUser.login);
+            expect(removeUserStub).toHaveBeenCalledWith(courseGroupUser.login);
             expect(removeUserStub).toHaveBeenCalledOnce();
             expect(comp.allGroupUsers).toEqual([courseGroupUser2]);
         });
@@ -210,38 +199,6 @@ describe('Course Management Detail Component', () => {
             expect(removeUserStub).not.toHaveBeenCalled();
         });
     });
-
-    describe('courseGroupName', () => {
-        it('should return courses studentGroupName if group is students', () => {
-            comp.courseGroup = CourseGroup.STUDENTS;
-            comp.course = { ...course };
-            comp.course.studentGroupName = 'testStudentGroupName';
-            expect(comp.courseGroupName).toBe(comp.course.studentGroupName);
-        });
-
-        it('should return courses teachingAssistantGroupName if group is tutors', () => {
-            comp.courseGroup = CourseGroup.TUTORS;
-            comp.course = { ...course };
-            comp.course.teachingAssistantGroupName = 'testTeachingAssistantGroupName';
-            expect(comp.courseGroupName).toBe(comp.course.teachingAssistantGroupName);
-        });
-
-        it('should return courses instructorGroupName if group is instructors', () => {
-            comp.courseGroup = CourseGroup.INSTRUCTORS;
-            comp.course = { ...course };
-            comp.course.instructorGroupName = 'testInstructorGroupName';
-            expect(comp.courseGroupName).toBe(comp.course.instructorGroupName);
-        });
-    });
-
-    describe('handleUsersSizeChange', () => {
-        it('should change user size to given number', () => {
-            const size = 5;
-            comp.handleUsersSizeChange(size);
-            expect(comp.filteredUsersSize).toBe(size);
-        });
-    });
-
     describe('searchResultFormatter', () => {
         it('should format user info into appropriate format', () => {
             const name = 'testName';
