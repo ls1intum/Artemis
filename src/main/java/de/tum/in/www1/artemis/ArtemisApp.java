@@ -17,7 +17,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.core.env.Environment;
 
-import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import tech.jhipster.config.DefaultProfileUtil;
 import tech.jhipster.config.JHipsterConstants;
 
