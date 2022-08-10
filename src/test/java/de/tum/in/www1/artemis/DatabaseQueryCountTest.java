@@ -22,18 +22,10 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
     @Autowired
     private HibernateQueryInterceptor hibernateQueryInterceptor;
 
-    private final static int numberOfStudents = 8;
-
-    private final static int numberOfTutors = 5;
-
-    private final static int numberOfEditors = 1;
-
-    private final static int numberOfInstructors = 1;
-
     @BeforeEach
     void setup() {
 
-        database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+        database.addUsers(8, 5, 1, 1);
 
         // Add users that are not in the course
         userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
