@@ -626,7 +626,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPostTagsForCourse() throws Exception {
         List<String> returnedTags = request.getList("/api/courses/" + courseId + "/posts/tags", HttpStatus.OK, String.class);
-
         // 4 different tags were used for the posts
         assertThat(returnedTags).hasSameSizeAs(postRepository.findPostTagsForCourse(courseId));
     }

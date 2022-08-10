@@ -149,10 +149,6 @@ management:
         env:
             enabled: true
 
-spring-hibernate-query-utils:
-    n-plus-one-queries-detection:
-        enabled: false # Disabled because when this is enabled it causes the server-tests build to hang indefinitely. Should be investigated as it might be a helpful feature.
-
 sentry:
     dsn: https://not-activated@sentry.io/0000000
     send-default-pii: true

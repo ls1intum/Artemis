@@ -564,7 +564,6 @@ public class CourseTestService {
     // Test
     public void testGetCourseForDashboard() throws Exception {
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(true, false);
-
         Course receivedCourse = request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class);
 
         // Test that the received course has five exercises
@@ -641,9 +640,7 @@ public class CourseTestService {
     public void testGetCoursesWithoutActiveExercises() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         courseRepo.save(course);
-
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-
         assertThat(courses).as("Only one course is returned").hasSize(1);
         assertThat(courses.stream().findFirst().get().getExercises()).as("Course doesn't have any exercises").isEmpty();
     }
@@ -659,14 +656,10 @@ public class CourseTestService {
         courseActive = courseRepo.save(courseActive);
         courseRepo.save(courseNotActivePast);
         courseRepo.save(courseNotActiveFuture);
-
         List<Course> courses = request.getList("/api/courses/for-dashboard", HttpStatus.OK, Course.class);
-
         assertThat(courses).as("Exactly one course is returned").hasSize(1);
         assertThat(courses.get(0)).as("Active course is returned").isEqualTo(courseActive);
-
         List<Course> coursesForNotifications = request.getList("/api/courses/for-notifications", HttpStatus.OK, Course.class);
-
         assertThat(coursesForNotifications).as("Exactly one course is returned").hasSize(1);
         assertThat(coursesForNotifications.get(0)).as("Active course is returned").isEqualTo(courseActive);
     }

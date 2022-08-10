@@ -448,8 +448,6 @@ and the ``hibernateQueryInterceptor.getQueryCount()`` should be right before/aft
         }
     }
 
-The library used for this is `Spring Hibernate Query Utils <https://github.com/yannbriancon/spring-hibernate-query-utils/>`_.
-
 24. Avoid using @MockBean
 =========================
 
