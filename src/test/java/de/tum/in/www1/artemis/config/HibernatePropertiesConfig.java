@@ -1,11 +1,12 @@
 package de.tum.in.www1.artemis.config;
 
-import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
+import java.util.Map;
+
 import org.springframework.boot.autoconfigure.orm.jpa.HibernatePropertiesCustomizer;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 
-import java.util.Map;
+import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
 
 @Configuration
 @ComponentScan

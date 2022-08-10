@@ -37,4 +37,3 @@ public class HibernateQueryInterceptor extends EmptyInterceptor {
         return super.onPrepareStatement(sql);
     }
 }
-

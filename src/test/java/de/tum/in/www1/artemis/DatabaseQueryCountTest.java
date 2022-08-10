@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
-import de.tum.in.www1.artemis.util.ModelFactory;
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
-import static org.assertj.core.api.Assertions.assertThat;
+
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.util.HibernateQueryInterceptor;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -19,7 +21,6 @@ public class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private HibernateQueryInterceptor hibernateQueryInterceptor;
-
 
     private final static int numberOfStudents = 8;
 
