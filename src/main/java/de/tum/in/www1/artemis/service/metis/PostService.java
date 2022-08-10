@@ -22,7 +22,9 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
-import de.tum.in.www1.artemis.domain.metis.*;
+import de.tum.in.www1.artemis.domain.metis.CourseWideContext;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.metis.Reaction;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -555,23 +557,5 @@ public class PostService extends PostingService {
                 setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
             });
         });
-    }
-
-    /**
-     * helper method that assigns authorRoles of postings in accordance to user groups and authorities
-     * @param posting       posting to assign authorRole
-     * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
-     */
-    private void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
-        if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, posting.getAuthor())) {
-            posting.setAuthorRole(UserRole.INSTRUCTOR);
-        }
-        else if (authorizationCheckService.isTeachingAssistantInCourse(postingCourse, posting.getAuthor())
-                || authorizationCheckService.isEditorInCourse(postingCourse, posting.getAuthor())) {
-            posting.setAuthorRole(UserRole.TUTOR);
-        }
-        else {
-            posting.setAuthorRole(UserRole.USER);
-        }
     }
 }
