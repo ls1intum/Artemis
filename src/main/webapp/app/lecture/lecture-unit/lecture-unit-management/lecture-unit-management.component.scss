@@ -44,6 +44,16 @@
         }
     }
 
+    .button-column {
+        min-width: 40px;
+
+        @media (min-width: 768px) {
+            & {
+                min-width: 100px;
+            }
+        }
+    }
+
     &.attachment {
         margin-top: 50px;
 
@@ -52,19 +62,6 @@
 
             > div {
                 width: min-content;
-            }
-        }
-    }
-
-    .learning-goals-column,
-    .button-column {
-    }
-
-    .button-column {
-        min-width: 40px;
-        @media (min-width: 768px) {
-            & {
-                min-width: 100px;
             }
         }
     }
