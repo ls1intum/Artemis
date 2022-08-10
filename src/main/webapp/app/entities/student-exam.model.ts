@@ -17,6 +17,7 @@ export class StudentExam implements BaseEntity {
     public exam?: Exam;
     public exercises?: Exercise[];
     public examSessions?: ExamSession[];
+    public startedDate?: dayjs.Dayjs;
     public examActivity?: ExamActivity;
 
     // helper attribute

@@ -183,12 +183,13 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).toEqual(studentExam);
         expect(comp.exam).toEqual(studentExam.exam);
     });
+
     it('should load exam if test run id is not defined', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
         studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
         studentExam.workingTime = 100;
-        const studentExamWithExercises = new StudentExam();
+        const studentExamWithExercises = { id: 1 };
         TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2' });
         const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
         const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
@@ -206,6 +207,64 @@ describe('ExamParticipationComponent', () => {
         expect(comp.studentExam).toEqual(studentExamWithExercises);
         expect(comp.studentExam).not.toEqual(studentExam);
     });
+
+    it('should load new testExam if studentExam id is new', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = true;
+        studentExam.exam.course = new Course();
+        studentExam.workingTime = 100;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: 'new' });
+        const loadTestRunStub = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        comp.ngOnInit();
+        expect(loadTestRunStub).toHaveBeenCalledOnce();
+        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.exam).toEqual(studentExam.exam);
+    });
+
+    it('should load existing testExam if studentExam id is defined', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = true;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 150;
+        studentExam.id = 4;
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 4;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '4' });
+        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+        comp.ngOnInit();
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(comp.studentExam).toEqual(studentExam);
+        expect(comp.exam).toEqual(studentExam.exam);
+        expect(comp.studentExam.id).toEqual(studentExam.id);
+        expect(loadStudentExamWithExercisesForSummary).not.toHaveBeenCalled();
+    });
+
+    it('should load existing testExam for summary if studentExam id is defined', () => {
+        const studentExam = new StudentExam();
+        studentExam.exam = new Exam();
+        studentExam.exam.testExam = true;
+        studentExam.exam.startDate = dayjs().subtract(2000, 'seconds');
+        studentExam.workingTime = 100;
+        studentExam.id = 3;
+        const studentExamWithExercises = new StudentExam();
+        studentExamWithExercises.id = 3;
+        TestBed.inject(ActivatedRoute).params = of({ courseId: '1', examId: '2', studentExamId: '3' });
+        const loadStudentExamSpy = jest.spyOn(examParticipationService, 'loadStudentExam').mockReturnValue(of(studentExam));
+        const loadStudentExamWithExercisesForSummary = jest.spyOn(examParticipationService, 'loadStudentExamWithExercisesForSummary').mockReturnValue(of(studentExamWithExercises));
+        studentExam.exam.course = new Course();
+        studentExam.ended = true;
+        studentExam.submitted = true;
+        comp.ngOnInit();
+        expect(loadStudentExamSpy).toHaveBeenCalledOnce();
+        expect(loadStudentExamWithExercisesForSummary).toHaveBeenCalledOnce();
+        expect(comp.studentExam).toEqual(studentExamWithExercises);
+        expect(comp.studentExam).not.toEqual(studentExam);
+        expect(comp.studentExam.id).toEqual(studentExamWithExercises.id);
+    });
+
     it('should load exam from local storage if needed', () => {
         const studentExam = new StudentExam();
         studentExam.exam = new Exam();
@@ -284,7 +343,7 @@ describe('ExamParticipationComponent', () => {
     it('should initialize exercises when exam starts', () => {
         const studentExam = new StudentExam();
         studentExam.workingTime = 100;
-        comp.testRunStartTime = dayjs().subtract(1000, 'seconds');
+        comp.testStartTime = dayjs().subtract(1000, 'seconds');
         comp.exam = new Exam();
         testExamStarted(studentExam);
     });
@@ -552,7 +611,7 @@ describe('ExamParticipationComponent', () => {
         comp.exam = new Exam();
         comp.onPageChange(exerciseChange);
         expect(triggerSpy).toHaveBeenCalledWith(true, false);
-        expect(comp.exerciseIndex).toEqual(1);
+        expect(comp.exerciseIndex).toBe(1);
         expect(createParticipationForExerciseSpy).toHaveBeenCalledWith(exercise2);
     });
 });

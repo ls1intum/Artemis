@@ -2,9 +2,9 @@
     <div class="col">
         <form name="editForm" role="form" #editForm="ngForm" (ngSubmit)="save()">
             <div *ngIf="!exam.id; else edit">
-                <h4>{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
+                <h4 *ngIf="!isImport">{{ 'artemisApp.examManagement.createExam' | artemisTranslate }}</h4>
+                <h4 *ngIf="isImport">{{ 'artemisApp.examManagement.importExam' | artemisTranslate }}</h4>
             </div>
-
             <ng-template #edit>
                 <h4>{{ 'artemisApp.examManagement.editExam' | artemisTranslate }}</h4>
             </ng-template>
@@ -25,19 +25,22 @@
                     <input class="form-control" required type="text" name="title" id="title" [(ngModel)]="exam.title" />
                 </div>
             </div>
-            <!-- Creation of TestExams is currently hidden for all non-admins, as the feature is not yet fully implemented -->
-            <div class="form-group" *ngIf="isAdmin">
+            <div class="form-group">
                 <div>
                     <label class="form-check-label" jhiTranslate="artemisApp.examManagement.testExam.examMode">Exam Mode</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.testExam.examModeTooltip"></jhi-help-icon>
                 </div>
                 <jhi-exam-mode-picker [exam]="exam" [disableInput]="exam.id !== undefined"></jhi-exam-mode-picker>
             </div>
-            <!-- Enabling exam monitoring is currently hidden for all non-admins, as the feature is not yet fully implemented -->
-            <div class="form-group" *ngIf="isAdmin">
-                <!--*ngIf="isAdmin"-->
+            <div class="form-group">
                 <div class="form-check">
-                    <input type="checkbox" class="form-check-input" [checked]="exam.monitoring" (change)="exam.monitoring = !exam.monitoring" />
+                    <input
+                        type="checkbox"
+                        class="form-check-input"
+                        [checked]="exam.monitoring"
+                        (change)="exam.monitoring = !exam.monitoring"
+                        [jhiFeatureToggle]="FeatureToggle.ExamLiveStatistics"
+                    />
                     <label class="form-control-label" jhiTranslate="artemisApp.examManagement.monitoring.enable.title">Exam Monitoring Enabled</label>
                     <jhi-help-icon placement="top" text="artemisApp.examManagement.monitoring.enable.description"></jhi-help-icon>
                 </div>
@@ -141,8 +144,18 @@
                 <input class="form-check-input" type="checkbox" id="DublerandomizeExerciseOrder" name="DublerandomizeExerciseOrder" [(ngModel)]="exam.randomizeExerciseOrder" />
                 <label class="form-check-label" for="DublerandomizeExerciseOrder" jhiTranslate="artemisApp.examManagement.randomizeQuestionOrder"> Randomize Question Order </label>
             </div>
+
+            <!-- Subsection Exercise Selection for Exam Import -->
+            <div class="mb-3" *ngIf="isImport && exam.exerciseGroups">
+                <h5 jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.title">Import Exam Exercises</h5>
+                <p jhiTranslate="artemisApp.examManagement.exerciseGroup.importModal.explanation">
+                    Select the individual exercises, which should be imported alongside the exam, by clicking on it
+                </p>
+                <jhi-exam-exercise-import [exam]="exam" [importInSameCourse]="isImportInSameCourse"></jhi-exam-exercise-import>
+            </div>
+
             <!-- Section exam assessment and student review
-            Deactivated for TestExams, as results are provided right after a TestExam run and complaints are not possible  -->
+            Deactivated for test exam, as results are provided right after a test eam run and complaints are not possible  -->
             <div *ngIf="!exam.testExam">
                 <hr />
                 <h5 class="pb-1" jhiTranslate="artemisApp.examManagement.sections.assessment">Exam Assessment</h5>
@@ -217,7 +230,7 @@
                     <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
                 </button>
                 <button id="save-exam" type="submit" [disabled]="editForm.form.invalid || !isValidConfiguration || isSaving" class="btn btn-primary">
-                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
+                    <fa-icon [icon]="faSave"></fa-icon>&nbsp;{{ 'entity.action.' + (isImport ? 'import' : 'save') | artemisTranslate }}
                 </button>
                 <ng-template #renderedWarning>
                     <div>{{ 'artemisApp.examManagement.reviewDatesInvalidExplanation' | artemisTranslate }}</div>

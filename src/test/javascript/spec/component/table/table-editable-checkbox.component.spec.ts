@@ -46,6 +46,6 @@ describe('TableEditableFieldComponent', () => {
         expect(checkbox.nativeElement.checked).toBeFalse();
 
         // Send one update value after click.
-        expect(fakeUpdateValue.emit.mock.calls.length).toEqual(1);
+        expect(fakeUpdateValue.emit.mock.calls).toHaveLength(1);
     });
 });

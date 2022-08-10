@@ -12,6 +12,8 @@ import { HttpClient } from '@angular/common/http';
 export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
+    Exports = 'Exports',
+    ExamLiveStatistics = 'ExamLiveStatistics',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
@@ -73,11 +75,20 @@ export class FeatureToggleService {
     }
 
     /**
-     * Getter method for the active feature toggles as an observable.
+     * Getter method for the active features toggles as an observable.
+     * Will check that the passed feature is enabled
      */
     getFeatureToggleActive(feature: FeatureToggle) {
+        return this.getFeatureTogglesActive([feature]);
+    }
+
+    /**
+     * Getter method for the active features toggles as an observable.
+     * Will check that all passed features are enabled
+     */
+    getFeatureTogglesActive(features: FeatureToggle[]) {
         return this.subject.asObservable().pipe(
-            map((activeFeatures) => activeFeatures.includes(feature)),
+            map((activeFeatures) => features.every((feature) => activeFeatures.includes(feature))),
             distinctUntilChanged(),
         );
     }

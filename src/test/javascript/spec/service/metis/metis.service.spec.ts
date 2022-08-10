@@ -162,15 +162,15 @@ describe('Metis Service', () => {
         it('should get posts for lecture filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
-            expect(postServiceSpy).toBeCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledTimes(1);
 
             // don't change filter
             metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
-            expect(postServiceSpy).toBeCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledTimes(1);
 
             // change filter
             metisService.getFilteredPosts({ lectureId: undefined, exerciseId: metisExercise.id }, false);
-            expect(postServiceSpy).toBeCalledTimes(2);
+            expect(postServiceSpy).toHaveBeenCalledTimes(2);
 
             // change filter
             metisService.getFilteredPosts(
@@ -181,7 +181,7 @@ describe('Metis Service', () => {
                 },
                 false,
             );
-            expect(postServiceSpy).toBeCalledTimes(3);
+            expect(postServiceSpy).toHaveBeenCalledTimes(3);
         });
 
         it('should get posts for exercise filter', () => {
@@ -191,11 +191,11 @@ describe('Metis Service', () => {
 
             // don't change filter
             metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
-            expect(postServiceSpy).toBeCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledTimes(1);
 
             // change filter
             metisService.getFilteredPosts({ lectureId: metisLecture.id, exerciseId: undefined }, false);
-            expect(postServiceSpy).toBeCalledTimes(2);
+            expect(postServiceSpy).toHaveBeenCalledTimes(2);
 
             // change filter
             metisService.getFilteredPosts(
@@ -206,7 +206,7 @@ describe('Metis Service', () => {
                 },
                 false,
             );
-            expect(postServiceSpy).toBeCalledTimes(3);
+            expect(postServiceSpy).toHaveBeenCalledTimes(3);
         });
 
         it('should get posts for course-context filter', () => {
@@ -314,25 +314,25 @@ describe('Metis Service', () => {
     it('should create empty post for a course-wide context', () => {
         const emptyPost = metisService.createEmptyPostForContext(CourseWideContext.ORGANIZATION, undefined, undefined);
         expect(emptyPost.courseWideContext).toEqual(CourseWideContext.ORGANIZATION);
-        expect(emptyPost.exercise).toEqual(undefined);
-        expect(emptyPost.lecture).toEqual(undefined);
+        expect(emptyPost.exercise).toBeUndefined();
+        expect(emptyPost.lecture).toBeUndefined();
     });
 
     it('should create empty post for a exercise context', () => {
         const emptyPost = metisService.createEmptyPostForContext(undefined, metisExercise, undefined);
-        expect(emptyPost.courseWideContext).toEqual(undefined);
+        expect(emptyPost.courseWideContext).toBeUndefined();
         expect(emptyPost.exercise).toEqual({
             id: metisExercise.id,
             title: metisExercise.title,
             type: metisExercise.type,
         });
-        expect(emptyPost.lecture).toEqual(undefined);
+        expect(emptyPost.lecture).toBeUndefined();
     });
 
     it('should create empty post for a lecture context', () => {
         const emptyPost = metisService.createEmptyPostForContext(undefined, undefined, metisLecture);
-        expect(emptyPost.courseWideContext).toEqual(undefined);
-        expect(emptyPost.exercise).toEqual(undefined);
+        expect(emptyPost.courseWideContext).toBeUndefined();
+        expect(emptyPost.exercise).toBeUndefined();
         expect(emptyPost.lecture).toEqual({ ...metisLecture, attachments: undefined });
     });
 
@@ -357,13 +357,13 @@ describe('Metis Service', () => {
     it('should determine the router link required for referencing an exercise page within posting', () => {
         metisService.setCourse(course);
         const referenceRouterLink = metisService.getLinkForExercise(metisExercise.id!.toString());
-        expect(referenceRouterLink).toEqual(`/courses/${metisCourse.id}/exercises/${metisExercise.id!.toString()}`);
+        expect(referenceRouterLink).toBe(`/courses/${metisCourse.id}/exercises/${metisExercise.id!.toString()}`);
     });
 
     it('should determine the router link required for referencing a lecture page within posting', () => {
         metisService.setCourse(course);
         const referenceRouterLink = metisService.getLinkForLecture(metisLecture.id!.toString());
-        expect(referenceRouterLink).toEqual(`/courses/${metisCourse.id}/lectures/${metisLecture.id!.toString()}`);
+        expect(referenceRouterLink).toBe(`/courses/${metisCourse.id}/lectures/${metisLecture.id!.toString()}`);
     });
 
     it('should determine the query param for a reference to a post with course-wide context', () => {
@@ -393,7 +393,7 @@ describe('Metis Service', () => {
     it('should determine context information for a post with course-wide context', () => {
         metisService.setCourse(course);
         const contextInformation = metisService.getContextInformation(metisCoursePostsWithCourseWideContext[0]);
-        expect(contextInformation.routerLinkComponents).toEqual(undefined);
+        expect(contextInformation.routerLinkComponents).toBeUndefined();
         expect(contextInformation.displayName).toBeDefined();
     });
 

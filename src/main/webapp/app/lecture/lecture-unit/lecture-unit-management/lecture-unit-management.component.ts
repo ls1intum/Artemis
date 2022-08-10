@@ -29,7 +29,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     navigationEndSubscription: Subscription;
     readonly LectureUnitType = LectureUnitType;
     readonly ActionType = ActionType;
-
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 

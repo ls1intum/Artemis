@@ -3,7 +3,7 @@
         <div *ngIf="programmingExercise">
             <h2><span jhiTranslate="artemisApp.programmingExercise.detail.title">Programming Exercise</span> {{ programmingExercise.id }}</h2>
             <hr />
-            <div>
+            <div class="button-header">
                 <div>
                     <a *ngIf="programmingExercise.isAtLeastEditor" [routerLink]="baseResource + 'edit'" class="btn btn-warning btn-sm me-1" style="margin-bottom: 10px">
                         <fa-icon [icon]="faWrench"></fa-icon>&nbsp;
@@ -26,11 +26,13 @@
                     <a
                         *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.course && !isExamExercise"
                         [routerLink]="['/course-management', programmingExercise.course?.id, 'programming-exercises', programmingExercise.id, 'exercise-hints']"
-                        class="btn btn-warning btn-sm me-1"
+                        class="btn btn-warning btn-sm me-1 position-relative"
                         style="margin-bottom: 10px"
                     >
                         <fa-icon [icon]="faPencilAlt"></fa-icon>
                         <span class="d-none d-md-inline" jhiTranslate="entity.action.manageHints">Manage Hints</span>
+                        <!-- New Badge -->
+                        <span class="position-absolute top-0 end-0 translate-middle-y badge rounded-pill bg-info">New</span>
                     </a>
 
                     <a
@@ -130,6 +132,7 @@
                             type="button"
                             (click)="combineTemplateCommits()"
                             class="btn btn-secondary btn-sm"
+                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.combineTemplateCommitsWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.combineTemplateCommits">Combine Template Commits</span>
@@ -141,69 +144,27 @@
                             type="button"
                             (click)="generateStructureOracle()"
                             class="btn btn-secondary btn-sm"
+                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.structureTestOracleWarning' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.structureTestOracle">Update Structure Test Oracle</span>
                         </button>
                     </span>
                 </div>
-                <!--
-                At the moment, this is only visible to admins as the actual main functionality has not yet been added on the server.
-                In the future, this feature will be available to editors and instructors as well.
-                -->
-                <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.programmingLanguage == ProgrammingLanguage.JAVA">
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="createStructuralSolutionEntries()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.createStructuralSolutionEntriesTooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.createStructuralSolutionEntriesTitle">Create Structural Solution Entries</span>
-                        </button>
-                    </span>
-                    <span *ngIf="programmingExercise.testwiseCoverageEnabled" class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="createBehavioralSolutionEntries()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.createBehavioralSolutionEntriesTooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.createBehavioralSolutionEntriesTitle">Create Behavioral Solution Entries</span>
-                        </button>
-                    </span>
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="generateCodeHints()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.generateCodeHintsTooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.generateCodeHintsTitle">Generate Code Hints</span>
-                        </button>
-                    </span>
-                </div>
                 <div *ngIf="programmingExercise.isAtLeastEditor">
-                    <span class="me-1">
-                        <button
-                            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                            type="button"
-                            (click)="getAndShowFullDiff()"
-                            class="btn btn-secondary btn-sm"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.tooltip' | artemisTranslate }}"
-                        >
-                            <span jhiTranslate="artemisApp.programmingExercise.diffReport.button">Update Diff-Report</span>
-                        </button>
-                    </span>
-                    <span class="me-1" *ngIf="programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA && programmingExercise.testwiseCoverageEnabled">
+                    <span
+                        class="me-1"
+                        *ngIf="
+                            (programmingExercise.programmingLanguage === ProgrammingLanguage.JAVA || programmingExercise.programmingLanguage === ProgrammingLanguage.KOTLIN) &&
+                            programmingExercise.testwiseCoverageEnabled
+                        "
+                    >
                         <button
                             [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
                             type="button"
                             (click)="getAndShowTestwiseCoverage()"
                             class="btn btn-secondary btn-sm"
+                            container="body"
                             ngbTooltip="{{ 'artemisApp.programmingExercise.testwiseCoverageReport.tooltip' | artemisTranslate }}"
                         >
                             <span jhiTranslate="artemisApp.programmingExercise.testwiseCoverageReport.button">Show Testwise Coverage</span>
@@ -564,16 +525,28 @@
                         <span jhiTranslate="artemisApp.programmingExercise.detail.showSolutionSubmissions">Show Submissions</span>
                     </a>
                 </dd>
-                <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
-                <dd>
-                    <div *ngIf="programmingExercise?.gitDiffReport" class="d-flex align-items-center fw-bold">
-                        <jhi-git-diff-line-stat
-                            [addedLineCount]="addedLineCount"
-                            [removedLineCount]="removedLineCount"
-                            ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
-                        ></jhi-git-diff-line-stat>
-                    </div>
-                </dd>
+                <div *ngIf="programmingExercise?.gitDiffReport">
+                    <dt><span jhiTranslate="artemisApp.programmingExercise.diffReport.lineStatLabel">Lines added/removed between template and solution</span></dt>
+                    <dd>
+                        <div class="fw-bold">
+                            <jhi-git-diff-line-stat
+                                [addedLineCount]="addedLineCount"
+                                [removedLineCount]="removedLineCount"
+                                ngbTooltip="{{ 'artemisApp.programmingExercise.diffReport.lineStatTooltipDetailPage' | artemisTranslate }}"
+                            ></jhi-git-diff-line-stat>
+                            <jhi-button
+                                [featureToggle]="FeatureToggle.ProgrammingExercises"
+                                [isLoading]="isLoadingDiffReport"
+                                [btnSize]="ButtonSize.SMALL"
+                                [icon]="faEye"
+                                [title]="'artemisApp.programmingExercise.diffReport.button'"
+                                [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
+                                (onClick)="getAndShowFullDiff()"
+                                class="ms-2"
+                            ></jhi-button>
+                        </div>
+                    </dd>
+                </div>
                 <div *ngIf="programmingExercise.isAtLeastTutor && programmingExercise?.testwiseCoverageEnabled">
                     <dt><span jhiTranslate="artemisApp.programmingExercise.coveredLineRatio">Covered Line Ratio</span></dt>
                     <dd>

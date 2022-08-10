@@ -7,7 +7,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -171,12 +170,12 @@ public class ParticipationTeamWebsocketService {
         final User user = userRepository.getUserWithGroupsAndAuthorities(principal.getName());
         final Exercise exercise = exerciseRepository.findByIdElseThrow(participation.getExercise().getId());
 
-        if (submission instanceof ModelingSubmission && exercise instanceof ModelingExercise) {
-            submission = modelingSubmissionService.save((ModelingSubmission) submission, (ModelingExercise) exercise, principal.getName());
+        if (submission instanceof ModelingSubmission modelingSubmission && exercise instanceof ModelingExercise modelingExercise) {
+            submission = modelingSubmissionService.handleModelingSubmission(modelingSubmission, modelingExercise, user);
             modelingSubmissionService.hideDetails(submission, user);
         }
-        else if (submission instanceof TextSubmission && exercise instanceof TextExercise) {
-            submission = textSubmissionService.handleTextSubmission((TextSubmission) submission, (TextExercise) exercise, principal);
+        else if (submission instanceof TextSubmission textSubmission && exercise instanceof TextExercise textExercise) {
+            submission = textSubmissionService.handleTextSubmission(textSubmission, textExercise, user);
             textSubmissionService.hideDetails(submission, user);
         }
         else {
@@ -201,8 +200,7 @@ public class ParticipationTeamWebsocketService {
         final String destination = getDestination(participationId);
 
         final List<OnlineTeamStudentDTO> onlineTeamStudents = getSubscriberPrincipals(destination, exceptSessionID).stream()
-                .map(login -> new OnlineTeamStudentDTO(login, getValue(lastTypingTracker, participationId, login), lastActionTracker.get(participationId + "-" + login)))
-                .collect(Collectors.toList());
+                .map(login -> new OnlineTeamStudentDTO(login, getValue(lastTypingTracker, participationId, login), lastActionTracker.get(participationId + "-" + login))).toList();
 
         messagingTemplate.convertAndSend(destination, onlineTeamStudents);
     }
@@ -254,11 +252,11 @@ public class ParticipationTeamWebsocketService {
      *
      * @param destination     destination/topic for which to get the subscribers
      * @param exceptSessionID session id that should be excluded from subscription sessions
-     * @return list of principals / logins
+     * @return an unmodifiable list of principals / logins
      */
     private List<String> getSubscriberPrincipals(String destination, String exceptSessionID) {
         return simpUserRegistry.findSubscriptions(subscription -> subscription.getDestination().equals(destination)).stream().map(SimpSubscription::getSession)
-                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().collect(Collectors.toList());
+                .filter(simpSession -> !simpSession.getId().equals(exceptSessionID)).map(SimpSession::getUser).map(SimpUser::getName).distinct().toList();
     }
 
     /**

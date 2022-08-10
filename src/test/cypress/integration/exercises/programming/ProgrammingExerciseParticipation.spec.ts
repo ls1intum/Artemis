@@ -51,9 +51,9 @@ describe('Programming exercise participations', () => {
         cy.login(users.getAdmin(), '/');
         courseManagement.createCourse(true).then((response) => {
             course = response.body;
-            courseManagement.addStudentToCourse(course.id!, users.getStudentOne().username);
-            courseManagement.addStudentToCourse(course.id!, users.getStudentTwo().username);
-            courseManagement.addStudentToCourse(course.id!, users.getStudentThree().username);
+            courseManagement.addStudentToCourse(course, users.getStudentOne());
+            courseManagement.addStudentToCourse(course, users.getStudentTwo());
+            courseManagement.addStudentToCourse(course, users.getStudentThree());
             courseManagement.createProgrammingExercise({ course }).then((exerciseResponse) => {
                 exercise = exerciseResponse.body;
             });
@@ -66,7 +66,7 @@ describe('Programming exercise participations', () => {
     function makeFailingSubmission() {
         const submission = { files: [{ name: 'BubbleSort.java', path: 'programming_exercise_submissions/build_error/BubbleSort.txt' }] };
         makeSubmissionAndVerifyResults(editorPage, exercise.packageName!, submission, () => {
-            editorPage.getResultScore().contains('Build Failed').should('be.visible');
+            editorPage.getResultScore().contains('Build failed').should('be.visible');
             editorPage.getResultScore().contains('0%').and('be.visible');
         });
     }

@@ -345,7 +345,7 @@ public class JiraAuthenticationProvider extends ArtemisAuthenticationProviderImp
             return Optional.of(firstResult.getName());
         }
         catch (HttpClientErrorException e) {
-            log.error("Could not get JIRA username for email address " + email, e);
+            log.error("Could not get JIRA username for email address {}", email, e);
             throw new ArtemisAuthenticationException("Error while checking eMail address", e);
         }
 

@@ -41,7 +41,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | Programming Language | Sequential Test Runs | Static Code Analysis | Plagiarism Check | Package Name | Project Type | Solution Repository Checkout | Testwise Coverage Analysis                 |
   +======================+======================+======================+==================+==============+==============+==============================+============================================+
-  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes (only for Gradle on Atlassian Setup)   |
+  | Java                 | yes                  | yes                  | yes              | yes          | yes          | no                           | yes                                        |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | Python               | yes                  | no                   | yes              | no           | no           | no                           | no                                         |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
@@ -51,7 +51,7 @@ Instructors can still use those templates to generate programming exercises and 
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | Haskell              | yes                  | no                   | no               | no           | no           | yes                          | no                                         |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
-  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           | no                                         |
+  | Kotlin               | yes                  | no                   | no               | yes          | no           | no                           | yes                                        |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
   | VHDL                 | no                   | no                   | no               | no           | no           | no                           | no                                         |
   +----------------------+----------------------+----------------------+------------------+--------------+--------------+------------------------------+--------------------------------------------+
@@ -88,6 +88,9 @@ Instructors can still use those templates to generate programming exercises and 
 
 We encourage instructors to contribute improvements to the existing ``templates`` or to provide new templates. Please contact Stephan Krusche and/or create Pull Requests in the GitHub repository.
 
+
+.. _programming_exercise_creation:
+
 Exercise Creation
 ^^^^^^^^^^^^^^^^^
 
@@ -96,7 +99,7 @@ Exercise Creation
 - Open |course-management|
 - Navigate into **Exercises** of your preferred course
 
-    .. figure:: programming/course-management-course-dashboard.png
+    .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
 
 2. **Generate programming exercise**
@@ -260,7 +263,7 @@ Exercise Creation
     - **Allow Offline IDE:** Allow students to clone their personal repository and work on the exercise with their preferred IDE.
     - **Allow Online Editor:** Allow students to work on the exercise using the Artemis Online Code Editor.
     - **Record Testwise Coverage:** Activate this option to record the testwise coverage for the solution repository.
-      This option is only available for Java-Gradle-projects with non-sequential test runs.
+      This option is only available for Java/Kotlin-exercises with non-sequential test runs.
 
       .. note::
         At least one of the options **Allow Offline IDE:** and **Allow Online Editor:** must be active
@@ -673,7 +676,7 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 - Open |course-management|
 - Navigate into **Exercises** of your preferred course
 
-    .. figure:: programming/course-management-course-dashboard.png
+    .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
 
 2. **Import programming exercise**
@@ -715,7 +718,7 @@ On exercise import, Artemis copies the repositories, build plans, interactive pr
 .. |view| image:: programming/view.png
 .. |edit-in-editor| image:: programming/edit-in-editor.png
 .. |submit| image:: programming/submit.png
-.. |course-management| image:: programming/course-management.png
+.. |course-management| image:: general/course-management.png
 .. |generate| image:: programming/generate-button.png
 .. |grading-preview| image:: programming/configure-grading-preview.png
 .. |grading-save| image:: programming/configure-grading-save.png

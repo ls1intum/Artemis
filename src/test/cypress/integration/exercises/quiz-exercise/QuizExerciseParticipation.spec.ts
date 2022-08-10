@@ -27,7 +27,7 @@ describe('Quiz Exercise Participation', () => {
         cy.login(admin);
         courseManagementRequest.createCourse().then((response) => {
             course = response.body;
-            courseManagementRequest.addStudentToCourse(course.id!, student.username);
+            courseManagementRequest.addStudentToCourse(course, student);
         });
     });
 

@@ -43,6 +43,8 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { MockArtemisServerDateService } from '../../../../helpers/mocks/service/mock-server-date.service';
 import { GradeType } from 'app/entities/grading-scale.model';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExamWithGradeDTO, StudentResult } from 'app/exam/exam-scores/exam-score-dtos.model';
@@ -51,6 +53,7 @@ import { SubmissionType } from 'app/entities/submission.model';
 
 let fixture: ComponentFixture<ExamParticipationSummaryComponent>;
 let component: ExamParticipationSummaryComponent;
+let artemisServerDateService: ArtemisServerDateService;
 
 const user = { id: 1, name: 'Test User' } as User;
 
@@ -58,18 +61,28 @@ const visibleDate = dayjs().subtract(6, 'hours');
 const startDate = dayjs().subtract(5, 'hours');
 const endDate = dayjs().subtract(4, 'hours');
 const publishResultsDate = dayjs().subtract(3, 'hours');
-const reviewStartDate = dayjs().subtract(2, 'hours');
-const reviewEndDate = dayjs().add(1, 'hours');
+const examStudentReviewStart = dayjs().subtract(2, 'hours');
+const examStudentReviewEnd = dayjs().add(1, 'hours');
 
 const exam = {
     id: 1,
-    title: 'Test Exam',
+    title: 'ExamForTesting',
     visibleDate,
     startDate,
     endDate,
     publishResultsDate,
-    reviewStartDate,
-    reviewEndDate,
+    examStudentReviewStart,
+    examStudentReviewEnd,
+    testExam: false,
+} as Exam;
+
+const testExam = {
+    id: 2,
+    title: 'TestExam for Testing',
+    visibleDate,
+    startDate,
+    endDate,
+    testExam: true,
 } as Exam;
 
 const exerciseGroup = {
@@ -92,7 +105,19 @@ const modelingExercise = { id: 3, type: ExerciseType.MODELING, studentParticipat
 const programmingExercise = { id: 4, type: ExerciseType.PROGRAMMING, studentParticipations: [programmingParticipation], exerciseGroup } as ProgrammingExercise;
 const exercises = [textExercise, quizExercise, modelingExercise, programmingExercise];
 
-const studentExam = { id: 1, exam, user, exercises } as StudentExam;
+const studentExam = {
+    id: 1,
+    exam,
+    user,
+    exercises,
+} as StudentExam;
+
+const studentExamForTestExam = {
+    id: 2,
+    exam: testExam,
+    user,
+    exercises,
+} as StudentExam;
 const gradeInfo: StudentExamWithGradeDTO = {
     maxPoints: 100,
     maxBonusPoints: 10,
@@ -145,6 +170,7 @@ function sharedSetup(url: string[]) {
                     },
                 }),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
+                { provide: ArtemisServerDateService, useClass: MockArtemisServerDateService },
                 { provide: ExamParticipationService, useClass: MockExamParticipationService },
             ],
         })
@@ -153,6 +179,7 @@ function sharedSetup(url: string[]) {
                 fixture = TestBed.createComponent(ExamParticipationSummaryComponent);
                 component = fixture.componentInstance;
                 component.studentExam = studentExam;
+                artemisServerDateService = TestBed.inject(ArtemisServerDateService);
             });
     });
 
@@ -182,7 +209,7 @@ describe('ExamParticipationSummaryComponent', () => {
         toggleCollapseExerciseButtonTwo.nativeElement.click();
         toggleCollapseExerciseButtonThree.nativeElement.click();
         toggleCollapseExerciseButtonFour.nativeElement.click();
-        expect(component.collapsedExerciseIds.length).toEqual(4);
+        expect(component.collapsedExerciseIds).toHaveLength(4);
 
         exportToPDFButton.nativeElement.click();
         expect(component.collapsedExerciseIds).toBeEmpty();
@@ -262,9 +289,9 @@ describe('ExamParticipationSummaryComponent', () => {
         fixture.detectChanges();
         const span = fixture.debugElement.query(By.css('.badge.bg-danger'));
         if (shouldBeNonNull) {
-            expect(span).not.toBe(null);
+            expect(span).not.toBeNull();
         } else {
-            expect(span).toBe(null);
+            expect(span).toBeNull();
         }
     });
 
@@ -282,5 +309,103 @@ describe('ExamParticipationSummaryComponent', () => {
         const studentExam3 = { id: 3 } as StudentExam;
         component.studentExam = studentExam3;
         expect(component.studentExamGradeInfoDTO.studentExam).toEqual(studentExam3);
+    });
+
+    it('should correctly identify a TestExam', () => {
+        component.studentExam = studentExamForTestExam;
+        component.ngOnInit();
+        expect(component.isTestExam).toBeTrue();
+        expect(component.testExamConduction).toBeTrue();
+
+        studentExamForTestExam.submitted = true;
+        component.studentExam = studentExamForTestExam;
+        component.ngOnInit();
+        expect(component.isTestExam).toBeTrue();
+        expect(component.testExamConduction).toBeFalse();
+    });
+
+    it('should correctly identify a RealExam', () => {
+        component.studentExam = studentExam;
+        component.ngOnInit();
+        expect(component.isTestExam).toBeFalse();
+        expect(component.testExamConduction).toBeFalse();
+        expect(component.isTestRun).toBeFalse();
+        expect(component.testRunConduction).toBeFalse();
+
+        studentExam.submitted = true;
+        component.studentExam = studentExam;
+        component.ngOnInit();
+        expect(component.isTestExam).toBeFalse();
+        expect(component.testExamConduction).toBeFalse();
+        expect(component.isTestRun).toBeFalse();
+        expect(component.testRunConduction).toBeFalse();
+    });
+
+    it('should correctly determine if the results are published', () => {
+        component.studentExam = studentExam;
+        component.testRunConduction = true;
+        expect(component.resultsPublished).toBeFalse();
+
+        component.testExamConduction = true;
+        component.testRunConduction = false;
+        expect(component.resultsPublished).toBeFalse();
+
+        component.isTestRun = true;
+        component.testExamConduction = false;
+        expect(component.resultsPublished).toBeTrue();
+
+        component.isTestExam = true;
+        component.isTestRun = false;
+        expect(component.resultsPublished).toBeTrue();
+
+        component.isTestExam = false;
+        // const publishResultsDate is in the past
+        expect(component.resultsPublished).toBeTrue();
+
+        component.studentExam.exam!.publishResultsDate = dayjs().add(2, 'hours');
+        expect(component.resultsPublished).toBeFalse();
+    });
+
+    it('should correctly determine if it is after student review start', () => {
+        const now = dayjs();
+        const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+
+        component.isTestExam = true;
+        expect(component.isAfterStudentReviewStart()).toBeTrue();
+
+        component.isTestExam = false;
+        component.isTestRun = true;
+        expect(component.isAfterStudentReviewStart()).toBeTrue();
+
+        component.isTestRun = false;
+        component.studentExam.exam!.examStudentReviewStart = examStudentReviewStart;
+        component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
+        expect(component.isAfterStudentReviewStart()).toBeTrue();
+
+        component.studentExam.exam!.examStudentReviewStart = dayjs().add(30, 'minutes');
+        expect(component.isAfterStudentReviewStart()).toBeFalse();
+
+        expect(dateSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('should correctly determine if it is before student review end', () => {
+        const now = dayjs();
+        const dateSpy = jest.spyOn(artemisServerDateService, 'now').mockReturnValue(now);
+
+        component.isTestExam = true;
+        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+
+        component.isTestExam = false;
+        component.isTestRun = true;
+        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+
+        component.isTestRun = false;
+        component.studentExam.exam!.examStudentReviewEnd = examStudentReviewEnd;
+        expect(component.isBeforeStudentReviewEnd()).toBeTrue();
+
+        component.studentExam.exam!.examStudentReviewEnd = dayjs().subtract(30, 'minutes');
+        expect(component.isBeforeStudentReviewEnd()).toBeFalse();
+
+        expect(dateSpy).toHaveBeenCalledTimes(2);
     });
 });

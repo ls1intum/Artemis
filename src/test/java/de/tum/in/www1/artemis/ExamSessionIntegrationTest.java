@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.ExamSessionService;
 import inet.ipaddr.IPAddressString;
 
-public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private StudentExamRepository studentExamRepository;
@@ -33,7 +33,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
     private StudentExam studentExam1;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         List<User> users = database.addUsers(1, 1, 0, 1);
         Course course1 = database.addEmptyCourse();
         Exam exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(0));
@@ -43,13 +43,13 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @AfterEach
-    public void resetDatabase() {
+    void resetDatabase() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testStartExamSession_asStudent() {
+    void testStartExamSession_asStudent() {
         String newSessionToken = examSessionService.startExamSession(studentExam1, null, null, null, null).getSessionToken();
         String newerSessionToken = examSessionService.startExamSession(studentExam1, null, null, null, null).getSessionToken();
         String currentSessionToken = examSessionService.startExamSession(studentExam1, null, null, null, null).getSessionToken();
@@ -59,7 +59,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void storeFingerprintOnStartExamSession_asStudent() {
+    void storeFingerprintOnStartExamSession_asStudent() {
         final Long id = examSessionService.startExamSession(studentExam1, "5b2cc274f6eaf3a71647e1f85358ce32", null, null, null).getId();
 
         final var examSessionById = examSessionRepository.findById(id);
@@ -69,7 +69,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void storeUserAgentOnStartExamSession_asStudent() {
+    void storeUserAgentOnStartExamSession_asStudent() {
         final Long id = examSessionService.startExamSession(studentExam1, null,
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_6) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.1.2 Safari/605.1.15", null, null).getId();
 
@@ -81,7 +81,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void storeIPv4OnStartExamSession_asStudent() {
+    void storeIPv4OnStartExamSession_asStudent() {
         final var ipAddress = new IPAddressString("192.0.2.235").getAddress();
         final Long id = examSessionService.startExamSession(studentExam1, null, null, null, ipAddress).getId();
 
@@ -92,7 +92,7 @@ public class ExamSessionIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void storeIPv6OnStartExamSession_asStudent() {
+    void storeIPv6OnStartExamSession_asStudent() {
         final var ipAddress = new IPAddressString("2001:db8:0:0:0:8a2e:370:7334").getAddress();
         final Long id = examSessionService.startExamSession(studentExam1, null, null, null, ipAddress).getId();
 

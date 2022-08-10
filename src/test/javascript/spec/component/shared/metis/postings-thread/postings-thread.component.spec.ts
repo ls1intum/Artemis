@@ -48,6 +48,6 @@ describe('PostingThreadComponent', () => {
     it('should contain a post', () => {
         component.post = post;
         const postComponent = fixture.debugElement.nativeElement.querySelector('jhi-post');
-        expect(postComponent).not.toBe(null);
+        expect(postComponent).not.toBeNull();
     });
 });

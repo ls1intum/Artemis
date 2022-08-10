@@ -24,14 +24,15 @@ let exam = {
     title: 'Test Exam',
     startDate,
     endDate,
+    testExam: false,
 } as Exam;
 
-let studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
+let studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
 describe('ExamInformationComponent', () => {
     beforeEach(() => {
-        exam = { id: 1, title: 'Test Exam', startDate, endDate } as Exam;
-        studentExam = { id: 1, exam, user, workingTime: 60 } as StudentExam;
+        exam = { id: 1, title: 'ExamForTesting', startDate, endDate, testExam: false } as Exam;
+        studentExam = { id: 1, exam, user, workingTime: 60, submitted: true } as StudentExam;
 
         return TestBed.configureTestingModule({
             imports: [RouterTestingModule.withRoutes([])],
@@ -57,13 +58,13 @@ describe('ExamInformationComponent', () => {
     it('should initialize', () => {
         component.exam = exam;
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.examEndDate).toEqual(exam.endDate);
     });
 
     it('should return undefined if the exam is not set', () => {
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.examEndDate).toBeUndefined();
     });
 
@@ -71,7 +72,7 @@ describe('ExamInformationComponent', () => {
         component.exam = exam;
         component.studentExam = studentExam;
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.examEndDate?.isSame(dayjs(exam.startDate).add(studentExam.workingTime!, 'seconds'))).toBeTrue();
     });
 
@@ -79,7 +80,7 @@ describe('ExamInformationComponent', () => {
         component.exam = exam;
         exam.endDate = dayjs(exam.startDate).add(2, 'days');
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeTrue();
     });
 
@@ -88,19 +89,37 @@ describe('ExamInformationComponent', () => {
         component.studentExam = studentExam;
         studentExam.workingTime = 24 * 60 * 60;
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeTrue();
     });
 
     it('should return false for exams that only last one day', () => {
         component.exam = exam;
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeFalse();
 
         component.studentExam = studentExam;
         fixture.detectChanges();
-        expect(fixture).not.toBeUndefined();
+        expect(fixture).toBeDefined();
         expect(component.isExamOverMultipleDays).toBeFalse();
+    });
+
+    it('should detect an TestExam and set the currentDate correctly', () => {
+        exam.testExam = true;
+        component.exam = exam;
+        component.studentExam = studentExam;
+        fixture.detectChanges();
+        expect(component.isTestExam).toBeTrue();
+        expect(component.currentDate).toBeDefined();
+        const acceptanceRange = dayjs().subtract(20, 's');
+        expect(component.currentDate!.isBetween(acceptanceRange, dayjs())).toBeTrue();
+    });
+
+    it('should detect an RealExam and not set the currentDate', () => {
+        component.exam = exam;
+        fixture.detectChanges();
+        expect(component.isTestExam).toBeFalse();
+        expect(component.currentDate).toBeUndefined();
     });
 });

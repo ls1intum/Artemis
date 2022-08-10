@@ -127,7 +127,7 @@ describe('AnswerPostHeaderComponent', () => {
         expect(getElement(debugElement, '.notResolved')).toBeNull();
     });
 
-    it('should initialize answer post not marked as resolved but show the check to mark it as such', () => {
+    it('should initialize as tutor answer post not marked as resolved but show the check to mark it as such', () => {
         // user, that is the author of original post, should not see the check to mark an answer post as resolving
         metisServiceUserIsAtLeastTutorMock.mockReturnValue(false);
         metisServiceUserPostingAuthorMock.mockReturnValue(true);

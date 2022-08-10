@@ -136,11 +136,11 @@ describe('Attachment Service', () => {
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
-            expect(req.request.method).toEqual('DELETE');
+            expect(req.request.method).toBe('DELETE');
         });
 
         it('should convert attachment date from server', async () => {
-            const results = service.convertAttachmentDateFromServer(elemDefault);
+            const results = service.convertAttachmentDatesFromServer(elemDefault);
             expect(results).toEqual(elemDefault);
         });
     });

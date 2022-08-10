@@ -17,7 +17,7 @@
 </dd>
 <dt><span jhiTranslate="artemisApp.exercise.title">Title</span></dt>
 <dd>
-    <span>{{ exercise.title }}</span>
+    <span id="exercise-detail-title">{{ exercise.title }}</span>
 </dd>
 <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <dt><span jhiTranslate="artemisApp.exercise.shortName">short Name</span></dt>

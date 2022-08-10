@@ -8,7 +8,7 @@ import { DomainService } from 'app/exercises/programming/shared/code-editor/serv
  * Service that can be extended to update rest endpoint urls with the received domain information.
  */
 export abstract class DomainDependentEndpointService extends DomainDependentService {
-    private restResourceUrlBase = `${SERVER_API_URL}/api`;
+    private restResourceUrlBase = `${SERVER_API_URL}api`;
     protected restResourceUrl: string | null;
 
     constructor(protected http: HttpClient, protected jhiWebsocketService: JhiWebsocketService, domainService: DomainService) {
@@ -22,16 +22,18 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
      */
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
-        const [domainType, domainValue] = this.domain;
+        this.restResourceUrl = this.calculateRestResourceURL(domain);
+    }
+
+    calculateRestResourceURL(domain: DomainChange): string | null {
+        const [domainType, domainValue] = domain;
         switch (domainType) {
             case DomainType.PARTICIPATION:
-                this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
-                break;
+                return `${this.restResourceUrlBase}/repository/${domainValue.id}`;
             case DomainType.TEST_REPOSITORY:
-                this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
-                break;
+                return `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
             default:
-                this.restResourceUrl = null;
+                return null;
         }
     }
 }

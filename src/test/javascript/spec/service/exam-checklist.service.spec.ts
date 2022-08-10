@@ -8,7 +8,23 @@ import { of, take } from 'rxjs';
 import { ArtemisTestModule } from '../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { getExerciseGroups } from '../component/exam/manage/exams/exam-checklist.component.spec';
+
+function getExerciseGroups(equalPoints: boolean) {
+    const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
+    const exerciseGroups = [
+        {
+            id: 1,
+            exercises: [
+                { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                { id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+            ],
+        },
+    ];
+    if (!equalPoints) {
+        exerciseGroups[0].exercises[0].maxPoints = 50;
+    }
+    return exerciseGroups;
+}
 
 describe('ExamChecklistService', () => {
     let service: ExamChecklistService;
@@ -17,6 +33,7 @@ describe('ExamChecklistService', () => {
     let examManagementService: ExamManagementService;
 
     let result: boolean;
+    let numericResult: number;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -238,6 +255,33 @@ describe('ExamChecklistService', () => {
             result = service.checkAtLeastOneRegisteredStudent(exam);
 
             expect(result).toBeFalse();
+        });
+    });
+
+    describe('test calculateExercisePoints', () => {
+        it('should return 0 if max points do not equal within an exercise group', () => {
+            exam.exerciseGroups = getExerciseGroups(false);
+
+            numericResult = service.calculateExercisePoints(false, exam);
+
+            expect(numericResult).toBe(0);
+        });
+
+        it('should return 100 for the exam points with equal points within one exercise group with mandatory exercises', () => {
+            exam.exerciseGroups = getExerciseGroups(true);
+            exam.exerciseGroups[0].isMandatory = true;
+
+            numericResult = service.calculateExercisePoints(true, exam);
+
+            expect(numericResult).toBe(100);
+        });
+
+        it('should return 100 for the exam points with equal points within one exercise group with optional exercises', () => {
+            exam.exerciseGroups = getExerciseGroups(true);
+
+            numericResult = service.calculateExercisePoints(true, exam);
+
+            expect(numericResult).toBe(100);
         });
     });
 });

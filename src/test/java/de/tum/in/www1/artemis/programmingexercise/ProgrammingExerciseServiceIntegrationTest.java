@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoin
 import static de.tum.in.www1.artemis.web.rest.ProgrammingExerciseResourceEndpoints.ROOT;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.ZonedDateTime;
 import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.AfterEach;
@@ -21,12 +22,13 @@ import de.tum.in.www1.artemis.domain.StaticCodeAnalysisCategory;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseImportBasicService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseService;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 
-public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private static final String BASE_RESOURCE = "/api/programming-exercises/";
 
@@ -34,17 +36,20 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     ProgrammingExerciseService programmingExerciseService;
 
     @Autowired
-    ProgrammingExerciseImportService programmingExerciseImportService;
+    ProgrammingExerciseImportBasicService programmingExerciseImportBasicService;
 
     @Autowired
     ProgrammingExerciseRepository programmingExerciseRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private Course additionalEmptyCourse;
 
     private ProgrammingExercise programmingExercise;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         bambooRequestMockProvider.enableMockingOfRequests();
         bitbucketRequestMockProvider.enableMockingOfRequests();
         database.addUsers(1, 1, 0, 1);
@@ -65,13 +70,13 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importProgrammingExerciseBasis_baseReferencesGotCloned() {
+    void importProgrammingExerciseBasis_baseReferencesGotCloned() {
         final var newlyImported = importExerciseBase();
 
         assertThat(newlyImported.getId()).isNotEqualTo(programmingExercise.getId());
@@ -108,7 +113,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
+    void importProgrammingExerciseBasis_testsAndHintsHoldTheSameInformation() {
         final var imported = importExerciseBase();
 
         // All copied hints/tests have the same content are referenced to the new exercise
@@ -128,21 +133,21 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void importExercise_tutor_forbidden() throws Exception {
+    void importExercise_tutor_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "user1", roles = "USER")
-    public void importExercise_user_forbidden() throws Exception {
+    void importExercise_user_forbidden() throws Exception {
         final var toBeImported = createToBeImported();
         request.post(ROOT + IMPORT.replace("{sourceExerciseId}", programmingExercise.getId().toString()), toBeImported, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructorother1", roles = "INSTRUCTOR")
-    public void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
+    void testInstructorGetsResultsOnlyFromOwningCourses() throws Exception {
         final var search = database.configureSearch("");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).isNullOrEmpty();
@@ -150,7 +155,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
+    void testInstructorGetsResultsFromOwningCoursesNotEmpty() throws Exception {
         final var search = database.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
@@ -158,7 +163,53 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
+    void testInstructorSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testAdminSearchTermMatchesId() throws Exception {
+        database.resetDatabase();
+        database.addUsers(1, 1, 0, 1);
+        testSearchTermMatchesId();
+    }
+
+    private void testSearchTermMatchesId() throws Exception {
+        final Course course = database.addEmptyCourse();
+        final var now = ZonedDateTime.now();
+        ProgrammingExercise exercise = ModelFactory.generateProgrammingExercise(now.minusDays(1), now.minusHours(2), course);
+        exercise.setTitle("LoremIpsum");
+        exercise = programmingExerciseRepository.save(exercise);
+
+        final var searchTerm = database.configureSearch(exercise.getId().toString());
+        final var searchResult = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(searchTerm));
+        assertThat(searchResult.getResultsOnPage()).hasSize(1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        database.addCourseWithNamedProgrammingExerciseAndTestCases("Ankh");
+        database.addCourseExamExerciseGroupWithOneProgrammingExercise("Ankh-Morpork", "AnkhMorpork");
+
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/programming-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testSearchProgrammingExercisesWithProperSearchTerm() throws Exception {
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK13");
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Python");
         database.addCourseWithNamedProgrammingExerciseAndTestCases("Java JDK12");
@@ -177,7 +228,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testAdminGetsResultsFromAllCourses() throws Exception {
+    void testAdminGetsResultsFromAllCourses() throws Exception {
         database.addCourseInOtherInstructionGroupAndExercise("Programming");
         final var search = database.configureSearch("Programming");
         final var result = request.get(BASE_RESOURCE, HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
@@ -186,7 +237,7 @@ public class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringInt
 
     private ProgrammingExercise importExerciseBase() {
         final var toBeImported = createToBeImported();
-        return programmingExerciseImportService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
+        return programmingExerciseImportBasicService.importProgrammingExerciseBasis(programmingExercise, toBeImported);
     }
 
     private ProgrammingExercise createToBeImported() {

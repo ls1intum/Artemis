@@ -187,18 +187,18 @@ public class CourseService {
      * Get all courses for the given user
      *
      * @param user the user entity
-     * @return the list of all courses for the user
+     * @return an unmodifiable list of all courses for the user
      */
     public List<Course> findAllActiveForUser(User user) {
         return courseRepository.findAllActive(ZonedDateTime.now()).stream().filter(course -> course.getEndDate() == null || course.getEndDate().isAfter(ZonedDateTime.now()))
-                .filter(course -> isCourseVisibleForUser(user, course)).collect(Collectors.toList());
+                .filter(course -> isCourseVisibleForUser(user, course)).toList();
     }
 
     /**
      * Get all courses with exercises, lectures  and exams (filtered for given user)
      *
      * @param user the user entity
-     * @return the list of all courses including exercises, lectures and exams for the user
+     * @return an unmodifiable list of all courses including exercises, lectures and exams for the user
      */
     public List<Course> findAllActiveWithExercisesAndLecturesAndExamsForUser(User user) {
         return courseRepository.findAllActiveWithLecturesAndExams().stream()
@@ -211,7 +211,7 @@ public class CourseService {
                     if (authCheckService.isOnlyStudentInCourse(course, user)) {
                         course.setExams(examRepository.filterVisibleExams(course.getExams()));
                     }
-                }).collect(Collectors.toList());
+                }).toList();
     }
 
     private boolean isCourseVisibleForUser(User user, Course course) {
@@ -395,6 +395,13 @@ public class CourseService {
      * @return An Integer list containing active students for each index. An index corresponds to a week
      */
     public List<Integer> getActiveStudents(Set<Long> exerciseIds, long periodIndex, int length, ZonedDateTime date) {
+        /*
+         * If the course did not start yet, the length of the chart will be negative (as the time difference between the start date end the current date is passed). In this case,
+         * we return an empty list.
+         */
+        if (length < 0) {
+            return new ArrayList<>(0);
+        }
         LocalDateTime localStartDate = date.toLocalDateTime().with(DayOfWeek.MONDAY);
         LocalDateTime localEndDate = date.toLocalDateTime().with(DayOfWeek.SUNDAY);
         ZoneId zone = date.getZone();

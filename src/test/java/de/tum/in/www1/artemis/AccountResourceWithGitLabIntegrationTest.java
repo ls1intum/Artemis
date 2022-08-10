@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
-public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegrationJenkinsGitlabTest {
 
     @Autowired
     private RequestUtilService request;
@@ -36,19 +36,19 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
     private GitlabRequestMockProvider gitlabRequestMockProvider;
 
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         gitlabRequestMockProvider.enableMockingOfRequests();
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
         gitlabRequestMockProvider.reset();
     }
 
     @Test
-    public void registerAccount() throws Exception {
+    void registerAccount() throws Exception {
         String login = "abd123cd";
         String password = "this is a password";
         // setup user
@@ -70,7 +70,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
      * @throws Exception on unknown failure
      */
     @Test
-    public void testUnactivatedUserIsDeletedDespiteUnableToDeleteInGitlab() throws Exception {
+    void testUnactivatedUserIsDeletedDespiteUnableToDeleteInGitlab() throws Exception {
         // create unactivated user in repo
         String testActivationKey = "testActivationKey";
         User user = ModelFactory.generateActivatedUser("ab123cd");
@@ -106,7 +106,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
      * @throws Exception on unknown failure
      */
     @Test
-    public void testFailureWhenTryingToDeleteActivatedUser() throws Exception {
+    void testFailureWhenTryingToDeleteActivatedUser() throws Exception {
         // create activated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setFirstName("Old Firstname");
@@ -134,7 +134,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
+    void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -162,7 +162,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
+    void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -181,7 +181,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
+    void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -200,7 +200,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldActivateUserInGitlab() throws Exception {
+    void testShouldActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -226,7 +226,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
+    void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
         User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
@@ -253,7 +253,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldBlockRegistrationIfUnactivatedUserWithSameLogin() throws Exception {
+    void testShouldBlockRegistrationIfUnactivatedUserWithSameLogin() throws Exception {
         // Create existing non activated user
         User user = ModelFactory.generateActivatedUser("userLogin");
         user.setEmail("existingUser@mytum.de");
@@ -274,7 +274,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldBlockRegistrationIfUnactivatedUserWithSameEmail() throws Exception {
+    void testShouldBlockRegistrationIfUnactivatedUserWithSameEmail() throws Exception {
         User user = ModelFactory.generateActivatedUser("existingLogin");
         user.setEmail("existingUser@mytum.de");
         user.setActivated(false);
@@ -294,7 +294,7 @@ public class AccountResourceWithGitLabIntegrationTest extends AbstractSpringInte
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testShouldFailRegistrationIfActivatedUserWithSameEmail() throws Exception {
+    void testShouldFailRegistrationIfActivatedUserWithSameEmail() throws Exception {
         User user = ModelFactory.generateActivatedUser("existingLogin");
         user.setEmail("existingUser@mytum.de");
         userRepo.save(user);

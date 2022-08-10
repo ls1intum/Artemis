@@ -11,7 +11,7 @@ import de.tum.in.www1.artemis.service.compass.umlmodel.AbstractUMLDiagramTest;
 import de.tum.in.www1.artemis.service.compass.umlmodel.UMLDiagram;
 import de.tum.in.www1.artemis.service.compass.umlmodel.parsers.UMLModelParser;
 
-public class UMLUseCaseDiagramTest extends AbstractUMLDiagramTest {
+class UMLUseCaseDiagramTest extends AbstractUMLDiagramTest {
 
     @Test
     void similarityUseCaseDiagram_EqualModels() {

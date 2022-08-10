@@ -52,7 +52,23 @@ During the exam creation and configuration, you can create your exam and configu
 
    Create and Configure the Exam
 
+.. figure:: instructor/exam_conduction.png
+   :alt: Exam Conduction
+   :align: center
 
+   Exam Conduction
+
+.. figure:: instructor/exam_conduction.png
+   :alt: Exam Exercises
+   :align: center
+
+   Exam Exercises
+
+.. figure:: instructor/exam_assessment.png
+   :alt: Exam Assessment and Student Review
+   :align: center
+
+   Exam Assessment and Student Review
 
     .. _exercise_groups:
 
@@ -354,6 +370,9 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
    Detecting Plagiarism attempts on Modeling Exercises
 
 - At the bottom of the page you will find the option |check_plagiarism|.
+
+
+.. _exam_grading_key:
 
 3.4 Grading Key
 ^^^^^^^^^^^^^^^

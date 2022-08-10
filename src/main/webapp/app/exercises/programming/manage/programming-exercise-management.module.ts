@@ -25,6 +25,7 @@ import { SubmissionResultStatusModule } from 'app/overview/submission-result-sta
 import { GitDiffReportModule } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report.module';
 import { ProgrammingExerciseExampleSolutionRepoDownloadComponent } from 'app/exercises/programming/shared/actions/programming-exercise-example-solution-repo-download.component';
 import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/testwise-coverage-report/testwise-coverage-report.module';
+import { ArtemisCodeHintGenerationOverviewModule } from 'app/exercises/programming/hestia/generation-overview/code-hint-generation-overview/code-hint-generation-overview.module';
 
 @NgModule({
     imports: [
@@ -48,6 +49,7 @@ import { TestwiseCoverageReportModule } from 'app/exercises/programming/hestia/t
         SubmissionResultStatusModule,
         GitDiffReportModule,
         TestwiseCoverageReportModule,
+        ArtemisCodeHintGenerationOverviewModule,
     ],
     declarations: [
         ProgrammingExerciseDetailComponent,

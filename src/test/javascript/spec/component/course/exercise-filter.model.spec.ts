@@ -38,21 +38,21 @@ describe('Exercise Filter Test', () => {
         const filter = new ExerciseFilter();
         filter.exerciseNameSearch = '2';
         const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
-        expect(filteredExercises.length).toBe(2);
+        expect(filteredExercises).toHaveLength(2);
     });
 
     it('should filter by category', () => {
         const filter = new ExerciseFilter();
         filter.exerciseCategorySearch = 'easy';
         const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
-        expect(filteredExercises.length).toBe(1);
+        expect(filteredExercises).toHaveLength(1);
     });
 
     it('should filter by type', () => {
         const filter = new ExerciseFilter();
         filter.exerciseTypeSearch = 'text';
         const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
-        expect(filteredExercises.length).toBe(2);
+        expect(filteredExercises).toHaveLength(2);
     });
 
     it('should filter by all', () => {
@@ -61,6 +61,6 @@ describe('Exercise Filter Test', () => {
         filter.exerciseCategorySearch = 'hard';
         filter.exerciseTypeSearch = 'text';
         const filteredExercises = exercises.filter((exercise) => filter.matchesExercise(exercise));
-        expect(filteredExercises.length).toBe(1);
+        expect(filteredExercises).toHaveLength(1);
     });
 });

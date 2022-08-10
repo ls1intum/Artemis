@@ -189,6 +189,7 @@ public class QuizScheduleService {
         }
         QuizExercise quizExercise = ((QuizExerciseCache) quizCache.getReadCacheFor(quizExerciseId)).getExercise();
         if (quizExercise == null) {
+            log.warn("QuizExercise with {} not found in cache, reload from database. This should NOT happen!", quizExerciseId);
             quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
             if (quizExercise != null) {
                 updateQuizExercise(quizExercise);
@@ -202,7 +203,8 @@ public class QuizScheduleService {
      *
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
-    public void updateQuizExercise(QuizExercise quizExercise) {
+    public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
+        log.info("updateQuizExercise invoked for {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
 
@@ -290,28 +292,30 @@ public class QuizScheduleService {
         cancelScheduledQuizStart(quizExerciseId);
         // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-        if (quizExercise != null && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
-            var quizBatch = quizExercise.getQuizBatches().stream().findAny();
-            if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
-                // schedule sending out filtered quiz over websocket
-                try {
-                    long delay = Duration.between(ZonedDateTime.now(), quizBatch.get().getStartTime()).toMillis();
-                    var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
-                    // save scheduled future in HashMap
-                    quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
-                        ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
-                        return quizExerciseCache;
-                    });
-                }
-                catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                    log.debug("Quiz {} task already registered", quizExerciseId);
-                    // this is expected if we run on multiple nodes
+        if (quizExercise != null) {
+            if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
+                var quizBatch = quizExercise.getQuizBatches().stream().findAny();
+                if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
+                    // schedule sending out filtered quiz over websocket
+                    try {
+                        long delay = Duration.between(ZonedDateTime.now(), quizBatch.get().getStartTime()).toMillis();
+                        var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
+                        // save scheduled future in HashMap
+                        quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
+                            ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
+                            return quizExerciseCache;
+                        });
+                    }
+                    catch (@SuppressWarnings("unused") DuplicateTaskException e) {
+                        log.debug("Quiz {} task already registered", quizExerciseId);
+                        // this is expected if we run on multiple nodes
+                    }
                 }
             }
+            // Do that at the end because this runs asynchronously and could interfere with the cache write above
+            updateQuizExercise(quizExercise);
         }
-        // Do that at the end because this runs asynchronously and could interfere with the cache write above
-        updateQuizExercise(quizExercise);
     }
 
     /**
@@ -354,7 +358,7 @@ public class QuizScheduleService {
             log.debug("Removed quiz {} start tasks", quizExerciseId);
             return quizExerciseCache;
         });
-        log.debug("Sending quiz {} start", quizExerciseId);
+        log.info("Sending quiz {} start", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         updateQuizExercise(quizExercise);
         if (quizExercise.getQuizMode() != QuizMode.SYNCHRONIZED) {
@@ -402,7 +406,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.debug("Process cached quiz submissions");
+        log.info("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Cache cache : quizCache.getAllCaches()) {
@@ -413,7 +417,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
+                    log.info("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }
@@ -641,7 +645,7 @@ public class QuizScheduleService {
                 // this automatically saves the results due to CascadeType.ALL
                 quizSubmission = quizSubmissionRepository.save(quizSubmission);
 
-                log.info("Successfully saved submission in quiz " + quizExercise.getTitle() + " for user " + username);
+                log.info("Successfully saved submission in quiz {} for user {}", quizExercise.getTitle(), username);
 
                 // reconnect entities after save
                 participation.setSubmissions(Set.of(quizSubmission));

@@ -41,8 +41,8 @@
                 "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
             },
             "postsEnabled": {
-                "title": "Enable postings by students",
-                "description": "Enable postings section on lecture and exercise page."
+                "title": "Enable communication features",
+                "description": "Enable course communication overview and communication section on lecture and exercise pages."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",

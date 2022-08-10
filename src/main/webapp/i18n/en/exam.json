@@ -3,8 +3,41 @@
         "exam": {
             "overview": {
                 "start": "Start: {{start}}",
-                "duration": "Duration: ",
-                "maxPoints": "Points: {{points}}"
+                "duration": "Working Time:",
+                "maxPoints": "Attainable Points: {{points}}",
+                "upcoming": "Upcoming Exam",
+                "imminent": "The Exam starts in",
+                "imminentExplanation": "You can already open the exam by clicking on the tile",
+                "conducting": "Exam in Progress",
+                "conductingExplanation": "You can open the exam by clicking on the tile",
+                "timeExtension": "The normal working time is over",
+                "timeExtensionExplanation": "In case you have a time extension, the exam can be opened by clicking on the tile. Otherwise, you can review your submission.",
+                "closed": "Exam Closed",
+                "closedExplanation": "You can review your submission by clicking on the tile",
+                "review": "Exam Review Open",
+                "reviewExplanation": "You can review the assessment until ",
+                "noMoreAttempts": "No More Attempts",
+                "noMoreAttemptsExplanation": "There are currently no further attempts available",
+                "realExamsHeading": "Exams",
+                "testExamsHeading": "Test Exams",
+                "testExam": {
+                    "upcoming": "Upcoming Test Exam",
+                    "imminent": "The Test Exam will start ",
+                    "imminentExplanation": "You can already open the test exam by clicking on the tile",
+                    "conducting": "Start New Test Exam",
+                    "conductingExplanation": "You can start a new test exam by clicking on the tile",
+                    "closed": "Test Exam Closed",
+                    "closedExplanation": "Starting a new attempt is no longer possible",
+                    "notSubmitted": "You have not submitted your Test Exam on time!",
+                    "reviewAttempt": "Attempt #{{attempt}}",
+                    "resumeAttempt": "Resume Attempt #{{attempt}}",
+                    "workingTimeLeft": "Working time left: ",
+                    "workingTimeCalculated": "Used working time: ",
+                    "submissionDate": "Submitted on: ",
+                    "available": "Available from {{startDate}} until {{endDate}}",
+                    "showMoreAttempts": "Show all attempts",
+                    "showLessAttempts": "Show latest attempts"
+                }
             },
             "examSummary": {
                 "yourSubmissionTo": "Your submission to {{examTitle}} ({{studentName}})",
@@ -37,6 +70,7 @@
             "endExam": "Finish",
             "date": "Date",
             "time": "Time",
+            "workingTime": "Working Time",
             "resultInformation": "Your result will be published here as soon as the correction is finished. You can get to this page by clicking on this exam in the exam overview of this course.",
             "course": "Course",
             "exercises": "Exercises",
@@ -53,6 +87,7 @@
             "nrOfStudents": "Registered Students",
             "created": "New exam created",
             "updated": "Exam updated",
+            "imported": "Exam imported",
             "deleted": "Deleted exam \"{{ param }}\"",
             "exercise": "Exercise {{nr}}",
             "startConsentText": "I hereby confirm with my full name, representing my signature, that I have read the conditions of participation and will adhere to them for the duration of the exam.",
@@ -158,7 +193,8 @@
             "examExercises": "Exam Exercises:",
             "exercisePoints": "Points",
             "exerciseName": "Name",
-            "noStudentExam": "You are not registered for the exam {{ examTitle }}. Please contact your instructor.",
+            "noStudentExam": "You are not registered for the exam. Please contact your instructor.",
+            "noFurtherAttempts": "Currently no further attempts for the Test Exam are possible. To review your submission, navigate back to the Exam page",
             "submitProgrammingExercise": "Continue",
             "submitOtherExercise": "Save & continue",
             "submitLastExercise": "Save",
@@ -224,12 +260,13 @@
             "studentExamGenerationError": "There was an error during student exam generation:\n {{message}}",
             "missingStudentExamGenerationSuccess": "{{number}} missing student exams successfully generated!",
             "missingStudentExamGenerationError": "There was an error during the missing student exam generation:\n {{message}}",
-            "startExerciseSuccess": "{{number}} exercises successfully prepared!",
+            "startExerciseSuccess": "The exercises will now be prepared. This may take a while.",
             "startExerciseFailure": "There was an error during the preparation of the exercises:\n {{message}}",
-            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.",
+            "studentExamGenerationModalText": "Some student exams already exist. If you continue, those individual exams will be deleted and new student exams generated.\n\nNote that existing participations and submissions will also be removed!",
             "studentExamStatusSuccess": "All registered students have an individual exam",
             "studentExamStatusWarning": "Not all registered students have an individual exam",
             "studentExamStatusWarningTooltip": "Click on the button 'Generate missing individual exams' to create the missing student exams. Alternatively, click the button 'Generate individual exams' to delete and re-create exams for all students",
+            "studentExamStatusTestExam": "Student exams are automatically created once a student requests to start a test exam",
             "evaluateQuizExerciseSuccess": "{{number}} quiz exercises successfully evaluated!",
             "evaluateQuizExerciseFailure": "There was an error during the evaluation of the quiz exercises:\n {{message}}",
             "assessUnsubmittedStudentExamsSuccess": "Reviewed all student exams and assessed the unsubmitted or empty modeling and text exercises with 0 points.",
@@ -239,6 +276,7 @@
             "lockAllRepositoriesSuccess": "Repositories of {{number}} programming exercises were locked.",
             "lockAllRepositoriesFailure": "There was an error during the locking of the programming exercises:\n {{message}}",
             "setWorkingTime": "Absolute:",
+            "usedWorkingTime": "Used working time",
             "setWorkingTimeRelative": "Addition relative to regular working time:",
             "removeAllStudents": {
                 "title": "Remove all students",
@@ -254,6 +292,15 @@
                 "warningRemove": "<strong class='text-danger'>Recovering the original submission date will not be possible after deletion!</strong>",
                 "submit": "Submit",
                 "unsubmit": "Unsubmit"
+            },
+            "exercisePreparationProgress": {
+                "label": "Exercise preparation progress:",
+                "failed": "failed",
+                "remaining": "remaining",
+                "finished": "Finished",
+                "noeta": "No ETA",
+                "participations": "Participations",
+                "exams": "Exams"
             }
         },
         "examManagement": {
@@ -268,6 +315,7 @@
             },
             "title": "Exam Management",
             "createExam": "Create a new exam",
+            "importExam": "Import an exam",
             "editExam": "Edit an existing exam",
             "courseTitle": "Course Title",
             "examId": "Exam ID",
@@ -314,6 +362,9 @@
                 "startDate": "Start of working window",
                 "endDate": "End of working window",
                 "workingTimeTooltip": "The working time allowed to the students per run"
+            },
+            "import": {
+                "search": "Search for exam"
             },
             "monitoring": {
                 "enable": {
@@ -364,7 +415,11 @@
             "exerciseGroups": "Exercise Groups",
             "exerciseGroup": {
                 "create": "Create new Exercise Group",
+                "import": "Import Exercise Group",
                 "update": "Edit Exercise Group",
+                "selectExerciseGroup": "Select Exercise Groups",
+                "selectExerciseGroupExplanation": "Select the individual exercises, which should be imported alongside the exercise groups, by clicking on it",
+                "noExerciseGroup": "The selected exam {{examTitle}} has no exercise groups",
                 "type": "Type",
                 "title": "Title",
                 "points": "Points",
@@ -380,7 +435,20 @@
                 "addFileUploadExercise": "Add File Upload Exercise",
                 "addModelingExercise": "Add Modeling Exercise",
                 "addProgrammingExercise": "Add Programming Exercise",
-                "orderCouldNotBeSaved": "The order could not be saved"
+                "orderCouldNotBeSaved": "The order could not be saved",
+                "importModal": {
+                    "title": "Import Exam Exercises",
+                    "explanation": "Select the individual exercises, which should be imported alongside the exam, by clicking on it",
+                    "selected": "Selected",
+                    "exerciseGroupTooltip": "The title of an exercise group can be changed before the import",
+                    "exerciseTitleTooltip": "The title of an exercise can be changed before the import. Further changes are possible after the import",
+                    "shortNameTooltip": "The shortname of a programming task must be unique. The short name of the exercise can NOT be edited after creating the exercise! The short name must begin with a letter, must not contain any special characters and must be at least 3 characters long",
+                    "invalidKey": "The chosen short name and title of {{ number }} programming exercise(s) already exists. Please insert a new short name and title for the corresponding programming exercise(s)",
+                    "invalidExerciseConfiguration": "One or more of the values specified are invalid. Please change them before importing",
+                    "isImporting": "The import of the exercise groups and the exercises is currently done on the server. This may take some time",
+                    "infoProgrammingExercises": "Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups."
+                },
+                "importSuccessful": "Exercise Groups successfully imported!"
             },
             "delete": {
                 "question": "Are you sure you want to permanently delete the Exam <strong>{{ title }}</strong>? All associated elements will be deleted including the Student Exams. This action can NOT be undone!",
@@ -388,10 +456,12 @@
             },
             "reset": {
                 "question": "Are you sure you want to permanently reset the Exam <strong>{{ title }}</strong>? All Student Exams will be deleted. Registered students and the exercise configurations will remain. This action can NOT be undone!",
-                "typeNameToConfirm": "Please type in the name of the exam to confirm."
+                "typeNameToConfirm": "Please type in the name of the exam to confirm.",
+                "success": "The exam has been successfully reset."
             },
             "checklist": {
                 "title": "Exam Checklist",
+                "conductionPlannedFromTo": "The conduction is planned from {{ from }} to {{ to }}",
                 "introduction": "This page gives an overview over the various steps when conducting an exam. In the",
                 "linkDescription": "external documentation",
                 "introductionPart2": "you can find more details about the individual steps.",
@@ -399,6 +469,13 @@
                 "description": "Description",
                 "status": "Current status",
                 "goTo": "Page",
+                "testExam": {
+                    "title": "Test Exam Checklist",
+                    "introduction": "This page gives an overview over the various steps when creating a test exam.",
+                    "detailsHintForTestExams": "For test exams, the following applies",
+                    "studentRegistration": "Students are automatically registered for the test exam when starting a test exam",
+                    "instantResults": "The results are automatically published once a student submits the exam"
+                },
                 "tableItem": {
                     "register": "Register students for the exam",
                     "exerciseGroups": "Create at least one exercise group with exercises",
@@ -465,6 +542,11 @@
         "examMonitoring": {
             "title": "Exam live statistics",
             "description": "The exam live statistics dashboard allows instructors to view students' actions during the exam and analyze the resulting data.",
+            "enable": "Enable",
+            "disable": "Disable",
+            "enabled": "Enabled",
+            "globallyDisabled": "Globally disabled",
+            "disabled": "Disabled",
             "table": {
                 "panelHeader": "Exam Information",
                 "panelDescriptionHeader": "Details",
@@ -482,11 +564,28 @@
                 "exercises": {
                     "title": "Exercises",
                     "description": "Shows the current participation of the students in the respective exercise and exercise groups",
-                    "groups": "Exercise Groups"
+                    "groups": "Exercise Groups",
+                    "exercisesPerPage": "{{number}} exercises per page",
+                    "showAllExercises": "Show all exercises",
+                    "id": "Exercise",
+                    "exerciseGroup.id": "Exercise group",
+                    "_title": "Title",
+                    "type": "Type"
                 },
                 "activity-log": {
                     "title": "Activity log",
-                    "description": "Shows the past and current activities of active students"
+                    "description": "Shows the past and current activities of active students",
+                    "actionsPerPage": "{{number}} actions per page",
+                    "showAllActions": "Show all actions",
+                    "studentExamId": "Exam-ID",
+                    "timestamp": "Timestamp",
+                    "type": "Category",
+                    "detail": "Detail",
+                    "forced": "Forced",
+                    "failed": "Failed",
+                    "automatically": "Automatically",
+                    "connected": "Connected",
+                    "notConnected": "Not connected"
                 }
             },
             "charts": {
@@ -517,6 +616,18 @@
                     "xAxisLabel": "Amount of navigations",
                     "yAxisLabel": "Exercises",
                     "legendTitle": "Exercises"
+                },
+                "exercise-detail-current-chart": {
+                    "name": "Current number of students",
+                    "tooltip": "Shows the current number of students"
+                },
+                "exercise-detail-navigation-chart": {
+                    "name": "Number of first navigations",
+                    "tooltip": "Shows the number of first navigations"
+                },
+                "exercise-detail-submission-chart": {
+                    "name": "Number of first submissions",
+                    "tooltip": "Shows the number of first submissions"
                 },
                 "average-actions-chart": {
                     "name": "Average number of actions per student",
@@ -579,12 +690,26 @@
                 "generateStudentExams": "Generate student exams: ",
                 "registered": "{{ generated }} of {{ total }}",
                 "notRegistered": "No students registered",
-                "prepareExerciseStart": "Prepare exercise start"
+                "prepareExerciseStart": "Prepare exercise start",
+                "testExam": {
+                    "examPreparation": "Test Exam preparation",
+                    "maxPointsCorrect": "Exam Points correctly set to ",
+                    "maxPointsWrong": "Exam Points should be set to {{ points }}"
+                }
             },
             "conduction": {
                 "examConduction": "Exam conduction",
+                "workingTime": "Working Time",
                 "startedExams": "Started exams",
-                "submittedExams": "Submitted exams"
+                "submittedExams": "Submitted exams",
+                "conductionSuspended": "Students cannot start their Exam!",
+                "testExam": {
+                    "examConduction": "Test Exam conduction",
+                    "numberOfStudents": "Number of students",
+                    "startedExams": "Started Test Exams",
+                    "submittedExams": "Submitted Test Exams",
+                    "conductionSuspended": "Students cannot start a Test Exam!"
+                }
             },
             "correction": {
                 "examCorrection": "Exam correction",
@@ -596,7 +721,8 @@
                 "planned": "Planned",
                 "running": "Running",
                 "finished": "Finished",
-                "complaints": "Complaints"
+                "complaints": "Complaints",
+                "complaintsCount": "({{ done }} out of {{ total}})"
             }
         }
     }

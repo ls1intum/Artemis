@@ -152,11 +152,11 @@ describe('Lecture Service', () => {
                 method: 'DELETE',
             });
             req.flush(returnedFromService);
-            expect(req.request.method).toEqual('DELETE');
+            expect(req.request.method).toBe('DELETE');
         });
 
         it('should convert Dates from server', async () => {
-            const results = service.convertDatesForLecturesFromServer([elemDefault, elemDefault]);
+            const results = service.convertLectureArrayDatesFromServer([elemDefault, elemDefault]);
             expect(results).toEqual([elemDefault, elemDefault]);
         });
     });

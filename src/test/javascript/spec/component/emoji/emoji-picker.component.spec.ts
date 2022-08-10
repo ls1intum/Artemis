@@ -34,11 +34,11 @@ describe('EmojiPickerComponent', () => {
     it('should subscribe and unsubscribe to the theme service and react to changes', () => {
         expect(themeSpy).toHaveBeenCalledOnce();
         expect(comp.dark).toBeFalse();
-        expect(comp.themeSubscription).not.toBeUndefined();
+        expect(comp.themeSubscription).toBeDefined();
 
         expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe('');
         mockThemeService.applyThemeExplicitly(Theme.DARK);
-        expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe(SERVER_API_URL + '/public/emoji/1f519.png');
+        expect(comp.singleImageFunction({ unified: '1F519' } as EmojiData)).toBe(SERVER_API_URL + 'public/emoji/1f519.png');
 
         const subSpy = jest.spyOn(comp.themeSubscription, 'unsubscribe');
 

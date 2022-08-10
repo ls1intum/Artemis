@@ -13,19 +13,11 @@
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
-        <!-- These buttons will be only shown in dev environment and if the programming exercise has no
-        connection to the VCS and CI
-        This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">Submission</button>
-        <button
-            class="dev-button"
-            [disabled]="!wasSubmissionSimulated"
-            *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable"
-            (click)="simulateResult()"
+        <a
+            *ngIf="plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM"
+            class="btn btn-danger btn-sm me-2"
+            [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]"
         >
-            Result
-        </button>
-        <a *ngIf="plagiarismCase" class="btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
         <jhi-submission-result-status
@@ -285,6 +277,13 @@
                 [activatedExerciseHints]="activatedExerciseHints"
                 (onHintActivated)="onHintActivated($event)"
             ></jhi-exercise-hint-button-overlay>
+            <a
+                *ngIf="plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM"
+                class="btn btn-info btn-sm me-2"
+                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]"
+            >
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase">Resolved Plagiarism Case</span>
+            </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
             <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>

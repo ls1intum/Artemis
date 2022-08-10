@@ -21,7 +21,7 @@ import tech.jhipster.config.JHipsterProperties;
  * Because this service mostly uses other frameworks/services and loads values/variables into html templates
  * we only test that the correct send method is called
  */
-public class MailServiceTest {
+class MailServiceTest {
 
     private MailService mailService;
 
@@ -56,7 +56,7 @@ public class MailServiceTest {
      * Prepares the needed values and objects for testing
      */
     @BeforeEach
-    public void setUp() {
+    void setUp() {
         student1 = new User();
         student1.setId(555L);
         String EMAIL_ADDRESS_A = "benige8246@omibrown.com";
@@ -84,7 +84,7 @@ public class MailServiceTest {
      * Very basic test that checks if the send method for emails is correctly called once
      */
     @Test
-    public void testSendEmail() {
+    void testSendEmail() {
         mailService.sendEmail(student1, subject, content, false, true);
         verify(javaMailSender, times(1)).send(mimeMessage);
     }
@@ -93,7 +93,7 @@ public class MailServiceTest {
      * When the javaMailSender returns an exception, that exception should be catched and an ArtemisMailException should be thrown instead.
      */
     @Test
-    public void testThrowException() {
+    void testThrowException() {
         doThrow(new org.springframework.mail.MailSendException("Some error occurred")).when(javaMailSender).send(any(MimeMessage.class));
         Assertions.assertThrows(ArtemisMailException.class, () -> mailService.sendEmail(student1, subject, content, false, true));
     }

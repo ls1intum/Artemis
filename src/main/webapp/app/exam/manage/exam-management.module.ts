@@ -22,7 +22,7 @@ import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { ArtemisMarkdownEditorModule } from 'app/shared/markdown-editor/markdown-editor.module';
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
-import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status.component';
+import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
 import { StudentExamSummaryComponent } from 'app/exam/manage/student-exams/student-exam-summary.component';
 import { ArtemisParticipationSummaryModule } from 'app/exam/participate/summary/exam-participation-summary.module';
 import { ExamExerciseRowButtonsComponent } from 'app/exercises/shared/exam-exercise-row-buttons/exam-exercise-row-buttons.component';
@@ -47,6 +47,10 @@ import { UserImportModule } from 'app/shared/import/user-import.module';
 import { ArtemisExamSharedModule } from 'app/exam/shared/exam-shared.module';
 import { ExamStatusComponent } from 'app/exam/manage/exam-status.component';
 import { ArtemisExamModePickerModule } from 'app/exam/manage/exams/exam-mode-picker/exam-mode-picker.module';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
+import { ArtemisHeaderExercisePageWithDetailsModule } from 'app/exercises/shared/exercise-headers/exercise-headers.module';
+import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { FeatureToggleModule } from 'app/shared/feature-toggle/feature-toggle.module';
 
 const ENTITY_STATES = [...examManagementState];
 
@@ -76,7 +80,9 @@ const ENTITY_STATES = [...examManagementState];
         UserImportModule,
         ArtemisExamSharedModule,
         ArtemisExamModePickerModule,
+        ArtemisHeaderExercisePageWithDetailsModule,
         BarChartModule,
+        FeatureToggleModule,
     ],
     declarations: [
         ExamManagementComponent,
@@ -102,6 +108,8 @@ const ENTITY_STATES = [...examManagementState];
         ModelingExerciseGroupCellComponent,
         QuizExerciseGroupCellComponent,
         StudentExamDetailTableRowComponent,
+        ExamImportComponent,
+        ExamExerciseImportComponent,
     ],
 })
 export class ArtemisExamManagementModule {}

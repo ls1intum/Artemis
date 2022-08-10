@@ -41,8 +41,8 @@
                 "description": "Diese Nummer gibt an, wie viele Zeichen für die Antwort pro Beschwerde maximal verwendet werden darf."
             },
             "postsEnabled": {
-                "title": "Posts von Studierenden aktivieren",
-                "description": "Postings auf Vorlesung- und Übungsseite aktivieren / deaktivieren"
+                "title": "Kommunikationsfunktionen aktivieren",
+                "description": "Kurskommunikationsübersicht und Kommunikationsbereich auf Vorlesungs- und Übungsseiten aktivieren."
             },
             "complaintsEnabled": {
                 "title": "Beschwerden von Studierenden aktivieren",

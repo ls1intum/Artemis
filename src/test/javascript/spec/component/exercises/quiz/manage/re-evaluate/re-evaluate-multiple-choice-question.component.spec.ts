@@ -14,7 +14,7 @@ import { IncorrectOptionCommand } from 'app/shared/markdown-editor/domainCommand
 
 // tslint:disable-next-line:directive-selector
 @Directive({ selector: '[sortableData]' })
-export class MockSortableDataDirective {
+class MockSortableDataDirective {
     @Input('sortableData') data: any;
 }
 
@@ -123,7 +123,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.deleteAnswer(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions!.length).toBe(0);
+        expect(component.question.answerOptions).toHaveLength(0);
     });
 
     it('should reset an answer', () => {
@@ -137,7 +137,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.setAnswerInvalid(answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions!.length).toBe(1);
+        expect(component.question.answerOptions).toHaveLength(1);
 
         const answer = component.question.answerOptions![0];
         expect(answer.invalid).toBeTrue();
@@ -148,7 +148,7 @@ describe('ReEvaluateMultipleChoiceQuestionComponent', () => {
         component.onAnswerOptionChange('solution[wrong]answer', answer1);
         fixture.detectChanges();
 
-        expect(component.question.answerOptions!.length).toBe(1);
+        expect(component.question.answerOptions).toHaveLength(1);
 
         const answer = component.question.answerOptions![0];
         expect(answer.isCorrect).toBeFalse();

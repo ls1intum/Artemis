@@ -254,17 +254,17 @@ describe('ExampleTextSubmissionComponent', () => {
         tick();
 
         // THEN
-        expect(comp.state.constructor.name).toEqual('EditState');
+        expect(comp.state.constructor.name).toBe('EditState');
         expect(assessmentsService.deleteExampleAssessment).toHaveBeenCalledWith(EXERCISE_ID, EXAMPLE_SUBMISSION_ID);
-        expect(comp.submission?.blocks).toBe(undefined);
-        expect(comp.submission?.results).toBe(undefined);
-        expect(comp.submission?.latestResult).toBe(undefined);
-        expect(comp.result).toBe(undefined);
+        expect(comp.submission?.blocks).toBeUndefined();
+        expect(comp.submission?.results).toBeUndefined();
+        expect(comp.submission?.latestResult).toBeUndefined();
+        expect(comp.result).toBeUndefined();
         expect(comp.textBlockRefs).toHaveLength(0);
         expect(comp.unusedTextBlockRefs).toHaveLength(0);
     }));
 
-    it('it should verify correct tutorial submission', fakeAsync(() => {
+    it('should verify correct tutorial submission', fakeAsync(() => {
         // GIVEN
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
@@ -328,8 +328,8 @@ describe('ExampleTextSubmissionComponent', () => {
 
         comp.textBlockRefs = [textBlockRefA, textBlockRefB];
 
-        expect(feedbackA.correctionStatus).toBe(undefined);
-        expect(feedbackB.correctionStatus).toBe(undefined);
+        expect(feedbackA.correctionStatus).toBeUndefined();
+        expect(feedbackB.correctionStatus).toBeUndefined();
 
         const tutorParticipationService = debugElement.injector.get(TutorParticipationService);
         const feedbackError = {

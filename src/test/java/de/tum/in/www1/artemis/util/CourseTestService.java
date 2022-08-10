@@ -1779,6 +1779,43 @@ public class CourseTestService {
         assertThat(statisticsOptional).isEmpty();
     }
 
+    public void testGetCourseManagementDetailDataForFutureCourse() throws Exception {
+        ZonedDateTime now = ZonedDateTime.now();
+        var course = database.createCourse();
+
+        course.setStartDate(now.plusWeeks(3));
+
+        var student1 = ModelFactory.generateActivatedUser("user1");
+        var student2 = ModelFactory.generateActivatedUser("user2");
+        // Fetch and update an instructor
+        var instructor1 = database.getUserByLogin("instructor1");
+        var instructor2 = database.getUserByLogin("instructor2");
+        var groups = new HashSet<String>();
+        groups.add("instructor");
+        instructor1.setGroups(groups);
+        instructor2.setGroups(groups);
+
+        userRepo.save(instructor1);
+        userRepo.save(instructor2);
+        userRepo.save(student1);
+        userRepo.save(student2);
+
+        courseRepo.save(course);
+
+        // API call
+        var courseDTO = request.get("/api/courses/" + course.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
+
+        // Check results
+        assertThat(courseDTO).isNotNull();
+
+        assertThat(courseDTO.getActiveStudents()).hasSize(0);
+
+        // number of users in course
+        assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
+        assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
+        assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(2);
+    }
+
     // Test
     public void testGetCourseManagementDetailData() throws Exception {
         ZonedDateTime now = ZonedDateTime.now();
@@ -1953,7 +1990,7 @@ public class CourseTestService {
         // API call for the lifetime overview
         var lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toList());
+        var expectedLifetimeOverviewStats = Arrays.stream(new int[21]).boxed().collect(Collectors.toCollection(ArrayList::new));
         expectedLifetimeOverviewStats.set(18, 1);
         expectedLifetimeOverviewStats.set(20, 1);
         assertThat(lifetimeOverviewStats).as("should depict 21 weeks in total").isEqualTo(expectedLifetimeOverviewStats);
@@ -1963,7 +2000,7 @@ public class CourseTestService {
 
         lifetimeOverviewStats = request.get("/api/courses/" + course2.getId() + "/statistics-lifetime-overview", HttpStatus.OK, List.class);
 
-        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toList());
+        expectedLifetimeOverviewStats = Arrays.stream(new int[20]).boxed().collect(Collectors.toCollection(ArrayList::new));
         expectedLifetimeOverviewStats.set(18, 1);
         assertThat(lifetimeOverviewStats).as("should only depict data until the end date of the course").isEqualTo(expectedLifetimeOverviewStats);
 

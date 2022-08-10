@@ -1,17 +1,21 @@
 import { Injectable } from '@angular/core';
 import { Exam } from 'app/entities/exam.model';
-import { BehaviorSubject } from 'rxjs';
-import { ArtemisServerDateService } from 'app/shared/server-date.service';
-import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { StudentExam } from 'app/entities/student-exam.model';
 import { ExamAction, ExamActivity } from 'app/entities/exam-user-activity.model';
+import { ExamActionService } from 'app/exam/monitoring/exam-action.service';
 import { captureException } from '@sentry/browser';
+import { ArtemisServerDateService } from 'app/shared/server-date.service';
+import { HttpClient, HttpResponse } from '@angular/common/http';
+import dayjs from 'dayjs/esm';
+
+export const EXAM_MONITORING_UPDATE_URL = (courseId: number, examId: number) => `${SERVER_API_URL}/api/courses/${courseId}/exams/${examId}/statistics`;
 
 @Injectable({ providedIn: 'root' })
 export class ExamMonitoringService {
     examObservables: Map<number, BehaviorSubject<Exam | undefined>> = new Map<number, BehaviorSubject<Exam>>();
 
-    constructor(private serverDateService: ArtemisServerDateService, private websocketService: JhiWebsocketService) {}
+    constructor(private examActionService: ExamActionService, private serverDateService: ArtemisServerDateService, private http: HttpClient) {}
 
     /**
      * Notify all exam subscribers with the newest exam provided.
@@ -39,14 +43,15 @@ export class ExamMonitoringService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param monitoring true if monitoring is enabled
+     * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction, monitoring: boolean) {
+    public handleActionEvent(studentExam: StudentExam, examAction: ExamAction, monitoring: boolean, timestamp?: dayjs.Dayjs) {
         if (!monitoring) {
             return;
         }
         try {
             const examActivity = studentExam.examActivity || new ExamActivity();
-            examAction.timestamp = this.serverDateService.now();
+            examAction.timestamp = timestamp ?? this.serverDateService.now();
             examAction.studentExamId = studentExam.id;
             examActivity.addAction(examAction);
             studentExam.examActivity = examActivity;
@@ -68,7 +73,7 @@ export class ExamMonitoringService {
             if (exam.monitoring && studentExam.examActivity && connected) {
                 // This should be in most cases an array with one element
                 const actionsToSend = studentExam.examActivity.examActions;
-                actionsToSend.forEach((action) => this.sendAction(action, exam.id!));
+                actionsToSend.forEach((action) => this.examActionService.sendAction(action, exam.id!));
 
                 // After synchronization, we can delete the actions -> filter in case of new actions during the synchronization
                 studentExam.examActivity!.examActions = studentExam.examActivity!.examActions.filter((action) => !actionsToSend.includes(action));
@@ -85,28 +90,20 @@ export class ExamMonitoringService {
      * @param studentExam current student exam
      * @param examAction performed action
      * @param connected true if we have a connection
+     * @param globallyEnabled whether the exam monitoring is globally enabled or not
+     * @param timestamp provided timestamp of the action. Usefully for actions which are async but called earlier.
      */
-    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean) {
-        this.handleActionEvent(studentExam, examAction, !!exam.monitoring);
-        this.saveActions(exam, studentExam, connected);
+    public handleAndSaveActionEvent(exam: Exam, studentExam: StudentExam, examAction: ExamAction, connected: boolean, globallyEnabled: boolean, timestamp?: dayjs.Dayjs) {
+        if (globallyEnabled) {
+            this.handleActionEvent(studentExam, examAction, !!exam.monitoring, timestamp);
+            this.saveActions(exam, studentExam, connected);
+        }
     }
 
     /**
-     * Returns the websocket topic.
-     * @param examId of the current exam
-     * @return the websocket topic
+     * Updates the current state of the exam monitoring.
      */
-    public static buildWebsocketTopic(examId: number): string {
-        return `/topic/exam-monitoring/${examId}/actions`;
-    }
-
-    /**
-     * Syncs the collected action to the server.
-     * @param examAction performed action
-     * @param examId of the current exam
-     */
-    public sendAction(examAction: ExamAction, examId: number): void {
-        const topic = ExamMonitoringService.buildWebsocketTopic(examId);
-        this.websocketService.send(topic, examAction);
+    updateMonitoring(exam: Exam, monitoring: boolean): Observable<HttpResponse<boolean>> {
+        return this.http.put<boolean>(EXAM_MONITORING_UPDATE_URL(exam.course?.id!, exam.id!), monitoring, { observe: 'response' });
     }
 }
