@@ -107,6 +107,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Autowired
     protected RequestUtilService request;
 
+    @Autowired
+    protected HibernateQueryInterceptor queryInterceptor;
+
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
@@ -138,5 +141,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @Override
     public void mockGetProjectKeyFromAnyUrl(String projectKey) {
         doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(any());
+    }
+
+    protected <T, E extends Exception> QueryCountAssert<T, E> assertThatDb(ThrowingProducer<T, E> call) {
+        return QueryCountAssert.assertThatDb(queryInterceptor, call);
     }
 }
