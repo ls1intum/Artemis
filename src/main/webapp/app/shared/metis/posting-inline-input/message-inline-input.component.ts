@@ -50,4 +50,6 @@ export class MessageInlineInputComponent extends PostingCreateEditModalDirective
     updateModalTitle(): void {}
 
     updatePosting(): void {}
+
+    open(): void {}
 }

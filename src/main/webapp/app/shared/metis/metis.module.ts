@@ -35,6 +35,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 import { EmojiPickerComponent } from 'app/shared/metis/emoji/emoji-picker.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/posting-inline-input/message-inline-input.component';
+import { InfiniteScrollModule } from 'ngx-infinite-scroll';
 
 @NgModule({
     imports: [

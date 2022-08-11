@@ -1,11 +1,10 @@
 import { MetisModule } from 'app/shared/metis/metis.module';
+import { ArtemisSharedModule } from 'app/shared/shared.module';
+import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
 import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
-import { CourseDiscussionComponent } from 'app/overview/course-discussion/course-discussion.component';
-import { ArtemisSharedCommonModule } from 'app/shared/shared-common.module';
-import { ArtemisSharedModule } from 'app/shared/shared.module';
-import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const routes: Routes = [
     {
@@ -19,7 +18,8 @@ const routes: Routes = [
 ];
 
 @NgModule({
-    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedCommonModule, ArtemisSharedComponentModule, InfiniteScrollModule],
+    imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, InfiniteScrollModule],
     declarations: [CourseDiscussionComponent],
+    exports: [CourseDiscussionComponent],
 })
 export class CourseDiscussionModule {}
