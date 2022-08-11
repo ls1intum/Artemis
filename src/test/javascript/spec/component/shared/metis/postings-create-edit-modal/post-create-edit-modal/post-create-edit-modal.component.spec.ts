@@ -21,7 +21,7 @@ describe('PostCreateEditModalComponent', () => {
     let component: PostCreateEditModalComponent;
     let fixture: ComponentFixture<PostCreateEditModalComponent>;
     let metisService: MetisService;
-    let modal: MockNgbModalService;
+    let modal: NgbModal;
     let metisServiceGetPageTypeMock: jest.SpyInstance;
     let metisServiceIsAtLeastInstructorStub: jest.SpyInstance;
     let metisServiceCreateStub: jest.SpyInstance;

@@ -47,19 +47,38 @@ public class ModelingExerciseService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user The user for whom to fetch all available exercises
+     * @param search         The search query defining the search term and the size of the returned page
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ModelingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<ModelingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+            final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-        final Page<ModelingExercise> exercisePage;
+        Page<ModelingExercise> exercisePage = Page.empty();
         if (authCheckService.isAdmin(user)) {
-            exercisePage = modelingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
+            }
         }
         else {
-            exercisePage = modelingExerciseRepository.queryBySearchTermInCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = modelingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
         }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }

@@ -81,7 +81,7 @@ describe('ProgrammingExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING }, true, true);
             expect(comp.listSorting).toBeTrue();
         });
     }));
@@ -91,7 +91,7 @@ describe('ProgrammingExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, page: 5 }, true, true);
             expect(comp.page).toBe(5);
         });
     }));
@@ -104,7 +104,7 @@ describe('ProgrammingExerciseImportComponent', () => {
             tick(10);
             expect(searchForExercisesStub).not.toHaveBeenCalled();
             tick(290);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
         });
     }));
@@ -114,7 +114,7 @@ describe('ProgrammingExerciseImportComponent', () => {
         setStateAndCallOnInit(() => {
             comp.sortedColumn = TableColumn.TITLE;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE });
+            expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, sortedColumn: TableColumn.TITLE }, true, true);
             expect(comp.sortedColumn).toEqual(TableColumn.TITLE);
         });
     }));
@@ -122,4 +122,31 @@ describe('ProgrammingExerciseImportComponent', () => {
     it('should return programming exercise id', () => {
         expect(comp.trackId(0, programmingExercise)).toEqual(programmingExercise.id);
     });
+
+    it('should switch courseFilter/examFilter and search', fakeAsync(() => {
+        const pagingServiceSpy = jest.spyOn(pagingService, 'searchForExercises');
+        pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<ProgrammingExercise>));
+
+        fixture.detectChanges();
+        expect(comp.isCourseFilter).toBe(true);
+        expect(comp.isExamFilter).toBe(true);
+
+        comp.onCourseFilterChange();
+        comp.onExamFilterChange();
+        tick();
+        expect(comp.isCourseFilter).toBe(false);
+        expect(comp.isExamFilter).toBe(false);
+
+        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        tick(300);
+
+        const expectedSearchObject = {
+            page: 1,
+            pageSize: 10,
+            searchTerm: '',
+            sortedColumn: 'ID',
+            sortingOrder: 'DESCENDING',
+        };
+        expect(pagingServiceSpy).toHaveBeenCalledWith(expectedSearchObject, false, false);
+    }));
 });

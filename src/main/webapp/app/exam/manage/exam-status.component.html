@@ -162,6 +162,14 @@
                                 ? round((examChecklist.numberOfAllComplaintsDone * 100) / examChecklist.numberOfAllComplaints, 1)
                                 : 100
                         }}%
+                        {{
+                            'artemisApp.examStatus.correction.complaintsCount'
+                                | artemisTranslate
+                                    : {
+                                          done: examChecklist.numberOfAllComplaintsDone!,
+                                          total: examChecklist.numberOfAllComplaints!
+                                      }
+                        }}
                     </span>
                 </li>
             </ol>

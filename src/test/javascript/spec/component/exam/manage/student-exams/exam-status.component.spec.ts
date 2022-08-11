@@ -170,12 +170,12 @@ describe('ExamStatusComponent', () => {
         expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
     });
 
-    it('should set examConductionState correctly if TestExam is started but not finished yet AND preparation is not finished', () => {
+    it('should set examConductionState correctly if TestExam is started but not finished yet AND preparation is not finished AND user is editor', () => {
         prepareForTestExamConductionStateTest(dayjs().add(-1, DateOffsetType.HOURS), 1, DateOffsetType.DAYS);
         component.mandatoryPreparationFinished = false;
         component.ngOnChanges();
-
-        expect(component.examConductionState).toBe(ExamConductionState.ERROR);
+        // Editors and TAs have no access to the required data to determine, if the preparation is not yet finished -> use RUNNING in this case
+        expect(component.examConductionState).toBe(ExamConductionState.RUNNING);
     });
 
     it('should set examConductionState correctly if TestExam not started yet', () => {

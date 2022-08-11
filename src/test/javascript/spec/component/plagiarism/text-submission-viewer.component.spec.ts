@@ -169,7 +169,7 @@ describe('Text Submission Viewer Component', () => {
         expect(result).toEqual(expectedResult);
     });
 
-    it('inserts match tokens', () => {
+    it('should insert match tokens', () => {
         const mockMatches = [
             {
                 from: {
@@ -200,6 +200,35 @@ describe('Text Submission Viewer Component', () => {
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor</span> sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr</span>.`;
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should return a non-empty string even if matches have undefined "from" and "to" values', () => {
+        const mockMatches = [
+            {
+                from: undefined as unknown as TextSubmissionElement,
+                to: {
+                    column: 13,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 2,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: undefined as unknown as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
+        const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 

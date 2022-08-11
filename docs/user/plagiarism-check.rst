@@ -53,6 +53,7 @@ The user can use different actions to run a plagiarism check, inspect the result
 
 .. note::
         Plagiarism detection can take a long time for large courses.
+
 1. Detect plagiarism: The user can execute the plagiarism check using this action.
 
 2. Rerun plagiarism detection: The user can rerun the plagiarism check by executing this action. It can be helpful to check for plagiarism using the different settings as described in section :ref:`settings`.
@@ -68,8 +69,11 @@ Results
 After the plagiarism check was executed, the results can be inspected in different views.
 
 1. Overview of the similarity distribution. This statistical overview shows the similarity distribution based on the percentage as a histogram chart. The user can analyze the distribution quickly and adjust the plagiarism check settings as needed accordingly.
+
  |run-results|
+
 2. Selected submission. When the user selects the submission from the submission list on the left side of the plagiarism run result view, new actions can be selected to initiate the plagiarism check workflow. We will provide further details to the workflow in the next section.
+
  |run-results-selected-submissions|
 
 Plagiarism Check Workflow
@@ -86,12 +90,16 @@ We visualized the process in the following diagram.
 
 1. Open the Exercise via: Course Management → Course → Exercises → Your Exercise.
 2. Access the plagiarism tool as seen in the picture
+
  |exercise-page|
 
 3. Run the Plagiarism Check.
+
  a. Tutors and instructors can adjust the similarity threshold and other settings as described in section :ref:`settings` if deemed necessary (most of the time not, depends on the formulation of the exercise and on the number of possible solution. A similarity of less than 50% typically means that students did not plagiarize).
  b. Checking exercises with many students can take some time (sometimes multiple minutes) and might be resource intensive → We recommend to run plagiarism checks at times when only a few users actively use Artemis in such cases
+
 4. Start checking for plagiarism.
+
  a. Review if the presented matches are actual plagiarism cases or not.
  b. Depending on your decision, either deny or confirm the match as plagiarism.
  c. Continue until the matches start to get "too different".
@@ -105,9 +113,11 @@ We visualized the process in the following diagram.
 |instructors-workflow|
 
 1. Open the plagiarism cases via: Course Management → Course → Plagiarism Cases.
+
  |plagiarism-cases-navigation|
 
 2. Overview the current status of all confirmed plagiarism cases by inspecting the management overview. The overview provides the following information about each confirmed case:
+
  |confirmed-plagiarism-cases-management|
 
  a. In how many comparisons the confirmed case appears.
@@ -117,12 +127,15 @@ We visualized the process in the following diagram.
 
 3. Export the confirmed cases as CSV file to analyze them in another editor.
 4. Select one confirmed case and navigate to the case detail view.
+
  |selected-confirmed-case|
 
 5. Notify the student about the potential plagiarism case and ask him or her for a statement.
+
  |student-notification|
 
 6. Make a final verdict by selecting one of 3 available options. The final verdict must be approved by clicking 'Confirm' in the dialog.
+
  |verdict-dialog|
 
  a. Point deduction in % (minimum value 0%, maximum 100). Deduct exercise points and confirm  the verdict in the dialog.
@@ -137,6 +150,7 @@ The process is visualized in the following diagram.
 |student-workflow|
 
 1. Open the notified plagiarism confirmed case via: Course Overview → Course → Exercise → Plagiarism Case.
+
  |student-plagiarism-case-navigation|
 
 2. Reply to the message of the instructor.

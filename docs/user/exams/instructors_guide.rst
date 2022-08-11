@@ -371,6 +371,9 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 
 - At the bottom of the page you will find the option |check_plagiarism|.
 
+
+.. _exam_grading_key:
+
 3.4 Grading Key
 ^^^^^^^^^^^^^^^
 - Optionally, you can create a grading key for your exam by clicking |grade_key| at the top of the exam's detail page.

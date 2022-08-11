@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider;
 import de.tum.in.www1.artemis.util.InvalidExamExerciseDatesArgumentProvider.InvalidExamExerciseDateConfiguration;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -60,6 +61,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;
+
+    @Autowired
+    private ExerciseIntegrationTestUtils exerciseIntegrationTestUtils;
 
     private ModelingExercise classExercise;
 
@@ -589,6 +593,22 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         final var search = database.configureSearch("ClassDiagram");
         final var result = request.get("/api/modeling-exercises/", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testCourseAndExamFiltersAsInstructor() throws Exception {
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge("Ankh");
+        database.addCourseExamExerciseGroupWithOneModelingExercise("Ankh-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/");
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCourseAndExamFiltersAsAdmin() throws Exception {
+        database.addCourseWithOneReleasedModelExerciseWithKnowledge("Ankh");
+        database.addCourseExamExerciseGroupWithOneModelingExercise("Ankh-Morpork");
+        exerciseIntegrationTestUtils.testCourseAndExamFilters("/api/modeling-exercises/");
     }
 
     @Test
