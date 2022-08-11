@@ -292,23 +292,25 @@ public class QuizScheduleService {
         cancelScheduledQuizStart(quizExerciseId);
         // reload from database to make sure there are no proxy objects
         final var quizExercise = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExerciseId);
-        if (quizExercise != null && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
-            // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
-            var quizBatch = quizExercise.getQuizBatches().stream().findAny();
-            if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
-                // schedule sending out filtered quiz over websocket
-                try {
-                    long delay = Duration.between(ZonedDateTime.now(), quizBatch.get().getStartTime()).toMillis();
-                    var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
-                    // save scheduled future in HashMap
-                    quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
-                        ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
-                        return quizExerciseCache;
-                    });
-                }
-                catch (@SuppressWarnings("unused") DuplicateTaskException e) {
-                    log.debug("Quiz {} task already registered", quizExerciseId);
-                    // this is expected if we run on multiple nodes
+        if (quizExercise != null) {
+            if (quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+                // TODO: quiz cleanup: it should be possible to schedule quiz batches in BATCHED mode
+                var quizBatch = quizExercise.getQuizBatches().stream().findAny();
+                if (quizBatch.isPresent() && quizBatch.get().getStartTime() != null && quizBatch.get().getStartTime().isAfter(ZonedDateTime.now())) {
+                    // schedule sending out filtered quiz over websocket
+                    try {
+                        long delay = Duration.between(ZonedDateTime.now(), quizBatch.get().getStartTime()).toMillis();
+                        var scheduledFuture = threadPoolTaskScheduler.schedule(new QuizStartTask(quizExerciseId), delay, TimeUnit.MILLISECONDS);
+                        // save scheduled future in HashMap
+                        quizCache.performCacheWrite(quizExerciseId, quizExerciseCache -> {
+                            ((QuizExerciseCache) quizExerciseCache).setQuizStart(List.of(scheduledFuture.getHandler()));
+                            return quizExerciseCache;
+                        });
+                    }
+                    catch (@SuppressWarnings("unused") DuplicateTaskException e) {
+                        log.debug("Quiz {} task already registered", quizExerciseId);
+                        // this is expected if we run on multiple nodes
+                    }
                 }
             }
             // Do that at the end because this runs asynchronously and could interfere with the cache write above
@@ -404,7 +406,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.debug("Process cached quiz submissions");
+        log.info("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Cache cache : quizCache.getAllCaches()) {
@@ -415,7 +417,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
+                    log.info("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }

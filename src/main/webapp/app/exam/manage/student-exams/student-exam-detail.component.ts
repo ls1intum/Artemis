@@ -30,6 +30,7 @@ export class StudentExamDetailComponent implements OnInit {
     student: User;
     isSavingWorkingTime = false;
     isTestRun = false;
+    isTestExam: boolean;
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
@@ -75,6 +76,7 @@ export class StudentExamDetailComponent implements OnInit {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
         this.route.data.subscribe(({ studentExam }) => this.setStudentExamWithGrade(studentExam));
+        this.isTestExam = this.studentExam.exam!.testExam!;
     }
 
     /**

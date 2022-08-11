@@ -153,17 +153,20 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
+     * Search for all modeling exercises by id, title and course title. The result is pageable since there might be hundreds
      * of exercises in the DB.
      *
-     * @param search The pageable search containing the page size, page number and query string
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("modeling-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
+        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
     /**
