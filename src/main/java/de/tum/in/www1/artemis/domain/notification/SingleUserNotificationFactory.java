@@ -1,15 +1,15 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIGH;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
+import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationPriority.HIGH;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTargetFactory.*;
-import static de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants.*;
 
 public class SingleUserNotificationFactory {
 

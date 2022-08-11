@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.Optional;
+
+import javax.annotation.Nullable;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.annotation.Nullable;
-import java.util.Optional;
-
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 
 /**
  * Spring Data JPA repository for the PlagiarismResult entity.

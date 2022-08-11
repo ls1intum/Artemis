@@ -1,10 +1,11 @@
 package de.tum.in.www1.artemis.domain.notification;
 
+import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+
 import com.google.common.collect.BiMap;
 import com.google.common.collect.ImmutableBiMap;
-import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
-import static de.tum.in.www1.artemis.domain.enumeration.NotificationType.*;
+import de.tum.in.www1.artemis.domain.enumeration.NotificationType;
 
 public class NotificationTitleTypeConstants {
 

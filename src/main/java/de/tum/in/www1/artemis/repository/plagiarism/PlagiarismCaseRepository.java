@@ -1,14 +1,15 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the PlagiarismCase entity.

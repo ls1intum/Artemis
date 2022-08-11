@@ -1,19 +1,22 @@
 package de.tum.in.www1.artemis.domain.metis;
 
+import java.util.HashSet;
+import java.util.Set;
+
+import javax.persistence.*;
+import javax.validation.constraints.Size;
+
+import org.hibernate.annotations.Cache;
+import org.hibernate.annotations.CacheConcurrencyStrategy;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
-import org.hibernate.annotations.Cache;
-import org.hibernate.annotations.CacheConcurrencyStrategy;
-
-import javax.persistence.*;
-import javax.validation.constraints.Size;
-import java.util.HashSet;
-import java.util.Set;
 
 /**
  * A Post, i.e. start of a Metis thread.

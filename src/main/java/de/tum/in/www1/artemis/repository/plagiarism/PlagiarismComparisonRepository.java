@@ -1,8 +1,10 @@
 package de.tum.in.www1.artemis.repository.plagiarism;
 
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
-import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
+import java.util.Optional;
+import java.util.Set;
+
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -11,10 +13,9 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Optional;
-import java.util.Set;
-
-import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the PlagiarismComparison entity.

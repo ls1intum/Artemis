@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -15,7 +17,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 public abstract class PostingService {
 
