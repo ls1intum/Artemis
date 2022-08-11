@@ -4,11 +4,11 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { ActivatedRoute } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { finalize } from 'rxjs/operators';
-import { faExclamationTriangle, faPlus, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { finalize, tap } from 'rxjs/operators';
+import { faExclamationTriangle, faPlus, faSave, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
-import { Subject } from 'rxjs';
+import { forkJoin, Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
@@ -38,6 +38,7 @@ export class BonusComponent implements OnInit {
     readonly faPlus = faPlus;
     readonly faTimes = faTimes;
     readonly faExclamationTriangle = faExclamationTriangle;
+    readonly faQuestionCircle = faQuestionCircle;
 
     readonly ButtonSize = ButtonSize;
     readonly GradeEditMode = GradeEditMode;
@@ -47,25 +48,25 @@ export class BonusComponent implements OnInit {
 
     readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
         value: bonusStrategyOption,
-        labelKey: 'artemisApp.TODO: Ata.' + BonusStrategyOption[bonusStrategyOption].toLowerCase(),
+        labelKey: 'artemisApp.bonus.bonusStrategy.' + BonusStrategyOption[bonusStrategyOption].toLowerCase(),
         btnClass: 'btn-secondary',
     }));
 
     readonly bonusStrategyDiscreteness = [BonusStrategyDiscreteness.DISCRETE, BonusStrategyDiscreteness.CONTINUOUS].map((bonusStrategyDiscreteness) => ({
         value: bonusStrategyDiscreteness,
-        labelKey: 'artemisApp.TODO: Ata.' + BonusStrategyDiscreteness[bonusStrategyDiscreteness].toLowerCase(),
+        labelKey: 'artemisApp..bonus.discreteness.' + BonusStrategyDiscreteness[bonusStrategyDiscreteness].toLowerCase(),
         btnClass: 'btn-secondary',
     }));
 
     readonly calculationSigns = [
         {
             value: this.CALCULATION_PLUS,
-            labelKey: '+',
+            label: '+',
             btnClass: 'btn-secondary',
         },
         {
             value: this.CALCULATION_MINUS,
-            labelKey: '−',
+            label: '−',
             btnClass: 'btn-secondary',
         },
     ];
@@ -107,47 +108,61 @@ export class BonusComponent implements OnInit {
 
     ngOnInit(): void {
         window['comp'] = this; // TODO: Ata Delete this.
-        this.route.params.subscribe((params) => {
-            this.isLoading = true;
-            this.courseId = Number(params['courseId']);
-            this.examId = Number(params['examId']);
+        this.isLoading = true;
 
-            this.bonusService
-                .findBonusWithTargetExam(this.courseId, this.examId)
-                .pipe(
-                    finalize(() => {
-                        this.isLoading = false;
-                    }),
-                )
-                .subscribe((bonusResponse) => {
+        const paramMap = this.route.snapshot.paramMap;
+        this.courseId = Number(paramMap.get('courseId'));
+        this.examId = Number(paramMap.get('examId'));
+
+        forkJoin([
+            this.bonusService.findBonusForExam(this.courseId, this.examId).pipe(
+                tap((bonusResponse) => {
                     this.setBonus(bonusResponse.body || new Bonus());
-                });
-        });
-
-        this.gradingSystemService.findWithBonusGradeTypeForInstructor(this.state).subscribe((gradingScales) => {
-            this.sourceGradingScales = gradingScales.body?.resultsOnPage || [];
-        });
-
-        this.gradingSystemService.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
-            if (gradeSteps) {
-                this.examGradeStepsDTO = gradeSteps;
-                this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
-                this.gradingSystemService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
-                // if (gradeSteps.maxPoints !== undefined) {
-                //     if (!this.isExam) {
-                //         // calculate course max points based on exercises
-                //         const course = this.courseCalculationService.getCourse(this.courseId!);
-                //         const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
-                //         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
-                //     } else {
-                //         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
-                //         this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
-                //     }
-                // }
-            } else {
-                // TODO: Ata Return to exam detail page and alert error.
-            }
-        });
+                }),
+            ),
+            this.gradingSystemService.findWithBonusGradeTypeForInstructor(this.state).pipe(
+                tap((gradingScales) => {
+                    this.sourceGradingScales = gradingScales.body?.resultsOnPage || [];
+                }),
+            ),
+            this.gradingSystemService.findGradeSteps(this.courseId, this.examId).pipe(
+                tap((gradeSteps) => {
+                    if (gradeSteps) {
+                        this.examGradeStepsDTO = gradeSteps;
+                        this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
+                        this.gradingSystemService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
+                        // if (gradeSteps.maxPoints !== undefined) {
+                        //     if (!this.isExam) {
+                        //         // calculate course max points based on exercises
+                        //         const course = this.courseCalculationService.getCourse(this.courseId!);
+                        //         const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
+                        //         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
+                        //     } else {
+                        //         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
+                        //         this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
+                        //     }
+                        // }
+                    } else {
+                        // TODO: Ata Return to exam detail page and alert error.
+                    }
+                }),
+            ),
+        ])
+            .pipe(
+                finalize(() => {
+                    this.isLoading = false;
+                }),
+            )
+            .subscribe(() => {
+                if (this.bonus.source) {
+                    const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.source!.id);
+                    if (!sourceGradingScale) {
+                        throw new Error(`sourceGradingScale not found for id: ${this.bonus.source.id}`);
+                    }
+                    this.bonus.source = sourceGradingScale;
+                    this.onBonusSourceChange(sourceGradingScale);
+                }
+            });
     }
 
     generateExamples() {

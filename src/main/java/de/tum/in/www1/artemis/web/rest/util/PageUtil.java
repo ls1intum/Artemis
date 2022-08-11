@@ -42,7 +42,7 @@ public class PageUtil {
         sortOptions = search.getSortingOrder() == SortingOrder.ASCENDING ? sortOptions.ascending() : sortOptions.descending();
         return PageRequest.of(search.getPage() - 1, search.getPageSize(), sortOptions);
     }
-    
+
     @NotNull
     public static PageRequest createGradingScaleRequest(PageableSearchDTO<String> search) {
         var sortOptions = Sort.by(GradingScale.GradingScaleSearchColumn.valueOf(search.getSortedColumn()).getMappedColumnName());

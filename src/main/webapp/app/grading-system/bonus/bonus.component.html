@@ -1,5 +1,12 @@
+<ng-template #helpTextTemplate let-translationKey="translationKey">
+    <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
+    <fa-icon *ngIf="bonus.id" [icon]="faQuestionCircle" class="text-secondary" placement="top" [ngbTooltip]="tipContent"></fa-icon>
+    <label *ngIf="!bonus.id" [innerHTML]="translationKey | artemisTranslate | safeHtml" class="d-block py-1"></label>
+</ng-template>
+<h2>{{ 'artemisApp.bonus.title' | artemisTranslate }}</h2>
 <div class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusStrategy.title">Select a Bonus Strategy</span>
+    <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusStrategy.helpText' }"></ng-container>
     <jhi-mode-picker [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()"></jhi-mode-picker>
 </div>
 <div *ngIf="currentBonusStrategyOption === BonusStrategyOptions.GRADES" class="form-group">
@@ -11,7 +18,7 @@
     <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="generateExamples()"></jhi-mode-picker>
 </div>
 <div class="form-group">
-    <span class="colon-suffix no-flex-shr ink" jhiTranslate="artemisApp.gradingSystem.TODO: Ata">Select bonus source</span>
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.TODO: Ata">Select bonus source</span>
     <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="onBonusSourceChange($event)" title="Select bonus source">
         <option *ngFor="let sourceGradingScale of sourceGradingScales" [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
     </select>
@@ -41,7 +48,7 @@
     </table>
 </div>
 <h6>{{ 'artemisApp.TODO: Ata Formula' | artemisTranslate }}</h6>
-<div *ngIf="bonus.bonusStrategy && bonus.weight" class="fs-4">
+<div *ngIf="bonus.bonusStrategy && bonus.weight && examGradeStepsDTO" class="fs-4 pb-5">
     <div class="d-flex py-2 align-items-center">
         <div class="p-2">
             <strong>Exam<br />Grade</strong>
@@ -107,7 +114,7 @@
 </div>
 <div>
     <button (click)="save()" [disabled]="isLoading || !isFormValid()" class="btn btn-primary mr-1 mb-1" type="button">
-        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="artemisApp.gradingSystem.save">Save</span>
+        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
     </button>
     <button
         *ngIf="bonus.id"
@@ -120,7 +127,7 @@
         [dialogError]="dialogError$"
         [disabled]="isLoading"
     >
-        <fa-icon [icon]="faTimes"><span jhiTranslate="artemisApp.gradingSystem.delete">Delete</span></fa-icon>
+        <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete">Delete</span></fa-icon>
     </button>
     <div *ngIf="invalidBonusMessage" class="alert alert-warning mt-3">
         <fa-icon [icon]="faExclamationTriangle"></fa-icon>

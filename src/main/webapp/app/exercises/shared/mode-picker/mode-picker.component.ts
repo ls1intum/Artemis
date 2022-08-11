@@ -2,7 +2,8 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 export type ModePickerOption<TMode> = {
     value: TMode;
-    labelKey: string;
+    labelKey?: string;
+    label?: string;
     btnClass: string;
 };
 

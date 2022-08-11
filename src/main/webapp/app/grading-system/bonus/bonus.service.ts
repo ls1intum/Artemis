@@ -44,7 +44,7 @@ export class BonusService {
     // }
 
     /**
-     * Deletes the bonus source for course
+     * Deletes the bonus
      *
      * @param bonusId the id of the bonus which will be deleted
      */
@@ -53,7 +53,7 @@ export class BonusService {
     }
 
     /**
-     * Store a new bonus source for exam on the server
+     * Store a new bonus for exam on the server
      *
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the bonus source will be created
@@ -73,24 +73,24 @@ export class BonusService {
     }
 
     /**
-     * Retrieves the bonus source for exam
+     * Retrieves the bonus for exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId the exam for which the bonus source will be retrieved
      */
-    findBonusWithTargetExam(courseId: number, examId: number): Observable<EntityResponseType> {
+    findBonusForExam(courseId: number, examId: number): Observable<EntityResponseType> {
         return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, { observe: 'response' });
     }
 
-    /**
-     * Deletes the bonus source for exam
-     *
-     * @param targetExamId the course to which the exam belongs
-     * @param examId the exam for which the bonus source will be deleted
-     */
-    deleteBonusForExam(targetExamId: number, examId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/courses/${targetExamId}/exams/${examId}/bonus`, { observe: 'response' });
-    }
+    // /**
+    //  * Deletes the bonus source for exam
+    //  *
+    //  * @param targetExamId the course to which the exam belongs
+    //  * @param examId the exam for which the bonus source will be deleted
+    //  */
+    // deleteBonusForExam(targetExamId: number, examId: number): Observable<HttpResponse<any>> {
+    //     return this.http.delete<any>(`${this.resourceUrl}/courses/${targetExamId}/exams/${examId}/bonus`, { observe: 'response' });
+    // }
 
     // /**
     //  * Finds all grade steps for a course or an exam
