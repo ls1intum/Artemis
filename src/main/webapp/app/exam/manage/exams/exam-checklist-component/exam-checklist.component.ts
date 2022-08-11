@@ -3,6 +3,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -30,6 +31,8 @@ export class ExamChecklistComponent implements OnChanges {
     faUser = faUser;
     faListAlt = faListAlt;
     faThList = faThList;
+
+    readonly FeatureToggle = FeatureToggle;
 
     constructor(private examChecklistService: ExamChecklistService) {}
 

@@ -115,7 +115,7 @@ describe('FileUploadExercise Service', () => {
     }));
 
     it('should delete a FileUploadExercise', fakeAsync(() => {
-        service.delete(123).subscribe((resp) => expect(resp.ok));
+        service.delete(123).subscribe((resp) => expect(resp.ok).toBeTrue());
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });

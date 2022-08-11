@@ -14,7 +14,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -127,7 +127,7 @@ export class CourseUpdateComponent implements OnInit {
                 id: new FormControl(this.course.id),
                 title: new FormControl(this.course.title, [Validators.required]),
                 shortName: new FormControl(this.course.shortName, {
-                    validators: [Validators.required, Validators.minLength(3), regexValidator(shortNamePattern)],
+                    validators: [Validators.required, Validators.minLength(3), regexValidator(SHORT_NAME_PATTERN)],
                     updateOn: 'blur',
                 }),
                 // note: we still reference them here so that they are used in the update method when the course is retrieved from the course form
