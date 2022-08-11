@@ -93,6 +93,9 @@ public class BonusResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var bonus = bonusRepository.findAllByTargetExamId(examId).stream().findAny().orElse(null);
+        if (bonus != null) {
+            bonus.setBonusStrategy(bonus.getExamGradingScale().getBonusStrategy());
+        }
         return ResponseEntity.ok(bonus);
     }
 
@@ -107,9 +110,9 @@ public class BonusResource {
     public ResponseEntity<Bonus> getBonus(@PathVariable Long bonusId) {
         log.debug("REST request to get Bonus : {}", bonusId);
         Bonus bonus = bonusRepository.findById(bonusId).orElseThrow();
-        GradingScale gradingScale = gradingScaleRepository.findByBonusFromId(bonus.getId()).orElseThrow();
-        checkIsAtLeastInstructorForGradingScaleCourse(gradingScale);
-
+        GradingScale examGradingScale = bonus.getExamGradingScale();
+        checkIsAtLeastInstructorForGradingScaleCourse(examGradingScale);
+        bonus.setBonusStrategy(examGradingScale.getBonusStrategy());
         return ResponseEntity.ok().body(bonus);
     }
 
@@ -171,7 +174,7 @@ public class BonusResource {
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> createBonusForTargetExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
+    public ResponseEntity<Bonus> createBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) throws URISyntaxException {
         log.debug("REST request to create a bonus source for exam: {}", examId);
         if (bonus.getId() != null) {
             throw new BadRequestAlertException("A new bonus source cannot already have an ID", ENTITY_NAME, "idexists");
@@ -180,19 +183,19 @@ public class BonusResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         // Optional<Bonus> existingBonus = bonusRepository.findBySourceExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        // TODO: Ata: Check source course too (see update method)
+        checkIsAtLeastInstructorForGradingScaleCourse(bonus.getSource());
 
         // validateBonus(existingBonus, bonus);
         GradingScale examGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
+        examGradingScale.addBonusFrom(bonus);
+        examGradingScale.setBonusStrategy(bonus.getBonusStrategy());
 
-        // bonus.setTarget(examGradingScale);
-        examGradingScale.getBonusFrom().add(bonus);
         if (bonus.getSource() != null) {
             var sourceFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
             bonus.setSource(sourceFromDb);
         }
-
         Bonus savedBonus = bonusService.saveBonus(bonus);
+        gradingScaleRepository.save(examGradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
@@ -207,15 +210,17 @@ public class BonusResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Bonus> updateBonus(@RequestBody Bonus bonus) {
         log.debug("REST request to update a bonus source: {}", bonus.getId());
-        // Course course = courseRepository.findByIdElseThrow(courseId);
         Bonus oldBonus = bonusRepository.findById(bonus.getId()).orElseThrow();
-        GradingScale gradingScale = gradingScaleRepository.findByBonusFromId(oldBonus.getId()).orElseThrow();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, gradingScale.getExam().getCourse(), null);
+        GradingScale examGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId()).orElseThrow(); // TODO: Ata Remove
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examGradingScale.getExam().getCourse(), null);
 
         GradingScale sourceGradingScale = oldBonus.getSource();
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
 
+        examGradingScale.addBonusFrom(bonus);
+        examGradingScale.setBonusStrategy(bonus.getBonusStrategy());
         Bonus savedBonus = bonusService.saveBonus(bonus);
+        gradingScaleRepository.save(examGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 
@@ -265,7 +270,7 @@ public class BonusResource {
     public ResponseEntity<Void> deleteBonus(@PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus source: {}", bonusId);
         Bonus bonus = bonusRepository.findById(bonusId).orElseThrow();
-        checkIsAtLeastInstructorForGradingScaleCourse(bonus.getTarget());
+        checkIsAtLeastInstructorForGradingScaleCourse(bonus.getExamGradingScale());
         bonusRepository.delete(bonus);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }

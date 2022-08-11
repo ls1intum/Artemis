@@ -141,7 +141,8 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
 
     // Page<GradingScale> findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(String partialCourseTitle, String partialExamTitle, Pageable pageable);
 
-    Optional<GradingScale> findByBonusFromId(@Param("bonusId") Long bonusId);
+    @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
+    Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);
 
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
     Optional<GradingScale> findWithEagerBonusFromByExamId(@Param("examId") Long examId);

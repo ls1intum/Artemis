@@ -5,7 +5,9 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 
@@ -18,10 +20,6 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Bonus extends DomainObject {
 
-    private static final int CALCULATION_MINUS = -1;
-
-    private static final int CALCULATION_PLUS = 1;
-
     /**
      * Can be either +1 or -1 to add or subtract bonus.
      */
@@ -32,9 +30,17 @@ public class Bonus extends DomainObject {
     @JoinColumn(name = "source_grading_scale_id", referencedColumnName = "id")
     private GradingScale source;
 
-    // @ManyToOne(optional = false)
-    // @JoinColumn(name = "target_grading_scale_id", referencedColumnName = "id")
-    // private GradingScale target;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "grading_scale_id", referencedColumnName = "id")
+    @JsonIgnore
+    private GradingScale examGradingScale;
+
+    /**
+     * This field is persisted at {@see examGradingScale}, it is defined here for transferring the value from client.
+     */
+    @Transient
+    @JsonProperty
+    private BonusStrategy bonusStrategy;
 
     public GradingScale getSource() {
         return source;
@@ -44,17 +50,16 @@ public class Bonus extends DomainObject {
         this.source = sourceGradingScale;
     }
 
-    public GradingScale getTarget() {
-        // return target;
-        return null;
+    public GradingScale getExamGradingScale() {
+        return examGradingScale;
     }
 
-    public void setTarget(GradingScale targetGradingScale) {
-        // this.target = targetGradingScale;
+    public void setExamGradingScale(GradingScale gradingScale) {
+        this.examGradingScale = gradingScale;
     }
 
     public Integer getWeight() {
-        return (int) Math.signum(1.0);
+        return (int) Math.signum(weight);
     }
 
     public void setWeight(Double weight) {
@@ -63,7 +68,15 @@ public class Bonus extends DomainObject {
 
     public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, BonusStrategy bonusStrategy, Double achievedPointsForBonus,
             Double achievedPointsForTarget) {
-        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, gradingScaleRepository.findByBonusFromId(getId()).orElse(null), achievedPointsForTarget, getSource(),
-                achievedPointsForBonus, getWeight());
+        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, gradingScaleRepository.findWithEagerBonusFromByBonusFromId(getId()).orElse(null),
+                achievedPointsForTarget, getSource(), achievedPointsForBonus, getWeight());
+    }
+
+    public BonusStrategy getBonusStrategy() {
+        return bonusStrategy;
+    }
+
+    public void setBonusStrategy(BonusStrategy bonusStrategy) {
+        this.bonusStrategy = bonusStrategy;
     }
 }
