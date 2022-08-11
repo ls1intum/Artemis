@@ -24,6 +24,14 @@ public class LearningGoal extends DomainObject {
     @Lob
     private String description;
 
+    /**
+     * The type of learning goal according to Bloom's taxonomy.
+     * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
+     */
+    @Column(name = "taxonomy")
+    @Enumerated(EnumType.STRING)
+    private LearningGoalTaxonomy taxonomy;
+
     @ManyToOne
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties("learningGoals")
@@ -41,6 +49,9 @@ public class LearningGoal extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<LectureUnit> lectureUnits = new HashSet<>();
 
+    /**
+     * A set of courses for which this learning goal is a prerequisite for.
+     */
     @ManyToMany
     @JoinTable(name = "learning_goal_course", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "course_id", referencedColumnName = "id"))
     @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
@@ -61,6 +72,14 @@ public class LearningGoal extends DomainObject {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public LearningGoalTaxonomy getTaxonomy() {
+        return taxonomy;
+    }
+
+    public void setTaxonomy(LearningGoalTaxonomy taxonomy) {
+        this.taxonomy = taxonomy;
     }
 
     public Course getCourse() {

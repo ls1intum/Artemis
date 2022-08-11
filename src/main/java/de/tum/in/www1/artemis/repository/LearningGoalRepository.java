@@ -95,4 +95,8 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
         return findByIdWithConsecutiveCourses(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
+    default LearningGoal findByIdElseThrow(long learningGoalId) {
+        return findById(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
+
 }

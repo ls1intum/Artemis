@@ -1,0 +1,39 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="ge65cer" id="20220720113000">
+        <addColumn tableName="learning_goal">
+            <column name="taxonomy" type="VARCHAR(31)"/>
+        </addColumn>
+        <createTable tableName="learning_goal_relation">
+            <!-- Directed edge from x (tail) to y (head) -->
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+            <column name="tail_learning_goal_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="head_learning_goal_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="type" type="VARCHAR(31)">
+                <constraints nullable="false"/>
+            </column>
+            <!--<column name="type" type="INT">
+                <constraints nullable="false"/>
+            </column>-->
+        </createTable>
+        <addForeignKeyConstraint constraintName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553"
+                                 baseTableName="learning_goal_relation"
+                                 baseColumnNames="tail_learning_goal_id"
+                                 referencedTableName="learning_goal"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint constraintName="FKbeaa051892e67ac2783f413bbf882a547db27e60"
+                                 baseTableName="learning_goal_relation"
+                                 baseColumnNames="head_learning_goal_id"
+                                 referencedTableName="learning_goal"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint constraintName="UQymvhyta1mtg5mmu2n2fjmjc4m2y0mtniymy4odjh"
+                             tableName="learning_goal_relation"
+                             columnNames="head_learning_goal_id, tail_learning_goal_id, type" />
+    </changeSet>
+</databaseChangeLog>

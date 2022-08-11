@@ -7,6 +7,15 @@
             "learningGoalButton": "Lernziele",
             "title": "Lernziele",
             "description": "Beschreibung",
+            "taxonomy": "Taxonomy",
+            "taxonomies": {
+                "remember": "Erinnern",
+                "understand": "Verstehen",
+                "apply": "Anwenden",
+                "analyze": "Analysieren",
+                "evaluate": "Evaluieren",
+                "create": "Erstellen"
+            },
             "manageLearningGoals": {
                 "title": "Lernzielmanagement"
             },
