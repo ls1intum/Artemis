@@ -39,7 +39,7 @@ public class ProgrammingLanguageConfiguration {
      * @return A map of programming languages to the CI build images that are defined for it.
      */
     private Map<ProgrammingLanguage, Map<ProjectType, String>> loadImages(final Map<String, Map<String, String>> imageConfig) {
-        final EnumMap<ProgrammingLanguage, Map<ProjectType, String>> buildImages = new EnumMap<>(ProgrammingLanguage.class);
+        final Map<ProgrammingLanguage, Map<ProjectType, String>> buildImages = new EnumMap<>(ProgrammingLanguage.class);
 
         for (var entry : imageConfig.entrySet()) {
             final ProgrammingLanguage programmingLanguage = tryParseProgrammingLanguage(entry.getKey());
