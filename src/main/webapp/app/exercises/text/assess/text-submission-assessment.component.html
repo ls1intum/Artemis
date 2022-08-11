@@ -58,14 +58,12 @@
     </div>
 
     <div class="row mt-3">
-        <div class="col-md-6">
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                [highlightDifferences]="highlightDifferences"
-                (feedbacksChange)="validateFeedback()"
-                [readOnly]="readOnly"
-            ></jhi-unreferenced-feedback>
-        </div>
+        <jhi-unreferenced-feedback
+            [(feedbacks)]="unreferencedFeedback"
+            [highlightDifferences]="highlightDifferences"
+            (feedbacksChange)="validateFeedback()"
+            [readOnly]="readOnly"
+        ></jhi-unreferenced-feedback>
     </div>
 </ng-template>
 
