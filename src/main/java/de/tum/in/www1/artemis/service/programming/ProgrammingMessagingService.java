@@ -61,6 +61,11 @@ public class ProgrammingMessagingService {
         notifyUserAboutSubmissionError(submission.getParticipation(), error);
     }
 
+    /**
+     * Notifies the user (or all users of the team) about a submission error
+     * @param participation the participation for which the submission error should be reported
+     * @param error the submission error wrapped in an object
+     */
     public void notifyUserAboutSubmissionError(Participation participation, BuildTriggerWebsocketError error) {
         if (participation instanceof StudentParticipation studentParticipation) {
             studentParticipation.getStudents().forEach(user -> messagingTemplate.convertAndSendToUser(user.getLogin(), NEW_SUBMISSION_TOPIC, error));
@@ -71,6 +76,12 @@ public class ProgrammingMessagingService {
         }
     }
 
+    /**
+     * Notifies editors and instructors about test case changes for the updated programming exercise
+     *
+     * @param testCasesChanged whether tests have been changed or not
+     * @param updatedProgrammingExercise the programming exercise for which tests have been changed
+     */
     public void notifyUserAboutTestCaseChanged(boolean testCasesChanged, ProgrammingExercise updatedProgrammingExercise) {
         websocketMessagingService.sendMessage(getProgrammingExerciseTestCaseChangedTopic(updatedProgrammingExercise.getId()), testCasesChanged);
         // Send a notification to the client to inform the instructor about the test case update.
