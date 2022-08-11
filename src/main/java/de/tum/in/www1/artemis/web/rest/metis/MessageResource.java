@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.metis.MessagePostService;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
-import io.swagger.annotations.ApiParam;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
+
+import javax.validation.Valid;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -12,12 +14,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-import tech.jhipster.web.util.PaginationUtil;
 
-import javax.validation.Valid;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.service.metis.MessagePostService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import io.swagger.annotations.ApiParam;
+import tech.jhipster.web.util.PaginationUtil;
 
 /**
  * REST controller for managing Message Posts.
@@ -52,7 +54,6 @@ public class MessageResource {
      * GET /courses/{courseId}/posts : Get all message posts for a conversation by its id
      *
      * @param pageable                  pagination settings to fetch posts in smaller batches
-     * @param pagingEnabled             flag stating whether requesting component has paging enabled or not
      * @param postContextFilter         request param for filtering posts
      * @return ResponseEntity with status 200 (OK) and with body all posts for course, that match the specified context
      * or 400 (Bad Request) if the checks on user, course or post validity fail

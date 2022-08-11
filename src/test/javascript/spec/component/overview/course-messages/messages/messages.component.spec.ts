@@ -107,7 +107,7 @@ describe('MessagesComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(0);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(0);
     }));
 
     it('should call fetchNextPage at course messages when scrolled to top and do nothing when scrolled to bottom', fakeAsync(() => {
@@ -119,10 +119,10 @@ describe('MessagesComponent', () => {
 
         const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
         scrollableDiv.dispatchEvent(new Event('scrolled'));
-        expect(fetchNextPageSpy).toBeCalledTimes(0);
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
 
         scrollableDiv.dispatchEvent(new Event('scrolledUp'));
-        expect(fetchNextPageSpy).toBeCalledTimes(1);
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('if user has no conversation, no call should be made to fetch posts', fakeAsync(() => {
@@ -132,7 +132,7 @@ describe('MessagesComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(0);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(0);
     }));
 
     it('if user has conversation, posts should be fetched on page load and displayed in reversed order', fakeAsync(() => {
@@ -141,7 +141,7 @@ describe('MessagesComponent', () => {
         component.conversation = conversationsOfUser1.first();
         component.onSelectContext();
         expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
-        expect(metisServiceGetFilteredPostsSpy).toBeCalledTimes(1);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(1);
         expect(metisServiceGetFilteredPostsSpy).toBeCalledWith(component.currentPostContextFilter);
     }));
 
@@ -161,7 +161,7 @@ describe('MessagesComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(scrollToBottomOfMessagesSpy).toBeCalledTimes(1);
+        expect(scrollToBottomOfMessagesSpy).toHaveBeenCalledTimes(1);
     }));
 
     function initializeFixtureForCourseMessagesPage() {

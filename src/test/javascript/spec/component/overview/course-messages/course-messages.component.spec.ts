@@ -33,6 +33,6 @@ describe('CourseMessagesComponent', () => {
 
         fixture.detectChanges();
 
-        expect(selectConversationSpy).toBeCalledTimes(1);
+        expect(selectConversationSpy).toHaveBeenCalledTimes(1);
     });
 });

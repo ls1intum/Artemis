@@ -12,7 +12,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
@@ -23,6 +22,7 @@ import { CourseMessagesService } from 'app/shared/metis/course.messages.service'
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
 import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisTutor, metisUser2 } from '../../../helpers/sample/metis-sample-data';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 
 describe('ConversationSidebarComponent', () => {
     let component: ConversationSidebarComponent;
@@ -81,8 +81,8 @@ describe('ConversationSidebarComponent', () => {
         expect(component.course).toBe(metisCourse);
         expect(component.conversations).toBe(conversationsOfUser1);
         expect(component.activeConversation).toBe(conversationsOfUser1.first());
-        expect(emitActiveConversationSpy).toBeCalledTimes(1);
-        expect(emitActiveConversationSpy).toBeCalledWith(conversationsOfUser1.first());
+        expect(emitActiveConversationSpy).toHaveBeenCalledTimes(1);
+        expect(emitActiveConversationSpy).toHaveBeenCalledWith(conversationsOfUser1.first());
     }));
 
     it('should search for other users via the searchbar', () => {
@@ -161,10 +161,10 @@ describe('ConversationSidebarComponent', () => {
         component.onAutocompleteSelect(metisUser2);
         fixture.detectChanges();
 
-        expect(spy).toBeCalledTimes(1);
-        expect(spy).toBeCalledWith(metisUser2);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(metisUser2);
         expect(component.activeConversation).toBe(conversationBetweenUser1User2);
-        expect(emitActiveConversationSpy).toBeCalledTimes(1);
+        expect(emitActiveConversationSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should handle selection of a user from the search list without existing conversation', () => {
@@ -175,10 +175,10 @@ describe('ConversationSidebarComponent', () => {
         component.onAutocompleteSelect(metisTutor);
         fixture.detectChanges();
 
-        expect(spy).toBeCalledTimes(1);
-        expect(spy).toBeCalledWith(metisTutor);
+        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledWith(metisTutor);
         expect(component.activeConversation).toBe(component.conversations[0]);
-        expect(emitActiveConversationSpy).toBeCalledTimes(1);
+        expect(emitActiveConversationSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should format search result', () => {

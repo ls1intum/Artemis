@@ -39,12 +39,6 @@ import {
     metisLecture,
     metisLecture2,
     metisLecturePosts,
-    metisPostExerciseUser1,
-    metisPostExerciseUser2,
-    metisPostLectureUser1,
-    metisPostLectureUser2,
-    metisResolvingAnswerPostUser1,
-    metisUpVoteReactionUser1,
     metisUser1,
 } from '../../../helpers/sample/metis-sample-data';
 
@@ -56,10 +50,6 @@ describe('CourseDiscussionComponent', () => {
     let metisServiceGetFilteredPostsSpy: jest.SpyInstance;
     let metisServiceGetUserStub: jest.SpyInstance;
     let fetchNextPageSpy: jest.SpyInstance;
-    let post1: Post;
-    let post2: Post;
-    let post3: Post;
-    let post4: Post;
 
     const id = metisCourse.id;
     const parentRoute = {
@@ -390,10 +380,10 @@ describe('CourseDiscussionComponent', () => {
 
         const scrollableDiv = getElement(fixture.debugElement, 'div[id=scrollableDiv]');
         scrollableDiv.dispatchEvent(new Event('scrolledUp'));
-        expect(fetchNextPageSpy).toBeCalledTimes(0);
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
 
         scrollableDiv.dispatchEvent(new Event('scrolled'));
-        expect(fetchNextPageSpy).toBeCalledTimes(1);
+        expect(fetchNextPageSpy).toHaveBeenCalledTimes(1);
     }));
 
     function expectGetFilteredPostsToBeCalled() {
@@ -431,19 +421,4 @@ describe('CourseDiscussionComponent', () => {
             expect(result).toBeFalse();
         });
     });
-
-    function expectGetFilteredPostsToBeCalled() {
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({
-            courseId: metisCourse.id,
-            courseWideContext: undefined,
-            exerciseId: undefined,
-            lectureId: undefined,
-            page: component.page - 1,
-            pageSize: component.itemsPerPage,
-            pagingEnabled: true,
-            postSortCriterion: 'CREATION_DATE',
-            sortingOrder: 'DESCENDING',
-        });
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(3);
-    }
 });
