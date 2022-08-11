@@ -77,21 +77,11 @@ public class ProgrammingLanguageConfiguration {
      * @return A map of project types to CI build images.
      */
     private Map<ProjectType, String> tryParseProjectTypeBuildImages(final Map<String, String> buildImageConfig) {
-        final EnumMap<ProjectType, String> projectTypeImages = new EnumMap<>(ProjectType.class);
+        final Map<ProjectType, String> projectTypeImages = new EnumMap<>(ProjectType.class);
 
         for (var entry : buildImageConfig.entrySet()) {
-            final String projectTypeRaw = entry.getKey();
+            final ProjectType projectType = ProjectType.tryFromString(entry.getKey());
             final String image = entry.getValue();
-
-            final ProjectType projectType = switch (projectTypeRaw) {
-                case "default" -> DEFAULT_PROJECT_TYPE;
-                case "maven" -> MAVEN_PROJECT_TYPE;
-                case "gradle" -> GRADLE_PROJECT_TYPE;
-                case "gcc" -> ProjectType.GCC;
-                case "fact" -> ProjectType.FACT;
-                case "xcode" -> ProjectType.XCODE;
-                default -> throw new IllegalArgumentException("Unknown project type: " + projectTypeRaw);
-            };
 
             projectTypeImages.put(projectType, image);
         }
