@@ -15,7 +15,6 @@ import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
-import { ArtemisTestModule } from '../../../../test.module';
 import { RouterTestingModule } from '@angular/router/testing';
 
 describe('PostComponent', () => {
