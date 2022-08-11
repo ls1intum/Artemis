@@ -1,5 +1,14 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.util.Objects;
+
+import javax.validation.Valid;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Service;
+
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -17,13 +26,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.stereotype.Service;
-
-import javax.validation.Valid;
-import java.util.Objects;
 
 @Service
 public class MessagePostService extends PostingService {
@@ -97,7 +99,8 @@ public class MessagePostService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-        } else {
+        }
+        else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
@@ -156,7 +159,7 @@ public class MessagePostService extends PostingService {
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
-    // TODO share code snippet for answerPost checks
+    // TODO share code snippet for answerPost check
     private void mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {
         // non-message posts should not be manipulated from this endpoint and only the author of a message post should edit or delete the entity
         if (existingMessagePost.getConversation() == null || !existingMessagePost.getAuthor().getId().equals(user.getId())) {

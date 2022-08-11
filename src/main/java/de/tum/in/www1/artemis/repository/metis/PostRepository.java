@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis.repository.metis;
 
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
+import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
+
+import java.util.List;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -13,9 +14,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
-import static de.tum.in.www1.artemis.repository.specs.PostSpecs.*;
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data repository for the Post entity.
@@ -52,13 +53,13 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
         }
     }
 
-    default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable){
+    default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable) {
         Specification<Post> specification = Specification.where(distinct())
                 .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
                         .and(getConversationSpecification(postContextFilter.getConversationId())
-                        .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()))));
+                                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()))));
 
-                        return findAll(specification, pageable);
+        return findAll(specification, pageable);
     }
 
     @Query("""

@@ -1,16 +1,18 @@
 package de.tum.in.www1.artemis.repository.specs;
 
+import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
+
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.persistence.criteria.*;
+
+import org.springframework.data.jpa.domain.Specification;
+
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
 import de.tum.in.www1.artemis.domain.metis.*;
-import org.springframework.data.jpa.domain.Specification;
-
-import javax.persistence.criteria.*;
-import java.util.ArrayList;
-import java.util.List;
-
-import static de.tum.in.www1.artemis.config.Constants.VOTE_EMOJI_ID;
 
 public class PostSpecs {
 
@@ -46,7 +48,7 @@ public class PostSpecs {
      * @param conversationId id of the conversation the Posts belong to
      * @return specification used to chain DB operations
      */
-    public static Specification<Post> getConversationSpecification(Long conversationId){
+    public static Specification<Post> getConversationSpecification(Long conversationId) {
         return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId);
     }
 

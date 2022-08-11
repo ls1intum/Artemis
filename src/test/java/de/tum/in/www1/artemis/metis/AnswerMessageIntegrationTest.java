@@ -94,17 +94,17 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
-     @Test
-     @WithMockUser(username = "student3", roles = "USER")
-     public void testCreateConversationAnswerPost_forbidden() throws Exception {
-     // only participants of a conversation can create posts for it
-     // attempt to save new answerPost under someone elses conversation
-     AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
-     AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.FORBIDDEN);
+    @Test
+    @WithMockUser(username = "student3", roles = "USER")
+    public void testCreateConversationAnswerPost_forbidden() throws Exception {
+        // only participants of a conversation can create posts for it
+        // attempt to save new answerPost under someone elses conversation
+        AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
+        AnswerPost notCreatedAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.FORBIDDEN);
 
-     assertThat(notCreatedAnswerPost).isNull();
-     assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
-     }
+        assertThat(notCreatedAnswerPost).isNull();
+        assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
+    }
 
     // UPDATE
 
@@ -141,8 +141,8 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
 
-        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + 999L,
-                conversationAnswerPostToUpdate, AnswerPost.class, HttpStatus.BAD_REQUEST);
+        AnswerPost notUpdatedAnswerPost = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + 999L, conversationAnswerPostToUpdate, AnswerPost.class,
+                HttpStatus.BAD_REQUEST);
 
         assertThat(notUpdatedAnswerPost).isNull();
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
@@ -164,11 +164,10 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
-        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(), answerPostToUpdate,
-                AnswerPost.class, HttpStatus.BAD_REQUEST);
+        AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + dummyCourse.getId() + "/answer-messages/" + answerPostToUpdate.getId(),
+                answerPostToUpdate, AnswerPost.class, HttpStatus.BAD_REQUEST);
         assertThat(updatedAnswerPostServer).isNull();
     }
-
 
     // DELETE
 

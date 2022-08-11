@@ -34,7 +34,7 @@ public class ReactionService {
     private final ConversationService conversationService;
 
     public ReactionService(UserRepository userRepository, CourseRepository courseRepository, ReactionRepository reactionRepository, PostService postService,
-                           AnswerPostService answerPostService, ConversationService conversationService) {
+            AnswerPostService answerPostService, ConversationService conversationService) {
         this.userRepository = userRepository;
         this.courseRepository = courseRepository;
         this.reactionRepository = reactionRepository;
@@ -73,7 +73,8 @@ public class ReactionService {
             savedReaction = reactionRepository.save(reaction);
             // save post
             postService.updateWithReaction(post, reaction, courseId);
-        } else {
+        }
+        else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
             mayInteractWithConversationIfConversationMessage(user, answerPost.getPost());
             reaction.setAnswerPost(answerPost);
@@ -106,7 +107,8 @@ public class ReactionService {
         if (reaction.getPost() != null) {
             updatedPost = reaction.getPost();
             updatedPost.removeReaction(reaction);
-        } else {
+        }
+        else {
             AnswerPost updatedAnswerPost = reaction.getAnswerPost();
             updatedAnswerPost.removeReaction(reaction);
             updatedPost = updatedAnswerPost.getPost();
@@ -122,7 +124,8 @@ public class ReactionService {
     private void mayInteractWithConversationIfConversationMessage(User user, Post post) {
         if (post.getConversation() != null) {
             conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
-        } else {
+        }
+        else {
             return;
         }
     }
