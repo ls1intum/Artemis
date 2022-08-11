@@ -201,7 +201,6 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
      * @param result
      */
     fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | null> {
-        console.log(result);
         if (result && (!result.submission || (result.submission as ProgrammingSubmission).buildFailed)) {
             return this.getBuildLogs();
         } else {
