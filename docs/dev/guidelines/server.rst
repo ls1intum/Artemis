@@ -432,9 +432,6 @@ For ease of use, a custom assert ``assertThatDb`` was added that allows to do th
 
     public class TestClass {
 
-        @Autowired
-        private HibernateQueryInterceptor hibernateQueryInterceptor;
-
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         public void testQueryCount() throws Exception {
