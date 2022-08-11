@@ -1,17 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import static de.tum.in.www1.artemis.service.metis.PostService.postComparator;
-import static de.tum.in.www1.artemis.service.metis.PostService.postFilter;
-
-import java.util.List;
-import java.util.stream.Collectors;
-
-import org.jetbrains.annotations.NotNull;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -24,10 +12,10 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
 
 public abstract class PostingService {
 
@@ -55,36 +43,6 @@ public abstract class PostingService {
         this.postRepository = postRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.messagingTemplate = messagingTemplate;
-    }
-
-    @NotNull
-    protected Page<Post> orderAndPaginatePosts(boolean pagingEnabled, Pageable pageable, PostContextFilter postContextFilter, List<Post> posts) {
-        List<Post> processedPosts = posts;
-
-        // search by text or #post
-        if (postContextFilter.getSearchText() != null) {
-            processedPosts = processedPosts.stream().filter(post -> postFilter(post, postContextFilter.getSearchText())).collect(Collectors.toList());
-        }
-
-        final Page<Post> postsPage;
-        if (pagingEnabled) {
-            int startIndex = pageable.getPageNumber() * pageable.getPageSize();
-            int endIndex = Math.min(startIndex + pageable.getPageSize(), processedPosts.size());
-
-            // sort (only used by CourseDiscussions and CourseMessages Page, which has pagination enabled)
-            processedPosts.sort((postA, postB) -> postComparator(postA, postB, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()));
-
-            try {
-                postsPage = new PageImpl<>(processedPosts.subList(startIndex, endIndex), pageable, processedPosts.size());
-            }
-            catch (IllegalArgumentException ex) {
-                throw new BadRequestAlertException("Not enough posts to fetch " + pageable.getPageNumber() + "'th page", METIS_POST_ENTITY_NAME, "invalidPageRequest");
-            }
-        }
-        else {
-            postsPage = new PageImpl<>(processedPosts);
-        }
-        return postsPage;
     }
 
     /**

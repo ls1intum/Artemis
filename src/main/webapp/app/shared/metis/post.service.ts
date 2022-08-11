@@ -27,7 +27,9 @@ export class PostService extends PostingService<Post> {
      */
     create(courseId: number, post: Post): Observable<EntityResponseType> {
         const copy = this.convertPostingDateFromClient(post);
-        return this.http.post<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(post)}`, copy, { observe: 'response' }).pipe(map(this.convertDateFromServer));
+        return this.http
+            .post<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(post)}`, copy, { observe: 'response' })
+            .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**
@@ -105,7 +107,7 @@ export class PostService extends PostingService<Post> {
         const copy = this.convertPostingDateFromClient(post);
         return this.http
             .put<Post>(`${this.resourceUrl}${courseId}${PostService.getResourceEndpoint(post)}/${post.id}`, copy, { observe: 'response' })
-            .pipe(map(this.convertDateFromServer));
+            .pipe(map(this.convertPostingResponseDateFromServer));
     }
 
     /**

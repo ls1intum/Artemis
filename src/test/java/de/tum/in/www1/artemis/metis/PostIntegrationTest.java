@@ -1,27 +1,5 @@
 package de.tum.in.www1.artemis.metis;
 
-import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.*;
-
-import java.util.List;
-import java.util.Set;
-
-import javax.validation.ConstraintViolation;
-import javax.validation.Validation;
-import javax.validation.Validator;
-
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
@@ -36,6 +14,26 @@ import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.Validation;
+import javax.validation.Validator;
+import java.util.List;
+import java.util.Set;
+
+import static de.tum.in.www1.artemis.service.metis.PostService.TOP_K_SIMILARITY_RESULTS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -89,7 +87,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         // 1 plagiarism case, 3 with course-wide context and 3 with conversation initialized - initialized): 15 posts in total
         existingPostsAndConversationPosts = database.createPostsWithinCourse();
 
-        existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList(),
+        existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
         // filter existing posts with exercise context
         existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
@@ -692,29 +690,6 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         assertThat(returnedPosts).hasSize(3);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_OrderByCreationDateASC() throws Exception {
-        PostSortCriterion sortCriterion = PostSortCriterion.CREATION_DATE;
-        SortingOrder sortingOrder = SortingOrder.ASCENDING;
-
-        var params = new LinkedMultiValueMap<String, String>();
-
-        // ordering only available in course discussions page, where paging is enabled
-        params.add("pagingEnabled", "true");
-        params.add("page", "0");
-        params.add("size", String.valueOf(MAX_POSTS_PER_PAGE));
-
-        params.add("postSortCriterion", sortCriterion.toString());
-        params.add("sortingOrder", sortingOrder.toString());
-
-        List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
-        database.assertSensitiveInformationHidden(returnedPosts);
-        existingPosts.sort(Comparator.comparing(Post::getCreationDate));
-
-        assertThat(returnedPosts).isEqualTo(existingPosts);
     }
 
     @Test

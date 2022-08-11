@@ -1,24 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-import javax.validation.Valid;
-
-import org.commonmark.node.Node;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.stereotype.Service;
-
 import com.google.common.collect.Lists;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Lecture;
@@ -44,6 +26,21 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Service;
+
+import javax.validation.Valid;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService extends PostingService {
@@ -143,7 +140,7 @@ public class PostService extends PostingService {
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
 
-        Post existingPost = postRepository.findByIdElseThrow(postId);
+        Post existingPost = postRepository.findPostByIdElseThrow(postId);
         preCheckPostValidity(existingPost);
         mayUpdateOrDeletePostingElseThrow(existingPost, user, course);
 
@@ -200,7 +197,7 @@ public class PostService extends PostingService {
      * @return updated post that was persisted
      */
     public Post changeDisplayPriority(Long courseId, Long postId, DisplayPriority displayPriority) {
-        Post post = postRepository.findByIdElseThrow(postId);
+        Post post = postRepository.findPostByIdElseThrow(postId);
         post.setDisplayPriority(displayPriority);
         return updatePost(courseId, postId, post);
     }
@@ -377,7 +374,7 @@ public class PostService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findByIdElseThrow(postId);
+        Post post = postRepository.findPostByIdElseThrow(postId);
         mayInteractWithPostElseThrow(post, user, course);
         preCheckPostValidity(post);
         mayUpdateOrDeletePostingElseThrow(post, user, course);
@@ -501,7 +498,7 @@ public class PostService extends PostingService {
      * @return retrieved post
      */
     public Post findById(Long postId) {
-        return postRepository.findByIdElseThrow(postId);
+        return postRepository.findPostByIdElseThrow(postId);
     }
 
     /**

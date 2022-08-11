@@ -1,11 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.metis;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.List;
-
-import javax.validation.Valid;
-
+import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.service.metis.MessagePostService;
+import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
+import io.swagger.annotations.ApiParam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpHeaders;
@@ -14,12 +12,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
-
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.service.metis.MessagePostService;
-import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
-import io.swagger.annotations.ApiParam;
 import tech.jhipster.web.util.PaginationUtil;
+
+import javax.validation.Valid;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.List;
 
 /**
  * REST controller for managing Message Posts.
@@ -61,9 +59,9 @@ public class MessageResource {
      */
     @GetMapping("courses/{courseId}/messages")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, @RequestParam(defaultValue = "false") boolean pagingEnabled, PostContextFilter postContextFilter) {
+    public ResponseEntity<List<Post>> getMessages(@ApiParam Pageable pageable, PostContextFilter postContextFilter) {
 
-        Page<Post> coursePosts = messagePostService.getMessages(pagingEnabled, pageable, postContextFilter);
+        Page<Post> coursePosts = messagePostService.getMessages(pageable, postContextFilter);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), coursePosts);
 
         return new ResponseEntity<>(coursePosts.getContent(), headers, HttpStatus.OK);

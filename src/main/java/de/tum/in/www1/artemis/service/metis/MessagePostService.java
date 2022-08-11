@@ -1,15 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.util.List;
-import java.util.Objects;
-
-import javax.validation.Valid;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.messaging.simp.SimpMessageSendingOperations;
-import org.springframework.stereotype.Service;
-
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -27,6 +17,13 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.messaging.simp.SimpMessageSendingOperations;
+import org.springframework.stereotype.Service;
+
+import javax.validation.Valid;
+import java.util.Objects;
 
 @Service
 public class MessagePostService extends PostingService {
@@ -48,8 +45,8 @@ public class MessagePostService extends PostingService {
      * determines the post's author, persists the post,
      * and sends a notification to affected user groups
      *
-     * @param courseId id of the course the post belongs to
-     * @param messagePost     message post to create
+     * @param courseId    id of the course the post belongs to
+     * @param messagePost message post to create
      * @return created message post that was persisted
      */
     public Post createMessage(Long courseId, Post messagePost) {
@@ -81,51 +78,29 @@ public class MessagePostService extends PostingService {
     }
 
     /**
-     * @param pagingEnabled     fetches single page instead of all entities
+     * fetch posts from database by conversationId
+     *
      * @param pageable          requested page and page size
      * @param postContextFilter request object to fetch posts
      * @return page of posts that match the given context
      */
-    public Page<Post> getMessages(boolean pagingEnabled, Pageable pageable, @Valid PostContextFilter postContextFilter) {
-
-        List<Post> postsInCourse;
-
+    public Page<Post> getMessages(Pageable pageable, @Valid PostContextFilter postContextFilter) {
+        Page<Post> conversationPosts;
         if (postContextFilter.getConversationId() != null) {
+
             final User user = userRepository.getUserWithGroupsAndAuthorities();
             Conversation conversation = conversationService.getConversationById(postContextFilter.getConversationId());
 
             conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
 
-            List<Post> conversationPosts = postRepository.findPostsByConversationId(postContextFilter.getConversationId());
+            conversationPosts = postRepository.findMessages(postContextFilter, pageable);
 
             // protect sample solution, grading instructions, etc.
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
-
-            postsInCourse = this.getPostsByConversation(postContextFilter.getConversationId());
-        }
-        else {
+        } else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
         }
 
-        return orderAndPaginatePosts(pagingEnabled, pageable, postContextFilter, postsInCourse);
-    }
-
-    /**
-     * fetch posts from database by conversationId
-     *
-     * @param conversationId    id of conversation to retrieve associated posts
-     * @return                  retrieved posts
-     */
-    public List<Post> getPostsByConversation(Long conversationId) {
-        final User user = userRepository.getUserWithGroupsAndAuthorities();
-        Conversation conversation = conversationService.getConversationById(conversationId);
-
-        conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
-
-        List<Post> conversationPosts = postRepository.findPostsByConversationId(conversationId);
-
-        // protect sample solution, grading instructions, etc.
-        conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
         return conversationPosts;
     }
 
@@ -134,9 +109,9 @@ public class MessagePostService extends PostingService {
      * updates non-restricted field of the post, persists the post,
      * and ensures that sensitive information is filtered out
      *
-     * @param courseId      id of the course the post belongs to
-     * @param postId        id of the post to update
-     * @param messagePost   post to update
+     * @param courseId    id of the course the post belongs to
+     * @param postId      id of the post to update
+     * @param messagePost post to update
      * @return updated post that was persisted
      */
     public Post updateMessage(Long courseId, Long postId, Post messagePost) {
