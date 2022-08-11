@@ -94,7 +94,7 @@ public class BonusResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         var bonus = bonusRepository.findAllByTargetExamId(examId).stream().findAny().orElse(null);
         if (bonus != null) {
-            bonus.setBonusStrategy(bonus.getExamGradingScale().getBonusStrategy());
+            bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
         }
         return ResponseEntity.ok(bonus);
     }
@@ -110,9 +110,9 @@ public class BonusResource {
     public ResponseEntity<Bonus> getBonus(@PathVariable Long bonusId) {
         log.debug("REST request to get Bonus : {}", bonusId);
         Bonus bonus = bonusRepository.findById(bonusId).orElseThrow();
-        GradingScale examGradingScale = bonus.getExamGradingScale();
-        checkIsAtLeastInstructorForGradingScaleCourse(examGradingScale);
-        bonus.setBonusStrategy(examGradingScale.getBonusStrategy());
+        GradingScale bonusToGradingScale = bonus.getBonusToGradingScale();
+        checkIsAtLeastInstructorForGradingScaleCourse(bonusToGradingScale);
+        bonus.setBonusStrategy(bonusToGradingScale.getBonusStrategy());
         return ResponseEntity.ok().body(bonus);
     }
 
@@ -186,16 +186,16 @@ public class BonusResource {
         checkIsAtLeastInstructorForGradingScaleCourse(bonus.getSource());
 
         // validateBonus(existingBonus, bonus);
-        GradingScale examGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
-        examGradingScale.addBonusFrom(bonus);
-        examGradingScale.setBonusStrategy(bonus.getBonusStrategy());
+        GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
+        bonusToGradingScale.addBonusFrom(bonus);
+        bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
 
         if (bonus.getSource() != null) {
             var sourceFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
             bonus.setSource(sourceFromDb);
         }
         Bonus savedBonus = bonusService.saveBonus(bonus);
-        gradingScaleRepository.save(examGradingScale);
+        gradingScaleRepository.save(bonusToGradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
@@ -211,16 +211,16 @@ public class BonusResource {
     public ResponseEntity<Bonus> updateBonus(@RequestBody Bonus bonus) {
         log.debug("REST request to update a bonus source: {}", bonus.getId());
         Bonus oldBonus = bonusRepository.findById(bonus.getId()).orElseThrow();
-        GradingScale examGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId()).orElseThrow(); // TODO: Ata Remove
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, examGradingScale.getExam().getCourse(), null);
+        GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId()).orElseThrow(); // TODO: Ata Remove
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, bonusToGradingScale.getExam().getCourse(), null);
 
         GradingScale sourceGradingScale = oldBonus.getSource();
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
 
-        examGradingScale.addBonusFrom(bonus);
-        examGradingScale.setBonusStrategy(bonus.getBonusStrategy());
+        bonusToGradingScale.addBonusFrom(bonus);
+        bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
         Bonus savedBonus = bonusService.saveBonus(bonus);
-        gradingScaleRepository.save(examGradingScale);
+        gradingScaleRepository.save(bonusToGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 
@@ -270,7 +270,7 @@ public class BonusResource {
     public ResponseEntity<Void> deleteBonus(@PathVariable Long bonusId) {
         log.debug("REST request to delete the bonus source: {}", bonusId);
         Bonus bonus = bonusRepository.findById(bonusId).orElseThrow();
-        checkIsAtLeastInstructorForGradingScaleCourse(bonus.getExamGradingScale());
+        checkIsAtLeastInstructorForGradingScaleCourse(bonus.getBonusToGradingScale());
         bonusRepository.delete(bonus);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }

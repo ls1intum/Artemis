@@ -43,7 +43,7 @@ public class GradingScale extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<GradeStep> gradeSteps = new HashSet<>();
 
-    @OneToMany(mappedBy = "examGradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "bonusToGradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties(value = "bonusFrom", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Bonus> bonusFrom = new HashSet<>();
@@ -94,7 +94,7 @@ public class GradingScale extends DomainObject {
 
     public void addBonusFrom(Bonus bonusFrom) {
         this.bonusFrom.add(bonusFrom);
-        bonusFrom.setExamGradingScale(this);
+        bonusFrom.setBonusToGradingScale(this);
     }
 
     public void addBonus(Bonus bonus) {

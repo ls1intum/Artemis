@@ -35,7 +35,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     private Course course;
 
-    private GradingScale targetExamGradingScale;
+    private GradingScale bonusToExamGradingScale;
 
     private GradingScale sourceExamGradingScale;
 
@@ -50,8 +50,8 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         course = database.addEmptyCourse();
         Exam targetExam = database.addExamWithExerciseGroup(course, true);
         Exam sourceExam = database.addExamWithExerciseGroup(course, true);
-        targetExamGradingScale = new GradingScale();
-        targetExamGradingScale.setExam(targetExam);
+        bonusToExamGradingScale = new GradingScale();
+        bonusToExamGradingScale.setExam(targetExam);
 
         sourceExamGradingScale = new GradingScale();
         sourceExamGradingScale.setExam(sourceExam);
@@ -59,12 +59,12 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         courseGradingScale = new GradingScale();
         courseGradingScale.setCourse(course);
 
-        gradingScaleRepository.saveAll(List.of(targetExamGradingScale, sourceExamGradingScale, courseGradingScale));
+        gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
 
-        courseBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale, targetExamGradingScale);
-        examBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale, targetExamGradingScale);
+        courseBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale, bonusToExamGradingScale);
+        examBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale, bonusToExamGradingScale);
         bonusRepository.saveAll(List.of(examBonus, courseBonus));
-        gradingScaleRepository.save(targetExamGradingScale);
+        gradingScaleRepository.save(bonusToExamGradingScale);
     }
 
     @AfterEach
@@ -83,14 +83,14 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         bonusRepository.delete(courseBonus);
         bonusRepository.delete(examBonus);
 
-        var result = request.get("/api/courses/" + targetExamGradingScale.getExam().getCourse().getId() + "/exams/" + targetExamGradingScale.getExam().getId() + "/bonus",
+        var result = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
                 HttpStatus.OK, String.class);
 
         assertThat(result).isNullOrEmpty();
     }
 
     private void assertBonusSourcesAreEqualIgnoringId(Bonus actualBonus, Bonus expectedBonus) {
-        assertThat(actualBonus).usingRecursiveComparison().ignoringFields("id", "source", "examGradingScale").isEqualTo(expectedBonus);
+        assertThat(actualBonus).usingRecursiveComparison().ignoringFields("id", "source", "bonusToGradingScale").isEqualTo(expectedBonus);
         assertThat(actualBonus.getSource().getId()).isEqualTo(expectedBonus.getSource().getId());
         // assertThat(actualBonusSource.getTarget().getId()).isEqualTo(expectedBonusSource.getTarget().getId());
     }
@@ -99,7 +99,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetBonusForTargetExam() throws Exception {
 
-        Bonus foundBonus = request.get("/api/courses/" + targetExamGradingScale.getExam().getCourse().getId() + "/exams/" + targetExamGradingScale.getExam().getId() + "/bonus",
+        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
                 HttpStatus.OK, Bonus.class);
 
         assertThat(foundBonus.getId()).isEqualTo(examBonus.getId());
@@ -125,10 +125,10 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         newExamGradingScale.setExam(newExam);
         gradingScaleRepository.save(newExamGradingScale);
 
-        Bonus newBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale, targetExamGradingScale);
+        Bonus newBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale, bonusToExamGradingScale);
 
         Bonus savedBonus = request.postWithResponseBody(
-                "/api/courses/" + targetExamGradingScale.getExam().getCourse().getId() + "/exams/" + targetExamGradingScale.getExam().getId() + "/bonus", newBonus, Bonus.class,
+                "/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus", newBonus, Bonus.class,
                 HttpStatus.CREATED);
 
         assertThat(savedBonus.getId()).isGreaterThan(0);

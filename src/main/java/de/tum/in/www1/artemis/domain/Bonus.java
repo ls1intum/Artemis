@@ -31,12 +31,12 @@ public class Bonus extends DomainObject {
     private GradingScale source;
 
     @ManyToOne(optional = false)
-    @JoinColumn(name = "grading_scale_id", referencedColumnName = "id")
+    @JoinColumn(name = "bonus_to_grading_scale_id", referencedColumnName = "id")
     @JsonIgnore
-    private GradingScale examGradingScale;
+    private GradingScale bonusToGradingScale;
 
     /**
-     * This field is persisted at {@see examGradingScale}, it is defined here for transferring the value from client.
+     * This field is persisted at {@see bonusToGradingScale}, it is defined here for transferring the value from client.
      */
     @Transient
     @JsonProperty
@@ -50,12 +50,12 @@ public class Bonus extends DomainObject {
         this.source = sourceGradingScale;
     }
 
-    public GradingScale getExamGradingScale() {
-        return examGradingScale;
+    public GradingScale getBonusToGradingScale() {
+        return bonusToGradingScale;
     }
 
-    public void setExamGradingScale(GradingScale gradingScale) {
-        this.examGradingScale = gradingScale;
+    public void setBonusToGradingScale(GradingScale gradingScale) {
+        this.bonusToGradingScale = gradingScale;
     }
 
     public Integer getWeight() {

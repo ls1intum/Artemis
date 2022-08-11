@@ -17,7 +17,7 @@
             <column name="source_grading_scale_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="grading_scale_id" type="BIGINT">
+            <column name="bonus_to_grading_scale_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -27,13 +27,13 @@
                                  referencedTableName="grading_scale"
                                  referencedColumnNames="id"/>
         <addForeignKeyConstraint baseTableName="bonus"
-                                 baseColumnNames="grading_scale_id"
-                                 constraintName="fk_bonus_grading_scale_id"
+                                 baseColumnNames="bonus_to_grading_scale_id"
+                                 constraintName="fk_bonus_bonus_to_grading_scale_id"
                                  referencedTableName="grading_scale"
                                  referencedColumnNames="id"/>
         <addUniqueConstraint tableName="bonus"
-                             columnNames="source_grading_scale_id,grading_scale_id"
-                             constraintName="uq_bonus_source_grading_scale_grading_scale"/>
+                             columnNames="source_grading_scale_id,bonus_to_grading_scale_id"
+                             constraintName="uq_bonus_source_grading_scale_bonus_to_grading_scale"/>
 
         <addColumn tableName="grading_scale">
             <column name="bonus_strategy" type="VARCHAR(255)">
