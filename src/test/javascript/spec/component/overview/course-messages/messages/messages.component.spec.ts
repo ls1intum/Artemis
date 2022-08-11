@@ -125,16 +125,6 @@ describe('MessagesComponent', () => {
         expect(fetchNextPageSpy).toHaveBeenCalledTimes(1);
     }));
 
-    it('if user has no conversation, no call should be made to fetch posts', fakeAsync(() => {
-        component.itemsPerPage = 5;
-        component.isCourseMessagesPage = true;
-        component.ngOnInit();
-        tick();
-        fixture.detectChanges();
-
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(0);
-    }));
-
     it('if user has conversation, posts should be fetched on page load and displayed in reversed order', fakeAsync(() => {
         initializeFixtureForCourseMessagesPage();
 
