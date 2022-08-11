@@ -142,7 +142,7 @@ describe('MessagesComponent', () => {
         component.onSelectContext();
         expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(1);
-        expect(metisServiceGetFilteredPostsSpy).toBeCalledWith(component.currentPostContextFilter);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(component.currentPostContextFilter);
     }));
 
     it('should fetch posts on activeConversation input outside of the component', fakeAsync(() => {
