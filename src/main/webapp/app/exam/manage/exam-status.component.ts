@@ -143,7 +143,7 @@ export class ExamStatusComponent implements OnChanges {
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         // The ERROR-State should only be visible to Instructors, as editors & TAs have no access to the required data to determine if the preparation is finished
-        if (this.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
+        if (this.course?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
         } else if (this.examAlreadyEnded() && ((this.course && !this.course.isAtLeastInstructor) || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
