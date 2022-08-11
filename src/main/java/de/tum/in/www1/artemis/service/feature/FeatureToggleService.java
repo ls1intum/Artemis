@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import com.hazelcast.core.HazelcastInstance;
 
 import de.tum.in.www1.artemis.service.WebsocketMessagingService;
-import de.tum.in.www1.artemis.service.scheduled.cache.monitoring.ExamMonitoringScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.statistics.ExamLiveStatisticsScheduleService;
 
 @Service
 public class FeatureToggleService {
@@ -17,14 +17,14 @@ public class FeatureToggleService {
 
     private final WebsocketMessagingService websocketMessagingService;
 
-    private final ExamMonitoringScheduleService examMonitoringScheduleService;
+    private final ExamLiveStatisticsScheduleService examLiveStatisticsScheduleService;
 
     private final Map<Feature, Boolean> features;
 
-    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, ExamMonitoringScheduleService examMonitoringScheduleService,
+    public FeatureToggleService(WebsocketMessagingService websocketMessagingService, ExamLiveStatisticsScheduleService examLiveStatisticsScheduleService,
             HazelcastInstance hazelcastInstance) {
         this.websocketMessagingService = websocketMessagingService;
-        this.examMonitoringScheduleService = examMonitoringScheduleService;
+        this.examLiveStatisticsScheduleService = examLiveStatisticsScheduleService;
 
         // The map will automatically be distributed between all instances by Hazelcast.
         features = hazelcastInstance.getMap("features");
@@ -56,7 +56,7 @@ public class FeatureToggleService {
     public void disableFeature(Feature feature) {
         if (feature == Feature.ExamLiveStatistics) {
             // We want to clear all the data, but keep the settings.
-            examMonitoringScheduleService.clearAllExamMonitoringData();
+            examLiveStatisticsScheduleService.clearAllExamLiveStatisticsData();
         }
         features.put(feature, false);
         sendUpdate();
@@ -72,7 +72,7 @@ public class FeatureToggleService {
         var examLiveStatistics = features.get(Feature.ExamLiveStatistics);
         if (Boolean.FALSE.equals(examLiveStatistics)) {
             // We want to clear all the data, but keep the settings.
-            examMonitoringScheduleService.clearAllExamMonitoringData();
+            examLiveStatisticsScheduleService.clearAllExamLiveStatisticsData();
         }
         this.features.putAll(features);
         sendUpdate();

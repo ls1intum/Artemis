@@ -230,7 +230,7 @@ public final class Constants {
 
     public static final String HAZELCAST_LIVE_STATISTICS_CACHE = HAZELCAST_LIVE_STATISTICS_PREFIX + "activity-cache";
 
-    public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
+    public static final int HAZELCAST_LIVE_STATISTICS_CACHE_SERIALIZER_ID = 2;
 
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
 

@@ -31,7 +31,7 @@ final class ExamCache extends CacheHandler<Long> {
 
     @Override
     protected Cache emptyCacheValue() {
-        return ExamMonitoringCache.empty();
+        return ExamLiveStatisticsCache.empty();
     }
 
     /**
