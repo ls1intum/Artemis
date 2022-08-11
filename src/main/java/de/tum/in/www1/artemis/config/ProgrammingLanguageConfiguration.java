@@ -43,7 +43,7 @@ public class ProgrammingLanguageConfiguration {
 
         for (var entry : imageConfig.entrySet()) {
             final ProgrammingLanguage programmingLanguage = tryParseProgrammingLanguage(entry.getKey());
-            final Map<ProjectType, String> projectTypeImages = tryParseProjectTypeBuildImages(entry.getValue());
+            final Map<ProjectType, String> projectTypeImages = tryParseProjectTypeBuildImages(programmingLanguage, entry.getValue());
 
             buildImages.put(programmingLanguage, projectTypeImages);
         }
@@ -64,7 +64,7 @@ public class ProgrammingLanguageConfiguration {
             return ProgrammingLanguage.valueOf(language.toUpperCase(Locale.ROOT));
         }
         catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Unknown programming language: " + language);
+            throw new IllegalArgumentException("Unknown programming language: " + language, ex);
         }
     }
 
@@ -76,17 +76,26 @@ public class ProgrammingLanguageConfiguration {
      * @param buildImageConfig A map of project types to CI build images.
      * @return A map of project types to CI build images.
      */
-    private Map<ProjectType, String> tryParseProjectTypeBuildImages(final Map<String, String> buildImageConfig) {
+    private Map<ProjectType, String> tryParseProjectTypeBuildImages(final ProgrammingLanguage language, final Map<String, String> buildImageConfig) {
         final Map<ProjectType, String> projectTypeImages = new EnumMap<>(ProjectType.class);
 
         for (var entry : buildImageConfig.entrySet()) {
-            final ProjectType projectType = ProjectType.tryFromString(entry.getKey());
+            final ProjectType projectType = tryParseProjectType(language, entry.getKey());
             final String image = entry.getValue();
 
             projectTypeImages.put(projectType, image);
         }
 
         return projectTypeImages;
+    }
+
+    private ProjectType tryParseProjectType(final ProgrammingLanguage language, final String projectType) {
+        try {
+            return ProjectType.tryFromString(projectType);
+        }
+        catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException("Unknown project type for " + language + ": " + projectType, ex);
+        }
     }
 
     /**

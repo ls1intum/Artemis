@@ -52,7 +52,7 @@ class ProgrammingLanguageConfigurationTest {
         defaultConfig.get("java").put("sbt", OVERRIDDEN_IMAGE_NAME);
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown project type: sbt");
+        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown project type for JAVA: sbt");
     }
 
     @Test
