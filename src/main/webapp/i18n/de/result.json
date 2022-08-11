@@ -22,6 +22,12 @@
             },
             "noResult": "Kein gewertetes Ergebnis",
             "resultString": "Ergebnistext",
+            "resultStringBuildFailed": "Build gescheitert",
+            "resultStringBuildSuccessfulNoTests": "Build erfolgreich, keine Tests ausgeführt",
+            "resultStringBuildSuccessfulTests": "{{ numberOfTestsPassed }} von {{ numberOfTestsTotal }} bestanden",
+            "resultStringNonProgramming": "Bewertung {{ relativeScore }}%, {{ points }} von {{ maxPoints }} Punkten",
+            "resultStringProgramming": "Bewertung {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} von {{ maxPoints }} Punkten",
+            "resultStringProgrammingCodeIssues": "Bewertung {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} Issues, {{ points }} von {{ maxPoints }} Punkten",
             "completionDate": "Abgabedatum",
             "successful": "Erfolgreich",
             "buildArtifact": "Build-Artefakt",
@@ -74,7 +80,8 @@
             },
             "notLatestSubmission": "Hinweis: Dieses Ergebnis und Feedback bezieht sich <strong>nicht</strong> auf die letzte Einreichung.",
             "seeMore": "Mehr anzeigen",
-            "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden nicht immer Detailfeedbacks zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Sobald alle Abgaben erfolgt sind, werden auch diese Feedbacks automatisch sichtbar."
+            "noFeedback": "Kein Feedback verfügbar",
+            "afterDueDateFeedbackHidden": "Auch nach der Abgabefrist werden Detailfeedbacks nicht zu allen Testfällen angezeigt. Dies ist etwa der Fall wenn für andere Studierende eine spätere Abgabefrist gesetzt ist (z.B. zum Ausgleich von Krankheitstagen). Alle Feedbacks werden automatisch am {{date}} sichtbar sein."
         }
     }
 }

@@ -98,7 +98,7 @@ export class CourseDetailDoughnutChartComponent implements OnChanges, OnInit {
     }
 
     /**
-     * Asigns a given array of numbers to ngxData
+     * Assigns a given array of numbers to ngxData
      * @param values the values that should be displayed by the chart
      * @private
      */

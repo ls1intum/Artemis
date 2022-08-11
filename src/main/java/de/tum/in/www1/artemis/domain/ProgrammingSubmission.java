@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
@@ -10,12 +11,10 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
-import de.tum.in.www1.artemis.domain.hestia.CoverageReport;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 
@@ -42,12 +41,6 @@ public class ProgrammingSubmission extends Submission {
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
-
-    // This attribute is only valid for ProgrammingSubmissions related to a SolutionProgrammingExerciseParticipation.
-    // If the submission is deleted, the coverage report with all child entities are deleted.
-    @OneToOne(mappedBy = "submission", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnore
-    private CoverageReport coverageReport;
 
     /**
      * There can be two reasons for the case that there is no programmingSubmission:
@@ -111,14 +104,6 @@ public class ProgrammingSubmission extends Submission {
         this.buildLogEntries = buildLogEntries;
     }
 
-    public CoverageReport getCoverageReport() {
-        return coverageReport;
-    }
-
-    public void setCoverageReport(CoverageReport testwiseCoverageReport) {
-        this.coverageReport = testwiseCoverageReport;
-    }
-
     public boolean belongsToTestRepository() {
         return SubmissionType.TEST.equals(getType());
     }
@@ -131,5 +116,16 @@ public class ProgrammingSubmission extends Submission {
     @Override
     public String toString() {
         return "ProgrammingSubmission{" + "commitHash='" + commitHash + '\'' + ", buildFailed=" + buildFailed + ", buildArtifact=" + buildArtifact + '}';
+    }
+
+    @Override
+    public int compareTo(Submission other) {
+        if (getSubmissionDate() == null || other.getSubmissionDate() == null
+                || other instanceof ProgrammingSubmission otherProgrammingSubmission && Objects.equals(getCommitHash(), otherProgrammingSubmission.getCommitHash())) {
+            // this case should not happen, but in the rare case we can compare the ids
+            // newer ids are typically later
+            return getId().compareTo(other.getId());
+        }
+        return getSubmissionDate().compareTo(other.getSubmissionDate());
     }
 }

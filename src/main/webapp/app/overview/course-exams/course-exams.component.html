@@ -1,11 +1,60 @@
-<div class="row">
-    <ng-container *ngFor="let exam of course!.exams!">
-        <jhi-course-exam-detail
-            *ngIf="isVisible(exam)"
-            [exam]="exam"
-            [course]="course!"
-            class="card clickable col-xl-3 col-lg-4 col-md-4 col-sm-6 col-xs-12 m-2"
-            id="exam-{{ exam.id }}"
-        ></jhi-course-exam-detail>
-    </ng-container>
-</div>
+<ng-container *ngIf="realExamsOfCourse.length > 0">
+    <h2 class="m-2" jhiTranslate="artemisApp.exam.overview.realExamsHeading">Exams</h2>
+    <div class="row d-flex align-items-start">
+        <ng-container *ngFor="let exam of realExamsOfCourse">
+            <jhi-course-exam-detail
+                [exam]="exam"
+                [course]="course!"
+                class="card clickable col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-success hover-green"
+                id="exam-{{ exam.id }}"
+            ></jhi-course-exam-detail>
+        </ng-container>
+    </div>
+    <hr />
+</ng-container>
+<!-- Section test exams. Shold not be displayed, if no test exams exist -->
+<ng-container *ngIf="testExamsOfCourse.length > 0">
+    <h2 jhiTranslate="artemisApp.exam.overview.testExamsHeading">Test Exams</h2>
+    <div class="row">
+        <ng-container *ngFor="let exam of testExamsOfCourse">
+            <div class="row d-flex align-items-start">
+                <div class="card col-12 col-md-4 col-lg-4 col-xl-3 m-2 border-primary hover-blue">
+                    <jhi-course-exam-detail
+                        [exam]="exam"
+                        [course]="course!"
+                        [maxAttemptsReached]="getStudentExamForExamIdOrderedByIdReverse(exam!.id!).length > 0"
+                        id="exam-{{ exam.id }}"
+                    >
+                    </jhi-course-exam-detail>
+                </div>
+                <!-- List of cards representing the individual attempts per Student and test exam. Ordered by Id in reverse (latest StudentExam at the top) -->
+                <div class="col-12 col-md-4 col-lg-4 col-xl-3">
+                    <ng-container *ngFor="let studentExam of getStudentExamForExamIdOrderedByIdReverse(exam!.id!); let i = index; let cnt = count">
+                        <div class="row align-items-start" *ngIf="i < 4 || expandAttemptsMap.get(exam!.id!)">
+                            <jhi-course-exam-attempt-review-detail
+                                [index]="cnt - i"
+                                [exam]="exam!"
+                                [courseId]="course!.id!"
+                                [studentExam]="studentExam"
+                                [latestExam]="i === 0"
+                                [class]="'card m-2 border-primary'"
+                            ></jhi-course-exam-attempt-review-detail>
+                        </div>
+                        <!-- Control Labels to expand / collapse the list of attempts -->
+                        <div class="control-label" *ngIf="i === 4 && !expandAttemptsMap.get(exam!.id!)" (click)="changeExpandAttemptList(exam!.id!)">
+                            <fa-icon class="pe-3" [icon]="faAngleDown"></fa-icon>
+                            <span class="pe-2">{{ 'artemisApp.exam.overview.testExam.showMoreAttempts' | artemisTranslate }}</span>
+                            <hr />
+                        </div>
+                        <div class="control-label" *ngIf="i === cnt - 1 && cnt > 4 && expandAttemptsMap.get(exam!.id!)" (click)="changeExpandAttemptList(exam.id!)">
+                            <fa-icon class="pe-3" [icon]="faAngleUp"></fa-icon>
+                            <span class="pe-2"> {{ 'artemisApp.exam.overview.testExam.showLessAttempts' | artemisTranslate }}</span>
+                            <hr />
+                        </div>
+                        <hr *ngIf="i === cnt - 1 && cnt <= 4" />
+                    </ng-container>
+                </div>
+            </div>
+        </ng-container>
+    </div>
+</ng-container>

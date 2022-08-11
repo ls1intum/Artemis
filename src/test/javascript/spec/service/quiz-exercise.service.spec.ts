@@ -133,7 +133,7 @@ describe('QuizExercise Service', () => {
         expect(req.request.url).toEndWith(urlSuffix);
         req.flush(response);
         const resp = await result;
-        expect(resp.ok);
+        expect(resp.ok).toBeTrue();
         expect(resp.body).toEqual(response);
     });
 
@@ -204,7 +204,7 @@ describe('QuizExercise Service', () => {
         if (count === 0) {
             expect(spy).toHaveBeenCalledTimes(0);
         } else {
-            expect(spy).toHaveBeenCalledTimes(1);
+            expect(spy).toHaveBeenCalledOnce();
             const [blob, file] = spy.mock.calls[0];
             const data = await new Promise((resolve) => {
                 const reader = new FileReader();

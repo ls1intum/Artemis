@@ -25,6 +25,18 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
     @JsonView(QuizView.Before.class)
     private String buildPlanId;
 
+    @Column(name = "branch")
+    @JsonView(QuizView.Before.class)
+    private String branch;
+
+    public ProgrammingExerciseStudentParticipation() {
+        // Default constructor
+    }
+
+    public ProgrammingExerciseStudentParticipation(String branch) {
+        this.branch = branch;
+    }
+
     public String getRepositoryUrl() {
         return repositoryUrl;
     }
@@ -39,6 +51,14 @@ public class ProgrammingExerciseStudentParticipation extends StudentParticipatio
 
     public void setBuildPlanId(String buildPlanId) {
         this.buildPlanId = buildPlanId;
+    }
+
+    public String getBranch() {
+        return branch;
+    }
+
+    public void setBranch(String branch) {
+        this.branch = branch;
     }
 
     @Override

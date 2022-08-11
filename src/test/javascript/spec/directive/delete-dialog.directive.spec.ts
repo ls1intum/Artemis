@@ -54,21 +54,21 @@ describe('DeleteDialogDirective', () => {
 
     it('directive should be correctly initialized', () => {
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.delete');
 
         // Check that button was assigned with proper classes and type.
         const deleteButton = debugElement.query(By.css('.btn.btn-danger.btn-sm.me-1'));
-        expect(deleteButton).not.toBe(null);
+        expect(deleteButton).not.toBeNull();
         expect(deleteButton.properties['type']).toBe('submit');
 
         // Check that delete text span was added to the DOM.
         const deleteTextSpan = debugElement.query(By.css('.d-none.d-md-inline'));
-        expect(deleteTextSpan).not.toBe(null);
-        expect(deleteTextSpan.nativeElement.textContent).not.toBe(null);
+        expect(deleteTextSpan).not.toBeNull();
+        expect(deleteTextSpan.nativeElement.textContent).not.toBeNull();
 
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
-        expect(directiveEl).not.toBe(null);
+        expect(directiveEl).not.toBeNull();
         const directiveInstance = directiveEl.injector.get(DeleteButtonDirective);
         expect(directiveInstance.entityTitle).toBe('title');
         expect(directiveInstance.deleteQuestion).toBe('question');
@@ -83,21 +83,21 @@ describe('DeleteDialogDirective', () => {
         const directiveEl = debugElement.query(By.directive(DeleteButtonDirective));
         directiveEl.nativeElement.click();
         fixture.detectChanges();
-        expect(deleteDialogSpy).toHaveBeenCalledTimes(1);
+        expect(deleteDialogSpy).toHaveBeenCalledOnce();
         discardPeriodicTasks();
     }));
 
     it('action type cleanup should change button title', () => {
         comp.actionType = ActionType.Cleanup;
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.cleanup');
     });
 
     it('action type reset should change button title', () => {
         comp.actionType = ActionType.Reset;
         fixture.detectChanges();
-        expect(translateSpy).toHaveBeenCalledTimes(1);
+        expect(translateSpy).toHaveBeenCalledOnce();
         expect(translateSpy).toHaveBeenCalledWith('entity.action.reset');
     });
 });

@@ -75,6 +75,7 @@ jobs:
         asset_content_type: application/x-webarchive
 
   docker:
+    if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == 'ls1intum/Artemis' }}
     needs: build
     runs-on: ubuntu-latest
     steps:
@@ -97,12 +98,15 @@ jobs:
           if (context.eventName === "pull_request") {
             return "pr-" + context.issue.number;
           }
+          if (context.eventName === "release") {
+            return "latest";
+          }
           if (context.eventName === "push") {
             if (context.ref.startsWith("refs/tags/")) {
               return context.ref.slice(10);
             }
             if (context.ref === "refs/heads/develop") {
-              return "latest";
+              return "develop";
             }
           }
           return "FALSE";
@@ -112,7 +116,7 @@ jobs:
       uses: docker/login-action@v2
       with:
         registry: ghcr.io
-        username: ${{ github.actor }}
+        username: ${{ github.repository_owner }}
         password: ${{ secrets.GITHUB_TOKEN }}
       if: ${{ steps.compute-tag.outputs.result != 'FALSE' }}
     - name: Push to GitHub Container Registry
@@ -172,7 +176,7 @@ jobs:
       id: artifact-name
       run: echo "::set-output name=war-file::$(ls)"
 
-    # Downlaod artemis-server-cli from GH without cloning the Repo
+    # Download artemis-server-cli from GH without cloning the Repo
     - name: Fetch Artemis CLI
       run: |
         wget ${{ env.RAW_URL }}/artemis-server-cli

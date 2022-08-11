@@ -52,7 +52,7 @@ describe('Course Management Exercises Search Component', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
         comp.exerciseNameSearch = filter.exerciseNameSearch;
         button.click();
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);
     });
 
@@ -63,7 +63,7 @@ describe('Course Management Exercises Search Component', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
         comp.exerciseCategorySearch = filter.exerciseCategorySearch;
         button.click();
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);
     });
 
@@ -74,7 +74,7 @@ describe('Course Management Exercises Search Component', () => {
         const button = fixture.debugElement.nativeElement.querySelector('#saveFilterButton');
         comp.exerciseTypeSearch = filter.exerciseTypeSearch;
         button.click();
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
         expect(emitSpy).toHaveBeenCalledWith(filter);
     });
 });

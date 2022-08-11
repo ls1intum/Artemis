@@ -147,7 +147,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
         tick();
 
         expect(comp.participationStatusWrapper()).toEqual(ParticipationStatus.UNINITIALIZED);
-        expect(startExerciseStub).toHaveBeenCalledTimes(1);
+        expect(startExerciseStub).toHaveBeenCalledOnce();
         participationSubject.next(initPart);
 
         fixture.detectChanges();
@@ -169,6 +169,6 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
     it('should not allow to publish a build plan for text exercises', () => {
         comp.exercise = teamExerciseWithoutTeamAssigned;
-        expect(comp.publishBuildPlanUrl()).toBe(undefined);
+        expect(comp.publishBuildPlanUrl()).toBeUndefined();
     });
 });

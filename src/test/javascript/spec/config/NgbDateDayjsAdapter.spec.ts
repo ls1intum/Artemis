@@ -14,17 +14,17 @@ describe('NgbDateDayjsAdapter', () => {
     });
 
     it('should return null for null inputs', () => {
-        expect(adapter.fromModel(null)).toBe(null);
+        expect(adapter.fromModel(null)).toBeNull();
     });
 
-    it('should return null for other objects that are not dayjs', () => {
-        expect(adapter.fromModel({} as dayjs.Dayjs)).toBe(null);
+    it('should return null for other objects that are not dayjs object', () => {
+        expect(adapter.fromModel({} as dayjs.Dayjs)).toBeNull();
     });
 
     it('should return null for invalid dates', () => {
         const date = dayjs('foobar');
         const result = adapter.fromModel(date);
-        expect(result).toBe(null);
+        expect(result).toBeNull();
     });
 
     it('should convert date structs to dayjs correctly', () => {
@@ -34,6 +34,6 @@ describe('NgbDateDayjsAdapter', () => {
     });
 
     it('should return null from toModel if null is passed in', () => {
-        expect(adapter.toModel(null)).toBe(null);
+        expect(adapter.toModel(null)).toBeNull();
     });
 });

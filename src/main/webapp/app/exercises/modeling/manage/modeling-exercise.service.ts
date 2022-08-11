@@ -21,7 +21,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     }
 
     create(modelingExercise: ModelingExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertDateFromClient(modelingExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -31,7 +31,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
 
     update(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(modelingExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -57,7 +57,7 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
      * (like the old ID) will be handled by the server.
      */
     import(adaptedSourceModelingExercise: ModelingExercise) {
-        let copy = ExerciseService.convertDateFromClient(adaptedSourceModelingExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(adaptedSourceModelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http
@@ -123,14 +123,14 @@ export class ModelingExerciseService implements ExerciseServicable<ModelingExerc
     }
 
     /**
-     * Re-evaluates and updates an modeling exercise.
+     * Re-evaluates and updates a modeling exercise.
      *
      * @param modelingExercise that should be updated of type {ModelingExercise}
      * @param req optional request options
      */
     reevaluateAndUpdate(modelingExercise: ModelingExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(modelingExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(modelingExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http

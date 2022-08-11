@@ -234,7 +234,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     @Override
     public void addUserToGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        log.info("Update Jenkins permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Jenkins permissions for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         // TODO: in case we update a tutor group / role here, the tutor should NOT get access to exam exercises before the exam has finished
         exercises.forEach(exercise -> {
 
@@ -285,7 +285,7 @@ public class JenkinsUserManagementService implements CIUserManagementService {
     public void removeUserFromGroups(String userLogin, Set<String> groups) throws ContinuousIntegrationException {
         // Remove all permissions assigned to the user for each exercise that belongs to the specified groups.
         var exercises = programmingExerciseRepository.findAllByInstructorOrEditorOrTAGroupNameIn(groups);
-        log.info("Update Jenkins permissions for programming exercises: " + exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Jenkins permissions for programming exercises: {}", exercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         exercises.forEach(exercise -> {
             try {
                 // The exercise's projectkey is also the name of the Jenkins folder job which groups the student's, solution,
@@ -304,16 +304,16 @@ public class JenkinsUserManagementService implements CIUserManagementService {
             throws ContinuousIntegrationException {
         var newInstructorGroup = updatedCourse.getInstructorGroupName();
         var newEditorGroup = updatedCourse.getEditorGroupName();
-        var newTeachingAssistangGroup = updatedCourse.getTeachingAssistantGroupName();
+        var newTeachingAssistantGroup = updatedCourse.getTeachingAssistantGroupName();
 
         // Don't do anything if the groups didn't change
-        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistangGroup.equals(oldTeachingAssistantGroup)) {
+        if (newInstructorGroup.equals(oldInstructorGroup) && newEditorGroup.equals(oldEditorGroup) && newTeachingAssistantGroup.equals(oldTeachingAssistantGroup)) {
             return;
         }
 
         // Remove all permissions assigned to the instructors and teaching assistants that do not belong to the course anymore.
         var programmingExercises = programmingExerciseRepository.findAllProgrammingExercisesInCourseOrInExamsOfCourse(updatedCourse);
-        log.info("Update Jenkins permissions for programming exercises: " + programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
+        log.info("Update Jenkins permissions for programming exercises: {}", programmingExercises.stream().map(ProgrammingExercise::getProjectKey).toList());
         removePermissionsFromInstructorsAndEditorsAndTAsForCourse(oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, updatedCourse, programmingExercises);
 
         // Assign teaching assistant and instructor permissions

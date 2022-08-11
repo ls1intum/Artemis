@@ -22,7 +22,7 @@ describe('UserManagementResolve', () => {
         returned.subscribe((user) => (returnedUser = user));
 
         expect(returnedUser).toBe(mockReturnUser);
-        expect(userService.find).toHaveBeenCalledTimes(1);
+        expect(userService.find).toHaveBeenCalledOnce();
         expect(userService.find).toHaveBeenCalledWith('test123');
     });
 

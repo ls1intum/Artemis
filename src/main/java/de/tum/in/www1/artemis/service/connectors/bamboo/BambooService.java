@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -91,8 +90,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public void createBuildPlanForExercise(ProgrammingExercise programmingExercise, String planKey, VcsRepositoryUrl sourceCodeRepositoryURL, VcsRepositoryUrl testRepositoryURL,
             VcsRepositoryUrl solutionRepositoryURL) {
         var additionalRepositories = programmingExercise.getAuxiliaryRepositoriesForBuildPlan().stream()
-                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl())))
-                .collect(Collectors.toList());
+                .map(repo -> new AuxiliaryRepository.AuxRepoNameWithSlug(repo.getName(), urlService.getRepositorySlugFromRepositoryUrl(repo.getVcsRepositoryUrl()))).toList();
         bambooBuildPlanService.createBuildPlanForExercise(programmingExercise, planKey, urlService.getRepositorySlugFromRepositoryUrl(sourceCodeRepositoryURL),
                 urlService.getRepositorySlugFromRepositoryUrl(testRepositoryURL), urlService.getRepositorySlugFromRepositoryUrl(solutionRepositoryURL), additionalRepositories);
     }
@@ -108,13 +106,12 @@ public class BambooService extends AbstractContinuousIntegrationService {
     }
 
     @Override
-    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String defaultBranch) {
+    public void configureBuildPlan(ProgrammingExerciseParticipation participation, String branch) {
         String buildPlanId = participation.getBuildPlanId();
         VcsRepositoryUrl repositoryUrl = participation.getVcsRepositoryUrl();
         String projectKey = getProjectKeyFromBuildPlanId(buildPlanId);
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, defaultBranch,
-                Optional.empty());
+        updatePlanRepository(projectKey, buildPlanId, ASSIGNMENT_REPO_NAME, repoProjectName, participation.getRepositoryUrl(), null /* not needed */, branch, Optional.empty());
         enablePlan(projectKey, buildPlanId);
 
         // allow student or team access to the build plan in case this option was specified (only available for course exercises)
@@ -396,10 +393,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
         }
         catch (RestClientException clientException) {
             if (clientException.getMessage() != null && clientException.getMessage().contains("already exists")) {
-                // NOTE: this case cannot happen any more, because we get the build plan above. It might still be reported by Bamboo, then we still throw an exception,
+                // NOTE: this case cannot happen anymore, because we get the build plan above. It might still be reported by Bamboo, then we still throw an exception,
                 // because the build plan cannot exist (this might be a caching issue shortly after the participation / build plan was deleted).
                 // It is important that we do not allow this here, because otherwise the subsequent actions won't succeed and the user might be in a wrong state that cannot be
-                // solved any more
+                // solved anymore
                 log.warn("Edge case: Bamboo reports that the build Plan {} already exists. However the build plan was not found. The user should try again in a few minutes",
                         targetPlanKey);
             }
@@ -465,7 +462,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void giveProjectPermissions(String projectKey, List<String> groupNames, List<CIPermission> permissions) {
-        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).collect(Collectors.toList());
+        final var permissionData = permissions.stream().map(this::permissionToBambooPermission).toList();
         final var entity = new HttpEntity<>(permissionData, null);
 
         groupNames.forEach(group -> {
@@ -505,9 +502,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
-            String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
+            String newBranch, Optional<List<String>> optionalTriggeredByRepositories) throws BambooException {
         final var vcsRepoName = urlService.getRepositorySlugFromRepositoryUrlString(newRepoUrl);
-        continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newDefaultBranch,
+        continuousIntegrationUpdateService.get().updatePlanRepository(buildProjectKey, buildPlanKey, ciRepoName, repoProjectKey, vcsRepoName, newBranch,
                 optionalTriggeredByRepositories);
     }
 
@@ -590,17 +587,21 @@ public class BambooService extends AbstractContinuousIntegrationService {
             for (final var failedTest : job.getFailedTests()) {
                 result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage, projectType));
             }
+            result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
 
             // 2) add feedback for passed test cases
             for (final var successfulTest : job.getSuccessfulTests()) {
                 result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage, projectType));
             }
+            result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
 
             // 3) process static code analysis feedback
             final var staticCodeAnalysisReports = job.getStaticCodeAnalysisReports();
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
                 var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
                 result.addFeedbacks(scaFeedbackList);
+                result.setCodeIssueCount(scaFeedbackList.size());
             }
 
             // 4) process testwise coverage analysis report
@@ -646,8 +647,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
             if (buildResult != null && buildResult.getArtifacts() != null) {
                 List<String> artifactLabelFilter = StaticCodeAnalysisTool.getAllArtifactLabels();
                 artifactLabelFilter.add("Build log");
-                buildResult.getArtifacts().setArtifacts(
-                        buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).collect(Collectors.toList()));
+                buildResult.getArtifacts()
+                        .setArtifacts(buildResult.getArtifacts().getArtifacts().stream().filter(artifact -> !artifactLabelFilter.contains(artifact.getName())).toList());
             }
             return buildResult;
         }

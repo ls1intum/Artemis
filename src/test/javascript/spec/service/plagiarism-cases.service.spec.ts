@@ -97,7 +97,7 @@ describe('Plagiarism Cases Service', () => {
             ...plagiarismCase1,
             verdict: PlagiarismVerdict.PLAGIARISM,
         };
-        service.savePlagiarismCaseVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
+        service.saveVerdict(1, 1, { verdict: PlagiarismVerdict.PLAGIARISM }).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
         req.flush(returnedFromService);
@@ -106,7 +106,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism cases for course for student', fakeAsync(() => {
         const returnedFromService = plagiarismCase1;
-        service.getPlagiarismCaseForStudent(1, 1).pipe(take(1)).subscribe();
+        service.getPlagiarismCaseInfoForStudent(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -124,7 +124,7 @@ describe('Plagiarism Cases Service', () => {
 
     it('should get plagiarism comparison for split view', fakeAsync(() => {
         const returnedFromService = plagiarismComparison1;
-        service.getPlagiarismComparisonForSplitView(1, 1, studentLoginA).pipe(take(1)).subscribe();
+        service.getPlagiarismComparisonForSplitView(1, 1).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'GET' });
         req.flush(returnedFromService);
@@ -136,6 +136,15 @@ describe('Plagiarism Cases Service', () => {
         service.updatePlagiarismComparisonStatus(1, 1, PlagiarismStatus.CONFIRMED).pipe(take(1)).subscribe();
 
         const req = httpMock.expectOne({ method: 'PUT' });
+        req.flush(returnedFromService);
+        tick();
+    }));
+
+    it('should clean up plagiarism', fakeAsync(() => {
+        const returnedFromService = {};
+        service.cleanUpPlagiarism(1, 1, true).pipe(take(1)).subscribe();
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush(returnedFromService);
         tick();
     }));

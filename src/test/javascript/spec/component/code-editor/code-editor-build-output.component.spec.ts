@@ -124,18 +124,18 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id, result.id);
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
-        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
         expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledWith(participation.id, true);
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).toBe(null);
+        expect(buildLogNoResultHtml).toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
@@ -150,9 +150,9 @@ describe('CodeEditorBuildOutputComponent', () => {
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.toBe(null);
+        expect(buildLogNoResultHtml).not.toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
         expect(buildLogHtmlEntries).toHaveLength(0);
     });
@@ -167,15 +167,15 @@ describe('CodeEditorBuildOutputComponent', () => {
         getFeedbackDetailsForResultStub.mockReturnValue(of({ ...result, feedbacks: [] }));
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, result.id!);
         expect(getBuildLogsStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(new BuildLogEntryArray());
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).not.toBe(null);
+        expect(buildLogNoResultHtml).not.toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.buildoutput__entry'));
         expect(buildLogHtmlEntries).toHaveLength(0);
     });
@@ -191,16 +191,16 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).toBe(null);
+        expect(buildLogNoResultHtml).toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });
@@ -218,16 +218,16 @@ describe('CodeEditorBuildOutputComponent', () => {
         triggerChanges(comp, { property: 'participation', currentValue: participation });
         fixture.detectChanges();
 
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(getBuildLogsStub).toHaveBeenCalledWith();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.rawBuildLogs).toStrictEqual(BuildLogEntryArray.fromBuildLogs(buildLogs));
         expect(comp.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toIncludeSameMembers(expectedBuildLogErrors);
 
         const buildLogIsBuildingHtml = debugElement.query(By.css('.is-building'));
-        expect(buildLogIsBuildingHtml).toBe(null);
+        expect(buildLogIsBuildingHtml).toBeNull();
         const buildLogNoResultHtml = debugElement.query(By.css('.no-buildoutput'));
-        expect(buildLogNoResultHtml).toBe(null);
+        expect(buildLogNoResultHtml).toBeNull();
         const buildLogHtmlEntries = debugElement.queryAll(By.css('.build-output__entry'));
         expect(buildLogHtmlEntries).toHaveLength(buildLogs.length);
     });

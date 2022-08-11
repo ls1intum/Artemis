@@ -55,7 +55,7 @@ describe('LtiInitializerComponent', () => {
         expect(initializeLTIUserStub).not.toHaveBeenCalled();
         expect(infoSpy).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
-        expect(comp.modalRef).toBe(undefined);
+        expect(comp.modalRef).toBeUndefined();
     });
 
     it('should initialize and display with flag', () => {
@@ -64,10 +64,10 @@ describe('LtiInitializerComponent', () => {
         initializeLTIUserStub.mockReturnValue(of({ body: { password: returnedPassword } }));
 
         comp.ngOnInit();
-        expect(initializeLTIUserStub).toHaveBeenCalledTimes(1);
+        expect(initializeLTIUserStub).toHaveBeenCalledOnce();
         expect(infoSpy).not.toHaveBeenCalled();
         expect(navigateSpy).not.toHaveBeenCalled();
-        expect(comp.modalRef).not.toBe(undefined); // External reference
+        expect(comp.modalRef).toBeDefined(); // External reference
     });
 
     it('should end initialization without password', () => {
@@ -75,9 +75,9 @@ describe('LtiInitializerComponent', () => {
         initializeLTIUserStub.mockReturnValue(of({ body: { password: undefined } }));
 
         comp.ngOnInit();
-        expect(initializeLTIUserStub).toHaveBeenCalledTimes(1);
-        expect(infoSpy).toHaveBeenCalledTimes(1);
-        expect(navigateSpy).toHaveBeenCalledTimes(1);
-        expect(comp.modalRef).toBe(undefined);
+        expect(initializeLTIUserStub).toHaveBeenCalledOnce();
+        expect(infoSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(comp.modalRef).toBeUndefined();
     });
 });

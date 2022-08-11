@@ -143,12 +143,12 @@ describe('AttachmentUnitFormComponent', () => {
         attachmentUnitFormComponentFixture.detectChanges();
         const fileInput = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#fileInput');
         fileInput.dispatchEvent(new Event('change'));
-        expect(onFileChangeStub).toHaveBeenCalledTimes(1);
+        expect(onFileChangeStub).toHaveBeenCalledOnce();
     });
 
     it('sets file upload error correctly', () => {
         attachmentUnitFormComponentFixture.detectChanges();
         attachmentUnitFormComponent.setFileUploadError('lorem ipsum');
-        expect(attachmentUnitFormComponent.fileUploadErrorMessage).toEqual('lorem ipsum');
+        expect(attachmentUnitFormComponent.fileUploadErrorMessage).toBe('lorem ipsum');
     });
 });

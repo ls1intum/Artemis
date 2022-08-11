@@ -5,7 +5,6 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -67,7 +66,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     @Override
     public void updatePlanRepository(String bambooProjectKey, String buildPlanKey, String bambooRepositoryName, String bitbucketProjectKey, String bitbucketRepositoryName,
-            String defaultBranchName, Optional<List<String>> optionalTriggeredByRepositories) {
+            String branchName, Optional<List<String>> optionalTriggeredByRepositories) {
         try {
             log.debug("Update plan repository for build plan {}", buildPlanKey);
             BambooRepositoryDTO bambooRepository = findBambooRepository(bambooRepositoryName, OLD_ASSIGNMENT_REPO_NAME, buildPlanKey);
@@ -76,13 +75,13 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
                         + " to the student repository : Could not find assignment nor Assignment repository");
             }
 
-            updateBambooPlanRepository(bambooRepository, bitbucketRepositoryName, bitbucketProjectKey, buildPlanKey, defaultBranchName);
+            updateBambooPlanRepository(bambooRepository, bitbucketRepositoryName, bitbucketProjectKey, buildPlanKey, branchName);
 
             // Overwrite triggers if needed, incl workaround for different repo names, triggered by is present means that the exercise (the BASE build plan) is imported from a
             // previous exercise
             if (optionalTriggeredByRepositories.isPresent() && bambooRepository.getName().equals(OLD_ASSIGNMENT_REPO_NAME)) {
-                optionalTriggeredByRepositories = Optional.of(optionalTriggeredByRepositories.get().stream()
-                        .map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).collect(Collectors.toList()));
+                optionalTriggeredByRepositories = Optional
+                        .of(optionalTriggeredByRepositories.get().stream().map(trigger -> trigger.replace(Constants.ASSIGNMENT_REPO_NAME, OLD_ASSIGNMENT_REPO_NAME)).toList());
             }
             optionalTriggeredByRepositories.ifPresent(triggeredByRepositories -> overwriteTriggers(buildPlanKey, triggeredByRepositories));
 
@@ -104,7 +103,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
      * @param buildPlanKey the complete name of the plan
      */
     private void updateBambooPlanRepository(@Nonnull BambooRepositoryDTO bambooRepository, String bitbucketRepositoryName, String bitbucketProjectKey, String buildPlanKey,
-            String defaultBranchName) {
+            String branchName) {
 
         MultiValueMap<String, String> parameters = new LinkedMultiValueMap<>();
         parameters.add("planKey", buildPlanKey);
@@ -115,7 +114,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
         parameters.add("confirm", "true");
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
-        parameters.add("repository.stash.branch", defaultBranchName);
+        parameters.add("repository.stash.branch", branchName);
 
         BitbucketRepositoryDTO bitbucketRepository = getBitbucketRepository(bitbucketProjectKey, bitbucketRepositoryName);
         parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());
@@ -247,7 +246,7 @@ public class BitbucketBambooUpdateService implements ContinuousIntegrationUpdate
 
     /**
      * What we basically want to achieve is the following:
-     * Tests should NOT trigger the BASE build plan any more.
+     * Tests should NOT trigger the BASE build plan anymore.
      * In old exercises this was the case, but in new exercises, this behavior is not wanted. Therefore, all triggers are removed and the assignment trigger is added again for the
      * BASE build plan
      *

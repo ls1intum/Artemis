@@ -1,17 +1,23 @@
 <div>
     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-3">
-        <h3 class="mb-0">
-            <span jhiTranslate="artemisApp.examManagement.students">Students</span>
-            <span class="text-muted">({{ exam.title }})</span>
-        </h3>
+        <div class="mb-0">
+            <h3>
+                <span jhiTranslate="artemisApp.examManagement.students">Students</span>
+                <span class="text-muted">({{ exam.title }})</span>
+            </h3>
+        </div>
         <div>
-            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span
-            ><span id="#registered-users">: {{ allRegisteredUsers.length }}</span>
+            <span [jhiTranslate]="'artemisApp.examManagement.examStudents.registeredStudents'">Registered students</span>:
+            <span class="badge bg-primary text-white" id="#registered-users"> {{ allRegisteredUsers.length }}</span>
             <span *ngIf="filteredUsersSize < allRegisteredUsers.length" class="text-muted">
-                (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }})
+                (<span [jhiTranslate]="'artemisApp.examManagement.examStudents.searchResults'">search results</span>: {{ filteredUsersSize }}
+                )
             </span>
-            <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
+            <ng-container *ngIf="!isTestExam">
+                <jhi-user-import-button class="ms-4" [courseId]="courseId" [exam]="exam" (finish)="reloadExamWithRegisteredUsers()"></jhi-user-import-button>
+            </ng-container>
             <button
+                *ngIf="!isTestExam"
                 class="btn btn btn-primary ms-auto"
                 id="register-course-students"
                 (click)="registerAllStudentsFromCourse()"
@@ -21,6 +27,7 @@
                 <span jhiTranslate="artemisApp.examManagement.examStudents.registerAllFromCourse"></span>
             </button>
             <button
+                *ngIf="!isTestExam"
                 [disabled]="isLoading"
                 [actionType]="ActionType.Remove"
                 [entityTitle]="exam.title || ''"
@@ -140,7 +147,7 @@
                     </ng-template>
                 </ngx-datatable-column>
 
-                <ngx-datatable-column prop="" [minWidth]="150" [width]="200">
+                <ngx-datatable-column *ngIf="!isTestExam" prop="" [minWidth]="150" [width]="200">
                     <ng-template ngx-datatable-header-template></ng-template>
                     <ng-template ngx-datatable-cell-template let-value="value">
                         <div class="w-100 text-end">

@@ -51,7 +51,7 @@ describe('AuthServerProvider', () => {
             const returnedToken = service.getToken();
 
             expect(returnedToken).toEqual(storedToken);
-            expect(localStorageRetrieveSpy).toHaveBeenCalledTimes(1);
+            expect(localStorageRetrieveSpy).toHaveBeenCalledOnce();
             expect(localStorageRetrieveSpy).toHaveBeenCalledWith(tokenKey);
         });
 
@@ -62,7 +62,7 @@ describe('AuthServerProvider', () => {
             const returnedToken = service.getToken();
 
             expect(returnedToken).toEqual(storedToken);
-            expect(retrieveMock).toHaveBeenCalledTimes(1);
+            expect(retrieveMock).toHaveBeenCalledOnce();
             expect(retrieveMock).toHaveBeenCalledWith(tokenKey);
         });
     });
@@ -73,7 +73,7 @@ describe('AuthServerProvider', () => {
             credentials = new Credentials('Test user', 'password1234', true);
 
             service.login(credentials).subscribe(() => {
-                expect(localStorageStoreSpy).toHaveBeenCalledTimes(1);
+                expect(localStorageStoreSpy).toHaveBeenCalledOnce();
                 expect(localStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
@@ -86,7 +86,7 @@ describe('AuthServerProvider', () => {
             credentials = new Credentials('Test user', 'password1234', false);
 
             service.login(credentials).subscribe(() => {
-                expect(sessionStorageStoreSpy).toHaveBeenCalledTimes(1);
+                expect(sessionStorageStoreSpy).toHaveBeenCalledOnce();
                 expect(sessionStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
@@ -99,7 +99,7 @@ describe('AuthServerProvider', () => {
     describe('test login with SAML2', () => {
         it('should login with SAML2 if login should be remembered', fakeAsync(() => {
             service.loginSAML2(true).subscribe(() => {
-                expect(localStorageStoreSpy).toHaveBeenCalledTimes(1);
+                expect(localStorageStoreSpy).toHaveBeenCalledOnce();
                 expect(localStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
@@ -110,7 +110,7 @@ describe('AuthServerProvider', () => {
 
         it('should login with SAML2 if login should not be remembered', fakeAsync(() => {
             service.loginSAML2(false).subscribe(() => {
-                expect(sessionStorageStoreSpy).toHaveBeenCalledTimes(1);
+                expect(sessionStorageStoreSpy).toHaveBeenCalledOnce();
                 expect(sessionStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
             });
 
@@ -123,7 +123,7 @@ describe('AuthServerProvider', () => {
     describe('test login with token', () => {
         it('should login with token if token is present', async () => {
             await expect(service.loginWithToken(storedToken, true)).resolves.toBe(storedToken);
-            expect(localStorageStoreSpy).toHaveBeenCalledTimes(1);
+            expect(localStorageStoreSpy).toHaveBeenCalledOnce();
             expect(localStorageStoreSpy).toHaveBeenCalledWith(tokenKey, storedToken);
         });
 
@@ -139,10 +139,10 @@ describe('AuthServerProvider', () => {
             sessionStorageService.store(tokenKey, storedToken);
 
             service.removeAuthTokenFromCaches().subscribe((resp) => {
-                expect(resp).toBe(undefined);
-                expect(sessionStorageClearSpy).toHaveBeenCalledTimes(1);
+                expect(resp).toBeUndefined();
+                expect(sessionStorageClearSpy).toHaveBeenCalledOnce();
                 expect(sessionStorageClearSpy).toHaveBeenCalledWith(tokenKey);
-                expect(localStorageClearSpy).toHaveBeenCalledTimes(1);
+                expect(localStorageClearSpy).toHaveBeenCalledOnce();
                 expect(localStorageClearSpy).toHaveBeenCalledWith(tokenKey);
             });
             tick();
@@ -153,10 +153,10 @@ describe('AuthServerProvider', () => {
             sessionStorageService.store(tokenKey, storedToken);
 
             service.clearCaches().subscribe((resp) => {
-                expect(resp).toBe(undefined);
-                expect(sessionStorageClearSpy).toHaveBeenCalledTimes(1);
+                expect(resp).toBeUndefined();
+                expect(sessionStorageClearSpy).toHaveBeenCalledOnce();
                 expect(sessionStorageClearSpy).toHaveBeenCalledWith();
-                expect(localStorageClearSpy).toHaveBeenCalledTimes(1);
+                expect(localStorageClearSpy).toHaveBeenCalledOnce();
                 expect(localStorageClearSpy).toHaveBeenCalledWith();
             });
             tick();

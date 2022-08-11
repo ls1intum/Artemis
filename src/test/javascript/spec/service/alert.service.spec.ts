@@ -72,7 +72,7 @@ describe('Alert Service Test', () => {
                 message: 'Hello Jhipster success',
             } as Alert),
         );
-        expect(alert1.onClose).toHaveBeenCalledTimes(1);
+        expect(alert1.onClose).toHaveBeenCalledOnce();
         alert2.close?.();
         expect(service.get()).toHaveLength(1);
         expect(service.get()[0]).toEqual(
@@ -81,11 +81,11 @@ describe('Alert Service Test', () => {
                 message: 'Hello Jhipster info',
             } as Alert),
         );
-        expect(alert2.onClose).toHaveBeenCalledTimes(1);
+        expect(alert2.onClose).toHaveBeenCalledOnce();
 
         alert0.close?.();
         expect(service.get()).toHaveLength(0);
-        expect(alert0.onClose).toHaveBeenCalledTimes(1);
+        expect(alert0.onClose).toHaveBeenCalledOnce();
     });
 
     it('should close an alert on timeout correctly', () => {
@@ -97,7 +97,7 @@ describe('Alert Service Test', () => {
         jest.advanceTimersByTime(16000);
 
         expect(service.get()).toHaveLength(0);
-        expect(alert.onClose).toHaveBeenCalledTimes(1);
+        expect(alert.onClose).toHaveBeenCalledOnce();
     });
 
     it('should clear alerts', () => {
@@ -110,7 +110,7 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(3);
         service.closeAll();
         expect(service.get()).toHaveLength(0);
-        alerts.forEach((alert) => expect(alert.onClose).toHaveBeenCalledTimes(1));
+        alerts.forEach((alert) => expect(alert.onClose).toHaveBeenCalledOnce());
     });
 
     it('should produce a success message', () => {

@@ -1,19 +1,18 @@
-import { Directive, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Directive, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { EmojiData } from '@ctrl/ngx-emoji-mart/ngx-emoji';
 import { Reaction } from 'app/entities/metis/reaction.model';
 import { PLACEHOLDER_USER_REACTED } from 'app/shared/pipes/reacting-users-on-posting.pipe';
-import { Theme, ThemeService } from 'app/core/theme/theme.service';
-import { Subscription } from 'rxjs';
 
 const PIN_EMOJI_ID = 'pushpin';
-const PIN_EMOJI_UNICODE = '1F4CC';
 const ARCHIVE_EMOJI_ID = 'open_file_folder';
-const ARCHIVE_EMOJI_UNICODE = '1F4C2';
 const SPEECH_BALLOON_ID = 'speech_balloon';
-const SPEECH_BALLOON_UNICODE = '1F4AC';
 const HEAVY_MULTIPLICATION_ID = 'heavy_multiplication_x';
+
+const SPEECH_BALLOON_UNICODE = '1F4AC';
+const ARCHIVE_EMOJI_UNICODE = '1F4C2';
+const PIN_EMOJI_UNICODE = '1F4CC';
 const HEAVY_MULTIPLICATION_UNICODE = '2716';
 
 /**
@@ -26,7 +25,7 @@ interface ReactionEvent {
 
 /**
  * represents the amount of users that reacted
- * hasReacted indicates if the currently logged in user is among those counted users
+ * hasReacted indicates if the currently logged-in user is among those counted users
  */
 interface ReactionMetaData {
     count: number;
@@ -35,18 +34,24 @@ interface ReactionMetaData {
 }
 
 /**
- * data structure used for displaying emoji reactions with meta data on postings
+ * data structure used for displaying emoji reactions with metadata on postings
  */
 interface ReactionMetaDataMap {
     [emojiId: string]: ReactionMetaData;
 }
 
 @Directive()
-export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges, OnDestroy {
+export abstract class PostingsReactionsBarDirective<T extends Posting> implements OnInit, OnChanges {
     pinEmojiId: string = PIN_EMOJI_ID;
     archiveEmojiId: string = ARCHIVE_EMOJI_ID;
     speechBalloonId: string = SPEECH_BALLOON_ID;
     closeCrossId: string = HEAVY_MULTIPLICATION_ID;
+
+    @Output() openPostingCreateEditModal = new EventEmitter<void>();
+
+    @Input() posting: T;
+    showReactionSelector = false;
+    currentUserIsAtLeastTutor: boolean;
 
     /*
      * icons (as svg paths) to be used as category preview image in emoji mart selector
@@ -57,27 +62,11 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
         recent: `M10 1h3v21h-3zm10.186 4l1.5 2.598L3.5 18.098 2 15.5zM2 7.598L3.5 5l18.186 10.5-1.5 2.598z`,
     };
 
-    @Input() posting: T;
-    showReactionSelector = false;
-    currentUserIsAtLeastTutor: boolean;
-    darkModeEmojiPicker = false;
-    themeSubscription: Subscription;
-
     /**
      * currently predefined fixed set of emojis that should be used within a course,
      * they will be listed on first page of the emoji-mart selector
      */
-    selectedCourseEmojis: string[];
-
-    /**
-     * map that lists associated reaction (by emojiId) for the current posting together with its count
-     * and a flag that indicates if the current user has used this reaction
-     */
-    reactionMetaDataMap: ReactionMetaDataMap = {};
-
-    constructor(protected metisService: MetisService, protected themeService: ThemeService) {
-        this.selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
-    }
+    selectedCourseEmojis = ['smile', 'joy', 'sunglasses', 'tada', 'rocket', 'heavy_plus_sign', 'thumbsup', 'memo', 'coffee', 'recycle'];
 
     /**
      * emojis that have a predefined meaning, i.e. pin and archive emoji,
@@ -97,13 +86,20 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     };
 
     /**
+     * map that lists associated reaction (by emojiId) for the current posting together with its count
+     * and a flag that indicates if the current user has used this reaction
+     */
+    reactionMetaDataMap: ReactionMetaDataMap = {};
+
+    protected constructor(protected metisService: MetisService) {}
+
+    /**
      * on initialization: updates the current posting and its reactions,
      * invokes metis service to check user authority
      */
     ngOnInit(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.themeSubscription = this.themeService.getCurrentThemeObservable().subscribe((theme) => (this.darkModeEmojiPicker = theme === Theme.DARK));
     }
 
     /**
@@ -113,10 +109,6 @@ export abstract class PostingsReactionsBarDirective<T extends Posting> implement
     ngOnChanges(): void {
         this.updatePostingWithReactions();
         this.currentUserIsAtLeastTutor = this.metisService.metisUserIsAtLeastTutorInCourse();
-    }
-
-    ngOnDestroy(): void {
-        this.themeSubscription?.unsubscribe();
     }
 
     abstract buildReaction(emojiId: string): Reaction;

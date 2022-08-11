@@ -123,10 +123,10 @@ export class QuizStatisticsFooterComponent implements OnInit, OnDestroy {
      * This functions loads the Quiz, which is necessary to build the Web-Template
      * And it loads the new Data if the Websocket has been notified
      *
-     * @param {QuizExercise} quiz: the quizExercise, which the this quiz-statistic presents.
+     * @param {QuizExercise} quiz: the quizExercise, which this quiz-statistic presents.
      */
     loadQuiz(quiz: QuizExercise) {
-        // if the Student finds a way to the Website -> the Student will be send back to Courses
+        // if the Student finds a way to the Website -> the Student will be sent back to Courses
         if (!this.accountService.hasAnyAuthorityDirect([Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA])) {
             this.router.navigate(['/courses']);
         }

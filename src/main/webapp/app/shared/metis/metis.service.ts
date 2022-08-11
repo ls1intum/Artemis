@@ -317,7 +317,7 @@ export class MetisService implements OnDestroy {
             emptyPost.courseWideContext = courseWideContext;
             emptyPost.course = this.course;
         } else if (exercise) {
-            const exercisePost = ExerciseService.convertExerciseForServer(exercise);
+            const exercisePost = ExerciseService.convertExerciseFromClient(exercise);
             emptyPost.exercise = { id: exercisePost.id, title: exercisePost.title, type: exercisePost.type } as Exercise;
         } else if (lecture) {
             emptyPost.lecture = { id: lecture.id, title: lecture.title } as Lecture;
@@ -359,6 +359,24 @@ export class MetisService implements OnDestroy {
             return MetisService.getLinkForExercisePost(this.courseId, post.exercise.id!);
         }
         return MetisService.getLinkForCoursePost(this.courseId);
+    }
+
+    /**
+     * returns the router link required for navigating to the exercise referenced within a posting
+     * @param {string} exerciseId ID of the exercise to be navigated to
+     * @return {string} router link of the exercise
+     */
+    getLinkForExercise(exerciseId: string): string {
+        return `/courses/${this.getCourse().id}/exercises/${exerciseId}`;
+    }
+
+    /**
+     * returns the router link required for navigating to the lecture referenced within a posting
+     * @param {string} lectureId ID of the lecture to be navigated to
+     * @return {string} router link of the lecture
+     */
+    getLinkForLecture(lectureId: string): string {
+        return `/courses/${this.getCourse().id}/lectures/${lectureId}`;
     }
 
     /**
@@ -425,6 +443,9 @@ export class MetisService implements OnDestroy {
         this.jhiWebsocketService.subscribe(this.subscriptionChannel);
         this.jhiWebsocketService.receive(this.subscriptionChannel).subscribe((postDTO: MetisPostDTO) => {
             postDTO.post.creationDate = dayjs(postDTO.post.creationDate);
+            postDTO.post.answers?.forEach((answer: AnswerPost) => {
+                answer.creationDate = dayjs(answer.creationDate);
+            });
             switch (postDTO.action) {
                 case MetisPostAction.CREATE:
                     // determine if either the current post context filter is not set to a specific course-wide topic

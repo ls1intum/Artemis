@@ -2,11 +2,10 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
-
-import dayjs from 'dayjs/esm';
 import { ComplaintResponse } from 'app/entities/complaint-response.model';
 import { AccountService } from 'app/core/auth/account.service';
 import { Exercise } from 'app/entities/exercise.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 type EntityResponseType = HttpResponse<ComplaintResponse>;
 
@@ -17,19 +16,19 @@ export class ComplaintResponseService {
     constructor(private http: HttpClient, private accountService: AccountService) {}
 
     /**
-     * Checks if a complaint response is locked for the currently logged in user
+     * Checks if a complaint response is locked for the currently logged-in user
      *
      * A complaint response is never locked for the creator of the complaint response and for instructors
      *
      * @param complaintResponse complaint response to check the lock status for
-     * @param exercise exercise used to find out if currently logged in user is instructor
+     * @param exercise exercise used to find out if currently logged-in user is instructor
      */
     isComplaintResponseLockedForLoggedInUser(complaintResponse: ComplaintResponse, exercise: Exercise): boolean {
         return !this.accountService.isAtLeastInstructorForExercise(exercise) && !this.isComplaintResponseLockedByLoggedInUser(complaintResponse);
     }
 
     /**
-     * Checks if the lock on a complaint response is active and if the currently logged in user is the creator of the lock
+     * Checks if the lock on a complaint response is active and if the currently logged-in user is the creator of the lock
      * @param complaintResponse complaint response to check
      */
     isComplaintResponseLockedByLoggedInUser(complaintResponse: ComplaintResponse): boolean {
@@ -41,7 +40,7 @@ export class ComplaintResponseService {
     refreshLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/refresh-lock`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     removeLock(complaintId: number): Observable<HttpResponse<void>> {
@@ -51,39 +50,39 @@ export class ComplaintResponseService {
     createLock(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .post<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}/create-lock`, {}, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     resolveComplaint(complaintResponse: ComplaintResponse): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(complaintResponse);
+        const copy = this.convertComplaintResponseDatesFromClient(complaintResponse);
         return this.http
             .put<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintResponse.complaint!.id}/resolve`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
     findByComplaintId(complaintId: number): Observable<EntityResponseType> {
         return this.http
             .get<ComplaintResponse>(`${this.resourceUrl}/complaint/${complaintId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintResponseEntityResponseDatesFromServer(res)));
     }
 
-    public convertDateFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
+    public convertComplaintResponseDatesFromClient(complaintResponse: ComplaintResponse): ComplaintResponse {
         return Object.assign({}, complaintResponse, {
-            submittedTime: complaintResponse.submittedTime != undefined && dayjs(complaintResponse.submittedTime).isValid ? complaintResponse.submittedTime.toJSON() : undefined,
+            submittedTime: convertDateFromClient(complaintResponse.submittedTime),
         });
     }
 
-    public convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    public convertComplaintResponseEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.convertDatesToDayjs(res.body);
+            this.convertComplaintResponseDatesFromServer(res.body);
         }
         return res;
     }
 
-    public convertDatesToDayjs(complaintResponse: ComplaintResponse): ComplaintResponse {
+    public convertComplaintResponseDatesFromServer(complaintResponse: ComplaintResponse): ComplaintResponse {
         if (complaintResponse) {
-            complaintResponse.submittedTime = complaintResponse.submittedTime != undefined ? dayjs(complaintResponse.submittedTime) : undefined;
-            complaintResponse.lockEndDate = complaintResponse.lockEndDate != undefined ? dayjs(complaintResponse.lockEndDate) : undefined;
+            complaintResponse.submittedTime = convertDateFromServer(complaintResponse.submittedTime);
+            complaintResponse.lockEndDate = convertDateFromServer(complaintResponse.lockEndDate);
         }
         return complaintResponse;
     }

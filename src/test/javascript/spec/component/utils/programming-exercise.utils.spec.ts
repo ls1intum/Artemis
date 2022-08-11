@@ -160,43 +160,43 @@ describe('ProgrammingExerciseUtils URL utils', () => {
     it('Should return undefined commit url with non-programming participation type', () => {
         participationType = ParticipationType.STUDENT;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined repository url for student participation', () => {
         repositoryUrl = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined participation type', () => {
         participationType = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined project key', () => {
         projectKey = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined participant identifier for student participation', () => {
         participantIdentifier = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined commit hash url template', () => {
         commitHashURLTemplate = undefined;
         generateParticipationAndSubmission();
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 
     it('Should return undefined commit url with undefined participation', () => {
         generateParticipationAndSubmission();
         participation = undefined;
-        expect(createCommitUrlResult()).toBe(undefined);
+        expect(createCommitUrlResult()).toBeUndefined();
     });
 });
 
@@ -206,19 +206,19 @@ describe('ProgrammingExerciseUtils', () => {
 
         it('returns false when the completion date is not set', () => {
             const result = new Result();
-            expect(isLegacyResult(result)).toBe(false);
+            expect(isLegacyResult(result)).toBeFalse();
         });
 
         it('returns true on legacy result', () => {
             const result = new Result();
             result.completionDate = legacyDate;
-            expect(isLegacyResult(result)).toBe(true);
+            expect(isLegacyResult(result)).toBeTrue();
         });
 
         it('returns false on non legacy result', () => {
             const result = new Result();
             result.completionDate = legacyDate.add(1, 'second');
-            expect(isLegacyResult(result)).toBe(false);
+            expect(isLegacyResult(result)).toBeFalse();
         });
     });
 
@@ -315,39 +315,39 @@ describe('ProgrammingExerciseUtils', () => {
     describe('isProgrammingExerciseStudentParticipation', () => {
         it('returns true for a programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBeTrue();
         });
 
         it('returns false for another participation', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseStudentParticipation(participation)).toBe(false);
+            expect(isProgrammingExerciseStudentParticipation(participation)).toBeFalse();
         });
     });
 
     describe('isProgrammingExerciseParticipation', () => {
         it('returns false for an undefined participation', () => {
             const participation = undefined;
-            expect(isProgrammingExerciseParticipation(participation)).toBe(false);
+            expect(isProgrammingExerciseParticipation(participation)).toBeFalse();
         });
 
         it('returns true for a student programming exercise participation', () => {
             const participation = new ProgrammingExerciseStudentParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBeTrue();
         });
 
         it('returns true for a template programming exercise participation', () => {
             const participation = new TemplateProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBeTrue();
         });
 
         it('returns true for a solution programming exercise participation', () => {
             const participation = new SolutionProgrammingExerciseParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(true);
+            expect(isProgrammingExerciseParticipation(participation)).toBeTrue();
         });
 
         it('returns false for a normal student participation', () => {
             const participation = new StudentParticipation();
-            expect(isProgrammingExerciseParticipation(participation)).toBe(false);
+            expect(isProgrammingExerciseParticipation(participation)).toBeFalse();
         });
     });
 
@@ -359,23 +359,23 @@ describe('ProgrammingExerciseUtils', () => {
         });
 
         it('returns false if no due date is set', () => {
-            expect(hasDeadlinePassed(exercise)).toBe(false);
+            expect(hasDeadlinePassed(exercise)).toBeFalse();
         });
 
         it('buildAndTestDate takes precedence over normal exercise due date', () => {
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
             exercise.dueDate = dayjs().subtract(5, 'hours');
-            expect(hasDeadlinePassed(exercise)).toBe(false);
+            expect(hasDeadlinePassed(exercise)).toBeFalse();
         });
 
         it('returns true on date in the past', () => {
             exercise.dueDate = dayjs().subtract(1, 'hour');
-            expect(hasDeadlinePassed(exercise)).toBe(true);
+            expect(hasDeadlinePassed(exercise)).toBeTrue();
         });
 
         it('returns false on date in the future', () => {
             exercise.dueDate = dayjs().add(1, 'hour');
-            expect(hasDeadlinePassed(exercise)).toBe(false);
+            expect(hasDeadlinePassed(exercise)).toBeFalse();
         });
     });
 
@@ -390,16 +390,16 @@ describe('ProgrammingExerciseUtils', () => {
         });
 
         it('returns false on undefined exercise', () => {
-            expect(isResultPreliminary(result, undefined)).toBe(false);
+            expect(isResultPreliminary(result, undefined)).toBeFalse();
         });
 
         it('return true if the result completion date is not set', () => {
-            expect(isResultPreliminary(result, exercise)).toBe(true);
+            expect(isResultPreliminary(result, exercise)).toBeTrue();
         });
 
         it('return true on invalid date', () => {
             result.completionDate = dayjs('Invalid date');
-            expect(isResultPreliminary(result, exercise)).toBe(true);
+            expect(isResultPreliminary(result, exercise)).toBeTrue();
         });
 
         describe('manual assessment set for the exercise', () => {
@@ -410,40 +410,40 @@ describe('ProgrammingExerciseUtils', () => {
 
             it('return true if the assessment due date is set and in the future', () => {
                 exercise.assessmentDueDate = dayjs().add(5, 'hours');
-                expect(isResultPreliminary(result, exercise)).toBe(true);
+                expect(isResultPreliminary(result, exercise)).toBeTrue();
             });
 
             it('return false if the assessment due date is set and in the past', () => {
                 exercise.assessmentDueDate = dayjs().subtract(5, 'hours');
-                expect(isResultPreliminary(result, exercise)).toBe(false);
+                expect(isResultPreliminary(result, exercise)).toBeFalse();
             });
 
             it('return true if the assessment due date is not set and the latest result is an automatic assessment', () => {
                 result.assessmentType = AssessmentType.AUTOMATIC;
-                expect(isResultPreliminary(result, exercise)).toBe(true);
+                expect(isResultPreliminary(result, exercise)).toBeTrue();
             });
 
             it('return false if the assessment due date is not set and the latest result is not an automatic assessment', () => {
                 result.assessmentType = AssessmentType.SEMI_AUTOMATIC;
-                expect(isResultPreliminary(result, exercise)).toBe(false);
+                expect(isResultPreliminary(result, exercise)).toBeFalse();
             });
         });
 
         it('return true if buildAndTest date is set and in the future', () => {
             result.completionDate = dayjs();
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().add(5, 'hours');
-            expect(isResultPreliminary(result, exercise)).toBe(true);
+            expect(isResultPreliminary(result, exercise)).toBeTrue();
         });
 
         it('return false if buildAndTest date is set and in the past', () => {
             result.completionDate = dayjs();
             exercise.buildAndTestStudentSubmissionsAfterDueDate = dayjs().subtract(5, 'hours');
-            expect(isResultPreliminary(result, exercise)).toBe(false);
+            expect(isResultPreliminary(result, exercise)).toBeFalse();
         });
 
         it('return false if completion date is valid and buildAndTest date is not set', () => {
             result.completionDate = dayjs();
-            expect(isResultPreliminary(result, exercise)).toBe(false);
+            expect(isResultPreliminary(result, exercise)).toBeFalse();
         });
     });
 });

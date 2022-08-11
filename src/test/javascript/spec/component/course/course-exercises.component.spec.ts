@@ -205,7 +205,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(localStorageSpy).toHaveBeenCalledTimes(1);
+        expect(localStorageSpy).toHaveBeenCalledOnce();
         expect(component.activeFilters).toEqual(new Set());
 
         for (let i = 1; i < 8; i++) {
@@ -237,7 +237,7 @@ describe('CourseExercisesComponent', () => {
 
         component.toggleFilters(filters);
 
-        expect(component.upcomingExercises.length).toBe(5);
+        expect(component.upcomingExercises).toHaveLength(5);
     });
 
     it('should filter optional exercises', () => {

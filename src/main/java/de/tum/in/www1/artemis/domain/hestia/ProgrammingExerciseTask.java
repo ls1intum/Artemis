@@ -29,14 +29,14 @@ public class ProgrammingExerciseTask extends DomainObject {
     @Column(name = "task_name")
     private String taskName;
 
-    // No orphanRemoval here, as there should only be one parent-child relationship (which is ProgrammingExercise -> CodeHint)
+    // No orphanRemoval here, as there should only be one parent-child relationship (which is ProgrammingExercise -> ExerciseHint)
     @OneToMany(mappedBy = "task", cascade = CascadeType.REMOVE, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("task")
-    private Set<CodeHint> codeHints = new HashSet<>();
+    private Set<ExerciseHint> exerciseHints = new HashSet<>();
 
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "programming_exercise_task_test_case", joinColumns = @JoinColumn(name = "task_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "test_case_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "tasks", "exercise" })
+    @JsonIgnoreProperties(value = { "tasks", "exercise" }, allowSetters = true)
     private Set<ProgrammingExerciseTestCase> testCases = new HashSet<>();
 
     @ManyToOne
@@ -51,12 +51,12 @@ public class ProgrammingExerciseTask extends DomainObject {
         this.taskName = taskName;
     }
 
-    public Set<CodeHint> getCodeHints() {
-        return codeHints;
+    public Set<ExerciseHint> getExerciseHints() {
+        return exerciseHints;
     }
 
-    public void setCodeHints(Set<CodeHint> codeHints) {
-        this.codeHints = codeHints;
+    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
+        this.exerciseHints = exerciseHints;
     }
 
     public Set<ProgrammingExerciseTestCase> getTestCases() {

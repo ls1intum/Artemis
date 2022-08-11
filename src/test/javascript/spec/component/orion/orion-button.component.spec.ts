@@ -24,7 +24,7 @@ describe('OrionButtonComponent', () => {
 
     it('should calculate btnPrimary correctly', () => {
         comp.outlined = true;
-        expect(comp.btnPrimary).toBe(false);
+        expect(comp.btnPrimary).toBeFalse();
     });
 
     it('should not forward click if buttonLoading', () => {
@@ -32,7 +32,7 @@ describe('OrionButtonComponent', () => {
         comp.buttonLoading = true;
 
         const buttonElement = fixture.debugElement.query(By.css('button'));
-        expect(buttonElement).not.toBe(null);
+        expect(buttonElement).not.toBeNull();
 
         buttonElement.nativeElement.click();
 
@@ -44,10 +44,10 @@ describe('OrionButtonComponent', () => {
         comp.buttonLoading = false;
 
         const buttonElement = fixture.debugElement.query(By.css('button'));
-        expect(buttonElement).not.toBe(null);
+        expect(buttonElement).not.toBeNull();
 
         buttonElement.nativeElement.click();
 
-        expect(emitSpy).toHaveBeenCalledTimes(1);
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 });

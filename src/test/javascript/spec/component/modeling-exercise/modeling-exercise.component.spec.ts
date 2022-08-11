@@ -101,7 +101,7 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
         comp.deleteModelingExercise(456);
         expect(modelingExerciseService.delete).toHaveBeenCalledWith(456);
-        expect(modelingExerciseService.delete).toHaveBeenCalledTimes(1);
+        expect(modelingExerciseService.delete).toHaveBeenCalledOnce();
     });
 
     it('Should open modal', () => {
@@ -110,7 +110,7 @@ describe('ModelingExercise Management Component', () => {
 
         comp.openImportModal();
         expect(modalService.open).toHaveBeenCalledWith(ModelingExerciseImportComponent, { size: 'lg', backdrop: 'static' });
-        expect(modalService.open).toHaveBeenCalledTimes(1);
+        expect(modalService.open).toHaveBeenCalledOnce();
     });
 
     it('Should return exercise id', () => {
@@ -148,13 +148,13 @@ describe('ModelingExercise Management Component', () => {
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
         comp.deleteModelingExercise(2);
         expect(deleteStub).toHaveBeenCalledWith(2);
-        expect(deleteStub).toHaveBeenCalledTimes(1);
+        expect(deleteStub).toHaveBeenCalledOnce();
         tick();
         expect(broadcastSpy).toHaveBeenCalledWith({
             name: 'modelingExerciseListModification',
             content: 'Deleted an modelingExercise',
         });
-        expect(broadcastSpy).toBeCalledTimes(1);
+        expect(broadcastSpy).toHaveBeenCalledTimes(1);
     }));
 
     it('should sort rows', () => {
@@ -165,6 +165,6 @@ describe('ModelingExercise Management Component', () => {
         comp.exerciseFilter = new ExerciseFilter();
         comp.sortRows();
         expect(sortSpy).toHaveBeenCalledWith(comp.modelingExercises, comp.predicate, comp.reverse);
-        expect(sortSpy).toHaveBeenCalledTimes(1);
+        expect(sortSpy).toHaveBeenCalledOnce();
     });
 });

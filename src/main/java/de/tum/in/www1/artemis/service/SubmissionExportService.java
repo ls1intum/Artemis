@@ -58,7 +58,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id   of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zippped file with the exported submissions
+     * @return the zipped file with the exported submissions
      */
     public File exportStudentSubmissionsElseThrow(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         return exportStudentSubmissions(exerciseId, submissionExportOptions)
@@ -71,7 +71,7 @@ public abstract class SubmissionExportService {
      *
      * @param exerciseId the id   of the exercise to be exported
      * @param submissionExportOptions the options for the export
-     * @return the zippped file with the exported submissions
+     * @return the zipped file with the exported submissions
      */
     public Optional<File> exportStudentSubmissions(Long exerciseId, SubmissionExportOptionsDTO submissionExportOptions) {
         Path outputDir = Path.of(fileService.getUniquePathString(submissionExportPath));
@@ -122,7 +122,7 @@ public abstract class SubmissionExportService {
             List<String> participantIds = Arrays.stream(submissionExportOptions.getParticipantIdentifierList().split(",")).map(String::trim).toList();
 
             exportedStudentParticipations = exercise.getStudentParticipations().stream().filter(participation -> participantIds.contains(participation.getParticipantIdentifier()))
-                    .collect(Collectors.toList());
+                    .collect(Collectors.toCollection(ArrayList::new));
         }
 
         boolean enableFilterAfterDueDate = false;
@@ -207,7 +207,7 @@ public abstract class SubmissionExportService {
                 exportErrors.add(message);
                 return Optional.<Path>empty();
             }
-        }).flatMap(Optional::stream).collect(Collectors.toList());
+        }).flatMap(Optional::stream).toList();
 
         // Add report entry
         reportData.add(new ArchivalReportEntry(exercise, fileService.removeIllegalCharacters(exercise.getTitle()), participations.size(), submissionFilePaths.size(),

@@ -1,7 +1,7 @@
 <div>
-    <div *ngIf="showPageSizeDropdown || showSearchField" class="d-flex mb-2">
+    <div *ngIf="showPageSizeDropdown || showSearchField" class="d-flex mb-2 gap-1 flex-column flex-md-row">
         <div *ngIf="showPageSizeDropdown" ngbDropdown class="d-inline-block me-2">
-            <button class="btn btn-outline-primary" id="dropdownBasic1" ngbDropdownToggle>
+            <button class="btn btn-outline-primary w-100" id="dropdownBasic1" ngbDropdownToggle>
                 {{ perPageTranslation(pagingValue) | artemisTranslate: { number: pagingValue } }}
             </button>
             <div ngbDropdownMenu aria-labelledby="dropdownBasic1">
@@ -10,7 +10,7 @@
                 </button>
             </div>
         </div>
-        <div *ngIf="showSearchField" class="search-container">
+        <div *ngIf="searchEnabled" class="search-container">
             <input
                 #ngbTypeahead
                 id="typeahead-basic"

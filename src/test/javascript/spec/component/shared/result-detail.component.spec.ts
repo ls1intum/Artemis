@@ -76,13 +76,13 @@ describe('ResultDetailComponent', () => {
                 title: category + ' Issue in file www/packet/File.java at line ' + line + (column != undefined ? ' column ' + column : ''),
                 text: showDetails ? 'Rule: This is a code issue' : 'This is a code issue',
                 credits: -penalty,
-                appliedCredits: credits,
+                actualCredits: credits,
                 positive: false,
             }),
         };
     };
 
-    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits = 0) => {
+    const generateTestCaseFeedbackPair = (showDetails: boolean, name: string, message: string | undefined, credits: number) => {
         return {
             fb: makeFeedback({
                 text: name,
@@ -134,7 +134,7 @@ describe('ResultDetailComponent', () => {
         addPair(generateManualFeedbackPair(showTestDetails, 'Positive', 'This is good', 4));
         addPair(generateManualFeedbackPair(showTestDetails, 'Negative', 'This is bad', -2));
         addPair(generateManualFeedbackPair(showTestDetails, 'Neutral', 'This is neutral', 0));
-        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.'));
+        addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase1', 'This failed.', 0));
         addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase2', 'This passed.', 3));
         addPair(generateTestCaseFeedbackPair(showTestDetails, 'TestCase3', undefined, 3));
 
@@ -264,7 +264,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve the feedbacks from the server if provided result does not have feedbacks', () => {
@@ -274,10 +274,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(comp.result.participation!.id!, comp.result.id);
         expect(comp.filteredFeedbackList).toIncludeSameMembers(expectedItems);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and no submission was provided.', () => {
@@ -285,10 +285,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should try to retrieve build logs if the exercise type is PROGRAMMING and a submission was provided which was marked with build failed.', () => {
@@ -297,10 +297,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
         expect(comp.buildLogs).toBeArrayOfSize(0);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should not try to retrieve build logs if the exercise type is not PROGRAMMING', () => {
@@ -310,8 +310,8 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.feedbackList).toBe(undefined);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.feedbackList).toBeUndefined();
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should not try to retrieve build logs if submission was not marked with build failed', () => {
@@ -321,8 +321,8 @@ describe('ResultDetailComponent', () => {
         comp.ngOnInit();
 
         expect(buildlogsStub).not.toHaveBeenCalled();
-        expect(comp.buildLogs).toBe(undefined);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.buildLogs).toBeUndefined();
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('fetchBuildLogs should suppress 403 error', () => {
@@ -332,10 +332,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
-        expect(comp.loadingFailed).toBe(false);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.loadingFailed).toBeFalse();
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('fetchBuildLogs should not suppress errors with status other than 403', () => {
@@ -345,10 +345,10 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(buildlogsStub).toHaveBeenCalledTimes(1);
+        expect(buildlogsStub).toHaveBeenCalledOnce();
         expect(buildlogsStub).toHaveBeenCalledWith(comp.result.participation!.id, comp.result.id);
-        expect(comp.loadingFailed).toBe(true);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.loadingFailed).toBeTrue();
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should show test names if showTestDetails is set to true', () => {
@@ -361,17 +361,18 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should show a replacement title if automatic feedback is neither positive nor negative', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = 'automaticTestCase1';
-        feedback.positive = undefined;
-        feedback.credits = 0.3;
+        const feedback: Feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: 'automaticTestCase1',
+            positive: undefined,
+            credits: 0.3,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             category: 'Test Case',
             credits: 0.3,
             title: 'No result information for automaticTestCase1',
@@ -387,13 +388,15 @@ describe('ResultDetailComponent', () => {
         const gradingInstruction = new GradingInstruction();
         gradingInstruction.feedback = 'Grading Instruction Feedback';
 
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.MANUAL;
-        feedback.gradingInstruction = gradingInstruction;
-        feedback.text = 'Feedback Title';
-        feedback.detailText = 'Manual tutor feedback';
+        const feedback: Feedback = {
+            type: FeedbackType.MANUAL,
+            gradingInstruction,
+            text: 'Feedback Title',
+            detailText: 'Manual tutor feedback',
+            credits: 0,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Tutor',
             title: feedback.text,
@@ -423,13 +426,15 @@ describe('ResultDetailComponent', () => {
         const gradingInstruction = new GradingInstruction();
         gradingInstruction.feedback = 'Grading Instruction Feedback';
 
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.MANUAL;
-        feedback.gradingInstruction = gradingInstruction;
-        feedback.text = 'Feedback Title';
-        feedback.detailText = 'Manual tutor feedback';
+        const feedback: Feedback = {
+            type: FeedbackType.MANUAL,
+            gradingInstruction,
+            text: 'Feedback Title',
+            detailText: 'Manual tutor feedback',
+            credits: 0,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Feedback',
             title: feedback.text,
@@ -443,14 +448,15 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should show feedback generated from submission policies', () => {
-        const feedback = new Feedback();
-        feedback.type = FeedbackType.AUTOMATIC;
-        feedback.text = `${SUBMISSION_POLICY_FEEDBACK_IDENTIFIER}Submission Penalty Policy`;
-        feedback.detailText = 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!';
-        feedback.positive = false;
-        feedback.credits = -0.1;
+        const feedback: Feedback = {
+            type: FeedbackType.AUTOMATIC,
+            text: `${SUBMISSION_POLICY_FEEDBACK_IDENTIFIER}Submission Penalty Policy`,
+            detailText: 'You have submitted 2 more times than the submission limit of 10. This results in a deduction of 0.1 points!',
+            positive: false,
+            credits: -0.1,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Policy,
             category: 'Submission Policy',
             title: 'Submission Penalty Policy',
@@ -458,18 +464,19 @@ describe('ResultDetailComponent', () => {
             previewText: undefined,
             positive: false,
             credits: feedback.credits,
-            appliedCredits: feedback.credits,
         };
 
         shouldGenerateFeedbackItem(feedback, expectedFeedbackItem);
     });
 
     it('should only show the first line of feedback as preview', () => {
-        const feedback = new Feedback();
-        feedback.text = 'Summary';
-        feedback.detailText = 'Multi\nLine\nText';
+        const feedback: Feedback = {
+            text: 'Summary',
+            detailText: 'Multi\nLine\nText',
+            credits: 0,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Feedback',
             title: feedback.text,
@@ -483,11 +490,13 @@ describe('ResultDetailComponent', () => {
     });
 
     it('should shorten the preview text if it is long', () => {
-        const feedback = new Feedback();
-        feedback.text = 'Summary';
-        feedback.detailText = '0'.repeat(400);
+        const feedback: Feedback = {
+            text: 'Summary',
+            detailText: '0'.repeat(400),
+            credits: 0,
+        };
 
-        const expectedFeedbackItem = {
+        const expectedFeedbackItem: FeedbackItem = {
             type: FeedbackItemType.Feedback,
             category: 'Feedback',
             title: feedback.text,
@@ -522,7 +531,7 @@ describe('ResultDetailComponent', () => {
             baseExpectedFeedbackItem = {
                 category: 'Code Issue',
                 type: FeedbackItemType.Issue,
-                appliedCredits: 0,
+                actualCredits: 0,
                 credits: 0,
                 positive: false,
                 previewText: undefined,
@@ -584,7 +593,7 @@ describe('ResultDetailComponent', () => {
 
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual([expectedFeedbackItem]);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     };
 
     it('should filter the correct feedbacks when a filter is set', () => {
@@ -595,9 +604,9 @@ describe('ResultDetailComponent', () => {
 
         comp.ngOnInit();
 
-        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled;
+        expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
         expect(comp.filteredFeedbackList).toEqual(expectedItems.filter((item) => item.type === FeedbackItemType.Test));
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
     });
 
     it('should generate correct class names for feedback items', () => {
@@ -623,10 +632,10 @@ describe('ResultDetailComponent', () => {
 
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
         expect(comp.backupFilteredFeedbackList).toEqual(expectedItems);
-        expect(comp.showScoreChartTooltip).toBe(true);
+        expect(comp.showScoreChartTooltip).toBeTrue();
 
         checkChartPreset(5, 5, '10', '5 of 6');
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
 
         // test score exceeding exercise maxpoints
 
@@ -661,22 +670,22 @@ describe('ResultDetailComponent', () => {
 
         comp.onSelect(event);
 
-        expect(comp.showOnlyPositiveFeedback).toBe(true);
-        expect(comp.showOnlyNegativeFeedback).toBe(false);
+        expect(comp.showOnlyPositiveFeedback).toBeTrue();
+        expect(comp.showOnlyNegativeFeedback).toBeFalse();
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 
         event.isPositive = false;
-        currentlyVisibleItems = expectedItems.filter((item) => item.positive === false && item.appliedCredits! < 0);
+        currentlyVisibleItems = expectedItems.filter((item) => item.positive === false && item.actualCredits! < 0);
 
         comp.onSelect(event);
 
-        expect(comp.showOnlyNegativeFeedback).toBe(true);
-        expect(comp.showOnlyPositiveFeedback).toBe(false);
+        expect(comp.showOnlyNegativeFeedback).toBeTrue();
+        expect(comp.showOnlyPositiveFeedback).toBeFalse();
         expect(comp.filteredFeedbackList).toEqual(currentlyVisibleItems);
 
         comp.resetChartFilter();
 
-        expect(comp.showOnlyNegativeFeedback).toBe(false);
+        expect(comp.showOnlyNegativeFeedback).toBeFalse();
         expect(comp.filteredFeedbackList).toEqual(expectedItems);
     });
 

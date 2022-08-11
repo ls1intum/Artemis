@@ -76,27 +76,27 @@ describe('PrerequisiteImportComponent', () => {
     };
 
     it('should set content to paging result on sort', fakeAsync(() => {
-        expect(comp.listSorting).toEqual(false);
+        expect(comp.listSorting).toBeFalse();
         setStateAndCallOnInit(() => {
             comp.listSorting = true;
             tick(10);
             expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, sortingOrder: SortingOrder.ASCENDING });
-            expect(comp.listSorting).toEqual(true);
+            expect(comp.listSorting).toBeTrue();
         });
     }));
 
     it('should set content to paging result on pageChange', fakeAsync(() => {
-        expect(comp.page).toEqual(1);
+        expect(comp.page).toBe(1);
         setStateAndCallOnInit(() => {
             comp.onPageChange(5);
             tick(10);
             expect(searchForLearningGoalsStub).toHaveBeenCalledWith({ ...state, page: 5 });
-            expect(comp.page).toEqual(5);
+            expect(comp.page).toBe(5);
         });
     }));
 
     it('should set content to paging result on search', fakeAsync(() => {
-        expect(comp.searchTerm).toEqual('');
+        expect(comp.searchTerm).toBe('');
         setStateAndCallOnInit(() => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;

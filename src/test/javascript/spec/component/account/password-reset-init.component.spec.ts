@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed, inject } from '@angular/core/testing';
+import { ComponentFixture, inject, TestBed } from '@angular/core/testing';
 import { FormBuilder, NgModel } from '@angular/forms';
 import { of, throwError } from 'rxjs';
 import { ArtemisTestModule } from '../../test.module';
@@ -66,7 +66,7 @@ describe('PasswordResetInitComponent', () => {
         comp.requestReset();
 
         expect(service.save).toHaveBeenCalledWith('user@domain.com');
-        expect(comp.externalResetModalRef).toBe(undefined);
+        expect(comp.externalResetModalRef).toBeUndefined();
     }));
 
     it('no notification of success upon external user error response', inject([PasswordResetInitService], (service: PasswordResetInitService) => {
@@ -81,6 +81,6 @@ describe('PasswordResetInitComponent', () => {
         comp.requestReset();
 
         expect(service.save).toHaveBeenCalledWith('user@domain.com');
-        expect(comp.externalResetModalRef).not.toBe(undefined); // External reference
+        expect(comp.externalResetModalRef).toBeDefined(); // External reference
     }));
 });

@@ -52,7 +52,7 @@ describe('HealthComponent', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(healthService.checkHealth).toHaveBeenCalledTimes(1);
+        expect(healthService.checkHealth).toHaveBeenCalledOnce();
         expect(comp.health).toEqual(health);
     });
 
@@ -65,7 +65,7 @@ describe('HealthComponent', () => {
         comp.refresh();
 
         // THEN
-        expect(healthService.checkHealth).toHaveBeenCalledTimes(1);
+        expect(healthService.checkHealth).toHaveBeenCalledOnce();
         expect(comp.health).toEqual(health);
     });
 
@@ -79,12 +79,12 @@ describe('HealthComponent', () => {
         fixture.detectChanges();
 
         const linkToClick = fixture.debugElement.query(By.css('a.hand'));
-        expect(linkToClick).not.toBe(null);
+        expect(linkToClick).not.toBeNull();
 
         linkToClick.nativeElement.click();
         fixture.detectChanges();
 
-        expect(modalServiceSpy).toHaveBeenCalledTimes(1);
+        expect(modalServiceSpy).toHaveBeenCalledOnce();
         expect(modalServiceSpy).toHaveBeenCalledWith(HealthModalComponent);
         expect(mockModalRef.componentInstance.health).toEqual({ key: 'mail', value: health.components.mail });
     });

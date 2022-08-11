@@ -6,7 +6,6 @@ import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
-import de.tum.in.www1.artemis.domain.hestia.ExerciseHint;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.Participation;
@@ -43,7 +42,7 @@ import java.util.stream.Collectors;
         @JsonSubTypes.Type(value = QuizExercise.class, name = "quiz"), @JsonSubTypes.Type(value = TextExercise.class, name = "text"),
         @JsonSubTypes.Type(value = FileUploadExercise.class, name = "file-upload"), })
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public abstract class Exercise extends BaseExercise {
+public abstract class Exercise extends BaseExercise implements Completable {
 
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
@@ -130,9 +129,6 @@ public abstract class Exercise extends BaseExercise {
     @JsonIncludeProperties({ "id" })
     private Set<PlagiarismCase> plagiarismCases = new HashSet<>();
 
-    @OneToMany(mappedBy = "exercise", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    private Set<ExerciseHint> exerciseHints = new HashSet<>();
-
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private DueDateStat numberOfSubmissionsTransient;
@@ -175,6 +171,16 @@ public abstract class Exercise extends BaseExercise {
 
     @Transient
     private Long numberOfRatingsTransient;
+
+    @Override
+    public boolean isCompletedFor(User user) {
+        return this.getStudentParticipations().stream().anyMatch((participation) -> participation.getStudents().contains(user));
+    }
+
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
+    }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
         return allowComplaintsForAutomaticAssessments;
@@ -364,14 +370,6 @@ public abstract class Exercise extends BaseExercise {
 
     public void setPlagiarismCases(Set<PlagiarismCase> plagiarismCases) {
         this.plagiarismCases = plagiarismCases;
-    }
-
-    public Set<ExerciseHint> getExerciseHints() {
-        return exerciseHints;
-    }
-
-    public void setExerciseHints(Set<ExerciseHint> exerciseHints) {
-        this.exerciseHints = exerciseHints;
     }
 
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
@@ -567,7 +565,7 @@ public abstract class Exercise extends BaseExercise {
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+                return submissionsWithRatedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         else if (!submissionsWithUnratedResult.isEmpty()) {
@@ -581,7 +579,7 @@ public abstract class Exercise extends BaseExercise {
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+                return submissionsWithUnratedResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         else if (!submissionsWithoutResult.isEmpty()) {
@@ -590,7 +588,7 @@ public abstract class Exercise extends BaseExercise {
             }
             else { // this means with have more than one submission, we want the one with the last submission date
                    // make sure that submissions without submission date do not lead to null pointer exception in the comparison
-                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.comparing(Submission::getSubmissionDate)).orElse(null);
+                return submissionsWithoutResult.stream().filter(s -> s.getSubmissionDate() != null).max(Comparator.naturalOrder()).orElse(null);
             }
         }
         return null;
@@ -848,6 +846,29 @@ public abstract class Exercise extends BaseExercise {
             gradingInstructionCopyTracker.put(originalGradingInstruction.getId(), newGradingInstruction);
         }
         return newGradingInstructions;
+    }
+
+    /**
+     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
+     *
+     * @throws BadRequestAlertException if the dates are not valid
+     */
+    public void validateDates() {
+        // All fields are optional, so there is no error if none of them is set
+        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
+            return;
+        }
+        if (isExamExercise()) {
+            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
+        }
+
+        // at least one is set, so we have to check the three possible errors
+        boolean areDatesValid = isNotAfterAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate())
+                && isValidExampleSolutionPublicationDate(getReleaseDate(), getDueDate(), getExampleSolutionPublicationDate(), getIncludedInOverallScore());
+
+        if (!areDatesValid) {
+            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
+        }
     }
 
     /**

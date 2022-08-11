@@ -49,25 +49,25 @@ describe('TutorParticipationGraphComponent', () => {
         it('should calculate the right classes for the initial NOT_PARTICIPATED status', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
 
-            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toEqual('active');
-            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toEqual('opaque');
+            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('active');
+            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('opaque');
         });
 
         it('should calculate the right classes for the REVIEWED_INSTRUCTIONS status', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.REVIEWED_INSTRUCTIONS;
 
-            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toEqual('active');
-            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toEqual('');
+            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('active');
+            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('');
         });
 
         it('should calculate the right classes for the TRAINED status', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.TRAINED;
 
-            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toEqual('');
+            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('');
 
             comp.exercise = {
                 id: 1,
@@ -82,29 +82,29 @@ describe('TutorParticipationGraphComponent', () => {
                 trainedExampleSubmissions: [{ id: 1, usedForTutorial: false }],
             } as TutorParticipation;
 
-            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toEqual('orange');
+            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('orange');
         });
 
         it('should calculate the right classes for the COMPLETED status', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.COMPLETED;
 
-            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toEqual('');
-            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toEqual('');
+            expect(comp.calculateClasses(TutorParticipationStatus.REVIEWED_INSTRUCTIONS)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.NOT_PARTICIPATED)).toBe('');
+            expect(comp.calculateClasses(TutorParticipationStatus.TRAINED)).toBe('');
         });
     });
 
     describe('should calculate the right classes for the given status', () => {
         it('should calculate the right classes for the COMPLETED status', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.COMPLETED;
-            expect(comp.calculateClassProgressBar()).toEqual('active');
+            expect(comp.calculateClassProgressBar()).toBe('active');
         });
 
         it('should calculate the right classes for the NOT_PARTICIPATED status', () => {
             comp.tutorParticipationStatus = TutorParticipationStatus.NOT_PARTICIPATED;
-            expect(comp.calculateClassProgressBar()).toEqual('opaque');
+            expect(comp.calculateClassProgressBar()).toBe('opaque');
         });
 
         it('should calculate the right classes for the TRAINED status', () => {
@@ -116,7 +116,7 @@ describe('TutorParticipationGraphComponent', () => {
             comp.numberOfOpenComplaints = 1;
             comp.numberOfOpenMoreFeedbackRequests = 2;
 
-            expect(comp.calculateClassProgressBar()).toEqual('orange');
+            expect(comp.calculateClassProgressBar()).toBe('orange');
         });
     });
 
@@ -135,8 +135,8 @@ describe('TutorParticipationGraphComponent', () => {
 
             comp.calculatePercentageAssessmentProgress();
 
-            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toEqual(75);
-            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).toEqual(50);
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toBe(75);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).toBe(50);
 
             const secondCorrectionDueDateStat = new DueDateStat();
             secondCorrectionDueDateStat.inTime = 2;
@@ -144,10 +144,10 @@ describe('TutorParticipationGraphComponent', () => {
             comp.numberOfAssessmentsOfCorrectionRounds = [comp.totalNumberOfAssessments, secondCorrectionDueDateStat];
 
             comp.calculatePercentageAssessmentProgress();
-            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toEqual(75);
-            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).toEqual(50);
-            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[1]).toEqual(50);
-            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[1]).toEqual(50);
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[0]).toBe(75);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[0]).toBe(50);
+            expect(comp.percentageInTimeAssessmentProgressOfCorrectionRound[1]).toBe(50);
+            expect(comp.percentageLateAssessmentProgressOfCorrectionRound[1]).toBe(50);
         });
     });
 
@@ -161,8 +161,8 @@ describe('TutorParticipationGraphComponent', () => {
 
         comp.ngOnInit();
 
-        expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledTimes(1);
-        expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledTimes(1);
+        expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledOnce();
+        expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledOnce();
 
         calculatePercentageAssessmentProgressStub.mockRestore();
         calculatePercentageComplaintsProgressStub.mockRestore();
@@ -176,7 +176,7 @@ describe('TutorParticipationGraphComponent', () => {
 
         const result = comp.calculateComplaintsNumerator();
 
-        expect(result).toEqual(3);
+        expect(result).toBe(3);
     });
 
     it('should calculate denominator', () => {
@@ -185,7 +185,7 @@ describe('TutorParticipationGraphComponent', () => {
 
         const result = comp.calculateComplaintsDenominator();
 
-        expect(result).toEqual(7);
+        expect(result).toBe(7);
     });
     it('should update changes', () => {
         calculatePercentageAssessmentProgressStub = jest.spyOn(comp, 'calculatePercentageAssessmentProgress').mockImplementation();
@@ -202,7 +202,7 @@ describe('TutorParticipationGraphComponent', () => {
         const changes = { tutorParticipation: { currentValue: changedParticipation } as SimpleChange };
         comp.ngOnChanges(changes);
 
-        expect(comp.tutorParticipation.id).toEqual(3);
+        expect(comp.tutorParticipation.id).toBe(3);
         expect(calculatePercentageAssessmentProgressStub).toHaveBeenCalledTimes(2);
         expect(calculatePercentageComplaintsProgressStub).toHaveBeenCalledTimes(2);
 
@@ -219,7 +219,7 @@ describe('TutorParticipationGraphComponent', () => {
 
         comp.calculatePercentageComplaintsProgress();
 
-        expect(comp.percentageComplaintsProgress).toEqual(50);
+        expect(comp.percentageComplaintsProgress).toBe(50);
     });
 
     it('should navigate', () => {

@@ -45,14 +45,14 @@ function computeEventHash(event: Event): string {
     let valueSequence = event.message ?? '';
 
     // If the event has an exception, add type, value
-    const exception = event.exception?.values && event.exception!.values.length > 0 && event.exception!.values[0];
+    const exception = event.exception?.values?.[0];
     if (exception) {
         valueSequence += exception.type ?? '';
         valueSequence += exception.value ?? '';
     }
 
     // If event has stack trace, add filename and line of each frame
-    const frames = (exception && exception.stacktrace?.frames) || event.stacktrace?.frames;
+    const frames = exception?.stacktrace?.frames;
     if (frames) {
         frames.forEach((frame) => (valueSequence += frame.filename ?? ''));
         frames.forEach((frame) => (valueSequence += frame.lineno ?? ''));

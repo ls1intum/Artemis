@@ -1,6 +1,6 @@
 import { ArtemisDeduplicate } from 'app/core/sentry/deduplicate.sentry-integration';
 import { Event } from '@sentry/types';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { fakeAsync, flush, tick } from '@angular/core/testing';
 
 describe('ArtemisDeduplicateSentryIntegration', () => {
@@ -82,7 +82,7 @@ describe('ArtemisDeduplicateSentryIntegration', () => {
 
             // Identical event should be ignored
             const ev1 = createEvent('test0');
-            expect(globalEventProcessor(ev1)).toBe(null);
+            expect(globalEventProcessor(ev1)).toBeNull();
 
             // An event with different value should go through
             const ev2 = createEvent('test1');

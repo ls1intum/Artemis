@@ -29,7 +29,6 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
     navigationEndSubscription: Subscription;
     readonly LectureUnitType = LectureUnitType;
     readonly ActionType = ActionType;
-
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -179,6 +178,7 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
             case LectureUnitType.ATTACHMENT:
             case LectureUnitType.TEXT:
             case LectureUnitType.VIDEO:
+            case LectureUnitType.ONLINE:
                 return true;
             default:
                 return false;
@@ -193,6 +193,8 @@ export class LectureUnitManagementComponent implements OnInit, OnDestroy {
                 return ['video-units', lectureUnit.id, 'edit'];
             case LectureUnitType.TEXT:
                 return ['text-units', lectureUnit.id, 'edit'];
+            case LectureUnitType.ONLINE:
+                return ['online-units', lectureUnit.id, 'edit'];
             default:
                 return;
         }

@@ -29,13 +29,17 @@
             "import": {
                 "attention": "Achtung! ",
                 "markdownWarning": "Die Aufgabenstellung kann nach dem Import geändert werden.",
+                "search": "Suche nach einer Aufgabe",
                 "loading": "Lade...",
+                "searchInCourses": "Suche in Kursen?",
+                "searchInExams": "Suche in Klausuren?",
                 "table": {
                     "title": "Titel",
-                    "language": "Programmiersprache",
+                    "language": "Sprache",
                     "course": "Kurs",
+                    "exam": "Klausur",
                     "examQuestion": "Klausuraufgabe",
-                    "doImport": "Import"
+                    "doImport": "Importieren"
                 }
             },
             "exercise": "Aufgabe",
@@ -73,9 +77,11 @@
             "dueDate": "Einreichungsfrist",
             "dueDateError": "Einreichungsfrist muss nach dem Veröffentlichungsdatum sein. Bitte überprüfe deine Auswahl nochmal",
             "assessmentDueDate": "Einreichungsfrist der Bewertung",
-            "assessmentDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal",
+            "assessmentDueDateError": "Einreichungsfrist der Bewertung muss nach dem Veröffentlichungsdatum und nach der Einreichungsfrist für Aufgaben sein. Bitte überprüfe deine Auswahl nochmal",
             "dateNotSet": "Kein Datum gesetzt",
             "exampleSolutionPublicationDate": "Veröffentlichungsdatum der Beispiellösung",
+            "exampleSolutionPublicationDateError": "Bei benoteten Übungen muss das Veröffentlichungsdatum der Beispiellösung nach dem Veröffentlichungsdatum und nach der Einreichungsfrist für Aufgaben sein, falls dieses festgelegt wurde. Bitte überprüfe deine Auswahl nochmal",
+            "exampleSolutionPublicationDateWarning": "Veröffentlichungsdatum der Beispiellösung liegt vor Einreichungsfrist!",
             "points": "Punktzahl",
             "pointsError": "Muss eine Zahl zwischen 1 und 9999 sein.",
             "bonusPoints": "Bonuspunkte",
@@ -142,6 +148,7 @@
             "showManual": "Nur manuelle anzeigen",
             "showAutomatic": "Nur automatische anzeigen",
             "showAll": "Alle anzeigen",
+            "showingOnlyInRange": "Zeige nur Ergebnisse im Bereich: {{ range }}",
             "tagPlaceholder": "+ Kategorie",
             "isProgramming": "Das ist eine Programmieraufgabe",
             "isModeling": "Das ist eine Modellierungsaufgabe",

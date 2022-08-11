@@ -13,12 +13,14 @@ import { SolutionProgrammingExerciseParticipation } from 'app/entities/participa
 import { TextPlagiarismResult } from 'app/exercises/shared/plagiarism/types/text/TextPlagiarismResult';
 import { PlagiarismOptions } from 'app/exercises/shared/plagiarism/types/PlagiarismOptions';
 import { Submission } from 'app/entities/submission.model';
-import { Task } from 'app/exercises/programming/shared/instructions-render/task/programming-exercise-task.model';
-import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
+import { ProgrammingExerciseServerSideTask } from 'app/entities/hestia/programming-exercise-task.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ProgrammingExerciseTestCase } from 'app/entities/programming-exercise-test-case.model';
 
 export type EntityResponseType = HttpResponse<ProgrammingExercise>;
 export type EntityArrayResponseType = HttpResponse<ProgrammingExercise[]>;
@@ -28,12 +30,6 @@ export type ProgrammingExerciseTestCaseStateDTO = {
     hasStudentResult: boolean;
     testCasesChanged: boolean;
     buildAndTestStudentSubmissionsAfterDueDate?: dayjs.Dayjs;
-};
-
-export type ProgrammingExerciseTaskServerSide = {
-    id: number;
-    taskName: String;
-    testCases: ProgrammingExerciseTestCase[];
 };
 
 // TODO: we should use a proper enum here
@@ -261,7 +257,7 @@ export class ProgrammingExerciseService {
     }
 
     /**
-     * Returns a entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
+     * Returns an entity with true in the body if there is a programming exercise with the given id, it is released (release date < now) and there is at least one student result.
      *
      * @param exerciseId ProgrammingExercise id
      */
@@ -300,11 +296,8 @@ export class ProgrammingExerciseService {
      */
     convertDataFromClient(exercise: ProgrammingExercise) {
         const copy = {
-            ...ExerciseService.convertDateFromClient(exercise),
-            buildAndTestStudentSubmissionsAfterDueDate:
-                exercise.buildAndTestStudentSubmissionsAfterDueDate && dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).isValid()
-                    ? dayjs(exercise.buildAndTestStudentSubmissionsAfterDueDate).toJSON()
-                    : undefined,
+            ...ExerciseService.convertExerciseDatesFromClient(exercise),
+            buildAndTestStudentSubmissionsAfterDueDate: convertDateFromClient(exercise.buildAndTestStudentSubmissionsAfterDueDate),
         };
         // Remove exercise from template & solution participation to avoid circular dependency issues.
         // Also remove the results, as they can have circular structures as well and don't have to be saved here.
@@ -324,14 +317,12 @@ export class ProgrammingExerciseService {
      *
      * @param entity ProgrammingExercise
      */
-    static convertDateFromServer(entity: EntityResponseType) {
-        const res = ExerciseService.convertDateFromServer(entity);
+    static convertProgrammingExerciseResponseDatesFromServer(entity: EntityResponseType) {
+        const res = ExerciseService.convertExerciseResponseDatesFromServer(entity);
         if (!res.body) {
             return res;
         }
-        res.body.buildAndTestStudentSubmissionsAfterDueDate = res.body.buildAndTestStudentSubmissionsAfterDueDate
-            ? dayjs(res.body.buildAndTestStudentSubmissionsAfterDueDate)
-            : undefined;
+        res.body.buildAndTestStudentSubmissionsAfterDueDate = convertDateFromServer(res.body.buildAndTestStudentSubmissionsAfterDueDate);
         return res;
     }
 
@@ -420,9 +411,10 @@ export class ProgrammingExerciseService {
      * @param exerciseRes
      */
     private processProgrammingExerciseEntityResponse(exerciseRes: EntityResponseType): EntityResponseType {
-        ProgrammingExerciseService.convertDateFromServer(exerciseRes);
+        ProgrammingExerciseService.convertProgrammingExerciseResponseDatesFromServer(exerciseRes);
         ExerciseService.convertExerciseCategoriesFromServer(exerciseRes);
         this.exerciseService.setAccessRightsExerciseEntityResponseType(exerciseRes);
+        this.exerciseService.sendExerciseTitleToTitleService(exerciseRes?.body);
         return exerciseRes;
     }
 
@@ -431,40 +423,10 @@ export class ProgrammingExerciseService {
      * This method and all helper methods are only for testing reason and will be removed later on.
      * @param exerciseId the exercise id
      */
-    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<Task[]> {
+    getTasksAndTestsExtractedFromProblemStatement(exerciseId: number): Observable<ProgrammingExerciseServerSideTask[]> {
         return this.http
             .get(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' })
-            .pipe(map((res: HttpResponse<ProgrammingExerciseTaskServerSide[]>) => this.processServerSideTasks(res)));
-    }
-
-    /**
-     * Map server response to tasks
-     * @param response the server response
-     * @private
-     */
-    private processServerSideTasks(response: HttpResponse<ProgrammingExerciseTaskServerSide[]>): Task[] {
-        return response.body?.map((task: ProgrammingExerciseTaskServerSide) => this.convertServerToClientTask(task)) ?? [];
-    }
-
-    /**
-     * Map server side task representation to client side task representation
-     * @param serverTask the server side representation of a task
-     * @private
-     */
-    private convertServerToClientTask(serverTask: ProgrammingExerciseTaskServerSide): Task {
-        return {
-            id: serverTask.id,
-            taskName: serverTask.taskName,
-            tests: serverTask.testCases.map((testCase: ProgrammingExerciseTestCase) => testCase.testName),
-        } as Task;
-    }
-
-    /**
-     * Delete all tasks and solution entries
-     * @param exerciseId the exercise id
-     */
-    deleteTasksWithSolutionEntries(exerciseId: number): Observable<HttpResponse<void>> {
-        return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/tasks`, { observe: 'response' });
+            .pipe(map((res: HttpResponse<ProgrammingExerciseServerSideTask[]>) => res.body ?? []));
     }
 
     /**
@@ -516,11 +478,23 @@ export class ProgrammingExerciseService {
         );
     }
 
+    getSolutionFileNames(exerciseId: number): Observable<string[]> {
+        return this.http.get<string[]>(`${this.resourceUrl}/${exerciseId}/file-names`);
+    }
+
+    getCodeHintsForExercise(exerciseId: number): Observable<ExerciseHint[]> {
+        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints`);
+    }
+
     createStructuralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
         return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/structural-solution-entries`, null);
     }
 
     createBehavioralSolutionEntries(exerciseId: number): Observable<ProgrammingExerciseSolutionEntry[]> {
         return this.http.post<ProgrammingExerciseSolutionEntry[]>(`${this.resourceUrl}/${exerciseId}/behavioral-solution-entries`, null);
+    }
+
+    getAllTestCases(exerciseId: number): Observable<ProgrammingExerciseTestCase[]> {
+        return this.http.get<ProgrammingExerciseTestCase[]>(`api/programming-exercise/${exerciseId}/test-cases`);
     }
 }

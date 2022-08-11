@@ -107,7 +107,6 @@
             [short]="true"
             class="me-1 my-1"
         ></jhi-result>
-        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" class="me-2"></jhi-exercise-hint-student>
     </ng-template>
     <ng-template #editorSidebar>
         <jhi-assessment-instructions
@@ -119,14 +118,12 @@
     </ng-template>
     <ng-template #editorBottom>
         <div class="row mt-3">
-            <div class="col-md-6">
-                <jhi-unreferenced-feedback
-                    [(feedbacks)]="unreferencedFeedback"
-                    (feedbacksChange)="validateFeedback()"
-                    [readOnly]="readOnly()"
-                    [highlightDifferences]="highlightDifferences"
-                ></jhi-unreferenced-feedback>
-            </div>
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly()"
+                [highlightDifferences]="highlightDifferences"
+            ></jhi-unreferenced-feedback>
         </div>
     </ng-template>
 </ng-template>

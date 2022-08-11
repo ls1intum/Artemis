@@ -1,10 +1,12 @@
-:host {
-    white-space: initial;
-}
-
 .light-button {
     border: 0;
     background-color: transparent;
+    color: var(--navbar-dark-color);
+    transition: color 0.2s;
+}
+
+.light-button:hover {
+    color: var(--bs-body-color);
 }
 
 .notification-overlay {
@@ -16,6 +18,7 @@
     right: 0;
     bottom: 0;
     background-color: var(--notification-sb-overlay-bg);
+
     &.show {
         display: block;
     }
@@ -30,34 +33,50 @@
     z-index: 999;
     transition: 0.3s;
     overflow-y: hidden;
+    color: var(--bs-body-color);
     background-color: var(--notification-sb-background);
     box-shadow: 0 0 20px 0 var(--notification-sb-box-shadow);
+
+    > *:hover {
+        color: var(--bs-body-color);
+    }
+
     &.show {
         right: 0;
         transition: 0.3s;
     }
+
     .header {
         height: 85px;
     }
+
     #notification-sidebar-container {
         height: calc(100vh - 85px);
         overflow-y: auto;
+        overflow-x: hidden;
+
         .notification-item {
             cursor: pointer;
+            white-space: normal;
+
             &:nth-child(even) {
                 background-color: var(--notification-sb-even-child-bg);
             }
+
             &:hover {
                 background-color: var(--notification-sb-hover-child-bg);
             }
+
             h5 {
                 font-size: 1rem;
             }
+
             .info {
                 font-size: 0.8rem;
             }
         }
     }
+
     .no-notifications {
         display: block;
         padding: 20px 16px;

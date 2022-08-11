@@ -25,10 +25,10 @@ describe('ModalConfirmAutofocusComponent', () => {
 
     it('should close modal on close button click', () => {
         const closeButton = fixture.debugElement.query(By.css('.btn-danger'));
-        expect(closeButton).not.toBe(null);
+        expect(closeButton).not.toBeNull();
 
         const closeSpy = jest.spyOn(modal, 'close').mockImplementation();
         closeButton.nativeElement.click();
-        expect(closeSpy).toHaveBeenCalledTimes(1);
+        expect(closeSpy).toHaveBeenCalledOnce();
     });
 });

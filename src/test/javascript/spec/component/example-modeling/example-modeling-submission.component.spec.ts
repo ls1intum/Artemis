@@ -130,7 +130,7 @@ describe('Example Modeling Submission Component', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(comp.isNewSubmission).toBe(true);
+        expect(comp.isNewSubmission).toBeTrue();
         expect(comp.exampleSubmission).toEqual(new ExampleSubmission());
     });
 
@@ -145,10 +145,10 @@ describe('Example Modeling Submission Component', () => {
         comp.upsertExampleModelingSubmission();
 
         // THEN
-        expect(comp.isNewSubmission).toBe(false);
-        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        expect(comp.isNewSubmission).toBeFalse();
+        expect(serviceSpy).toHaveBeenCalledOnce();
 
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
     });
 
@@ -170,7 +170,7 @@ describe('Example Modeling Submission Component', () => {
         comp.upsertExampleModelingSubmission();
 
         // Ensure calls are not concurrent, new one should start after first one ends.
-        expect(serviceSpy).toHaveBeenCalledTimes(1);
+        expect(serviceSpy).toHaveBeenCalledOnce();
         tick(1);
 
         // This service request should also start after the previous one ends.
@@ -178,10 +178,10 @@ describe('Example Modeling Submission Component', () => {
         tick(1);
 
         // THEN
-        expect(comp.isNewSubmission).toBe(false);
+        expect(comp.isNewSubmission).toBeFalse();
         expect(serviceSpy).toHaveBeenCalledTimes(2);
-        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(1);
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(modelingAssessmentServiceSpy).toHaveBeenCalledOnce();
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingEditor.saveSuccessful');
     }));
 
@@ -197,8 +197,8 @@ describe('Example Modeling Submission Component', () => {
         comp.checkAssessment();
 
         // THEN
-        expect(comp.assessmentsAreValid).toBe(true);
-        expect(assessExampleSubmissionSpy).toHaveBeenCalledTimes(1);
+        expect(comp.assessmentsAreValid).toBeTrue();
+        expect(assessExampleSubmissionSpy).toHaveBeenCalledOnce();
         expect(assessExampleSubmissionSpy).toHaveBeenCalledWith(exampleSubmission, exerciseId);
     });
 
@@ -212,7 +212,7 @@ describe('Example Modeling Submission Component', () => {
         comp.checkAssessment();
 
         // THEN
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.modelingAssessment.invalidAssessments');
     });
 
@@ -230,9 +230,9 @@ describe('Example Modeling Submission Component', () => {
         comp.readAndUnderstood();
 
         // THEN
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.exampleSubmission.readSuccessfully');
-        expect(routerSpy).toHaveBeenCalledTimes(1);
+        expect(routerSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle referenced feedback change', () => {
@@ -244,8 +244,8 @@ describe('Example Modeling Submission Component', () => {
         comp.onReferencedFeedbackChanged(feedbacks);
 
         // THEN
-        expect(comp.feedbackChanged).toBe(true);
-        expect(comp.assessmentsAreValid).toBe(true);
+        expect(comp.feedbackChanged).toBeTrue();
+        expect(comp.assessmentsAreValid).toBeTrue();
         expect(comp.referencedFeedback).toEqual(feedbacks);
     });
 
@@ -258,8 +258,8 @@ describe('Example Modeling Submission Component', () => {
         comp.onUnReferencedFeedbackChanged(feedbacks);
 
         // THEN
-        expect(comp.feedbackChanged).toBe(true);
-        expect(comp.assessmentsAreValid).toBe(true);
+        expect(comp.feedbackChanged).toBeTrue();
+        expect(comp.assessmentsAreValid).toBeTrue();
         expect(comp.unreferencedFeedback).toEqual(feedbacks);
     });
 
@@ -274,8 +274,8 @@ describe('Example Modeling Submission Component', () => {
         comp.showSubmission();
 
         // THEN
-        expect(comp.feedbackChanged).toBe(false);
-        expect(comp.assessmentMode).toBe(false);
+        expect(comp.feedbackChanged).toBeFalse();
+        expect(comp.assessmentMode).toBeFalse();
         expect(comp.totalScore).toBe(mockFeedbackWithReference.credits);
     });
 
@@ -290,7 +290,7 @@ describe('Example Modeling Submission Component', () => {
         comp.saveExampleAssessment();
 
         // THEN
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('modelingAssessment.invalidAssessments');
     });
 
@@ -312,7 +312,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(comp.result).toBe(result);
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveSuccessful');
     });
 
@@ -331,8 +331,8 @@ describe('Example Modeling Submission Component', () => {
         comp.saveExampleAssessment();
 
         // THEN
-        expect(comp.result).toBe(undefined);
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(comp.result).toBeUndefined();
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveFailed');
     });
 
@@ -353,7 +353,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(comp.referencedFeedback.every((feedback) => feedback.correctionStatus === 'CORRECT')).toBeTrue();
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledTimes(1);
+        expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
         expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
     });
 
@@ -374,7 +374,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         expect(comp.referencedFeedback[0].correctionStatus).toBe(mockFeedbackCorrectionError.type);
-        expect(resultFeedbacksSetterSpy).toHaveBeenCalledTimes(1);
+        expect(resultFeedbacksSetterSpy).toHaveBeenCalledOnce();
         expect(resultFeedbacksSetterSpy).toHaveBeenCalledWith(comp.referencedFeedback);
     });
 
@@ -394,7 +394,7 @@ describe('Example Modeling Submission Component', () => {
 
         // THEN
         comp.result = result;
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveSuccessful');
     });
 
@@ -412,7 +412,7 @@ describe('Example Modeling Submission Component', () => {
         comp.saveExampleAssessment();
 
         // THEN
-        expect(alertSpy).toHaveBeenCalledTimes(1);
+        expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('modelingAssessmentEditor.messages.saveFailed');
     });
 
@@ -450,8 +450,8 @@ describe('Example Modeling Submission Component', () => {
         comp.showAssessment();
 
         // THEN
-        expect(assessmentSpy).toHaveBeenCalledTimes(1);
-        expect(comp.assessmentMode).toBe(true);
+        expect(assessmentSpy).toHaveBeenCalledOnce();
+        expect(comp.assessmentMode).toBeTrue();
         expect(result.feedbacks).toEqual(comp.assessments);
     });
 });

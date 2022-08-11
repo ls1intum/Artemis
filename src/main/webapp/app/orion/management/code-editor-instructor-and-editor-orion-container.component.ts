@@ -13,7 +13,6 @@ import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.
 import { OrionState } from 'app/shared/orion/orion';
 import { faCircleNotch, faTimesCircle } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 
 @Component({
     selector: 'jhi-code-editor-instructor-orion',
@@ -35,25 +34,13 @@ export class CodeEditorInstructorAndEditorOrionContainerComponent extends CodeEd
         courseExerciseService: CourseExerciseService,
         domainService: DomainService,
         programmingExerciseParticipationService: ProgrammingExerciseParticipationService,
-        exerciseHintService: ExerciseHintService,
         location: Location,
         participationService: ParticipationService,
         translateService: TranslateService,
         route: ActivatedRoute,
         alertService: AlertService,
     ) {
-        super(
-            router,
-            exerciseService,
-            courseExerciseService,
-            domainService,
-            programmingExerciseParticipationService,
-            exerciseHintService,
-            location,
-            participationService,
-            route,
-            alertService,
-        );
+        super(router, exerciseService, courseExerciseService, domainService, programmingExerciseParticipationService, location, participationService, route, alertService);
     }
 
     /**

@@ -8,7 +8,23 @@ import { of, take } from 'rxjs';
 import { ArtemisTestModule } from '../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
-import { getExerciseGroups } from '../component/exam/manage/exams/exam-checklist.component.spec';
+
+function getExerciseGroups(equalPoints: boolean) {
+    const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
+    const exerciseGroups = [
+        {
+            id: 1,
+            exercises: [
+                { id: 3, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+                { id: 2, maxPoints: 100, numberOfAssessmentsOfCorrectionRounds: dueDateStatArray, studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false },
+            ],
+        },
+    ];
+    if (!equalPoints) {
+        exerciseGroups[0].exercises[0].maxPoints = 50;
+    }
+    return exerciseGroups;
+}
 
 describe('ExamChecklistService', () => {
     let service: ExamChecklistService;
@@ -17,6 +33,7 @@ describe('ExamChecklistService', () => {
     let examManagementService: ExamManagementService;
 
     let result: boolean;
+    let numericResult: number;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -45,19 +62,19 @@ describe('ExamChecklistService', () => {
     it('should indicate correctly whether all exercises are generated', () => {
         result = service.checkAllExamsGenerated(exam, examChecklist);
 
-        expect(result).toBe(false);
+        expect(result).toBeFalse();
 
         examChecklist.numberOfGeneratedStudentExams = 2;
 
         result = service.checkAllExamsGenerated(exam, examChecklist);
 
-        expect(result).toBe(false);
+        expect(result).toBeFalse();
 
         examChecklist.numberOfGeneratedStudentExams = 3;
 
         result = service.checkAllExamsGenerated(exam, examChecklist);
 
-        expect(result).toBe(true);
+        expect(result).toBeTrue();
     });
 
     it('should return exam statistics correctly', () => {
@@ -68,7 +85,7 @@ describe('ExamChecklistService', () => {
             .pipe(take(1))
             .subscribe((checklist) => expect(checklist).toEqual(examChecklist));
 
-        expect(getExamStatisticsStub).toHaveBeenCalledTimes(1);
+        expect(getExamStatisticsStub).toHaveBeenCalledOnce();
         expect(getExamStatisticsStub).toHaveBeenCalledWith(2, 1);
     });
 
@@ -78,7 +95,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkTotalPointsMandatory(false, exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if exam points can be reached by mandatory points', () => {
@@ -87,7 +104,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkTotalPointsMandatory(true, exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return to true if exam points can be reached by optional points', () => {
@@ -95,7 +112,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkTotalPointsMandatory(true, exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should set totalPointsMandatoryOptional to false if exam points cannot be reached by mandatory points + optional points', () => {
@@ -104,7 +121,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkTotalPointsMandatory(true, exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
     });
 
@@ -114,21 +131,21 @@ describe('ExamChecklistService', () => {
 
             result = service.checkPointsExercisesEqual(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
         it('should return checkPointsExercisesEqual as true if max points equal in each exercise group', () => {
             exam.exerciseGroups = getExerciseGroups(true);
 
             result = service.checkPointsExercisesEqual(exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
         it('should return checkPointsExercisesEqual as false if max points do not equal in each exercise group', () => {
             exam.exerciseGroups = getExerciseGroups(false);
 
             result = service.checkPointsExercisesEqual(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
     });
 
@@ -138,7 +155,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkEachGroupContainsExercise(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return true if every exercise group contains at least one exercise', () => {
@@ -146,7 +163,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkEachGroupContainsExercise(exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return false if an exercise group does not contain exercises', () => {
@@ -154,7 +171,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkEachGroupContainsExercise(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
     });
 
@@ -164,7 +181,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkAtLeastOneExerciseGroup(exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return false if no exercise groups exist', () => {
@@ -172,7 +189,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkAtLeastOneExerciseGroup(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
     });
 
@@ -186,13 +203,13 @@ describe('ExamChecklistService', () => {
             exam.exerciseGroups![0].isMandatory = true;
             result = service.checkNumberOfExerciseGroups(exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return true if number of mandatory exercise groups is smaller than number of exam exercises', () => {
             result = service.checkNumberOfExerciseGroups(exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return false if number of mandatory exercise groups is greater than number of exam exercises', () => {
@@ -213,7 +230,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkNumberOfExerciseGroups(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
 
         it('should return false if number of exam exercises is greater than number of exercise groups', () => {
@@ -221,7 +238,7 @@ describe('ExamChecklistService', () => {
 
             result = service.checkNumberOfExerciseGroups(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
         });
     });
 
@@ -229,7 +246,7 @@ describe('ExamChecklistService', () => {
         it('should return true if at least one student is registered', () => {
             result = service.checkAtLeastOneRegisteredStudent(exam);
 
-            expect(result).toBe(true);
+            expect(result).toBeTrue();
         });
 
         it('should return false if no student is registered', () => {
@@ -237,7 +254,34 @@ describe('ExamChecklistService', () => {
 
             result = service.checkAtLeastOneRegisteredStudent(exam);
 
-            expect(result).toBe(false);
+            expect(result).toBeFalse();
+        });
+    });
+
+    describe('test calculateExercisePoints', () => {
+        it('should return 0 if max points do not equal within an exercise group', () => {
+            exam.exerciseGroups = getExerciseGroups(false);
+
+            numericResult = service.calculateExercisePoints(false, exam);
+
+            expect(numericResult).toBe(0);
+        });
+
+        it('should return 100 for the exam points with equal points within one exercise group with mandatory exercises', () => {
+            exam.exerciseGroups = getExerciseGroups(true);
+            exam.exerciseGroups[0].isMandatory = true;
+
+            numericResult = service.calculateExercisePoints(true, exam);
+
+            expect(numericResult).toBe(100);
+        });
+
+        it('should return 100 for the exam points with equal points within one exercise group with optional exercises', () => {
+            exam.exerciseGroups = getExerciseGroups(true);
+
+            numericResult = service.calculateExercisePoints(true, exam);
+
+            expect(numericResult).toBe(100);
         });
     });
 });

@@ -46,7 +46,7 @@ export class CourseManagementRequests {
 
     /**
      * Creates a course with the specified title and short name.
-     * @param customizeGroups whether the predefined groups should be used (so we dont have to wait more than a minute between course and programming exercise creation)
+     * @param customizeGroups whether the predefined groups should be used (so we don't have to wait more than a minute between course and programming exercise creation)
      * @param courseName the title of the course (will generate default name if not provided)
      * @param courseShortName the short name (will generate default name if not provided)
      * @param start the start date of the course (default: now() - 2 hours)
@@ -82,7 +82,7 @@ export class CourseManagementRequests {
     }
 
     /**
-     * Creates a course with the specified title and short name.
+     * Creates a programming exercise with the specified title and other data.
      * @param body an object containing either the course or exercise group the exercise will be added to
      * @param scaMaxPenalty? the max percentage (0-100) static code analysis can reduce from the points (if sca should be disabled pass null)
      * @param recordTestwiseCoverage enable testwise coverage analysis for this exercise (default is false)
@@ -180,12 +180,12 @@ export class CourseManagementRequests {
 
     /**
      * Adds the specified student to the course.
-     * @param courseId the course id
-     * @param studentName the student name
+     * @param course the course
+     * @param student the student
      * @returns <Chainable> request response
      */
-    addStudentToCourse(courseId: number, studentName: string) {
-        return this.addUserToCourse(courseId, studentName, 'students');
+    addStudentToCourse(course: Course, user: CypressCredentials) {
+        return this.addUserToCourse(course.id!, user.username, 'students');
     }
 
     /**
@@ -198,8 +198,8 @@ export class CourseManagementRequests {
     /**
      * Adds the specified user to the instructor group in the course
      */
-    addInstructorToCourse(courseId: number, user: CypressCredentials) {
-        return this.addUserToCourse(courseId, user.username, 'instructors');
+    addInstructorToCourse(course: Course, user: CypressCredentials) {
+        return this.addUserToCourse(course.id!, user.username, 'instructors');
     }
 
     private addUserToCourse(courseId: number, username: string, roleIdentifier: string) {
@@ -406,7 +406,7 @@ export class CourseManagementRequests {
             {
                 ...multipleChoiceSubmissionTemplate.submittedAnswers[0],
                 quizQuestion: quizExercise.quizQuestions![0],
-                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option].body),
+                selectedOptions: tickOptions.map((option) => quizExercise.quizQuestions[0].answerOptions[option]),
             },
         ];
         const multipleChoiceSubmission = {

@@ -97,8 +97,8 @@ describe('EditTextUnitComponent', () => {
         const textUnitFormStubComponent: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
 
         editTextUnitComponentFixture.detectChanges();
-        editTextUnitComponentFixture.whenStable().then(() => {
-            expect(findByIdStub).toHaveBeenCalledTimes(1);
+        return editTextUnitComponentFixture.whenStable().then(() => {
+            expect(findByIdStub).toHaveBeenCalledOnce();
             expect(editTextUnitComponent.formData.name).toEqual(originalTextUnit.name);
             expect(editTextUnitComponent.formData.releaseDate).toEqual(originalTextUnit.releaseDate);
             expect(editTextUnitComponent.formData.content).toEqual(originalTextUnit.content);
@@ -147,10 +147,10 @@ describe('EditTextUnitComponent', () => {
         const textUnitForm: TextUnitFormStubComponent = editTextUnitComponentFixture.debugElement.query(By.directive(TextUnitFormStubComponent)).componentInstance;
         textUnitForm.formSubmitted.emit(formDate);
 
-        editTextUnitComponentFixture.whenStable().then(() => {
-            expect(findByIdStub).toHaveBeenCalledTimes(1);
-            expect(updatedStub).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+        return editTextUnitComponentFixture.whenStable().then(() => {
+            expect(findByIdStub).toHaveBeenCalledOnce();
+            expect(updatedStub).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
             navigateSpy.mockRestore();
         });
     }));

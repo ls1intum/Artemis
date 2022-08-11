@@ -36,8 +36,8 @@ describe('FullscreenCommand', () => {
         comp.ngAfterViewInit();
 
         command.execute();
-        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledTimes(1);
-        expect(FullscreenUtil.enterFullscreen).toHaveBeenCalledTimes(1);
+        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledOnce();
+        expect(FullscreenUtil.enterFullscreen).toHaveBeenCalledOnce();
     });
 
     it('should disable fullscreen on execute', () => {
@@ -50,7 +50,7 @@ describe('FullscreenCommand', () => {
         comp.ngAfterViewInit();
 
         command.execute();
-        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledTimes(1);
-        expect(FullscreenUtil.exitFullscreen).toHaveBeenCalledTimes(1);
+        expect(FullscreenUtil.isFullScreen).toHaveBeenCalledOnce();
+        expect(FullscreenUtil.exitFullscreen).toHaveBeenCalledOnce();
     });
 });

@@ -20,6 +20,7 @@ import org.eclipse.jgit.api.errors.GitAPIException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -152,14 +153,16 @@ public class ProgrammingExerciseService {
      *
      * @param programmingExercise The programmingExercise that should be setup
      * @return The new setup exercise
-     * @throws GitAPIException      If something during the communication with the remote Git repository went wrong
-     * @throws IOException          If the template files couldn't be read
+     * @throws GitAPIException If something during the communication with the remote Git repository went wrong
+     * @throws IOException If the template files couldn't be read
      */
-    @Transactional // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
+    @Transactional
+    // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
         final User exerciseCreator = userRepository.getUser();
 
+        programmingExercise.setBranch(versionControlService.get().getDefaultBranchOfArtemis());
         createRepositoriesForNewExercise(programmingExercise);
         initParticipations(programmingExercise);
         setURLsAndBuildPlanIDsForNewExercise(programmingExercise);
@@ -359,8 +362,8 @@ public class ProgrammingExerciseService {
                     exerciseCreator);
             // The template repo can be re-written, so we can unprotect the default branch.
             var templateVcsRepositoryUrl = programmingExercise.getVcsTemplateRepositoryUrl();
-            String templateVcsRepositoryDefaultBranch = versionControlService.get().getDefaultBranchOfRepository(templateVcsRepositoryUrl);
-            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateVcsRepositoryDefaultBranch);
+            String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
+            versionControlService.get().unprotectBranch(templateVcsRepositoryUrl, templateBranch);
 
             setupTemplateAndPush(solutionRepo, solutionResources, solutionPrefix, projectTypeSolutionResources, projectTypeSolutionPrefix, "Solution", programmingExercise,
                     exerciseCreator);
@@ -469,7 +472,7 @@ public class ProgrammingExerciseService {
      * @param templateName         The name of the template
      * @param programmingExercise  the programming exercise
      * @param user                 The user that triggered the action (used as Git commit author)
-     * @throws Exception           An exception in case something went wrong
+     * @throws Exception An exception in case something went wrong
      */
     private void setupTemplateAndPush(Repository repository, Resource[] resources, String prefix, @Nullable Resource[] projectTypeResources, String projectTypePrefix,
             String templateName, ProgrammingExercise programmingExercise, User user) throws Exception {
@@ -566,7 +569,7 @@ public class ProgrammingExerciseService {
 
                     try {
                         Resource[] projectTypeTestFileResources = resourceLoaderService.getResources(projectTypeTemplatePath);
-                        // filter non existing resources to avoid exceptions
+                        // filter non-existing resources to avoid exceptions
                         List<Resource> existingProjectTypeTestFileResources = new ArrayList<>();
                         for (Resource resource : projectTypeTestFileResources) {
                             if (resource.exists()) {
@@ -721,8 +724,9 @@ public class ProgrammingExerciseService {
 
     /**
      * Updates the timeline attributes of the given programming exercise
+     *
      * @param updatedProgrammingExercise containing the changes that have to be saved
-     * @param notificationText optional text for a notification to all students about the update
+     * @param notificationText           optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      */
     public ProgrammingExercise updateTimeline(ProgrammingExercise updatedProgrammingExercise, @Nullable String notificationText) {
@@ -738,6 +742,10 @@ public class ProgrammingExerciseService {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(updatedProgrammingExercise.getBuildAndTestStudentSubmissionsAfterDueDate());
         programmingExercise.setAssessmentType(updatedProgrammingExercise.getAssessmentType());
         programmingExercise.setAssessmentDueDate(updatedProgrammingExercise.getAssessmentDueDate());
+        programmingExercise.setExampleSolutionPublicationDate(updatedProgrammingExercise.getExampleSolutionPublicationDate());
+
+        programmingExercise.validateDates();
+
         ProgrammingExercise savedProgrammingExercise = programmingExerciseRepository.save(programmingExercise);
 
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(programmingExerciseBeforeUpdate, savedProgrammingExercise, notificationText,
@@ -749,9 +757,9 @@ public class ProgrammingExerciseService {
     /**
      * Updates the problem statement of the given programming exercise.
      *
-     * @param programmingExercise   The ProgrammingExercise of which the problem statement is updated.
-     * @param problemStatement      markdown of the problem statement.
-     * @param notificationText      optional text for a notification to all students about the update
+     * @param programmingExercise The ProgrammingExercise of which the problem statement is updated.
+     * @param problemStatement    markdown of the problem statement.
+     * @param notificationText    optional text for a notification to all students about the update
      * @return the updated ProgrammingExercise object.
      * @throws EntityNotFoundException if there is no ProgrammingExercise for the given id.
      */
@@ -778,8 +786,8 @@ public class ProgrammingExerciseService {
      * @param testsPath       The path to the tests' folder, e.g. the path inside the repository where the structure oracle file will be saved in.
      * @param user            The user who has initiated the action
      * @return True, if the structure oracle was successfully generated or updated, false if no changes to the file were made.
-     * @throws IOException          If the URLs cannot be converted to actual {@link Path paths}
-     * @throws GitAPIException      If the checkout fails
+     * @throws IOException If the URLs cannot be converted to actual {@link Path paths}
+     * @throws GitAPIException If the checkout fails
      */
     public boolean generateStructureOracleFile(VcsRepositoryUrl solutionRepoURL, VcsRepositoryUrl exerciseRepoURL, VcsRepositoryUrl testRepoURL, String testsPath, User user)
             throws IOException, GitAPIException {
@@ -909,7 +917,6 @@ public class ProgrammingExerciseService {
         }
 
         programmingExerciseGitDiffReportRepository.deleteByProgrammingExerciseId(programmingExerciseId);
-        programmingExercise.setGitDiffReport(null);
 
         SolutionProgrammingExerciseParticipation solutionProgrammingExerciseParticipation = programmingExercise.getSolutionParticipation();
         TemplateProgrammingExerciseParticipation templateProgrammingExerciseParticipation = programmingExercise.getTemplateParticipation();
@@ -938,19 +945,39 @@ public class ProgrammingExerciseService {
      * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
      * have to send hundreds/thousands of exercises if there are that many in Artemis.
      *
-     * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available exercises
+     * @param search         The search query defining the search term and the size of the returned page
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param user           The user for whom to fetch all available exercises
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
-    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+    public SearchResultPageDTO<ProgrammingExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+            final User user) {
         final var pageable = PageUtil.createExercisePageRequest(search);
         final var searchTerm = search.getSearchTerm();
-
-        final var exercisePage = authCheckService.isAdmin(user)
-                ? programmingExerciseRepository.findByTitleIgnoreCaseContainingAndShortNameNotNullOrCourse_TitleIgnoreCaseContainingAndShortNameNotNull(searchTerm, searchTerm,
-                        pageable)
-                : programmingExerciseRepository.findByTitleInExerciseOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
-
+        Page<ProgrammingExercise> exercisePage = Page.empty();
+        if (authCheckService.isAdmin(user)) {
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
+            }
+        }
+        else {
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = programmingExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+        }
         return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 
@@ -1012,11 +1039,32 @@ public class ProgrammingExerciseService {
             var errorMessageVcs = "Project already exists on the Version Control Server: " + projectName + ". Please choose a different title and short name!";
             throw new BadRequestAlertException(errorMessageVcs, "ProgrammingExercise", "vcsProjectExists");
         }
-
         String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
         if (errorMessageCis != null) {
             throw new BadRequestAlertException(errorMessageCis, "ProgrammingExercise", "ciProjectExists");
         }
+        // means the project does not exist in version control server and does not exist in continuous integration server
+    }
+
+    /**
+     * Pre-Checks if a project with the same ProjectKey or ProjectName already exists in the version control system (VCS) and in the continuous integration system (CIS).
+     * The check is done based on a generated project key (course short name + exercise short name) and the project name (course short name + exercise title).
+     *
+     * @param programmingExercise a typically new programming exercise for which the corresponding VCS and CIS projects should not yet exist.
+     * @param courseShortName the shortName of the course the programming exercise should be imported in
+     * @return TRUE if a project with the same ProjectKey or ProjectName already exists, otherwise false
+     */
+    public boolean preCheckProjectExistsOnVCSOrCI(ProgrammingExercise programmingExercise, String courseShortName) {
+        String projectKey = courseShortName + programmingExercise.getShortName().toUpperCase().replaceAll("\\s+", "");
+        String projectName = courseShortName + " " + programmingExercise.getTitle();
+        log.debug("Project Key: " + projectKey);
+        log.debug("Project Name: " + projectName);
+        boolean projectExists = versionControlService.get().checkIfProjectExists(projectKey, projectName);
+        if (projectExists) {
+            return true;
+        }
+        String errorMessageCis = continuousIntegrationService.get().checkIfProjectExists(projectKey, projectName);
+        return errorMessageCis != null;
         // means the project does not exist in version control server and does not exist in continuous integration server
     }
 

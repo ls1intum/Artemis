@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { TranslateModule } from '@ngx-translate/core';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -64,7 +64,7 @@ describe('ParticipantScoresTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).toEqual(13);
+        expect(cellElements).toHaveLength(13);
         expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreDTO.id.toString());
         expect(cellElements[1].nativeElement.innerHTML).toContain(participantScoreDTO.userId.toString());
         expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreDTO.userName);

@@ -4,7 +4,6 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,11 +86,11 @@ public class ScoreService {
 
         if (associatedParticipantScore.getLastResult() == null && associatedParticipantScore.getLastRatedResult() == null) {
             participantScoreRepository.deleteById(associatedParticipantScore.getId());
-            logger.info("Deleted an existing participant score: " + originalParticipantScoreStructure);
+            logger.info("Deleted an existing participant score: {}", originalParticipantScoreStructure);
         }
         else {
             ParticipantScore updatedParticipantScore = participantScoreRepository.saveAndFlush(associatedParticipantScore);
-            logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + updatedParticipantScore);
+            logger.debug("Updated an existing participant score. Was: {}. Is: {}", originalParticipantScoreStructure, updatedParticipantScore);
         }
     }
 
@@ -222,7 +221,7 @@ public class ScoreService {
             setLastRatedAttributes(newStudentScore, newResult, exercise);
         }
         StudentScore studentScore = studentScoreRepository.saveAndFlush(newStudentScore);
-        logger.info("Saved a new student score: " + studentScore);
+        logger.info("Saved a new student score: {}", studentScore);
     }
 
     private void createNewTeamScore(Result newResult, StudentParticipation studentParticipation, Exercise exercise) {
@@ -234,7 +233,7 @@ public class ScoreService {
             setLastRatedAttributes(newTeamScore, newResult, exercise);
         }
         TeamScore teamScore = teamScoreRepository.saveAndFlush(newTeamScore);
-        logger.info("Saved a new team score: " + teamScore);
+        logger.info("Saved a new team score: {}", teamScore);
     }
 
     /**
@@ -262,7 +261,7 @@ public class ScoreService {
             setLastRatedAttributes(participantScore, null, exercise);
         }
         participantScoreRepository.saveAndFlush(participantScore);
-        logger.info("Updated an existing participant score. Was: " + originalParticipantScoreStructure + ". Is: " + participantScore);
+        logger.debug("Updated an existing participant score. Was: {}. Is: {}", originalParticipantScoreStructure, participantScore);
     }
 
     /**
@@ -277,13 +276,13 @@ public class ScoreService {
             StudentScore studentScore = (StudentScore) participantScore;
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastResult().equals(r)).toList();
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !participantScore.getLastResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastResult().equals(r)).toList();
         }
         // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
@@ -302,13 +301,13 @@ public class ScoreService {
             StudentScore studentScore = (StudentScore) participantScore;
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).toList();
         }
         else {
             TeamScore teamScore = (TeamScore) participantScore;
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).collect(Collectors.toList());
+                    .filter(r -> !participantScore.getLastRatedResult().equals(r)).toList();
         }
         // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));

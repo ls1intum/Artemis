@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/cor
 import { HttpResponse } from '@angular/common/http';
 import { ActivatedRoute, Router, RouterState } from '@angular/router';
 import { of, Subject } from 'rxjs';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, NgForm, NgModel } from '@angular/forms';
 
 import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
@@ -16,7 +16,6 @@ import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 import { Organization } from 'app/entities/organization.model';
 import { OrganizationSelectorComponent } from 'app/shared/organization-selector/organization-selector.component';
-import { NgForm, NgModel } from '@angular/forms';
 import { MockDirective, MockModule } from 'ng-mocks';
 import { MockTranslateService, TranslatePipeMock } from '../../helpers/mocks/service/mock-translate.service';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -24,6 +23,7 @@ import { MatChipInputEvent, MatChipsModule } from '@angular/material/chips';
 import { TranslateService } from '@ngx-translate/core';
 import { MockRouter } from '../../helpers/mocks/mock-router';
 import { Title } from '@angular/platform-browser';
+import * as Sentry from '@sentry/browser';
 
 import { LANGUAGES } from 'app/core/language/language.constants';
 
@@ -38,13 +38,7 @@ describe('User Management Update Component', () => {
     } as any as ActivatedRoute;
     const route = { parent: parentRoute } as any as ActivatedRoute;
 
-    const mockRouterState = {
-        routerState: {
-            snapshot: {
-                root: { firstChild: {}, data: {} },
-            },
-        } as RouterState,
-    };
+    let mockRouterState: RouterState;
 
     let modalService: NgbModal;
     let translateService: TranslateService;
@@ -73,6 +67,11 @@ describe('User Management Update Component', () => {
                 modalService = TestBed.inject(NgbModal);
                 titleService = TestBed.inject(Title);
                 translateService = TestBed.inject(TranslateService);
+                mockRouterState = {
+                    snapshot: {
+                        root: { firstChild: {}, data: {} },
+                    },
+                } as RouterState;
             });
     });
 
@@ -108,7 +107,7 @@ describe('User Management Update Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(getAllSpy).toHaveBeenCalledTimes(1);
+                expect(getAllSpy).toHaveBeenCalledOnce();
                 expect(comp.languages).toEqual(LANGUAGES);
             }),
         ));
@@ -118,7 +117,7 @@ describe('User Management Update Component', () => {
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
-                routerMock.setRouterState(mockRouterState.routerState);
+                routerMock.setRouterState(mockRouterState);
 
                 // WHEN
                 translateService.use('en');
@@ -128,12 +127,39 @@ describe('User Management Update Component', () => {
             }),
         ));
 
+        it('should set page title based on router snapshot', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+                mockRouterState.snapshot.root.data = { pageTitle: 'parent.page.test' };
+                mockRouterState.snapshot.root.firstChild!.data = { pageTitle: 'child.page.test' };
+                routerMock.setRouterState(mockRouterState);
+
+                const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
+                const getPageTitleSpy = jest.spyOn(languageHelper, 'getPageTitle');
+                const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
+
+                // WHEN
+                translateService.use('en');
+
+                // THEN
+                expect(updateTitleSpy).toHaveBeenCalledOnce();
+                expect(getPageTitleSpy).toHaveBeenCalledTimes(2);
+                expect(getPageTitleSpy).toHaveBeenNthCalledWith(1, mockRouterState.snapshot.root);
+                expect(getPageTitleSpy).toHaveBeenNthCalledWith(2, mockRouterState.snapshot.root.firstChild);
+                expect(getPageTitleSpy).toHaveLastReturnedWith('child.page.test');
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledOnce();
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('child.page.test');
+            }),
+        ));
+
         it('should set page title to default', inject(
             [JhiLanguageHelper],
             fakeAsync((languageHelper: JhiLanguageHelper) => {
                 // GIVEN
                 const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
-                routerMock.setRouterState(mockRouterState.routerState);
+                routerMock.setRouterState(mockRouterState);
 
                 const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
                 const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
@@ -142,9 +168,34 @@ describe('User Management Update Component', () => {
                 translateService.use('en');
 
                 // THEN
-                expect(updateTitleSpy).toHaveBeenCalledTimes(1);
-                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledTimes(1);
-                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('artemisApp');
+                expect(updateTitleSpy).toHaveBeenCalledOnce();
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledOnce();
+                expect(setTitleOnTitleServiceSpy).toHaveBeenCalledWith('global.title');
+            }),
+        ));
+
+        it('should capture exception if title translation not found', inject(
+            [JhiLanguageHelper],
+            fakeAsync((languageHelper: JhiLanguageHelper) => {
+                // GIVEN
+                const routerMock: MockRouter = TestBed.inject<MockRouter>(Router as any);
+                routerMock.setRouterState(mockRouterState);
+
+                const updateTitleSpy = jest.spyOn(languageHelper, 'updateTitle');
+                const getTranslationSpy = jest.spyOn(translateService, 'get').mockReturnValue(of(undefined));
+                const setTitleOnTitleServiceSpy = jest.spyOn(titleService, 'setTitle');
+                const captureExceptionSpy = jest.spyOn(Sentry, 'captureException');
+
+                // WHEN
+                translateService.use('en');
+
+                // THEN
+                expect(updateTitleSpy).toHaveBeenCalledOnce();
+                expect(getTranslationSpy).toHaveBeenCalledOnce();
+                expect(getTranslationSpy).toHaveBeenCalledWith('global.title');
+                expect(captureExceptionSpy).toHaveBeenCalledOnce();
+                expect(captureExceptionSpy).toHaveBeenCalledWith(new Error("Translation key 'global.title' for page title not found"));
+                expect(setTitleOnTitleServiceSpy).not.toHaveBeenCalled();
             }),
         ));
     });
@@ -170,7 +221,7 @@ describe('User Management Update Component', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }),
         ));
 
@@ -187,7 +238,7 @@ describe('User Management Update Component', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }),
         ));
     });
@@ -196,13 +247,13 @@ describe('User Management Update Component', () => {
         comp.isSaving = true;
         // @ts-ignore
         comp.onSaveError();
-        expect(comp.isSaving).toBe(false);
+        expect(comp.isSaving).toBeFalse();
     });
 
     it('should set password to undefined if random password should be used', () => {
         comp.user = { password: 'abc' } as User;
         comp.shouldRandomizePassword(true);
-        expect(comp.user.password).toBe(undefined);
+        expect(comp.user.password).toBeUndefined();
 
         comp.shouldRandomizePassword(false);
         expect(comp.user.password).toBe('');
@@ -221,7 +272,7 @@ describe('User Management Update Component', () => {
 
         comp.openOrganizationsModal();
 
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledOnce();
         expect(openSpy).toHaveBeenCalledWith(OrganizationSelectorComponent, { size: 'xl', backdrop: 'static' });
         expect(modalRef.componentInstance.organizations).toBe(orgs);
 
@@ -252,8 +303,8 @@ describe('User Management Update Component', () => {
         comp.onGroupAdd(comp.user, event);
 
         expect(comp.user.groups).toEqual([newGroup]);
-        expect(event.chipInput!.clear).toHaveBeenCalledTimes(1);
-        expect(groupCtrlSetValueSpy).toHaveBeenCalledTimes(1);
+        expect(event.chipInput!.clear).toHaveBeenCalledOnce();
+        expect(groupCtrlSetValueSpy).toHaveBeenCalledOnce();
         expect(groupCtrlSetValueSpy).toHaveBeenCalledWith(null);
     });
 });

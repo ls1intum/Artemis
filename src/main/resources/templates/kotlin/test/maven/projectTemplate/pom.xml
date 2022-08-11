@@ -3,16 +3,17 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>${packageName}</groupId>
     <artifactId>${exerciseNamePomXml}-Tests</artifactId>
-    %non-sequential-start%
+    <!--%non-sequential-start%-->
     <packaging>jar</packaging>
-    %non-sequential-stop%
-    %sequential-start%
+    <!--%non-sequential-stop%-->
+    <!--%sequential-start%-->
     <packaging>pom</packaging>
-    %sequential-stop%
+    <!--%sequential-stop%-->
     <version>1.0</version>
     <name>${exerciseName} Tests</name>
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <argLine>-Dfile.encoding=UTF-8</argLine>
         <kotlin.version>1.6.10</kotlin.version>
 	</properties>
     <dependencies>
@@ -20,7 +21,7 @@
             <!-- Comes with JUnit 5, AssertJ and Hamcrest. JUnit 4 (JUnit 5 Vintage) or jqwik need to be added explicitly -->
             <groupId>de.tum.in.ase</groupId>
             <artifactId>artemis-java-test-sandbox</artifactId>
-            <version>1.9.2</version>
+            <version>1.10.1</version>
         </dependency>
         <dependency>
             <groupId>org.jetbrains.kotlin</groupId>
@@ -36,22 +37,19 @@
     </dependencies>
     <build>
         <sourceDirectory>${project.basedir}${studentWorkingDirectory}</sourceDirectory>
-        %non-sequential-start%
+        <!--%non-sequential-start%-->
         <testSourceDirectory>${project.basedir}/test</testSourceDirectory>
         <testResources>
             <testResource>
                 <directory>${project.basedir}/test</directory>
             </testResource>
         </testResources>
-        %non-sequential-stop%
+        <!--%non-sequential-stop%-->
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.0.0-M5</version>
-                <configuration>
-                    <argLine>-Dfile.encoding=UTF-8</argLine>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.jetbrains.kotlin</groupId>
@@ -138,6 +136,14 @@
                                 <file>${project.build.outputDirectory}/sun/</file>
                                 <file>${project.build.outputDirectory}/org/gradle/</file>
                                 <file>${project.build.outputDirectory}/worker/org/gradle/</file>
+                                <!--%record-testwise-coverage-start%-->
+                                <file>${project.build.outputDirectory}/com/squareup/</file>
+                                <file>${project.build.outputDirectory}/com/teamscale/</file>
+                                <file>${project.build.outputDirectory}/okhttp3/</file>
+                                <file>${project.build.outputDirectory}/okio/</file>
+                                <file>${project.build.outputDirectory}/retrofit2/</file>
+                                <file>${project.build.outputDirectory}/shadow/</file>
+                                <!--%record-testwise-coverage-stop%-->
                             </files>
                         </requireFilesDontExist>
                     </rules>
@@ -145,4 +151,54 @@
             </plugin>
         </plugins>
     </build>
+    <!--%record-testwise-coverage-start%-->
+    <profiles>
+        <profile>
+            <id>coverage</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-surefire-plugin</artifactId>
+                        <version>3.0.0-M5</version>
+                        <configuration>
+                            <systemPropertyVariables>
+                                <ares.security.trustedpackages>okhttp3,com.teamscale,retrofit2,shadow,com.squareup,okio</ares.security.trustedpackages>
+                            </systemPropertyVariables>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>com.teamscale</groupId>
+                                <artifactId>teamscale-surefire-provider</artifactId>
+                                <version>24.1.1</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                    <plugin>
+                        <groupId>com.teamscale</groupId>
+                        <artifactId>teamscale-maven-plugin</artifactId>
+                        <version>24.1.1</version>
+                        <configuration>
+                            <teamscaleUrl>http://localhost</teamscaleUrl>
+                            <accessToken>dummy</accessToken>
+                            <projectId>${exerciseNamePomXml}-Tests</projectId>
+                            <username>dummy</username>
+                            <partition>testwise</partition>
+                            <includes>
+                                <include>*${packageName}*</include>
+                            </includes>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-tia-unit-test</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+    <!--%record-testwise-coverage-stop%-->
 </project>

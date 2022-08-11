@@ -30,7 +30,7 @@ import de.tum.in.www1.artemis.repository.ParticipationRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ExerciseRepository exerciseRepository;
@@ -59,19 +59,19 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
     private Course course1 = new Course();
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @BeforeEach
-    public void init() {
+    void init() {
         database.addUsers(2, 2, 0, 1);
         course1 = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course1.setRegistrationEnabled(true);
         courseRepository.save(course1);
     }
 
-    public TextExercise createTextExerciseWithSGI(Course course) {
+    private TextExercise createTextExerciseWithSGI(Course course) {
         TextExercise textExercise = ModelFactory.generateTextExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, course);
         textExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(textExercise);
@@ -81,7 +81,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         return textExercise;
     }
 
-    public ModelingExercise createModelingExerciseWithSGI(Course course) {
+    private ModelingExercise createModelingExerciseWithSGI(Course course) {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(modelingExercise);
@@ -91,7 +91,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         return modelingExercise;
     }
 
-    public FileUploadExercise createFileuploadExerciseWithSGI(Course course) {
+    private FileUploadExercise createFileuploadExerciseWithSGI(Course course) {
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, "png", course);
         fileUploadExercise.setMaxPoints(7.0);
         database.addGradingInstructionsToExercise(fileUploadExercise);
@@ -101,7 +101,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         return fileUploadExercise;
     }
 
-    public List<Feedback> createFeedback(Exercise exercise) {
+    private List<Feedback> createFeedback(Exercise exercise) {
 
         var gradingInstructionNoLimit = exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0);
         var gradingInstructionLimited = exercise.getGradingCriteria().get(1).getStructuredGradingInstructions().get(0);
@@ -149,7 +149,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createFileUploadSubmissionAndCalculateScore() {
+    void createFileUploadSubmissionAndCalculateScore() {
         FileUploadExercise exercise = createFileuploadExerciseWithSGI(course1);
         Submission submissionWithoutResult = new FileUploadSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
@@ -166,12 +166,12 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
-        assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+        assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createTextExerciseSubmissionAndCalculateScore() {
+    void createTextExerciseSubmissionAndCalculateScore() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
@@ -188,12 +188,12 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
-        assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+        assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void createModelingExerciseSubmissionAndCalculateScore() {
+    void createModelingExerciseSubmissionAndCalculateScore() {
         ModelingExercise exercise = createModelingExerciseWithSGI(course1);
         Submission submissionWithoutResult = new ModelingSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp.plusMinutes(3L));
@@ -210,13 +210,13 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
         resultRepository.submitResult(result, exercise, exerciseDateService.getDueDate(result.getParticipation()));
         resultRepository.save(result);
 
-        assertThat(result.getResultString()).isEqualTo("6 of 7 points");
+        assertThat(result.getScore()).isEqualTo(85.7); // 85.7 = 6/7 * 100
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
     @ValueSource(booleans = { true, false })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {
+    void testRatedAfterSubmitResultWithDueDateEqualsSubmissionDateOfResult(boolean isDueDateIndividual) {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         // comparison of dates including nanos would make this test flaky
@@ -254,7 +254,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testNotRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
+    void testNotRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(futureFutureTimestamp);
@@ -276,7 +276,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
+    void testRatedAfterSubmitResultWithDueDateBeforeSubmissionDateOfResult() {
         TextExercise exercise = createTextExerciseWithSGI(course1);
         Submission submissionWithoutResult = new TextSubmission();
         submissionWithoutResult.setSubmissionDate(pastTimestamp);
@@ -298,7 +298,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsAllowedToCreateOrOverrideResult_withExamDueDateNotPassed() {
+    void testIsAllowedToCreateOrOverrideResult_withExamDueDateNotPassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(2);
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(1);
         ZonedDateTime endDate = ZonedDateTime.now().plusHours(1);
@@ -313,7 +313,7 @@ public class AssessmentServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsAllowedToCreateOrOverrideResult_withExamPublishResultDatePassed() {
+    void testIsAllowedToCreateOrOverrideResult_withExamPublishResultDatePassed() {
         ZonedDateTime visibleDate = ZonedDateTime.now().minusHours(3);
         ZonedDateTime startDate = ZonedDateTime.now().minusHours(2);
         ZonedDateTime endDate = ZonedDateTime.now().minusHours(1);

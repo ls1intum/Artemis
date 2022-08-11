@@ -60,11 +60,11 @@ describe('JvmThreadsComponent', () => {
         fixture.detectChanges();
 
         const button = fixture.debugElement.query(By.css('button.hand.btn.btn-primary.btn-sm'));
-        expect(button).not.toBe(null);
+        expect(button).not.toBeNull();
 
         button.nativeElement.click();
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(MetricsModalThreadsComponent, { size: 'xl' });
         expect(mockModalRef.componentInstance.threads).toEqual(threads);
     });

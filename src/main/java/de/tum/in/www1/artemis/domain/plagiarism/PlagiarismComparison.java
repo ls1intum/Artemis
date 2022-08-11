@@ -1,14 +1,20 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
-import de.jplag.JPlagComparison;
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-
-import javax.persistence.*;
-import javax.validation.constraints.NotNull;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
+import javax.persistence.*;
+import javax.validation.constraints.NotNull;
+
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import de.jplag.JPlagComparison;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
 
 /**
  * Pair of compared student submissions whose similarity is above a certain threshold.
@@ -24,19 +30,25 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
     private PlagiarismResult<E> plagiarismResult;
 
     /**
-     * First submission compared.
+     * First submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
      * <p>
      * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
      * which would leave empty references from other plagiarism comparisons. Comparisons are
      * always deleted all at once, so we can also cascade deletion.
      */
+    @JsonIgnoreProperties("plagiarismComparison")
     @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_a_id")
     private PlagiarismSubmission<E> submissionA;
 
     /**
-     * Second submission compared.
+     * Second submission compared. We maintain a bidirectional relationship manually with #PlagiarismSubmission.plagiarismComparison.
+     * <p>
+     * Using `CascadeType.ALL` here is fine because we'll never delete a single comparison alone,
+     * which would leave empty references from other plagiarism comparisons. Comparisons are
+     * always deleted all at once, so we can also cascade deletion.
      */
+    @JsonIgnoreProperties("plagiarismComparison")
     @ManyToOne(targetEntity = PlagiarismSubmission.class, cascade = CascadeType.ALL)
     @JoinColumn(name = "submission_b_id")
     private PlagiarismSubmission<E> submissionB;
@@ -46,21 +58,21 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
      */
     @CollectionTable(name = "plagiarism_comparison_matches", joinColumns = @JoinColumn(name = "plagiarism_comparison_id"))
     @ElementCollection(fetch = FetchType.EAGER)
+    @JoinColumn(name = "plagiarism_comparison_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
     protected Set<PlagiarismMatch> matches;
 
     /**
      * Similarity of the compared submissions (between 0 and 1).
      */
+    @Column(name = "similarity")
     private double similarity;
 
     /**
      * Status of this submission comparison.
      */
+    @Column(name = "status")
     private PlagiarismStatus status = PlagiarismStatus.NONE;
-
-    /**
-     * Instructor statement/message sent to student A, null if not sent
-     */
 
     /**
      * Create a new PlagiarismComparison instance from an existing JPlagComparison object.
@@ -72,9 +84,7 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         PlagiarismComparison<TextSubmissionElement> comparison = new PlagiarismComparison<>();
 
         comparison.setSubmissionA(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getFirstSubmission()));
-        comparison.getSubmissionA().setPlagiarismComparison(comparison);
         comparison.setSubmissionB(PlagiarismSubmission.fromJPlagSubmission(jplagComparison.getSecondSubmission()));
-        comparison.getSubmissionB().setPlagiarismComparison(comparison);
         comparison.setMatches(jplagComparison.getMatches().stream().map(PlagiarismMatch::fromJPlagMatch).collect(Collectors.toSet()));
         comparison.setSimilarity(jplagComparison.similarity());
         comparison.setStatus(PlagiarismStatus.NONE);
@@ -82,12 +92,28 @@ public class PlagiarismComparison<E extends PlagiarismSubmissionElement> extends
         return comparison;
     }
 
+    /**
+     * Maintain the bidirectional relationship manually
+     * @param submissionA the new submission which will be attached to the comparison
+     */
     public void setSubmissionA(PlagiarismSubmission<?> submissionA) {
         this.submissionA = (PlagiarismSubmission<E>) submissionA;
+        if (this.submissionA != null) {
+            // Important: make sure to maintain the custom bidirectional association
+            this.submissionA.setPlagiarismComparison(this);
+        }
     }
 
+    /**
+     * Maintain the bidirectional relationship manually
+     * @param submissionB the new submission which will be attached to the comparison
+     */
     public void setSubmissionB(PlagiarismSubmission<?> submissionB) {
         this.submissionB = (PlagiarismSubmission<E>) submissionB;
+        if (this.submissionB != null) {
+            // Important: make sure to maintain the custom bidirectional association
+            this.submissionB.setPlagiarismComparison(this);
+        }
     }
 
     public PlagiarismSubmission<E> getSubmissionA() {

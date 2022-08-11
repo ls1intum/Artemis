@@ -102,7 +102,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
         }
 
         final ZonedDateTime now = ZonedDateTime.now();
-        // Semi automatically assessed modeling exercises as well
+        // Semi-automatically assessed modeling exercises as well
         // Has a regular due date in the future
         return exercise.getDueDate() != null && now.isBefore(exercise.getDueDate());
     }
@@ -117,7 +117,7 @@ public class ModelingExerciseScheduleService implements IExerciseScheduleService
             }
         }
         catch (Exception e) {
-            log.error("Failed to schedule exercise " + exercise.getId(), e);
+            log.error("Failed to schedule exercise {}", exercise.getId(), e);
         }
     }
 

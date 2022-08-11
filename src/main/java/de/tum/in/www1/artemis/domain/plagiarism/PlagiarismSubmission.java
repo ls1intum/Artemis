@@ -1,19 +1,24 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
+
+import javax.persistence.*;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import de.jplag.Submission;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingSubmissionElement;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import javax.persistence.*;
-import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 @Entity
 @Table(name = "plagiarism_submission")
@@ -33,24 +38,29 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
      * a single submission of a student, since the participation ID is required to properly fetch the
      * corresponding repository's contents.
      */
+    @Column(name = "submission_id")
     private long submissionId;
 
     /**
      * Login of the student who created the submission.
      */
+    @Column(name = "student_login")
     private String studentLogin;
 
     /**
      * List of elements the related submission consists of.
      */
-    @OneToMany(cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.LAZY)
-    // TODO: we don't need a join table here and should simply store the 'submissionId' in the element
-    @JoinTable(name = "plagiarism_submission_elements", joinColumns = @JoinColumn(name = "plagiarism_submission_id"), inverseJoinColumns = @JoinColumn(name = "plagiarism_submission_element_id"))
+    @JsonIgnoreProperties("plagiarismSubmission")
+    @OneToMany(mappedBy = "plagiarismSubmission", cascade = CascadeType.ALL, targetEntity = PlagiarismSubmissionElement.class, fetch = FetchType.LAZY)
     private List<E> elements;
 
     @ManyToOne
     private PlagiarismCase plagiarismCase;
 
+    /**
+     * We maintain a bidirectional relationship manually with submissionA and submissionB
+     */
+    @JsonIgnoreProperties({ "submissionA", "submissionB" })
     @OneToOne(targetEntity = PlagiarismComparison.class)
     @JoinColumn(name = "plagiarism_comparison_id")
     private PlagiarismComparison<E> plagiarismComparison;
@@ -61,11 +71,13 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
      * For modeling submissions, this is the number of modeling elements. For text and programming
      * submissions, this is the number of words or tokens.
      */
+    @Column(name = "size")
     private int size;
 
     /**
      * Result score of the related submission.
      */
+    @Column(name = "score")
     private Double score;
 
     /**
@@ -87,7 +99,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
                 submissionId = Long.parseLong(submissionIdAndStudentLogin[0]);
             }
             catch (NumberFormatException e) {
-                logger.error("Invalid submissionId: " + e.getMessage());
+                logger.error("Invalid submissionId: {}", e.getMessage());
             }
 
             studentLogin = submissionIdAndStudentLogin[1];
@@ -95,7 +107,7 @@ public class PlagiarismSubmission<E extends PlagiarismSubmissionElement> extends
 
         submission.setStudentLogin(studentLogin);
         submission.setElements(StreamSupport.stream(jplagSubmission.getTokenList().allTokens().spliterator(), false).filter(Objects::nonNull)
-                .map(TextSubmissionElement::fromJPlagToken).collect(Collectors.toList()));
+                .map(token -> TextSubmissionElement.fromJPlagToken(token, submission)).collect(Collectors.toCollection(ArrayList::new)));
         submission.setSubmissionId(submissionId);
         submission.setSize(jplagSubmission.getNumberOfTokens());
         submission.setScore(null); // TODO

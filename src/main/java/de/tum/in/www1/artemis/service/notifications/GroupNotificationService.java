@@ -9,7 +9,6 @@ import static de.tum.in.www1.artemis.service.notifications.NotificationSettingsC
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -531,7 +530,7 @@ public class GroupNotificationService {
     public void prepareGroupNotificationEmail(GroupNotification notification, List<User> users, Object notificationSubject) {
         // find the users that have this notification type & email communication channel activated
         List<User> usersThatShouldReceiveAnEmail = users.stream()
-                .filter(user -> notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, user, EMAIL)).collect(Collectors.toList());
+                .filter(user -> notificationSettingsService.checkIfNotificationOrEmailIsAllowedBySettingsForGivenUser(notification, user, EMAIL)).toList();
 
         if (!usersThatShouldReceiveAnEmail.isEmpty()) {
             mailService.sendNotificationEmailForMultipleUsers(notification, usersThatShouldReceiveAnEmail, notificationSubject);

@@ -120,12 +120,12 @@ describe('Interval Grading System Component', () => {
         comp.generateDefaultGradingScale();
 
         expect(comp.gradingScale.gradeType).toStrictEqual(GradeType.GRADE);
-        expect(comp.firstPassingGrade).toStrictEqual('4.0');
-        expect(comp.lowerBoundInclusivity).toBe(true);
+        expect(comp.firstPassingGrade).toBe('4.0');
+        expect(comp.lowerBoundInclusivity).toBeTrue();
         expect(comp.gradingScale.gradeSteps).toHaveLength(14);
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.id).toBe(undefined);
-            expect(gradeStep.gradeName).not.toBe(undefined);
+            expect(gradeStep.id).toBeUndefined();
+            expect(gradeStep.gradeName).toBeDefined();
 
             // No need to test parts that are intrinsic to DetailedGradingSystemComponent.
 
@@ -168,13 +168,13 @@ describe('Interval Grading System Component', () => {
         expect(comp.gradingScale.gradeSteps).toHaveLength(5);
 
         const newGradeStep = comp.gradingScale.gradeSteps[3];
-        expect(newGradeStep.id).toBe(undefined);
-        expect(newGradeStep.gradeName).toStrictEqual('');
+        expect(newGradeStep.id).toBeUndefined();
+        expect(newGradeStep.gradeName).toBe('');
         expect(newGradeStep.lowerBoundPercentage).toBe(100);
         expect(newGradeStep.upperBoundPercentage).toBe(100);
-        expect(newGradeStep.isPassingGrade).toBe(true);
-        expect(newGradeStep.lowerBoundInclusive).toBe(true);
-        expect(newGradeStep.upperBoundInclusive).toBe(true);
+        expect(newGradeStep.isPassingGrade).toBeTrue();
+        expect(newGradeStep.lowerBoundInclusive).toBeTrue();
+        expect(newGradeStep.upperBoundInclusive).toBeTrue();
 
         // Previous gradeStep.upperBoundPercentage is already 100.
         expect(comp.getPercentageInterval(newGradeStep)).toBe(0);
@@ -184,7 +184,7 @@ describe('Interval Grading System Component', () => {
         comp.deleteGradeNames();
 
         comp.gradingScale.gradeSteps.forEach((gradeStep) => {
-            expect(gradeStep.gradeName).toStrictEqual('');
+            expect(gradeStep.gradeName).toBe('');
         });
     });
 
@@ -196,10 +196,10 @@ describe('Interval Grading System Component', () => {
     });
 
     it('should set all grade step point intervals correctly', () => {
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(undefined);
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(undefined);
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(undefined);
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(undefined);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBeUndefined();
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBeUndefined();
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBeUndefined();
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBeUndefined();
 
         const multiplier = 2;
         const maxPoints = multiplier * 100;
@@ -215,10 +215,10 @@ describe('Interval Grading System Component', () => {
         comp.maxPoints = negativeMaxPoints;
         comp.onChangeMaxPoints(negativeMaxPoints);
 
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBe(undefined);
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBe(undefined);
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBe(undefined);
-        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBe(undefined);
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[0])).toBeUndefined();
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[1])).toBeUndefined();
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[2])).toBeUndefined();
+        expect(comp.getPointsInterval(comp.gradingScale.gradeSteps[3])).toBeUndefined();
     });
 
     it('should cascade percentage interval increase', () => {
@@ -318,7 +318,7 @@ describe('Interval Grading System Component', () => {
     });
 
     it('should throw on points interval change when max points are not defined', () => {
-        expect(comp.maxPoints).toBe(undefined);
+        expect(comp.maxPoints).toBeUndefined();
         expect(() => {
             comp.setPointsInterval(0, 10);
         }).toThrow();
@@ -338,7 +338,7 @@ describe('Interval Grading System Component', () => {
 
         comp.createGradeStep();
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeFalse();
         expect(comp.gradingScale.gradeSteps).toHaveLength(2);
     });
 
@@ -354,33 +354,33 @@ describe('Interval Grading System Component', () => {
         comp.lowerBoundInclusivity = true;
         comp.setInclusivity();
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
-        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeFalse();
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(true);
-        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(false);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeFalse();
 
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(true);
-        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
     });
 
     it('should set inclusivity to upper bound inclusive', () => {
         comp.lowerBoundInclusivity = false;
         comp.setInclusivity();
 
-        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBe(true);
-        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[0].lowerBoundInclusive).toBeTrue();
+        expect(comp.gradingScale.gradeSteps[0].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBe(false);
-        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[1].lowerBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[1].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBe(false);
-        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[2].lowerBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[2].upperBoundInclusive).toBeTrue();
 
-        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBe(false);
-        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBe(true);
+        expect(comp.gradingScale.gradeSteps[3].lowerBoundInclusive).toBeFalse();
+        expect(comp.gradingScale.gradeSteps[3].upperBoundInclusive).toBeTrue();
     });
 });

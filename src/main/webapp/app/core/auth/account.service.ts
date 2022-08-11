@@ -148,7 +148,7 @@ export class AccountService implements IAccountService {
 
                         // After retrieve the account info, the language will be changed to
                         // the user's preferred language configured in the account setting
-                        const langKey = this.sessionStorage.retrieve('locale') || this.userIdentity.langKey;
+                        const langKey = this.userIdentity.langKey || this.sessionStorage.retrieve('locale');
                         this.translateService.use(langKey);
                     } else {
                         this.userIdentity = undefined;
@@ -167,7 +167,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * checks if the currently logged in user is at least tutor in the given course
+     * checks if the currently logged-in user is at least tutor in the given course
      * @param course
      */
     isAtLeastTutorInCourse(course?: Course): boolean {
@@ -180,7 +180,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * checks if the currently logged in user is at least editor in the given course
+     * checks if the currently logged-in user is at least editor in the given course
      * @param course
      */
     isAtLeastEditorInCourse(course?: Course): boolean {
@@ -188,7 +188,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * checks if the currently logged in user is at least instructor in the given course
+     * checks if the currently logged-in user is at least instructor in the given course
      * @param course
      */
     isAtLeastInstructorInCourse(course?: Course): boolean {
@@ -196,7 +196,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * checks if the currently logged in user is at least tutor for the exercise (directly) in the course or the exercise in the exam in the course
+     * checks if the currently logged-in user is at least tutor for the exercise (directly) in the course or the exercise in the exam in the course
      * @param exercise
      */
     isAtLeastTutorForExercise(exercise?: Exercise): boolean {
@@ -204,7 +204,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * checks if the currently logged in user is at least editor for the exercise (directly) in the course or the exercise in the exam in the course
+     * checks if the currently logged-in user is at least editor for the exercise (directly) in the course or the exercise in the exam in the course
      * @param exercise
      */
     isAtLeastEditorForExercise(exercise?: Exercise): boolean {
@@ -212,7 +212,7 @@ export class AccountService implements IAccountService {
     }
 
     /**
-     * checks if the currently logged in user is at least instructor for the exercise (directly) in the course or the exercise in the exam in the course
+     * checks if the currently logged-in user is at least instructor for the exercise (directly) in the course or the exercise in the exam in the course
      * @param exercise
      */
     isAtLeastInstructorForExercise(exercise?: Exercise): boolean {
@@ -281,5 +281,14 @@ export class AccountService implements IAccountService {
      */
     getImageUrl() {
         return this.isAuthenticated() && this.userIdentity ? this.userIdentity.imageUrl : undefined;
+    }
+
+    /**
+     * Sets a new language key for the current user
+     *
+     * @param languageKey The new languageKey
+     */
+    updateLanguage(languageKey: String): Observable<void> {
+        return this.http.post<void>(`${SERVER_API_URL}api/account/change-language`, languageKey);
     }
 }

@@ -1,10 +1,10 @@
 <div>
     <h2>
         <ng-container *ngIf="!instructorView">
-            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
+            {{ 'artemisApp.exam.examSummary.yourSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
         <ng-container *ngIf="instructorView">
-            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam.exam!.title!, studentName: studentExam.user!.name! } }}
+            {{ 'artemisApp.exam.examSummary.studentSubmissionTo' | artemisTranslate: { examTitle: studentExam?.exam?.title, studentName: studentExam?.user?.name } }}
         </ng-container>
         <button id="exportToPDFButton" class="btn btn-primary float-end" (click)="printPDF()">
             <fa-icon [icon]="faPrint"></fa-icon>
@@ -12,33 +12,29 @@
         </button>
     </h2>
 </div>
-<jhi-exam-information [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
-<div class="mb-4 text-center" *ngIf="studentExam && studentExam.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
-    <a class="btn btn-success" style="cursor: default; pointer-events: none">
-        {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
-    </a>
+<jhi-exam-information *ngIf="studentExam?.exam" [exam]="studentExam.exam!" [studentExam]="studentExam"></jhi-exam-information>
+<div class="mb-4 container text-center" *ngIf="studentExam?.exam && isBeforeStudentReviewEnd() && isAfterStudentReviewStart()">
+    <div class="row justify-content-center">
+        <div class="alert alert-success col-12 col-lg-6" role="alert">
+            {{ 'artemisApp.exam.studentReviewEnabled' | artemisTranslate }}
+        </div>
+    </div>
 </div>
-<div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam && studentExam.exam.course">
-    <jhi-exam-points-summary [exercises]="studentExam.exercises" [exam]="studentExam.exam"></jhi-exam-points-summary>
+<div class="mb-4 container exam-points-summary-container" *ngIf="studentExam && studentExam.exercises && studentExam.exam?.course && studentExamGradeInfoDTO">
+    <jhi-exam-points-summary [studentExamWithGrade]="studentExamGradeInfoDTO"></jhi-exam-points-summary>
 </div>
 <div *ngIf="!resultsPublished" class="mb-0">
     <fa-icon [icon]="faInfoCircle" class="info-icon"></fa-icon>
     {{ 'artemisApp.exam.resultInformation' | artemisTranslate }}
 </div>
-<div *ngFor="let exercise of studentExam.exercises; let i = index">
+<div *ngFor="let exercise of studentExam?.exercises; let i = index">
     <div class="question card">
         <div class="question-options card-header question-card-header">
             <h5>
-                &nbsp;<fa-icon *ngIf="exercise && exercise.type" [icon]="getIcon(exercise.type)"></fa-icon>&nbsp;
+                &nbsp;<fa-icon *ngIf="exercise?.type" [icon]="getIcon(exercise.type!)"></fa-icon>&nbsp;
                 <span jhiTranslate="artemisApp.exam.exercise" [translateValues]="{ nr: i + 1 }">Exercise {{ i + 1 }}</span>
             </h5>
-            <div
-                *ngIf="
-                    exercise.studentParticipations?.length &&
-                    exercise.studentParticipations![0].submissions?.length &&
-                    exercise.studentParticipations![0].submissions![0].type === SUBMISSION_TYPE_ILLEGAL
-                "
-            >
+            <div *ngIf="exercise.studentParticipations?.[0]?.submissions?.[0]?.type === SUBMISSION_TYPE_ILLEGAL">
                 <span class="badge bg-danger" jhiTranslate="artemisApp.assessment.assessmentIllegalSubmission"> Warning: You are viewing an illegal submission. </span>
             </div>
             <div *ngIf="resultsPublished && exercise.studentParticipations?.length">

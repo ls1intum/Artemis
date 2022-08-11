@@ -19,6 +19,15 @@
             <fa-icon [icon]="faPlus"></fa-icon>
             <span jhiTranslate="artemisApp.quizExercise.home.createModelDragAndDrop"> Create new Drag and Drop Model Quiz </span>
         </a>
+        <button
+            *ngIf="course && course.isAtLeastEditor"
+            id="jh-import-entity"
+            class="btn btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
+            (click)="openImportModal()"
+        >
+            <fa-icon [icon]="faPlus"></fa-icon>
+            <span class="hidden-sm-down" jhiTranslate="artemisApp.quizExercise.home.importLabel"> Import quiz </span>
+        </button>
         <a
             *ngIf="quizExercises && quizExercises.length > 0 && course.isAtLeastEditor"
             class="btn me-2 btn-primary jh-create-entity create-quiz-exercise text-truncate mb-1 me-1"
@@ -55,10 +64,10 @@
                 <tr *ngFor="let quizExercise of filteredQuizExercises; trackBy: trackId" id="exercise-card-{{ quizExercise.id }}">
                     <td *ngIf="!quizIsOver(quizExercise) || !quizExercise.isAtLeastEditor">
                         <a
-                            *ngIf="quizExercise.status !== QuizStatus.ACTIVE; else readOnlyId"
+                            *ngIf="quizExercise.status !== QuizStatus.ACTIVE && quizExercise.isAtLeastEditor; else readOnlyId"
                             [routerLink]="['/course-management', quizExercise.course?.id, 'quiz-exercises', quizExercise.id, 'edit']"
-                            >{{ quizExercise.id }}</a
-                        >
+                            >{{ quizExercise.id }}
+                        </a>
                         <ng-template #readOnlyId>{{ quizExercise.id }}</ng-template>
                     </td>
                     <td *ngIf="quizIsOver(quizExercise) && quizExercise.isAtLeastEditor">

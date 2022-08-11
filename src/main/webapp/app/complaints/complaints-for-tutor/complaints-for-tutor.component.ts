@@ -97,7 +97,7 @@ export class ComplaintsForTutorComponent implements OnInit {
     private refreshLock() {
         this.complaintResponse = this.complaint.complaintResponse!;
         this.showLockDuration = true;
-        // a lock exists we have to check if it affects the currently logged in user
+        // if a lock exists we have to check if it affects the currently logged-in user
         this.isLockedForLoggedInUser = this.complaintResponseService.isComplaintResponseLockedForLoggedInUser(this.complaintResponse, this.exercise!);
         if (!this.isLockedForLoggedInUser) {
             // update the lock

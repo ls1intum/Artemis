@@ -24,7 +24,7 @@ describe(`AuthInterceptor`, () => {
     it('should add a token to a request if it is a request to artemis and token is present in local or session storage', () => {
         [localStorageMock, sessionStorageMock].forEach((service) => {
             const storageSpy = jest.spyOn(service, 'retrieve').mockReturnValue(token);
-            const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+            const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
             const cloneSpy = jest.spyOn(requestMock, 'clone');
             const mockHandler = {
                 handle: jest.fn(),
@@ -33,13 +33,13 @@ describe(`AuthInterceptor`, () => {
             authInterceptor.intercept(requestMock, mockHandler);
 
             expect(storageSpy).toHaveBeenCalledWith('authenticationToken');
-            expect(cloneSpy).toHaveBeenCalledTimes(1);
+            expect(cloneSpy).toHaveBeenCalledOnce();
             expect(cloneSpy).toHaveBeenCalledWith({
                 setHeaders: {
                     Authorization: 'Bearer ' + token,
                 },
             });
-            expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+            expect(mockHandler.handle).toHaveBeenCalledOnce();
 
             jest.restoreAllMocks();
         });
@@ -49,7 +49,7 @@ describe(`AuthInterceptor`, () => {
         const localStorageSpy = jest.spyOn(localStorageMock, 'retrieve');
         const sessionStorageSpy = jest.spyOn(localStorageMock, 'retrieve');
 
-        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}/test`);
+        const requestMock = new HttpRequest('GET', `${SERVER_API_URL}test`);
         const cloneSpy = jest.spyOn(requestMock, 'clone');
         const mockHandler = {
             handle: jest.fn(),
@@ -60,7 +60,7 @@ describe(`AuthInterceptor`, () => {
         expect(localStorageSpy).toHaveBeenCalledWith('authenticationToken');
         expect(sessionStorageSpy).toHaveBeenCalledWith('authenticationToken');
         expect(cloneSpy).toHaveBeenCalledTimes(0);
-        expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+        expect(mockHandler.handle).toHaveBeenCalledOnce();
     });
 
     it('should not add token to a request if it is not a request to artemis', () => {
@@ -76,6 +76,6 @@ describe(`AuthInterceptor`, () => {
 
         expect(localStorageSpy).toHaveBeenCalledTimes(0);
         expect(cloneSpy).toHaveBeenCalledTimes(0);
-        expect(mockHandler.handle).toHaveBeenCalledTimes(1);
+        expect(mockHandler.handle).toHaveBeenCalledOnce();
     });
 });

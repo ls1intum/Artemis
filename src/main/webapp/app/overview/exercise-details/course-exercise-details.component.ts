@@ -16,7 +16,7 @@ import { SourceTreeService } from 'app/exercises/programming/shared/service/sour
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import { InitializationState, Participation } from 'app/entities/participation/participation.model';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { AssessmentType } from 'app/entities/assessment-type.model';
@@ -24,10 +24,7 @@ import { getExerciseDueDate, hasExerciseDueDatePassed, participationStatus } fro
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { GradingCriterion } from 'app/exercises/shared/structured-grading-criterion/grading-criterion.model';
-import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
-import { ProgrammingExerciseSimulationUtils } from 'app/exercises/programming/shared/utils/programming-exercise-simulation.utils';
 import { AlertService } from 'app/core/util/alert.service';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { QuizExercise, QuizStatus } from 'app/entities/quiz/quiz-exercise.model';
@@ -46,21 +43,25 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faAngleDown, faAngleUp, faBook, faExternalLinkAlt, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
+import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
 @Component({
     selector: 'jhi-course-exercise-details',
     templateUrl: './course-exercise-details.component.html',
-    styleUrls: ['../course-overview.scss'],
+    styleUrls: ['../course-overview.scss', '../tab-bar/tab-bar.scss'],
 })
 export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
+    readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
     readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
     readonly QUIZ = ExerciseType.QUIZ;
@@ -68,6 +69,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly MODELING = ExerciseType.MODELING;
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
+
     private currentUser: User;
     private exerciseId: number;
     public courseId: number;
@@ -92,7 +94,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
     exampleSolutionCollapsed: boolean;
-    plagiarismCase?: PlagiarismCase;
+    plagiarismCaseInfo?: PlagiarismCaseInfo;
+    availableExerciseHints: ExerciseHint[];
+    activatedExerciseHints: ExerciseHint[];
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
@@ -106,8 +110,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * variables are only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
      */
     public inProductionEnvironment: boolean;
-    public noVersionControlAndContinuousIntegrationServerAvailable = false;
-    public wasSubmissionSimulated = false;
 
     // Icons
     faBook = faBook;
@@ -116,7 +118,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     faTable = faTable;
     faListAlt = faListAlt;
     faSignal = faSignal;
-    faExternalLinkAlt = faExternalLinkAlt;
     faFileSignature = faFileSignature;
     faAngleDown = faAngleDown;
     faAngleUp = faAngleUp;
@@ -134,10 +135,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private route: ActivatedRoute,
         private profileService: ProfileService,
         private guidedTourService: GuidedTourService,
-        private courseExerciseSubmissionResultSimulationService: CourseExerciseSubmissionResultSimulationService,
-        private programmingExerciseSimulationUtils: ProgrammingExerciseSimulationUtils,
         private alertService: AlertService,
-        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private programmingExerciseSubmissionPolicyService: SubmissionPolicyService,
         private teamService: TeamService,
         private quizExerciseService: QuizExerciseService,
@@ -146,6 +144,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         private navigationUtilService: ArtemisNavigationUtilService,
         private artemisMarkdown: ArtemisMarkdownService,
         private plagiarismCaseService: PlagiarismCasesService,
+        private exerciseHintService: ExerciseHintService,
     ) {}
 
     ngOnInit() {
@@ -193,8 +192,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
         });
-        this.plagiarismCaseService.getPlagiarismCaseForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCase>) => {
-            this.plagiarismCase = res.body!;
+        this.plagiarismCaseService.getPlagiarismCaseInfoForStudent(this.courseId, this.exerciseId).subscribe((res: HttpResponse<PlagiarismCaseInfo>) => {
+            this.plagiarismCaseInfo = res.body ?? undefined;
         });
     }
 
@@ -228,12 +227,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
 
         this.showIfExampleSolutionPresent(newExercise);
-
-        // This is only needed in the local environment
-        if (!this.inProductionEnvironment && this.exercise.type === ExerciseType.PROGRAMMING && (<ProgrammingExercise>this.exercise).isLocalSimulation) {
-            this.noVersionControlAndContinuousIntegrationServerAvailable = true;
-        }
-
         this.subscribeForNewResults();
         this.subscribeToTeamAssignmentUpdates();
 
@@ -373,6 +366,25 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                         ? this.exercise.studentParticipations.map((el) => (el.id === changedParticipation.id ? changedParticipation : el))
                         : [changedParticipation];
                 this.mergeResultsAndSubmissionsForParticipations();
+
+                if (ExerciseType.PROGRAMMING === this.exercise?.type) {
+                    this.exerciseHintService.getActivatedExerciseHints(this.exerciseId).subscribe((activatedRes?: HttpResponse<ExerciseHint[]>) => {
+                        this.activatedExerciseHints = activatedRes!.body!;
+
+                        this.exerciseHintService.getAvailableExerciseHints(this.exerciseId).subscribe((availableRes?: HttpResponse<ExerciseHint[]>) => {
+                            // filter out the activated hints from the available hints
+                            this.availableExerciseHints = availableRes!.body!.filter(
+                                (availableHint) => !this.activatedExerciseHints.some((activatedHint) => availableHint.id === activatedHint.id),
+                            );
+                            const filteredAvailableExerciseHints = this.availableExerciseHints.filter((hint) => hint.displayThreshold !== 0);
+                            if (filteredAvailableExerciseHints.length) {
+                                this.alertService.info('artemisApp.exerciseHint.availableHintsAlertMessage', {
+                                    taskName: filteredAvailableExerciseHints.first()?.programmingExerciseTask?.taskName,
+                                });
+                            }
+                        });
+                    });
+                }
             }
         });
     }
@@ -404,13 +416,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                     }
                 });
         }
-    }
-
-    /**
-     * Navigates to the previous page or, if no previous navigation happened, to the courses exercise overview
-     */
-    backToCourse() {
-        this.navigationUtilService.navigateBack(['courses', this.courseId.toString(), 'exercises']);
     }
 
     exerciseRatedBadge(result: Result): string {
@@ -498,50 +503,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.alertService.error(error);
     }
 
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- START ##################
-
-    /**
-     * Triggers the simulation of a participation and submission for the currently logged in user
-     * This method will fail if used in production
-     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    simulateSubmission() {
-        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateSubmission(this.exerciseId).subscribe({
-            next: () => {
-                this.wasSubmissionSimulated = true;
-                this.alertService.success('artemisApp.exercise.submissionSuccessful');
-            },
-            error: () => {
-                this.alertService.error('artemisApp.exercise.submissionUnsuccessful');
-            },
-        });
-    }
-
-    /**
-     * Triggers the simulation of a result for the currently logged in user
-     * This method will fail if used in production
-     * This functionality is only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-     */
-    simulateResult() {
-        this.programmingExerciseSimulationService.failsIfInProduction(this.inProductionEnvironment);
-        this.courseExerciseSubmissionResultSimulationService.simulateResult(this.exerciseId).subscribe({
-            next: (result) => {
-                // set the value to false in order to deactivate the result button
-                this.wasSubmissionSimulated = false;
-
-                // set these values in order to visualize the simulated result on the exercise details page
-                this.exercise!.participationStatus = ParticipationStatus.EXERCISE_SUBMITTED;
-                this.studentParticipation = <StudentParticipation>result.body!.participation;
-                this.studentParticipation.results = [];
-                this.studentParticipation.results[0] = result.body!;
-
-                this.alertService.success('artemisApp.exercise.resultCreationSuccessful');
-            },
-            error: () => {
-                this.alertService.error('artemisApp.exercise.resultCreationUnsuccessful');
-            },
-        });
+    onHintActivated(exerciseHint: ExerciseHint) {
+        this.availableExerciseHints = this.availableExerciseHints.filter((hint) => hint.id !== exerciseHint.id);
+        this.activatedExerciseHints.push(exerciseHint);
     }
 
     /**
@@ -550,6 +514,4 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     changeExampleSolution() {
         this.exampleSolutionCollapsed = !this.exampleSolutionCollapsed;
     }
-
-    // ################## ONLY FOR LOCAL TESTING PURPOSE -- END ##################
 }

@@ -1,6 +1,6 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ParticipantScoresAverageTableComponent } from 'app/shared/participant-scores/participant-scores-average-table/participant-scores-average-table.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TranslateModule } from '@ngx-translate/core';
 import { MockDirective, MockPipe } from 'ng-mocks';
 import { NgbTooltipModule, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -68,7 +68,7 @@ describe('ParticipantScoresAverageTable', () => {
         fixture.detectChanges();
 
         const cellElements = fixture.debugElement.queryAll(By.css('.datatable-body-cell-label > span'));
-        expect(cellElements.length).toEqual(8);
+        expect(cellElements).toHaveLength(8);
         expect(cellElements[0].nativeElement.innerHTML).toContain(participantScoreAverageDTO.userName);
         expect(cellElements[1].nativeElement.innerHTML).toContain('');
         expect(cellElements[2].nativeElement.innerHTML).toContain(participantScoreAverageDTO.averageScore.toString());

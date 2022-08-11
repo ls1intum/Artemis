@@ -1,6 +1,6 @@
 import { Directive, EventEmitter, Input, OnChanges, OnInit, Output, TemplateRef, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { Posting } from 'app/entities/metis/posting.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostingEditType } from 'app/shared/metis/metis.util';
@@ -39,7 +39,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
      * on changes: sets the content, and the modal title (edit or create), resets the from
      */
     ngOnChanges(): void {
-        this.content = this.posting.content ?? '';
+        this.content = this.posting?.content ?? '';
         this.updateModalTitle();
         this.resetFormGroup();
     }
@@ -60,23 +60,7 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
         this.isModalOpen.emit();
     }
 
-    /**
-     * opens the modal to edit or create a posting
-     */
-    open(): void {
-        this.modalRef = this.modalService.open(this.postingEditor, {
-            size: 'lg',
-            backdrop: 'static',
-            beforeDismiss: () => {
-                // when cancelling the create/update action, we do not want to store the current values
-                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
-                this.resetFormGroup();
-                this.isModalOpen.emit();
-                return true;
-            },
-        });
-        this.isModalOpen.emit();
-    }
+    abstract open(): void;
 
     abstract updateModalTitle(): void;
 

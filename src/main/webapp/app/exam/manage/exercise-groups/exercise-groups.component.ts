@@ -24,6 +24,9 @@ import { IconProp } from '@fortawesome/fontawesome-svg-core';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
 import { faAngleDown, faAngleUp, faCheckDouble, faFileUpload, faFont, faKeyboard, faPlus, faProjectDiagram, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
+import { QuizExerciseImportComponent } from 'app/exercises/quiz/manage/quiz-exercise-import.component';
+import { ExamImportComponent } from 'app/exam/manage/exams/exam-import/exam-import.component';
 
 @Component({
     selector: 'jhi-exercise-groups',
@@ -198,6 +201,19 @@ export class ExerciseGroupsComponent implements OnInit {
                     () => {},
                 );
                 break;
+            case ExerciseType.QUIZ:
+                const quizImportModalRef = this.modalService.open(QuizExerciseImportComponent, {
+                    size: 'lg',
+                    backdrop: 'static',
+                });
+                quizImportModalRef.result.then(
+                    (result: QuizExercise) => {
+                        importBaseRoute.push(result.id);
+                        this.router.navigate(importBaseRoute);
+                    },
+                    () => {},
+                );
+                break;
             case ExerciseType.MODELING:
                 const modelingImportModalRef = this.modalService.open(ModelingExerciseImportComponent, {
                     size: 'lg',
@@ -262,5 +278,26 @@ export class ExerciseGroupsComponent implements OnInit {
                 }
             }
         }
+    }
+
+    /**
+     * Opens the import module for an exam import
+     */
+    openExerciseGroupImportModal() {
+        const examImportModalRef = this.modalService.open(ExamImportComponent, {
+            size: 'xl',
+            backdrop: 'static',
+        });
+        // The Exercise Group selection is performed within the exam-update.component afterwards
+        examImportModalRef.componentInstance.subsequentExerciseGroupSelection = true;
+        examImportModalRef.componentInstance.targetCourseId = this.courseId;
+        examImportModalRef.componentInstance.targetExamId = this.examId;
+
+        examImportModalRef.result.then((exerciseGroups: ExerciseGroup[]) => {
+            if (exerciseGroups) {
+                this.exerciseGroups = exerciseGroups;
+                this.alertService.success('artemisApp.examManagement.exerciseGroup.importSuccessful');
+            }
+        });
     }
 }

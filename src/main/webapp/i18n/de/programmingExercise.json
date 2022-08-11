@@ -103,18 +103,18 @@
             "extractTasksFromProblemStatementWarning": "Nur zu Testzwecken: Extrahiere alle Aufgaben und Tests aus der Aufgabenstellung.",
             "extractTasksFromProblemStatementSuccess": "{{numberTasks}} extrahierte Aufgaben mit {{numberTestCases}} Tests geladen:\n{{detailedResult}}",
             "extractTasksFromProblemStatementTitle": "Lade extrahierte Aufgaben",
-            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Solution Entries wurden gelöscht.",
-            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Solution Entries.",
+            "deleteTasksAndSolutionEntriesSuccess": "Alle Aufgaben und Lösungs Codeschnipsel wurden gelöscht.",
+            "deleteTasksAndSolutionEntriesWarning": "Nur zu Testzwecken: Lösche alle Aufgaben und Lösungs Codeschnipsel.",
             "deleteTasksAndSolutionEntriesTitle": "Lösche Aufgaben",
-            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Solution Entries",
+            "generateCodeHintsTooltip": "Generiert Code Hinweise für alle Tasks dieser Aufgabe unter Verwendung der bereits erstellten Lösungs Codeschnipsel",
             "generateCodeHintsTitle": "Generiere Code Hinweise",
             "generateCodeHintsSuccess": "Code Hinweise wurden erfolgreich generiert",
-            "createStructuralSolutionEntriesTooltip": "Erstellt Solution Entries für alle strukturellen Tests dieser Aufgabe.",
-            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Solution Entries",
-            "createStructuralSolutionEntriesSuccess": "Strukturelle Solution Entries wurden erfolgreich erstellt",
-            "createBehavioralSolutionEntriesTooltip": "Erstellt Solution Entries für alle Verhaltenstests dieser Aufgabe.",
-            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Solution Entries",
-            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Solution Entries wurden erfolgreich erstellt",
+            "createStructuralSolutionEntriesTooltip": "Erstellt Lösungs Codeschnipsel für alle strukturellen Tests dieser Aufgabe.",
+            "createStructuralSolutionEntriesTitle": "Erstelle strukturelle Lösungs Codeschnipsel",
+            "createStructuralSolutionEntriesSuccess": "Strukturelle Lösungs Codeschnipsel wurden erfolgreich erstellt",
+            "createBehavioralSolutionEntriesTooltip": "Erstellt Lösungs Codeschnipsel für alle Verhaltenstests dieser Aufgabe.",
+            "createBehavioralSolutionEntriesTitle": "Erstelle verhaltensweise Lösungs Codeschnipsel",
+            "createBehavioralSolutionEntriesSuccess": "Verhaltensweise Lösungs Codeschnipsel wurden erfolgreich erstellt",
             "editable": {
                 "unsaved": "Ungespeichert.",
                 "unsavedTooltip": "Es gibt ungespeicherte Änderungen in der Aufgabenstellung.",
@@ -126,8 +126,7 @@
             "problemStatement": {
                 "title": "Aufgabenstellung",
                 "taskCommand": "Aufgabe",
-                "testCaseCommand": "Testfall einfügen",
-                "exerciseHintCommand": "Aufgaben-spezifischen Hinweis hinzufügen"
+                "testCaseCommand": "Testfall einfügen"
             },
             "status": {
                 "solutionFailsTest": "Das Solution-Repository erfüllt einen oder mehrere Testfälle nicht. Das könnte auf ein Problem mit dem Solution-Repository oder den Testfällen hinweisen.",
@@ -272,6 +271,8 @@
                 "afterDueDateTooltip": "Aktiviere diese Option, um alle Abgaben von Studierenden nach der Einreichungsfrist zu bewerten. Durch diese Einstellung werden zum angegebenen Datum für alle Abgaben von Studierenden ein Build & Testlauf ausgeführt. Die hierdurch generierten Ergebnisse werden als 'bewertet' gekennzeichnet obwohl die Einreichungsfrist abgelaufen ist",
                 "alertNewDueDate": "Die Einreichungsfrist wurde auf das Veröffentlichungsdatum gesetzt!",
                 "alertNewAfterDueDate": "Das Datum der zusätzlichen Testläufe wurde auf das Releasedatum gesetzt!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Datum der Veröffentlichung gesetzt!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "Das Veröffentlichungsdatum der Beispiellösung wurde auf das Fälligkeitsdatum gesetzt!",
                 "assessmentDueDate": "Einreichungsfrist der Bewertung",
                 "assessmentDueDateTooltip": "Die Frist für manuelle Reviews. Sobald das Datum erreicht ist, werden alle manuellen Ergebnisse an die Studierenden veröffentlicht!",
                 "notSet": "nicht gesetzt",
@@ -323,7 +324,8 @@
                 "checkoutDirectory": "Checkout-Verzeichnis",
                 "duplicateRepositoryNames": "Verschiedene Hilfs-Repositories dürfen nicht den gleichen Namen haben.",
                 "duplicateDirectoryNames": "Verschiedene Hilfs-Repositories dürfen nicht das gleiche Checkout-Verzeichnis haben.",
-                "warning": "Hilfs-Repositories können editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen manuell durchgeführt werden.",
+                "warning": "Hilfs-Repositories können hinzugefügt, editiert und gelöscht werden. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
+                "editedWarning": "Du hast die Hilfs-Repositories verändert. Diese Änderungen wirken sich allerdings nicht auf das VCS und CIS aus und müssen dort manuell durchgeführt werden.",
                 "repositoryNameRequired": {
                     "pattern": "Der Name eines Hilfs-Repositories darf nicht 'exercise', 'solution', 'tests', oder 'auxiliary' sein. Außerdem darf der Name nur Wörter und die Sonderzeichen '-' und '_' enthalten."
                 },
@@ -363,7 +365,7 @@
                         "pattern": "Der Punktabzug muss eine Nummer größer als 0 sein.",
                         "required": "Der Punktabzug muss gesetzt sein."
                     },
-                    "penaltyInfoLabel": "Punktabzug je Überschreitung",
+                    "penaltyInfoLabel": "(Punktabzug je Überschreitung: {{points}} Punkte)",
                     "triggerAllInformation": "Wird der Punktabzug je Überschreitung des Abgabelimits oder das Abgabelimit selbst angepasst, muss nach dem Speichern der Abgaberichtlinie die 'Erneut Bewerten' Funktionalität genutzt werden, um die Ergebnisse der Teilnehmenden zu aktualisieren."
                 },
                 "submissionPolicyType": {
@@ -389,8 +391,8 @@
                 }
             },
             "diffReport": {
-                "button": "Zeige den Unterschied zwischen Template und Lösung",
-                "tooltip": "Zeigt den Git-Diff zwischen den Template- und Lösungs-Repositories.",
+                "button": "Anzeigen",
+                "tooltip": "Zeigt den detaillierten Git-Diff zwischen den Template- und Lösungs-Repositories.",
                 "title": "Template-Lösungs-Diff",
                 "template": "Template",
                 "solution": "Lösung",
@@ -410,14 +412,14 @@
             },
             "withDependencies": "Mit beispielhafter Abhängigkeit",
             "withDependenciesTooltip": "Fügt dem generierten Projekt eine externe Apache commons-lang-Abhängigkeit als Beispiel dafür hinzu, wie Maven-Abhängigkeiten mit Artemis-Aufgaben verwendet werden sollten.",
-            "recordTestwiseCoverage": "Testweise Test-Abdeckung aufzeichnen",
-            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testweise Test-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java-Gradle-Projekte mit nicht-sequentiellen Testläufen verfügbar.",
+            "recordTestwiseCoverage": "Testbasierte Code-Abdeckung aufzeichnen",
+            "recordTestwiseCoverageTooltip": "Durch Aktivierung dieser Option wird die testbasierte Code-Abdeckung für das Lösungs-Repository aufgezeichnet. Diese Option ist nur für Java/Kotlin-Aufgaben mit nicht-sequentiellen Testläufen verfügbar.",
             "coveredLineRatio": "Anteil Test-Abgedeckter Zeilen",
             "testwiseCoverageReport": {
-                "button": "Testweise Test-Abdeckung anzeigen",
-                "tooltip": "Zeigt die testwise Test-Abdeckung für das Lösungs-Repository.",
-                "title": "Testweise Test-Abdeckung",
-                "404": "Testweise Test-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
+                "button": "Testbasierte Code-Abdeckung anzeigen",
+                "tooltip": "Zeigt die testbasierte Code-Abdeckung für das Lösungs-Repository.",
+                "title": "Testbasierte Code-Abdeckung",
+                "404": "Testbasierte Code-Abdeckung wurde noch nicht generiert. Bitte pushe etwas in die Lösungs- oder Test-Repositories um den Report zu erstellen.",
                 "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
                 "filePath": "Datei-Pfad",
                 "coveredLines": "Abgedeckte Zeilen"

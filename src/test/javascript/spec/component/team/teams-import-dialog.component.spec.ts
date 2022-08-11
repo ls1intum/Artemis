@@ -92,7 +92,7 @@ describe('TeamsImportDialogComponent', () => {
         it('should compute potential conflicts based on existing teams', () => {
             const potentialConflictSpy = jest.spyOn(comp, 'computePotentialConflictsBasedOnExistingTeams');
             comp.ngOnInit();
-            expect(potentialConflictSpy).toHaveBeenCalledTimes(1);
+            expect(potentialConflictSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -110,11 +110,11 @@ describe('TeamsImportDialogComponent', () => {
             const sourceExercise = mockSourceExercise;
             comp.sourceTeams = [];
             comp.loadSourceTeams(sourceExercise);
-            expect(comp.loadingSourceTeams).toBe(false);
-            expect(comp.loadingSourceTeamsFailed).toBe(false);
+            expect(comp.loadingSourceTeams).toBeFalse();
+            expect(comp.loadingSourceTeamsFailed).toBeFalse();
             expect(teamServiceStub).toHaveBeenCalledWith(sourceExercise.id);
             expect(comp.sourceTeams).toBe(mockSourceTeams);
-            expect(computeSourceSpy).toHaveBeenCalledTimes(1);
+            expect(computeSourceSpy).toHaveBeenCalledOnce();
         });
 
         it('should not load teams of given exercise if find failed', () => {
@@ -122,15 +122,15 @@ describe('TeamsImportDialogComponent', () => {
             const sourceExercise = mockSourceExercise;
             comp.sourceTeams = [];
             comp.loadSourceTeams(sourceExercise);
-            expect(comp.sourceTeams).toBe(undefined);
-            expect(comp.loadingSourceTeams).toBe(false);
-            expect(comp.loadingSourceTeamsFailed).toBe(true);
+            expect(comp.sourceTeams).toBeUndefined();
+            expect(comp.loadingSourceTeams).toBeFalse();
+            expect(comp.loadingSourceTeamsFailed).toBeTrue();
             expect(teamServiceStub).toHaveBeenCalledWith(sourceExercise.id);
             expect(computeSourceSpy).not.toHaveBeenCalled();
         });
     });
 
-    describe('loadSourceTeams', () => {
+    describe('loadSourceStub and initImportStrategy', () => {
         let loadSourceStub: jest.SpyInstance;
         let initImportStrategyStub: jest.SpyInstance;
 
@@ -144,7 +144,7 @@ describe('TeamsImportDialogComponent', () => {
             const sourceExercise = mockSourceExercise;
             comp.onSelectSourceExercise(sourceExercise);
             expect(comp.sourceExercise).toBe(sourceExercise);
-            expect(initImportStrategyStub).toHaveBeenCalledTimes(1);
+            expect(initImportStrategyStub).toHaveBeenCalledOnce();
             expect(loadSourceStub).toHaveBeenCalledWith(sourceExercise);
         });
     });
@@ -162,7 +162,7 @@ describe('TeamsImportDialogComponent', () => {
 
         it('should set import strategy to undefined if there are teams', () => {
             comp.initImportStrategy();
-            expect(comp.importStrategy).toBe(undefined);
+            expect(comp.importStrategy).toBeUndefined();
         });
     });
 
@@ -204,63 +204,63 @@ describe('TeamsImportDialogComponent', () => {
 
         it('returns false if short name is in already existing short names', () => {
             comp.teamShortNamesAlreadyExistingInExercise = [mockTeam.shortName!];
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeFalse();
         });
 
         it('returns true if short name is not in already existing short names', () => {
             comp.teamShortNamesAlreadyExistingInExercise = [];
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeTrue();
         });
 
         it('Import from exercise: returns false if one of the students login is in already existing students', () => {
             comp.conflictingLoginsSet = new Set([mockTeamStudents[0].login!]);
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeFalse();
         });
 
         it('Import from exercise: returns true if none of the students login is in already existing students', () => {
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeTrue();
         });
 
         it('Import from file: returns false if one of the students login is in already existing students', () => {
             comp.conflictingLoginsSet = new Set([mockTeamStudents[0].login!]);
             comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeFalse();
         });
 
         it('Import from exercise: returns true if one of the students registration number is in already existing students', () => {
             comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeTrue();
         });
 
         it('Import from file: returns false if one of the students registration number is in already existing students', () => {
             comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
             comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeFalse();
         });
 
         it('Import from exercise: returns true if one of the students registration number is in already other source teams', () => {
             comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
             comp.studentsAppearInMultipleTeams = true;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeTrue();
         });
 
         it('Import from file: returns false if one of the students registration number is in already other source teams', () => {
             comp.conflictingRegistrationNumbersSet = new Set([mockTeamStudents[0].visibleRegistrationNumber!]);
             comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeFalse();
         });
 
         it('Import from file: returns false if one of the students login is in already other source teams', () => {
             comp.conflictingLoginsSet = new Set([mockTeamStudents[0].login!]);
             comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(false);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeFalse();
         });
 
         it('Import from file: returns true if no student is in multiple teams', () => {
             comp.showImportFromExercise = false;
-            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBe(true);
+            expect(comp.isSourceTeamFreeOfAnyConflicts(mockTeam)).toBeTrue();
         });
     });
 
@@ -330,33 +330,33 @@ describe('TeamsImportDialogComponent', () => {
 
         it('Import from exercise: should return false if there is no sourceExercise', () => {
             comp.sourceExercise = undefined;
-            expect(comp.showImportStrategyChoices).toBe(false);
+            expect(comp.showImportStrategyChoices).toBeFalse();
         });
 
         it('Import from exercise: should return true if there is a sourceExercise and source team', () => {
-            expect(comp.showImportStrategyChoices).toBe(true);
+            expect(comp.showImportStrategyChoices).toBeTrue();
         });
 
         it('should return false if there is no source team', () => {
             comp.sourceTeams = [];
-            expect(comp.showImportStrategyChoices).toBe(false);
+            expect(comp.showImportStrategyChoices).toBeFalse();
         });
 
         it('should return false if there is no existing team', () => {
             comp.teams = [];
-            expect(comp.showImportStrategyChoices).toBe(false);
+            expect(comp.showImportStrategyChoices).toBeFalse();
         });
 
         it('Import from file: should return false if source teams undefined', () => {
             comp.sourceTeams = undefined;
             comp.showImportFromExercise = false;
-            expect(comp.showImportStrategyChoices).toBe(false);
+            expect(comp.showImportStrategyChoices).toBeFalse();
         });
 
         it('Import from file: should return true if source exercise undefined', () => {
             comp.sourceExercise = undefined;
             comp.showImportFromExercise = false;
-            expect(comp.showImportStrategyChoices).toBe(true);
+            expect(comp.showImportStrategyChoices).toBeTrue();
         });
     });
 
@@ -366,7 +366,7 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('should set import strategy to given import strategy', () => {
-            expect(comp.importStrategy).toBe(undefined);
+            expect(comp.importStrategy).toBeUndefined();
             comp.updateImportStrategy(TeamImportStrategyType.CREATE_ONLY);
             expect(comp.importStrategy).toBe(TeamImportStrategyType.CREATE_ONLY);
             comp.updateImportStrategy(TeamImportStrategyType.PURGE_EXISTING);
@@ -383,25 +383,25 @@ describe('TeamsImportDialogComponent', () => {
             });
 
             it('Import from exercise: should return false if there is no sourceExercise', () => {
-                expect(comp.showImportPreviewNumbers).toBe(false);
+                expect(comp.showImportPreviewNumbers).toBeFalse();
             });
 
             it('Import from exercise: should return true if there is a sourceExercise and source team', () => {
                 comp.sourceExercise = mockSourceExercise;
                 comp.sourceTeams = mockSourceTeams;
-                expect(comp.showImportPreviewNumbers).toBe(true);
+                expect(comp.showImportPreviewNumbers).toBeTrue();
             });
 
             it('should return false if there is no source team', () => {
-                expect(comp.showImportPreviewNumbers).toBe(false);
+                expect(comp.showImportPreviewNumbers).toBeFalse();
             });
 
             it('Import from exercise: should return false if there is no import strategy', () => {
-                expect(comp.showImportPreviewNumbers).toBe(false);
+                expect(comp.showImportPreviewNumbers).toBeFalse();
             });
         });
 
-        describe('import from exercise', () => {
+        describe('import from exercise without showing', () => {
             beforeEach(() => {
                 resetComponent();
                 comp.sourceExercise = undefined;
@@ -410,26 +410,26 @@ describe('TeamsImportDialogComponent', () => {
             });
 
             it('Import from file: should return false if there is no import strategy', () => {
-                expect(comp.showImportPreviewNumbers).toBe(false);
+                expect(comp.showImportPreviewNumbers).toBeFalse();
             });
 
             it('Import from file: should return false if no students in multiple teams and no import strategy', () => {
                 comp.importStrategy = undefined;
-                expect(comp.showImportPreviewNumbers).toBe(false);
+                expect(comp.showImportPreviewNumbers).toBeFalse();
             });
 
             it('Import from file: should return true if there are students appear in multiple teams and conflicting registration numbers', () => {
                 comp.conflictingRegistrationNumbersSet = new Set(['1', '2']);
                 comp.studentsAppearInMultipleTeams = true;
                 comp.importStrategy = undefined;
-                expect(comp.showImportPreviewNumbers).toBe(true);
+                expect(comp.showImportPreviewNumbers).toBeTrue();
             });
 
             it('Import from file: should return true if there are students appear in multiple teams and conflicting logins', () => {
                 comp.conflictingLoginsSet = new Set(['l1', 'l2']);
                 comp.studentsAppearInMultipleTeams = true;
                 comp.importStrategy = undefined;
-                expect(comp.showImportPreviewNumbers).toBe(true);
+                expect(comp.showImportPreviewNumbers).toBeTrue();
             });
         });
     });
@@ -443,58 +443,58 @@ describe('TeamsImportDialogComponent', () => {
         });
 
         it('should return false', () => {
-            expect(comp.isSubmitDisabled).toBe(false);
+            expect(comp.isSubmitDisabled).toBeFalse();
         });
 
         it('Import from exercise: should return true if importing', () => {
             comp.isImporting = true;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
 
         it('Import from exercise: should return true if it has source exercise', () => {
             comp.sourceExercise = undefined;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
 
         it('Import from exercise: should return true if it has source teams', () => {
             comp.sourceTeams = undefined;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
 
         it('Import from exercise: should return true if it has import strategy', () => {
             comp.importStrategy = undefined;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
 
         it('Import from file: should return false if importing', () => {
             comp.isImporting = true;
             comp.showImportFromExercise = false;
-            expect(comp.isSubmitDisabled).toBe(false);
+            expect(comp.isSubmitDisabled).toBeFalse();
         });
 
         it('Import from file: should return false if it has no source exercise', () => {
             comp.sourceExercise = undefined;
             comp.showImportFromExercise = false;
-            expect(comp.isSubmitDisabled).toBe(false);
+            expect(comp.isSubmitDisabled).toBeFalse();
         });
 
         it('Import from file: should return true if it has source teams', () => {
             comp.sourceTeams = undefined;
             comp.showImportFromExercise = false;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
 
         it('Import from file: should return true if it has import strategy', () => {
             comp.importStrategy = undefined;
             comp.showImportFromExercise = false;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
 
         it('Import from file: should return true if there same registration number is in two teams', () => {
             comp.conflictingRegistrationNumbersSet = new Set(['1', '2']);
             comp.studentsAppearInMultipleTeams = true;
             comp.showImportFromExercise = false;
-            expect(comp.isSubmitDisabled).toBe(true);
+            expect(comp.isSubmitDisabled).toBeTrue();
         });
     });
 
@@ -518,7 +518,7 @@ describe('TeamsImportDialogComponent', () => {
         it('should return false', () => {
             const importTeamsStub = jest.spyOn(comp, 'importTeams');
             comp.purgeAndImportTeams();
-            expect(importTeamsStub).toHaveBeenCalledTimes(1);
+            expect(importTeamsStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -550,7 +550,7 @@ describe('TeamsImportDialogComponent', () => {
             expect(importTeamsStub).not.toHaveBeenCalled();
             expect(onSuccessStub).not.toHaveBeenCalled();
             expect(onErrorStub).not.toHaveBeenCalled();
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
         });
 
         it('should call importTeamsFromSourceExercise if show import from exercise and call save success', () => {
@@ -559,7 +559,7 @@ describe('TeamsImportDialogComponent', () => {
             expect(importTeamsStub).not.toHaveBeenCalled();
             expect(onSuccessStub).toHaveBeenCalledWith(fromExerciseResponse);
             expect(onErrorStub).not.toHaveBeenCalled();
-            expect(comp.isImporting).toBe(true);
+            expect(comp.isImporting).toBeTrue();
         });
 
         it('should call importTeamsFromSourceExercise if show import from exercise and call save error on Error', () => {
@@ -570,7 +570,7 @@ describe('TeamsImportDialogComponent', () => {
             expect(importTeamsStub).not.toHaveBeenCalled();
             expect(onSuccessStub).not.toHaveBeenCalled();
             expect(onErrorStub).toHaveBeenCalledWith(error);
-            expect(comp.isImporting).toBe(true);
+            expect(comp.isImporting).toBeTrue();
         });
 
         it('should call importTeamsFromFile if not show import from exercise and call save success', () => {
@@ -580,7 +580,7 @@ describe('TeamsImportDialogComponent', () => {
             expect(importTeamsStub).toHaveBeenCalledWith(comp.exercise, comp.sourceTeams, comp.importStrategy);
             expect(onSuccessStub).toHaveBeenCalledWith(fromFileResponse);
             expect(onErrorStub).not.toHaveBeenCalled();
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
         });
 
         it('should call importTeamsFromFile if not show import from exercise and call save error on Error', () => {
@@ -592,7 +592,7 @@ describe('TeamsImportDialogComponent', () => {
             expect(importTeamsStub).toHaveBeenCalledWith(comp.exercise, comp.sourceTeams, comp.importStrategy);
             expect(onSuccessStub).not.toHaveBeenCalled();
             expect(onErrorStub).toHaveBeenCalledWith(error);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
         });
     });
 
@@ -608,11 +608,11 @@ describe('TeamsImportDialogComponent', () => {
 
         it('change component files and convert file teams to normal teams', () => {
             comp.onTeamsChanged(mockSourceTeams);
-            expect(initImportStub).toHaveBeenCalledTimes(1);
+            expect(initImportStub).toHaveBeenCalledOnce();
             expect(comp.sourceTeams).toEqual(mockSourceTeams);
             expect(comp.conflictingRegistrationNumbersSet).toEqual(new Set(registrationNumbers));
             expect(comp.conflictingLoginsSet).toEqual(new Set(logins));
-            expect(computeSourceFreeOfConflictsStub).toHaveBeenCalledTimes(1);
+            expect(computeSourceFreeOfConflictsStub).toHaveBeenCalledOnce();
         });
 
         it('adds registration number if a student is in two or more teams', () => {
@@ -643,7 +643,7 @@ describe('TeamsImportDialogComponent', () => {
             comp.onSaveSuccess(response);
             tick(500);
             expect(modalStub).toHaveBeenCalledWith(mockSourceTeams);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
             expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.importSuccess', { numberOfImportedTeams: comp.numberOfTeamsToBeImported });
         }));
     });
@@ -661,7 +661,7 @@ describe('TeamsImportDialogComponent', () => {
             response = new HttpErrorResponse({ error: {} });
             comp.isImporting = true;
             comp.onSaveError(response);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
             expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.importError');
         });
 
@@ -671,7 +671,7 @@ describe('TeamsImportDialogComponent', () => {
             response = new HttpErrorResponse({ error: { errorKey: 'studentsNotFound', params: { registrationNumbers: notFoundRegistrationNumbers, logins: notFoundLogins } } });
             comp.isImporting = true;
             comp.onSaveError(response);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
             expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.errors.registrationNumbersNotFound', { registrationNumbers: notFoundRegistrationNumbers });
             expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.errors.loginsNotFound', { logins: notFoundLogins });
         });
@@ -686,7 +686,7 @@ describe('TeamsImportDialogComponent', () => {
             response = new HttpErrorResponse({ error: { errorKey: 'studentsAppearMultipleTimes', params: { students } } });
             comp.isImporting = true;
             comp.onSaveError(response);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.isImporting).toBeFalse();
             expect(alertServiceStub).toHaveBeenCalledWith('artemisApp.team.errors.studentsAppearMultipleTimes', { students: message });
         });
     });
@@ -694,12 +694,12 @@ describe('TeamsImportDialogComponent', () => {
     describe('setShowImportFromExercise', () => {
         let initImportStrategyStub: jest.SpyInstance;
         const expectValuesToBeReset = () => {
-            expect(comp.sourceTeams).toBe(undefined);
-            expect(comp.sourceExercise).toBe(undefined);
-            expect(comp.isImporting).toBe(false);
+            expect(comp.sourceTeams).toBeUndefined();
+            expect(comp.sourceExercise).toBeUndefined();
+            expect(comp.isImporting).toBeFalse();
             expect(comp.conflictingLoginsSet).toEqual(new Set(logins));
             expect(comp.conflictingRegistrationNumbersSet).toEqual(new Set(registrationNumbers));
-            expect(initImportStrategyStub).toHaveBeenCalledTimes(1);
+            expect(initImportStrategyStub).toHaveBeenCalledOnce();
         };
 
         beforeEach(() => {
@@ -716,13 +716,13 @@ describe('TeamsImportDialogComponent', () => {
         it('should set show import from exercise to true', () => {
             comp.showImportFromExercise = false;
             comp.setShowImportFromExercise(true);
-            expect(comp.showImportFromExercise).toBe(true);
+            expect(comp.showImportFromExercise).toBeTrue();
             expectValuesToBeReset();
         });
 
         it('should set show import from exercise to false', () => {
             comp.setShowImportFromExercise(false);
-            expect(comp.showImportFromExercise).toBe(false);
+            expect(comp.showImportFromExercise).toBeFalse();
             expectValuesToBeReset();
         });
     });
@@ -757,17 +757,17 @@ describe('TeamsImportDialogComponent', () => {
 
         it('should return false no source teams', () => {
             comp.sourceTeams = undefined;
-            expect(comp.showLegend).toBe(false);
+            expect(comp.showLegend).toBeFalse();
         });
 
         it('should return false source teams length is equal to conflict free teams length', () => {
             comp.sourceTeamsFreeOfConflicts = mockSourceTeams;
-            expect(comp.showLegend).toBe(false);
+            expect(comp.showLegend).toBeFalse();
         });
 
         it('should return true source teams length not equal to conflict free teams length', () => {
             comp.sourceTeamsFreeOfConflicts = [];
-            expect(comp.showLegend).toBe(true);
+            expect(comp.showLegend).toBeTrue();
         });
     });
 

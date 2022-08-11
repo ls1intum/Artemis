@@ -21,7 +21,7 @@ describe('ExerciseUtils', () => {
         const individualDueDate = dayjs().add(1, 'hour');
         const participation = participationWithDueDate(individualDueDate);
 
-        expect(getExerciseDueDate(exercise, participation)).toBe(undefined);
+        expect(getExerciseDueDate(exercise, participation)).toBeUndefined();
     });
 
     it('should return the exercise due date if no individual due date exists', () => {
@@ -43,24 +43,24 @@ describe('ExerciseUtils', () => {
 
     it('the due date should not have passed if the exercise has no due date', () => {
         const exercise = exerciseWithDueDate(undefined);
-        expect(hasExerciseDueDatePassed(exercise)).toBe(false);
+        expect(hasExerciseDueDatePassed(exercise)).toBeFalse();
 
         const participation = participationWithDueDate(dayjs().subtract(1, 'hour'));
-        expect(hasExerciseDueDatePassed(exercise, participation)).toBe(false);
+        expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
     });
 
     it('the due date should have passed if the exercise due date has passed and no individual due date exists', () => {
         const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
         const participation = participationWithDueDate(undefined);
 
-        expect(hasExerciseDueDatePassed(exercise)).toBe(true);
-        expect(hasExerciseDueDatePassed(exercise, participation)).toBe(true);
+        expect(hasExerciseDueDatePassed(exercise)).toBeTrue();
+        expect(hasExerciseDueDatePassed(exercise, participation)).toBeTrue();
     });
 
     it('the due date should not have passed if the individual due date is in the future', () => {
         const exercise = exerciseWithDueDate(dayjs().subtract(1, 'hour'));
         const participation = participationWithDueDate(dayjs().add(1, 'hour'));
 
-        expect(hasExerciseDueDatePassed(exercise, participation)).toBe(false);
+        expect(hasExerciseDueDatePassed(exercise, participation)).toBeFalse();
     });
 });

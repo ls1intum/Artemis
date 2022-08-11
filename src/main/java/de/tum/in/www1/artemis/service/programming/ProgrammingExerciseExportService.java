@@ -180,8 +180,7 @@ public class ProgrammingExerciseExportService {
         if (includingStudentRepos) {
             // Lazy load student participation, sort by id, and set the export options
             var studentParticipations = studentParticipationRepository.findByExerciseId(exercise.getId()).stream()
-                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId))
-                    .collect(Collectors.toList());
+                    .map(studentParticipation -> (ProgrammingExerciseStudentParticipation) studentParticipation).sorted(Comparator.comparing(DomainObject::getId)).toList();
             var exportOptions = new RepositoryExportOptionsDTO();
             exportOptions.setHideStudentNameInZippedFolder(false);
 
@@ -210,7 +209,7 @@ public class ProgrammingExerciseExportService {
         Path pathToZippedExercise = Path.of(outputDir.toString(), cleanFilename);
 
         // Remove null elements and get the file path of each file to be included, i.e. each entry in the pathsToBeZipped list
-        List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).collect(Collectors.toList());
+        List<Path> includedFilePathsNotNull = pathsToBeZipped.stream().filter(Objects::nonNull).toList();
 
         String cleanProjectName = fileService.removeIllegalCharacters(exercise.getProjectName());
         // Add report entry, programming repositories cannot be skipped
@@ -382,7 +381,7 @@ public class ProgrammingExerciseExportService {
         }
         catch (Exception ex) {
             var error = "Failed to export instructor repository " + repositoryName + " for programming exercise '" + exercise.getTitle() + "' (id: " + exercise.getId() + ")";
-            log.info(error + ": " + ex.getMessage());
+            log.info("{}: {}", error, ex.getMessage());
             exportErrors.add(error);
         }
         return Optional.empty();
@@ -426,7 +425,7 @@ public class ProgrammingExerciseExportService {
      * @param participations          participations that should be exported
      * @param repositoryExportOptions the options that should be used for the export
      * @param outputDir The directory used for store the zip file
-     * @param exportErrors            A list of errors that occured during export (populated by this function)
+     * @param exportErrors            A list of errors that occurred during export (populated by this function)
      * @return List of zip file paths
      */
     public List<Path> exportStudentRepositories(ProgrammingExercise programmingExercise, @NotNull List<ProgrammingExerciseStudentParticipation> participations,
@@ -587,7 +586,7 @@ public class ProgrammingExerciseExportService {
             FileUtils.deleteDirectory(projectPath.toFile());
         }
         catch (IOException ex) {
-            log.warn("The project root directory '" + projectPath + "' could not be deleted.", ex);
+            log.warn("The project root directory '{}' could not be deleted.", projectPath, ex);
         }
     }
 
@@ -610,7 +609,7 @@ public class ProgrammingExerciseExportService {
 
         if (latestAllowedDate.isPresent()) {
             Optional<Submission> lastValidSubmission = participation.getSubmissions().stream()
-                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.comparing(Submission::getSubmissionDate));
+                    .filter(s -> s.getSubmissionDate() != null && s.getSubmissionDate().isBefore(latestAllowedDate.get())).max(Comparator.naturalOrder());
             gitService.filterLateSubmissions(repo, lastValidSubmission, latestAllowedDate.get());
         }
     }
@@ -650,7 +649,7 @@ public class ProgrammingExerciseExportService {
             gitService.commit(repository, "Add participant identifier (student login or team short name) to project name");
         }
         catch (GitAPIException ex) {
-            log.error("Cannot stage or commit to the repository " + repository.getLocalPath(), ex);
+            log.error("Cannot stage or commit to the repository {}", repository.getLocalPath(), ex);
         }
         finally {
             // if repo is not closed, it causes weird IO issues when trying to delete the repo again
@@ -691,7 +690,7 @@ public class ProgrammingExerciseExportService {
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-            log.error("Cannot rename pom.xml file in " + repo.getLocalPath(), ex);
+            log.error("Cannot rename pom.xml file in {}", repo.getLocalPath(), ex);
         }
     }
 
@@ -722,7 +721,7 @@ public class ProgrammingExerciseExportService {
 
         }
         catch (SAXException | IOException | ParserConfigurationException | TransformerException | XPathException ex) {
-            log.error("Cannot rename .project file in " + repo.getLocalPath(), ex);
+            log.error("Cannot rename .project file in {}", repo.getLocalPath(), ex);
         }
     }
 
@@ -730,12 +729,12 @@ public class ProgrammingExerciseExportService {
      * Get all files in path except .git files
      *
      * @param path The path for which all file names should be listed
-     * @return A list of all file names under the given path
+     * @return an unmodifiable list of all file names under the given path
      */
     private List<String> listAllFilesInPath(Path path) {
         List<String> allRepoFiles = Collections.emptyList();
         try (Stream<Path> walk = Files.walk(path)) {
-            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).collect(Collectors.toList());
+            allRepoFiles = walk.filter(Files::isRegularFile).map(Path::toString).filter(s -> !s.contains(".git")).toList();
         }
         catch (IOException | SecurityException e) {
             log.error("Cannot list all files in path {}: {}", path, e.getMessage());

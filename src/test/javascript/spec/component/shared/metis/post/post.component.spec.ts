@@ -15,6 +15,8 @@ import { PageType } from 'app/shared/metis/metis.util';
 import { TranslatePipeMock } from '../../../../helpers/mocks/service/mock-translate.service';
 import { metisExercise, metisLecture, metisPostExerciseUser1, metisPostLectureUser1, metisPostTechSupport } from '../../../../helpers/sample/metis-sample-data';
 import { MockQueryParamsDirective, MockRouterLinkDirective } from '../../../../helpers/mocks/directive/mock-router-link.directive';
+import { ArtemisTestModule } from '../../../../test.module';
+import { RouterTestingModule } from '@angular/router/testing';
 
 describe('PostComponent', () => {
     let component: PostComponent;
@@ -28,6 +30,7 @@ describe('PostComponent', () => {
 
     beforeEach(() => {
         return TestBed.configureTestingModule({
+            imports: [RouterTestingModule],
             providers: [{ provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostComponent,
@@ -61,7 +64,7 @@ describe('PostComponent', () => {
         metisServiceIsPostResolvedStub.mockReturnValue(false);
         component.posting = metisPostExerciseUser1;
         component.ngOnInit();
-        expect(component.postIsResolved).toBe(false);
+        expect(component.postIsResolved).toBeFalse();
     });
 
     it('should be re-evaluated on changes', () => {
@@ -71,12 +74,12 @@ describe('PostComponent', () => {
         component.ngOnInit();
         metisServiceIsPostResolvedStub.mockReturnValue(true);
         component.ngOnChanges();
-        expect(component.postIsResolved).toBe(true);
+        expect(component.postIsResolved).toBeTrue();
     });
 
     it('should contain a post header', () => {
         const header = getElement(debugElement, 'jhi-post-header');
-        expect(header).not.toBe(null);
+        expect(header).not.toBeNull();
     });
 
     it('should contain a title with referencable id', () => {
@@ -89,7 +92,7 @@ describe('PostComponent', () => {
         expect(title).toBeDefined();
         const idHash = getElement(debugElement, '.reference-hash');
         expect(idHash).toBeDefined();
-        expect(idHash.innerHTML).toEqual(`#${metisPostExerciseUser1.id}`);
+        expect(idHash.innerHTML).toBe(`#${metisPostExerciseUser1.id}`);
         expect(metisServiceGetLinkSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
         expect(metisServiceGetQueryParamsSpy).toHaveBeenCalledWith(metisPostExerciseUser1);
     });
@@ -100,12 +103,12 @@ describe('PostComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         const contextLink = getElement(fixture.debugElement, 'a.linked-context-information');
-        expect(contextLink).toBe(null);
+        expect(contextLink).toBeNull();
         component.posting = metisPostExerciseUser1;
         component.ngOnChanges();
         fixture.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
-        expect(context).toBe(null);
+        expect(context).toBeNull();
     });
 
     it('should have a course-wide context information shown as title prefix in course discussion overview', () => {
@@ -114,8 +117,8 @@ describe('PostComponent', () => {
         component.ngOnInit();
         fixture.detectChanges();
         const context = getElement(fixture.debugElement, 'span.context-information');
-        expect(context).not.toBe(null);
-        expect(component.contextInformation.routerLinkComponents).toEqual(undefined);
+        expect(context).not.toBeNull();
+        expect(component.contextInformation.routerLinkComponents).toBeUndefined();
     });
 
     it('should have a lecture context information shown as title prefix in course discussion overview', () => {
@@ -127,7 +130,7 @@ describe('PostComponent', () => {
         expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['lectures']));
         expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([metisLecture.id]));
         expect(component.contextInformation.displayName).toEqual(metisLecture.title);
-        expect(contextLink).not.toBe(null);
+        expect(contextLink).not.toBeNull();
     });
 
     it('should have a exercise context information shown as title prefix in course discussion overview', () => {
@@ -139,17 +142,17 @@ describe('PostComponent', () => {
         expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining(['exercises']));
         expect(component.contextInformation.routerLinkComponents).toEqual(expect.arrayContaining([metisExercise.id]));
         expect(component.contextInformation.displayName).toEqual(metisExercise.title);
-        expect(contextLink).not.toBe(null);
+        expect(contextLink).not.toBeNull();
     });
 
     it('should contain the posting content', () => {
         const header = getElement(debugElement, 'jhi-posting-content');
-        expect(header).not.toBe(null);
+        expect(header).not.toBeNull();
     });
 
     it('should contain a post footer', () => {
         const footer = getElement(debugElement, 'jhi-post-footer');
-        expect(footer).not.toBe(null);
+        expect(footer).not.toBeNull();
     });
 
     it('should have correct content and title', () => {

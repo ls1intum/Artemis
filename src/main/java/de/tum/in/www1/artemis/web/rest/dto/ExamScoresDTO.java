@@ -17,6 +17,10 @@ public class ExamScoresDTO {
 
     public Boolean hasSecondCorrectionAndStarted;
 
+    public List<ExerciseGroup> exerciseGroups = new ArrayList<>();
+
+    public List<StudentResult> studentResults = new ArrayList<>();
+
     public ExamScoresDTO() {
         // default constructor for our beloved Jackson :-*
     }
@@ -26,10 +30,6 @@ public class ExamScoresDTO {
         this.title = title;
         this.maxPoints = maxPoints;
     }
-
-    public List<ExerciseGroup> exerciseGroups = new ArrayList<>();
-
-    public List<StudentResult> studentResults = new ArrayList<>();
 
     // Inner DTO
     @JsonInclude(JsonInclude.Include.NON_EMPTY)

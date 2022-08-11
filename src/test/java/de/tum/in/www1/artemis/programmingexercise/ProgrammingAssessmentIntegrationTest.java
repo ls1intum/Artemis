@@ -33,7 +33,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingAssessmentService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -91,24 +91,21 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         // A new manual result and submission are created during the locking of submission for manual assessment
-        // The new result has a result string, assessment type, automatic feedbacks and assessor
+        // The new result has an assessment type, automatic feedbacks and assessor
         var automaticFeedback = new Feedback().credits(0.0).detailText("asdfasdf").type(FeedbackType.AUTOMATIC).text("asdf");
         var automaticFeedbacks = new ArrayList<Feedback>();
         automaticFeedbacks.add(automaticFeedback);
-        var newManualResult = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, "2 of 3 passed", "tutor1",
-                automaticFeedbacks);
+        var newManualResult = database.addResultToParticipation(AssessmentType.SEMI_AUTOMATIC, null, programmingExerciseStudentParticipation, "tutor1", automaticFeedbacks);
         programmingExerciseStudentParticipation.addResult(newManualResult);
         // Set submission of newResult
         database.addProgrammingSubmissionToResultAndParticipation(newManualResult, programmingExerciseStudentParticipation, "123");
 
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         manualResult = ModelFactory.generateResult(true, 90D).participation(programmingExerciseStudentParticipation);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
         manualResult.setFeedbacks(feedbacks);
         manualResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         manualResult.rated(true);
-
-        double points = manualResult.calculateTotalPointsForProgrammingExercises();
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         doReturn(ObjectId.fromString(dummyHash)).when(gitService).getLastCommitHash(ArgumentMatchers.any());
     }
@@ -120,7 +117,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void updateAssessmentAfterComplaint_studentHidden() throws Exception {
+    void updateAssessmentAfterComplaint_studentHidden() throws Exception {
         ProgrammingSubmission programmingSubmission = ModelFactory.generateProgrammingSubmission(true);
         programmingSubmission = database.addProgrammingSubmissionWithResultAndAssessor(programmingExercise, programmingSubmission, "student1", "tutor1",
                 AssessmentType.SEMI_AUTOMATIC, true);
@@ -145,7 +142,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         assertThat(updatedResult).as("updated result found").isNotNull();
         assertThat(updatedResult.getScore()).isEqualTo(80);
-        assertThat(updatedResult.getResultString()).isEqualTo("1 of 13 passed, 1 issue, 80 of 100 points");
         assertThat(((StudentParticipation) updatedResult.getParticipation()).getStudent()).as("student of participation is hidden").isEmpty();
 
         // Check that result and submission are properly connected
@@ -157,7 +153,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
+    void updateAssessmentAfterComplaint_automaticAssessment_forbidden() throws Exception {
         programmingExercise.setAssessmentType(AssessmentType.AUTOMATIC);
         programmingExerciseRepository.save(programmingExercise);
         Result programmingAssessment = programmingSubmission.getLatestResult();
@@ -175,7 +171,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
+    void updateAssessmentAfterComplaint_dueDateNotPassed_forbidden() throws Exception {
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(1));
         programmingExerciseRepository.save(programmingExercise);
         Result programmingAssessment = programmingSubmission.getLatestResult();
@@ -193,7 +189,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
+    void updateAssessmentAfterComplaint_sameAsAssessor_forbidden() throws Exception {
         Result programmingAssessment = programmingSubmission.getLatestResult();
         Complaint complaint = new Complaint().result(programmingAssessment).complaintText("This is not fair");
 
@@ -212,60 +208,60 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+    void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+    void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+    void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_submitSameTutorNoAssessmentDueDatePossible() throws Exception {
         database.updateAssessmentDueDate(programmingExercise.getId(), null);
         overrideAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void programmingExerciseManualResult_noManualReviewsAllowed_forbidden() throws Exception {
+    void programmingExerciseManualResult_noManualReviewsAllowed_forbidden() throws Exception {
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.FORBIDDEN);
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void programmingExerciseManualResult_submissionNotModified() throws Exception {
+    void programmingExerciseManualResult_submissionNotModified() throws Exception {
         ProgrammingSubmission newSubmission = new ProgrammingSubmission().commitHash("asdf");
         manualResult.setSubmission(newSubmission);
         request.put("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, HttpStatus.OK);
@@ -274,29 +270,26 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         assertThat(commitHash).isEqualToIgnoringCase("123");
         assertThat(submission.getLatestResult()).isNotNull();
-        assertThat(submission.getLatestResult().getResultString()).isEqualTo(manualResult.getResultString());
         assertThat(submission.getLatestResult().getScore()).isEqualTo(manualResult.getScore());
 
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_save() throws Exception {
+    void createManualProgrammingExerciseResult_save() throws Exception {
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
 
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_submit() throws Exception {
+    void createManualProgrammingExerciseResult_submit() throws Exception {
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
 
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
         assertThat(response.getSubmission()).isNotNull();
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
@@ -313,7 +306,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+    void createManualProgrammingExerciseResult_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         programmingExercise.setMaxPoints(10.0);
@@ -336,7 +329,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+    void createManualProgrammingExerciseResult_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         programmingExercise.setMaxPoints(10.0);
@@ -360,7 +353,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_IncludedAsBonusExercise() throws Exception {
+    void createManualProgrammingExerciseResult_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         programmingExercise.setMaxPoints(10.0);
@@ -374,7 +367,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_NotIncludedExercise() throws Exception {
+    void createManualProgrammingExerciseResult_NotIncludedExercise() throws Exception {
         // setting up exercise
         programmingExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         programmingExercise.setMaxPoints(10.0);
@@ -391,26 +384,22 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.setFeedbacks(feedbacks);
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         var score = (points / programmingExercise.getMaxPoints()) * 100.0;
-        manualResult.resultString(manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         manualResult.score(score);
         manualResult.rated(true);
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(expectedScore, Offset.offset(offsetByTenThousandth));
-        double maxPoints = programmingExercise.getMaxPoints();
-        assertThat(response.getResultString()).isEqualTo((int) points + " of " + (int) maxPoints + " points");
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_withResultOver100Percent() throws Exception {
+    void createManualProgrammingExerciseResult_withResultOver100Percent() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         // Check that result is over 100% -> 105
         feedbacks.add(new Feedback().credits(80.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 2"));
         manualResult.setFeedbacks(feedbacks);
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
         manualResult.rated(true);
@@ -419,24 +408,21 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(105);
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 105 of 100 points");
 
         // Check that result is capped to maximum of maxScore + bonus points -> 110
         feedbacks.add(new Feedback().credits(25.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 3"));
         points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.score(points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult, Result.class,
                 HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(110, Offset.offset(offsetByTenThousandth));
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 110 of 100 points");
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
+    void createManualProgrammingExerciseResult_resultHasAutomaticFeedback() throws Exception {
         List<Feedback> feedbacks = new ArrayList<>();
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.AUTOMATIC));
         feedbacks.add(new Feedback().credits(1.00).type(FeedbackType.MANUAL_UNREFERENCED).detailText("nice submission 1"));
@@ -447,19 +433,17 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         // As maxScore is 100 points, 1 point is 1%
         manualResult.score(points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results?submit=true", manualResult,
                 Result.class, HttpStatus.OK);
 
         assertThat(response.getScore()).isEqualTo(4);
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 4 of 100 points");
         assertThat(response.getFeedbacks().stream().anyMatch(feedback -> feedback.getType().equals(FeedbackType.AUTOMATIC))).isTrue();
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
+    void createManualProgrammingExerciseResult_manualResultsNotAllowed() throws Exception {
         var participation = setParticipationForProgrammingExercise(AssessmentType.AUTOMATIC);
         manualResult.setParticipation(participation);
 
@@ -468,29 +452,13 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
+    void createManualProgrammingExerciseResult_resultPropertyMissing() throws Exception {
         Result result = new Result();
         Feedback feedback = new Feedback();
 
         // Result rated is missing
         request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
         result.rated(true);
-
-        // Result string is missing
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Result string is too long
-        result.setResultString(
-                """
-                        Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet.  \s
-                        Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore eu feugiat nulla facilisis at vero eros et accumsan et iusto odio dignissim qui blandit praesent luptatum zzril delenit augue duis dolore te feugait nulla facilisi. Lorem ipsum dolor sit amet, consectetuer adipiscing elit, sed diam nonummy nibh euismod tincidunt ut laoreet dolore magna aliquam erat volutpat.  \s
-                        Ut wisi enim ad minim veniam, quis nostrud exerci tation ullamcorper suscipit lobortis nisl ut aliquip ex ea commodo consequat. Duis autem vel eum iriure dolor in hendrerit in vulputate velit esse molestie consequat, vel illum dolore...""");
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-
-        // Result score is missing
-        result.setResultString("Good work here");
-        request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", result, Result.class, HttpStatus.BAD_REQUEST);
-        result.setScore(100D);
 
         // Check that not automatically created feedbacks must have a detail text
         // Manual feedback
@@ -512,7 +480,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void updateManualProgrammingExerciseResult() throws Exception {
+    void updateManualProgrammingExerciseResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         programmingSubmission = database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
         var participation = setParticipationForProgrammingExercise(AssessmentType.SEMI_AUTOMATIC);
@@ -532,12 +500,10 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
         double points = manualResult.calculateTotalPointsForProgrammingExercises();
         manualResult.setScore(points);
-        manualResult.resultString("3 of 3 passed, 1 issue, " + manualResult.createResultString(points, programmingExercise.getMaxPoints()));
         manualResult = resultRepository.save(manualResult);
 
         Result response = request.putWithResponseBody("/api/participations/" + participation.getId() + "/manual-results", manualResult, Result.class, HttpStatus.OK);
         assertThat(response.getScore()).isEqualTo(2);
-        assertThat(response.getResultString()).isEqualTo("3 of 3 passed, 1 issue, 2 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
 
@@ -549,7 +515,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void updateManualProgrammingExerciseResult_newResult() throws Exception {
+    void updateManualProgrammingExerciseResult_newResult() throws Exception {
         ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) new ProgrammingSubmission().commitHash("abc").submitted(true).submissionDate(ZonedDateTime.now());
         database.addProgrammingSubmission(programmingExercise, programmingSubmission, "student1");
 
@@ -559,37 +525,35 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         // Remove feedbacks, change text and score.
         manualResult.setFeedbacks(manualResult.getFeedbacks().subList(0, 1));
         manualResult.setScore(77D);
-        manualResult.resultString("2 of 3 passed, 77 of 100 points");
         manualResult.rated(true);
 
         Result response = request.putWithResponseBody("/api/participations/" + programmingExerciseStudentParticipation.getId() + "/manual-results", manualResult, Result.class,
                 HttpStatus.OK);
-        assertThat(response.getResultString()).isEqualTo("2 of 3 passed, 77 of 100 points");
         assertThat(response.getParticipation()).isEqualTo(manualResult.getParticipation());
         assertThat(response.getFeedbacks()).hasSameSizeAs(manualResult.getFeedbacks());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void cancelOwnAssessmentAsStudent() throws Exception {
+    void cancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void cancelOwnAssessmentAsTutor() throws Exception {
+    void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+    void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+    void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
@@ -602,7 +566,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         var result = programmingSubmission.getLatestResult();
         assertThat(result).isNotNull();
         result.setScore(75D);
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         result.setCompletionDate(ZonedDateTime.now());
         result.setFeedbacks(feedbacks);
         result.setParticipation(participation);
@@ -626,7 +591,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void multipleCorrectionRoundsForExam() throws Exception {
+    void multipleCorrectionRoundsForExam() throws Exception {
         // Setup exam with 2 correction rounds and a programming exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         Exam exam = database.addExam(programmingExercise.getCourseViaExerciseGroupOrCourseMember());
@@ -676,7 +641,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         ProgrammingSubmission submissionWithoutFirstAssessment = request.get("/api/exercises/" + exerciseWithParticipation.getId() + "/programming-submission-without-assessment",
                 HttpStatus.OK, ProgrammingSubmission.class, params);
         // verify that a new submission was created
-        // We want to get the third Submission, as it is the latest one, and contains a automatic result;
+        // We want to get the third Submission, as it is the latest one, and contains an automatic result;
         assertThat(submissionWithoutFirstAssessment).isNotEqualTo(firstSubmission).isNotEqualTo(secondSubmission).isEqualTo(thirdSubmission);
         // verify that the lock has been set
         assertThat(submissionWithoutFirstAssessment.getLatestResult()).isNotNull();
@@ -696,7 +661,8 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
         // assess submission and submit
         var manualResultLockedFirstRound = submissionWithoutFirstAssessment.getLatestResult();
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here"))
+                .collect(Collectors.toCollection(ArrayList::new));
         manualResultLockedFirstRound.setFeedbacks(feedbacks);
         manualResultLockedFirstRound.setRated(true);
         manualResultLockedFirstRound.setHasFeedback(true);
@@ -821,7 +787,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void overrideProgrammingAssessmentAfterComplaint() throws Exception {
+    void overrideProgrammingAssessmentAfterComplaint() throws Exception {
         User student1 = userRepository.findOneByLogin("student1").orElse(null);
 
         // Starting participation
@@ -844,7 +810,6 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         initialResult.setHasFeedback(false);
         initialResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         initialResult.setParticipation(participation);
-        initialResult.setResultString(50.0, 100.0);
         initialResult = resultRepository.save(initialResult);
 
         programmingSubmission.addResult(initialResult);
@@ -893,7 +858,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
         assertThat(overwrittenResult.hasComplaint()).isFalse(); // The result has no complaint, as it is the answer for one
         assertThat(initialResult.hasComplaint()).isTrue(); // Very important: It must not be overwritten whether the result actually had a complaint
 
-        // Also check that its correctly saved in the database
+        // Also check that it's correctly saved in the database
         ProgrammingSubmission savedSubmission = programmingSubmissionRepository.findWithEagerResultsById(programmingSubmission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(10D);
@@ -904,7 +869,7 @@ public class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testdeleteResult() throws Exception {
+    void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).stream().findFirst().orElseThrow();
 

@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
@@ -88,7 +87,7 @@ public class TextUnitResource {
         authorizationCheckService.checkHasAtLeastRoleForLectureElseThrow(Role.EDITOR, textUnit.getLecture(), null);
 
         TextUnit result = textUnitRepository.save(textUnit);
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, textUnit.getId().toString())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -106,11 +105,9 @@ public class TextUnitResource {
         if (textUnit.getId() != null) {
             throw new BadRequestAlertException("A new text unit cannot have an id", ENTITY_NAME, "idexists");
         }
-        Optional<Lecture> lectureOptional = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoals(lectureId);
-        if (lectureOptional.isEmpty()) {
-            throw new BadRequestAlertException("A new text unit must be connected to a lecture", ENTITY_NAME, "lectureempty");
-        }
-        Lecture lecture = lectureOptional.get();
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureId);
+
         if (lecture.getCourse() == null || (textUnit.getLecture() != null && !lecture.getId().equals(textUnit.getLecture().getId()))) {
             throw new ConflictException("Input data not valid", ENTITY_NAME, "inputInvalid");
         }
@@ -124,7 +121,6 @@ public class TextUnitResource {
         Lecture updatedLecture = lectureRepository.save(lecture);
         TextUnit persistedTextUnit = (TextUnit) updatedLecture.getLectureUnits().get(updatedLecture.getLectureUnits().size() - 1);
 
-        return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, ""))
-                .body(persistedTextUnit);
+        return ResponseEntity.created(new URI("/api/text-units/" + persistedTextUnit.getId())).body(persistedTextUnit);
     }
 }

@@ -6,8 +6,12 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ExerciseType } from 'app/entities/exercise.model';
-import { DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { CodeEditorRepositoryFileService } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
+import { FileWithHasMatch } from 'app/exercises/shared/plagiarism/plagiarism-split-view/split-pane-header/split-pane-header.component';
+import { captureException } from '@sentry/angular';
+
+type FilesWithType = { [p: string]: FileType };
 
 @Component({
     selector: 'jhi-text-submission-viewer',
@@ -34,7 +38,7 @@ export class TextSubmissionViewerComponent implements OnChanges {
      * List of files the given submission consists of.
      * `null` for text exercises.
      */
-    public files: string[];
+    public files: FileWithHasMatch[];
 
     /**
      * True, if the given exercise is of type 'programming'.
@@ -69,35 +73,89 @@ export class TextSubmissionViewerComponent implements OnChanges {
             this.loading = true;
 
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
-                this.isProgrammingExercise = true;
-
-                this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }]);
-                this.repositoryService.getRepositoryContent().subscribe({
-                    next: (files) => {
-                        this.loading = false;
-                        this.files = this.filterFiles(files);
-                    },
-                    error: () => {
-                        this.loading = false;
-                    },
-                });
+                this.loadProgrammingExercise(currentPlagiarismSubmission);
             } else {
-                this.isProgrammingExercise = false;
-
-                this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe({
-                    next: (submission: TextSubmission) => {
-                        this.loading = false;
-                        this.fileContent = this.insertMatchTokens(submission.text || '');
-                    },
-                    error: () => {
-                        this.loading = false;
-                    },
-                });
+                this.loadTextExercise(currentPlagiarismSubmission);
             }
         }
     }
 
-    filterFiles(files: { [p: string]: FileType }) {
+    /**
+     * Initializes this component with a programming exercise submission.
+     *
+     * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
+     * @private
+     */
+    private loadProgrammingExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
+        this.isProgrammingExercise = true;
+
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: currentPlagiarismSubmission.submissionId }];
+        this.repositoryService.getRepositoryContent(domain).subscribe({
+            next: (files) => {
+                this.loading = false;
+                this.files = this.programmingExerciseFilesWithMatches(files);
+            },
+            error: () => {
+                this.loading = false;
+            },
+        });
+    }
+
+    /**
+     * Computes the list of all files that should be shown for the plagiarism view.
+     *
+     * @param files An unfiltered list of files.
+     * @return A sorted list of files that should be shown for the plagiarism view.
+     * @private
+     */
+    private programmingExerciseFilesWithMatches(files: FilesWithType): Array<FileWithHasMatch> {
+        return this.filterFiles(files)
+            .map((file) => ({ file, hasMatch: this.hasMatch(file) }))
+            .sort(TextSubmissionViewerComponent.compareFileWithHasMatch);
+    }
+
+    /**
+     * Compares two files.
+     *
+     * Files which have got a match have got precedence over ones which don’t.
+     * If two files either both or neither have a match, then they are sorted lexicographically.
+     *
+     * @param file1 Some file with information if it has a match.
+     * @param file2 Some other file with information if it has a match.
+     * @return `-1`, if `file1` is smaller according to the sorting order described above, `1` otherwise.
+     * @private
+     */
+    private static compareFileWithHasMatch(file1: FileWithHasMatch, file2: FileWithHasMatch): number {
+        if (file1.hasMatch === file2.hasMatch) {
+            return file1.file.localeCompare(file2.file);
+        } else if (file1.hasMatch) {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
+
+    /**
+     * Initializes this component with a text exercise submission.
+     *
+     * @param currentPlagiarismSubmission The submission to load the plagiarism information for.
+     * @private
+     */
+    private loadTextExercise(currentPlagiarismSubmission: PlagiarismSubmission<TextSubmissionElement>) {
+        this.isProgrammingExercise = false;
+
+        this.textSubmissionService.getTextSubmission(currentPlagiarismSubmission.submissionId).subscribe({
+            next: (submission: TextSubmission) => {
+                this.loading = false;
+                this.fileContent = this.insertMatchTokens(submission.text || '');
+            },
+            error: () => {
+                this.loading = false;
+            },
+        });
+    }
+
+    filterFiles(files: FilesWithType) {
         return Object.keys(files).filter((fileName) => files[fileName] === FileType.FILE);
     }
 
@@ -105,16 +163,16 @@ export class TextSubmissionViewerComponent implements OnChanges {
         this.currentFile = file;
         this.loading = true;
 
-        this.repositoryService.setDomain([DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }]);
+        const domain: DomainChange = [DomainType.PARTICIPATION, { id: this.plagiarismSubmission.submissionId }];
 
-        this.repositoryService.getFileHeaders(file).subscribe((response) => {
+        this.repositoryService.getFileHeaders(file, domain).subscribe((response) => {
             const contentType = response.headers.get('content-type');
             if (contentType && !contentType.startsWith('text')) {
                 this.binaryFile = true;
                 this.loading = false;
             } else {
                 this.binaryFile = false;
-                this.repositoryService.getFile(file).subscribe({
+                this.repositoryService.getFile(file, domain).subscribe({
                     next: ({ fileContent }) => {
                         this.loading = false;
                         this.fileContent = this.insertMatchTokens(fileContent);
@@ -138,6 +196,10 @@ export class TextSubmissionViewerComponent implements OnChanges {
         return this.matches.get(this.currentFile || 'none') || [];
     }
 
+    private hasMatch(file: string): boolean {
+        return this.matches.has(file);
+    }
+
     insertToken(text: string, token: string, position: number) {
         return [text.slice(0, position), token, text.slice(position)].join('');
     }
@@ -148,6 +210,15 @@ export class TextSubmissionViewerComponent implements OnChanges {
         const offsets = new Array(rows.length).fill(0);
 
         matches.forEach(({ from, to }) => {
+            if (!from) {
+                captureException(new Error('"from" is not defined in insertMatchTokens'));
+                return;
+            }
+            if (!to) {
+                captureException(new Error('"to" is not defined in insertMatchTokens'));
+                return;
+            }
+
             const idxLineFrom = from.line - 1;
             const idxLineTo = to.line - 1;
 

@@ -14,8 +14,10 @@ import { NotificationSettingsService } from 'app/shared/user-settings/notificati
 import { UserSettingsCategory } from 'app/shared/constants/user-settings.constants';
 import { Setting } from 'app/shared/user-settings/user-settings.model';
 import { faArchive, faBell, faCircleNotch, faCog, faEye, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { SessionStorageService } from 'ngx-webstorage';
 
 export const reloadNotificationSideBarMessage = 'reloadNotificationsInNotificationSideBar';
+export const LAST_READ_STORAGE_KEY = 'lastNotificationRead';
 
 @Component({
     selector: 'jhi-notification-sidebar',
@@ -57,6 +59,7 @@ export class NotificationSidebarComponent implements OnInit {
         private accountService: AccountService,
         private userSettingsService: UserSettingsService,
         private notificationSettingsService: NotificationSettingsService,
+        private sessionStorageService: SessionStorageService,
         private changeDetector: ChangeDetectorRef,
     ) {}
 
@@ -66,13 +69,30 @@ export class NotificationSidebarComponent implements OnInit {
     ngOnInit(): void {
         this.accountService.getAuthenticationState().subscribe((user: User | undefined) => {
             if (user) {
-                if (user.lastNotificationRead) {
+                // Check if we have a newer notification read date in session storage to prevent marking old notifications as new on a rerender
+                // If we have it, use the latest of both dates
+
+                const sessionLastNotificationReadRaw = this.sessionStorageService.retrieve(LAST_READ_STORAGE_KEY);
+                const sessionLastNotificationReadDayJs = sessionLastNotificationReadRaw ? dayjs(sessionLastNotificationReadRaw) : undefined;
+
+                if (user.lastNotificationRead && !sessionLastNotificationReadDayJs) {
                     this.lastNotificationRead = user.lastNotificationRead;
+                } else if (!user.lastNotificationRead && sessionLastNotificationReadDayJs) {
+                    this.lastNotificationRead = sessionLastNotificationReadDayJs;
+                } else if (user.lastNotificationRead && sessionLastNotificationReadDayJs) {
+                    if (sessionLastNotificationReadDayJs.isBefore(user.lastNotificationRead)) {
+                        this.lastNotificationRead = user.lastNotificationRead;
+                    } else {
+                        this.lastNotificationRead = sessionLastNotificationReadDayJs;
+                    }
                 }
+
                 this.loadNotificationSettings();
                 this.listenForNotificationSettingsChanges();
                 this.loadNotifications();
                 this.subscribeToNotificationUpdates();
+            } else {
+                this.sessionStorageService.clear(LAST_READ_STORAGE_KEY);
             }
         });
     }
@@ -132,6 +152,7 @@ export class NotificationSidebarComponent implements OnInit {
             const lastNotificationReadNow = dayjs();
             setTimeout(() => {
                 this.lastNotificationRead = lastNotificationReadNow;
+                this.sessionStorageService.store(LAST_READ_STORAGE_KEY, lastNotificationReadNow);
                 this.updateRecentNotificationCount();
             }, 2000);
         });

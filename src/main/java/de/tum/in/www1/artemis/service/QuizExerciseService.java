@@ -6,15 +6,20 @@ import java.util.*;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class QuizExerciseService {
@@ -37,9 +42,11 @@ public class QuizExerciseService {
 
     private final QuizBatchService quizBatchService;
 
+    private final AuthorizationCheckService authCheckService;
+
     public QuizExerciseService(QuizExerciseRepository quizExerciseRepository, DragAndDropMappingRepository dragAndDropMappingRepository, ResultRepository resultRepository,
             ShortAnswerMappingRepository shortAnswerMappingRepository, QuizSubmissionRepository quizSubmissionRepository, QuizScheduleService quizScheduleService,
-            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService) {
+            QuizStatisticService quizStatisticService, QuizBatchService quizBatchService, AuthorizationCheckService authCheckService) {
         this.quizExerciseRepository = quizExerciseRepository;
         this.dragAndDropMappingRepository = dragAndDropMappingRepository;
         this.shortAnswerMappingRepository = shortAnswerMappingRepository;
@@ -48,6 +55,7 @@ public class QuizExerciseService {
         this.quizScheduleService = quizScheduleService;
         this.quizStatisticService = quizStatisticService;
         this.quizBatchService = quizBatchService;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -219,7 +227,7 @@ public class QuizExerciseService {
             // update Successful-Flag in Result
             StudentParticipation studentParticipation = (StudentParticipation) result.getParticipation();
             studentParticipation.setExercise(quizExercise);
-            result.evaluateSubmission();
+            result.evaluateQuizSubmission();
 
             submissions.add(quizSubmission);
         }
@@ -402,7 +410,10 @@ public class QuizExerciseService {
 
         // for quizzes, we need to delete the statistics, and we need to reset the quiz to its original state
         quizExercise.setIsOpenForPractice(Boolean.FALSE);
-        quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        if (!quizExercise.isExamExercise()) {
+            // do not set the release date of exam exercises
+            quizExercise.setReleaseDate(ZonedDateTime.now().plusYears(1));
+        }
         quizExercise.setDueDate(null);
         quizExercise.setQuizBatches(Set.of());
 
@@ -429,5 +440,46 @@ public class QuizExerciseService {
     public void endQuiz(QuizExercise quizExercise, ZonedDateTime endDate) {
         quizExercise.setDueDate(ZonedDateTime.now().truncatedTo(ChronoUnit.SECONDS));
         quizExercise.getQuizBatches().forEach(batch -> batch.setStartTime(quizBatchService.quizBatchStartDate(quizExercise, batch.getStartTime())));
+    }
+
+    /**
+     * Search for all quiz exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
+     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     *
+     * @param search         The search query defining the search term and the size of the returned page
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
+     * @param user           The user for whom to fetch all available exercises
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<QuizExercise> getAllOnPageWithSize(final PageableSearchDTO<String> search, final Boolean isCourseFilter, final Boolean isExamFilter,
+            final User user) {
+        final var pageable = PageUtil.createExercisePageRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        Page<QuizExercise> exercisePage = Page.empty();
+        if (authCheckService.isAdmin(user)) {
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExams(searchTerm, pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllExams(searchTerm, pageable);
+            }
+        }
+        else {
+            if (isCourseFilter && isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isCourseFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllCoursesWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+            else if (isExamFilter) {
+                exercisePage = quizExerciseRepository.queryBySearchTermInAllExamsWhereEditorOrInstructor(searchTerm, user.getGroups(), pageable);
+            }
+        }
+        return new SearchResultPageDTO<>(exercisePage.getContent(), exercisePage.getTotalPages());
     }
 }

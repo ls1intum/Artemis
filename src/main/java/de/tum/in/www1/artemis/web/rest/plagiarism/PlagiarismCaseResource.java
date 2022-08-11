@@ -14,8 +14,10 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
+import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -115,30 +117,35 @@ public class PlagiarismCaseResource {
     }
 
     /**
-     * Retrieves the plagiarismCase related to an exercise for the student.
+     * Retrieves the plagiarismCase related to an exercise for the student if the plagiarism comparison was confirmed and the student was notified
      *
      * @param courseId the id of the course
      * @param exerciseId the id of the exercise
-     * @return the plagiarism case for the exercise and student
+     * @return the plagiarism case id for the exercise and student if and only if the comparison was confirmed and the student was notified
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<PlagiarismCase> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismCaseInfoDTO> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
-        }
-        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseId(user.getId(), exerciseId);
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        var plagiarismCaseOptional = plagiarismCaseRepository.findByStudentIdAndExerciseIdWithPost(user.getId(), exerciseId);
         if (plagiarismCaseOptional.isPresent()) {
+            // the student was notified if the plagiarism case is available (due to the nature of the query above)
             var plagiarismCase = plagiarismCaseOptional.get();
-            plagiarismCase.setPost(null);
-            return ResponseEntity.ok(plagiarismCase);
+            // the following line is already checked in the SQL statement, but we want to ensure it 100%
+            if (plagiarismCase.getPost() != null) {
+                // Note: we only return the ID and verdict to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the
+                // detail page
+                // all other information might be irrelevant or sensitive and could lead to longer loading times
+                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict());
+                return ResponseEntity.ok(plagiarismCaseInfoDTO);
+            }
         }
-        else {
-            return ResponseEntity.ok().build();
-        }
+        // in all other cases the response is empty
+        return ResponseEntity.ok(null);
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {
@@ -168,13 +175,16 @@ public class PlagiarismCaseResource {
         log.debug("REST request to get plagiarism case for student with id: {}", plagiarismCaseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
-        if (!authenticationCheckService.isAtLeastStudentInCourse(course, user)) {
-            throw new AccessForbiddenException("Only students of this course have access to its plagiarism cases.");
-        }
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
         var plagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCaseId);
         if (!plagiarismCase.getStudent().getLogin().equals(user.getLogin())) {
             throw new AccessForbiddenException("Students only have access to plagiarism cases by which they are affected");
         }
+
+        // hide potentially sensitive data
+        plagiarismCase.getExercise().filterSensitiveInformation();
+
         return getPlagiarismCaseResponseEntity(plagiarismCase);
     }
 }

@@ -24,6 +24,7 @@ import org.apache.commons.io.filefilter.IOFileFilter;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.apache.pdfbox.io.MemoryUsageSetting;
 import org.apache.pdfbox.multipdf.PDFMergerUtility;
+import org.apache.pdfbox.pdmodel.PDDocumentInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
@@ -101,13 +102,40 @@ public class FileService implements DisposableBean {
     }
 
     /**
+     * Copies an existing file (if not a temporary file) to a target location. Returns the public path for the resulting file.
+     *
+     * @param oldFilePath  the old file path
+     * @param targetFolder the folder that a file should be copied to
+     * @param entityId     id of the entity this file belongs to (needed to generate public path). If this is null, a placeholder will be inserted where the id would be
+     * @return the resulting public path
+     */
+    public String copyExistingFileToTarget(String oldFilePath, String targetFolder, Long entityId) {
+        if (oldFilePath != null && !oldFilePath.contains("files/temp")) {
+            try {
+                Path source = Path.of(actualPathForPublicPath(oldFilePath));
+                File targetFile = generateTargetFile(oldFilePath, targetFolder, false);
+                Path target = targetFile.toPath();
+                Files.copy(source, target, REPLACE_EXISTING);
+                String newFilePath = publicPathForActualPath(target.toString(), entityId);
+                log.debug("Moved File from {} to {}", source, target);
+                return newFilePath;
+            }
+            catch (IOException e) {
+                log.error("Error moving file: {}", oldFilePath);
+            }
+        }
+        return oldFilePath;
+    }
+
+    /**
      * Takes care of any changes that have to be made to the filesystem (deleting old files, moving temporary files into their proper location) and returns the public path for the
      * resulting file (as it might have been moved from newFilePath to another path)
      *
      * @param oldFilePath  the old file path (this file will be deleted if not null and different from newFilePath)
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
      * @param targetFolder the folder that a temporary file should be moved to
-     * @param entityId     id of the entity this file belongs to (needed to generate public path). If this is null, a placeholder will be inserted where the id would be
+     * @param entityId     id of the entity this file belongs to (needed to generate
+     *                    public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
@@ -760,7 +788,7 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the file " + path + " did not work", e);
+                log.error("Deleting the file {} did not work", path, e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 
@@ -783,7 +811,7 @@ public class FileService implements DisposableBean {
                 futures.remove(path);
             }
             catch (IOException e) {
-                log.error("Deleting the directory " + path + " did not work", e);
+                log.error("Deleting the directory {} did not work", path, e);
             }
         }, delayInMinutes, TimeUnit.MINUTES);
 
@@ -889,10 +917,11 @@ public class FileService implements DisposableBean {
     /**
      * Merge the PDF files located in the given paths.
      *
-     * @param paths list of paths to merge
+     * @param paths             list of paths to merge
+     * @param mergedPdfFileName title of merged pdf file
      * @return byte array of the merged file
      */
-    public Optional<byte[]> mergePdfFiles(List<String> paths) {
+    public Optional<byte[]> mergePdfFiles(List<String> paths, String mergedPdfFileName) {
         if (paths == null || paths.isEmpty()) {
             return Optional.empty();
         }
@@ -906,8 +935,14 @@ public class FileService implements DisposableBean {
                     pdfMerger.addSource(new File(path));
                 }
             }
+
+            PDDocumentInformation pdDocumentInformation = new PDDocumentInformation();
+            pdDocumentInformation.setTitle(mergedPdfFileName);
+            pdfMerger.setDestinationDocumentInformation(pdDocumentInformation);
+
             pdfMerger.setDestinationStream(outputStream);
             pdfMerger.mergeDocuments(MemoryUsageSetting.setupTempFileOnly());
+
         }
         catch (IOException e) {
             log.warn("Could not merge files");

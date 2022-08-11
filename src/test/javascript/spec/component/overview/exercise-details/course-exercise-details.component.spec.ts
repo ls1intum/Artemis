@@ -1,20 +1,16 @@
-import { HttpResponse } from '@angular/common/http';
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
-import { CourseExerciseSubmissionResultSimulationService } from 'app/course/manage/course-exercise-submission-result-simulation.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { Exercise, ExerciseType, ParticipationStatus } from 'app/entities/exercise.model';
+import { Exercise, ExerciseType } from 'app/entities/exercise.model';
 import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
-import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { Result } from 'app/entities/result.model';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { TextSubmission } from 'app/entities/text-submission.model';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ProgrammingSubmissionService } from 'app/exercises/programming/participate/programming-submission.service';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
@@ -151,8 +147,6 @@ describe('CourseExerciseDetailsComponent', () => {
                 MockProvider(ParticipationService),
                 MockProvider(SourceTreeService),
                 MockProvider(GuidedTourService),
-                MockProvider(CourseExerciseSubmissionResultSimulationService),
-                MockProvider(ProgrammingExerciseSimulationService),
                 MockProvider(TeamService),
                 MockProvider(QuizExerciseService),
                 MockProvider(ProgrammingSubmissionService),
@@ -198,10 +192,10 @@ describe('CourseExerciseDetailsComponent', () => {
     it('should initialize', fakeAsync(() => {
         fixture.detectChanges();
         tick(500);
-        expect(comp.inProductionEnvironment).toBe(false);
+        expect(comp.inProductionEnvironment).toBeFalse();
         expect(comp.courseId).toBe(1);
         expect(comp.exercise).toStrictEqual(exercise);
-        expect(comp.hasMoreResults).toBe(false);
+        expect(comp.hasMoreResults).toBeFalse();
     }));
 
     it('should have student participations', fakeAsync(() => {
@@ -241,93 +235,65 @@ describe('CourseExerciseDetailsComponent', () => {
         expect(comp.courseId).toBe(1);
         expect(comp.studentParticipation?.exercise?.id).toBe(exerciseDetail.id);
         expect(comp.exercise!.studentParticipations![0].results![0]).toStrictEqual(changedResult);
-        expect(comp.hasMoreResults).toBe(false);
+        expect(comp.hasMoreResults).toBeFalse();
         expect(comp.exerciseRatedBadge(result)).toBe('bg-info');
     }));
 
     it('should not be a quiz exercise', () => {
         comp.exercise = { ...exercise };
-        expect(comp.quizExerciseStatus).toBe(undefined);
+        expect(comp.quizExerciseStatus).toBeUndefined();
     });
-
-    it('should simulate a submission', () => {
-        const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        jest.spyOn(courseExerciseSubmissionResultSimulationService, 'simulateSubmission').mockReturnValue(
-            of(
-                new HttpResponse({
-                    body: new ProgrammingSubmission(),
-                }),
-            ),
-        );
-        comp.simulateSubmission();
-
-        expect(comp.wasSubmissionSimulated).toBe(true);
-    });
-
-    it('should simulate a result', fakeAsync(() => {
-        const result = new Result();
-        result.participation = new StudentParticipation();
-        comp.exercise = { id: 2 } as Exercise;
-        const courseExerciseSubmissionResultSimulationService = fixture.debugElement.injector.get(CourseExerciseSubmissionResultSimulationService);
-        jest.spyOn(courseExerciseSubmissionResultSimulationService, 'simulateResult').mockReturnValue(of({ body: result } as HttpResponse<Result>));
-        comp.simulateResult();
-        tick();
-        flush();
-
-        expect(comp.wasSubmissionSimulated).toBe(false);
-        expect(comp.exercise?.participationStatus).toBe(ParticipationStatus.EXERCISE_SUBMITTED);
-    }));
 
     it('should fill & empty sample modeling solution', () => {
         comp.showIfExampleSolutionPresent({ ...modelingExercise });
-        expect(comp.exampleSolution).toBe(undefined);
+        expect(comp.exampleSolution).toBeUndefined();
         expect(comp.exampleSolutionUML).toEqual(JSON.parse(modelingExercise.exampleSolutionModel!));
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty sample text solution', () => {
         comp.showIfExampleSolutionPresent({ ...textExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeDefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty sample file upload solution', () => {
         comp.showIfExampleSolutionPresent({ ...fileUploadExercise });
-        expect(comp.exampleSolution).not.toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeDefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 
     it('should fill & empty sample programming exercise solution', () => {
         comp.showIfExampleSolutionPresent({ ...programmingExercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(true);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeTrue();
 
         comp.showIfExampleSolutionPresent({ ...programmingExercise, exampleSolutionPublished: false });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
 
         comp.showIfExampleSolutionPresent({ ...exercise });
-        expect(comp.exampleSolution).toBe(undefined);
-        expect(comp.exampleSolutionUML).toBe(undefined);
-        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBe(false);
+        expect(comp.exampleSolution).toBeUndefined();
+        expect(comp.exampleSolutionUML).toBeUndefined();
+        expect(comp.isProgrammingExerciseExampleSolutionPublished).toBeFalse();
     });
 });

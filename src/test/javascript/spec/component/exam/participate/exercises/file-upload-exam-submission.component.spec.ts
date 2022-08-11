@@ -176,11 +176,11 @@ describe('FileUploadExamSubmissionComponent', () => {
         });
         it('should return true if isSynced false', () => {
             comp.studentSubmission.isSynced = false;
-            expect(comp.hasUnsavedChanges()).toEqual(true);
+            expect(comp.hasUnsavedChanges()).toBeTrue();
         });
         it('should return false if isSynced true', () => {
             comp.studentSubmission.isSynced = true;
-            expect(comp.hasUnsavedChanges()).toEqual(false);
+            expect(comp.hasUnsavedChanges()).toBeFalse();
         });
     });
 
@@ -196,15 +196,15 @@ describe('FileUploadExamSubmissionComponent', () => {
             comp.studentSubmission.isSynced = false;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submissionFile).not.toBeUndefined();
+            expect(comp.submissionFile).toBeDefined();
         });
         it('should set submitted filename and file extension', () => {
             comp.studentSubmission.isSynced = true;
             comp.submissionFile = new File([], 'file2');
             comp.updateViewFromSubmission();
-            expect(comp.submittedFileName).toEqual('file1.png');
-            expect(comp.submittedFileExtension).toEqual('png');
-            expect(comp.submissionFile).toEqual(undefined);
+            expect(comp.submittedFileName).toBe('file1.png');
+            expect(comp.submittedFileExtension).toBe('png');
+            expect(comp.submissionFile).toBeUndefined();
         });
     });
 
@@ -224,7 +224,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(jhiErrorSpy).toHaveBeenCalledOnce();
         expect(comp.submissionFile).toBeUndefined();
         expect(comp.studentSubmission!.filePath).toBeUndefined();
 
@@ -232,7 +232,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
         jest.restoreAllMocks();
     }));
 
@@ -252,7 +252,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(jhiErrorSpy).toHaveBeenCalledOnce();
         expect(comp.submissionFile).toBeUndefined();
         expect(comp.studentSubmission!.filePath).toBeUndefined();
 
@@ -260,7 +260,7 @@ describe('FileUploadExamSubmissionComponent', () => {
         const fileUploadInput = fixture.debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).not.toBeNull();
         expect(fileUploadInput.nativeElement.disabled).toBeFalse();
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.value).toBe('');
 
         tick();
         fixture.destroy();

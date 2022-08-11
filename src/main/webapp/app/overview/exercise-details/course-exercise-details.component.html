@@ -1,11 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details
-        [exercise]="exercise"
-        [studentParticipation]="studentParticipation"
-        [onBackClick]="backToCourse.bind(this)"
-        [submissionPolicy]="submissionPolicy"
-    >
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="studentParticipation" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -18,19 +13,11 @@
             [showResult]="showResults && latestRatedResult != undefined"
         >
         </jhi-exercise-details-student-actions>
-        <!-- These buttons will be only shown in dev environment and if the programming exercise has no
-        connection to the VCS and CI
-        This functionality is only for testing purposes-->
-        <button class="dev-button" *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable" (click)="simulateSubmission()">Submission</button>
-        <button
-            class="dev-button"
-            [disabled]="!wasSubmissionSimulated"
-            *ngIf="!inProductionEnvironment && noVersionControlAndContinuousIntegrationServerAvailable"
-            (click)="simulateResult()"
+        <a
+            *ngIf="plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM"
+            class="btn btn-danger btn-sm me-2"
+            [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]"
         >
-            Result
-        </button>
-        <a *ngIf="plagiarismCase" class="btn btn-danger btn-sm me-2" [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCase.id]">
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
         <jhi-submission-result-status
@@ -128,7 +115,6 @@
                     [exercise]="exercise"
                     [participation]="exercise.studentParticipations! && exercise.studentParticipations![0]"
                     [personalParticipation]="true"
-                    [exerciseHints]="exercise.exerciseHints || []"
                 >
                 </jhi-programming-exercise-instructions>
             </div>
@@ -152,7 +138,7 @@
             </div>
             <div class="row mb-2 d-none d-md-flex" *ngIf="showResults && sortedHistoryResult && sortedHistoryResult!.length > 1">
                 <div class="col-12 col-md-12">
-                    <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults" [maxScore]="exercise.maxPoints"></jhi-result-history>
+                    <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"></jhi-result-history>
                 </div>
             </div>
             <div
@@ -285,6 +271,19 @@
             >
                 <jhi-rating class="mt-2 alert alert-info" [result]="latestRatedResult"></jhi-rating>
             </div>
+            <jhi-exercise-hint-button-overlay
+                class="p-3"
+                [availableExerciseHints]="availableExerciseHints"
+                [activatedExerciseHints]="activatedExerciseHints"
+                (onHintActivated)="onHintActivated($event)"
+            ></jhi-exercise-hint-button-overlay>
+            <a
+                *ngIf="plagiarismCaseInfo?.verdict === PlagiarismVerdict.NO_PLAGIARISM"
+                class="btn btn-info btn-sm me-2"
+                [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo?.id]"
+            >
+                <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.resolvedPlagiarismCase">Resolved Plagiarism Case</span>
+            </a>
         </div>
         <div class="col d-flex flex-grow-1 justify-end px-0" style="max-width: min-content">
             <router-outlet *ngIf="exercise.course && exercise.course.postsEnabled" (activate)="onChildActivate($event)"></router-outlet>

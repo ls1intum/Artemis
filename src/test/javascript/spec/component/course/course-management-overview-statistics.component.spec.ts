@@ -63,7 +63,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
         component.ngOnChanges();
 
-        expect(component.loading).toBe(false);
+        expect(component.loading).toBeFalse();
         expect(component.ngxData[0].series[0].value).toBe(0);
         expect(component.ngxData[0].series[1].value).toBe(0);
         expect(component.ngxData[0].series[2].value).toBe(0);
@@ -76,7 +76,7 @@ describe('CourseManagementOverviewStatisticsComponent', () => {
 
         component.ngOnInit();
 
-        expect(component.startDateAlreadyPassed).toBe(false);
+        expect(component.startDateAlreadyPassed).toBeFalse();
     });
 
     it('should show only 2 weeks if start date is 1 week ago', () => {

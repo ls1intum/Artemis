@@ -197,7 +197,7 @@ export class CodeEditorBuildOutputComponent implements AfterViewInit, OnInit, On
 
     /**
      * Decides if the build log should be shown.
-     * Fetch the build logs if a result is available and no submission  is available or the submission could not be build
+     * Fetch the build logs if a result is available and no submission is available or the submission could not be build
      * @param result
      */
     fetchBuildResults(result?: Result): Observable<BuildLogEntry[] | null> {

@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import java.security.SecureRandom;
 import java.time.ZonedDateTime;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 import javax.annotation.Nullable;
 
@@ -15,10 +14,10 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.QuizMode;
-import de.tum.in.www1.artemis.domain.quiz.QuizBatch;
-import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.repository.QuizBatchRepository;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.domain.quiz.*;
+import de.tum.in.www1.artemis.exception.QuizJoinException;
+import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 @Service
 public class QuizBatchService {
@@ -52,13 +51,6 @@ public class QuizBatchService {
         return quizBatchRepository.saveAndFlush(quizBatch);
     }
 
-    // TODO: quiz cleanup: attempt at lazy loading batches but doesn't work; check it lazy loading makes any sense and how to implement it properly
-    public void loadBatchesIfMissing(QuizExercise quizExercise) {
-        if (quizExercise.getQuizBatches() == null) {
-            quizExercise.setQuizBatches(quizBatchRepository.findAllByQuizExercise(quizExercise));
-        }
-    }
-
     /**
      * Get or create the batch for synchronized quiz exercises. If it was created it will not have been saved to the database yet.
      * Only valid to call for synchronized quiz exercises
@@ -71,11 +63,14 @@ public class QuizBatchService {
             throw new IllegalStateException();
         }
 
-        loadBatchesIfMissing(quizExercise);
-
-        var batch = quizExercise.getQuizBatches().stream().findAny();
-        if (batch.isPresent()) {
-            return batch.get();
+        if (quizExercise.getQuizBatches() == null) {
+            var quizBatch = quizBatchRepository.findFirstByQuizExercise(quizExercise);
+            if (quizBatch.isPresent()) {
+                return quizBatch.get();
+            }
+        }
+        else if (!quizExercise.getQuizBatches().isEmpty()) {
+            return quizExercise.getQuizBatches().iterator().next();
         }
 
         var quizBatch = new QuizBatch();
@@ -91,18 +86,21 @@ public class QuizBatchService {
      * @param quizExercise the quiz of the batch to join
      * @param user the user to join
      * @param password the password of the batch to join; unused for INDIVIDUAL mode
-     * @param batchId the id of the batch to join without a password; currently not implemented; unused for INDIVIDUAL mode
      * @return the batch that was joined, or empty if the batch could not be found
      */
-    public Optional<QuizBatch> joinBatch(QuizExercise quizExercise, User user, @Nullable String password, @Nullable Long batchId) {
-        Optional<QuizBatch> quizBatch = switch (quizExercise.getQuizMode()) {
-            case SYNCHRONIZED -> Optional.empty();
-            case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password);
-            case INDIVIDUAL -> Optional.of(createIndividualBatch(quizExercise, user));
+    public QuizBatch joinBatch(QuizExercise quizExercise, User user, @Nullable String password) throws QuizJoinException {
+        QuizBatch quizBatch = switch (quizExercise.getQuizMode()) {
+            case SYNCHRONIZED -> throw new QuizJoinException("quizBatchJoinSynchronized", "Cannot join batch in synchronized quiz");
+            case BATCHED -> quizBatchRepository.findByQuizExerciseAndPassword(quizExercise, password)
+                    .orElseThrow(() -> new QuizJoinException("quizBatchNotFound", "Batch does not exist"));
+            case INDIVIDUAL -> createIndividualBatch(quizExercise, user);
         };
 
-        quizBatch = quizBatch.filter(batch -> !batch.isEnded());
-        quizBatch.ifPresent(batch -> quizScheduleService.joinQuizBatch(quizExercise, batch, user));
+        if (quizBatch.isEnded()) {
+            throw new QuizJoinException("quizBatchExpired", "Batch has expired");
+        }
+
+        quizScheduleService.joinQuizBatch(quizExercise, quizBatch, user);
         return quizBatch;
     }
 
@@ -112,7 +110,6 @@ public class QuizBatchService {
      * @return a new unused password
      */
     public String createBatchPassword(QuizExercise quizExercise) {
-        loadBatchesIfMissing(quizExercise);
         for (int i = 0; i < 1000; i++) {
             var password = RandomStringUtils.random(8, 0, 0, false, true, null, SECURE_RANDOM);
             if (quizExercise.getQuizBatches().stream().noneMatch(batch -> password.equals(batch.getPassword()))) {
@@ -172,14 +169,18 @@ public class QuizBatchService {
     /**
      * Return the batch that a user the currently participating in for a given exercise
      * @param quizExercise the quiz for that the batch should be look up for
-     * @param user the user that the batch should be looked up for
+     * @param login the login of the user that the batch should be looked up for
      * @return the batch that the user currently takes part in or empty
      */
-    public Optional<QuizBatch> getQuizBatchForStudent(QuizExercise quizExercise, User user) {
-        var batch = quizScheduleService.getQuizBatchForStudent(quizExercise, user);
-        if (batch.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
+    public Optional<QuizBatch> getQuizBatchForStudentByLogin(QuizExercise quizExercise, String login) {
+        var batchIdOptional = quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, login);
+        if (batchIdOptional.isEmpty() && quizExercise.getQuizMode() == QuizMode.SYNCHRONIZED) {
             return Optional.of(getOrCreateSynchronizedQuizBatch(quizExercise));
         }
-        return batch.flatMap(quizBatchRepository::findById);
+        if (quizExercise.getQuizBatches() != null && batchIdOptional.isPresent()) {
+            final Long batchId = batchIdOptional.get();
+            return quizExercise.getQuizBatches().stream().filter(quizBatch -> Objects.equals(quizBatch.getId(), batchId)).findAny().or(() -> quizBatchRepository.findById(batchId));
+        }
+        return batchIdOptional.flatMap(quizBatchRepository::findById);
     }
 }

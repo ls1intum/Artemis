@@ -25,8 +25,8 @@ describe('StructuredGradingInstructionsAssessmentLayoutComponent', () => {
     it('should initialize', () => {
         comp.readonly = true;
         comp.ngOnInit();
-        expect(comp.allowDrop).toBe(false);
-        expect(comp.disableDrag()).toBe(false);
+        expect(comp.allowDrop).toBeFalse();
+        expect(comp.disableDrag()).toBeFalse();
     });
 
     it('should set display elements', () => {

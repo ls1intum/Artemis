@@ -44,6 +44,11 @@
     <div editorToolbar class="d-inline-flex align-items-center">
         <jhi-code-editor-repository-is-locked *ngIf="repositoryIsLocked"
                                               class="me-3"></jhi-code-editor-repository-is-locked>
+        <jhi-exercise-hint-button-overlay
+            [availableExerciseHints]="availableExerciseHints"
+            [activatedExerciseHints]="activatedExerciseHints"
+            (onHintActivated)="onHintActivated($event)"
+        ></jhi-exercise-hint-button-overlay>
         <jhi-updating-result
             *ngIf="participation"
             [exercise]="exercise"
@@ -52,6 +57,7 @@
             [participation]="participation"
             [short]="true"
             [personalParticipation]="true"
+            (onParticipationChange)="loadStudentExerciseHints()"
             class="me-2"
         ></jhi-updating-result>
         <jhi-programming-exercise-student-trigger-build-button
@@ -60,7 +66,6 @@
             [participation]="participation"
             [btnSize]="ButtonSize.MEDIUM"
         ></jhi-programming-exercise-student-trigger-build-button>
-        <jhi-exercise-hint-student *ngIf="exercise" [exerciseId]="exercise.id!" class="me-2"></jhi-exercise-hint-student>
     </div>
     <jhi-programming-exercise-instructions
         editorSidebar
@@ -68,7 +73,6 @@
         [exercise]="exercise"
         [participation]="participation"
         [personalParticipation]="true"
-        [exerciseHints]="exercise.exerciseHints || []"
         class="instructions-wrapper__content card-body p-0"
     ></jhi-programming-exercise-instructions>
 </jhi-code-editor-container>

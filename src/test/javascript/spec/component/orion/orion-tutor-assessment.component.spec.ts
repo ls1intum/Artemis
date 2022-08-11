@@ -52,7 +52,7 @@ describe('OrionTutorAssessmentComponent', () => {
 
         comp.initializeFeedback();
 
-        expect(initializeAssessmentSpy).toHaveBeenCalledTimes(1);
+        expect(initializeAssessmentSpy).toHaveBeenCalledOnce();
         expect(initializeAssessmentSpy).toHaveBeenCalledWith(5, [{ id: 5 }, { id: 6 }]);
     });
 
@@ -61,7 +61,7 @@ describe('OrionTutorAssessmentComponent', () => {
 
         comp.updateFeedback(5, [{ id: 1 }]);
 
-        expect(updateFeedbackSpy).toHaveBeenCalledTimes(1);
+        expect(updateFeedbackSpy).toHaveBeenCalledOnce();
         expect(updateFeedbackSpy).toHaveBeenCalledWith([{ id: 1 }]);
     });
 
@@ -70,7 +70,7 @@ describe('OrionTutorAssessmentComponent', () => {
 
         comp.updateFeedback(10, [{ id: 1 }]);
 
-        expect(errorSpy).toHaveBeenCalledTimes(1);
+        expect(errorSpy).toHaveBeenCalledOnce();
         expect(errorSpy).toHaveBeenCalledWith('artemisApp.orion.assessment.submissionIdDontMatch');
     });
 
@@ -79,7 +79,7 @@ describe('OrionTutorAssessmentComponent', () => {
 
         comp.openNextSubmission(2);
 
-        expect(sendSubmissionToOrionCancellableSpy).toHaveBeenCalledTimes(1);
+        expect(sendSubmissionToOrionCancellableSpy).toHaveBeenCalledOnce();
         expect(sendSubmissionToOrionCancellableSpy).toHaveBeenCalledWith(15, 2, 1, false);
     });
 });

@@ -39,10 +39,8 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
         return findByIdWithSubmissions(comparisonId).orElseThrow(() -> new EntityNotFoundException("PlagiarismComparison", comparisonId));
     }
 
-    // TODO add a new method which loads the comparison together with the 2 submissions and their elements, but be careful that it does not load too many elements
     @Query("""
             SELECT DISTINCT comparison FROM PlagiarismComparison comparison
-            LEFT JOIN FETCH comparison.matches matches
             LEFT JOIN FETCH comparison.submissionA submissionA
             LEFT JOIN FETCH submissionA.elements elementsA
             LEFT JOIN FETCH comparison.plagiarismResult result
@@ -58,7 +56,6 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
 
     @Query("""
             SELECT DISTINCT comparison FROM PlagiarismComparison comparison
-            LEFT JOIN FETCH comparison.matches matches
             LEFT JOIN FETCH comparison.submissionB submissionB
             LEFT JOIN FETCH submissionB.elements elementsB
             WHERE comparison.id = :comparisonId
@@ -71,6 +68,10 @@ public interface PlagiarismComparisonRepository extends JpaRepository<Plagiarism
 
     @EntityGraph(type = LOAD, attributePaths = { "submissionA", "submissionA.plagiarismCase", "submissionB", "submissionB.plagiarismCase" })
     Optional<Set<PlagiarismComparison<?>>> findBySubmissionA_SubmissionIdOrSubmissionB_SubmissionId(long submissionA_submissionId, long submissionB_submissionId);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    void deletePlagiarismComparisonsByPlagiarismResultIdAndStatus(Long plagiarismResultId, PlagiarismStatus plagiarismStatus);
 
     // we can't simply call save() on plagiarismComparisons because the plagiarismComparisonMatches have no id
     // and would be recreated. Therefore, we need some update methods:

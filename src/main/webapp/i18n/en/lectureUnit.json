@@ -10,7 +10,8 @@
                 "text": "Text",
                 "exercise": "Exercise",
                 "video": "Video",
-                "file": "File"
+                "online": "Online",
+                "attachment": "File"
             },
             "releaseDate": "Release Date",
             "details": {
@@ -18,7 +19,9 @@
                 "releaseDateNotSet": "No release date set!",
                 "releaseDateSet": "Release date: ",
                 "attachmentVersion": "Attachment version: "
-            }
+            },
+            "completedTooltip": "Click to mark this lecture unit as uncompleted",
+            "uncompletedTooltip": "Click to mark this lecture unit as completed"
         },
         "textUnit": {
             "created": "New text unit created",
@@ -46,7 +49,7 @@
             }
         },
         "videoUnit": {
-            "created": "A new video unit created",
+            "created": "New video unit created",
             "updated": "Video unit updated",
             "tooltip": "This is a video unit",
             "description": "Description",
@@ -77,6 +80,37 @@
                 "buttonText": "Delete"
             }
         },
+        "onlineUnit": {
+            "created": "New online unit created",
+            "updated": "Online unit updated",
+            "tooltip": "This is an online unit",
+            "description": "Description",
+            "notReleasedTooltip": "Online unit only visible to teaching assistants and instructors. Release date:",
+            "doOpen": "Open link",
+            "createOnlineUnit": {
+                "title": "Create Online Unit",
+                "name": "Name",
+                "namePlaceHolder": "Give the online unit a name",
+                "description": "Description",
+                "descriptionPlaceHolder": "Give the online unit a description",
+                "nameRequiredValidationError": "Name is required.",
+                "nameMaxLengthValidationError": "Name can be max 255 characters long.",
+                "descriptionMaxLengthValidationError": "Description can be max 1000 characters long.",
+                "source": "Online Resource URL",
+                "sourcePlaceHolder": "Enter an URL to an external online resource",
+                "sourceRequiredValidationError": "Link is required",
+                "sourceURLValidationError": "Not a valid URL",
+                "urlHelperPlaceholder": "Name and description will be loaded from the meta data of the link"
+            },
+            "editOnlineUnit": {
+                "title": "Edit Online Unit"
+            },
+            "delete": {
+                "question": "Do you really want to delete the online unit <strong>{{ title }}</strong>? You can not undo this action!",
+                "typeNameToConfirm": "Please enter the name of the online unit for confirmation.",
+                "buttonText": "Delete"
+            }
+        },
         "attachmentUnit": {
             "created": "New attachment unit created",
             "updated": "Attachment unit updated",
@@ -97,7 +131,8 @@
                 "version": "Version",
                 "fileRequiredValidationError": "You must select a file to upload.",
                 "chooseFile": "Choose File",
-                "fileLimitations": "Supported Types: \".png\", \".jpg\", \".jpeg\", \".svg\", \".pdf\", \".zip\". Max. file size 10 mb"
+                "fileLimitation": "Max. file size 10 MB",
+                "fileFormat": "Supported Types"
             },
             "editAttachmentUnit": {
                 "title": "Edit Attachment Unit"
@@ -107,6 +142,7 @@
             "version": "Version",
             "FileName": "Filename",
             "description": "Description",
+            "download": "Download",
             "delete": {
                 "question": "Do you really want to delete the attachment unit <strong>{{ title }}</strong>? The attachment will also be removed! You can not undo this action!",
                 "typeNameToConfirm": "Please enter the name of the attachment for confirmation.",

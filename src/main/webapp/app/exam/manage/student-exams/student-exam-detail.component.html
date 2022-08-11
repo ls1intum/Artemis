@@ -32,7 +32,7 @@
         </ol>
     </div>
 
-    <div class="mb-3">
+    <div class="mb-3" *ngIf="!isTestExam">
         <h5><span jhiTranslate="artemisApp.studentExams.workingTime" [ngbTooltip]="getWorkingTimeToolTip()">Working time</span></h5>
         <form #form="ngForm" (ngSubmit)="saveWorkingTime()">
             <div class="mb-1 working-time-form" [ngbTooltip]="getWorkingTimeToolTip()">
@@ -102,6 +102,12 @@
                 <span jhiTranslate="entity.action.save" [ngbTooltip]="getWorkingTimeToolTip()">Save</span>
             </button>
         </form>
+    </div>
+
+    <div class="mb-3" *ngIf="isTestExam">
+        <h5 jhiTranslate="artemisApp.studentExams.workingTime">Working time</h5>
+        <span jhiTranslate="artemisApp.studentExams.usedWorkingTime">Used working time</span>:
+        <jhi-testexam-working-time [studentExam]="studentExam"></jhi-testexam-working-time>
     </div>
 
     <div class="mb-3">
@@ -213,6 +219,7 @@
                             [busy]="busy"
                             [isTestRun]="isTestRun"
                             [studentExam]="studentExam"
+                            [achievedPointsPerExercise]="achievedPointsPerExercise"
                         ></tr>
                     </ng-template>
                     <tr>

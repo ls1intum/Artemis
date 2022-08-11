@@ -1,18 +1,17 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit, TemplateRef, ViewChild } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, Input, OnChanges, OnDestroy, OnInit, ViewChild, ViewContainerRef } from '@angular/core';
 import { PostingFooterDirective } from 'app/shared/metis/posting-footer/posting-footer.directive';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { AnswerPostCreateEditModalComponent } from 'app/shared/metis/posting-create-edit-modal/answer-post-create-edit-modal/answer-post-create-edit-modal.component';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
-import { faComments } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
     selector: 'jhi-post-footer',
     templateUrl: './post-footer.component.html',
     styleUrls: ['./post-footer.component.scss'],
 })
-export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges, OnDestroy {
+export class PostFooterComponent extends PostingFooterDirective<Post> implements OnInit, OnChanges, OnDestroy, AfterContentChecked {
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post context
@@ -25,11 +24,11 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;
-    @ViewChild('createAnswerPostModal') createAnswerPostModal: TemplateRef<AnswerPostCreateEditModalComponent>;
 
-    faComments = faComments;
+    // ng-container to render createEditAnswerPostComponent
+    @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
 
-    constructor(private metisService: MetisService) {
+    constructor(private metisService: MetisService, protected changeDetector: ChangeDetectorRef) {
         super();
     }
 
@@ -38,10 +37,10 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
      */
     ngOnInit(): void {
         this.courseId = this.metisService.getCourse().id!;
-        this.updateTags();
         this.isAtLeastTutorInCourse = this.metisService.metisUserIsAtLeastTutorInCourse();
-        this.sortAnswerPosts();
         this.createdAnswerPost = this.createEmptyAnswerPost();
+        this.updateTags();
+        this.sortAnswerPosts();
     }
 
     /**
@@ -53,10 +52,18 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
     }
 
     /**
-     * on leaving the page, the modal should be closed
+     * on leaving the page, the container for answerPost creation or editing should be cleared
      */
     ngOnDestroy(): void {
-        this.answerPostCreateEditModal?.modalRef?.close();
+        this.answerPostCreateEditModal?.createEditAnswerPostContainerRef?.clear();
+    }
+
+    /**
+     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when dismissing all changes in the tag-selector
+     * on dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
+     */
+    ngAfterContentChecked() {
+        this.changeDetector.detectChanges();
     }
 
     /**
@@ -97,4 +104,10 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
         answerPost.resolvesPost = this.isAtLeastTutorInCourse;
         return answerPost;
     }
+
+    /**
+     * defines a function that returns the answerPost id as unique identifier,
+     * by this means, Angular determines which answerPost in the collection of answerPosts has to be reloaded/destroyed on changes
+     */
+    answerPostTrackByFn = (index: number, answerPost: AnswerPost): number => answerPost.id!;
 }

@@ -56,14 +56,14 @@ describe('Team Owner Search Component', () => {
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
-        expect(searchFailedSpy).toHaveBeenCalledTimes(1);
+        expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
         expect(searchingSpy).toHaveBeenCalledTimes(2);
         expect(searchingSpy).toHaveBeenNthCalledWith(1, true);
         expect(searchingSpy).toHaveBeenNthCalledWith(2, false);
 
-        expect(searchNoResultsSpy).toHaveBeenCalledTimes(1);
+        expect(searchNoResultsSpy).toHaveBeenCalledOnce();
         expect(searchNoResultsSpy).toHaveBeenCalledWith(undefined);
 
         expect(onSearchResult).toEqual([owner]);
@@ -84,7 +84,7 @@ describe('Team Owner Search Component', () => {
         let onSearchResult: User[] | undefined = undefined;
         comp.onSearch(of(searchText)).subscribe((result) => (onSearchResult = result));
 
-        expect(searchFailedSpy).toHaveBeenCalledTimes(1);
+        expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(false);
 
         expect(searchingSpy).toHaveBeenCalledTimes(2);
@@ -109,10 +109,10 @@ describe('Team Owner Search Component', () => {
         let loadOwnerOptionsResult: User[] | undefined = [owner];
         comp.loadOwnerOptions().subscribe((result) => (loadOwnerOptionsResult = result));
 
-        expect(searchFailedSpy).toHaveBeenCalledTimes(1);
+        expect(searchFailedSpy).toHaveBeenCalledOnce();
         expect(searchFailedSpy).toHaveBeenCalledWith(true);
 
-        expect(comp.ownerOptionsLoaded).toBe(false);
-        expect(loadOwnerOptionsResult).toBe(undefined);
+        expect(comp.ownerOptionsLoaded).toBeFalse();
+        expect(loadOwnerOptionsResult).toBeUndefined();
     });
 });

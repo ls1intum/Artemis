@@ -1,6 +1,6 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { SystemNotificationManagementDetailComponent } from 'app/admin/system-notification-management/system-notification-management-detail.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
 import { FormDateTimePickerComponent } from 'app/shared/date-time-picker/date-time-picker.component';
@@ -23,7 +23,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.events = of({ id: 1, url: '' } as RouterEvent);
+        router.setUrl('');
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, FormsModule],
@@ -53,7 +53,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
     it('should initialize', () => {
         const dataSpy = jest.spyOn(route.data, 'subscribe');
         detailComponentFixture.detectChanges();
-        expect(dataSpy).toHaveBeenCalledTimes(1);
+        expect(dataSpy).toHaveBeenCalledOnce();
     });
 
     it('should navigate to edit if edit is clicked', fakeAsync(() => {
@@ -63,7 +63,7 @@ describe('SystemNotificationManagementDetailComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnce();
         const navigationArray = router.navigateByUrl.mock.calls[0][0];
         expect(navigationArray).toEqual(['edit']);
     }));

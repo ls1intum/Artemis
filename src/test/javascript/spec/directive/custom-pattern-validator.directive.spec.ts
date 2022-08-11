@@ -39,7 +39,7 @@ describe('CustomPatternValidatorDirective', () => {
 
             const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
 
-            expect(patternEl.errors).toBe(null);
+            expect(patternEl.errors).toBeNull();
         });
     }));
 
@@ -53,7 +53,7 @@ describe('CustomPatternValidatorDirective', () => {
 
             const patternEl = fixture.debugElement.query(By.css('input[name=pattern]')).references['patternModel'];
 
-            expect(patternEl.errors.validPattern).toBe(true);
+            expect(patternEl.errors.validPattern).toBeTrue();
         });
     }));
 });

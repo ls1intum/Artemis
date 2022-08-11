@@ -1,12 +1,7 @@
 <ng-template #controls>
     <div class="d-flex row course-overview-controls justify-content-end">
         <div class="col" aria-label="Filter Dropdown" ngbDropdown>
-            <button
-                class="btn"
-                [ngClass]="{ 'btn-secondary': numberOfAppliedFilters === 0, 'btn-success': numberOfAppliedFilters > 0 }"
-                ngbDropdownToggle
-                id="filter-dropdown-button"
-            >
+            <button class="btn" [class.btn-secondary]="!numberOfAppliedFilters" [class.btn-success]="!!numberOfAppliedFilters" ngbDropdownToggle id="filter-dropdown-button">
                 <fa-icon [icon]="faFilter"></fa-icon>
                 <span>{{ 'artemisApp.courseOverview.exerciseList.filter' | artemisTranslate: { num: numberOfAppliedFilters } }}</span>
             </button>
@@ -23,19 +18,24 @@
                 </li>
                 <li>
                     <label class="mb-1">
-                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="allCategoriesSelected" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleAllCategories()" [checked]="chartCategoryFilter.allCategoriesSelected" type="checkbox" />
                         <b class="ms-2">{{ 'artemisApp.courseOverview.statistics.includeAllCategories' | artemisTranslate }}</b>
                     </label>
                 </li>
-                <li>
+                <li *ngIf="chartCategoryFilter.exercisesWithoutCategoriesPresent">
                     <label>
-                        <input class="ms-2 form-check-input" (change)="toggleExercisesWithNoCategory()" [checked]="includeExercisesWithNoCategory" type="checkbox" />
+                        <input
+                            class="ms-2 form-check-input"
+                            (change)="toggleExercisesWithNoCategory()"
+                            [checked]="chartCategoryFilter.includeExercisesWithNoCategory"
+                            type="checkbox"
+                        />
                         <span class="ms-2">{{ 'artemisApp.courseOverview.statistics.exercisesWithNoCategories' | artemisTranslate }}</span>
                     </label>
                 </li>
-                <li *ngFor="let category of exerciseCategories">
+                <li *ngFor="let category of chartCategoryFilter.exerciseCategories">
                     <label>
-                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="exerciseCategoryFilters.get(category)" type="checkbox" />
+                        <input class="ms-2 form-check-input" (change)="toggleCategory(category)" [checked]="chartCategoryFilter.getCurrentFilterState(category)" type="checkbox" />
                         <span class="ms-2">{{ category }}</span>
                     </label>
                 </li>
@@ -45,7 +45,7 @@
 </ng-template>
 
 <div *ngIf="course">
-    <div class="row" *ngIf="course.exercises && course.exercises.length > 0 && ngxExerciseGroups.length > 0; else noStatistics">
+    <div class="row" *ngIf="course.exercises && course.exercises.length > 0; else noStatistics">
         <div class="statistic-summary">
             <h2>{{ 'artemisApp.courseOverview.statistics.totalScore' | artemisTranslate }}</h2>
             <div class="row d-flex justify-content-center align-items-start">
@@ -243,7 +243,6 @@
             </div>
         </div>
     </div>
-    <jhi-course-learning-goals [courseId]="courseId"></jhi-course-learning-goals>
     <ng-template #noStatistics>
         <div class="row">
             <div class="col mt-3">

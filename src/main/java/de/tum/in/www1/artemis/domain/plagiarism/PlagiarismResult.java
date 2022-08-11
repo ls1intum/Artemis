@@ -41,6 +41,7 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
     /**
      * Duration of the plagiarism detection run in milliseconds.
      */
+    @Column(name = "duration")
     protected long duration;
 
     /**
@@ -87,8 +88,11 @@ public abstract class PlagiarismResult<E extends PlagiarismSubmissionElement> ex
         this.exercise = exercise;
     }
 
+    /**
+     * @return an unmodifiable list of the similar distribution
+     */
     public List<Integer> getSimilarityDistribution() {
-        return this.similarityDistribution.entrySet().stream().sorted(comparingInt(Entry::getKey)).map(Entry::getValue).collect(Collectors.toList());
+        return this.similarityDistribution.entrySet().stream().sorted(comparingInt(Entry::getKey)).map(Entry::getValue).toList();
     }
 
     /**

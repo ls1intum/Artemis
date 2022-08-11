@@ -1,4 +1,4 @@
-import { Component, Input, OnChanges, OnInit } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -11,7 +11,7 @@ import { faBullhorn, faCheckSquare } from '@fortawesome/free-solid-svg-icons';
     templateUrl: './post.component.html',
     styleUrls: ['./post.component.scss', './../metis.component.scss'],
 })
-export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges {
+export class PostComponent extends PostingDirective<Post> implements OnInit, OnChanges, AfterContentChecked {
     @Input() previewMode: boolean;
     // if the post is previewed in the create/edit modal,
     // we need to pass the ref in order to close it when navigating to the previewed post via post title
@@ -29,7 +29,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     faBullhorn = faBullhorn;
     faCheckSquare = faCheckSquare;
 
-    constructor(public metisService: MetisService) {
+    constructor(public metisService: MetisService, protected changeDetector: ChangeDetectorRef) {
         super();
     }
 
@@ -49,6 +49,14 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     ngOnChanges() {
         this.postIsResolved = this.metisService.isPostResolved(this.posting);
         this.contextInformation = this.metisService.getContextInformation(this.posting);
+    }
+
+    /**
+     * this lifecycle hook is required to avoid causing "Expression has changed after it was checked"-error when
+     * dismissing the edit-create-modal -> we do not want to store changes in the create-edit-modal that are not saved
+     */
+    ngAfterContentChecked() {
+        this.changeDetector.detectChanges();
     }
 
     /**

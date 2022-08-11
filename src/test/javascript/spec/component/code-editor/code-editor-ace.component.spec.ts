@@ -59,9 +59,9 @@ describe('CodeEditorAceComponent', () => {
     it('without any inputs, should still render correctly without ace, showing a placeholder', () => {
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).not.toBe(null);
+        expect(placeholder).not.toBeNull();
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(true);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTrue();
     });
 
     it('if the component is loading a file from server, it should show the editor in a readonly state', () => {
@@ -69,15 +69,15 @@ describe('CodeEditorAceComponent', () => {
         comp.isLoading = true;
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBe(null);
+        expect(placeholder).toBeNull();
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(true);
-        expect(comp.editor.getEditor().getReadOnly()).toBe(true);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeTrue();
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
 
         comp.isLoading = false;
         fixture.detectChanges();
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(false);
-        expect(comp.editor.getEditor().getReadOnly()).toBe(false);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
+        expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
     it('if a file is selected and the component is not loading a file from server, the editor should be usable', () => {
@@ -85,13 +85,13 @@ describe('CodeEditorAceComponent', () => {
         comp.isLoading = false;
         fixture.detectChanges();
         const placeholder = debugElement.query(By.css('#no-file-selected'));
-        expect(placeholder).toBe(null);
+        expect(placeholder).toBeNull();
         const aceEditor = debugElement.query(By.css('#ace-code-editor'));
-        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBe(false);
-        expect(comp.editor.getEditor().getReadOnly()).toBe(false);
+        expect(aceEditor.nativeElement.hasAttribute('hidden')).toBeFalse();
+        expect(comp.editor.getEditor().getReadOnly()).toBeFalse();
     });
 
-    it('should not load the file from server on selected file change if the file is already in session', () => {
+    it('should correctly init editor after file change', () => {
         const selectedFile = 'dummy';
         const fileSession = {};
         const loadFileSubject = new Subject();
@@ -103,13 +103,13 @@ describe('CodeEditorAceComponent', () => {
         triggerChanges(comp, { property: 'selectedFile', currentValue: selectedFile });
         fixture.detectChanges();
 
-        expect(comp.isLoading).toBe(true);
+        expect(comp.isLoading).toBeTrue();
         expect(loadRepositoryFileStub).toHaveBeenCalledWith(selectedFile);
         expect(initEditorAfterFileChangeSpy).not.toHaveBeenCalled();
         loadFileSubject.next({ fileName: selectedFile, fileContent: 'lorem ipsum' });
         fixture.detectChanges();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(initEditorAfterFileChangeSpy).toHaveBeenCalledWith();
     });
 
@@ -197,8 +197,8 @@ describe('CodeEditorAceComponent', () => {
         const displayFeedbacksSpy = jest.spyOn(comp, 'displayFeedbacks');
         comp.onFileTextChanged('newFileContent');
 
-        expect(comp.editor.getEditor().getReadOnly()).toBe(true);
-        expect(displayFeedbacksSpy).toHaveBeenCalledTimes(1);
+        expect(comp.editor.getEditor().getReadOnly()).toBeTrue();
+        expect(displayFeedbacksSpy).toHaveBeenCalledOnce();
     });
 
     it('should setup inline comment buttons in gutter', () => {
@@ -209,8 +209,8 @@ describe('CodeEditorAceComponent', () => {
         const observerDomSpy = jest.spyOn(comp, 'observerDom');
         comp.onFileTextChanged('newFileContent');
 
-        expect(setupLineIconsSpy).toBeCalledTimes(1);
-        expect(observerDomSpy).toBeCalledTimes(1);
+        expect(setupLineIconsSpy).toHaveBeenCalledTimes(1);
+        expect(observerDomSpy).toHaveBeenCalledTimes(1);
     });
 
     it('should only allow tab sizes between 1 and the maximum size', () => {

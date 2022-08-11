@@ -16,7 +16,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { CourseExerciseRowComponent } from 'app/overview/course-exercises/course-exercise-row.component';
 import { CourseExercisesComponent } from 'app/overview/course-exercises/course-exercises.component';
 import { CourseRegistrationComponent } from 'app/overview/course-registration/course-registration.component';
-import { BarControlConfiguration, BarControlConfigurationProvider, CourseOverviewComponent } from 'app/overview/course-overview.component';
 import { CourseCardComponent } from 'app/overview/course-card.component';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
 import dayjs from 'dayjs/esm';
@@ -36,6 +35,11 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AfterViewInit, Component, TemplateRef, ViewChild } from '@angular/core';
 import { By } from '@angular/platform-browser';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
+import { Exam } from 'app/entities/exam.model';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { LearningGoal } from 'app/entities/learningGoal.model';
+import { CourseOverviewComponent } from 'app/overview/course-overview.component';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 
 const endDate1 = dayjs().add(1, 'days');
 const visibleDate1 = dayjs().subtract(1, 'days');
@@ -58,11 +62,25 @@ const quizExercise: QuizExercise = { id: 7, numberOfAssessmentsOfCorrectionRound
 
 const courseEmpty: Course = {};
 
-const exam1 = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
-const exam2 = { id: 4, course: courseEmpty };
+const exam1: Exam = { id: 3, endDate: endDate1, visibleDate: visibleDate1, course: courseEmpty };
+const exam2: Exam = { id: 4, course: courseEmpty };
 const exams = [exam1, exam2];
-const course1 = { id: 1, exams, exercises: [exercise1], description: 'description of course 1' };
-const course2 = { id: 2, exercises: [exercise2], exams: [exam2], description: 'description of course 2', shortName: 'shortName1' };
+const course1: Course = {
+    id: 1,
+    exams,
+    exercises: [exercise1],
+    description:
+        'Nihilne te nocturnum praesidium Palati, nihil urbis vigiliae. Salutantibus vitae elit libero, a pharetra augue. Quam diu etiam furor iste tuus nos eludet? ' +
+        'Fabio vel iudice vincam, sunt in culpa qui officia. Quam temere in vitiis, legem sancimus haerentia. Quisque ut dolor gravida, placerat libero vel, euismod.',
+};
+const course2: Course = {
+    id: 2,
+    exercises: [exercise2],
+    exams: [exam2],
+    description: 'Short description of course 2',
+    shortName: 'shortName2',
+    learningGoals: [new LearningGoal()],
+};
 
 @Component({
     template: '<ng-template #controls><button id="test-button">TestButton</button></ng-template>',
@@ -85,6 +103,7 @@ describe('CourseOverviewComponent', () => {
     let courseService: CourseManagementService;
     let courseScoreCalculationService: CourseScoreCalculationService;
     let teamService: TeamService;
+    let learningGoalService: LearningGoalService;
     let jhiWebsocketService: JhiWebsocketService;
 
     const route: MockActivatedRouteWithSubjects = new MockActivatedRouteWithSubjects();
@@ -126,6 +145,7 @@ describe('CourseOverviewComponent', () => {
                 courseService = TestBed.inject(CourseManagementService);
                 courseScoreCalculationService = TestBed.inject(CourseScoreCalculationService);
                 teamService = TestBed.inject(TeamService);
+                learningGoalService = TestBed.inject(LearningGoalService);
                 jhiWebsocketService = TestBed.inject(JhiWebsocketService);
             });
     }));
@@ -133,13 +153,14 @@ describe('CourseOverviewComponent', () => {
     afterEach(() => {
         component.ngOnDestroy();
         jest.restoreAllMocks();
+        localStorage.clear();
+        sessionStorage.clear();
     });
 
     it('Should call all methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
-        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
@@ -148,7 +169,6 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalled();
-        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalled();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
     });
@@ -157,7 +177,6 @@ describe('CourseOverviewComponent', () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');
-        const adjustCourseDescriptionStub = jest.spyOn(component, 'adjustCourseDescription');
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
         jest.spyOn(teamService, 'teamAssignmentUpdates', 'get').mockReturnValue(Promise.resolve(of(new TeamAssignmentPayload())));
@@ -165,33 +184,8 @@ describe('CourseOverviewComponent', () => {
         await component.ngOnInit();
 
         expect(getCourseStub).toHaveBeenCalled();
-        expect(adjustCourseDescriptionStub).toHaveBeenCalled();
         expect(subscribeForQuizChangesStub).toHaveBeenCalled();
         expect(subscribeToTeamAssignmentUpdatesStub).toHaveBeenCalled();
-    });
-
-    it('should set Long Description', () => {
-        component.longTextShown = false;
-
-        component.showLongDescription();
-
-        expect(component.courseDescription).toBe('');
-        expect(component.longTextShown).toBe(true);
-    });
-
-    it('should set short Description', () => {
-        component.longTextShown = true;
-        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
-        getCourseStub.mockReturnValue(course1);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course1, headers: new HttpHeaders() })));
-
-        component.ngOnInit();
-
-        component.showShortDescription();
-
-        expect(component.courseDescription).toBe('description of course 1...');
-        expect(component.longTextShown).toBe(false);
     });
 
     it('should have visible exams', () => {
@@ -204,7 +198,7 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toBe(true);
+        expect(bool).toBeTrue();
     });
 
     it('should not have visible exams', () => {
@@ -217,7 +211,27 @@ describe('CourseOverviewComponent', () => {
 
         const bool = component.hasVisibleExams();
 
-        expect(bool).toBe(false);
+        expect(bool).toBeFalse();
+    });
+
+    it('should have learning goals', () => {
+        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
+        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
+
+        const learningGoalsResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [new LearningGoal()],
+            status: 200,
+        });
+        jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(learningGoalsResponse));
+        jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsResponse));
+        getCourseStub.mockReturnValue(course2);
+        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
+
+        component.ngOnInit();
+
+        expect(component.hasLearningGoals()).toBeTrue();
+        expect(component.course?.learningGoals).not.toBeEmpty();
+        expect(component.course?.prerequisites).not.toBeEmpty();
     });
 
     it('should subscribeToTeamAssignmentUpdates', () => {
@@ -233,21 +247,6 @@ describe('CourseOverviewComponent', () => {
         component.subscribeToTeamAssignmentUpdates();
     });
 
-    it('should adjustCourseDescription', () => {
-        const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
-        const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
-        getCourseStub.mockReturnValue(course2);
-        findOneForDashboardStub.mockReturnValue(of(new HttpResponse({ body: course2, headers: new HttpHeaders() })));
-        const showLongDescriptionStub = jest.spyOn(component, 'showLongDescription');
-        component.enableShowMore = true;
-
-        component.ngOnInit();
-        component.adjustCourseDescription();
-
-        expect(component.enableShowMore).toBe(false);
-        expect(showLongDescriptionStub).toHaveBeenCalled();
-        expect(localStorage.getItem('isDescriptionReadshortName1')).toBe('true');
-    });
     it('should subscribeForQuizChanges', () => {
         const findOneForDashboardStub = jest.spyOn(courseService, 'findOneForDashboard');
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
@@ -286,7 +285,7 @@ describe('CourseOverviewComponent', () => {
         stubSubComponent.detectChanges();
 
         const expectedButton = fixture.debugElement.query(By.css('#test-button'));
-        expect(expectedButton).not.toBe(null);
+        expect(expectedButton).not.toBeNull();
         expect(expectedButton.nativeElement.innerHTML).toBe('TestButton');
     });
 });

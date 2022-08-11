@@ -1,0 +1,12 @@
+<div>
+    <button
+        *ngIf="availableExerciseHints && activatedExerciseHints && availableExerciseHints.length + activatedExerciseHints.length > 0"
+        type="button"
+        [ngbTooltip]="'artemisApp.exerciseHint.exerciseHintButtonTooltip' | artemisTranslate"
+        class="btn btn-circle"
+        [class]="availableExerciseHints.length ? 'animated-button text-success' : 'text-info'"
+        (click)="openModal()"
+    >
+        <fa-icon [icon]="faCircleQuestion" size="3x"></fa-icon>
+    </button>
+</div>

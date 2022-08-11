@@ -1,4 +1,4 @@
-import { ComponentFixture, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, discardPeriodicTasks, fakeAsync, flush, TestBed, tick } from '@angular/core/testing';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import dayjs from 'dayjs/esm';
 import { ChangeDetectorRef, DebugElement } from '@angular/core';
@@ -16,7 +16,6 @@ import { problemStatement } from '../../helpers/sample/problemStatement.json';
 import { MockProgrammingExerciseParticipationService } from '../../helpers/mocks/service/mock-programming-exercise-participation.service';
 import { ProgrammingSubmissionService, ProgrammingSubmissionState, ProgrammingSubmissionStateObj } from 'app/exercises/programming/participate/programming-submission.service';
 import { MockProgrammingSubmissionService } from '../../helpers/mocks/service/mock-programming-submission.service';
-import { DeviceDetectorService } from 'ngx-device-detector';
 import { GuidedTourService } from 'app/guided-tour/guided-tour.service';
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
@@ -65,8 +64,6 @@ import { AceEditorModule } from 'app/shared/markdown-editor/ace-editor/ace-edito
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
 import { TreeviewItemComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview-item/treeview-item.component';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 
 describe('CodeEditorContainerIntegration', () => {
     // needed to make sure ace is defined
@@ -120,7 +117,6 @@ describe('CodeEditorContainerIntegration', () => {
             ],
             providers: [
                 ChangeDetectorRef,
-                DeviceDetectorService,
                 CodeEditorConflictStateService,
                 { provide: ActivatedRoute, useClass: MockActivatedRouteWithSubjects },
                 { provide: JhiWebsocketService, useClass: MockWebsocketService },
@@ -134,7 +130,6 @@ describe('CodeEditorContainerIntegration', () => {
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .compileComponents()
@@ -212,38 +207,38 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).toBe(CommitState.CLEAN);
         expect(container.editorState).toBe(EditorState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
-        expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
-        expect(getRepositoryContentStub).toHaveBeenCalledTimes(1);
+        expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledOnce();
+        expect(getRepositoryContentStub).toHaveBeenCalledOnce();
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
-        expect(container.aceEditor.isLoading).toBe(false);
+        expect(container.aceEditor.isLoading).toBeFalse();
         expect(container.aceEditor.commitState).toBe(CommitState.CLEAN);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.CLEAN);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBe(false);
+        expect(container.actions.isBuilding).toBeFalse();
 
         // status
         expect(container.fileBrowser.status.commitState).toBe(CommitState.CLEAN);
         expect(container.fileBrowser.status.editorState).toBe(EditorState.CLEAN);
 
         // build output
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
 
         // instructions
-        expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.instructions).toBeDefined(); // Have to use this as it's a component
 
         // called by build output
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0].id);
     };
 
@@ -252,15 +247,14 @@ describe('CodeEditorContainerIntegration', () => {
         container.fileBrowser.selectedFile = fileName;
     };
 
-    it('should initialize all components correctly if all server calls are successful', (done) => {
+    it('should initialize all components correctly if all server calls are successful', fakeAsync(() => {
         cleanInitialize();
-        setTimeout(() => {
-            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
-            done();
-        }, 0);
-    });
+        flush();
+        discardPeriodicTasks();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+    }));
 
-    it('should not load files and render other components correctly if the repository status cannot be retrieved', (done) => {
+    it('should not load files and render other components correctly if the repository status cannot be retrieved', fakeAsync(() => {
         const exercise = { id: 1, problemStatement, course: { id: 2 } };
         const participation = { id: 2, exercise, results: [result] } as StudentParticipation;
         const isCleanSubject = new Subject();
@@ -287,47 +281,45 @@ describe('CodeEditorContainerIntegration', () => {
         // container
         expect(container.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.editorState).toBe(EditorState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.unsavedFiles).toStrictEqual({});
 
         // file browser
-        expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledTimes(1);
+        expect(checkIfRepositoryIsCleanStub).toHaveBeenCalledOnce();
         expect(getRepositoryContentStub).not.toHaveBeenCalled();
         expect(container.fileBrowser.errorFiles).toEqual(extractedErrorFiles);
         expect(container.fileBrowser.unsavedFiles).toHaveLength(0);
 
         // ace editor
-        expect(container.aceEditor.isLoading).toBe(false);
+        expect(container.aceEditor.isLoading).toBeFalse();
         expect(container.aceEditor.annotationsArray.map((a) => omit(a, 'hash'))).toEqual(extractedBuildLogErrors);
         expect(container.aceEditor.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
 
         // actions
         expect(container.actions.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.actions.editorState).toBe(EditorState.CLEAN);
-        expect(container.actions.isBuilding).toBe(false);
+        expect(container.actions.isBuilding).toBeFalse();
 
         // status
         expect(container.fileBrowser.status.commitState).toBe(CommitState.COULD_NOT_BE_RETRIEVED);
         expect(container.fileBrowser.status.editorState).toBe(EditorState.CLEAN);
 
         // build output
-        expect(getBuildLogsStub).toHaveBeenCalledTimes(1);
+        expect(getBuildLogsStub).toHaveBeenCalledOnce();
         expect(container.buildOutput.rawBuildLogs.extractErrors(ProgrammingLanguage.JAVA, ProjectType.PLAIN_MAVEN)).toEqual(extractedBuildLogErrors);
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
 
         // instructions
-        expect(container.instructions).not.toBe(undefined); // Have to use this as it's a component
+        expect(container.instructions).toBeDefined(); // Have to use this as it's a component
 
         // called by build output & instructions
-        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledTimes(1);
+        expect(getFeedbackDetailsForResultStub).toHaveBeenCalledOnce();
         expect(getFeedbackDetailsForResultStub).toHaveBeenCalledWith(participation.id!, participation.results![0].id);
 
-        setTimeout(() => {
-            // called by build output
-            expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledTimes(1);
-            done();
-        }, 0);
-    });
+        flush();
+        discardPeriodicTasks();
+        expect(subscribeForLatestResultOfParticipationStub).toHaveBeenCalledOnce();
+    }));
 
     it('should update the file browser and ace editor on file selection', () => {
         cleanInitialize();
@@ -338,9 +330,9 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
         expect(container.selectedFile).toBe(selectedFile);
         expect(container.aceEditor.selectedFile).toBe(selectedFile);
-        expect(container.aceEditor.isLoading).toBe(false);
+        expect(container.aceEditor.isLoading).toBeFalse();
         expect(container.aceEditor.fileSession).toContainKey(selectedFile);
-        expect(getFileStub).toHaveBeenCalledTimes(1);
+        expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
 
         containerFixture.detectChanges();
@@ -358,7 +350,7 @@ describe('CodeEditorContainerIntegration', () => {
         container.aceEditor.onFileTextChanged(newFileContent);
         containerFixture.detectChanges();
 
-        expect(getFileStub).toHaveBeenCalledTimes(1);
+        expect(getFileStub).toHaveBeenCalledOnce();
         expect(getFileStub).toHaveBeenCalledWith(selectedFile);
         expect(container.unsavedFiles).toEqual({ [selectedFile]: newFileContent });
         expect(container.fileBrowser.unsavedFiles).toEqual([selectedFile]);
@@ -439,7 +431,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // waiting for build successfulResult
         expect(container.commitState).toBe(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBe(true);
+        expect(container.buildOutput.isBuilding).toBeTrue();
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
@@ -449,7 +441,7 @@ describe('CodeEditorContainerIntegration', () => {
         subscribeForLatestResultOfParticipationSubject.next(successfulResult);
         containerFixture.detectChanges();
 
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
         expect(container.fileBrowser.errorFiles).toHaveLength(0);
     });
@@ -473,7 +465,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         // saving before commit
-        expect(saveFilesStub).toHaveBeenCalledTimes(1);
+        expect(saveFilesStub).toHaveBeenCalledOnce();
         expect(saveFilesStub).toHaveBeenCalledWith([{ fileName: unsavedFile, fileContent: 'lorem ipsum' }], true);
         expect(container.editorState).toBe(EditorState.SAVING);
         expect(container.fileBrowser.status.editorState).toBe(EditorState.SAVING);
@@ -495,7 +487,7 @@ describe('CodeEditorContainerIntegration', () => {
 
         // waiting for build result
         expect(container.commitState).toBe(CommitState.CLEAN);
-        expect(container.buildOutput.isBuilding).toBe(true);
+        expect(container.buildOutput.isBuilding).toBeTrue();
 
         getLatestPendingSubmissionSubject.next({
             submissionState: ProgrammingSubmissionState.HAS_NO_PENDING_SUBMISSION,
@@ -504,7 +496,7 @@ describe('CodeEditorContainerIntegration', () => {
         });
         containerFixture.detectChanges();
 
-        expect(container.buildOutput.isBuilding).toBe(false);
+        expect(container.buildOutput.isBuilding).toBeFalse();
         expect(container.buildOutput.rawBuildLogs).toEqual(expectedBuildLog);
         expect(container.fileBrowser.errorFiles).toHaveLength(0);
 
@@ -551,7 +543,7 @@ describe('CodeEditorContainerIntegration', () => {
         containerFixture.detectChanges();
 
         expect(container.commitState).toBe(CommitState.CLEAN);
-        expect(getRepositoryContentStub).toHaveBeenCalledTimes(1);
+        expect(getRepositoryContentStub).toHaveBeenCalledOnce();
 
         containerFixture.destroy();
         flush();

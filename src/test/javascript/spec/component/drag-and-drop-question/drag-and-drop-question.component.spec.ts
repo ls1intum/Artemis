@@ -69,9 +69,9 @@ describe('DragAndDropQuestionComponent', () => {
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(markdownSpy).toHaveBeenCalledWith(question.text);
         expect(comp.renderedQuestion).toBeDefined();
-        expect(comp.renderedQuestion.text).toEqual(`${question.text}markdown`);
-        expect(comp.renderedQuestion.hint).toEqual(`${question.hint}markdown`);
-        expect(comp.renderedQuestion.explanation).toEqual(`${question.explanation}markdown`);
+        expect(comp.renderedQuestion.text).toBe(`${question.text}markdown`);
+        expect(comp.renderedQuestion.hint).toBe(`${question.hint}markdown`);
+        expect(comp.renderedQuestion.explanation).toBe(`${question.explanation}markdown`);
     });
 
     it('should count correct mappings as zero if no correct mappings', () => {
@@ -126,16 +126,16 @@ describe('DragAndDropQuestionComponent', () => {
         const solveSpy = jest.spyOn(dragAndDropQuestionUtil, 'solve').mockReturnValue(mappings);
         comp.mappings = mappings;
         comp.forceSampleSolution = true;
-        expect(comp.forceSampleSolution).toBe(true);
+        expect(comp.forceSampleSolution).toBeTrue();
         expect(solveSpy).toHaveBeenCalledWith(comp.question, mappings);
         expect(comp.sampleSolutionMappings).toEqual(mappings);
-        expect(comp.showingSampleSolution).toBe(true);
+        expect(comp.showingSampleSolution).toBeTrue();
     });
 
     it('should hide sample solutions', () => {
         comp.showingSampleSolution = true;
         comp.hideSampleSolution();
-        expect(comp.showingSampleSolution).toBe(false);
+        expect(comp.showingSampleSolution).toBeFalse();
     });
 
     it('should return unassigned drag items', () => {
@@ -150,9 +150,9 @@ describe('DragAndDropQuestionComponent', () => {
         const { dropLocation: dropLocation1, mapping: mapping1 } = getDropLocationMappingAndItem();
         const { dropLocation: dropLocation2, mapping: mapping2, dragItem: dragItem2 } = getDropLocationMappingAndItem();
         comp.mappings = [mapping1, mapping2];
-        expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBe(false);
+        expect(comp.invalidDragItemForDropLocation(dropLocation1)).toBeFalse();
         dragItem2.invalid = true;
-        expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBe(true);
+        expect(comp.invalidDragItemForDropLocation(dropLocation2)).toBeTrue();
     });
 
     it('should return no drag item if there is no mapping', () => {
@@ -196,7 +196,7 @@ describe('DragAndDropQuestionComponent', () => {
         comp.onMappingUpdate = onMappingUpdate;
         comp.onDragDrop(dropLocation, event);
         expect(comp.mappings).toEqual(expectedMappings);
-        expect(onMappingUpdate.mock.calls.length).toBe(callCount);
+        expect(onMappingUpdate.mock.calls).toHaveLength(callCount);
     };
 
     it('should change loading with given value', () => {
@@ -207,7 +207,7 @@ describe('DragAndDropQuestionComponent', () => {
     it('should set drop allowed to true when dragged', () => {
         comp.dropAllowed = false;
         comp.drag();
-        expect(comp.dropAllowed).toBe(true);
+        expect(comp.dropAllowed).toBeTrue();
     });
 
     const getDropLocationMappingAndItem = () => {

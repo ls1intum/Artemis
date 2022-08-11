@@ -59,7 +59,7 @@ export class NotificationSettingsComponent extends UserSettingsDirective impleme
     }
 
     /**
-     * Catches the toggle event from an user click
+     * Catches the toggle event from a user click
      * Toggles the respective setting and mark it as changed (only changed settings will be send to the server for saving)
      */
     toggleSetting(event: any, communicationChannel: NotificationSettingsCommunicationChannel) {

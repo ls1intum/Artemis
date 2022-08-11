@@ -69,7 +69,7 @@ describe('Course Management Exercises Component', () => {
         comp.ngOnInit();
         expect(comp.courseId).toBe(course.id);
         expect(findStub).toHaveBeenCalledWith(course.id);
-        expect(findStub).toHaveBeenCalledTimes(1);
+        expect(findStub).toHaveBeenCalledOnce();
     });
 
     it('should open search bar on button click', () => {
@@ -80,7 +80,7 @@ describe('Course Management Exercises Component', () => {
 
         const searchBar = fixture.debugElement.nativeElement.querySelector('jhi-course-management-exercises-search');
 
-        expect(comp.showSearch).toBe(true);
-        expect(searchBar).not.toBe(null);
+        expect(comp.showSearch).toBeTrue();
+        expect(searchBar).not.toBeNull();
     });
 });

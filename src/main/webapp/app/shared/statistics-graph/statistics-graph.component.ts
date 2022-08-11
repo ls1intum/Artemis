@@ -6,6 +6,7 @@ import { faArrowLeft, faArrowRight } from '@fortawesome/free-solid-svg-icons';
 import { yAxisTickFormatting } from 'app/shared/statistics-graph/statistics-graph.utils';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { TranslateService } from '@ngx-translate/core';
+import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
 
 @Component({
     selector: 'jhi-statistics-graph',
@@ -37,7 +38,7 @@ export class StatisticsGraphComponent implements OnChanges {
     dataForSpanType: number[];
 
     // ngx
-    ngxData: any[] = [];
+    ngxData: NgxChartsSingleSeriesDataEntry[] = [];
     ngxColor: Color = {
         name: 'Statistics',
         selectable: true,
@@ -55,7 +56,11 @@ export class StatisticsGraphComponent implements OnChanges {
     faArrowLeft = faArrowLeft;
     faArrowRight = faArrowRight;
 
-    constructor(private service: StatisticsService, private translateService: TranslateService) {}
+    constructor(private service: StatisticsService, private translateService: TranslateService) {
+        this.translateService.onLangChange.subscribe(() => {
+            this.onSystemLanguageChange();
+        });
+    }
 
     /**
      * Life cycle hook to indicate component changes
@@ -192,11 +197,23 @@ export class StatisticsGraphComponent implements OnChanges {
     /**
      * Converts the data retrieved from the service to dedicated objects that can be interpreted by ngx-charts
      * and pushes them to ngxData.
-     * Then, computes the upper limit for the y Axis of the chart.
+     * Then, computes the upper limit for the y-axis of the chart.
      * @private
      */
     private pushToData(): void {
         this.ngxData = this.dataForSpanType.map((score, index) => ({ name: this.barChartLabels[index], value: score }));
         this.yScaleMax = Math.max(3, ...this.dataForSpanType);
+    }
+
+    /**
+     * Handles the update of the data labels if the user changes the system language
+     * @private
+     */
+    private onSystemLanguageChange(): void {
+        this.createLabels();
+        this.ngxData.forEach((dataPack, index) => {
+            dataPack.name = this.barChartLabels[index];
+        });
+        this.ngxData = [...this.ngxData];
     }
 }

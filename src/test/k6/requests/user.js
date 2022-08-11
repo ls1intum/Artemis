@@ -95,7 +95,7 @@ export function createUsersIfNeeded(artemis, baseUsername, basePassword, adminUs
     } else {
         console.log('Do not create users, assume the user exists in the external system, will update their groups');
         for (let i = 1 + userIdOffset; i <= iterations + userIdOffset; i++) {
-            // we need to login once with the user, so that the user is synced and available for the update with the groups
+            // we need to log in once with the user, so that the user is synced and available for the update with the groups
             login(baseUsername.replace('USERID', i + userOffset), basePassword.replace('USERID', i + userOffset));
         }
         artemis = login(adminUsername, adminPassword);

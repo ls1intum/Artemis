@@ -10,6 +10,8 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
 import { Course } from 'app/entities/course.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../helpers/mocks/service/mock-ngb-modal.service';
 
 describe('Plagiarism Header Component', () => {
     let comp: PlagiarismHeaderComponent;
@@ -20,7 +22,10 @@ describe('Plagiarism Header Component', () => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [PlagiarismHeaderComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            providers: [
+                { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
+            ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismHeaderComponent);
@@ -52,6 +57,18 @@ describe('Plagiarism Header Component', () => {
         comp.denyPlagiarism();
 
         expect(comp.updatePlagiarismStatus).toHaveBeenCalledWith(PlagiarismStatus.DENIED);
+    });
+
+    it('should open a confirmation popup to deny a plagiarism if it is changing from confirmed to denied', () => {
+        jest.spyOn(comp, 'updatePlagiarismStatus');
+        const modalSpy = jest.spyOn(fixture.debugElement.injector.get(NgbModal), 'open');
+
+        comp.comparison.status = PlagiarismStatus.CONFIRMED;
+
+        comp.denyPlagiarism();
+
+        expect(comp.updatePlagiarismStatus).not.toHaveBeenCalled();
+        expect(modalSpy).toHaveBeenCalledOnce();
     });
 
     it('should update the plagiarism status', fakeAsync(() => {

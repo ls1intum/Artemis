@@ -57,9 +57,10 @@ describe('LearningGoalCardComponent', () => {
 
         learningGoalCardComponentFixture.detectChanges();
 
+        expect(learningGoalCardComponent.isProgressAvailable).toBeTrue();
         const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent)).componentInstance;
         expect(circularProgress).toBeDefined();
-        expect(circularProgress.progressInPercent).toEqual(50);
+        expect(circularProgress.progressInPercent).toBe(50);
     });
 
     it('should not display progress bar when progress is not available', () => {
@@ -69,6 +70,7 @@ describe('LearningGoalCardComponent', () => {
 
         learningGoalCardComponentFixture.detectChanges();
 
+        expect(learningGoalCardComponent.isProgressAvailable).toBeFalse();
         const circularProgress = learningGoalCardComponentFixture.debugElement.query(By.directive(CircularProgressBarStubComponent));
         expect(circularProgress).toBeNull();
     });
@@ -83,6 +85,6 @@ describe('LearningGoalCardComponent', () => {
         const modalService = TestBed.inject(NgbModal);
         const openSpy = jest.spyOn(modalService, 'open');
         card.click();
-        expect(openSpy).toHaveBeenCalledTimes(1);
+        expect(openSpy).toHaveBeenCalledOnce();
     });
 });

@@ -3,8 +3,8 @@
 ########################################################################################################################
 # Script:       artemis-server-cli                                                                                     #
 #                                                                                                                      #
-# Description:  Provide a Wrapper to conveniently perform commom operations on Artemis Servers.                        #
-#               This asumes a standardized server configuration and properly configured SSH access.                    #
+# Description:  Provide a Wrapper to conveniently perform common operations on Artemis Servers.                        #
+#               This assumes a standardized server configuration and properly configured SSH access.                    #
 #               Run artemis-server-cli -h for usage information                                                        #
 #                                                                                                                      #
 # Author:       Jan Philip Bernius                                                                                     #

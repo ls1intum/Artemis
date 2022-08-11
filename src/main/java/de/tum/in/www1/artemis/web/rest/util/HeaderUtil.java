@@ -37,7 +37,7 @@ public final class HeaderUtil {
     }
 
     /**
-     * Creates a authorization headers for a given username and password
+     * Creates authorization headers for a given username and password
      * @param username the username for the authentication
      * @param password the password for the authentication
      * @return the authorization header

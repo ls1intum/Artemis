@@ -84,11 +84,11 @@ describe('ExerciseStatisticsComponent', () => {
     it('should initialize', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
-        expect(statisticsSpy).toHaveBeenCalledTimes(1);
-        expect(exerciseSpy).toHaveBeenCalledTimes(1);
-        expect(component.exerciseStatistics.participationsInPercent).toEqual(100);
-        expect(component.exerciseStatistics.resolvedPostsInPercent).toEqual(50);
-        expect(component.exerciseStatistics.absoluteAveragePoints).toEqual(5);
+        expect(statisticsSpy).toHaveBeenCalledOnce();
+        expect(exerciseSpy).toHaveBeenCalledOnce();
+        expect(component.exerciseStatistics.participationsInPercent).toBe(100);
+        expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
+        expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
     });
 
     it('should trigger when tab changed', fakeAsync(() => {
@@ -99,12 +99,12 @@ describe('ExerciseStatisticsComponent', () => {
         button.click();
 
         tick();
-        expect(tabSpy).toHaveBeenCalledTimes(1);
+        expect(tabSpy).toHaveBeenCalledOnce();
         expect(component.currentSpan).toEqual(SpanType.MONTH);
-        expect(statisticsSpy).toHaveBeenCalledTimes(1);
-        expect(exerciseSpy).toHaveBeenCalledTimes(1);
-        expect(component.exerciseStatistics.participationsInPercent).toEqual(100);
-        expect(component.exerciseStatistics.resolvedPostsInPercent).toEqual(50);
-        expect(component.exerciseStatistics.absoluteAveragePoints).toEqual(5);
+        expect(statisticsSpy).toHaveBeenCalledOnce();
+        expect(exerciseSpy).toHaveBeenCalledOnce();
+        expect(component.exerciseStatistics.participationsInPercent).toBe(100);
+        expect(component.exerciseStatistics.resolvedPostsInPercent).toBe(50);
+        expect(component.exerciseStatistics.absoluteAveragePoints).toBe(5);
     }));
 });

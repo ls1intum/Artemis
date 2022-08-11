@@ -18,7 +18,10 @@ import de.tum.in.www1.artemis.domain.Repository;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.domain.enumeration.InitializationState;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseStudentParticipationRepository;
 import de.tum.in.www1.artemis.service.UrlService;
 
 public abstract class AbstractVersionControlService implements VersionControlService {
@@ -34,16 +37,26 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     @Value("${artemis.lti.user-prefix-u4i:#{null}}")
     protected Optional<String> userPrefixU4I;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    protected String defaultBranch;
+
     private final ApplicationContext applicationContext;
 
     private final GitService gitService;
 
     protected final UrlService urlService;
 
-    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService) {
+    protected final ProgrammingExerciseStudentParticipationRepository studentParticipationRepository;
+
+    protected final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    public AbstractVersionControlService(ApplicationContext applicationContext, GitService gitService, UrlService urlService,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         this.applicationContext = applicationContext;
         this.gitService = gitService;
         this.urlService = urlService;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -91,7 +104,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
     }
 
     @Override
-    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String targetProjectKey, String targetRepositoryName)
+    public VcsRepositoryUrl copyRepository(String sourceProjectKey, String sourceRepositoryName, String sourceBranch, String targetProjectKey, String targetRepositoryName)
             throws VersionControlException {
         sourceRepositoryName = sourceRepositoryName.toLowerCase();
         targetRepositoryName = targetRepositoryName.toLowerCase();
@@ -107,7 +120,7 @@ public abstract class AbstractVersionControlService implements VersionControlSer
             // clone the source repo to the target directory
             targetRepo = gitService.getOrCheckoutRepositoryIntoTargetDirectory(sourceRepoUrl, targetRepoUrl, true);
             // copy by pushing the source's content to the target's repo
-            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, getDefaultBranchOfRepository(sourceRepoUrl));
+            gitService.pushSourceToTargetRepo(targetRepo, targetRepoUrl, sourceBranch);
         }
         catch (GitAPIException e) {
             Path localPath = gitService.getDefaultLocalPathOfRepo(targetRepoUrl);
@@ -129,5 +142,42 @@ public abstract class AbstractVersionControlService implements VersionControlSer
         }
 
         return targetRepoUrl;
+    }
+
+    @Override
+    public String getOrRetrieveBranchOfParticipation(ProgrammingExerciseParticipation participation) {
+        if (participation instanceof ProgrammingExerciseStudentParticipation studentParticipation) {
+            return getOrRetrieveBranchOfStudentParticipation(studentParticipation);
+        }
+        else {
+            return getOrRetrieveBranchOfExercise(participation.getProgrammingExercise());
+        }
+    }
+
+    @Override
+    public String getOrRetrieveBranchOfStudentParticipation(ProgrammingExerciseStudentParticipation participation) {
+        if (participation.getBranch() == null) {
+            String branch = getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
+            participation.setBranch(branch);
+            studentParticipationRepository.save(participation);
+        }
+
+        return participation.getBranch();
+    }
+
+    @Override
+    public String getOrRetrieveBranchOfExercise(ProgrammingExercise programmingExercise) {
+        if (programmingExercise.getBranch() == null) {
+            String branch = getDefaultBranchOfRepository(programmingExercise.getVcsTemplateRepositoryUrl());
+            programmingExercise.setBranch(branch);
+            programmingExerciseRepository.save(programmingExercise);
+        }
+
+        return programmingExercise.getBranch();
+    }
+
+    @Override
+    public String getDefaultBranchOfArtemis() {
+        return defaultBranch;
     }
 }

@@ -209,7 +209,7 @@ Some guidelines:
 
             fixture.detectChanges();
 
-            expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledTimes(1);
+            expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
             expect(emitSpy).toHaveBeenCalled();
         });
 
@@ -259,7 +259,7 @@ Some guidelines:
     .. code:: ts
 
         expect(course == undefined).toBeTrue();
-        expect(courseList.length).toBe(4);
+        expect(courseList).toHaveLength(4);
 
     extract as much as possible:
 
@@ -309,13 +309,13 @@ Some guidelines:
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A spy should not have been called                      | :code:`expect(spy).not.toHaveBeenCalled();`                     |
   +--------------------------------------------------------+-----------------------------------------------------------------+
-  | A spy should have been called once                     | :code:`expect(spy).toHaveBeenCalledTimes(1);`                   |
+  | A spy should have been called once                     | :code:`expect(spy).toHaveBeenCalledOnce();`                     |
   +--------------------------------------------------------+-----------------------------------------------------------------+
   | A spy should have been called with a value             | Always test the number of calls as well:                        |
   |                                                        |                                                                 |
   |                                                        | .. code:: ts                                                    |
   |                                                        |                                                                 |
-  |                                                        |     expect(spy).toHaveBeenCalledTimes(1);                       |
+  |                                                        |     expect(spy).toHaveBeenCalledOnce();                         |
   |                                                        |     expect(spy).toHaveBeenCalledWith(value);                    |
   |                                                        |                                                                 |
   |                                                        | If you have multiple calls, you can verify the parameters       |

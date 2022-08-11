@@ -6,7 +6,7 @@ import { NgbActiveModal } from '@ng-bootstrap/ng-bootstrap';
 import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { ProgrammingExercisePagingService } from 'app/exercises/programming/manage/services/programming-exercise-paging.service';
 import { SortService } from 'app/shared/service/sort.service';
-import { faSort } from '@fortawesome/free-solid-svg-icons';
+import { faCheck, faSort } from '@fortawesome/free-solid-svg-icons';
 
 export enum TableColumn {
     ID = 'ID',
@@ -38,6 +38,10 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     // Icons
     faSort = faSort;
+    faCheck = faCheck;
+
+    isCourseFilter = true;
+    isExamFilter = true;
 
     constructor(private pagingService: ProgrammingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
@@ -53,7 +57,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForExercises(this.state)),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
             .subscribe((resp) => {
                 this.content = resp;
@@ -77,6 +81,16 @@ export class ProgrammingExerciseImportComponent implements OnInit {
 
     get searchTerm(): string {
         return this.state.searchTerm;
+    }
+
+    onCourseFilterChange() {
+        this.isCourseFilter = !this.isCourseFilter;
+        this.search.next();
+    }
+
+    onExamFilterChange() {
+        this.isExamFilter = !this.isExamFilter;
+        this.search.next();
     }
 
     set listSorting(ascending: boolean) {
@@ -108,7 +122,7 @@ export class ProgrammingExerciseImportComponent implements OnInit {
     /**
      * Gives the ID for any programming exercise in the table, so that it can be tracked/identified by ngFor
      *
-     * @param index The index of the elemnt in the ngFor
+     * @param index The index of the element in the ngFor
      * @param item The exercise itself
      * @returns The ID of the programming exercise
      */

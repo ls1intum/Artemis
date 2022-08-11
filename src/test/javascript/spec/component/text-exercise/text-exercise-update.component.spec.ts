@@ -66,7 +66,7 @@ describe('TextExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.update).toHaveBeenCalledWith(entity, {});
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
 
@@ -93,7 +93,7 @@ describe('TextExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.create).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
 
@@ -121,7 +121,7 @@ describe('TextExercise Management Update Component', () => {
 
                 // THEN
                 expect(service.import).toHaveBeenCalledWith(entity);
-                expect(comp.isSaving).toEqual(false);
+                expect(comp.isSaving).toBeFalse();
             }));
         });
     });
@@ -140,7 +140,7 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isExamMode).toEqual(true);
+            expect(comp.isExamMode).toBeTrue();
             expect(comp.textExercise).toEqual(textExercise);
         }));
     });
@@ -159,7 +159,7 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isExamMode).toEqual(false);
+            expect(comp.isExamMode).toBeFalse();
             expect(comp.textExercise).toEqual(textExercise);
         }));
     });
@@ -184,11 +184,11 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(false);
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -216,11 +216,11 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(false);
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeFalse();
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -244,12 +244,12 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(true);
-            expect(comp.textExercise.course).toEqual(undefined);
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
+            expect(comp.textExercise.course).toBeUndefined();
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 
@@ -274,11 +274,11 @@ describe('TextExercise Management Update Component', () => {
             comp.ngOnInit();
             tick(); // simulate async
             // THEN
-            expect(comp.isImport).toEqual(true);
-            expect(comp.isExamMode).toEqual(true);
-            expect(comp.textExercise.assessmentDueDate).toEqual(undefined);
-            expect(comp.textExercise.releaseDate).toEqual(undefined);
-            expect(comp.textExercise.dueDate).toEqual(undefined);
+            expect(comp.isImport).toBeTrue();
+            expect(comp.isExamMode).toBeTrue();
+            expect(comp.textExercise.assessmentDueDate).toBeUndefined();
+            expect(comp.textExercise.releaseDate).toBeUndefined();
+            expect(comp.textExercise.dueDate).toBeUndefined();
         }));
     });
 });

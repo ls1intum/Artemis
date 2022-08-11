@@ -16,9 +16,9 @@ public interface ContinuousIntegrationUpdateService {
      * @param ciRepoName        The name of the configured repository in the continuous integration plan, normally 'assignment' or 'test'
      * @param repoProjectKey    The key of the project that contains the repository.
      * @param vcsRepoName       The lower level identifier of the repository in the version control system
-     * @param defaultBranchName The name of the default name of the repository
+     * @param branchName The name of the default name of the repository
      * @param triggeredBy       Optional list of repositories that should trigger the new build plan. If empty, no triggers get overwritten
      */
-    void updatePlanRepository(String projectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String vcsRepoName, String defaultBranchName,
+    void updatePlanRepository(String projectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String vcsRepoName, String branchName,
             Optional<List<String>> triggeredBy);
 }

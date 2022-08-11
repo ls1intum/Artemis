@@ -11,20 +11,6 @@
             <span class="text-info" jhiTranslate="artemisApp.programmingExercise.testCaseAnalysis.ok">Test cases ok.</span>
         </div>
     </ng-template>
-
-    <ng-container *ngIf="invalidHints.length > 0; else hintsOk">
-        <div id="instruction_analysis_hint-issues" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="faExclamationTriangle" class="text-warning me-1" [ngbTooltip]="hintsTooltipContent"></fa-icon>
-            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.issues">Hints issues.</span>
-        </div>
-    </ng-container>
-    <ng-template #hintsOk>
-        <div id="instruction_analysis_hint-ok" class="editable-instruction-container__status__item">
-            <fa-icon [icon]="faCheckCircle" class="text-success me-1"></fa-icon>
-            <span class="text-info" jhiTranslate="artemisApp.programmingExercise.hintsAnalysis.ok">Hints ok.</span>
-        </div>
-    </ng-template>
-
     <ng-template #testCasesTooltipContent>
         <div class="text-start w-100">
             <div *ngIf="invalidTestCases.length">
@@ -39,19 +25,6 @@
                 <span>{{ 'artemisApp.programmingExercise.testCaseAnalysis.missingTestCases' | artemisTranslate: { number: missingTestCases.length } }}</span>
                 <ul>
                     <li *ngFor="let test of missingTestCases">{{ test }}</li>
-                </ul>
-            </div>
-        </div>
-    </ng-template>
-
-    <ng-template #hintsTooltipContent>
-        <div class="text-start w-100">
-            <div *ngIf="invalidHints.length">
-                <span [innerHTML]="'artemisApp.programmingExercise.hintsAnalysis.invalidHints' | artemisTranslate: { number: invalidHints.length }"
-                    >There are {{ invalidHints.length }} test cases that are part of the problem statement but can't be found in your test repository:</span
-                >
-                <ul>
-                    <li *ngFor="let test of invalidHints">{{ 'id:' + test }}</li>
                 </ul>
             </div>
         </div>

@@ -86,8 +86,8 @@ describe('TextblockAssessmentCardComponent', () => {
         const feedbackEditorComponent = feedbackEditor.componentInstance as TextblockFeedbackEditorComponent;
         feedbackEditorComponent.dismiss();
 
-        expect(component.textBlockRef.feedback).toBe(undefined);
-        expect(component.didDelete.emit).toHaveBeenCalledTimes(1);
+        expect(component.textBlockRef.feedback).toBeUndefined();
+        expect(component.didDelete.emit).toHaveBeenCalledOnce();
         expect(component.didDelete.emit).toHaveBeenCalledWith(component.textBlockRef);
     });
 

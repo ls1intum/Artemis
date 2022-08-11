@@ -1,16 +1,16 @@
 import { Component, Input, OnChanges, OnInit } from '@angular/core';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { Post } from 'app/entities/metis/post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Lecture } from 'app/entities/lecture.model';
 import { Exercise } from 'app/entities/exercise.model';
 import { Course } from 'app/entities/course.model';
-import { CourseWideContext, PageType, PostingEditType } from 'app/shared/metis/metis.util';
 import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { Router } from '@angular/router';
 import { faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { CourseWideContext, PageType, PostContentValidationPattern, PostingEditType, PostTitleValidationPattern } from 'app/shared/metis/metis.util';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 const TITLE_MAX_LENGTH = 200;
@@ -31,6 +31,7 @@ export interface ContextSelectorOption {
 export class PostCreateEditModalComponent extends PostingCreateEditModalDirective<Post> implements OnInit, OnChanges {
     @Input() isCourseMessagesPage: boolean;
 
+    modalRef?: NgbModalRef;
     exercises?: Exercise[];
     lectures?: Lecture[];
     tags: string[];
@@ -75,6 +76,22 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     }
 
     /**
+     * opens the modal to edit or create a post
+     */
+    open(): void {
+        this.modalRef = this.modalService.open(this.postingEditor, {
+            size: 'lg',
+            backdrop: 'static',
+            beforeDismiss: () => {
+                // when cancelling the create or update action, we do not want to store the current values
+                // but rather reset the formGroup values so when re-opening the modal we do not show the previously unsaved changes
+                this.resetFormGroup();
+                return true;
+            },
+        });
+    }
+
+    /**
      * resets the pageType, initialContext, post tags, post title, and post content
      */
     resetFormGroup(): void {
@@ -86,7 +103,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
         this.formGroup = this.formBuilder.group(!this.isCourseMessagesPage ? this.postValidator() : this.messageValidator());
         this.formGroup.controls['context'].valueChanges.subscribe((context: ContextSelectorOption) => {
             this.currentContextSelectorOption = context;
-            // announcements should no show similar posts
+            // announcements should not show similar posts
             if (this.currentContextSelectorOption.courseWideContext === CourseWideContext.ANNOUNCEMENT) {
                 this.similarPosts = [];
             }
@@ -215,8 +232,8 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     private postValidator() {
         return {
             // the pattern ensures that the title and content must include at least one non-whitespace character
-            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            title: [this.posting.title, [Validators.required, Validators.maxLength(TITLE_MAX_LENGTH), PostTitleValidationPattern]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         };
     }
@@ -224,7 +241,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     private messageValidator() {
         return {
             // the pattern ensures that content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
             context: [this.currentContextSelectorOption, [Validators.required]],
         };
     }

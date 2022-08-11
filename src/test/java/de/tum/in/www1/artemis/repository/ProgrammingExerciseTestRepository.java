@@ -18,7 +18,8 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
             left join fetch p.templateParticipation
             left join fetch p.solutionParticipation
             left join fetch p.exampleSubmissions
-            left join fetch p.exerciseHints
+            left join fetch p.exerciseHints eh
+            left join fetch eh.solutionEntries
             left join fetch p.tutorParticipations
             left join fetch p.posts
             left join fetch p.testCases tc
@@ -27,8 +28,7 @@ public interface ProgrammingExerciseTestRepository extends JpaRepository<Program
             left join fetch p.auxiliaryRepositories
             left join fetch p.tasks t
             left join fetch t.testCases
-            left join fetch t.codeHints ch
-            left join fetch ch.solutionEntries
+            left join fetch t.exerciseHints
             where p.id = :#{#exerciseId}
             """)
     ProgrammingExercise findOneWithEagerEverything(@Param("exerciseId") Long exerciseId);

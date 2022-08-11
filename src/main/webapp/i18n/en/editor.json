@@ -4,6 +4,7 @@
             "home": {
                 "title": "Code Editor"
             },
+            "breadCrumbTitle": "Code Editor",
             "title": "Code Editor for Exercise:",
             "instructions": "&nbsp; Instructions &nbsp;",
             "unsavedChanges": "Unsaved.",
@@ -30,8 +31,7 @@
             "submitDescription": "Stage, commit, push, build and test your changes.",
             "buildOutput": "&nbsp; Build Output",
             "building": "Building and testing...",
-            "buildFailed": "Build Failed",
-            "buildSuccessful": "Build Successful, no tests executed",
+            "buildFailed": "Build failed",
             "noBuildOutput": "No build results available",
             "selectFile": "Select a file to get started!",
             "downloadBuildResult": "Download Build Result",

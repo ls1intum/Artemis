@@ -71,7 +71,7 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         comp.writeValue(updatedDayJsTime);
 
         expect(comp.selectedDate?.getDate()).toBe(updatedDateNumber);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should update date with date object and invoke change', () => {
@@ -81,14 +81,14 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         comp.writeValue(updatedDayJsTime);
 
         expect(comp.selectedDate?.getDate()).toBe(updatedDateNumber);
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     it('should reset date and emit reset event', () => {
         const spy = jest.spyOn(comp.onDateReset, 'emit');
         comp.resetDate();
 
-        expect(comp.selectedDate).toBe(null);
-        expect(spy).toBeCalledTimes(1);
+        expect(comp.selectedDate).toBeNull();
+        expect(spy).toHaveBeenCalledTimes(1);
     });
 });

@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { ActivatedRoute, Router, RouterEvent, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Router, RouterOutlet } from '@angular/router';
 import { NgbPagination } from '@ng-bootstrap/ng-bootstrap';
 import { SystemNotificationManagementComponent } from 'app/admin/system-notification-management/system-notification-management.component';
 import { SystemNotification } from 'app/entities/system-notification.model';
@@ -27,7 +27,7 @@ describe('SystemNotificationManagementComponent', () => {
 
     beforeEach(() => {
         router = new MockRouter();
-        router.events = of({ id: 1, url: '' } as RouterEvent);
+        router.setUrl('');
 
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
@@ -71,7 +71,7 @@ describe('SystemNotificationManagementComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnce();
         expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id]);
     }));
 
@@ -87,14 +87,14 @@ describe('SystemNotificationManagementComponent', () => {
         button.click();
 
         tick();
-        expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+        expect(router.navigateByUrl).toHaveBeenCalledOnce();
         expect(router.navigateByUrl.mock.calls[0][0]).toEqual(['./', notification.id, 'edit']);
     }));
 
     it('should unsubscribe on destroy', () => {
         const routeDataSpy = jest.spyOn(managementComponent.routeData, 'unsubscribe');
         managementComponentFixture.destroy();
-        expect(routeDataSpy).toHaveBeenCalledTimes(1);
+        expect(routeDataSpy).toHaveBeenCalledOnce();
     });
 
     it('should transition on page change', fakeAsync(() => {

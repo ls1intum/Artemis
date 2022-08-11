@@ -115,10 +115,10 @@ describe('CreateVideoUnitComponent', () => {
             expect(videoUnitCallArgument.description).toEqual(formDate.description);
             expect(videoUnitCallArgument.releaseDate).toEqual(formDate.releaseDate);
             expect(videoUnitCallArgument.source).toEqual(formDate.source);
-            expect(lectureIdCallArgument).toEqual(1);
+            expect(lectureIdCallArgument).toBe(1);
 
-            expect(createStub).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(createStub).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
 
             navigateSpy.mockRestore();
         });

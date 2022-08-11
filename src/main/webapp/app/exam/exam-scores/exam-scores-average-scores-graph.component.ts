@@ -8,10 +8,10 @@ import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 import { ActivatedRoute } from '@angular/router';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ArtemisNavigationUtilService, navigateToExamExercise } from 'app/utils/navigation.utils';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course } from 'app/entities/course.model';
 import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { NgxChartsSingleSeriesDataEntry } from 'app/shared/chart/ngx-charts-datatypes';
+import { axisTickFormattingWithPercentageSign } from 'app/shared/statistics-graph/statistics-graph.utils';
 
 type NameToValueMap = { [name: string]: any };
 
@@ -21,10 +21,12 @@ type NameToValueMap = { [name: string]: any };
 })
 export class ExamScoresAverageScoresGraphComponent implements OnInit {
     @Input() averageScores: AggregatedExerciseGroupResult;
+    @Input() course: Course;
 
     courseId: number;
-    course?: Course;
     examId: number;
+
+    readonly xAxisTickFormatting = axisTickFormattingWithPercentageSign;
 
     // ngx
     ngxData: NgxChartsSingleSeriesDataEntry[] = [];
@@ -43,7 +45,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
         private service: StatisticsService,
         private translateService: TranslateService,
         private localeConversionService: LocaleConversionService,
-        private courseService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
@@ -51,7 +52,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
             this.courseId = +params['courseId'];
             this.examId = +params['examId'];
         });
-        this.courseService.find(this.courseId).subscribe((courseResponse) => (this.course = courseResponse.body!));
         this.initializeChart();
     }
 
@@ -85,14 +85,6 @@ export class ExamScoresAverageScoresGraphComponent implements OnInit {
      */
     navigateToExercise(exerciseId: number, exerciseType: ExerciseType) {
         navigateToExamExercise(this.navigationUtilService, this.courseId, this.examId, this.averageScores.exerciseGroupId, exerciseType, exerciseId, 'scores');
-    }
-
-    /**
-     * Appends to every xAxis tick a percentage sign
-     * @param tick the initial xiAxis tick
-     */
-    formatTicks(tick: string): string {
-        return tick + '%';
     }
 
     /**

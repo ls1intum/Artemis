@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit } from '@angular/core';
-import { Observable, of, Subscription } from 'rxjs';
-import { filter, map, switchMap, tap } from 'rxjs/operators';
+import { Subscription } from 'rxjs';
+import { filter, map, tap } from 'rxjs/operators';
 import { NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { SessionStorageService } from 'ngx-webstorage';
 import { User } from 'app/core/user/user.model';
@@ -13,12 +13,10 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
-import { Exam } from 'app/entities/exam.model';
 import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { LocaleConversionService } from 'app/shared/service/locale-conversion.service';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { onError } from 'app/shared/util/global.utils';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { ApollonDiagramService } from 'app/exercises/quiz/manage/apollon-diagrams/apollon-diagram.service';
 import { LectureService } from 'app/lecture/lecture.service';
@@ -53,6 +51,9 @@ import {
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { onError } from 'app/shared/util/global.utils';
+import { StudentExam } from 'app/entities/student-exam.model';
 
 @Component({
     selector: 'jhi-navbar',
@@ -73,7 +74,12 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isRegistrationEnabled = false;
     passwordResetEnabled = false;
     breadcrumbs: Breadcrumb[];
+    breadcrumbSubscriptions: Subscription[];
     isCollapsed: boolean;
+    iconsMovedToMenu: boolean;
+    isNavbarNavVertical: boolean;
+    isExamActive = false;
+    examActiveCheckFuture?: ReturnType<typeof setTimeout>;
 
     // Icons
     faBars = faBars;
@@ -99,7 +105,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
     private authStateSubscription: Subscription;
     private routerEventSubscription: Subscription;
-    private exam?: Exam;
+    private studentExam?: StudentExam;
     private examId?: number;
     private routeExamId = 0;
     private lastRouteUrlSegment: string;
@@ -127,16 +133,44 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private examService: ExamManagementService,
         private organisationService: OrganizationManagementService,
         public themeService: ThemeService,
+        private entityTitleService: EntityTitleService,
     ) {
         this.version = VERSION ? VERSION : '';
         this.isNavbarCollapsed = true;
-        this.getExamId();
+        this.subscribeToNavigationEventsForExamId();
         this.onResize();
     }
 
-    @HostListener('window:resize', ['$event'])
+    @HostListener('window:resize')
     onResize() {
-        this.isCollapsed = window.innerWidth < 1200;
+        // Figure out breakpoints depending on available menu options and length of login
+        let neededWidthToNotRequireCollapse: number;
+        let neededWidthToDisplayCollapsedOptionsHorizontally = 150;
+        let neededWidthForIconOptionsToBeInMainNavBar: number;
+        if (this.currAccount) {
+            const nameLength = (this.currAccount.login?.length ?? 0) * 8;
+            neededWidthForIconOptionsToBeInMainNavBar = 580 + nameLength;
+            neededWidthToNotRequireCollapse = 700 + nameLength;
+
+            const hasServerAdminOption = this.accountService.hasAnyAuthorityDirect([Authority.ADMIN]);
+            const hasCourseManageOption = this.accountService.hasAnyAuthorityDirect([Authority.TA, Authority.INSTRUCTOR, Authority.EDITOR, Authority.ADMIN]);
+            if (hasCourseManageOption) {
+                neededWidthToNotRequireCollapse += 200;
+                neededWidthToDisplayCollapsedOptionsHorizontally += 200;
+            }
+            if (hasServerAdminOption) {
+                neededWidthToNotRequireCollapse += 225;
+                neededWidthToDisplayCollapsedOptionsHorizontally += 225;
+            }
+        } else {
+            // For login screen, we only see language and theme selectors which are smaller
+            neededWidthToNotRequireCollapse = 510;
+            neededWidthForIconOptionsToBeInMainNavBar = 430;
+        }
+
+        this.isCollapsed = window.innerWidth < neededWidthToNotRequireCollapse;
+        this.isNavbarNavVertical = window.innerWidth < Math.max(neededWidthToDisplayCollapsedOptionsHorizontally, 480);
+        this.iconsMovedToMenu = window.innerWidth < neededWidthForIconOptionsToBeInMainNavBar;
     }
 
     ngOnInit() {
@@ -149,19 +183,21 @@ export class NavbarComponent implements OnInit, OnDestroy {
 
         this.subscribeForGuidedTourAvailability();
 
-        // The current user is needed to hide menu items for not logged in users.
+        // The current user is needed to hide menu items for not logged-in users.
         this.authStateSubscription = this.accountService
             .getAuthenticationState()
             .pipe(
                 tap((user: User) => {
                     this.currAccount = user;
                     this.passwordResetEnabled = user?.internal || false;
+                    this.onResize();
                 }),
             )
             .subscribe();
 
         this.examParticipationService.currentlyLoadedStudentExam.subscribe((studentExam) => {
-            this.exam = studentExam.exam;
+            this.studentExam = studentExam;
+            this.checkExamActive();
         });
 
         this.buildBreadcrumbs(this.router.url);
@@ -174,6 +210,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         }
         if (this.routerEventSubscription) {
             this.routerEventSubscription.unsubscribe();
+        }
+        if (this.examActiveCheckFuture) {
+            clearTimeout(this.examActiveCheckFuture);
         }
     }
 
@@ -219,7 +258,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         goal_management: 'artemisApp.learningGoal.manageLearningGoals.title',
         assessment_locks: 'artemisApp.assessment.locks.home.title',
         apollon_diagrams: 'artemisApp.apollonDiagram.home.title',
-        discussion: 'artemisApp.metis.discussion.label',
+        communication: 'artemisApp.metis.communication.label',
         scores: 'entity.action.scores',
         assessment: 'artemisApp.assessment.assessment',
         export: 'artemisApp.quizExercise.export.export',
@@ -246,6 +285,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
         tutors: 'artemisApp.course.tutors',
         instructors: 'artemisApp.course.instructors',
         test_runs: 'artemisApp.examManagement.testRun.testRun',
+        monitoring: 'artemisApp.examMonitoring.title',
+        overview: 'artemisApp.examMonitoring.menu.overview.title',
+        activity_log: 'artemisApp.examMonitoring.menu.activity-log.title',
         assess: 'artemisApp.examManagement.assessmentDashboard',
         summary: 'artemisApp.exam.summary',
         conduction: 'artemisApp.exam.title',
@@ -263,6 +305,20 @@ export class NavbarComponent implements OnInit, OnDestroy {
         detailed: 'artemisApp.gradingSystem.detailedTab.title',
         interval: 'artemisApp.gradingSystem.intervalTab.title',
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
+        code_hint_management: 'artemisApp.codeHint.management.title',
+    };
+
+    studentPathBreadcrumbTranslations = {
+        exams: 'artemisApp.courseOverview.menu.exams',
+        exercises: 'artemisApp.courseOverview.menu.exercises',
+        lectures: 'artemisApp.courseOverview.menu.lectures',
+        learning_goals: 'artemisApp.courseOverview.menu.learningGoals',
+        statistics: 'artemisApp.courseOverview.menu.statistics',
+        discussion: 'artemisApp.metis.communication.label',
+        code_editor: 'artemisApp.editor.breadCrumbTitle',
+        participate: 'artemisApp.submission.detail.title',
+        live: 'artemisApp.submission.detail.title',
+        courses: 'artemisApp.course.home.title',
     };
 
     /**
@@ -270,13 +326,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private buildBreadcrumbs(fullURI: string): void {
         this.breadcrumbs = [];
+        this.breadcrumbSubscriptions?.forEach((subscription) => subscription.unsubscribe());
+        this.breadcrumbSubscriptions = [];
 
         if (!fullURI) {
             return;
         }
 
         // Temporarily restrict routes
-        if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management')) {
+        if (!fullURI.startsWith('/admin') && !fullURI.startsWith('/course-management') && !fullURI.startsWith('/courses')) {
             return;
         }
 
@@ -315,6 +373,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment (string representation of an entityID) to add a crumb for
      */
     private addBreadcrumbForNumberSegment(currentPath: string, segment: string): void {
+        const isStudentPath = currentPath.startsWith('/courses');
+        if (isStudentPath) {
+            switch (this.lastRouteUrlSegment) {
+                case 'code-editor':
+                case 'participate':
+                    this.addTranslationAsCrumb(currentPath, this.lastRouteUrlSegment);
+                    return;
+                case 'exercises':
+                    this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
+                    return;
+                default:
+                    const exercisesMatcher = this.lastRouteUrlSegment?.match(/.+-exercises/);
+                    if (exercisesMatcher) {
+                        this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                        return;
+                    }
+                    break;
+            }
+        }
+
         switch (this.lastRouteUrlSegment) {
             // Displays the path segment as breadcrumb (no other title exists)
             case 'system-notification-management':
@@ -323,7 +401,8 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.addBreadcrumb(currentPath, segment, false);
                 break;
             case 'course-management':
-                this.addResolvedTitleAsCrumb(this.courseManagementService.getTitle(Number(segment)), currentPath, segment);
+            case 'courses':
+                this.addResolvedTitleAsCrumb(EntityType.COURSE, [Number(segment)], currentPath, segment);
                 break;
             case 'exercises':
                 // Special case: A raw /course-management/XXX/exercises/XXX doesn't work, we need to add the exercise type
@@ -336,26 +415,26 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'programming-exercises':
             case 'quiz-exercises':
             case 'assessment-dashboard':
-                this.addResolvedTitleAsCrumb(this.exerciseService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.EXERCISE, [Number(segment)], currentPath, segment);
                 break;
             case 'exercise-hints':
                 // obtain the exerciseId of the current path
                 // current path of form '/course-management/:courseId/exercises/:exerciseId/...
                 const exerciseId = currentPath.split('/')[4];
-                this.addResolvedTitleAsCrumb(this.exerciseHintService.getTitle(Number(exerciseId), Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.HINT, [Number(segment), Number(exerciseId)], currentPath, segment);
                 break;
             case 'apollon-diagrams':
-                this.addResolvedTitleAsCrumb(this.apollonDiagramService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.DIAGRAM, [Number(segment)], currentPath, segment);
                 break;
             case 'lectures':
-                this.addResolvedTitleAsCrumb(this.lectureService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.LECTURE, [Number(segment)], currentPath, segment);
                 break;
             case 'exams':
                 this.routeExamId = Number(segment);
-                this.addResolvedTitleAsCrumb(this.examService.getTitle(this.routeExamId), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.EXAM, [this.routeExamId], currentPath, segment);
                 break;
             case 'organization-management':
-                this.addResolvedTitleAsCrumb(this.organisationService.getTitle(Number(segment)), currentPath, segment);
+                this.addResolvedTitleAsCrumb(EntityType.ORGANIZATION, [Number(segment)], currentPath, segment);
                 break;
             case 'import':
                 // Special case: Don't display the ID here but the name directly (clicking the ID wouldn't work)
@@ -391,6 +470,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * @param segment the current url segment to add a (translated) crumb for
      */
     private addBreadcrumbForUrlSegment(currentPath: string, segment: string): void {
+        const isStudentPath = currentPath.startsWith('/courses');
+
+        if (isStudentPath) {
+            const exercisesMatcher = segment?.match(/.+-exercises/);
+            if (exercisesMatcher) {
+                this.addTranslationAsCrumb(currentPath.replace(exercisesMatcher[0], 'exercises'), 'exercises');
+                return;
+            }
+        }
+
         // When we're not dealing with an ID we need to translate the current part
         // The translation might still depend on the previous parts
         switch (segment) {
@@ -409,6 +498,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             case 'mc-question-statistic':
             case 'dnd-question-statistic':
             case 'sa-question-statistic':
+            case 'participate':
                 break;
             case 'example-submissions':
                 // Hide example submission dashboard for non instructor users
@@ -431,13 +521,17 @@ export class NavbarComponent implements OnInit, OnDestroy {
                     this.addTranslationAsCrumb(currentPath, 'grading');
                     break;
                 } else if (this.lastRouteUrlSegment === 'code-editor' && segment === 'new') {
-                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'programming-exercises' && segment === 'import') {
-                    // - This route is bogus an needs to be replaced in the future, display no crumb
+                    // - This route is bogus and needs to be replaced in the future, display no crumb
                     break;
                 } else if (this.lastRouteUrlSegment === 'exercise-groups') {
                     // - Don't display '<type>-exercises' because it has no associated route
+                    break;
+                } else if (this.lastRouteUrlSegment === 'exams' && segment === 'import') {
+                    // This route is only used internally when opening the exam import modal and therefore shouldn't be displayed.
+                    // When opening the exam-update.component, the id of the to be imported exam is appended (-> case `import`).
                     break;
                 }
 
@@ -480,22 +574,22 @@ export class NavbarComponent implements OnInit, OnDestroy {
      * Uses the server response to add a title for a breadcrumb
      * While waiting for the response or in case of an error the segment is displayed directly as fallback
      *
-     * @param observable the observable returning an entity to display the title of
+     * @param type the type of the entity
+     * @param ids the ids of the entity
      * @param uri the uri/path for the breadcrumb
      * @param segment the current url segment to add a breadcrumb for
      */
-    private addResolvedTitleAsCrumb(observable: Observable<HttpResponse<string>>, uri: string, segment: string): void {
+    private addResolvedTitleAsCrumb(type: EntityType, ids: number[], uri: string, segment: string): void {
         // Insert the segment until we fetched a title from the server to insert at the correct index
-        const crumb = this.addBreadcrumb(uri, segment, false);
+        let crumb = this.addBreadcrumb(uri, segment, false);
 
-        observable.subscribe({
-            next: (response: HttpResponse<string>) => {
-                // Fall back to the segment in case there is no body returned
-                const title = response.body ?? segment;
-                this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
-            },
-            error: (error: HttpErrorResponse) => onError(this.alertService, error),
-        });
+        this.breadcrumbSubscriptions.push(
+            this.entityTitleService.getTitle(type, ids).subscribe({
+                next: (title: string) => {
+                    crumb = this.setBreadcrumb(uri, title, false, this.breadcrumbs.indexOf(crumb));
+                },
+            }),
+        );
     }
 
     /**
@@ -532,7 +626,9 @@ export class NavbarComponent implements OnInit, OnDestroy {
      */
     private addTranslationAsCrumb(uri: string, translationKey: string): void {
         const key = translationKey.split('-').join('_');
-        if (this.breadcrumbTranslation[key]) {
+        if (uri.startsWith('/courses') && this.studentPathBreadcrumbTranslations[key]) {
+            this.addBreadcrumb(uri, this.studentPathBreadcrumbTranslations[key], true);
+        } else if (this.breadcrumbTranslation[key]) {
             this.addBreadcrumb(uri, this.breadcrumbTranslation[key], true);
         } else {
             // If there is no valid entry in the mapping display the raw key instead of a "not found"
@@ -551,9 +647,16 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     changeLanguage(languageKey: string) {
-        this.sessionStorage.store('locale', languageKey);
-        this.translateService.use(languageKey);
-        this.localeConversionService.locale = languageKey;
+        if (this.currAccount) {
+            this.accountService.updateLanguage(languageKey).subscribe({
+                next: () => {
+                    this.translateService.use(languageKey);
+                },
+                error: (error: HttpErrorResponse) => onError(this.alertService, error),
+            });
+        } else {
+            this.translateService.use(languageKey);
+        }
     }
 
     collapseNavbar() {
@@ -596,39 +699,60 @@ export class NavbarComponent implements OnInit, OnDestroy {
     }
 
     /**
-     * get exam id from current route
+     * Subscribes to navigation end events to look for an exam id in the URL which indicates that we're in the student view of an exam.
      */
-    getExamId() {
-        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event) => {
-            const examId = of(event).pipe(
-                map(() => this.route.root),
-                map((root) => root.firstChild),
-                switchMap((firstChild) => {
-                    if (firstChild) {
-                        return firstChild?.paramMap.pipe(map((paramMap) => paramMap.get('examId')));
-                    } else {
-                        return of(null);
-                    }
-                }),
-            );
-            examId.subscribe((id) => {
-                if (id !== null && !event.url.includes('management')) {
-                    this.examId = +id;
-                } else {
-                    this.examId = undefined;
-                }
+    subscribeToNavigationEventsForExamId() {
+        this.routerEventSubscription = this.router.events.pipe(filter((event: RouterEvent) => event instanceof NavigationEnd)).subscribe((event: NavigationEnd) => {
+            if (event.url.includes('management')) {
+                this.examId = undefined;
+                return;
+            }
+
+            this.route.root.firstChild?.paramMap.pipe(map((params) => params.get('examId'))).subscribe((examId) => {
+                this.examId = examId ? Number(examId) : undefined;
+                this.checkExamActive();
             });
         });
     }
 
     /**
-     * check if exam mode is active
+     * Check if the student is currently working on an active exam.
+     * If yes, hide some elements like notifications and breadcrumbs.
+     * Schedules a check for this at the next relevant timestamp (exam start or exam end, whichever comes next)
      */
-    examModeActive(): boolean {
-        if (this.exam && this.exam.id === this.examId && this.exam.startDate && this.exam.endDate) {
-            return this.serverDateService.now().isBetween(this.exam.startDate, this.exam.endDate);
+    checkExamActive() {
+        if (this.examActiveCheckFuture) {
+            clearTimeout(this.examActiveCheckFuture);
+            this.examActiveCheckFuture = undefined;
         }
-        return false;
+
+        if (
+            this.studentExam?.exam &&
+            this.studentExam.exam.id === this.examId &&
+            !this.studentExam.exam.testExam &&
+            !this.studentExam.testRun &&
+            this.studentExam.exam.startDate &&
+            this.studentExam.exam.endDate &&
+            !this.studentExam.submitted
+        ) {
+            const serverTime = this.serverDateService.now();
+            // As end date, we use the working time of this student plus the grace period
+            const workingTime = this.studentExam.workingTime ?? this.studentExam.exam.workingTime;
+            const examEndWithGracePeriod = (workingTime ? this.studentExam.exam.startDate.add(workingTime, 'seconds') : this.studentExam.exam.endDate).add(
+                this.studentExam.exam.gracePeriod ?? 0,
+                'seconds',
+            );
+            this.isExamActive = serverTime.isBetween(this.studentExam.exam.startDate, examEndWithGracePeriod);
+
+            const timeUntilStart = this.studentExam.exam.startDate.diff(serverTime);
+            const timeUntilEnd = examEndWithGracePeriod.diff(serverTime);
+            const timeUntilNextChange = timeUntilStart >= 0 ? timeUntilStart : timeUntilEnd;
+            if (timeUntilNextChange > 0) {
+                this.examActiveCheckFuture = setTimeout(this.checkExamActive.bind(this), timeUntilNextChange + 100);
+            }
+        } else {
+            this.isExamActive = false;
+        }
     }
 }
 

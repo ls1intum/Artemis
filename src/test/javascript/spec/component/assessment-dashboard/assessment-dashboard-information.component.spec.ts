@@ -49,9 +49,9 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         component.ngOnInit();
 
-        expect(setupSpy).toHaveBeenCalledTimes(1);
-        expect(setupLinksSpy).toHaveBeenCalledTimes(1);
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+        expect(setupSpy).toHaveBeenCalledOnce();
+        expect(setupLinksSpy).toHaveBeenCalledOnce();
+        expect(setupGraphSpy).toHaveBeenCalledOnce();
 
         expect(component.customColors[0].name).toBe('artemisApp.exerciseAssessmentDashboard.openAssessments');
         expect(component.customColors[1].name).toBe('artemisApp.exerciseAssessmentDashboard.closedAssessments');

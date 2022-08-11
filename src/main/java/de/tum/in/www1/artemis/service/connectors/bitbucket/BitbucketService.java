@@ -36,9 +36,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
-import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.AbstractVersionControlService;
 import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
@@ -64,9 +65,6 @@ public class BitbucketService extends AbstractVersionControlService {
     @Value("${artemis.git.name}")
     private String artemisGitName;
 
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultBranch;
-
     private final UserRepository userRepository;
 
     private final RestTemplate restTemplate;
@@ -74,16 +72,17 @@ public class BitbucketService extends AbstractVersionControlService {
     private final RestTemplate shortTimeoutRestTemplate;
 
     public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
-            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext) {
-        super(applicationContext, gitService, urlService);
+            @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
+            ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
+        super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
         this.userRepository = userRepository;
         this.restTemplate = restTemplate;
         this.shortTimeoutRestTemplate = shortTimeoutRestTemplate;
     }
 
     @Override
-    public void configureRepository(ProgrammingExercise exercise, VcsRepositoryUrl repositoryUrl, Set<User> users, boolean allowAccess) {
-        for (User user : users) {
+    public void configureRepository(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean allowAccess) {
+        for (User user : participation.getStudents()) {
             String username = user.getLogin();
 
             // This is a failsafe in case a user was not created in VCS on registration
@@ -94,11 +93,12 @@ public class BitbucketService extends AbstractVersionControlService {
             if (allowAccess && !Boolean.FALSE.equals(exercise.isAllowOfflineIde())) {
                 // only add access to the repository if the offline IDE usage is NOT disallowed
                 // NOTE: null values are interpreted as offline IDE is allowed
-                addMemberToRepository(repositoryUrl, user);
+                addMemberToRepository(participation.getVcsRepositoryUrl(), user);
             }
         }
 
-        protectBranches(urlService.getProjectKeyFromRepositoryUrl(repositoryUrl), urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl));
+        protectBranches(urlService.getProjectKeyFromRepositoryUrl(participation.getVcsRepositoryUrl()),
+                urlService.getRepositorySlugFromRepositoryUrl(participation.getVcsRepositoryUrl()));
     }
 
     @Override
@@ -112,7 +112,7 @@ public class BitbucketService extends AbstractVersionControlService {
     }
 
     /**
-     * This methods protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
+     * This method protects the repository on the Bitbucket server by using a REST-call to setup branch protection.
      * The branch protection is applied to all branches and prevents rewriting the history (force-pushes) and deletion of branches.
      *
      * @param projectKey     The project key of the repository that should be protected
@@ -139,7 +139,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(baseUrl, HttpMethod.POST, entity, Object.class);
         }
         catch (Exception emAll) {
-            log.error("Exception occurred while protecting repository " + repositorySlug, emAll);
+            log.error("Exception occurred while protecting repository {}", repositorySlug, emAll);
         }
 
         log.debug("Branch protection for repository {} set up", repositorySlug);
@@ -188,7 +188,6 @@ public class BitbucketService extends AbstractVersionControlService {
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
         final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
-        log.debug("getCloneRepositoryUrl: {}", cloneUrl);
         return cloneUrl;
     }
 
@@ -211,14 +210,14 @@ public class BitbucketService extends AbstractVersionControlService {
             if (e.getStatusCode().equals(HttpStatus.NOT_FOUND)) {
                 return false;
             }
-            log.error("Could not check if user  " + username + " exists.", e);
+            log.error("Could not check if user {} exists.", username, e);
             throw new BitbucketException("Could not check if user exists");
         }
         return true;
     }
 
     /**
-     * Creates an user on Bitbucket
+     * Creates a user on Bitbucket
      *
      * @param username     The wanted Bitbucket username
      * @param password     The wanted password in clear text
@@ -237,7 +236,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(builder.build().encode().toUri(), HttpMethod.POST, null, Void.class);
         }
         catch (HttpClientErrorException e) {
-            log.error("Could not create Bitbucket user " + username, e);
+            log.error("Could not create Bitbucket user {}", username, e);
             throw new BitbucketException("Error while creating user", e);
         }
     }
@@ -268,7 +267,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 log.warn("Bitbucket user {} does not exist.", username);
                 return;
             }
-            log.error("Could not update Bitbucket user " + username, e);
+            log.error("Could not update Bitbucket user {}", username, e);
             throw new BitbucketException("Error while updating user", e);
         }
     }
@@ -298,7 +297,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 log.warn("Bitbucket user {} does not exist.", username);
                 return;
             }
-            log.error("Could not update Bitbucket user password for user " + username, e);
+            log.error("Could not update Bitbucket user password for user {}", username, e);
             throw new BitbucketException("Error while updating user", e);
         }
     }
@@ -322,7 +321,7 @@ public class BitbucketService extends AbstractVersionControlService {
                 log.warn("Bitbucket user {} has already been deleted.", username);
                 return;
             }
-            log.error("Could not delete Bitbucket user " + username, e);
+            log.error("Could not delete Bitbucket user {}", username, e);
             throw new BitbucketException("Error while updating user", e);
         }
     }
@@ -344,7 +343,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(bitbucketServerUrl + "/rest/api/latest/admin/users/add-groups", HttpMethod.POST, entity, Void.class);
         }
         catch (HttpClientErrorException e) {
-            log.error("Could not add Bitbucket user " + username + " to groups" + groups, e);
+            log.error("Could not add Bitbucket user {} to groups {}", username, groups, e);
             throw new BitbucketException("Error while adding Bitbucket user to groups");
         }
     }
@@ -377,7 +376,7 @@ public class BitbucketService extends AbstractVersionControlService {
                         groups);
                 return;
             }
-            log.error("Could not remove Bitbucket user " + username + " from groups" + groups, e);
+            log.error("Could not remove Bitbucket user {} from groups {}", username, groups, e);
             throw new BitbucketException("Error while removing Bitbucket user from groups");
         }
     }
@@ -445,11 +444,11 @@ public class BitbucketService extends AbstractVersionControlService {
         catch (HttpClientErrorException e) {
             log.error("Server Error on Bitbucket with message: '{}', body: '{}', headers: '{}', status text: '{}'.", e.getMessage(), e.getResponseBodyAsString(),
                     e.getResponseHeaders(), e.getStatusText());
-            log.error("Could not give write permission using " + url, e);
+            log.error("Could not give write permission using {}", url, e);
             throw new BitbucketException("Error while giving repository permissions", e);
         }
         catch (Exception emAll) {
-            log.error("Could not give write permission using " + url, emAll);
+            log.error("Could not give write permission using {}", url, emAll);
             throw new BitbucketException("Error while giving repository permissions", emAll);
         }
 
@@ -477,14 +476,14 @@ public class BitbucketService extends AbstractVersionControlService {
             var defaultBranchDTO = response.getBody();
 
             if (defaultBranchDTO == null) {
-                log.error("Unable to get default branch for repository " + repositorySlug);
+                log.error("Unable to get default branch for repository {}", repositorySlug);
                 throw new BitbucketException("Unable to get default branch for repository " + repositorySlug);
             }
 
             return defaultBranchDTO.getDisplayId();
         }
         catch (HttpClientErrorException e) {
-            log.error("Unable to get default branch for repository " + repositorySlug, e);
+            log.error("Unable to get default branch for repository {}", repositorySlug, e);
             throw new BitbucketException("Unable to get default branch for repository " + repositorySlug, e);
         }
     }
@@ -505,7 +504,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(getDefaultBranchUrl, HttpMethod.PUT, new HttpEntity<>(payload), Void.class);
         }
         catch (HttpClientErrorException e) {
-            log.error("Unable to set default branch for repository " + repositorySlug, e);
+            log.error("Unable to set default branch for repository {}", repositorySlug, e);
             throw new BitbucketException("Unable to set default branch for repository " + repositorySlug, e);
         }
     }
@@ -532,7 +531,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(url, HttpMethod.PUT, null, Void.class);
         }
         catch (Exception e) {
-            log.error("Could not give " + repositoryPermission + " permissions using " + url, e);
+            log.error("Could not give {} permissions using {}", repositoryPermission, url, e);
             throw new BitbucketException("Error while giving repository permissions", e);
         }
     }
@@ -552,7 +551,7 @@ public class BitbucketService extends AbstractVersionControlService {
             restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class);
         }
         catch (Exception e) {
-            log.error("Could not remove repository access using " + url, e);
+            log.error("Could not remove repository access using {}", url, e);
             throw new BitbucketException("Error while removing repository access", e);
         }
     }

@@ -12,7 +12,7 @@ import de.tum.in.www1.artemis.config.migration.MigrationEntry;
 import de.tum.in.www1.artemis.config.migration.MigrationRegistry;
 import de.tum.in.www1.artemis.config.migration.MigrationService;
 
-public class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private MigrationRegistry migrationRegistry;
@@ -21,7 +21,7 @@ public class MigrationIntegrityTest extends AbstractSpringIntegrationBambooBitbu
     private MigrationService migrationService;
 
     @Test
-    public void testIntegrity() {
+    void testIntegrity() {
         SortedMap<Integer, Class<? extends MigrationEntry>> classMap = migrationRegistry.getMigrationEntryMap();
         SortedMap<Integer, MigrationEntry> map = migrationService.instantiateEntryMap(classMap);
         assertThat(migrationService.checkIntegrity(map)).as("Migration Integrity Check")

@@ -17,27 +17,27 @@ public class PageableSearchDTO<T> {
     /**
      * The number of the page to return
      */
-    private int page;
+    protected int page;
 
     /**
      * The maximum size of one page
      */
-    private int pageSize;
+    protected int pageSize;
 
     /**
      * The string to search for
      */
-    private String searchTerm;
+    protected String searchTerm;
 
     /**
      * The sort order, i.e. descending or ascending
      */
-    private SortingOrder sortingOrder;
+    protected SortingOrder sortingOrder;
 
     /**
      * The column for which the result should be sorted by
      */
-    private T sortedColumn;
+    protected T sortedColumn;
 
     public int getPage() {
         return page;

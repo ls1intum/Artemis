@@ -1,5 +1,5 @@
 // These constants are injected via webpack environment variables.
-// If you change the values in the webpack config files, you need to re run webpack to update the application
+// If you change the values in the webpack config files, you need to re-run webpack to update the application
 
 declare const __DEBUG_INFO_ENABLED__: boolean;
 declare const __VERSION__: string;

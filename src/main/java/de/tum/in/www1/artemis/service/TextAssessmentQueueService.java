@@ -1,8 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.util.stream.Collectors.*;
-
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
@@ -48,7 +47,6 @@ public class TextAssessmentQueueService {
      */
     @Transactional(readOnly = true)
     public Optional<TextSubmission> getProposedTextSubmission(TextExercise textExercise, List<Language> languages) {
-
         if (!textExercise.isAutomaticAssessmentEnabled()) {
             throw new IllegalArgumentException("The TextExercise is not automatic assessable");
         }
@@ -65,18 +63,17 @@ public class TextAssessmentQueueService {
      * Return all TextSubmission which are the latest TextSubmission of a Participation and doesn't have a Result so far
      * The corresponding TextBlocks and Participations are retrieved from the database
      * @param exercise Exercise for which all assessed submissions should be retrieved
-     * @return List of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
-     *
+     * @return an unmodifiable list of all TextSubmission which aren't assessed at the Moment, but need assessment in the future.
      */
     public List<TextSubmission> getAllOpenTextSubmissions(TextExercise exercise) {
         final List<TextSubmission> submissions = textSubmissionRepository.findByParticipation_ExerciseIdAndResultsIsNullAndSubmittedIsTrue(exercise.getId());
 
         final Set<Long> clusterIds = submissions.stream().flatMap(submission -> submission.getBlocks().stream()).map(TextBlock::getCluster).filter(Objects::nonNull)
-                .map(TextCluster::getId).collect(toSet());
+                .map(TextCluster::getId).collect(Collectors.toSet());
 
         // To prevent lazy loading many elements later on, we fetch all clusters with text blocks here.
         final Map<Long, TextCluster> textClusterMap = textClusterRepository.findAllByIdsWithEagerTextBlocks(clusterIds).stream()
-                .collect(toMap(TextCluster::getId, textCluster -> textCluster));
+                .collect(Collectors.toMap(TextCluster::getId, textCluster -> textCluster));
 
         // link up clusters with eager blocks
         submissions.stream().flatMap(submission -> submission.getBlocks().stream()).forEach(textBlock -> {
@@ -87,7 +84,7 @@ public class TextAssessmentQueueService {
 
         return submissions.stream()
                 .filter(submission -> submission.getParticipation().findLatestSubmission().isPresent() && submission == submission.getParticipation().findLatestSubmission().get())
-                .collect(toList());
+                .toList();
     }
 
     /**
@@ -127,7 +124,7 @@ public class TextAssessmentQueueService {
         }
         double[][] distanceMatrix = cluster.getDistanceMatrix();
         int blockID = cluster.getBlocks().indexOf(textBlock);
-        // subtract 1 because the statement also included the distance to itself, but it should't be included
+        // subtract 1 because the statement also included the distance to itself, but it shouldn't be included
         return Arrays.stream(distanceMatrix[blockID]).map(distance -> 1.0 - distance).sum() - 1;
     }
 

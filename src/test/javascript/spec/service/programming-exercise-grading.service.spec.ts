@@ -86,9 +86,9 @@ describe('ProgrammingExerciseGradingService', () => {
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(testCasesExercise1).toEqual(testCases1);
-        expect(testCasesExercise2).toBe(undefined);
+        expect(testCasesExercise2).toBeUndefined();
 
         gradingService
             .subscribeForTestCases(exercise2.id)
@@ -113,7 +113,7 @@ describe('ProgrammingExerciseGradingService', () => {
             .pipe(tap((newTestCases) => (testCasesExercise1 = newTestCases)))
             .subscribe();
 
-        expect(getStub).toHaveBeenCalledTimes(1);
+        expect(getStub).toHaveBeenCalledOnce();
         expect(testCasesExercise1).toEqual(testCases1);
     });
 

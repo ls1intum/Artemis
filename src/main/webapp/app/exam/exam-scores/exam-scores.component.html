@@ -281,16 +281,18 @@
                 </label>
             </div>
             <!-- Histogram -->
-            <jhi-participant-scores-distribution
-                [scores]="scores"
-                [scoreToHighlight]="highlightedValue"
-                [gradingScale]="gradingScale"
-                [isCourseScore]="false"
-                [dataLabelFormatting]="dataLabelFormatting"
-                (onSelect)="onSelect()"
-                class="row"
-            >
-            </jhi-participant-scores-distribution>
+            <div class="row d-flex justify-content-center">
+                <jhi-participant-scores-distribution
+                    [scores]="scores"
+                    [scoreToHighlight]="highlightedValue"
+                    [gradingScale]="gradingScale"
+                    [isCourseScore]="false"
+                    [dataLabelFormatting]="dataLabelFormatting"
+                    (onSelect)="onSelect()"
+                    class="col-lg-11"
+                >
+                </jhi-participant-scores-distribution>
+            </div>
         </div>
 
         <!-- Exercise Statistics -->
@@ -298,9 +300,9 @@
             <h4 class="mt-3">
                 <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
             </h4>
-            <div class="col mb-3">
+            <div class="col mb-3" *ngIf="course">
                 <div *ngFor="let exerciseGroup of aggregatedExerciseGroupResults">
-                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup"></jhi-exam-scores-average-scores-graph>
+                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course"></jhi-exam-scores-average-scores-graph>
                 </div>
             </div>
 

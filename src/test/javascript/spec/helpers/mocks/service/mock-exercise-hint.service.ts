@@ -19,11 +19,31 @@ export class MockExerciseHintService implements IExerciseHintService {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
     }
 
-    findByExerciseIdWithRelations(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+    findByExerciseId(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
         return of({ body: [this.exerciseHintDummy, this.exerciseHintDummy2] }) as Observable<HttpResponse<ExerciseHint[]>>;
     }
 
     update(exerciseId: number, exerciseHint: ExerciseHint): Observable<ExerciseHintResponse> {
         return of({ body: this.exerciseHintDummy }) as Observable<ExerciseHintResponse>;
+    }
+
+    activateExerciseHint(exerciseId: number, exerciseHintId: number): Observable<ExerciseHintResponse> {
+        return of();
+    }
+
+    getActivatedExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+        return of();
+    }
+
+    getAvailableExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
+        return of();
+    }
+
+    getTitle(exerciseId: number, exerciseHintId: number): Observable<HttpResponse<string>> {
+        return of();
+    }
+
+    rateExerciseHint(exerciseId: number, exerciseHintId: number, ratingValue: number): Observable<HttpResponse<void>> {
+        return of();
     }
 }

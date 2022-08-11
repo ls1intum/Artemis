@@ -27,7 +27,7 @@ import { getLatestSubmissionResult, SubmissionExerciseType } from 'app/entities/
 import { TextSubmission } from 'app/entities/text-submission.model';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { of } from 'rxjs';
-import dayjs from 'dayjs';
+import dayjs from 'dayjs/esm';
 import { Result } from 'app/entities/result.model';
 import { TextblockFeedbackDropdownComponent } from 'app/exercises/text/assess/textblock-feedback-editor/dropdown/textblock-feedback-dropdown.component';
 
@@ -186,7 +186,7 @@ describe('TextblockFeedbackEditorComponent', () => {
 
         component.escKeyup();
         fixture.detectChanges();
-        expect(confirmSpy).toHaveBeenCalledTimes(1);
+        expect(confirmSpy).toHaveBeenCalledOnce();
     });
 
     it('should show feedback impact warning when numberOfAffectedSubmissions > 0', () => {
@@ -219,14 +219,16 @@ describe('TextblockFeedbackEditorComponent', () => {
         expect(searchOriginIcon).toBeTruthy();
     });
 
-    it('should open modal when open origin of feedback function is called', () => {
+    it('should open modal when open origin of feedback function is called', async () => {
         const modalService: NgbModal = TestBed.inject(NgbModal);
         const content = {};
         const modalServiceSpy = jest.spyOn(modalService, 'open');
 
-        component.openOriginOfFeedbackModal(content).then(() => {
-            expect(modalServiceSpy).toHaveBeenCalledTimes(1);
-        });
+        await expect(component.openOriginOfFeedbackModal(content))
+            .toResolve()
+            .then(() => {
+                expect(modalServiceSpy).toHaveBeenCalledOnce();
+            });
     });
 
     it('should connect automatic feedback origin blocks with current feedback', fakeAsync(() => {
@@ -277,7 +279,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.connectAutomaticFeedbackOriginBlocksWithFeedback();
         tick();
 
-        expect(participationStub).toHaveBeenCalledTimes(1);
+        expect(participationStub).toHaveBeenCalledOnce();
         expect(component.listOfBlocksWithFeedback).toEqual([
             {
                 text: 'First text.',
@@ -357,6 +359,6 @@ describe('TextblockFeedbackEditorComponent', () => {
         component.feedback.type = FeedbackType.AUTOMATIC;
         const typeSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.didChange();
-        expect(typeSpy).toHaveBeenCalledTimes(1);
+        expect(typeSpy).toHaveBeenCalledOnce();
     });
 });

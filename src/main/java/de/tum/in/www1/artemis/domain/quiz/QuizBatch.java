@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 
 /**
- * A BuizBatch.
+ * A QuizBatch.
  */
 @Entity
 @Table(name = "quiz_batch")
@@ -48,7 +48,7 @@ public class QuizBatch extends DomainObject {
         return startTime;
     }
 
-    public void setStartTime(ZonedDateTime startTime) {
+    public void setStartTime(@Nullable ZonedDateTime startTime) {
         this.startTime = startTime;
     }
 
@@ -87,16 +87,6 @@ public class QuizBatch extends DomainObject {
         return isStarted()
                 ? getQuizExercise() == null ? 0 : ChronoUnit.SECONDS.between(ZonedDateTime.now(), ChronoUnit.SECONDS.addTo(getStartTime(), getQuizExercise().getDuration()))
                 : null;
-    }
-
-    /**
-     * Get the remaining time until the batch starts in seconds
-     *
-     * @return null, if the batch isn't planned to start, otherwise the time until the quiz starts in seconds (negative if the quiz has already started)
-     */
-    @JsonView(QuizView.Before.class)
-    public Long getTimeUntilPlannedStart() {
-        return getStartTime() != null ? ChronoUnit.SECONDS.between(ZonedDateTime.now(), getStartTime()) : null;
     }
 
     /**

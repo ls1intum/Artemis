@@ -65,12 +65,12 @@ describe('Alert Overlay Component Tests', () => {
         fixture.detectChanges();
 
         const btn = fixture.debugElement.query(By.css('.btn'));
-        expect(btn).not.toBe(null);
+        expect(btn).not.toBeNull();
 
         btn.nativeElement.click();
 
         expect(callback).toHaveBeenCalledWith(alert);
-        expect(callback).toHaveBeenCalledTimes(1);
+        expect(callback).toHaveBeenCalledOnce();
     });
 
     it('Should close the alert if the close icon is clicked', () => {
@@ -87,12 +87,12 @@ describe('Alert Overlay Component Tests', () => {
         fixture.detectChanges();
 
         const btn = fixture.debugElement.query(By.css('jhi-close-circle'));
-        expect(btn).not.toBe(null);
+        expect(btn).not.toBeNull();
 
         btn.nativeElement.click();
 
         expect(onClose).toHaveBeenCalledWith(alert);
-        expect(onClose).toHaveBeenCalledTimes(1);
+        expect(onClose).toHaveBeenCalledOnce();
         expect(alertService.get()).toHaveLength(0);
     });
 
@@ -106,6 +106,6 @@ describe('Alert Overlay Component Tests', () => {
         });
 
         const btn = fixture.debugElement.query(By.css('jhi-close-circle'));
-        expect(btn).toBe(null);
+        expect(btn).toBeNull();
     });
 });

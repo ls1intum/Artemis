@@ -101,15 +101,15 @@ describe('CreateLearningGoal', () => {
         ).componentInstance;
         learningGoalForm.formSubmitted.emit(formData);
 
-        createLearningGoalComponentFixture.whenStable().then(() => {
+        return createLearningGoalComponentFixture.whenStable().then(() => {
             const learningGoal = new LearningGoal();
             learningGoal.title = formData.title;
             learningGoal.description = formData.description;
             learningGoal.lectureUnits = formData.connectedLectureUnits;
 
             expect(createSpy).toHaveBeenCalledWith(learningGoal, 1);
-            expect(createSpy).toHaveBeenCalledTimes(1);
-            expect(navigateSpy).toHaveBeenCalledTimes(1);
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(navigateSpy).toHaveBeenCalledOnce();
         });
     });
 });

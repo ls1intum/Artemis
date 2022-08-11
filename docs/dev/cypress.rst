@@ -62,7 +62,7 @@ The *Artemis Build* build plan is triggered whenever a new commit has been pushe
 The Cypress build plan is only triggered after a successful build of the Artemis executable.
 This does imply a delay (about 10 minutes on average) between the push of new commits and the execution of the Cypress test suite, since the new Artemis executable first has to be built.
 
-**NOTE:** The Cypress test suite is only automatically executed for internal branches and pull requests (requires access to this Github repository) **not** for external ones. In case you need access rights, please contact the maintainer `Stephan Krusche <https://github.com/krusche>`__.
+**NOTE:** The Cypress test suite is only automatically executed for internal branches and pull requests (requires access to this GitHub repository) **not** for external ones. In case you need access rights, please contact the maintainer `Stephan Krusche <https://github.com/krusche>`__.
 
 Artemis Deployment in Test Environment
 --------------------------------------

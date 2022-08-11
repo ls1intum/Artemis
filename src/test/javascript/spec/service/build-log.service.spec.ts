@@ -7,7 +7,7 @@ describe('Build Log Service', () => {
     let service: BuildLogService;
     let httpMock: HttpTestingController;
 
-    const resourceUrl = SERVER_API_URL + '/api/repository/42/buildlogs';
+    const resourceUrl = SERVER_API_URL + 'api/repository/42/buildlogs';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -30,8 +30,8 @@ describe('Build Log Service', () => {
 
             const req = httpMock.expectOne({ method: 'GET' });
             expect(req.request.url).toEqual(resourceUrl);
-            expect(req.request.params.keys().length).toEqual(1);
-            expect(req.request.params.get('resultId')).toEqual('123');
+            expect(req.request.params.keys()).toHaveLength(1);
+            expect(req.request.params.get('resultId')).toBe('123');
             req.flush(logEntry);
             tick();
         }));
@@ -41,7 +41,7 @@ describe('Build Log Service', () => {
 
             const req = httpMock.expectOne({ method: 'GET' });
             expect(req.request.url).toEqual(resourceUrl);
-            expect(req.request.params.keys().length).toEqual(0);
+            expect(req.request.params.keys()).toHaveLength(0);
             expect(req.request.params.keys()).not.toContain('resultId');
             tick();
         }));

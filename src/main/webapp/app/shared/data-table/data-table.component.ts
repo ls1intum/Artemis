@@ -1,12 +1,12 @@
-import { Component, ContentChild, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild, ViewEncapsulation } from '@angular/core';
+import { Component, ContentChild, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewEncapsulation, ViewChild, ElementRef } from '@angular/core';
 import { debounceTime, distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { Observable } from 'rxjs';
-import { ColumnMode, SortType } from '@swimlane/ngx-datatable';
-import { flatten, get, isNumber } from 'lodash-es';
+import { ColumnMode, SortType } from '@flaviosantoro92/ngx-datatable';
+import { get, isNumber, flatten } from 'lodash-es';
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { LocalStorageService } from 'ngx-webstorage';
 import { SortService } from 'app/shared/service/sort.service';
-import { faCircleNotch, faSort, faSortDown, faSortUp } from '@fortawesome/free-solid-svg-icons';
+import { faSort, faSortUp, faSortDown, faCircleNotch } from '@fortawesome/free-solid-svg-icons';
 
 /**
  * Enum for ascending and descending order.
@@ -74,6 +74,7 @@ export class DataTableComponent implements OnInit, OnChanges {
      * @property searchPlaceholderTranslation Translation string that is used for the placeholder in the search input field
      * @property minQueryLengthHintTranslation Translation string that is used to inform the user about the min. number of characters that must be input to trigger a search
      * @property searchFields Fields of entity whose values will be compared to the user's search string (allows nested attributes, e.g. ['student.login', 'student.name'])
+     * @property searchEnabled Flag whether searching is enabled (default: true)
      * @property searchEntityFilterEnabled Flag whether searching should cause a filtering of the entities (default: true)
      * @function searchTextFromEntity Function that takes an entity and returns a text that is inserted into the search input field when clicking on an autocomplete suggestion
      * @function searchResultFormatter Function that takes an entity and returns the text for the autocomplete suggestion result row
@@ -97,6 +98,7 @@ export class DataTableComponent implements OnInit, OnChanges {
     @Input() searchPlaceholderTranslation: string;
     @Input() minQueryLengthHintTranslation = 'artemisApp.dataTable.search.minQueryLengthHint';
     @Input() searchFields: string[] = [];
+    @Input() searchEnabled = true;
     @Input() searchEntityFilterEnabled = true;
     @Input() searchTextFromEntity: (entity: BaseEntity) => string = entityToString;
     @Input() searchResultFormatter: (entity: BaseEntity) => string = entityToString;
@@ -370,7 +372,7 @@ export class DataTableComponent implements OnInit, OnChanges {
                 map(({ text, searchWords }) => {
                     // We only execute the autocomplete for the last keyword in the provided list.
                     const lastSearchWord = searchWords.last();
-                    // Don't execute autocomplete for less then two inputted characters.
+                    // Don't execute autocomplete for less than two inputted characters.
                     if (!lastSearchWord || lastSearchWord.length < this.minSearchQueryLength) {
                         this.searchQueryTooShort = true;
                         return { text, entities: [] };

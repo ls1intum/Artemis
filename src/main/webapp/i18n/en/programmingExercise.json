@@ -103,18 +103,18 @@
             "extractTasksFromProblemStatementWarning": "Only for testing purpose: Extract all tasks and test cases from problems statement.",
             "extractTasksFromProblemStatementSuccess": "Loaded {{numberTasks}} extracted tasks with {{numberTestCases}} tests from the problem statement:\n{{detailedResult}}",
             "extractTasksFromProblemStatementTitle": "Get Extracted Tasks",
-            "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and solution entries.",
-            "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and solution entries.",
+            "deleteTasksAndSolutionEntriesWarning": "Only for testing purpose: Delete all tasks and Solution Code Snippets.",
+            "deleteTasksAndSolutionEntriesSuccess": "Successfully deleted all tasks and Solution Code Snippets.",
             "deleteTasksAndSolutionEntriesTitle": "Delete Tasks",
-            "generateCodeHintsTooltip": "Generates code hints for all tasks in this exercise using the already created solution entries.",
+            "generateCodeHintsTooltip": "Generates code hints for all tasks in this exercise using the already created Solution Code Snippets.",
             "generateCodeHintsTitle": "Generate code hints",
             "generateCodeHintsSuccess": "Code hints have been generated",
-            "createStructuralSolutionEntriesTooltip": "Creates solution entries for all structural test cases of this exercise.",
-            "createStructuralSolutionEntriesTitle": "Create structural solution entries",
-            "createStructuralSolutionEntriesSuccess": "Structural solution entries have been created successfully",
-            "createBehavioralSolutionEntriesTooltip": "Creates solution entries for all behavioral test cases of this exercise.",
-            "createBehavioralSolutionEntriesTitle": "Create behavioral solution entries",
-            "createBehavioralSolutionEntriesSuccess": "Behavioral solution entries have been created successfully",
+            "createStructuralSolutionEntriesTooltip": "Creates Solution Code Snippets for all structural test cases of this exercise.",
+            "createStructuralSolutionEntriesTitle": "Create structural Solution Code Snippets",
+            "createStructuralSolutionEntriesSuccess": "Structural Solution Code Snippets have been created successfully",
+            "createBehavioralSolutionEntriesTooltip": "Creates Solution Code Snippets for all behavioral test cases of this exercise.",
+            "createBehavioralSolutionEntriesTitle": "Create behavioral Solution Code Snippets",
+            "createBehavioralSolutionEntriesSuccess": "Behavioral Solution Code Snippets have been created successfully",
             "editable": {
                 "unsaved": "Unsaved.",
                 "unsavedTooltip": "There are unsaved changes in the problem statement.",
@@ -126,8 +126,7 @@
             "problemStatement": {
                 "title": "Problem Statement",
                 "taskCommand": "Task",
-                "testCaseCommand": "Insert Test Case",
-                "exerciseHintCommand": "Add task specific hint"
+                "testCaseCommand": "Insert Test Case"
             },
             "status": {
                 "solutionFailsTest": "The Solution Repository does not fulfill one or more test cases. This could indicate an issue with the Solution Repository or the test cases.",
@@ -272,6 +271,8 @@
                 "afterDueDateTooltip": "Activate this setting to build & test all student submissions on the selected date. This date must be set after the due date. These generated results will be marked as 'graded' even though the due date has passed.",
                 "alertNewDueDate": "The due date has been set to the release date!",
                 "alertNewAfterDueDate": "The date of the additional test runs has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsReleaseDate": "The example solution publication date has been set to the release date!",
+                "alertNewExampleSolutionPublicationDateAsDueDate": "The example solution publication date has been set to the due date!",
                 "assessmentDueDate": "Assessment Due Date",
                 "assessmentDueDateTooltip": "The deadline for manual reviews. As soon as the specified date passes, all manual assessments will be released to students!",
                 "notSet": "not set",
@@ -324,7 +325,8 @@
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
-                "warning": "Auxiliary repositories can be edited and removed. Changes do not cascade to the VCS and CIS and must be carried out manually.",
+                "warning": "Auxiliary repositories can be added, edited and removed. Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
+                "editedWarning": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
                 "repositoryNameRequired": {
                     "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
                 },
@@ -364,7 +366,7 @@
                         "pattern": "The penalty must be a number greater than 0.",
                         "required": "The penalty must be set."
                     },
-                    "penaltyInfoLabel": "Exceeding Penalty",
+                    "penaltyInfoLabel": "(Exceeding Penalty: {{points}} points)",
                     "triggerAllInformation": "If the exceeding submission limit penalty or the submission limit is updated, the 'Re-evaluate' functionality must be used to update the participants' results."
                 },
                 "submissionPolicyType": {
@@ -381,7 +383,7 @@
                         "tooltip": "The system deducts points from your score for each submission that exceeds the submission limit. Try to stay within the submission limit to avoid penalties!"
                     }
                 },
-                "submissionLimitTitle": "Submission Limit",
+                "submissionLimitTitle": "Submission limit",
                 "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
@@ -390,8 +392,8 @@
                 }
             },
             "diffReport": {
-                "button": "Show difference between the template and solution repositories",
-                "tooltip": "Shows the git-diff between the template and solution repositories.",
+                "button": "Show",
+                "tooltip": "Shows the detailed git-diff between the template and solution repositories.",
                 "title": "Template-Solution-Diff",
                 "template": "Template",
                 "solution": "Solution",
@@ -412,7 +414,7 @@
             "withDependencies": "With exemplary dependency",
             "withDependenciesTooltip": "Adds an external Apache commons-lang dependency to the generated project as an example how Maven dependencies should be used with Artemis exercises.",
             "recordTestwiseCoverage": "Record Testwise Coverage",
-            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java-Gradle-projects with non-sequential test runs.",
+            "recordTestwiseCoverageTooltip": "Activate this option to record the testwise coverage for the solution repository. This option is only available for Java/Kotlin-exercises with non-sequential test runs.",
             "coveredLineRatio": "Ratio Test-Covered Lines",
             "testwiseCoverageReport": {
                 "button": "Show testwise coverage",

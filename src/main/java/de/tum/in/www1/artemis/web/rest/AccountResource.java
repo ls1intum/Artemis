@@ -60,7 +60,7 @@ public class AccountResource {
 
     /**
      * the registration is only enabled when the configuration artemis.user-management.registration.enabled is set to true.
-     * A non existing entry or false mean that the registration is not enabled
+     * A non-existing entry or false mean that the registration is not enabled
      *
      * @return whether the registration is enabled or not
      */
@@ -188,6 +188,22 @@ public class AccountResource {
     }
 
     /**
+     * {@code POST  /account/change-language} : changes the current user's language key.
+     *
+     * @param languageKey languageKey to change to.
+     * @throws BadRequestAlertException {@code 400 (Bad Request)} if the language key is not 'en' or 'de'.
+     */
+    @PostMapping(path = "/account/change-language")
+    public void changeLanguageKey(@RequestBody String languageKey) {
+        User user = userRepository.getUser();
+        String langKey = languageKey.replaceAll("\"", "").toLowerCase().trim();
+        if (!"en".equals(langKey) && !"de".equals(langKey)) {
+            throw new BadRequestAlertException("Language key %s not supported!".formatted(languageKey), "Account", "invalidLanguageKey");
+        }
+        userService.updateUserLanguageKey(user.getId(), langKey);
+    }
+
+    /**
      * {@code POST   /account/reset-password/init} : Send an email to reset the password of the user.
      *
      * @param mailUsername string containing either mail or username of the user.
@@ -207,7 +223,7 @@ public class AccountResource {
         else {
             // Pretend the request has been successful to prevent checking which emails or usernames really exist
             // but log that an invalid attempt has been made
-            log.warn("Password reset requested for non existing mail or username '{}'", mailUsername);
+            log.warn("Password reset requested for non-existing mail or username '{}'", mailUsername);
         }
     }
 

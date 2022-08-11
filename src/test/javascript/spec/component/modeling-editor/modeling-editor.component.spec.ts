@@ -62,7 +62,7 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
         const editor: ApollonEditor = component['apollonEditor'] as ApollonEditor;
         // Check that editor exists
-        expect(editor).not.toBe(undefined);
+        expect(editor).toBeDefined();
 
         // check that editor contains elements of our model (direct equality check won't work somehow due to missing properties)
         expect(editor.model.elements.map((e) => e.id)).toEqual(classDiagram.elements.map((e) => e.id));
@@ -75,7 +75,7 @@ describe('ModelingEditorComponent', () => {
 
         component.ngOnDestroy();
         // verify teardown
-        expect(component['apollonEditor']).toBe(undefined);
+        expect(component['apollonEditor']).toBeUndefined();
     });
 
     it('ngOnChanges', () => {
@@ -107,7 +107,7 @@ describe('ModelingEditorComponent', () => {
     it('isFullScreen false', () => {
         // test
         const fullScreen = component.isFullScreen;
-        expect(fullScreen).toBe(false);
+        expect(fullScreen).toBeFalse();
     });
 
     it('getCurrentModel', () => {
@@ -161,7 +161,7 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
-        expect(statusHint).toBe(null);
+        expect(statusHint).toBeNull();
     });
 
     it('should not show save indicator in read only mode', () => {
@@ -171,7 +171,7 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
-        expect(statusHint).toBe(null);
+        expect(statusHint).toBeNull();
     });
 
     it('should not show save indicator in fullscreen mode', () => {
@@ -181,7 +181,7 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint'));
-        expect(statusHint).toBe(null);
+        expect(statusHint).toBeNull();
     });
 
     it('should show green checkmark save indicator if everything is saved', () => {
@@ -190,10 +190,10 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-success'));
-        expect(statusHint).not.toBe(null);
+        expect(statusHint).not.toBeNull();
 
         const icon = statusHint.query(By.css('fa-icon'));
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('All changes saved');
@@ -205,10 +205,10 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-warning'));
-        expect(statusHint).not.toBe(null);
+        expect(statusHint).not.toBeNull();
 
         const icon = statusHint.query(By.css('fa-icon'));
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('Unsaved changes');
@@ -220,10 +220,10 @@ describe('ModelingEditorComponent', () => {
         component.ngAfterViewInit();
 
         const statusHint = fixture.debugElement.query(By.css('.status-hint.text-info'));
-        expect(statusHint).not.toBe(null);
+        expect(statusHint).not.toBeNull();
 
         const icon = statusHint.query(By.css('fa-icon'));
-        expect(icon).not.toBe(null);
+        expect(icon).not.toBeNull();
 
         const spanText = statusHint.query(By.css('span'))?.nativeElement?.textContent;
         expect(spanText).toBe('Saving...');
@@ -235,7 +235,7 @@ describe('ModelingEditorComponent', () => {
         const newExplanation = 'New Explanation';
         component.onExplanationInput(newExplanation);
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(newExplanation);
         expect(component.explanation).toBe(newExplanation);
     });

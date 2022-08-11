@@ -39,6 +39,9 @@ export class ModelingExerciseImportComponent implements OnInit {
     faSort = faSort;
     faCheck = faCheck;
 
+    isCourseFilter = true;
+    isExamFilter = true;
+
     constructor(private pagingService: ModelingExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
@@ -51,14 +54,14 @@ export class ModelingExerciseImportComponent implements OnInit {
     /** Method to perform the search based on a search subject
      *
      * @param searchSubject The search subject which we use to search.
-     * @param debounce The delay we apply to deley the feedback / wait for input
+     * @param debounce The delay we apply to delay the feedback / wait for input
      */
     private performSearch(searchSubject: Subject<void>, debounce: number) {
         searchSubject
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForExercises(this.state)),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
             .subscribe((resp) => {
                 this.content = resp;
@@ -82,7 +85,7 @@ export class ModelingExerciseImportComponent implements OnInit {
     /**
      * Gives the ID for any programming exercise in the table, so that it can be tracked/identified by ngFor
      *
-     * @param index The index of the elemnt in the ngFor
+     * @param index The index of the element in the ngFor
      * @param item The exercise itself
      * @returns The ID of the programming exercise
      */
@@ -123,6 +126,16 @@ export class ModelingExerciseImportComponent implements OnInit {
 
     get searchTerm(): string {
         return this.state.searchTerm;
+    }
+
+    onCourseFilterChange() {
+        this.isCourseFilter = !this.isCourseFilter;
+        this.search.next();
+    }
+
+    onExamFilterChange() {
+        this.isExamFilter = !this.isExamFilter;
+        this.search.next();
     }
 
     /**

@@ -8,9 +8,10 @@ import { ExerciseHintService } from '../shared/exercise-hint.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faEye, faPlus, faTimes, faWrench, faFont, faCode } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsRotate, faCode, faEye, faFont, faPlus, faTimes, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExerciseHint, HintType } from 'app/entities/hestia/exercise-hint.model';
 import { ExerciseType } from 'app/entities/exercise.model';
+import { ProgrammingExercise, ProgrammingLanguage } from 'app/entities/programming-exercise.model';
 
 @Component({
     selector: 'jhi-exercise-hint',
@@ -19,8 +20,9 @@ import { ExerciseType } from 'app/entities/exercise.model';
 export class ExerciseHintComponent implements OnInit, OnDestroy {
     readonly HintType = HintType;
     ExerciseType = ExerciseType;
-    exerciseId: number;
+    exercise: ProgrammingExercise;
     exerciseHints: ExerciseHint[];
+    containsCodeHints: boolean;
     eventSubscriber: Subscription;
 
     private dialogErrorSource = new Subject<string>();
@@ -35,6 +37,9 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
     faWrench = faWrench;
     faText = faFont;
     faCode = faCode;
+    faArrowsRotate = faArrowsRotate;
+
+    readonly ProgrammingLanguage = ProgrammingLanguage;
 
     constructor(private route: ActivatedRoute, protected exerciseHintService: ExerciseHintService, private alertService: AlertService, protected eventManager: EventManager) {}
 
@@ -42,8 +47,8 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * Subscribes to the route params to act on the currently selected exercise.
      */
     ngOnInit() {
-        this.paramSub = this.route.params.subscribe((params) => {
-            this.exerciseId = params['exerciseId'];
+        this.route.data.subscribe(({ exercise }) => {
+            this.exercise = exercise;
             this.loadAllByExerciseId();
             this.registerChangeInExerciseHints();
         });
@@ -65,7 +70,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      */
     loadAllByExerciseId() {
         this.exerciseHintService
-            .findByExerciseIdWithRelations(this.exerciseId)
+            .findByExerciseId(this.exercise.id!)
             .pipe(
                 filter((res: HttpResponse<ExerciseHint[]>) => res.ok),
                 map((res: HttpResponse<ExerciseHint[]>) => res.body),
@@ -73,7 +78,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
             .subscribe({
                 next: (res: ExerciseHint[]) => {
                     this.exerciseHints = res;
-                    console.log(res);
+                    this.containsCodeHints = this.exerciseHints?.some((hint) => hint.type === HintType.CODE);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -103,7 +108,7 @@ export class ExerciseHintComponent implements OnInit, OnDestroy {
      * @param exerciseHintId the id of the exercise hint that we want to delete
      */
     deleteExerciseHint(exerciseHintId: number) {
-        this.exerciseHintService.delete(this.exerciseId, exerciseHintId).subscribe({
+        this.exerciseHintService.delete(this.exercise.id!, exerciseHintId).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'exerciseHintListModification',

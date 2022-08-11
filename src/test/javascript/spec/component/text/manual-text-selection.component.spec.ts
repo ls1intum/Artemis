@@ -78,7 +78,7 @@ describe('ManualTextSelectionComponent', () => {
         const sendAssessmentEventSpy = jest.spyOn(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.selectWord('lastWord');
         fixture.detectChanges();
-        expect(sendAssessmentEventSpy).toHaveBeenCalledTimes(1);
+        expect(sendAssessmentEventSpy).toHaveBeenCalledOnce();
         expect(sendAssessmentEventSpy).toHaveBeenCalledWith(TextAssessmentEventType.ADD_FEEDBACK_MANUALLY_SELECTED_BLOCK, FeedbackType.MANUAL, TextBlockType.MANUAL);
     });
 });

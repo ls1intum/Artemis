@@ -1,41 +1,45 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.repository.specs.UserSpecs.*;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.jpa.repository.EntityGraph;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.domain.*;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.*;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Organization;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.SortingOrder;
+import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
-import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.UserPageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
  * Spring Data JPA repository for the User entity.
  */
 @Repository
-public interface UserRepository extends JpaRepository<User, Long> {
+public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
     String USERS_CACHE = "users";
+
+    String FILTER_INTERNAL = "INTERNAL";
+
+    String FILTER_EXTERNAL = "EXTERNAL";
+
+    String FILTER_ACTIVATED = "ACTIVATED";
+
+    String FILTER_DEACTIVATED = "DEACTIVATED";
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);
@@ -138,8 +142,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     /**
      * Gets users in a group by their login.
      *
-     * @param groupName           Name of group in which to search for users
-     * @param logins Logins of users
+     * @param groupName Name of group in which to search for users
+     * @param logins    Logins of users
      * @return found users that match the criteria
      */
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
@@ -168,11 +172,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("select user from User user")
     Set<User> findAllWithGroupsAndAuthorities();
 
-    @EntityGraph(type = LOAD, attributePaths = { "groups", "authorities" })
-    @Query("select user from User user where user.login like %:#{#searchTerm}% or user.email like %:#{#searchTerm}% "
-            + "or user.lastName like %:#{#searchTerm}% or user.firstName like %:#{#searchTerm}%")
-    Page<User> searchByLoginOrNameWithGroups(@Param("searchTerm") String searchTerm, Pageable pageable);
-
     @Modifying
     @Transactional // ok because of modifying query
     @Query("Update User user set user.lastNotificationRead = :#{#lastNotificationRead} where user.id = :#{#userId}")
@@ -184,13 +183,19 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * If the value is null then all notifications should be shown.
      * (Not to be confused with notification settings. This filter is based on the notification date alone)
      *
-     * @param userId of the user
-     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it (if null -> show all notifications)
+     * @param userId                of the user
+     * @param hideNotificationUntil indicates a time that is used to filter all notifications that are prior to it
+     *                              (if null -> show all notifications)
      */
     @Modifying
     @Transactional // ok because of modifying query
     @Query("Update User user set user.hideNotificationsUntil = :#{#hideNotificationUntil} where user.id = :#{#userId}")
     void updateUserNotificationVisibility(@Param("userId") Long userId, @Param("hideNotificationUntil") ZonedDateTime hideNotificationUntil);
+
+    @Modifying
+    @Transactional // ok because of modifying query
+    @Query("Update User user set user.langKey = :#{#languageKey} where user.id = :#{#userId}")
+    void updateUserLanguageKey(@Param("userId") Long userId, @Param("languageKey") String languageKey);
 
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     @Query("select user from User user where :#{#groupName} member of user.groups and user not in :#{#ignoredUsers}")
@@ -205,12 +210,33 @@ public interface UserRepository extends JpaRepository<User, Long> {
      * @param userSearch used to find users
      * @return all users
      */
-    default Page<UserDTO> getAllManagedUsers(PageableSearchDTO<String> userSearch) {
+    default Page<UserDTO> getAllManagedUsers(UserPageableSearchDTO userSearch) {
+        // Prepare filter
         final var searchTerm = userSearch.getSearchTerm();
         var sorting = Sort.by(userSearch.getSortedColumn());
         sorting = userSearch.getSortingOrder() == SortingOrder.ASCENDING ? sorting.ascending() : sorting.descending();
         final var sorted = PageRequest.of(userSearch.getPage(), userSearch.getPageSize(), sorting);
-        return searchByLoginOrNameWithGroups(searchTerm, sorted).map(user -> {
+
+        // List of authorities that a user should match at least one
+        Set<String> authorities = userSearch.getAuthorities();
+        var modifiedAuthorities = authorities.stream().map(auth -> Role.ROLE_PREFIX + auth).collect(Collectors.toSet());
+
+        // Internal or external users or both
+        final var internal = userSearch.getOrigins().contains(FILTER_INTERNAL);
+        final var external = userSearch.getOrigins().contains(FILTER_EXTERNAL);
+
+        // Activated or deactivated users or both
+        var activated = userSearch.getStatus().contains(FILTER_ACTIVATED);
+        var deactivated = userSearch.getStatus().contains(FILTER_DEACTIVATED);
+
+        // Course Ids
+        var courseIds = userSearch.getCourseIds();
+
+        Specification<User> specification = Specification.where(distinct()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
+                .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities, courseIds))
+                .and(getCourseSpecification(courseIds, modifiedAuthorities)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities));
+
+        return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
             return new UserDTO(user);
         });
@@ -240,6 +266,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Retrieve a user by its login, or else throw exception
+     *
      * @param login the login of the user to search
      * @return the user entity if it exists
      */
@@ -249,9 +276,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * Get user with user groups and authorities of currently logged in user
+     * Get user with user groups and authorities of currently logged-in user
      *
-     * @return currently logged in user
+     * @return currently logged-in user
      */
     @NotNull
     default User getUserWithGroupsAndAuthorities() {
@@ -261,9 +288,9 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * Get user with user groups, authorities and organizations of currently logged in user
+     * Get user with user groups, authorities and organizations of currently logged-in user
      *
-     * @return currently logged in user
+     * @return currently logged-in user
      */
     @NotNull
     default User getUserWithGroupsAndAuthoritiesAndOrganizations() {
@@ -273,10 +300,10 @@ public interface UserRepository extends JpaRepository<User, Long> {
     }
 
     /**
-     * Get user with user groups, authorities and guided tour settings of currently logged in user
+     * Get user with user groups, authorities and guided tour settings of currently logged-in user
      * Note: this method should only be invoked if the guided tour settings are really needed
      *
-     * @return currently logged in user
+     * @return currently logged-in user
      */
     @NotNull
     default User getUserWithGroupsAuthoritiesAndGuidedTourSettings() {
@@ -425,7 +452,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Add organization to user, if not contained already
-     * @param userId the id of the user to add to the organization
+     *
+     * @param userId       the id of the user to add to the organization
      * @param organization the organization to add to the user
      */
     @NotNull
@@ -439,7 +467,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
 
     /**
      * Remove organization from user, if currently contained
-     * @param userId the id of the user to remove from the organization
+     *
+     * @param userId       the id of the user to remove from the organization
      * @param organization the organization to remove from the user
      */
     @NotNull
@@ -449,5 +478,18 @@ public interface UserRepository extends JpaRepository<User, Long> {
             user.getOrganizations().remove(organization);
             save(user);
         }
+    }
+
+    /**
+     * Return true if the current users' login matches the provided login
+     * @param login user login
+     * @return true if both logins match
+     */
+    default boolean isCurrentUser(String login) {
+        var currentUserLogin = SecurityUtils.getCurrentUserLogin();
+        if (currentUserLogin.isEmpty()) {
+            return false;
+        }
+        return currentUserLogin.get().equals(login);
     }
 }

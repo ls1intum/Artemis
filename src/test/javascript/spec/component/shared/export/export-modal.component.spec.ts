@@ -64,7 +64,7 @@ describe('ExportModalComponent', () => {
         const closeButton = fixture.debugElement.query(By.css('button.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledTimes(1);
+        expect(dismissSpy).toHaveBeenCalledOnce();
 
         const cancelButton = fixture.debugElement.query(By.css('button.cancel'));
         expect(cancelButton).not.toBeNull();

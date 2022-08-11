@@ -67,7 +67,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         );
     });
 
-    it('should parse answer options but not question titles ', () => {
+    it('should parse answer options but not question titles', () => {
         component.domainCommandsFound([
             ['text1', new TestCaseCommand()],
             ['text2', new CorrectOptionCommand()],
@@ -105,7 +105,7 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         expect(component.showMultipleChoiceQuestionPreview).toBeTrue();
     });
 
-    it('should parse answer options with question titles ', () => {
+    it('should parse answer options with question titles', () => {
         component.domainCommandsFound([
             ['text1', new ExplanationCommand()],
             ['text2', new HintCommand()],
@@ -155,11 +155,11 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         component.changesInMarkdown();
 
         expectCleanupQuestion();
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 
     function expectCleanupQuestion() {
-        expect(component.question.answerOptions?.length).toBe(0);
+        expect(component.question.answerOptions).toHaveLength(0);
         expect(component.question.text).toBeUndefined();
         expect(component.question.explanation).toBeUndefined();
         expect(component.question.hint).toBeUndefined();
@@ -170,6 +170,6 @@ describe('MultipleChoiceQuestionEditComponent', () => {
         const spy = jest.spyOn(component, 'deleteQuestion');
         const deleteButton = fixture.debugElement.query(By.css(`.delete-button`));
         deleteButton.nativeElement.click();
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 });

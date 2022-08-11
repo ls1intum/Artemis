@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { filter, map, tap } from 'rxjs/operators';
-
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -16,6 +15,9 @@ import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { StatsForDashboard } from 'app/course/dashboards/stats-for-dashboard.model';
 import { reconnectSubmissions, Submission } from 'app/entities/submission.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
+import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
+import { ExamExerciseStartPreparationStatus } from 'app/exam/manage/student-exams/student-exams.component';
 
 type EntityResponseType = HttpResponse<Exam>;
 type EntityArrayResponseType = HttpResponse<Exam[]>;
@@ -24,7 +26,7 @@ type EntityArrayResponseType = HttpResponse<Exam[]>;
 export class ExamManagementService {
     public resourceUrl = SERVER_API_URL + 'api/courses';
 
-    constructor(private router: Router, private http: HttpClient, private accountService: AccountService) {}
+    constructor(private router: Router, private http: HttpClient, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
 
     /**
      * Create an exam on the server using a POST request.
@@ -32,10 +34,10 @@ export class ExamManagementService {
      * @param exam The exam to create.
      */
     create(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertDateFromClient(exam);
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
         return this.http
             .post<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     /**
@@ -44,10 +46,32 @@ export class ExamManagementService {
      * @param exam The exam to update.
      */
     update(courseId: number, exam: Exam): Observable<EntityResponseType> {
-        const copy = ExamManagementService.convertDateFromClient(exam);
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
         return this.http
             .put<Exam>(`${this.resourceUrl}/${courseId}/exams`, copy, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    /**
+     * Imports an exam on the server using a PUT request.
+     * @param courseId The course id into which the exam should be imported
+     * @param exam The exam with exercises to import.
+     */
+    import(courseId: number, exam: Exam): Observable<EntityResponseType> {
+        const copy = ExamManagementService.convertExamDatesFromClient(exam);
+        return this.http
+            .post<Exam>(`${this.resourceUrl}/${courseId}/exam-import`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
+    }
+
+    /**
+     * Imports an exam on the server using a PUT request.
+     * @param courseId The course id into which the exercise groups should be imported
+     * @param examId The exam id to which the exercise groups should be added
+     * @param exerciseGroups the exercise groups to be added to the exam
+     */
+    importExerciseGroup(courseId: number, examId: number, exerciseGroups: ExerciseGroup[]): Observable<HttpResponse<ExerciseGroup[]>> {
+        return this.http.post<ExerciseGroup[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/import-exercise-group`, exerciseGroups, { observe: 'response' });
     }
 
     /**
@@ -61,24 +85,15 @@ export class ExamManagementService {
         const options = createRequestOption({ withStudents, withExerciseGroups });
         return this.http
             .get<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}`, { params: options, observe: 'response' })
-            .pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)))
-            .pipe(
-                tap((res: EntityResponseType) => {
-                    if (res.body?.course) {
-                        this.accountService.setAccessRightsForCourse(res.body.course);
-                    }
-                }),
-            );
+            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     /**
-     * Fetches the title of the exam with the given id
-     *
-     * @param examId the id of the exam
-     * @return the title of the exam in an HttpResponse, or an HttpErrorResponse on error
+     * Find an exam on the server using a GET request with exercises for the exam import
+     * @param examId The id of the exam to get.
      */
-    getTitle(examId: number): Observable<HttpResponse<string>> {
-        return this.http.get(`api/exams/${examId}/title`, { observe: 'response', responseType: 'text' });
+    findWithExercisesAndWithoutCourseId(examId: number): Observable<EntityResponseType> {
+        return this.http.get<Exam>(`${SERVER_API_URL}api/exams/${examId}`, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     /**
@@ -115,7 +130,7 @@ export class ExamManagementService {
     findAllExamsForCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
     }
 
     /**
@@ -125,7 +140,7 @@ export class ExamManagementService {
     findAllExamsAccessibleToUser(courseId: number): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/${courseId}/exams-for-user`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
     }
 
     /**
@@ -134,7 +149,7 @@ export class ExamManagementService {
     findAllCurrentAndUpcomingExams(): Observable<EntityArrayResponseType> {
         return this.http
             .get<Exam[]>(`${this.resourceUrl}/upcoming-exams`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => ExamManagementService.convertDateArrayFromServer(res)));
+            .pipe(map((res: EntityArrayResponseType) => this.processExamArrayResponseFromServer(res)));
     }
 
     /**
@@ -150,7 +165,7 @@ export class ExamManagementService {
         } else {
             url = `${this.resourceUrl}/${courseId}/exams/${examId}/exam-for-assessment-dashboard`;
         }
-        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => ExamManagementService.convertDateFromServer(res)));
+        return this.http.get<Exam>(url, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
     getLatestIndividualEndDateOfExam(courseId: number, examId: number): Observable<HttpResponse<ExamInformationDTO>> {
@@ -286,10 +301,27 @@ export class ExamManagementService {
      * Start all the exercises for all the student exams belonging to the exam
      * @param courseId course to which the exam belongs
      * @param examId exam to which the student exams belong
-     * @returns number of generated participations
      */
-    startExercises(courseId: number, examId: number): Observable<HttpResponse<number>> {
-        return this.http.post<any>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+    startExercises(courseId: number, examId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises`, {}, { observe: 'response' });
+    }
+
+    /**
+     * Get the current progress of starting exercises for all students
+     * @param courseId course to which the exam belongs
+     * @param examId exam to which the student exams belong
+     * @returns an object containing the status
+     */
+    getExerciseStartStatus(courseId: number, examId: number): Observable<HttpResponse<ExamExerciseStartPreparationStatus>> {
+        return this.http
+            .get<ExamExerciseStartPreparationStatus>(`${this.resourceUrl}/${courseId}/exams/${examId}/student-exams/start-exercises/status`, { observe: 'response' })
+            .pipe(
+                tap((res: HttpResponse<ExamExerciseStartPreparationStatus>) => {
+                    if (res.body) {
+                        res.body.startedAt = convertDateFromServer(res.body.startedAt);
+                    }
+                }),
+            );
     }
 
     /**
@@ -348,41 +380,49 @@ export class ExamManagementService {
      * @param examId The exam id.
      */
     reset(courseId: number, examId: number): Observable<EntityResponseType> {
-        return this.http.delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' });
+        return this.http
+            .delete<Exam>(`${this.resourceUrl}/${courseId}/exams/${examId}/reset`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.processExamResponseFromServer(res)));
     }
 
-    public static convertDateFromClient(exam: Exam): Exam {
+    public static convertExamDatesFromClient(exam: Exam): Exam {
         return Object.assign({}, exam, {
-            startDate: exam.startDate && dayjs(exam.startDate).isValid() ? exam.startDate.toJSON() : undefined,
-            endDate: exam.endDate && dayjs(exam.endDate).isValid() ? exam.endDate.toJSON() : undefined,
-            visibleDate: exam.visibleDate && dayjs(exam.visibleDate).isValid() ? exam.visibleDate.toJSON() : undefined,
-            publishResultsDate: exam.publishResultsDate && dayjs(exam.publishResultsDate).isValid() ? exam.publishResultsDate.toJSON() : undefined,
-            examStudentReviewStart: exam.examStudentReviewStart && dayjs(exam.examStudentReviewStart).isValid() ? exam.examStudentReviewStart.toJSON() : undefined,
-            examStudentReviewEnd: exam.examStudentReviewEnd && dayjs(exam.examStudentReviewEnd).isValid() ? exam.examStudentReviewEnd.toJSON() : undefined,
+            startDate: convertDateFromClient(exam.startDate),
+            endDate: convertDateFromClient(exam.endDate),
+            visibleDate: convertDateFromClient(exam.visibleDate),
+            publishResultsDate: convertDateFromClient(exam.publishResultsDate),
+            examStudentReviewStart: convertDateFromClient(exam.examStudentReviewStart),
+            examStudentReviewEnd: convertDateFromClient(exam.examStudentReviewEnd),
         });
     }
 
-    private static convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private processExamResponseFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
-            this.convertExamDate(res.body);
+            this.convertExamFromServerAndSendTitles(res.body);
         }
         return res;
     }
 
-    private static convertDateArrayFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
+    private processExamArrayResponseFromServer(res: EntityArrayResponseType): EntityArrayResponseType {
         if (res.body) {
-            res.body.forEach(this.convertExamDate);
+            res.body.forEach(this.convertExamFromServerAndSendTitles.bind(this));
         }
         return res;
     }
 
-    private static convertExamDate(exam: Exam) {
-        exam.startDate = exam.startDate ? dayjs(exam.startDate) : undefined;
-        exam.endDate = exam.endDate ? dayjs(exam.endDate) : undefined;
-        exam.visibleDate = exam.visibleDate ? dayjs(exam.visibleDate) : undefined;
-        exam.publishResultsDate = exam.publishResultsDate ? dayjs(exam.publishResultsDate) : undefined;
-        exam.examStudentReviewStart = exam.examStudentReviewStart ? dayjs(exam.examStudentReviewStart) : undefined;
-        exam.examStudentReviewEnd = exam.examStudentReviewEnd ? dayjs(exam.examStudentReviewEnd) : undefined;
+    private convertExamFromServerAndSendTitles(exam: Exam) {
+        exam.startDate = convertDateFromServer(exam.startDate);
+        exam.endDate = convertDateFromServer(exam.endDate);
+        exam.visibleDate = convertDateFromServer(exam.visibleDate);
+        exam.publishResultsDate = convertDateFromServer(exam.publishResultsDate);
+        exam.examStudentReviewStart = convertDateFromServer(exam.examStudentReviewStart);
+        exam.examStudentReviewEnd = convertDateFromServer(exam.examStudentReviewEnd);
+
+        if (exam.course) {
+            this.accountService.setAccessRightsForCourse(exam.course);
+        }
+
+        this.sendTitlesToEntityTitleService(exam);
     }
 
     findAllLockedSubmissionsOfExam(courseId: number, examId: number) {
@@ -412,5 +452,9 @@ export class ExamManagementService {
      */
     archiveExam(courseId: number, examId: number): Observable<HttpResponse<any>> {
         return this.http.put(`${this.resourceUrl}/${courseId}/exams/${examId}/archive`, {}, { observe: 'response' });
+    }
+
+    private sendTitlesToEntityTitleService(exam: Exam | undefined | null) {
+        this.entityTitleService.setTitle(EntityType.EXAM, [exam?.id], exam?.title);
     }
 }

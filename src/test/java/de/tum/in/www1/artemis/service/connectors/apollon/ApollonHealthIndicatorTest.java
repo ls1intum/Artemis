@@ -12,7 +12,7 @@ import org.springframework.boot.actuate.health.Status;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.connector.apollon.ApollonRequestMockProvider;
 
-public class ApollonHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ApollonHealthIndicatorTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ApollonRequestMockProvider apollonRequestMockProvider;
@@ -21,12 +21,12 @@ public class ApollonHealthIndicatorTest extends AbstractSpringIntegrationBambooB
     private ApollonHealthIndicator apollonHealthIndicator;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         apollonRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         apollonRequestMockProvider.reset();
     }
 

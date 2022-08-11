@@ -37,7 +37,7 @@ describe('Submission Policy Update Form Component', () => {
         fixture.detectChanges();
         tick();
 
-        expect(expectedProgrammingExercise.submissionPolicy).toBe(undefined);
+        expect(expectedProgrammingExercise.submissionPolicy).toBeUndefined();
 
         const submissionPolicyTypeField = fixture.nativeElement.querySelector('#field_submissionPolicy');
         // We revert the enum values, since 'none' is the default type for the type picker. Therefore we
@@ -49,7 +49,7 @@ describe('Submission Policy Update Form Component', () => {
             tick();
 
             expect(expectedProgrammingExercise.submissionPolicy?.type).toBe(type);
-            expect(expectedProgrammingExercise.submissionPolicy?.id).toBe(undefined);
+            expect(expectedProgrammingExercise.submissionPolicy?.id).toBeUndefined();
         }
     }));
 
@@ -93,7 +93,7 @@ describe('Submission Policy Update Form Component', () => {
         expect(expectedProgrammingExercise.submissionPolicy?.exceedingPenalty).toBe(73.73);
     }));
 
-    it('Should display correct input fields when penalty policy is already set', fakeAsync(() => {
+    it('Should display correct input fields when penalty policy (lock repo) is already set', fakeAsync(() => {
         expectedProgrammingExercise.submissionPolicy = lockRepositoryPolicy;
         component.ngOnInit();
         fixture.detectChanges();
@@ -138,13 +138,13 @@ describe('Submission Policy Update Form Component', () => {
         component.programmingExercise.submissionPolicy = undefined;
         component.ngOnInit();
         fixture.detectChanges();
-        expect(component.invalid).toBe(false);
+        expect(component.invalid).toBeFalse();
     });
 
     it('Should not be invalid when no policy is of type none', () => {
         component.programmingExercise.submissionPolicy = { type: SubmissionPolicyType.NONE };
         component.ngOnInit();
         fixture.detectChanges();
-        expect(component.invalid).toBe(false);
+        expect(component.invalid).toBeFalse();
     });
 });

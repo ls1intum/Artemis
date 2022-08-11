@@ -60,8 +60,8 @@ describe('CodeEditorActionsComponent', () => {
         fixture.detectChanges();
         const submitButton = fixture.debugElement.query(By.css('#submit_button'));
         const refreshButton = fixture.debugElement.query(By.css('#refresh_button'));
-        expect(submitButton).not.toBe(null);
-        expect(refreshButton).not.toBe(null);
+        expect(submitButton).not.toBeNull();
+        expect(refreshButton).not.toBeNull();
     });
 
     const enableCommitButtonCombinations = cartesianProduct([EditorState.UNSAVED_CHANGES, EditorState.CLEAN], [CommitState.UNCOMMITTED_CHANGES, CommitState.CLEAN], [false, true]);
@@ -174,24 +174,24 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         // start commit, wait for result
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(true);
+        expect(commitButton.nativeElement.disabled).toBeTrue();
 
         // commit result mockReturnValue
         commitObservable.next(null);
-        expect(comp.isBuilding).toBe(true);
+        expect(comp.isBuilding).toBeTrue();
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
     });
 
     it('should commit if no unsaved changes exist and emit an error on error response', () => {
@@ -206,25 +206,25 @@ describe('CodeEditorActionsComponent', () => {
         commitStub.mockReturnValue(commitObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         // start commit, wait for result
         commitButton.nativeElement.click();
         expect(commitStub).toHaveBeenNthCalledWith(1);
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(true);
+        expect(commitButton.nativeElement.disabled).toBeTrue();
 
         // commit result mockReturnValue an error
         commitObservable.error('error!');
-        expect(comp.isBuilding).toBe(false);
+        expect(comp.isBuilding).toBeFalse();
         expect(comp.commitState).toEqual(CommitState.UNCOMMITTED_CHANGES);
         expect(onErrorSpy).toHaveBeenNthCalledWith(1, 'commitFailed');
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
     });
 
     it('should not commit if unsavedFiles exist, instead should save files with commit set to true', fakeAsync(() => {
@@ -241,13 +241,13 @@ describe('CodeEditorActionsComponent', () => {
         saveChangedFilesStub.mockReturnValue(saveObservable);
 
         const commitButton = fixture.debugElement.query(By.css('#submit_button'));
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         // unsaved changes exist, needs to save files first
         commitButton.nativeElement.click();
 
         expect(commitStub).not.toHaveBeenCalled();
-        expect(saveChangedFilesStub).toHaveBeenCalled;
+        expect(saveChangedFilesStub).toHaveBeenCalledOnce();
         expect(comp.commitState).toEqual(CommitState.COMMITTING);
 
         // save + commit completed
@@ -261,11 +261,11 @@ describe('CodeEditorActionsComponent', () => {
 
         tick();
 
-        expect(comp.isBuilding).toBe(true);
+        expect(comp.isBuilding).toBeTrue();
         expect(comp.commitState).toEqual(CommitState.CLEAN);
 
         fixture.detectChanges();
-        expect(commitButton.nativeElement.disabled).toBe(false);
+        expect(commitButton.nativeElement.disabled).toBeFalse();
 
         fixture.destroy();
         flush();

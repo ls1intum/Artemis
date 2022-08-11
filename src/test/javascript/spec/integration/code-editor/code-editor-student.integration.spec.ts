@@ -43,7 +43,6 @@ import { IncludedInScoreBadgeComponent } from 'app/exercises/shared/exercise-hea
 import { CodeEditorRepositoryIsLockedComponent } from 'app/exercises/programming/shared/code-editor/layout/code-editor-repository-is-locked.component';
 import { UpdatingResultComponent } from 'app/exercises/shared/result/updating-result.component';
 import { ProgrammingExerciseStudentTriggerBuildButtonComponent } from 'app/exercises/programming/shared/actions/programming-exercise-student-trigger-build-button.component';
-import { ExerciseHintStudentComponent } from 'app/exercises/shared/exercise-hint/participate/exercise-hint-student-dialog.component';
 import { ProgrammingExerciseInstructionComponent } from 'app/exercises/programming/shared/instructions-render/programming-exercise-instruction.component';
 import { AdditionalFeedbackComponent } from 'app/shared/additional-feedback/additional-feedback.component';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -59,8 +58,6 @@ import { CodeEditorFileBrowserFolderComponent } from 'app/exercises/programming/
 import { CodeEditorFileBrowserFileComponent } from 'app/exercises/programming/shared/code-editor/file-browser/code-editor-file-browser-file.component';
 import { CodeEditorStatusComponent } from 'app/exercises/programming/shared/code-editor/status/code-editor-status.component';
 import { TreeviewComponent } from 'app/exercises/programming/shared/code-editor/treeview/components/treeview/treeview.component';
-import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
-import { MockExerciseHintService } from '../../helpers/mocks/service/mock-exercise-hint.service';
 
 describe('CodeEditorStudentIntegration', () => {
     // needed to make sure ace is defined
@@ -97,7 +94,6 @@ describe('CodeEditorStudentIntegration', () => {
                 MockComponent(IncludedInScoreBadgeComponent),
                 MockComponent(UpdatingResultComponent),
                 MockComponent(ProgrammingExerciseStudentTriggerBuildButtonComponent),
-                MockComponent(ExerciseHintStudentComponent),
                 MockComponent(ProgrammingExerciseInstructionComponent),
                 MockComponent(AdditionalFeedbackComponent),
                 MockPipe(ArtemisTranslatePipe),
@@ -127,7 +123,6 @@ describe('CodeEditorStudentIntegration', () => {
                 { provide: CodeEditorBuildLogService, useClass: MockCodeEditorBuildLogService },
                 { provide: ResultService, useClass: MockResultService },
                 { provide: ProgrammingSubmissionService, useClass: MockProgrammingSubmissionService },
-                { provide: ExerciseHintService, useClass: MockExerciseHintService },
             ],
         })
             .compileComponents()
@@ -179,15 +174,15 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).toBe(true);
+        expect(container.loadingParticipation).toBeTrue();
 
         findWithLatestResultSubject.next(participation);
         getFeedbackDetailsForResultSubject.next({ body: feedbacks });
 
         expect(getStudentParticipationWithLatestResultStub).toHaveBeenNthCalledWith(1, participation.id);
         expect(getFeedbackDetailsForResultStub).toHaveBeenNthCalledWith(1, participation.id, result.id);
-        expect(container.loadingParticipation).toBe(false);
-        expect(container.participationCouldNotBeFetched).toBe(false);
+        expect(container.loadingParticipation).toBeFalse();
+        expect(container.participationCouldNotBeFetched).toBeFalse();
         expect(container.participation).toEqual({ ...participation, results: [{ ...result, feedbacks }] });
     });
 
@@ -214,10 +209,10 @@ describe('CodeEditorStudentIntegration', () => {
         isCleanSubject.next({ repositoryStatus: CommitState.CLEAN });
 
         // Repository should be locked, the student can't write into it anymore.
-        expect(container.repositoryIsLocked).toBe(true);
+        expect(container.repositoryIsLocked).toBeTrue();
         expect(getElement(containerDebugElement, '.locked-container').innerHTML).toContain('fa-icon');
-        expect(container.codeEditorContainer.fileBrowser.disableActions).toBe(true);
-        expect(container.codeEditorContainer.actions.disableActions).toBe(true);
+        expect(container.codeEditorContainer.fileBrowser.disableActions).toBeTrue();
+        expect(container.codeEditorContainer.actions.disableActions).toBeTrue();
     });
 
     it('should abort initialization and show error state if participation cannot be retrieved', () => {
@@ -227,13 +222,13 @@ describe('CodeEditorStudentIntegration', () => {
 
         routeSubject.next({ participationId: 1 });
 
-        expect(container.loadingParticipation).toBe(true);
+        expect(container.loadingParticipation).toBeTrue();
 
         findWithLatestResultSubject.error('fatal error');
 
-        expect(container.loadingParticipation).toBe(false);
-        expect(container.participationCouldNotBeFetched).toBe(true);
+        expect(container.loadingParticipation).toBeFalse();
+        expect(container.participationCouldNotBeFetched).toBeTrue();
         expect(getFeedbackDetailsForResultStub).not.toHaveBeenCalled();
-        expect(container.participation).toBe(undefined);
+        expect(container.participation).toBeUndefined();
     });
 });

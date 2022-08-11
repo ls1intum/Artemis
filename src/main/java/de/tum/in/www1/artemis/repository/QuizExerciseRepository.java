@@ -5,10 +5,13 @@ import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphTyp
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 import javax.validation.constraints.NotNull;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -28,7 +31,6 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @Query("""
             SELECT DISTINCT e FROM QuizExercise e
             LEFT JOIN FETCH e.categories
-            LEFT JOIN FETCH e.quizBatches
             WHERE e.course.id = :#{#courseId}
             """)
     List<QuizExercise> findByCourseIdWithCategories(@Param("courseId") Long courseId);
@@ -51,8 +53,11 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizPointStatistic", "quizQuestions.quizQuestionStatistic", "categories", "quizBatches" })
     Optional<QuizExercise> findWithEagerQuestionsAndStatisticsById(Long quizExerciseId);
 
-    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions", "quizBatches" })
+    @EntityGraph(type = LOAD, attributePaths = { "quizQuestions" })
     Optional<QuizExercise> findWithEagerQuestionsById(Long quizExerciseId);
+
+    @EntityGraph(type = LOAD, attributePaths = { "quizBatches" })
+    Optional<QuizExercise> findWithEagerBatchesById(Long quizExerciseId);
 
     @NotNull
     default QuizExercise findByIdElseThrow(Long quizExerciseId) throws EntityNotFoundException {
@@ -76,14 +81,20 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
      * @param quizExerciseId the id of the entity
      * @return the entity
      */
-    @Nullable
-    default QuizExercise findOneWithQuestions(Long quizExerciseId) {
-        return findWithEagerQuestionsById(quizExerciseId).orElse(null);
-    }
-
     @NotNull
     default QuizExercise findByIdWithQuestionsElseThrow(Long quizExerciseId) {
         return findWithEagerQuestionsById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
+    }
+
+    /**
+     * Get one quiz exercise by id and eagerly load batches
+     *
+     * @param quizExerciseId the id of the entity
+     * @return the entity
+     */
+    @NotNull
+    default QuizExercise findByIdWithBatchesElseThrow(Long quizExerciseId) {
+        return findWithEagerBatchesById(quizExerciseId).orElseThrow(() -> new EntityNotFoundException("Quiz Exercise", quizExerciseId));
     }
 
     /**
@@ -105,4 +116,55 @@ public interface QuizExerciseRepository extends JpaRepository<QuizExercise, Long
     default List<QuizExercise> findAllPlannedToStartInTheFuture() {
         return findAllPlannedToStartAfter(ZonedDateTime.now());
     }
+
+    @Query("""
+                SELECT exercise FROM QuizExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM QuizExercise courseExercise
+                    WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+                    AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM QuizExercise examExercise
+                    WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+                    AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                        """)
+    Page<QuizExercise> queryBySearchTermInAllCoursesAndExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT courseExercise FROM QuizExercise courseExercise
+            WHERE (courseExercise.course.instructorGroupName IN :groups OR courseExercise.course.editorGroupName IN :groups)
+            AND (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllCoursesWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT examExercise FROM QuizExercise examExercise
+            WHERE (examExercise.exerciseGroup.exam.course.instructorGroupName IN :groups OR examExercise.exerciseGroup.exam.course.editorGroupName IN :groups)
+            AND (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllExamsWhereEditorOrInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
+
+    @Query("""
+            SELECT exercise FROM QuizExercise exercise
+            WHERE (exercise.id IN
+                    (SELECT courseExercise.id FROM QuizExercise courseExercise
+                    WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%))
+                OR exercise.id IN
+                    (SELECT examExercise.id FROM QuizExercise examExercise
+                    WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)))
+                        """)
+    Page<QuizExercise> queryBySearchTermInAllCoursesAndExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("""
+            SELECT courseExercise FROM QuizExercise courseExercise
+            WHERE (CONCAT(courseExercise.id, '') = :#{#searchTerm} OR courseExercise.title LIKE %:searchTerm% OR courseExercise.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
+
+    @Query("""
+            SELECT examExercise FROM QuizExercise examExercise
+            WHERE (CONCAT(examExercise.id, '') = :#{#searchTerm} OR examExercise.title LIKE %:searchTerm% OR examExercise.exerciseGroup.exam.course.title LIKE %:searchTerm%)
+                """)
+    Page<QuizExercise> queryBySearchTermInAllExams(@Param("searchTerm") String searchTerm, Pageable pageable);
+
 }

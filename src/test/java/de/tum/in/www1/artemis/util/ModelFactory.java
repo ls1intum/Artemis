@@ -288,7 +288,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generate users that has registration numbers
+     * Generate users that have registration numbers
      *
      * @param loginPrefix prefix that will be added in front of every user's login
      * @param groups groups that the users will be added
@@ -555,6 +555,7 @@ public class ModelFactory {
         course.setEndDate(endDate);
         course.setExercises(exercises);
         course.setOnlineCourse(false);
+        course.setRegistrationEnabled(false);
         course.setPresentationScore(2);
         course.setAccuracyOfScores(1);
         return course;
@@ -624,7 +625,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a RealExam with student review dates set
+     * Generates a real exam with student review dates set
      *
      * @param course the associated course
      * @return the created exam
@@ -640,7 +641,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a RealExam without student review dates set
+     * Generates a real exam without student review dates set
      *
      * @param course the associated course
      * @return the created exam
@@ -650,7 +651,7 @@ public class ModelFactory {
     }
 
     /**
-     * Generates a TestExam (TestExams have no student review dates)
+     * Generates a test eam (test exams have no student review dates)
      *
      * @param course the associated course
      * @return the created exam
@@ -663,7 +664,7 @@ public class ModelFactory {
      * Helper method to create an exam
      *
      * @param course the associated course
-     * @param testExam Boolean flag to determine whether it is a TestExam
+     * @param testExam Boolean flag to determine whether it is a test exam
      * @return the created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
@@ -682,6 +683,7 @@ public class ModelFactory {
         exam.setMaxPoints(90);
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
+        exam.setNumberOfCorrectionRoundsInExam(testExam ? 0 : 1);
         exam.setCourse(course);
         return exam;
     }
@@ -697,6 +699,20 @@ public class ModelFactory {
     public static StudentExam generateStudentExam(Exam exam) {
         StudentExam studentExam = new StudentExam();
         studentExam.setExam(exam);
+        studentExam.setTestRun(false);
+        return studentExam;
+    }
+
+    /**
+     * Helper Method to generate a studentExam for a test exam
+     *
+     * @param exam the exam to be linked to the studentExam
+     * @return a StudentExam for a test exam
+     */
+    public static StudentExam generateStudentExamForTestExam(Exam exam) {
+        StudentExam studentExam = new StudentExam();
+        studentExam.setExam(exam);
+        studentExam.setWorkingTime(exam.getWorkingTime());
         studentExam.setTestRun(false);
         return studentExam;
     }
@@ -1004,7 +1020,7 @@ public class ModelFactory {
             testcase.setName(name);
             testcase.setClassname("Class");
             return testcase;
-        }).collect(Collectors.toList()));
+        }).collect(Collectors.toCollection(ArrayList::new)));
         testSuite.getTestCases().addAll(failedTestNames.stream().map(name -> {
             var testcase = new TestCaseDTO();
             testcase.setName(name);
@@ -1116,8 +1132,8 @@ public class ModelFactory {
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO();
         final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO();
         final var job = new BambooBuildResultNotificationDTO.BambooJobDTO();
-        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).collect(Collectors.toList());
-        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).collect(Collectors.toList());
+        final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).toList();
+        final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
         final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO();
         final var plan = new BambooBuildPlanDTO("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
@@ -1232,7 +1248,7 @@ public class ModelFactory {
     }
 
     public static List<StaticCodeAnalysisReportDTO> generateStaticCodeAnalysisReports(ProgrammingLanguage language) {
-        return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).collect(Collectors.toList());
+        return StaticCodeAnalysisTool.getToolsForProgrammingLanguage(language).stream().map(ModelFactory::generateStaticCodeAnalysisReport).toList();
     }
 
     private static StaticCodeAnalysisReportDTO generateStaticCodeAnalysisReport(StaticCodeAnalysisTool tool) {

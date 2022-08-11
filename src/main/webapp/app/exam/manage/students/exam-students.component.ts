@@ -15,7 +15,7 @@ import { ButtonSize, ButtonType } from 'app/shared/components/button.component';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { EventManager } from 'app/core/util/event-manager.service';
-import { faPlus, faUserSlash } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faUserSlash, faInfoCircle } from '@fortawesome/free-solid-svg-icons';
 
 const cssClasses = {
     alreadyRegistered: 'already-registered',
@@ -37,6 +37,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
 
     courseId: number;
     exam: Exam;
+    isTestExam: boolean;
     allRegisteredUsers: User[] = [];
     filteredUsersSize = 0;
     paramSub: Subscription;
@@ -56,6 +57,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
     // Icons
     faPlus = faPlus;
     faUserSlash = faUserSlash;
+    faInfoCircle = faInfoCircle;
 
     constructor(
         private router: Router,
@@ -74,6 +76,7 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
         this.route.data.subscribe(({ exam }: { exam: Exam }) => {
             this.exam = exam;
             this.allRegisteredUsers = exam.registeredUsers! || [];
+            this.isTestExam = this.exam.testExam!;
             this.isLoading = false;
         });
     }
@@ -166,7 +169,10 @@ export class ExamStudentsComponent implements OnInit, OnDestroy {
                     this.flashRowClass(cssClasses.newlyRegistered);
                 },
                 error: (error: HttpErrorResponse) => {
-                    this.onError(`artemisApp.exam.${error.headers.get('x-null-error')}`);
+                    if (error.status === 403) {
+                        this.onError(`artemisApp.exam.error.${error.error.errorKey}`);
+                    }
+                    this.isTransitioning = false;
                 },
             });
         } else {

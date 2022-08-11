@@ -2,10 +2,9 @@ import { AfterViewInit, ChangeDetectorRef, Component, EmbeddedViewRef, OnDestroy
 import { Course } from 'app/entities/course.model';
 import { CourseManagementService } from '../course/manage/course-management.service';
 import { ActivatedRoute } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
+import { forkJoin, Subscription } from 'rxjs';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { TeamService } from 'app/exercises/shared/team/team.service';
 import { TeamAssignmentPayload } from 'app/entities/team.model';
 import { participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
@@ -16,33 +15,20 @@ import { ArtemisServerDateService } from 'app/shared/server-date.service';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { faCircleNotch, faSync } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
+import { BarControlConfiguration, BarControlConfigurationProvider } from 'app/overview/tab-bar/tab-bar';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-
-const DESCRIPTION_READ = 'isDescriptionRead';
-
-export interface BarControlConfiguration {
-    subject?: Subject<TemplateRef<any>>;
-    useIndentation: boolean;
-}
-
-export interface BarControlConfigurationProvider {
-    controlConfiguration: BarControlConfiguration;
-}
 
 @Component({
     selector: 'jhi-course-overview',
     templateUrl: './course-overview.component.html',
-    styleUrls: ['course-overview.scss'],
+    styleUrls: ['course-overview.scss', './tab-bar/tab-bar.scss'],
 })
 export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit {
-    CachingStrategy = CachingStrategy;
     private courseId: number;
     private subscription: Subscription;
     public course?: Course;
     public refreshingCourse = false;
-    public courseDescription: string;
-    public enableShowMore: boolean;
-    public longTextShown: boolean;
     private teamAssignmentUpdateListener: Subscription;
     private quizExercisesChannel: string;
 
@@ -72,6 +58,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         private courseService: CourseManagementService,
         private courseExerciseService: CourseExerciseService,
         private courseCalculationService: CourseScoreCalculationService,
+        private learningGoalService: LearningGoalService,
         private route: ActivatedRoute,
         private teamService: TeamService,
         private jhiWebsocketService: JhiWebsocketService,
@@ -96,8 +83,10 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         this.course = this.courseCalculationService.getCourse(this.courseId);
         if (!this.course) {
             this.loadCourse();
+        } else if (!this.course.learningGoals || !this.course.prerequisites) {
+            // If the course is present but without learning goals (e.g. loaded in Artemis overview), we only need to fetch those
+            this.loadLearningGoals();
         }
-        this.adjustCourseDescription();
         await this.subscribeToTeamAssignmentUpdates();
         this.subscribeForQuizChanges();
     }
@@ -161,13 +150,16 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
+    /**
+     * Fetch the course from the server including all exercises, lectures, exams and learning goals
+     * @param refresh Whether this is a force refresh (displays loader animation)
+     */
     loadCourse(refresh = false) {
         this.refreshingCourse = refresh;
         this.courseService.findOneForDashboard(this.courseId).subscribe({
             next: (res: HttpResponse<Course>) => {
                 this.courseCalculationService.updateCourse(res.body!);
                 this.course = this.courseCalculationService.getCourse(this.courseId);
-                this.adjustCourseDescription();
                 setTimeout(() => (this.refreshingCourse = false), 500); // ensure min animation duration
             },
             error: (error: HttpErrorResponse) => {
@@ -200,7 +192,7 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             // quizExercise channel => react to changes made to quizExercise (e.g. start date)
             this.jhiWebsocketService.subscribe(this.quizExercisesChannel);
             this.jhiWebsocketService.receive(this.quizExercisesChannel).subscribe((quizExercise: QuizExercise) => {
-                quizExercise = this.courseExerciseService.convertDateFromServer(quizExercise);
+                quizExercise = this.courseExerciseService.convertExerciseDatesFromServer(quizExercise);
                 // the quiz was set to visible or started, we should add it to the exercise list and display it at the top
                 if (this.course && this.course.exercises) {
                     this.course.exercises = this.course.exercises.filter((exercise) => exercise.id !== quizExercise.id);
@@ -210,26 +202,17 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
         }
     }
 
-    adjustCourseDescription() {
-        if (this.course && this.course.description) {
-            this.enableShowMore = this.course.description.length > 50;
-            if (localStorage.getItem(DESCRIPTION_READ + this.course.shortName) && !this.courseDescription && this.enableShowMore) {
-                this.showShortDescription();
-            } else {
-                this.showLongDescription();
-                localStorage.setItem(DESCRIPTION_READ + this.course.shortName, 'true');
-            }
-        }
-    }
-
-    showLongDescription() {
-        this.courseDescription = this.course?.description || '';
-        this.longTextShown = true;
-    }
-
-    showShortDescription() {
-        this.courseDescription = this.course?.description?.slice(0, 50) + '...' || '';
-        this.longTextShown = false;
+    loadLearningGoals() {
+        forkJoin([this.learningGoalService.getAllForCourse(this.courseId), this.learningGoalService.getAllPrerequisitesForCourse(this.courseId)]).subscribe({
+            next: ([learningGoals, prerequisites]) => {
+                if (this.course) {
+                    this.course.learningGoals = learningGoals.body!;
+                    this.course.prerequisites = prerequisites.body!;
+                    this.courseCalculationService.updateCourse(this.course);
+                }
+            },
+            error: () => {},
+        });
     }
 
     /**
@@ -242,6 +225,13 @@ export class CourseOverviewComponent implements OnInit, OnDestroy, AfterViewInit
             }
         }
         return false;
+    }
+
+    /**
+     * Check if the course has any learning goals or prerequisites
+     */
+    hasLearningGoals(): boolean {
+        return !!(this.course?.learningGoals?.length || this.course?.prerequisites?.length);
     }
 
     /**

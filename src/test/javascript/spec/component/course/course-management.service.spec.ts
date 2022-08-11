@@ -57,7 +57,7 @@ describe('Course Management Service', () => {
         isAtLeastEditorInCourseSpy = jest.spyOn(accountService, 'isAtLeastEditorInCourse').mockReturnValue(false);
         isAtLeastInstructorInCourseSpy = jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
         syncGroupsSpy = jest.spyOn(accountService, 'syncGroups').mockImplementation();
-        convertDatesForLecturesFromServerSpy = jest.spyOn(lectureService, 'convertDatesForLecturesFromServer');
+        convertDatesForLecturesFromServerSpy = jest.spyOn(lectureService, 'convertLectureArrayDatesFromServer');
         course = new Course();
         course.id = 1234;
         course.title = 'testTitle';
@@ -66,6 +66,8 @@ describe('Course Management Service', () => {
         course.lectures = undefined;
         course.startDate = undefined;
         course.endDate = undefined;
+        course.learningGoals = [];
+        course.prerequisites = [];
         returnedFromService = { ...course } as Course;
         participations = [new StudentParticipation()];
         convertExercisesDateFromServerSpy = jest.spyOn(ExerciseService, 'convertExercisesDateFromServer').mockReturnValue(exercises);
@@ -130,18 +132,6 @@ describe('Course Management Service', () => {
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual(course));
         requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}`, returnedFromService, course, true);
-        tick();
-    }));
-
-    it('should get title of the course', fakeAsync(() => {
-        returnedFromService = course.title!;
-        courseManagementService
-            .getTitle(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course.title));
-
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/title` });
-        req.flush(returnedFromService);
         tick();
     }));
 
@@ -305,7 +295,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should delete a course ', fakeAsync(() => {
+    it('should delete a course', fakeAsync(() => {
         courseManagementService
             .delete(course.id!)
             .pipe(take(1))
@@ -315,7 +305,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should get all exercise details ', fakeAsync(() => {
+    it('should get all exercise details', fakeAsync(() => {
         returnedFromService = [{ ...course }] as Course[];
         courseManagementService
             .getExercisesForManagementOverview(true)
@@ -362,19 +352,7 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should search other users within course', fakeAsync(() => {
-        const users = [new User(1, 'user1')];
-        returnedFromService = [...users];
-        courseManagementService
-            .searchOtherUsersInCourse(course.id!, 'user1')
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(users));
-        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
-    it('should find all users of course group', fakeAsync(() => {
+    it('should download course archive', fakeAsync(() => {
         const expectedBlob = new Blob(['abc', 'cfe']);
         courseManagementService.downloadCourseArchive(course.id!).subscribe((resp) => {
             expect(resp.body).toEqual(expectedBlob);
@@ -429,6 +407,29 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual({}));
         const req = httpMock.expectOne({ method: 'DELETE', url: `${resourceUrl}/${course.id}/${courseGroup}/${user.login}` });
         req.flush({});
+        tick();
+    }));
+
+    it('should return lifetime overview data', fakeAsync(() => {
+        const stats = [34, 23, 45, 67, 89, 201, 67, 890, 1359];
+        courseManagementService
+            .getStatisticsForLifetimeOverview(course.id!)
+            .pipe(take(1))
+            .subscribe((res) => expect(res).toEqual(stats));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/statistics-lifetime-overview` });
+        req.flush(stats);
+        tick();
+    }));
+
+    it('should search other users within course', fakeAsync(() => {
+        const users = [new User(1, 'user1')];
+        returnedFromService = [...users];
+        courseManagementService
+            .searchOtherUsersInCourse(course.id!, 'user1')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual(users));
+        const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/${course.id}/search-other-users?nameOfUser=user1` });
+        req.flush(returnedFromService);
         tick();
     }));
 

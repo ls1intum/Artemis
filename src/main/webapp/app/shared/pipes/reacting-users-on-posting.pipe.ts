@@ -30,19 +30,19 @@ export class ReactingUsersOnPostingPipe implements PipeTransform {
 
     /**
      * Manipulates the `reactingUsersString` variable taking into account the language, if the string has to be stripped,
-     * and if the currently logged in user is addressed directly ('you' instead of name)
+     * and if the currently logged-in user is addressed directly ('you' instead of name)
      * @param {string[]} reactingUsers
      * @private
      */
     updateReactingUsersString(reactingUsers: string[]): string {
-        // determine if the list includes the currently logged in user
+        // determine if the list includes the currently logged-in user
         if (reactingUsers.includes(PLACEHOLDER_USER_REACTED)) {
             if (reactingUsers.length === 1) {
                 // set "you" as ready-to-use reacting users string
                 return this.translateService.instant('artemisApp.metis.you');
             }
-            // if more than the currently logged in user reacted,
-            // remove placeholder and replace it with directly addressing currently logged in user
+            // if more than the currently logged-in user reacted,
+            // remove placeholder and replace it with directly addressing currently logged-in user
             reactingUsers = reactingUsers.filter((user) => user !== PLACEHOLDER_USER_REACTED);
             reactingUsers = [this.translateService.instant('artemisApp.metis.you')].concat(reactingUsers);
         }

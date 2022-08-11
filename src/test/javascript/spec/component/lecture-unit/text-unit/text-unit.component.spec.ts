@@ -36,6 +36,7 @@ describe('TextUnitFormComponent', () => {
             .then(() => {
                 textUnitComponentFixture = TestBed.createComponent(TextUnitComponent);
                 textUnitComponent = textUnitComponentFixture.componentInstance;
+                textUnitComponent.textUnit = textUnit;
             });
     });
 
@@ -43,13 +44,7 @@ describe('TextUnitFormComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        textUnitComponentFixture.detectChanges();
-        expect(textUnitComponent).not.toBeNull();
-    });
-
     it('should convert markdown to html and display it', fakeAsync(() => {
-        textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         textUnitComponentFixture.whenStable().then(() => {
             expect((textUnitComponent.formattedContent as any)?.changingThisBreaksApplicationSecurity).toEqual(exampleHTML);
@@ -60,7 +55,6 @@ describe('TextUnitFormComponent', () => {
     }));
 
     it('should collapse unit when header clicked', fakeAsync(() => {
-        textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         expect(textUnitComponent.isCollapsed).toBeTrue();
         const handleCollapseSpy = jest.spyOn(textUnitComponent, 'handleCollapse');
@@ -71,7 +65,7 @@ describe('TextUnitFormComponent', () => {
         tick(500);
 
         textUnitComponentFixture.whenStable().then(() => {
-            expect(handleCollapseSpy).toHaveBeenCalledTimes(1);
+            expect(handleCollapseSpy).toHaveBeenCalledOnce();
             expect(textUnitComponent.isCollapsed).toBeFalse();
         });
     }));
@@ -84,16 +78,37 @@ describe('TextUnitFormComponent', () => {
         const focusStub = jest.spyOn(window, 'focus').mockImplementation();
         const openStub = jest.spyOn(window, 'open').mockReturnValue(window);
 
-        textUnitComponent.textUnit = textUnit;
         textUnitComponentFixture.detectChanges();
         const popButton = textUnitComponentFixture.debugElement.nativeElement.querySelector('#popupButton');
         popButton.click();
         expect(textUnitComponent).not.toBeNull();
-        expect(openStub).toHaveBeenCalledTimes(1);
+        expect(openStub).toHaveBeenCalledOnce();
         expect(writeStub).toHaveBeenCalledTimes(4);
-        expect(closeStub).toHaveBeenCalledTimes(1);
-        expect(focusStub).toHaveBeenCalledTimes(1);
+        expect(closeStub).toHaveBeenCalledOnce();
+        expect(focusStub).toHaveBeenCalledOnce();
         expect(window.document.body.innerHTML).toEqual(exampleHTML);
         window.document.body.innerHTML = innerHtmlCopy;
     }));
+
+    it('should call completion callback when uncollapsed', () => {
+        return new Promise<void>((done) => {
+            textUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(textUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            textUnitComponent.handleCollapse(new Event('click'));
+        });
+    }, 1000);
+
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            textUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(textUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            textUnitComponent.handleClick(new Event('click'), false);
+        });
+    }, 1000);
 });

@@ -1,5 +1,9 @@
 import { ElementRef } from '@angular/core';
 import { IconProp } from '@fortawesome/fontawesome-svg-core';
+import { acequire, Range } from 'brace';
+
+// Work around to update the range
+const RangeCtor = acequire('ace/range').Range as typeof Range;
 
 /**
  * abstract class for all commands - default and domain commands of Artemis
@@ -22,6 +26,30 @@ export abstract class Command {
 
     protected getSelectedText(): string {
         return this.aceEditor.getSelectedText();
+    }
+
+    /**
+     * Extends the current selection to full lines.
+     *
+     * @return The complete lines of the selected text.
+     */
+    protected getExtendedSelectedText(): string[] {
+        const text = this.getText();
+
+        // Split text by line breaks
+        const lines = text.split('\n');
+
+        const range = this.getRange();
+
+        // Update the range
+        this.aceEditor.selection.setRange(new RangeCtor(range.start.row, 0, range.end.row, lines[range.end.row].length));
+
+        // Return extended selection as array
+        return lines.slice(range.start.row, range.end.row + 1);
+    }
+
+    protected getText(): string {
+        return this.aceEditor.getValue();
     }
 
     protected insertText(text: string) {

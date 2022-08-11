@@ -40,7 +40,7 @@ import { ProgrammingAssessmentManualResultService } from 'app/exercises/programm
 import { ModelingAssessmentService } from 'app/exercises/modeling/assess/modeling-assessment.service';
 import { Result } from 'app/entities/result.model';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { ResultComponent } from 'app/exercises/shared/result/result.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
@@ -170,7 +170,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         // check if findAllSubmissionsOfParticipationStub() is called and works
         expect(findAllSubmissionsOfParticipationStub).toHaveBeenCalled();
         expect(comp.participation).toEqual(participation);
@@ -178,11 +178,11 @@ describe('ParticipationSubmissionComponent', () => {
 
         // check if delete button is available
         const deleteButton = debugElement.query(By.css('#deleteButton'));
-        expect(deleteButton).not.toBe(null);
+        expect(deleteButton).not.toBeNull();
 
         // check if the right amount of rows is visible
         const row = debugElement.query(By.css('#participationSubmissionTable'));
-        expect(row.nativeElement.children.length).toEqual(1);
+        expect(row.nativeElement.children).toHaveLength(1);
 
         fixture.destroy();
         flush();
@@ -211,7 +211,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
         expect(comp.exercise).toEqual(programmingExercise);
         expect(comp.participation).toEqual(templateParticipation);
@@ -248,7 +248,7 @@ describe('ParticipationSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
         expect(findWithTemplateAndSolutionParticipationStub).toHaveBeenCalled();
         expect(comp.participation).toEqual(solutionParticipation);
         expect(comp.submissions).toEqual(solutionParticipation.submissions);
@@ -271,28 +271,31 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
         });
 
-        afterEach(() => {
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(1);
-            expect(comp.submissions![0].results![0]).toEqual(result1);
-        });
-
         it('should delete result of fileUploadSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should delete result of modelingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should delete result of programmingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should delete result of textSubmission', fakeAsync(() => {
@@ -305,6 +308,9 @@ describe('ParticipationSubmissionComponent', () => {
             tick();
             fixture.destroy();
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(1);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });
 
@@ -319,36 +325,42 @@ describe('ParticipationSubmissionComponent', () => {
             jest.spyOn(participationService, 'find').mockReturnValue(of(new HttpResponse({ body: participation1 })));
         });
 
-        afterEach(() => {
-            expect(comp.submissions?.length).toBe(1);
-            expect(comp.submissions![0].results?.length).toBe(2);
-            expect(comp.submissions![0].results![0]).toEqual(result1);
-        });
-
         it('should not delete result of fileUploadSubmission because of server error', fakeAsync(() => {
             const error2 = { message: '403 error', error: { message: 'error.badAuthentication' } } as HttpErrorResponse;
             deleteFileUploadAssessmentStub.mockReturnValue(throwError(() => error2));
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of fileUploadSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: fileUploadExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of modelingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: modelingExercise })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of programmingSubmission', fakeAsync(() => {
             jest.spyOn(exerciseService, 'find').mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
             deleteResult(submissionWithTwoResults, result2);
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
 
         it('should not delete result of textSubmission', fakeAsync(() => {
@@ -361,6 +373,9 @@ describe('ParticipationSubmissionComponent', () => {
             tick();
             fixture.destroy();
             flush();
+            expect(comp.submissions).toHaveLength(1);
+            expect(comp.submissions![0].results).toHaveLength(2);
+            expect(comp.submissions![0].results![0]).toEqual(result1);
         }));
     });
 

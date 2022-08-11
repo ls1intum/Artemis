@@ -11,7 +11,7 @@ import { Color, ScaleType } from '@swimlane/ngx-charts';
 import { round } from 'app/shared/util/utils';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { faFilter } from '@fortawesome/free-solid-svg-icons';
-import { ChartExerciseTypeFilterDirective } from 'app/shared/chart/chart-exercise-type-filter.directive';
+import { ChartExerciseTypeFilter } from 'app/shared/chart/chart-exercise-type-filter';
 import { GraphColors } from 'app/entities/statistics.model';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
 
@@ -20,7 +20,7 @@ import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
     templateUrl: './exercise-scores-chart.component.html',
     styleUrls: ['./exercise-scores-chart.component.scss'],
 })
-export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirective implements AfterViewInit, OnChanges {
+export class ExerciseScoresChartComponent implements AfterViewInit, OnChanges {
     @Input()
     filteredExerciseIDs: number[];
 
@@ -32,7 +32,8 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
 
     readonly Math = Math;
     readonly ExerciseType = ExerciseType;
-    readonly convertToMapKey = ChartExerciseTypeFilterDirective.convertToMapKey;
+    readonly convertToMapKey = ChartExerciseTypeFilter.convertToMapKey;
+    readonly typeFilter = this.exerciseTypeFilter;
 
     // Icons
     faFilter = faFilter;
@@ -59,9 +60,9 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
         private activatedRoute: ActivatedRoute,
         private alertService: AlertService,
         private exerciseScoresChartService: ExerciseScoresChartService,
+        private exerciseTypeFilter: ChartExerciseTypeFilter,
         private translateService: TranslateService,
     ) {
-        super();
         this.translateService.onLangChange.subscribe(() => {
             this.setTranslations();
         });
@@ -106,7 +107,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
         this.visibleExerciseScores = Array.of(...this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.exerciseScores, (exerciseScore) => exerciseScore.releaseDate);
-        this.initializeFilterOptions(sortedExerciseScores);
+        this.exerciseTypeFilter.initializeFilterOptions(sortedExerciseScores);
         this.addData(sortedExerciseScores);
     }
 
@@ -127,7 +128,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
                 exerciseId: exerciseScoreDTO.exerciseId,
                 exerciseType: exerciseScoreDTO.exerciseType,
             };
-            // adapt the y axis max
+            // adapt the y-axis max
             this.maxScale = Math.max(
                 round(exerciseScoreDTO.scoreOfStudent!),
                 round(exerciseScoreDTO.averageScoreAchieved!),
@@ -156,7 +157,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
      * @param data the event sent by the framework
      */
     onSelect(data: any): void {
-        // delegate to the corresponding exericse if chart node is clicked
+        // delegate to the corresponding exercise if chart node is clicked
         if (data.exerciseId) {
             this.navigateToExercise(data.exerciseId);
         } else {
@@ -198,7 +199,7 @@ export class ExerciseScoresChartComponent extends ChartExerciseTypeFilterDirecti
      * @param type the ExerciseType the user changed the filter for
      */
     toggleType(type: ExerciseType): void {
-        this.visibleExerciseScores = this.toggleExerciseType(type, this.exerciseScores);
+        this.visibleExerciseScores = this.exerciseTypeFilter.toggleExerciseType(type, this.exerciseScores);
         // we show all the exercises ordered by their release data
         const sortedExerciseScores = sortBy(this.visibleExerciseScores, (exerciseScore) => exerciseScore.releaseDate);
         this.addData(sortedExerciseScores);

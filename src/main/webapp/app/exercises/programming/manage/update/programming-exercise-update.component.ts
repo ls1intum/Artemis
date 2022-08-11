@@ -15,11 +15,10 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 import { Exercise, IncludedInOverallScore, resetDates, ValidationReason } from 'app/entities/exercise.model';
 import { EditorMode } from 'app/shared/markdown-editor/markdown-editor.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { ProgrammingExerciseSimulationService } from 'app/exercises/programming/manage/services/programming-exercise-simulation.service';
 import { ExerciseGroupService } from 'app/exam/manage/exercise-groups/exercise-group.service';
 import { ProgrammingLanguageFeatureService } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
 import { cloneDeep } from 'lodash-es';
 import { ExerciseUpdateWarningService } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.service';
@@ -37,10 +36,9 @@ import { ModePickerOption } from 'app/exercises/shared/mode-picker/mode-picker.c
 })
 export class ProgrammingExerciseUpdateComponent implements OnInit {
     readonly IncludedInOverallScore = IncludedInOverallScore;
-
-    FeatureToggle = FeatureToggle;
-    ProgrammingLanguage = ProgrammingLanguage;
-    ProjectType = ProjectType;
+    readonly FeatureToggle = FeatureToggle;
+    readonly ProgrammingLanguage = ProgrammingLanguage;
+    readonly ProjectType = ProjectType;
 
     private translationBasePath = 'artemisApp.programmingExercise.';
 
@@ -85,14 +83,13 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     invalidDirectoryNamePattern = RegExp('^[\\w-]+(/[\\w-]+)*$');
 
     // length of < 3 is also accepted in order to provide more accurate validation error messages
-    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + shortNamePattern); // must start with a letter and cannot contain special characters
+    readonly shortNamePattern = RegExp('(^(?![\\s\\S]))|^[a-zA-Z][a-zA-Z0-9]*$|' + SHORT_NAME_PATTERN); // must start with a letter and cannot contain special characters
     titleNamePattern = '^[a-zA-Z0-9-_ ]+'; // must only contain alphanumeric characters, or whitespaces, or '_' or '-'
 
     exerciseCategories: ExerciseCategory[];
     existingCategories: ExerciseCategory[];
 
     public inProductionEnvironment: boolean;
-    public isBamboo: boolean;
 
     public supportsJava = true;
     public supportsPython = false;
@@ -139,7 +136,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private translateService: TranslateService,
         private profileService: ProfileService,
-        private programmingExerciseSimulationService: ProgrammingExerciseSimulationService,
         private exerciseGroupService: ExerciseGroupService,
         private programmingLanguageFeatureService: ProgrammingLanguageFeatureService,
         private navigationUtilService: ArtemisNavigationUtilService,
@@ -400,7 +396,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
             if (profileInfo) {
                 this.inProductionEnvironment = profileInfo.inProduction;
-                this.isBamboo = profileInfo.activeProfiles.includes('bamboo');
             }
         });
 
@@ -457,7 +452,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
     }
 
     /**
-     * Return to the previous page or a default if no previous page exists
+     * Return to the exercise overview page
      */
     previousState() {
         this.navigationUtilService.navigateBackFromExerciseUpdate(this.programmingExercise);
@@ -514,6 +509,27 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
         this.isSaving = true;
 
+        if (this.exerciseService.hasExampleSolutionPublicationDateWarning(this.programmingExercise)) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.exercise.exampleSolutionPublicationDateWarning',
+            });
+        }
+
+        // If the auxiliary repositories were edited after the creation of the exercise, the changes have to be done manually in the VCS and CIS
+        const changedAuxiliaryRepository =
+            (this.programmingExercise.auxiliaryRepositories?.length ?? 0) < (this.backupExercise?.auxiliaryRepositories?.length ?? 0) ||
+            this.programmingExercise.auxiliaryRepositories?.some((auxRepo, index) => {
+                const otherAuxRepo = this.backupExercise?.auxiliaryRepositories?.[index];
+                return !otherAuxRepo || auxRepo.name !== otherAuxRepo.name || auxRepo.checkoutDirectory !== otherAuxRepo.checkoutDirectory;
+            });
+        if (changedAuxiliaryRepository && this.programmingExercise.id) {
+            this.alertService.addAlert({
+                type: AlertType.WARNING,
+                message: 'artemisApp.programmingExercise.auxiliaryRepository.editedWarning',
+            });
+        }
+
         if (this.isImport) {
             this.subscribeToSaveResponse(this.programmingExerciseService.importExercise(this.programmingExercise, this.recreateBuildPlans, this.updateTemplate));
         } else if (this.programmingExercise.id !== undefined) {
@@ -522,9 +538,6 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
                 requestOptions.notificationText = this.notificationText;
             }
             this.subscribeToSaveResponse(this.programmingExerciseService.update(this.programmingExercise, requestOptions));
-        } else if (this.programmingExercise.noVersionControlAndContinuousIntegrationAvailable) {
-            // only for testing purposes(noVersionControlAndContinuousIntegrationAvailable)
-            this.subscribeToSaveResponse(this.programmingExerciseSimulationService.automaticSetupWithoutConnectionToVCSandCI(this.programmingExercise));
         } else {
             this.subscribeToSaveResponse(this.programmingExerciseService.automaticSetup(this.programmingExercise));
         }
@@ -532,14 +545,14 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     private subscribeToSaveResponse(result: Observable<HttpResponse<ProgrammingExercise>>) {
         result.subscribe({
-            next: () => this.onSaveSuccess(),
+            next: (response: HttpResponse<ProgrammingExercise>) => this.onSaveSuccess(response.body!),
             error: (error: HttpErrorResponse) => this.onSaveError(error),
         });
     }
 
-    private onSaveSuccess() {
+    private onSaveSuccess(exercise: ProgrammingExercise) {
         this.isSaving = false;
-        this.previousState();
+        this.navigationUtilService.navigateForwardFromExerciseUpdateOrCreation(exercise);
     }
 
     private onSaveError(error: HttpErrorResponse) {
@@ -555,7 +568,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * When setting the programming language, a change guard is triggered.
-     * This is because we want to reload the instructions template for a different language, but don't want the user to loose unsaved changes.
+     * This is because we want to reload the instructions template for a different language, but don't want the user to lose unsaved changes.
      * If the user cancels the language will not be changed.
      *
      * @param language to switch to.
@@ -589,7 +602,7 @@ export class ProgrammingExerciseUpdateComponent implements OnInit {
 
     /**
      * When setting the project type, a change guard is triggered.
-     * This is because we want to reload the instructions template for a project type, but don't want the user to loose unsaved changes.
+     * This is because we want to reload the instructions template for a project type, but don't want the user to lose unsaved changes.
      * If the user cancels the project type will not be changed.
      *
      * @param projectType to switch to.

@@ -9,6 +9,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { PlagiarismInspectorService } from 'app/exercises/shared/plagiarism/plagiarism-inspector/plagiarism-inspector.service';
 import { HelpIconComponent } from 'app/shared/components/help-icon.component';
 import { ArtemisTestModule } from '../../test.module';
+import { Range } from 'app/shared/util/utils';
 
 describe('Plagiarism Run Details', () => {
     let comp: PlagiarismRunDetailsComponent;
@@ -79,8 +80,23 @@ describe('Plagiarism Run Details', () => {
 
         comp.onSelect(event);
 
-        expect(similaritySelectedStub).toHaveBeenCalledTimes(1);
-        expect(similaritySelectedStub).toHaveBeenCalledWith({ minimumSimilarity: minimumBorder, maximumSimilarity: maximumBorder });
+        expect(similaritySelectedStub).toHaveBeenCalledOnce();
+        expect(similaritySelectedStub).toHaveBeenCalledWith(new Range(minimumBorder, maximumBorder));
         jest.restoreAllMocks();
+    });
+
+    it.each([1, 2, 3])('return correct bucketDTO', (label: number) => {
+        comp.ngxChartLabels = ['1', '2', '3'];
+        comp.bucketDTOs = [
+            { confirmed: 1, denied: 1, open: 1 },
+            { confirmed: 2, denied: 2, open: 2 },
+            { confirmed: 3, denied: 3, open: 3 },
+        ];
+
+        const result = comp.getBucketDTO(label.toString());
+
+        expect(result.confirmed).toBe(label);
+        expect(result.denied).toBe(label);
+        expect(result.open).toBe(label);
     });
 });

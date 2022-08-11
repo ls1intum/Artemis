@@ -29,11 +29,15 @@
             "import": {
                 "attention": "Attention! ",
                 "markdownWarning": "You can edit the problem statement after importing the exercise.",
+                "search": "Search for exercise",
                 "loading": "Loading...",
+                "searchInCourses": "Search in courses?",
+                "searchInExams": "Search in exams?",
                 "table": {
                     "title": "Title",
-                    "language": "Programming Language",
+                    "language": "Language",
                     "course": "Course",
+                    "exam": "Exam",
                     "examQuestion": "Exam Question",
                     "doImport": "Import"
                 }
@@ -45,6 +49,8 @@
             "problemStatement": "Problem Statement",
             "instructions": "Instructions",
             "exampleSolution": "Example Solution",
+            "exampleSolutionPublicationDateError": "For graded exercises, Example Solution Publication Date must be after Release and Due Date if set. Please check your selection again",
+            "exampleSolutionPublicationDateWarning": "Example Solution Publication Date is before Due Date!",
             "assessmentCriterion": "Assessment Criterion",
             "assessmentInstructions": "Assessment Instructions",
             "assessmentInstruction": "Assessment Instruction: ",
@@ -142,6 +148,7 @@
             "showManual": "Show Manual",
             "showAutomatic": "Show Automatic",
             "showAll": "Show All",
+            "showingOnlyInRange": "Showing only results in range: {{ range }}",
             "tagPlaceholder": "+ Category",
             "isProgramming": "This is a programming exercise",
             "isModeling": "This is a modeling exercise",

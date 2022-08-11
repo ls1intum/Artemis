@@ -67,18 +67,19 @@ export class ProfileService {
                         profileInfo.versionControlAccessToken = data.versionControlAccessToken;
                         profileInfo.programmingLanguageFeatures = data.programmingLanguageFeatures;
                         profileInfo.textAssessmentAnalyticsEnabled = data['text-assessment-analytics-enabled'];
-                        profileInfo.browserFingerprintsEnabled = data['browser-fingerprints-enabled'];
+                        profileInfo.studentExamStoreSessionData = data['student-exam-store-session-data'];
 
                         profileInfo.useExternal = data.useExternal;
                         profileInfo.externalCredentialProvider = data.externalCredentialProvider;
                         profileInfo.externalPasswordResetLinkMap = data.externalPasswordResetLinkMap;
+
                         return profileInfo;
                     }),
                 )
                 .subscribe((profileInfo: ProfileInfo) => {
                     this.profileInfo.next(profileInfo);
                     this.featureToggleService.initializeFeatureToggles(profileInfo.features);
-                    this.browserFingerprintService.initialize(profileInfo.browserFingerprintsEnabled);
+                    this.browserFingerprintService.initialize(profileInfo.studentExamStoreSessionData);
                 });
         }
 
@@ -105,7 +106,9 @@ export class ProfileService {
     private static mapSaml2Config(data: any, profileInfo: ProfileInfo) {
         if (data.saml2) {
             profileInfo.saml2 = new Saml2Config();
+            profileInfo.saml2.identityProviderName = data.saml2['identity-provider-name'];
             profileInfo.saml2.buttonLabel = data.saml2['button-label'] || 'SAML2 Login';
+            profileInfo.saml2.passwordLoginDisabled = data.saml2['password-login-disabled'] || false;
             profileInfo.saml2.enablePassword = data.saml2['enable-password'] || false;
         }
     }

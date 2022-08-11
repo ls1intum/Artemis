@@ -2,6 +2,8 @@ import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, 
 import dayjs from 'dayjs/esm';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export interface AttachmentUnitFormData {
     formProperties: FormProperties;
@@ -26,7 +28,6 @@ export interface FileProperties {
 @Component({
     selector: 'jhi-attachment-unit-form',
     templateUrl: './attachment-unit-form.component.html',
-    styleUrls: ['./attachment-unit-form.component.scss'],
 })
 export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
@@ -35,6 +36,10 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     isEditMode = false;
 
     fileUploadErrorMessage?: string;
+    farQuestionCircle = faQuestionCircle;
+    fileSizeLimitation?: string;
+    fileLimitations?: string;
+    fileNamePlaceholder?: string;
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
@@ -44,11 +49,12 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @ViewChild('fileInput', { static: false })
     fileInput: ElementRef;
     file: File | Blob;
-    readonly fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
-    fileName: string = this.fileNamePlaceholder;
+    fileName?: string;
     fileInputTouched = false;
 
-    constructor(private translateService: TranslateService, private fb: FormBuilder) {}
+    constructor(private translateService: TranslateService, private fb: FormBuilder) {
+        this.setTranslationStrings();
+    }
 
     ngOnChanges(): void {
         this.initializeForm();
@@ -59,6 +65,10 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.initializeForm();
+
+        this.translateService.onLangChange?.subscribe(() => {
+            this.setTranslationStrings();
+        });
     }
 
     private initializeForm() {
@@ -66,11 +76,11 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
             return;
         }
         this.form = this.fb.group({
-            name: [undefined, [Validators.required, Validators.maxLength(255)]],
-            description: [undefined, [Validators.maxLength(1000)]],
-            releaseDate: [undefined],
+            name: [undefined as string | undefined, [Validators.required, Validators.maxLength(255)]],
+            description: [undefined as string | undefined, [Validators.maxLength(1000)]],
+            releaseDate: [undefined as dayjs.Dayjs | undefined],
             version: [1],
-            updateNotificationText: [undefined, [Validators.maxLength(1000)]],
+            updateNotificationText: [undefined as string | undefined, [Validators.maxLength(1000)]],
         });
     }
 
@@ -138,5 +148,15 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (formData?.fileProperties?.fileName) {
             this.fileName = formData?.fileProperties?.fileName;
         }
+    }
+
+    /**
+     * Update the translation strings after the application language is changed
+     */
+    private setTranslationStrings() {
+        this.fileSizeLimitation = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation');
+        this.fileLimitations = `${FILE_EXTENSIONS.join(', ')}. ${this.fileSizeLimitation}`;
+        this.fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
+        this.fileName = this.fileNamePlaceholder;
     }
 }

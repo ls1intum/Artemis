@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.assertj.core.data.Offset;
 import org.junit.jupiter.api.AfterEach;
@@ -35,7 +34,7 @@ import de.tum.in.www1.artemis.service.compass.CompassService;
 import de.tum.in.www1.artemis.util.FileUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ModelingAssessmentIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     public static final String API_MODELING_SUBMISSIONS = "/api/modeling-submissions/";
 
@@ -112,7 +111,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     private final double offsetByTenThousandth = 0.0001;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         database.addUsers(6, 2, 0, 1);
         this.course = database.addCourseWithDifferentModelingExercises();
         classExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
@@ -130,13 +129,13 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetAssessmentBySubmissionId() throws Exception {
+    void testGetAssessmentBySubmissionId() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         List<Feedback> feedback = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.v2.json");
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
@@ -149,14 +148,14 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetAssessmentBySubmissionId_notFound() throws Exception {
+    void testGetAssessmentBySubmissionId_notFound() throws Exception {
         saveModelingSubmission();
         request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.NOT_FOUND, Result.class);
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
+    void testGetAssessmentBySubmissionId_assessmentNotFinished_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(false);
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -165,7 +164,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1")
-    public void testGetAssessmentBySubmissionId_assessmentDueDateNotOver_forbidden() throws Exception {
+    void testGetAssessmentBySubmissionId_assessmentDueDateNotOver_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(true);
 
         request.get(API_MODELING_SUBMISSIONS + modelingSubmission.getId() + "/result", HttpStatus.FORBIDDEN, Result.class);
@@ -173,7 +172,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testGetAssessmentBySubmissionId_studentNotOwnerOfSubmission_forbidden() throws Exception {
+    void testGetAssessmentBySubmissionId_studentNotOwnerOfSubmission_forbidden() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.updateAssessmentDueDate(classExercise.getId(), ZonedDateTime.now().minusHours(1));
 
@@ -182,7 +181,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test()
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetExampleAssessmentAsTutor() throws Exception {
+    void testGetExampleAssessmentAsTutor() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
@@ -195,7 +194,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test()
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
+    void testGetExampleAssessmentAsTutorNoTutorial() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, false));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
@@ -208,7 +207,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test()
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetExampleAssessmentAsInstructor() throws Exception {
+    void testGetExampleAssessmentAsInstructor() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission(validModel, classExercise, true, true));
         List<Feedback> feedbackList = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         Result storedResult = request.putWithResponseBody("/api/modeling-submissions/" + storedExampleSubmission.getId() + "/example-assessment", feedbackList, Result.class,
@@ -221,7 +220,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1")
-    public void testManualAssessmentSubmitAsStudent() throws Exception {
+    void testManualAssessmentSubmitAsStudent() throws Exception {
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.FORBIDDEN);
@@ -231,7 +230,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSave() throws Exception {
+    void testManualAssessmentSave() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
@@ -248,7 +247,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSave_noCourse() throws Exception {
+    void testManualAssessmentSave_noCourse() throws Exception {
         classExercise.setCourse(null);
         exerciseRepo.save(classExercise);
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
@@ -259,7 +258,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_classDiagram() throws Exception {
+    void testManualAssessmentSubmit_classDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
@@ -280,7 +279,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_activityDiagram() throws Exception {
+    void testManualAssessmentSubmit_activityDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
 
@@ -296,7 +295,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_objectDiagram() throws Exception {
+    void testManualAssessmentSubmit_objectDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/object-model.json", "student1");
 
@@ -311,7 +310,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_useCaseDiagram() throws Exception {
+    void testManualAssessmentSubmit_useCaseDiagram() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
 
@@ -327,7 +326,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSaveAndSubmit() throws Exception {
+    void testManualAssessmentSaveAndSubmit() throws Exception {
         User assessor = database.getUserByLogin("tutor1");
         ModelingSubmission submission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
 
@@ -351,7 +350,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
+    void testManualAssessmentSubmit_IncludedCompletelyWithBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         useCaseExercise.setMaxPoints(10.0);
@@ -374,7 +373,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
+    void testManualAssessmentSubmit_IncludedCompletelyWithoutBonusPointsExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_COMPLETELY);
         useCaseExercise.setMaxPoints(10.0);
@@ -390,7 +389,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
+    void testManualAssessmentSubmit_IncludedAsBonusExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.INCLUDED_AS_BONUS);
         useCaseExercise.setMaxPoints(10.0);
@@ -406,7 +405,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
+    void testManualAssessmentSubmit_NotIncludedExercise() throws Exception {
         // setting up exercise
         useCaseExercise.setIncludedInOverallScore(IncludedInOverallScore.NOT_INCLUDED);
         useCaseExercise.setMaxPoints(10.0);
@@ -429,7 +428,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         addAssessmentFeedbackAndCheckScore(submission, feedbacks, 5.0, 100D);
     }
 
-    public void addAssessmentFeedbackAndCheckScore(ModelingSubmission submission, List<Feedback> feedbacks, double pointsAwarded, Double expectedScore) throws Exception {
+    private void addAssessmentFeedbackAndCheckScore(ModelingSubmission submission, List<Feedback> feedbacks, double pointsAwarded, Double expectedScore) throws Exception {
         feedbacks.add(new Feedback().credits(pointsAwarded).type(FeedbackType.MANUAL_UNREFERENCED).detailText("gj"));
         createAssessment(submission, feedbacks, "/assessment?submit=true", HttpStatus.OK);
         ModelingSubmission storedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).get();
@@ -439,7 +438,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testManualAssessmentSubmit_withResultOver100Percent() throws Exception {
+    void testManualAssessmentSubmit_withResultOver100Percent() throws Exception {
         useCaseExercise = (ModelingExercise) database.addMaxScoreAndBonusPointsToExercise(useCaseExercise);
         ModelingSubmission submission = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
 
@@ -469,7 +468,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
     // region Automatic Assessment Tests
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_identicalModel() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.createAndSaveParticipationForExercise(classExercise, "student2");
 
@@ -481,9 +480,27 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(automaticResult).as("automatic result is not created").isNull();
     }
 
+    /**
+     * Tests that a submission without model (can happen for exam submissions) does not throw an exception and does
+     * not create an automatic result.
+     * @throws Exception any exception in the test
+     */
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_emptyModel() throws Exception {
+        database.createAndSaveParticipationForExercise(classExercise, "student2");
+
+        ModelingSubmission submission = ModelFactory.generateModelingSubmission(null, true);
+        ModelingSubmission storedSubmission = request.postWithResponseBody("/api/exercises/" + classExercise.getId() + "/modeling-submissions", submission,
+                ModelingSubmission.class, HttpStatus.OK);
+
+        Result automaticResult = compassService.getSuggestionResult(storedSubmission, classExercise);
+        assertThat(automaticResult).as("automatic result is not created").isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student2")
+    void testAutomaticAssessmentUponModelSubmission_activityDiagram_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment_activityDiagram(true);
         database.createAndSaveParticipationForExercise(activityExercise, "student2");
 
@@ -497,7 +514,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_objectDiagram_identicalModel() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_objectDiagram_identicalModel() throws Exception {
         saveModelingSubmissionAndAssessment_activityDiagram(true);
         database.createAndSaveParticipationForExercise(activityExercise, "student2");
 
@@ -511,7 +528,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_partialModel() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_partialModel() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.createAndSaveParticipationForExercise(classExercise, "student2");
 
@@ -525,7 +542,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_partialModelExists() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54727.partial.json", "tutor1",
                 true);
@@ -541,7 +558,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_noSimilarity() throws Exception {
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54745.json", "student1");
         database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.54745.json", "tutor1", true);
         database.createAndSaveParticipationForExercise(classExercise, "student2");
@@ -556,7 +573,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_similarElementsWithinModel() throws Exception {
         modelingSubmission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.inheritance.json"), true);
         modelingSubmission = database.addModelingSubmission(classExercise, modelingSubmission, "student1");
         modelingAssessment = database.addModelingAssessmentForSubmission(classExercise, modelingSubmission, "test-data/model-assessment/assessment.inheritance.json", "tutor1",
@@ -573,7 +590,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student2")
-    public void testAutomaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
+    void testAutomaticAssessmentUponModelSubmission_noResultInDatabase() throws Exception {
         saveModelingSubmissionAndAssessment(true);
         database.createAndSaveParticipationForExercise(classExercise, "student2");
 
@@ -587,7 +604,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testConfidenceThreshold() throws Exception {
+    void testConfidenceThreshold() throws Exception {
         Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback feedbackTwentyPoints = new Feedback().credits(20.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
@@ -633,7 +650,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testLongestFeedbackTextSelection() throws Exception {
+    void testLongestFeedbackTextSelection() throws Exception {
         Feedback feedbackOnePoint = new Feedback().credits(1.0).reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
@@ -666,7 +683,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
@@ -683,7 +700,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentActivityDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentActivityDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(activityExercise, "test-data/model-submission/example-activity-diagram-cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-activity-assessment.json");
@@ -700,7 +717,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentObjectDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentObjectDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(objectExercise, "test-data/model-submission/example-object-diagram.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-object-assessment.json");
@@ -717,7 +734,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentUseCaseDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentUseCaseDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(useCaseExercise, "test-data/model-submission/use-case-model.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/use-case-assessment.json");
@@ -734,7 +751,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentCommunicationDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentCommunicationDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(communicationExercise, "test-data/model-submission/example-communication-diagram.json",
                 "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(communicationExercise, "test-data/model-submission/example-communication-diagram-cpy.json",
@@ -753,7 +770,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentComponentDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentComponentDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(componentExercise, "test-data/model-submission/example-component-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(componentExercise, "test-data/model-submission/example-component-diagram-cpy.json",
                 "student2");
@@ -771,7 +788,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentDeploymentDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentDeploymentDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(deploymentExercise, "test-data/model-submission/example-deployment-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(deploymentExercise, "test-data/model-submission/example-deployment-diagram-cpy.json",
                 "student2");
@@ -789,7 +806,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentPetriNetDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentPetriNetDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(petriNetExercise, "test-data/model-submission/example-petri-net-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(petriNetExercise, "test-data/model-submission/example-petri-net-diagram-cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/example-petri-net-assessment.json");
@@ -806,7 +823,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentSyntaxTreeDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentSyntaxTreeDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(syntaxTreeExercise, "test-data/model-submission/example-syntax-tree-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(syntaxTreeExercise, "test-data/model-submission/example-syntax-tree-diagram-cpy.json",
                 "student2");
@@ -824,7 +841,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentFlowchartDiagramUponAssessmentSubmission() throws Exception {
+    void testAutomaticAssessmentFlowchartDiagramUponAssessmentSubmission() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(flowchartExercise, "test-data/model-submission/example-flowchart-diagram.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(flowchartExercise, "test-data/model-submission/example-flowchart-diagram-cpy.json",
                 "student2");
@@ -842,7 +859,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessmentUponAssessmentSubmission_noResultInDatabase() throws Exception {
+    void testAutomaticAssessmentUponAssessmentSubmission_noResultInDatabase() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
@@ -857,7 +874,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testNoAutomaticAssessmentWhenNotBuild() throws Exception {
+    void testNoAutomaticAssessmentWhenNotBuild() throws Exception {
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         ModelingSubmission submission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.cpy.json", "student2");
         List<Feedback> feedbacks = database.loadAssessmentFomResources("test-data/model-assessment/assessment.54727.json");
@@ -870,7 +887,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testAutomaticAssessment_elementsWithDifferentContextInSameSimilaritySet() throws Exception {
+    void testAutomaticAssessment_elementsWithDifferentContextInSameSimilaritySet() throws Exception {
         List<Feedback> assessment1 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.json");
         List<Feedback> assessment2 = database.loadAssessmentFomResources("test-data/model-assessment/assessment.different-context.automatic.json");
         ModelingSubmission submission1 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.different-context.json", "student1");
@@ -894,7 +911,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAutomaticAssessment() throws Exception {
+    void testOverrideAutomaticAssessment() throws Exception {
         classExercise.setDueDate(ZonedDateTime.now().minusHours(1));
         exerciseRepo.save(classExercise);
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.partial.json", "student1");
@@ -951,7 +968,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
+    void testOverrideAutomaticAssessment_existingManualAssessmentDoesNotChange() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback changedFeedback = new Feedback().credits(2.0).text("another text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
@@ -970,7 +987,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideSubmittedManualAssessment_noConflict() throws Exception {
+    void testOverrideSubmittedManualAssessment_noConflict() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
         ModelingSubmission modelingSubmission2 = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student2");
@@ -995,7 +1012,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideSubmittedManualAssessment_conflict() throws Exception {
+    void testOverrideSubmittedManualAssessment_conflict() throws Exception {
         Feedback originalFeedback = new Feedback().credits(1.0).text("some feedback text").reference("Class:6aba5764-d102-4740-9675-b2bd0a4f2123");
         Feedback originalFeedbackWithoutReference = new Feedback().credits(1.5).text("some feedback text again").reference(null).type(FeedbackType.MANUAL_UNREFERENCED);
         modelingSubmission = database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.one-element.json", "student1");
@@ -1029,7 +1046,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
-        assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
     }
 
@@ -1037,7 +1053,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.isRated()).as("rated has been set").isTrue();
         assertThat(storedResult.getScore()).as("score has been calculated").isNotNull();
         assertThat(storedResult.getAssessor()).as("Assessor has been set").isEqualTo(assessor);
-        assertThat(storedResult.getResultString()).as("result string has been set").isNotNull().isNotEqualTo("");
         assertThat(storedResult.getCompletionDate()).as("completion date has been set").isNotNull();
     }
 
@@ -1045,7 +1060,6 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(storedResult.isRated() == null || !storedResult.isRated()).as("rated has not been set").isTrue();
         assertThat(storedResult.getScore()).as("score has not been calculated").isNull();
         assertThat(storedResult.getAssessor()).as("assessor has not been set").isNull();
-        assertThat(storedResult.getResultString()).as("result string has not been set").isNull();
         assertThat(storedResult.getCompletionDate()).as("completion date has not been set").isNull();
         assertThat(storedResult.getAssessmentType()).as("result type is SEMI AUTOMATIC").isEqualTo(AssessmentType.SEMI_AUTOMATIC);
     }
@@ -1078,88 +1092,88 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void cancelOwnAssessmentAsStudent() throws Exception {
+    void cancelOwnAssessmentAsStudent() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void cancelOwnAssessmentAsTutor() throws Exception {
+    void cancelOwnAssessmentAsTutor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
+    void cancelAssessmentOfOtherTutorAsTutor() throws Exception {
         cancelAssessment(HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
+    void cancelAssessmentOfOtherTutorAsInstructor() throws Exception {
         cancelAssessment(HttpStatus.OK);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
+    void testOverrideAssessment_saveOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_saveInstructorPossible() throws Exception {
+    void testOverrideAssessment_saveInstructorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_saveSameTutorPossible() throws Exception {
+    void testOverrideAssessment_saveSameTutorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
+    void testOverrideAssessment_submitOtherTutorForbidden() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_submitInstructorPossible() throws Exception {
+    void testOverrideAssessment_submitInstructorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorPossible() throws Exception {
+    void testOverrideAssessment_submitSameTutorPossible() throws Exception {
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_saveOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_saveInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_saveSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "false", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_saveSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "false", false);
@@ -1167,28 +1181,28 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_submitOtherTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_submitInstructorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
+    void testOverrideAssessment_submitSameTutorAfterAssessmentDueDateForbidden() throws Exception {
         assessmentDueDatePassed();
         overrideAssessment("student1", "tutor1", HttpStatus.FORBIDDEN, "true", true);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
+    void testOverrideAssessment_submitSameTutorAfterAssessmentDueDatePossible() throws Exception {
         assessmentDueDatePassed();
         // should be possible because the original result was not yet submitted
         overrideAssessment("student1", "tutor1", HttpStatus.OK, "true", false);
@@ -1196,7 +1210,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void multipleCorrectionRoundsForExam() throws Exception {
+    void multipleCorrectionRoundsForExam() throws Exception {
         // Setup exam with 2 correction rounds and a programming exercise
         ExerciseGroup exerciseGroup1 = new ExerciseGroup();
         Exam exam = database.addExam(classExercise.getCourseViaExerciseGroupOrCourseMember());
@@ -1249,7 +1263,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(assessedSubmissionList.get(0).getResultForCorrectionRound(0)).isEqualTo(submissionWithoutFirstAssessment.getLatestResult());
 
         // assess submission and submit
-        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        List<Feedback> feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var firstSubmittedManualResult = request.putWithResponseBodyAndParams(
@@ -1323,7 +1337,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(fetchedParticipation.findLatestSubmission().get().getLatestResult()).isEqualTo(submissionWithoutSecondAssessment.getLatestResult());
 
         // assess submission and submit
-        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).collect(Collectors.toList());
+        feedbacks = ModelFactory.generateFeedback().stream().peek(feedback -> feedback.setDetailText("Good work here")).toList();
         params = new LinkedMultiValueMap<>();
         params.add("submit", "true");
         final var secondSubmittedManualResult = request.putWithResponseBodyAndParams(
@@ -1373,7 +1387,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "ADMIN")
-    public void overrideAssessment_inFirstCorrectionRoundByInstructor() throws Exception {
+    void overrideAssessment_inFirstCorrectionRoundByInstructor() throws Exception {
         String student = "student1";
         String originalAssessor = "tutor1";
         HttpStatus httpStatus = HttpStatus.OK;
@@ -1382,7 +1396,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         ModelingSubmission submission = ModelFactory.generateModelingSubmission(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json"), true);
         submission = database.addModelingSubmissionWithResultAndAssessor(classExercise, submission, student, originalAssessor);
 
-        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("tutor2"), null, null, true, null).getLatestResult();
+        Result newResult = database.addResultToSubmission(submission, AssessmentType.MANUAL, database.getUserByLogin("tutor2"), null, true, null).getLatestResult();
 
         resultRepo.save(submission.getLatestResult());
         var params = new LinkedMultiValueMap<String, String>();
@@ -1399,7 +1413,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void overrideAssessmentAfterComplaint() throws Exception {
+    void overrideAssessmentAfterComplaint() throws Exception {
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(ZonedDateTime.now().minusDays(5), ZonedDateTime.now().plusDays(5),
                 ZonedDateTime.now().plusDays(8), DiagramType.ClassDiagram, course);
         modelingExercise.setMaxPoints(10.0);
@@ -1464,7 +1478,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
         assertThat(overwrittenResult.getScore()).isEqualTo(40L); // the instructor overwrote the score to 40%
         assertThat(overwrittenResult.hasComplaint()).isFalse();
 
-        // Also check that its correctly saved in the database
+        // Also check that it's correctly saved in the database
         ModelingSubmission savedSubmission = modelingSubmissionRepo.findWithEagerResultById(submission.getId()).orElse(null);
         assertThat(savedSubmission).isNotNull();
         assertThat(savedSubmission.getLatestResult().getScore()).isEqualTo(40L);
@@ -1475,7 +1489,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testCheckPlagiarismIdenticalLongTexts() throws Exception {
+    void testCheckPlagiarismIdenticalLongModels() throws Exception {
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student1");
         database.addModelingSubmissionFromResources(classExercise, "test-data/model-submission/model.54727.json", "student2");
         var path = "/api/modeling-exercises/" + classExercise.getId() + "/check-plagiarism";
@@ -1491,7 +1505,7 @@ public class ModelingAssessmentIntegrationTest extends AbstractSpringIntegration
 
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
-    public void testdeleteResult() throws Exception {
+    void testdeleteResult() throws Exception {
         Course course = database.addCourseWithOneExerciseAndSubmissions("modeling", 1, Optional.of(FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json")));
         Exercise exercise = exerciseRepository.findAllExercisesByCourseId(course.getId()).iterator().next();
         database.addAssessmentToExercise(exercise, database.getUserByLogin("tutor1"));

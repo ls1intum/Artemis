@@ -18,7 +18,7 @@ describe('Exercise Group Service', () => {
 
     it('should set additional parameters correctly in delete', () => {
         service.delete(1, 2, 3, true, false);
-        expect(httpClientDeleteSpy).toHaveBeenCalledTimes(1);
+        expect(httpClientDeleteSpy).toHaveBeenCalledOnce();
         expect(httpClientDeleteSpy.mock.calls[0]).toHaveLength(2);
         expect(httpClientDeleteSpy.mock.calls[0][1].params.updates).toContainAllValues([
             { op: 's', param: 'deleteStudentReposBuildPlans', value: 'true' },

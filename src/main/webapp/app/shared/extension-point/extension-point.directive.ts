@@ -2,7 +2,7 @@ import { Directive, EmbeddedViewRef, Input, OnChanges, SimpleChanges, TemplateRe
 
 /**
  * @whatItDoes marks parts of a (parent) template as extendable to allow other (child) components to override them.
- * Its basically a variation of ngTemplateOutlet that renders the normal elements if the parameter is undefined
+ * It's basically a variation of ngTemplateOutlet that renders the normal elements if the parameter is undefined
  * (whereas ngTemplateOutlet does not render anything in that case).
  * See ngTemplateOutlet for further information
  *

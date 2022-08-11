@@ -63,10 +63,10 @@ describe('HeaderParticipationPage', () => {
     });
 
     it('should always publish the results for regular exercises', () => {
-        expect(component.resultsPublished).toBe(true);
+        expect(component.resultsPublished).toBeTrue();
 
         exercise.exerciseGroup = new ExerciseGroup();
-        expect(component.resultsPublished).toBe(true);
+        expect(component.resultsPublished).toBeTrue();
     });
 
     it('should only publish the results for exam exercises after the publishing date', () => {
@@ -77,13 +77,13 @@ describe('HeaderParticipationPage', () => {
         exercise.exerciseGroup = exerciseGroup;
 
         // no publishing date => do not publish
-        expect(component.resultsPublished).toBe(false);
+        expect(component.resultsPublished).toBeFalse();
 
         exam.publishResultsDate = dayjs().subtract(1, 'day');
-        expect(component.resultsPublished).toBe(true);
+        expect(component.resultsPublished).toBeTrue();
 
         exam.publishResultsDate = dayjs().add(1, 'day');
-        expect(component.resultsPublished).toBe(false);
+        expect(component.resultsPublished).toBeFalse();
     });
 
     it('should not apply changes if no exercise is set', () => {
@@ -93,7 +93,7 @@ describe('HeaderParticipationPage', () => {
 
         // Expect default values
         expect(component.exerciseStatusBadge).toBe('bg-success');
-        expect(component.exerciseCategories).toBe(undefined);
-        expect(component.dueDate).toBe(undefined);
+        expect(component.exerciseCategories).toBeUndefined();
+        expect(component.dueDate).toBeUndefined();
     });
 });

@@ -41,7 +41,7 @@ import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from
 import { ProgrammingExerciseConfigureGradingStatusComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-status.component';
 import { ProgrammingExerciseConfigureGradingActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-configure-grading-actions.component';
 import { ProgrammingExerciseGradingTableActionsComponent } from 'app/exercises/programming/manage/grading/programming-exercise-grading-table-actions.component';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { TableEditableFieldComponent } from 'app/shared/table/table-editable-field.component';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbAlert, NgbPopover, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
@@ -321,8 +321,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(rows).toHaveLength(testCases1.filter(({ active }) => active).length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).not.toBe(null);
-        expect(saveButton.nativeElement.disabled).toBe(true);
+        expect(saveButton).not.toBeNull();
+        expect(saveButton.nativeElement.disabled).toBeTrue();
     });
 
     it('should create a datatable with the correct amount of rows when test cases come in (show inactive tests)', () => {
@@ -337,8 +337,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(rows).toHaveLength(testCases1.length);
 
         const saveButton = debugElement.query(By.css(saveTableButton));
-        expect(saveButton).not.toBe(null);
-        expect(saveButton.nativeElement.disabled).toBe(true);
+        expect(saveButton).not.toBeNull();
+        expect(saveButton.nativeElement.disabled).toBeTrue();
     });
 
     it('should update test case when an input field is updated', () => {
@@ -355,7 +355,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(editingInputs).toHaveLength(testCases1.length * 3);
 
         const weightInput = editingInputs[0].nativeElement;
-        expect(weightInput).not.toBe(null);
+        expect(weightInput).not.toBeNull();
         weightInput.focus();
 
         // Set new weight.
@@ -363,7 +363,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         weightInput.dispatchEvent(new Event('blur'));
 
         const multiplierInput = editingInputs[1].nativeElement;
-        expect(multiplierInput).not.toBe(null);
+        expect(multiplierInput).not.toBeNull();
         multiplierInput.focus();
 
         // Set new multiplier.
@@ -371,7 +371,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         multiplierInput.dispatchEvent(new Event('blur'));
 
         const bonusInput = editingInputs[2].nativeElement;
-        expect(bonusInput).not.toBe(null);
+        expect(bonusInput).not.toBeNull();
         bonusInput.focus();
 
         // Set new bonus.
@@ -391,7 +391,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         let testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 2, testThatWasUpdated.visibility)]);
         expect(testThatWasUpdated.weight).toBe(20);
         expect(testThatWasUpdated.bonusMultiplier).toBe(2);
@@ -400,7 +400,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
         fixture.detectChanges();
 
@@ -432,7 +432,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         fixture.detectChanges();
 
         testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [new ProgrammingExerciseTestCaseUpdate(testThatWasUpdated.id, 20, 1, 1, testThatWasUpdated.visibility)]);
         expect(testThatWasUpdated.weight).toBe(20);
         expect(testThatWasUpdated.bonusMultiplier).toBe(1);
@@ -449,7 +449,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         // Set only the weight input fields to 0 of all test cases
         for (let i = 0; i < editingInputs.length; i += 3) {
             const weightInput = editingInputs[i].nativeElement;
-            expect(weightInput).not.toBe(null);
+            expect(weightInput).not.toBeNull();
             weightInput.focus();
 
             // Set new weight.
@@ -486,7 +486,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         saveButton.click();
 
         if (assessmentType === AssessmentType.AUTOMATIC) {
-            expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(alertServiceSpy).toHaveBeenCalledWith('artemisApp.programmingExercise.configureGrading.testCases.weightSumError');
         } else {
             expect(alertServiceSpy).not.toHaveBeenCalled();
@@ -523,20 +523,20 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(comp.changedTestCaseIds).toEqual([orderedTests[0].id]);
 
         // The UI should now show that there are unsaved changes.
-        expect(getUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUnsavedChangesBadge()).toBe(null);
+        expect(getUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUnsavedChangesBadge()).toBeNull();
 
         // Save weight.
         updateTestCasesStub.mockReturnValue(of({ ...orderedTests[0], afterDueDate: true }));
         const saveTestCases = debugElement.query(By.css(saveTableButton));
-        expect(saveTestCases).not.toBe(null);
-        expect(saveTestCases.nativeElement.disabled).toBe(false);
+        expect(saveTestCases).not.toBeNull();
+        expect(saveTestCases.nativeElement.disabled).toBeFalse();
         saveTestCases.nativeElement.click();
 
         fixture.detectChanges();
 
         const testThatWasUpdated = sortedTestCases(comp.testCases)[0];
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
         expect(updateTestCasesStub).toHaveBeenCalledWith(exerciseId, [ProgrammingExerciseTestCaseUpdate.from(testThatWasUpdated)]);
     });
 
@@ -556,8 +556,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).not.toBe(null);
+        expect(getNoUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).not.toBeNull();
     });
 
     it('should not show the updatedTests badge when the exercise is released and has no student results', () => {
@@ -565,8 +565,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).toBe(null);
+        expect(getNoUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
     });
 
     it('should not show the updatedTests badge when the exercise is not released and has student results (edge case)', () => {
@@ -574,8 +574,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getNoUnsavedChangesBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).toBe(null);
+        expect(getNoUnsavedChangesBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
     });
 
     it('should show that there are updated test cases if the testCasesChanged flat is set', () => {
@@ -583,8 +583,8 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(getUpdatedTestCaseBadge()).not.toBe(null);
-        expect(getNoUpdatedTestCaseBadge()).toBe(null);
+        expect(getUpdatedTestCaseBadge()).not.toBeNull();
+        expect(getNoUpdatedTestCaseBadge()).toBeNull();
     });
 
     it('should reset all test cases when the reset button is clicked', () => {
@@ -613,13 +613,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(updateTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(updateTestCasesStub).toHaveBeenCalledOnce();
 
         expect(comp.changedTestCaseIds).toHaveLength(0);
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
         fixture.detectChanges();
 
@@ -631,7 +631,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(resetTestCasesStub).toHaveBeenCalledTimes(1);
+        expect(resetTestCasesStub).toHaveBeenCalledOnce();
         expect(resetTestCasesStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.testCases).toEqual(testCases1);
         expect(comp.changedTestCaseIds).toHaveLength(0);
@@ -662,13 +662,13 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(updateCategoriesStub).toHaveBeenCalledTimes(1);
+        expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(comp.changedCategoryIds).toHaveLength(0);
 
         testCasesChangedSubject.next(true);
 
         // Reset button is now enabled because the categories were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
 
         fixture.detectChanges();
 
@@ -683,9 +683,9 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(resetCategoriesStub).toHaveBeenCalledTimes(1);
+        expect(resetCategoriesStub).toHaveBeenCalledOnce();
         expect(resetCategoriesStub).toHaveBeenCalledWith(exerciseId);
-        expect(loadStatisticsStub).toHaveBeenCalledTimes(1);
+        expect(loadStatisticsStub).toHaveBeenCalledOnce();
         expect(loadStatisticsStub).toHaveBeenCalledWith(exerciseId);
         expect(comp.staticCodeAnalysisCategoriesForTable).toEqual(codeAnalysisCategories1);
         expect(comp.changedCategoryIds).toHaveLength(0);
@@ -705,7 +705,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(editingInputs).toHaveLength(gradedCategories.length * 2);
 
         const penaltyInput = editingInputs[0].nativeElement;
-        expect(penaltyInput).not.toBe(null);
+        expect(penaltyInput).not.toBeNull();
         penaltyInput.focus();
 
         // Set new penalty.
@@ -713,7 +713,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         penaltyInput.dispatchEvent(new Event('blur'));
 
         const maxPenaltyInput = editingInputs[1].nativeElement;
-        expect(maxPenaltyInput).not.toBe(null);
+        expect(maxPenaltyInput).not.toBeNull();
         maxPenaltyInput.focus();
 
         // Set new max penalty.
@@ -734,7 +734,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         fixture.detectChanges();
 
-        expect(updateCategoriesStub).toHaveBeenCalledTimes(1);
+        expect(updateCategoriesStub).toHaveBeenCalledOnce();
         expect(updateCategoriesStub).toHaveBeenCalledWith(exerciseId, [StaticCodeAnalysisCategoryUpdate.from(updatedCategory)]);
 
         const categoryThatWasUpdated = comp.staticCodeAnalysisCategoriesForTable.find((category) => category.id === updatedCategory.id)!;
@@ -744,7 +744,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
 
         testCasesChangedSubject.next(true);
         // Trigger button is now enabled because the tests were saved.
-        expect(comp.hasUpdatedGradingConfig).toBe(true);
+        expect(comp.hasUpdatedGradingConfig).toBeTrue();
     });
 
     it('should load the grading statistics correctly', () => {
@@ -781,7 +781,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
         expect(passedBuildCharts).toHaveLength(3);
 
         // this test case is disabled and has no stats
-        expect(passedBuildCharts[0].testCaseStats).toBe(undefined);
+        expect(passedBuildCharts[0].testCaseStats).toBeUndefined();
         expect(passedBuildCharts[0].totalParticipations).toBe(5);
 
         expect(passedBuildCharts[1].testCaseStats).toEqual(gradingStatistics.testCaseStatsMap!.testBubbleSort);
@@ -870,7 +870,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             expect(editingInputs).toHaveLength(3);
 
             const weightInput = editingInputs[0].nativeElement;
-            expect(weightInput).not.toBe(null);
+            expect(weightInput).not.toBeNull();
             weightInput.focus();
 
             // Set new weight.
@@ -878,7 +878,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             weightInput.dispatchEvent(new Event('blur'));
 
             const multiplierInput = editingInputs[1].nativeElement;
-            expect(multiplierInput).not.toBe(null);
+            expect(multiplierInput).not.toBeNull();
             multiplierInput.focus();
 
             // Set new multiplier.
@@ -886,7 +886,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             multiplierInput.dispatchEvent(new Event('blur'));
 
             const bonusInput = editingInputs[2].nativeElement;
-            expect(bonusInput).not.toBe(null);
+            expect(bonusInput).not.toBeNull();
             bonusInput.focus();
 
             // Set new bonus.
@@ -946,7 +946,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             expect(editingInputs).toHaveLength(2);
 
             const penaltyInput = editingInputs[0].nativeElement;
-            expect(penaltyInput).not.toBe(null);
+            expect(penaltyInput).not.toBeNull();
             penaltyInput.focus();
 
             // Set new penalty.
@@ -954,7 +954,7 @@ describe('ProgrammingExerciseConfigureGradingComponent', () => {
             penaltyInput.dispatchEvent(new Event('blur'));
 
             const maxPenaltyInput = editingInputs[1].nativeElement;
-            expect(maxPenaltyInput).not.toBe(null);
+            expect(maxPenaltyInput).not.toBeNull();
             maxPenaltyInput.focus();
 
             // Set new max penalty.

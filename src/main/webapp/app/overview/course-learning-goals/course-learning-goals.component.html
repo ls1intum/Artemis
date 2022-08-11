@@ -1,19 +1,41 @@
-<div *ngIf="isLoading" class="d-flex justify-content-center">
-    <hr class="w-100" />
-    <div class="spinner-border" role="status">
-        <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+<div class="container" *ngIf="isLoading || (learningGoals && learningGoals.length > 0) || (prerequisites && prerequisites.length > 0); else noData">
+    <div *ngIf="isLoading" class="d-flex justify-content-center">
+        <div class="spinner-border" role="status">
+            <span class="sr-only">{{ 'loading' | artemisTranslate }}</span>
+        </div>
     </div>
-    <hr class="w-100" />
+
+    <div *ngIf="!isLoading">
+        <h2 *ngIf="prerequisites && prerequisites.length > 0" class="text-center my-4">{{ 'artemisApp.learningGoal.prerequisite.title' | artemisTranslate }}</h2>
+
+        <div class="d-flex flex-wrap gap-3 justify-content-evenly">
+            <jhi-learning-goal-card
+                *ngFor="let prerequisite of prerequisites; index as i; trackBy: identify"
+                [learningGoal]="prerequisite"
+                [isPrerequisite]="true"
+                [displayOnly]="true"
+            ></jhi-learning-goal-card>
+        </div>
+    </div>
+
+    <div *ngIf="!isLoading">
+        <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center my-4">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
+
+        <div class="p-3 d-flex flex-wrap gap-3 justify-content-evenly">
+            <jhi-learning-goal-card
+                *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
+                [learningGoal]="learningGoal"
+                [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
+                [displayOnly]="true"
+            ></jhi-learning-goal-card>
+        </div>
+    </div>
 </div>
 
-<div *ngIf="!isLoading" class="row row-cols-auto">
-    <hr *ngIf="learningGoals && learningGoals.length > 0" class="w-100" />
-    <h2 *ngIf="learningGoals && learningGoals.length > 0" class="text-center">{{ 'artemisApp.learningGoal.title' | artemisTranslate }}</h2>
-    <jhi-learning-goal-card
-        class="mx-auto col"
-        *ngFor="let learningGoal of learningGoals; index as i; trackBy: identify"
-        [learningGoal]="learningGoal"
-        [learningGoalProgress]="getLearningGoalProgress(learningGoal)"
-    ></jhi-learning-goal-card>
-    <hr *ngIf="learningGoals && learningGoals.length > 0" class="w-100" />
-</div>
+<ng-template #noData>
+    <div class="row">
+        <div class="col mt-3">
+            {{ 'artemisApp.courseOverview.learningGoals.noData' | artemisTranslate }}
+        </div>
+    </div>
+</ng-template>

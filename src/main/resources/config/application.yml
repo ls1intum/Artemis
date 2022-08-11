@@ -34,13 +34,13 @@ artemis:
         # Defines the used docker images for certain programming languages
         build:
             images:
-                JAVA: "ls1tum/artemis-maven-template:java17-6"
-                KOTLIN: "ls1tum/artemis-maven-template:java17-6"
-                EMPTY: "ls1tum/artemis-maven-template:java17-6"
+                JAVA: "ls1tum/artemis-maven-template:java17-8"
+                KOTLIN: "ls1tum/artemis-maven-template:java17-8"
+                EMPTY: "ls1tum/artemis-maven-template:java17-8"
                 PYTHON: "ls1tum/artemis-python-docker:latest"
                 C: "ls1tum/artemis-c-docker:latest"
                 C_FACT: "sharingcodeability/fact:latest"
-                HASKELL: "tumfpv/fpv-stack:8.8.4"
+                HASKELL: "ghcr.io/b-fein/artemis-haskell:main"
                 VHDL: "tizianleonhardt/era-artemis-vhdl:latest"
                 ASSEMBLER: "tizianleonhardt/era-artemis-assembler:latest"
                 SWIFT: "norionomura/swiftlint:latest"
@@ -83,7 +83,7 @@ management:
         enable:
             http: true
             jvm: true
-            logback: true
+            logback: false
             process: true
             system: true
         distribution:
@@ -180,6 +180,15 @@ spring:
         phone:
             home:
                 enabled: false
+    autoconfigure:
+        # These AutoConfiguration are excluded as they include metrics which are not evaluated and only cause unnecessary network load
+        # They can be included once they are processed
+        exclude:
+          - org.springframework.boot.actuate.autoconfigure.metrics.data.RepositoryMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.jdbc.DataSourcePoolMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.startup.StartupTimeMetricsListenerAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.task.TaskExecutorMetricsAutoConfiguration
+          - org.springframework.boot.actuate.autoconfigure.metrics.web.tomcat.TomcatMetricsAutoConfiguration
 
 hazelcast:
     phone:
@@ -206,6 +215,8 @@ sentry:
         enabled: true
         minimum-breadcrumb-level: error
         minimum-event-level: error
+    sample-rate: 1
+    traces-sample-rate: 0.2
 
 # Properties to be exposed on the /info management endpoint
 info:
@@ -218,7 +229,7 @@ info:
     # Specifies whether text assessment analytics service (TextAssessmentEventResource) is enabled/disabled
     # default value set to false
     text-assessment-analytics-enabled: false
-    browser-fingerprints-enabled: true
+    student-exam-store-session-data: true
 
 # ===================================================================
 # JHipster specific properties
@@ -241,6 +252,9 @@ jhipster:
         from: artemis@localhost
     registry:
         password: AN-ADMIN-PASSWORD-THAT-MUST-BE-CHANGED (FROM REGISTRY CONFIG)
+    http:
+        cache: # Used by the CachingHttpHeadersFilter
+            timeToLiveInDays: 1461
     cache: # Cache configuration
         hazelcast: # Hazelcast distributed cache
             time-to-live-seconds: 3600

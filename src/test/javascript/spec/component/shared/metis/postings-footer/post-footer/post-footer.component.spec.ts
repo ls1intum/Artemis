@@ -151,22 +151,12 @@ describe('PostFooterComponent', () => {
         expect(component.sortedAnswerPosts).toEqual(sortedAnswerArray);
     });
 
-    it('answer now button should not be visible if answer posts are not shown', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = false;
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton).toBeNull();
+    it('should contain reference to container for rendering answerPostCreateEditModal component', () => {
+        expect(component.containerRef).not.toBeNull();
     });
 
-    it('answer now button should be visible if answer posts are shown', () => {
-        component.posting = post;
-        component.posting.answers = unsortedAnswerArray;
-        component.showAnswers = true;
-        component.ngOnInit();
-        fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('button');
-        expect(answerNowButton.innerHTML).toContain('answerNow');
+    it('should contain component to create a new answer post', () => {
+        const answerPostCreateEditModal = fixture.debugElement.nativeElement.querySelector('jhi-answer-post-create-edit-modal');
+        expect(answerPostCreateEditModal).not.toBeNull();
     });
 });

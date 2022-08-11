@@ -143,7 +143,7 @@ describe('QuizExercise Statistic Component', () => {
 
             // check
             expect(comp.quizExercise).toBe(quizExercise);
-            expect(comp.maxScore).toEqual(11);
+            expect(comp.maxScore).toBe(11);
             expect(loadDataSpy).toHaveBeenCalled();
         });
 
@@ -252,5 +252,30 @@ describe('QuizExercise Statistic Component', () => {
             expect(comp.data).toEqual([0]);
             expect(comp.participants).toBe(42);
         });
+    });
+
+    it('should switch rated', () => {
+        const loadDataMock = jest.spyOn(comp, 'loadDataInDiagram').mockImplementation();
+        comp.rated = true;
+
+        comp.switchRated();
+
+        expect(loadDataMock).toHaveBeenCalledOnce();
+        expect(comp.rated).toBeFalse();
+    });
+
+    it('should format correctly', () => {
+        comp.totalParticipants = 100;
+        comp.participants = 100;
+
+        let result = comp.bindFormatting(30);
+
+        expect(result).toBe('30 (30%)');
+
+        comp.totalParticipants = 0;
+
+        result = comp.bindFormatting(0);
+
+        expect(result).toBe('0 (0%)');
     });
 });

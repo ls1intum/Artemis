@@ -21,7 +21,7 @@ import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 @AutoConfigureTestDatabase
-public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ComplaintResponseService complaintResponseService;
@@ -57,7 +57,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
     private Team team;
 
     @BeforeEach
-    public void initTestCase() throws Exception {
+    void initTestCase() throws Exception {
         this.database.addUsers(2, 2, 0, 1);
         this.course = this.database.createCourse();
 
@@ -88,12 +88,12 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
-    public void testIsUserAuthorizedToRespondToComplaintCheckInput() {
+    void testIsUserAuthorizedToRespondToComplaintCheckInput() {
         Complaint complaintWithoutResult = new Complaint();
         Complaint complaintWithResult = new Complaint();
         complaintWithResult.setResult(new Result());
@@ -106,7 +106,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testIsUserAuthorizedToRespondToComplaintForInstructor() {
+    void testIsUserAuthorizedToRespondToComplaintForInstructor() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
@@ -116,7 +116,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student2", roles = "INSTRUCTOR")
-    public void testIsUserAuthorizedToRespondToComplaintForStudent() {
+    void testIsUserAuthorizedToRespondToComplaintForStudent() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
@@ -126,7 +126,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForTeamOwner() {
+    void testIsUserAuthorizedToRespondToComplaintForTeamOwner() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(teamTextExercise.getId(), team, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
@@ -136,7 +136,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor2", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForNotTeamOwner() {
+    void testIsUserAuthorizedToRespondToComplaintForNotTeamOwner() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(teamTextExercise.getId(), team, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
@@ -146,7 +146,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForNoComplaintType() {
+    void testIsUserAuthorizedToRespondToComplaintForNoComplaintType() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
         textExerciseResult.setAssessor(tutor1);
@@ -161,7 +161,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForComplaints() {
+    void testIsUserAuthorizedToRespondToComplaintForComplaints() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
         textExerciseResult.setAssessor(tutor1);
@@ -176,7 +176,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForComplaintsWithAutomaticAssessment() {
+    void testIsUserAuthorizedToRespondToComplaintForComplaintsWithAutomaticAssessment() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();
@@ -187,7 +187,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForFeedbackRequest() {
+    void testIsUserAuthorizedToRespondToComplaintForFeedbackRequest() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         Submission submission = textExerciseResult.getSubmission();
         textExerciseResult.setAssessor(tutor1);
@@ -202,7 +202,7 @@ public class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testIsUserAuthorizedToRespondToComplaintForFeedbackRequestWithAutomaticAssessment() {
+    void testIsUserAuthorizedToRespondToComplaintForFeedbackRequestWithAutomaticAssessment() {
         Result textExerciseResult = this.database.createParticipationSubmissionAndResult(textExercise.getId(), student1, 0d, 0d, 10, true);
         this.database.addComplaintToSubmission(textExerciseResult.getSubmission(), student1.getLogin(), ComplaintType.MORE_FEEDBACK);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(textExerciseResult.getSubmission().getId()).orElseThrow();

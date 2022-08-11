@@ -28,13 +28,6 @@
             "submissionLocked": "Abgabe gesperrt",
             "studentSubmission": "Studentische Abgabe",
             "instructions": "&nbsp; Aufgabenstellung &nbsp;",
-            "detail": {
-                "feedback": "Feedback",
-                "credits": {
-                    "one": "{{credits}} Punkt",
-                    "many": "{{credits}} Punkte"
-                }
-            },
             "editor": {
                 "assess": "Bewerten"
             },

@@ -14,6 +14,7 @@ import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipatio
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
+import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.hestia.behavioral.knowledgesource.*;
 
@@ -35,16 +36,20 @@ public class BehavioralTestCaseService {
 
     private final ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
+    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
+
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
     public BehavioralTestCaseService(GitService gitService, RepositoryService repositoryService, TestwiseCoverageService testwiseCoverageService,
             ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseSolutionEntryRepository solutionEntryRepository,
+            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.gitService = gitService;
         this.repositoryService = repositoryService;
         this.testCaseRepository = testCaseRepository;
         this.testwiseCoverageService = testwiseCoverageService;
         this.solutionEntryRepository = solutionEntryRepository;
+        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
     }
 
@@ -66,10 +71,11 @@ public class BehavioralTestCaseService {
         if (testCases.isEmpty()) {
             throw new BehavioralSolutionEntryGenerationException("Test cases have not been received yet");
         }
-        var gitDiffReport = programmingExercise.getGitDiffReport();
+        var gitDiffReport = programmingExerciseGitDiffReportService.getReportOfExercise(programmingExercise);
         if (gitDiffReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Git-Diff Report has not been generated");
         }
+
         var coverageReport = testwiseCoverageService.getFullCoverageReportForLatestSolutionSubmissionFromProgrammingExercise(programmingExercise).orElse(null);
         if (coverageReport == null) {
             throw new BehavioralSolutionEntryGenerationException("Testwise coverage report has not been generated");
@@ -116,6 +122,7 @@ public class BehavioralTestCaseService {
         // Create knowledge sources (Turning the formatter off to make the code more readable)
         // @formatter:off
         List<BehavioralKnowledgeSource> behavioralKnowledgeSources = Arrays.asList(
+            new DropRemovedGitDiffEntries(blackboard),
             new GroupGitDiffAndCoverageEntriesByFilePathAndTestCase(blackboard),
             new ExtractCoveredLines(blackboard),
             new ExtractChangedLines(blackboard),

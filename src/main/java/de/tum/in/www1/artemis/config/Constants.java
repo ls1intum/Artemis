@@ -55,7 +55,7 @@ public final class Constants {
 
     public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH = "/system-notifications/";
 
-    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active-notification";
+    public static final String SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH = "/api" + SYSTEM_NOTIFICATIONS_RESOURCE_PATH + "active";
 
     public static final String PROGRAMMING_SUBMISSION_TOPIC = "/newSubmissions";
 
@@ -96,6 +96,11 @@ public final class Constants {
     // Note: The values in input.constants.ts (client) need to be the same
     public static final long MAX_SUBMISSION_FILE_SIZE = 8 * 1024 * 1024; // 8 MB
 
+    // Note: The values in input.constants.ts (client) need to be the same
+    public static final long MAX_SUBMISSION_TEXT_LENGTH = 30 * 1000; // 30.000 characters
+
+    public static final long MAX_SUBMISSION_MODEL_LENGTH = 100 * 1000; // 100.000 characters
+
     public static final String TEST_CASES_DUPLICATE_NOTIFICATION = "There are duplicated test cases in this programming exercise. All test cases have to be unique and cannot have the same name. The following test cases are duplicated: ";
 
     public static final String TEST_CASES_CHANGED_RUN_COMPLETED_NOTIFICATION = "Build and Test run complete. New results were created for the programming exercise's student submissions with the updated test case settings.";
@@ -118,15 +123,15 @@ public final class Constants {
 
     public static final int FEEDBACK_DETAIL_TEXT_MAX_CHARACTERS = 5000;
 
-    // Used to define the maximum allowed complaint response text limit.
-    // This value must be similar to the allowed value in the database.
+    // This value limits the amount of characters allowed for a complaint response text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
-    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 5000;
+    public static final int COMPLAINT_RESPONSE_TEXT_LIMIT = 65535;
 
-    // Used to define the maximum allowed complaint text limit.
-    // This value must be similar to the allowed value in the database.
+    // This value limits the amount of characters allowed for a complaint text.
+    // Set to 65535 as the db-column has type TEXT which can hold up to 65535 characters.
     // Also, the value on the client side must match this value.
-    public static final int COMPLAINT_TEXT_LIMIT = 5000;
+    public static final int COMPLAINT_TEXT_LIMIT = 65535;
 
     public static final String ASSIGNMENT_CHECKOUT_PATH = "assignment";
 
@@ -162,6 +167,12 @@ public final class Constants {
     public static final String TOGGLE_STUDENT_EXAM_SUBMITTED = "TOGGLE_STUDENT_EXAM_SUBMITTED";
 
     public static final String TOGGLE_STUDENT_EXAM_UNSUBMITTED = "TOGGLE_STUDENT_EXAM_UNSUBMITTED";
+
+    public static final String PREPARE_EXERCISE_START = "PREPARE_EXERCISE_START";
+
+    public static final String GENERATE_STUDENT_EXAMS = "GENERATE_STUDENT_EXAMS";
+
+    public static final String GENERATE_MISSING_STUDENT_EXAMS = "GENERATE_MISSING_STUDENT_EXAMS";
 
     public static final String DELETE_PARTICIPATION = "DELETE_PARTICIPATION";
 
@@ -213,7 +224,19 @@ public final class Constants {
 
     public static final String HAZELCAST_EXERCISE_CACHE = HAZELCAST_QUIZ_PREFIX + "exercise-cache";
 
+    public static final long MONITORING_CACHE_RESET_DELAY = 60 * 30; // 30 minutes in seconds
+
+    public static final String HAZELCAST_MONITORING_PREFIX = "monitoring-";
+
+    public static final String HAZELCAST_MONITORING_CACHE = HAZELCAST_MONITORING_PREFIX + "activity-cache";
+
+    public static final int HAZELCAST_MONITORING_CACHE_SERIALIZER_ID = 2;
+
     public static final int HAZELCAST_QUIZ_EXERCISE_CACHE_SERIALIZER_ID = 1;
+
+    public static final String HAZELCAST_PLAGIARISM_PREFIX = "plagiarism-";
+
+    public static final String HAZELCAST_ACTIVE_PLAGIARISM_CHECKS_PER_COURSE_CACHE = HAZELCAST_PLAGIARISM_PREFIX + "active-plagiarism-checks-per-course-cache";
 
     public static final String VERSION_CONTROL_URL = "versionControlUrl";
 
@@ -224,6 +247,13 @@ public final class Constants {
     public static final String EXTERNAL_PASSWORD_RESET_LINK_MAP = "externalPasswordResetLinkMap";
 
     public static final String VOTE_EMOJI_ID = "heavy_plus_sign";
+
+    public static final String EXAM_EXERCISE_START_STATUS = "exam-exercise-start-status";
+
+    /**
+     * Size of an unsigned tinyInt in SQL, that is used in the database
+     */
+    public static final int SIZE_OF_UNSIGNED_TINYINT = 255;
 
     private Constants() {
     }

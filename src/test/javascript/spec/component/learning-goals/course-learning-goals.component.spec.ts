@@ -16,11 +16,15 @@ import { AccountService } from 'app/core/auth/account.service';
 import { User } from 'app/core/user/user.model';
 import { cloneDeep } from 'lodash-es';
 import * as Sentry from '@sentry/browser';
+import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
+import { Course } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
     @Input() learningGoal: LearningGoal;
     @Input() learningGoalProgress: IndividualLearningGoalProgress;
+    @Input() isPrerequisite: Boolean;
+    @Input() displayOnly: Boolean;
 }
 
 class MockActivatedRoute {
@@ -43,6 +47,7 @@ const mockActivatedRoute = new MockActivatedRoute({
 describe('CourseLearningGoals', () => {
     let courseLearningGoalsComponentFixture: ComponentFixture<CourseLearningGoalsComponent>;
     let courseLearningGoalsComponent: CourseLearningGoalsComponent;
+    let learningGoalService: LearningGoalService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -50,6 +55,7 @@ describe('CourseLearningGoals', () => {
             declarations: [CourseLearningGoalsComponent, LearningGoalCardStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(AlertService),
+                MockProvider(CourseScoreCalculationService),
                 MockProvider(LearningGoalService),
                 MockProvider(AccountService),
                 {
@@ -63,6 +69,7 @@ describe('CourseLearningGoals', () => {
             .then(() => {
                 courseLearningGoalsComponentFixture = TestBed.createComponent(CourseLearningGoalsComponent);
                 courseLearningGoalsComponent = courseLearningGoalsComponentFixture.componentInstance;
+                learningGoalService = TestBed.inject(LearningGoalService);
                 const accountService = TestBed.inject(AccountService);
                 const user = new User();
                 user.login = 'testUser';
@@ -77,11 +84,59 @@ describe('CourseLearningGoals', () => {
     it('should initialize', () => {
         courseLearningGoalsComponentFixture.detectChanges();
         expect(courseLearningGoalsComponent).toBeDefined();
-        expect(courseLearningGoalsComponent.courseId).toEqual(1);
+        expect(courseLearningGoalsComponent.courseId).toBe(1);
     });
 
-    it('should load learning goal and associated progress and display a card for each of them', () => {
-        const learningGoalService = TestBed.inject(LearningGoalService);
+    it('should load progress for each learning goal in a given course', () => {
+        const courseCalculationService = TestBed.inject(CourseScoreCalculationService);
+        const learningGoal = new LearningGoal();
+        const textUnit = new TextUnit();
+        learningGoal.id = 1;
+        learningGoal.description = 'Petierunt uti sibi concilium totius';
+        learningGoal.lectureUnits = [textUnit];
+
+        // Mock a course that was already fetched in another component
+        const course = new Course();
+        course.id = 1;
+        course.learningGoals = [learningGoal];
+        course.prerequisites = [learningGoal];
+        courseCalculationService.setCourses([course]);
+        const getCourseSpy = jest.spyOn(courseCalculationService, 'getCourse').mockReturnValue(course);
+
+        const learningUnitProgress = new IndividualLectureUnitProgress();
+        learningUnitProgress.lectureUnitId = textUnit.id!;
+        learningUnitProgress.totalPointsAchievableByStudentsInLectureUnit = 10;
+        const learningGoalProgress = new IndividualLearningGoalProgress();
+        learningGoalProgress.learningGoalId = learningGoal.id!;
+        learningGoalProgress.learningGoalTitle = learningGoal.title!;
+        learningGoalProgress.pointsAchievedByStudentInLearningGoal = 5;
+        learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
+        learningGoalProgress.progressInLectureUnits = [learningUnitProgress];
+
+        const learningGoalProgressResponse: HttpResponse<IndividualLearningGoalProgress> = new HttpResponse({
+            body: learningGoalProgress,
+            status: 200,
+        });
+
+        const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse');
+        const getProgressSpy = jest.spyOn(learningGoalService, 'getProgress');
+        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
+        getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = true
+
+        courseLearningGoalsComponentFixture.detectChanges();
+
+        expect(getCourseSpy).toHaveBeenCalledOnce();
+        expect(getCourseSpy).toHaveBeenCalledWith(1);
+        expect(courseLearningGoalsComponent.course).toEqual(course);
+        expect(courseLearningGoalsComponent.learningGoals).toEqual([learningGoal]);
+        expect(getAllForCourseSpy).not.toHaveBeenCalled(); // do not load learning goals again as already fetched
+        expect(getProgressSpy).toHaveBeenCalledTimes(2);
+        expect(getProgressSpy).toHaveBeenNthCalledWith(1, 1, 1, false);
+        expect(getProgressSpy).toHaveBeenNthCalledWith(2, 1, 1, true);
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.get(1)).toEqual(learningGoalProgress);
+    });
+
+    it('should load prerequisites and learning goals (with associated progress) and display a card for each of them', () => {
         const learningGoal = new LearningGoal();
         const textUnit = new TextUnit();
         learningGoal.id = 1;
@@ -97,6 +152,10 @@ describe('CourseLearningGoals', () => {
         learningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 10;
         learningGoalProgress.progressInLectureUnits = [learningUnitProgress];
 
+        const prerequisitesOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
+            body: [new LearningGoal()],
+            status: 200,
+        });
         const learningGoalsOfCourseResponse: HttpResponse<LearningGoal[]> = new HttpResponse({
             body: [learningGoal, new LearningGoal()],
             status: 200,
@@ -113,6 +172,7 @@ describe('CourseLearningGoals', () => {
             status: 200,
         });
 
+        const getAllPrerequisitesForCourseSpy = jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
         const getProgressSpy = jest.spyOn(learningGoalService, 'getProgress');
         getProgressSpy.mockReturnValueOnce(of(learningGoalProgressResponse)); // when useParticipantScoreTable = false
@@ -125,12 +185,13 @@ describe('CourseLearningGoals', () => {
         courseLearningGoalsComponentFixture.detectChanges();
 
         const learningGoalCards = courseLearningGoalsComponentFixture.debugElement.queryAll(By.directive(LearningGoalCardStubComponent));
-        expect(learningGoalCards).toHaveLength(2);
-        expect(getAllForCourseSpy).toHaveBeenCalledTimes(1);
+        expect(learningGoalCards).toHaveLength(3); // 1 prerequisite and 2 learning goals
+        expect(getAllPrerequisitesForCourseSpy).toHaveBeenCalledOnce();
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getProgressSpy).toHaveBeenCalledTimes(4);
         expect(courseLearningGoalsComponent.learningGoals).toHaveLength(2);
-        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toEqual(true);
-        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toEqual(true);
-        expect(captureExceptionSpy).toHaveBeenCalledTimes(1);
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgressUsingParticipantScoresTables.has(1)).toBeTrue();
+        expect(courseLearningGoalsComponent.learningGoalIdToLearningGoalProgress.has(1)).toBeTrue();
+        expect(captureExceptionSpy).toHaveBeenCalledOnce();
     });
 });

@@ -119,9 +119,9 @@ describe('UsersImportButtonComponent', () => {
         component.usersToImport = studentsToImport;
         component.importUsers();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
     });
 
@@ -157,16 +157,16 @@ describe('UsersImportButtonComponent', () => {
         expect(rowNumbersOrNull).toBe('2');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ benutzer: 'Max' }, { benutzername: '1' }, { user: 'username' }]);
-        expect(rowNumbersOrNull).toBe(undefined);
+        expect(rowNumbersOrNull).toBeUndefined();
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ matriculationnumber: '1' }, { matrikelnummer: '1' }]);
-        expect(rowNumbersOrNull).toBe(undefined);
+        expect(rowNumbersOrNull).toBeUndefined();
 
         rowNumbersOrNull = component.computeInvalidUserEntries([{ firstnameofstudent: 'Max' }, { familynameofstudent: 'Mustermann' }]);
         expect(rowNumbersOrNull).toBe('2, 3');
 
         rowNumbersOrNull = component.computeInvalidUserEntries([]);
-        expect(rowNumbersOrNull).toBe(undefined);
+        expect(rowNumbersOrNull).toBeUndefined();
     });
 
     it('should import correctly', () => {
@@ -182,8 +182,8 @@ describe('UsersImportButtonComponent', () => {
         component.usersToImport = importedStudents.concat(notImportedStudents);
         component.importUsers();
 
-        importedStudents.forEach((student) => expect(component.wasImported(student)).toBe(true));
-        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBe(false));
+        importedStudents.forEach((student) => expect(component.wasImported(student)).toBeTrue());
+        notImportedStudents.forEach((student) => expect(component.wasImported(student)).toBeFalse());
         expect(component.numberOfUsersImported).toBe(importedStudents.length);
         expect(component.numberOfUsersNotImported).toBe(notImportedStudents.length);
     });
@@ -202,17 +202,17 @@ describe('UsersImportButtonComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.hasImported).toBe(false);
-        expect(component.isSubmitDisabled).toBe(false);
+        expect(component.hasImported).toBeFalse();
+        expect(component.isSubmitDisabled).toBeFalse();
         const importButton = fixture.debugElement.query(By.css('#import'));
 
-        expect(importButton).not.toBe(null);
+        expect(importButton).not.toBeNull();
 
         importButton.nativeElement.click();
 
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
-        expect(component.isImporting).toBe(false);
-        expect(component.hasImported).toBe(true);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
+        expect(component.isImporting).toBeFalse();
+        expect(component.hasImported).toBeTrue();
         expect(component.notFoundUsers).toHaveLength(studentsNotFound.length);
 
         jest.spyOn(examManagementService, 'addStudentsToExam').mockReturnValue(of(fakeResponse));
@@ -221,9 +221,9 @@ describe('UsersImportButtonComponent', () => {
         fixture.detectChanges();
 
         const finishButton = fixture.debugElement.query(By.css('#finish-button'));
-        expect(finishButton).not.toBeNull;
+        expect(finishButton).not.toBeNull();
 
         finishButton.nativeElement.click();
-        expect(examManagementService.addStudentsToExam).toHaveBeenCalledTimes(1);
+        expect(examManagementService.addStudentsToExam).toHaveBeenCalledOnce();
     });
 });

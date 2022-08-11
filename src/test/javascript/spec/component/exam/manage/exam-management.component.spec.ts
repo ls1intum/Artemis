@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpResponse } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import dayjs from 'dayjs/esm';
@@ -7,7 +7,7 @@ import { MockSyncStorage } from '../../../helpers/mocks/service/mock-sync-storag
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { MockTranslateService } from '../../../helpers/mocks/service/mock-translate.service';
 import { TranslateService } from '@ngx-translate/core';
-import { ActivatedRoute, convertToParamMap, UrlSegment } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, Router, UrlSegment } from '@angular/router';
 import { Course } from 'app/entities/course.model';
 import { ExamManagementComponent } from 'app/exam/manage/exam-management.component';
 import { Exam } from 'app/entities/exam.model';
@@ -24,6 +24,9 @@ import { MockRouterLinkDirective } from '../../../helpers/mocks/directive/mock-r
 import { DurationPipe } from 'app/shared/pipes/artemis-duration.pipe';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
+import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
+import { MockNgbModalService } from '../../../helpers/mocks/service/mock-ngb-modal.service';
+import { MockRouter } from '../../../helpers/mocks/mock-router';
 
 describe('Exam Management Component', () => {
     const course = { id: 456 } as Course;
@@ -37,6 +40,8 @@ describe('Exam Management Component', () => {
     let courseManagementService: CourseManagementService;
     let sortService: SortService;
     let eventManager: EventManager;
+    let modalService: NgbModal;
+    let router: Router;
 
     const route = { snapshot: { paramMap: convertToParamMap({ courseId: course.id }) }, url: new Observable<UrlSegment[]>() } as any as ActivatedRoute;
 
@@ -57,6 +62,8 @@ describe('Exam Management Component', () => {
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
+                { provide: NgbModal, useClass: MockNgbModalService },
+                { provide: Router, useClass: MockRouter },
                 { provide: ActivatedRoute, useValue: route },
                 EventManager,
             ],
@@ -68,6 +75,8 @@ describe('Exam Management Component', () => {
         courseManagementService = TestBed.inject(CourseManagementService);
         sortService = TestBed.inject(SortService);
         eventManager = TestBed.inject(EventManager);
+        modalService = TestBed.inject(NgbModal);
+        router = TestBed.inject(Router);
     });
 
     afterEach(() => {
@@ -84,7 +93,7 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(courseManagementService.find).toHaveBeenCalledTimes(1);
+        expect(courseManagementService.find).toHaveBeenCalledOnce();
         expect(comp.course).toEqual(course);
     });
 
@@ -99,7 +108,7 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
+        expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
         expect(comp.exams).toEqual([exam]);
     });
 
@@ -119,11 +128,11 @@ describe('Exam Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledTimes(1);
+        expect(service.getLatestIndividualEndDateOfExam).toHaveBeenCalledOnce();
         expect(comp.exams[0].latestIndividualEndDate).toEqual(examInformationDTO.latestIndividualEndDate);
     });
 
-    it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes ', () => {
+    it('should call findAllExamsForCourse on examListModification event being fired after registering for exam changes', () => {
         // GIVEN
         comp.course = course;
         const responseFakeExams = { body: [exam] } as HttpResponse<Exam[]>;
@@ -134,11 +143,11 @@ describe('Exam Management Component', () => {
         eventManager.broadcast({ name: 'examListModification', content: 'dummy' });
 
         // THEN
-        expect(service.findAllExamsForCourse).toHaveBeenCalledTimes(1);
+        expect(service.findAllExamsForCourse).toHaveBeenCalledOnce();
         expect(comp.exams).toEqual([exam]);
     });
 
-    it('should return false for examHasFinished when component has no exam information ', () => {
+    it('should return false for examHasFinished when component has no exam information', () => {
         // GIVEN
         exam.latestIndividualEndDate = undefined;
 
@@ -149,7 +158,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).toBeFalse();
     });
 
-    it('should return true for examHasFinished when exam is in the past ', () => {
+    it('should return true for examHasFinished when exam is in the past', () => {
         // GIVEN
         exam.latestIndividualEndDate = dayjs().subtract(1, 'days');
 
@@ -160,7 +169,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).toBeTrue();
     });
 
-    it('should return false for examHasFinished when exam is in the future ', () => {
+    it('should return false for examHasFinished when exam is in the future', () => {
         // GIVEN
         exam.latestIndividualEndDate = dayjs().add(1, 'minute');
 
@@ -171,7 +180,7 @@ describe('Exam Management Component', () => {
         expect(examHasFinished).toBeFalse();
     });
 
-    it('should return exam.id, when item in the exam table is being tracked ', () => {
+    it('should return exam.id, when item in the exam table is being tracked', () => {
         // WHEN
         const itemId = comp.trackId(0, exam);
 
@@ -179,7 +188,7 @@ describe('Exam Management Component', () => {
         expect(itemId).toEqual(exam.id);
     });
 
-    it('should call sortService when sortRows is called ', () => {
+    it('should call sortService when sortRows is called', () => {
         // GIVEN
         jest.spyOn(sortService, 'sortByProperty').mockReturnValue([]);
 
@@ -187,6 +196,26 @@ describe('Exam Management Component', () => {
         comp.sortRows();
 
         // THEN
-        expect(sortService.sortByProperty).toHaveBeenCalledTimes(1);
+        expect(sortService.sortByProperty).toHaveBeenCalledOnce();
     });
+
+    it('should open the import modal for exercise groups', fakeAsync(() => {
+        const mockReturnValue = {
+            componentInstance: {
+                subsequentExerciseGroupSelection: undefined,
+                targetCourseId: undefined,
+                targetExamId: undefined,
+            },
+            result: Promise.resolve(exam),
+        } as NgbModalRef;
+        jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
+        jest.spyOn(router, 'navigate');
+
+        comp.course = { id: 1 } as Course;
+        comp.openImportModal();
+        tick();
+
+        expect(modalService.open).toHaveBeenCalled();
+        expect(router.navigate).toHaveBeenCalled();
+    }));
 });

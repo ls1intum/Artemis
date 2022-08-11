@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
 import java.util.*;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -83,17 +82,8 @@ public class ComplaintResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaint(@RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint: {}", complaint);
-        if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
-        }
 
-        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
-        }
-
-        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
-        }
+        validateNewComplaint(complaint);
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
 
@@ -129,17 +119,8 @@ public class ComplaintResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Complaint> createComplaintForExamExercise(@PathVariable Long examId, @RequestBody Complaint complaint, Principal principal) throws URISyntaxException {
         log.debug("REST request to save Complaint for exam exercise: {}", complaint);
-        if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
-        }
 
-        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
-            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
-        }
-
-        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
-            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
-        }
+        validateNewComplaint(complaint);
 
         Result result = resultRepository.findByIdElseThrow(complaint.getResult().getId());
 
@@ -159,6 +140,20 @@ public class ComplaintResource {
 
         return ResponseEntity.created(new URI("/api/complaints/" + savedComplaint.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, entityName, savedComplaint.getId().toString())).body(savedComplaint);
+    }
+
+    private void validateNewComplaint(Complaint complaint) {
+        if (complaint.getId() != null) {
+            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
+        }
+
+        if (complaint.getResult() == null || complaint.getResult().getId() == null) {
+            throw new BadRequestAlertException("A complaint can be only associated to a result", COMPLAINT_ENTITY_NAME, "noresultid");
+        }
+
+        if (complaintRepository.findByResultId(complaint.getResult().getId()).isPresent()) {
+            throw new BadRequestAlertException("A complaint for this result already exists", COMPLAINT_ENTITY_NAME, "complaintexists");
+        }
     }
 
     /**
@@ -351,7 +346,7 @@ public class ComplaintResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, user);
         boolean isAtLeastInstructor = authCheckService.isAtLeastInstructorForExercise(exercise, user);
 
-        // Only instructors can access all complaints about a exercise without filtering by tutorId
+        // Only instructors can access all complaints about an exercise without filtering by tutorId
         if (!isAtLeastInstructor) {
             tutorId = userRepository.getUser().getId();
         }
@@ -396,9 +391,10 @@ public class ComplaintResource {
      *
      * @param complaints    list of complaints
      * @param complaintType the type of complaints we want to get
+     * @return an unmodifiable list of the complaints
      */
     private List<Complaint> getComplaintsByComplaintType(List<Complaint> complaints, ComplaintType complaintType) {
-        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).collect(Collectors.toList());
+        return complaints.stream().filter(complaint -> complaint.getComplaintType() == complaintType).toList();
     }
 
     private void filterOutStudentFromComplaint(Complaint complaint) {

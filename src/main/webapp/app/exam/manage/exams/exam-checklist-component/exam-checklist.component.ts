@@ -3,6 +3,7 @@ import { Exam } from 'app/entities/exam.model';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { faEye, faListAlt, faThList, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-exam-checklist',
@@ -20,6 +21,9 @@ export class ExamChecklistComponent implements OnChanges {
     totalPoints = false;
     hasOptionalExercises = false;
     countMandatoryExercises = 0;
+    isTestExam: boolean;
+
+    examPreparationFinished: boolean;
 
     // Icons
     faEye = faEye;
@@ -28,9 +32,12 @@ export class ExamChecklistComponent implements OnChanges {
     faListAlt = faListAlt;
     faThList = faThList;
 
+    readonly FeatureToggle = FeatureToggle;
+
     constructor(private examChecklistService: ExamChecklistService) {}
 
     ngOnChanges() {
+        this.isTestExam = this.exam.testExam!;
         this.pointsExercisesEqual = this.examChecklistService.checkPointsExercisesEqual(this.exam);
         this.totalPoints = this.examChecklistService.checkTotalPointsMandatory(this.pointsExercisesEqual, this.exam);
         this.allGroupsContainExercise = this.examChecklistService.checkEachGroupContainsExercise(this.exam);

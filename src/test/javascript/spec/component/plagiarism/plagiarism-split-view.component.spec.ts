@@ -82,8 +82,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: modelingExercise } as SimpleChange,
         });
 
-        expect(comp.isModelingExercise).toEqual(true);
-        expect(comp.isProgrammingOrTextExercise).toEqual(false);
+        expect(comp.isModelingExercise).toBeTrue();
+        expect(comp.isProgrammingOrTextExercise).toBeFalse();
     });
 
     it('checks type of text exercise', () => {
@@ -91,8 +91,8 @@ describe('Plagiarism Split View Component', () => {
             exercise: { currentValue: textExercise } as SimpleChange,
         });
 
-        expect(comp.isProgrammingOrTextExercise).toEqual(true);
-        expect(comp.isModelingExercise).toEqual(false);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
     });
 
     it('should parse text matches for comparison', fakeAsync(() => {
@@ -108,9 +108,9 @@ describe('Plagiarism Split View Component', () => {
 
         tick();
 
-        expect(comp.isProgrammingOrTextExercise).toBe(true);
-        expect(comp.isModelingExercise).toBe(false);
-        expect(comp.parseTextMatches).toHaveBeenCalledTimes(1);
+        expect(comp.isProgrammingOrTextExercise).toBeTrue();
+        expect(comp.isModelingExercise).toBeFalse();
+        expect(comp.parseTextMatches).toHaveBeenCalledOnce();
     }));
 
     it('should subscribe to the split control subject', () => {
@@ -120,7 +120,7 @@ describe('Plagiarism Split View Component', () => {
         comp.ngOnInit();
 
         // eslint-disable-next-line deprecation/deprecation
-        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledTimes(1);
+        expect(comp.splitControlSubject.subscribe).toHaveBeenCalledOnce();
     });
 
     it('should collapse the left pane', () => {
@@ -204,7 +204,7 @@ describe('Plagiarism Split View Component', () => {
             { start: 0, length: 0 },
             { start: 3, length: 3 },
         ];
-        const textSubmissionElements = [
+        submissionA.elements = [
             { file: '', column: 1, line: 1 },
             { file: '', column: 2, line: 2 },
             { file: '', column: 3, line: 3 },
@@ -216,7 +216,6 @@ describe('Plagiarism Split View Component', () => {
             { file: '', column: 9, line: 9 },
             { file: '', column: 10, line: 10 },
         ] as TextSubmissionElement[];
-        submissionA.elements = textSubmissionElements;
         const mappedElements = new Map();
         mappedElements.set('none', [
             { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
@@ -226,5 +225,97 @@ describe('Plagiarism Split View Component', () => {
         const result = comp.mapMatchesToElements(matches, submissionA);
 
         expect(result).toEqual(mappedElements);
+    });
+
+    it('should map matches to elements even if matches are out of bounds', () => {
+        submissionA.elements = [
+            { file: '', column: 1, line: 1 },
+            { file: '', column: 2, line: 2 },
+            { file: '', column: 3, line: 3 },
+            { file: '', column: 4, line: 4 },
+            { file: '', column: 5, line: 5 },
+            { file: '', column: 6, line: 6 },
+            { file: '', column: 7, line: 7 },
+            { file: '', column: 8, line: 8 },
+            { file: '', column: 9, line: 9 },
+            { file: '', column: 10, line: 10 },
+        ] as TextSubmissionElement[];
+        const matches = [
+            { start: 0, length: 2 },
+            { start: 0, length: 0 },
+            { start: submissionA.elements.length + 1, length: 3 }, // Faulty data
+            { start: 3, length: 3 },
+        ];
+        const mappedElements = new Map();
+        mappedElements.set('none', [
+            { from: { file: '', column: 1, line: 1 }, to: { file: '', column: 2, line: 2 } },
+            { from: undefined, to: undefined }, // Faulty but better than crashing.
+            { from: { file: '', column: 4, line: 4 }, to: { file: '', column: 6, line: 6 } },
+        ]);
+
+        const result = comp.mapMatchesToElements(matches, submissionA);
+
+        expect(result).toEqual(mappedElements);
+    });
+
+    it('should swap submissions correctly with corresponding matches', () => {
+        const studentLogin = 'student1';
+
+        function createPlagiarismComparison() {
+            return {
+                id: 1,
+                similarity: 80,
+                matches: [
+                    { startA: 0, startB: 2, length: 1 },
+                    { startA: 1, startB: 4, length: 1 },
+                    { startA: 2, startB: 5, length: 2 },
+                ],
+                status: PlagiarismStatus.CONFIRMED,
+                submissionA: {
+                    studentLogin: 'student2',
+                    elements: [
+                        { file: '', column: 1, line: 1 },
+                        { file: '', column: 2, line: 2 },
+                        { file: '', column: 3, line: 3 },
+                        { file: '', column: 4, line: 4 },
+                    ],
+                },
+                submissionB: {
+                    studentLogin,
+                    elements: [
+                        { file: '', column: 1, line: 1 },
+                        { file: '', column: 2, line: 2 },
+                        { file: '', column: 3, line: 3 },
+                        { file: '', column: 4, line: 4 },
+                        { file: '', column: 5, line: 5 },
+                        { file: '', column: 6, line: 6 },
+                        { file: '', column: 7, line: 7 },
+                        { file: '', column: 8, line: 8 },
+                    ],
+                },
+            } as PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
+        }
+
+        const plagiarismComparison = createPlagiarismComparison();
+
+        const plagiarismCasesServiceSpy = jest
+            .spyOn(plagiarismCasesService, 'getPlagiarismComparisonForSplitView')
+            .mockReturnValue(of({ body: plagiarismComparison } as HttpResponse<PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>>));
+
+        comp.sortByStudentLogin = studentLogin;
+        comp.exercise = textExercise;
+
+        comp.ngOnChanges({ comparison: { currentValue: { id: 1 } } as SimpleChange });
+
+        const originalPlagComp = createPlagiarismComparison();
+        const plagComp = comp.plagiarismComparison;
+
+        expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
+
+        expect(plagComp.submissionA).toEqual(originalPlagComp.submissionB);
+        expect(plagComp.submissionB).toEqual(originalPlagComp.submissionA);
+        expect(plagComp.matches.map((match) => match.startA)).toEqual(originalPlagComp.matches.map((match) => match.startB));
+        expect(plagComp.matches.map((match) => match.startB)).toEqual(originalPlagComp.matches.map((match) => match.startA));
+        expect(plagComp.matches.map((match) => match.length)).toEqual(originalPlagComp.matches.map((match) => match.length));
     });
 });

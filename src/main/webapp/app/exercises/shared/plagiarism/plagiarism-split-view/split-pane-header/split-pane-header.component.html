@@ -1,6 +1,6 @@
-<div class="split-pane-header">
-    <div class="split-pane-header-top" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles()">
-        <div *ngIf="getActiveFile()" class="split-pane-header-file-name">
+<div class="split-pane-header" ngbDropdown>
+    <div class="split-pane-header-top" data-toggle="dropdown" [ngClass]="{ active: showFiles, clickable: hasFiles() }" (click)="toggleShowFiles()">
+        <div *ngIf="hasActiveFile()" class="split-pane-header-file-name">
             <fa-icon class="file-arrow-down" [icon]="faChevronDown"></fa-icon>
             <span class="split-pane-header-selected-file">{{ getActiveFile() }}</span>
         </div>
@@ -9,7 +9,9 @@
     </div>
 
     <ul *ngIf="showFiles" class="split-pane-header-files">
-        <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" (click)="handleFileSelect(file, idx)">{{ file }}</li>
+        <li *ngFor="let file of files; let idx = index" class="split-pane-header-file" ngbDropdownItem (click)="handleFileSelect(file, idx)">
+            <span [class.split-pane-header-file-with-match]="file.hasMatch">{{ file.file }}</span>
+        </li>
 
         <li *ngIf="!hasFiles()">{{ 'artemisApp.plagiarism.noFilesFound' | artemisTranslate }}</li>
     </ul>

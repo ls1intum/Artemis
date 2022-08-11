@@ -199,7 +199,7 @@ public class GitUtilService {
     /**
      * @param repo The repository on which the action should be operated
      * @param branch The branch that should be checked out
-     * @param createBranch indicator if a non existing branch should get created
+     * @param createBranch indicator if a non-existing branch should get created
      */
     public void checkoutBranch(REPOS repo, String branch, boolean createBranch) {
         try {

@@ -58,7 +58,6 @@ describe('TextFeedbackConflictsComponent', () => {
     textSubmission.results = [
         {
             id: 2374,
-            resultString: '1 of 12 points',
             completionDate: dayjs('2019-07-09T11:51:23.251Z'),
             successful: false,
             score: 8,
@@ -186,7 +185,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
     it('should use jhi-text-feedback-conflicts-header', () => {
         const headerComponent = fixture.debugElement.query(By.directive(TextFeedbackConflictsHeaderComponent));
-        expect(headerComponent).not.toBe(null);
+        expect(headerComponent).not.toBeNull();
     });
 
     it('should set conflicting submission correctly', () => {
@@ -202,7 +201,7 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
         const textAssessmentAreaComponent = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
-        expect(textAssessmentAreaComponent).not.toBe(null);
+        expect(textAssessmentAreaComponent).not.toBeNull();
     });
 
     it('should solve conflict by overriding left submission', () => {
@@ -210,7 +209,7 @@ describe('TextFeedbackConflictsComponent', () => {
         component['setPropertiesFromServerResponse']([conflictingSubmission]);
         fixture.detectChanges();
 
-        expect(component.isOverrideDisabled).toBe(true);
+        expect(component.isOverrideDisabled).toBeTrue();
 
         const textAssessmentArea = fixture.debugElement.query(By.directive(TextAssessmentAreaComponent));
         const textAssessmentAreaComponent = textAssessmentArea.componentInstance as TextAssessmentAreaComponent;
@@ -220,7 +219,7 @@ describe('TextFeedbackConflictsComponent', () => {
         textAssessmentAreaComponent.textBlockRefsChangeEmit();
 
         expect(component.leftTotalScore).toBe(2);
-        expect(component.isOverrideDisabled).toBe(false);
+        expect(component.isOverrideDisabled).toBeFalse();
 
         jest.spyOn(textAssessmentService, 'submit').mockReturnValue(
             of(
@@ -250,7 +249,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).not.toBe(undefined);
+        expect(component.selectedRightFeedbackId).toBeDefined();
         expect(component.selectedRightFeedbackId).toBe(conflictingSubmission.latestResult!.feedbacks![0].id);
     });
 
@@ -268,7 +267,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBe(undefined);
+        expect(component.selectedRightFeedbackId).toBeUndefined();
     });
 
     it('should not be able to select conflicting feedback for left submission', () => {
@@ -285,7 +284,7 @@ describe('TextFeedbackConflictsComponent', () => {
             }
         });
 
-        expect(component.selectedRightFeedbackId).toBe(undefined);
+        expect(component.selectedRightFeedbackId).toBeUndefined();
     });
 
     it('should discard conflict', () => {
@@ -313,9 +312,9 @@ describe('TextFeedbackConflictsComponent', () => {
         const solveConflictStub = jest.spyOn(textAssessmentService, 'solveFeedbackConflict').mockReturnValue(throwError(() => errorResponse));
         component.discardConflict();
 
-        expect(solveConflictStub).toHaveBeenCalledTimes(1);
-        expect(component.isMarkingDisabled).toBe(true);
-        expect(component.markBusy).toBe(false);
+        expect(solveConflictStub).toHaveBeenCalledOnce();
+        expect(component.isMarkingDisabled).toBeTrue();
+        expect(component.markBusy).toBeFalse();
     });
 
     it('should switch submissions when it changed in the header', () => {
@@ -340,10 +339,10 @@ describe('TextFeedbackConflictsComponent', () => {
         const clickSpy = jest.spyOn(component, 'didClickedButtonNoConflict');
         fixture.detectChanges();
         const button = fixture.debugElement.query(By.css('button'));
-        expect(button).not.toBe(null);
+        expect(button).not.toBeNull();
         button.triggerEventHandler('click', null);
 
-        expect(clickSpy).toHaveBeenCalledTimes(1);
+        expect(clickSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle error correctly when submitting left submission', () => {
@@ -353,7 +352,7 @@ describe('TextFeedbackConflictsComponent', () => {
 
         component.overrideLeftSubmission();
 
-        expect(errorStub).toHaveBeenCalledTimes(1);
-        expect(component.isOverrideDisabled).toBe(true);
+        expect(errorStub).toHaveBeenCalledOnce();
+        expect(component.isOverrideDisabled).toBeTrue();
     });
 });

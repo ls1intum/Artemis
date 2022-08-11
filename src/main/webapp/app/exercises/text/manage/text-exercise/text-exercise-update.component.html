@@ -2,7 +2,7 @@
     <div>
         <h4 *ngIf="!textExercise.id" id="jhi-text-exercise-heading-create" jhiTranslate="artemisApp.textExercise.home.createLabel">Create a new Text Exercise</h4>
         <h4 *ngIf="!isImport && textExercise.id" id="jhi-text-exercise-heading-edit" jhiTranslate="artemisApp.textExercise.home.editLabel">Edit Text Exercise</h4>
-        <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel"></h4>
+        <h4 *ngIf="isImport" id="jhi-text-exercise-heading-import" jhiTranslate="artemisApp.textExercise.home.importLabel">Import Text Exercise</h4>
     </div>
     <div>
         <div class="form-group" [hidden]="isImport || !textExercise.id">
@@ -70,6 +70,7 @@
             <div>
                 <jhi-included-in-overall-score-picker
                     [(includedInOverallScore)]="textExercise.includedInOverallScore"
+                    (includedInOverallScoreChange)="validateDate()"
                     [allowNotIncluded]="!isExamMode"
                 ></jhi-included-in-overall-score-picker>
             </div>
@@ -160,26 +161,23 @@
                 name="exampleSolutionPublicationDate"
                 labelName="{{ 'artemisApp.exercise.exampleSolutionPublicationDate' | artemisTranslate }}"
                 [(ngModel)]="textExercise.exampleSolutionPublicationDate"
+                [error]="textExercise.exampleSolutionPublicationDateError!"
+                (valueChange)="validateDate()"
             ></jhi-date-time-picker>
+            <span *ngIf="textExercise.exampleSolutionPublicationDateError" class="invalid-feedback">{{
+                'artemisApp.exercise.exampleSolutionPublicationDateError' | artemisTranslate
+            }}</span>
         </div>
         <div class="form-group">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.assessmentInstructions" for="gradingInstructions">Assessment Instructions</label>
             <jhi-grading-instructions-details id="gradingInstructions" [exercise]="textExercise"></jhi-grading-instructions-details>
-        </div>
-        <div class="form-group" *ngIf="isImport || !textExercise.id">
-            <label class="form-control-label" jhiTranslate="artemisApp.textExercise.exampleSubmissions">Example submissions</label>
-            <div
-                id="example-submission-message"
-                class="alert alert-info"
-                *ngIf="!textExercise.id || isImport"
-                jhiTranslate="artemisApp.textExercise.exampleSubmissionsRequireExercise"
-            ></div>
         </div>
         <div class="form-group" *ngIf="textExercise.id && !isImport">
             <label class="form-control-label" jhiTranslate="artemisApp.exercise.notificationText" for="field_notification_text">Notification Text</label>
             <input minlength="3" type="text" class="form-control" name="notificationText" id="field_notification_text" [(ngModel)]="notificationText" />
         </div>
     </div>
+
     <div>
         <button type="button" class="btn btn-secondary" (click)="previousState()">
             <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
@@ -190,7 +188,7 @@
             (click)="save()"
             class="btn btn-primary"
             id="submit-entity"
-            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError"
+            [disabled]="editForm.form.invalid || isSaving || textExercise.dueDateError || textExercise.assessmentDueDateError || textExercise.exampleSolutionPublicationDateError"
         >
             <fa-icon [icon]="faSave"></fa-icon>
             <span *ngIf="isImport" jhiTranslate="artemisApp.textExercise.submitButton.import">Import</span>

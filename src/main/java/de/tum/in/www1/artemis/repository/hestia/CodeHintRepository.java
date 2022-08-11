@@ -7,7 +7,6 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
 
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -25,8 +24,8 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
     }
 
     @NotNull
-    default CodeHint findByIdWithTaskAndSolutionEntriesElseThrow(long exerciseHintId) throws EntityNotFoundException {
-        return findByIdWithTaskAndSolutionEntries(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));
+    default CodeHint findByIdWithSolutionEntriesElseThrow(long exerciseHintId) throws EntityNotFoundException {
+        return findByIdWithSolutionEntries(exerciseHintId).orElseThrow(() -> new EntityNotFoundException("Code Hint", exerciseHintId));
     }
 
     @Query("""
@@ -36,9 +35,7 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
             LEFT JOIN FETCH h.solutionEntries tc
             WHERE h.id = :codeHintId
             """)
-    Optional<CodeHint> findByIdWithTaskAndSolutionEntries(Long codeHintId);
-
-    Set<CodeHint> findByTaskId(Long taskId);
+    Optional<CodeHint> findByIdWithSolutionEntries(Long codeHintId);
 
     @Query("""
             SELECT h
@@ -48,17 +45,4 @@ public interface CodeHintRepository extends JpaRepository<CodeHint, Long> {
             WHERE t.id = :taskId
             """)
     Set<CodeHint> findByTaskIdWithSolutionEntries(Long taskId);
-
-    /**
-     * Returns the title of the code hint with the given id
-     *
-     * @param hintId the id of the hint
-     * @return the name/title of the hint or null if the hint does not exist
-     */
-    @Query("""
-            SELECT h.title
-            FROM CodeHint h
-            WHERE h.id = :#{#hintId}
-            """)
-    String getHintTitle(@Param("hintId") Long hintId);
 }

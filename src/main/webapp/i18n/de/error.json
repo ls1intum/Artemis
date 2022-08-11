@@ -10,6 +10,7 @@
             "409": "Es gab einen Konflikt bei der Bearbeitung Deiner Anfrage.",
             "500": "Interner Serverfehler."
         },
+        "cannotDeleteYourself": "Du kannst nicht deinen eigenen Account löschen!",
         "fileUploadSavingError": "Fehler! Der Upload schlug fehl. Stelle sicher, dass eine Internetverbindung besteht!",
         "concurrencyFailure": "Ein:e Nutzer:in hat diese Daten zeitgleich mit dir geändert. Deine Änderungen wurden abgelehnt.",
         "validation": "Validierungsfehler auf dem Server.",
@@ -45,6 +46,9 @@
         "submissionPolicyAlreadyDisabled": "Die Abgaberichtlinie konnte nicht deaktiviert werden, da diese bereits deaktiviert ist.",
         "submissionPolicyToggleFailedPolicyNotExist": "Für diese Programmieraufgabe konnte die Abgaberichtlinie nicht (de)aktiviert werden, da die Programmieraufgabe keine Abgaberichtlinie hat. ",
         "submissionPolicyActiveNull": "Abgaberichtlinien müssen aktiviert oder deaktiviert sein. Dieser Status darf nicht null sein.",
-        "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!"
+        "submissionPolicyUpdateFailedPolicyNotExist": "Die Abgaberichtlinie konnte nicht gespeichert werden, da die Programmieraufgabe keine Abgaberichtlinie hat!",
+        "oneActivePlagiarismCheck": "Bitte warte bis die aktuelle Plagiatskontrolle in diesem Kurs abgeschlossen ist, bevor du eine weitere startest.",
+        "systemNotificationNeedsBothDates": "Sowohl das Mitteilungsdatum als auch das Ablaufdatum müssen gesetzt sein.",
+        "systemNotificationNeedsNotificationBeforeExpiration": "Das Ablaufdatum muss nach dem Mitteilungsdatum liegen."
     }
 }

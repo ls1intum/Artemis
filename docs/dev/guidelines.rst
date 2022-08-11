@@ -10,6 +10,8 @@ Coding and design guidelines
    guidelines/server
    guidelines/client
    guidelines/client-tests
+   guidelines/client-design
    guidelines/database
+   guidelines/criteria-builder
    guidelines/development-process
    guidelines/language-guidelines

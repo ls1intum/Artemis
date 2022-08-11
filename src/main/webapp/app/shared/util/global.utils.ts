@@ -12,7 +12,7 @@ export const escapeStringForUseInRegex = (text: string) => {
 
 type StringPositions = Array<{ start: number; end: number; word: string }>;
 /**
- * Insert a string that is segmented by a specified delimiter, and the a dictionary that provides the
+ * Insert a string that is segmented by a specified delimiter, and a dictionary that provides the
  * start and end positions of the segments.
  * E.g.: "word1, word2" -> [{start: 0, end: 4, word: "word1"}, {start: 6, end: 10, word: "word2"}]
  * @param stringToSegment string which should be provided segment information about
@@ -93,7 +93,8 @@ export const onError = (alertService: AlertService, error: HttpErrorResponse) =>
             alertService.error('error.http.405');
             break;
         case 500:
-            alertService.error('error.http.500');
+            // Removed to avoid alerts about internal errors as the user can't do anything about it
+            // and the alert does not provide any other value
             break;
         default:
             alertService.addAlert({

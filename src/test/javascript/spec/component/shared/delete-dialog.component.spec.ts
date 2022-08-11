@@ -52,7 +52,7 @@ describe('DeleteDialogComponent', () => {
         const closeButton = fixture.debugElement.query(By.css('.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(closeSpy).toHaveBeenCalledTimes(1);
+        expect(closeSpy).toHaveBeenCalledOnce();
 
         const cancelButton = fixture.debugElement.query(By.css('.btn.btn-secondary'));
         expect(cancelButton).not.toBeNull();
@@ -81,7 +81,7 @@ describe('DeleteDialogComponent', () => {
 
         // User entered correct tile
         comp.confirmEntityName = 'title';
-        expect(comp.confirmEntityName).toEqual('title');
+        expect(comp.confirmEntityName).toBe('title');
         fixture.detectChanges();
         submitButton = debugElement.query(By.css('.btn.btn-danger'));
         expect(submitButton.nativeElement.disabled).toBeFalse();
@@ -114,7 +114,7 @@ describe('DeleteDialogComponent', () => {
         const clearStub = jest.spyOn(comp, 'clear');
         clearStub.mockReturnValue();
         dialogErrorSource.next('');
-        expect(clearStub).toHaveBeenCalledTimes(1);
+        expect(clearStub).toHaveBeenCalledOnce();
 
         fixture.destroy();
         flush();

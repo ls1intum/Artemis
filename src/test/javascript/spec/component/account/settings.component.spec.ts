@@ -1,6 +1,6 @@
-import { TestBed, tick, fakeAsync, inject } from '@angular/core/testing';
+import { fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { FormBuilder } from '@angular/forms';
-import { throwError, of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { ArtemisTestModule } from '../../test.module';
 import { AccountService } from 'app/core/auth/account.service';
@@ -95,7 +95,7 @@ describe('SettingsComponent', () => {
             tick();
 
             // THEN
-            expect(comp.success).toBe(true);
+            expect(comp.success).toBeTrue();
         }),
     ));
 
@@ -114,7 +114,7 @@ describe('SettingsComponent', () => {
             tick();
 
             // THEN
-            expect(comp.success).toBe(false);
+            expect(comp.success).toBeFalse();
         }),
     ));
 });

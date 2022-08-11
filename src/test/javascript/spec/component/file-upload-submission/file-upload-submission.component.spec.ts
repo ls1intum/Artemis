@@ -13,7 +13,7 @@ import { MockAccountService } from '../../helpers/mocks/service/mock-account.ser
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
 import { ComplaintService } from 'app/complaints/complaint.service';
 import { MockComplaintService } from '../../helpers/mocks/service/mock-complaint.service';
-import { NgxDatatableModule } from '@swimlane/ngx-datatable';
+import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { routes } from 'app/exercises/file-upload/participate/file-upload-participation.route';
 import { FileUploadSubmissionComponent } from 'app/exercises/file-upload/participate/file-upload-submission.component';
 import { createFileUploadSubmission, MockFileUploadSubmissionService } from '../../helpers/mocks/service/mock-file-upload-submission.service';
@@ -110,12 +110,12 @@ describe('FileUploadSubmissionComponent', () => {
         // check if properties where assigned correctly on init
         expect(comp.acceptedFileExtensions.replace(/\./g, '')).toEqual(fileUploadExercise.filePattern);
         expect(comp.fileUploadExercise).toEqual(fileUploadExercise);
-        expect(comp.isAfterAssessmentDueDate).toBe(true);
+        expect(comp.isAfterAssessmentDueDate).toBeTrue();
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).not.toBe(null);
-        expect(fileUploadInput.nativeElement.disabled).toBe(false);
+        expect(fileUploadInput).not.toBeNull();
+        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
 
         // check if extension elements are set
         const extension = debugElement.query(By.css('.ms-1.badge.bg-info'));
@@ -142,10 +142,10 @@ describe('FileUploadSubmissionComponent', () => {
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
-        expect(fileUploadInput).toBe(null);
+        expect(fileUploadInput).toBeNull();
 
         submitFileButton = debugElement.query(By.css('.btn.btn-success'));
-        expect(submitFileButton).toBe(null);
+        expect(submitFileButton).toBeNull();
     });
 
     it('Too big file can not be submitted', fakeAsync(() => {
@@ -164,15 +164,15 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toBeCalledTimes(1);
-        expect(comp.submissionFile).toBe(undefined);
-        expect(comp.submission!.filePath).toBe(undefined);
+        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submissionFile).toBeUndefined();
+        expect(comp.submission!.filePath).toBeUndefined();
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).toBeDefined();
-        expect(fileUploadInput.nativeElement.disabled).toBe(false);
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
+        expect(fileUploadInput.nativeElement.value).toBe('');
     }));
 
     it('Incorrect file type can not be submitted', fakeAsync(() => {
@@ -191,15 +191,15 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toBeCalledTimes(1);
-        expect(comp.submissionFile).toBe(undefined);
-        expect(comp.submission!.filePath).toBe(undefined);
+        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(comp.submissionFile).toBeUndefined();
+        expect(comp.submission!.filePath).toBeUndefined();
 
         // check if fileUploadInput is available
         const fileUploadInput = debugElement.query(By.css('#fileUploadInput'));
         expect(fileUploadInput).toBeDefined();
-        expect(fileUploadInput.nativeElement.disabled).toBe(false);
-        expect(fileUploadInput.nativeElement.value).toEqual('');
+        expect(fileUploadInput.nativeElement.disabled).toBeFalse();
+        expect(fileUploadInput.nativeElement.value).toBe('');
 
         tick();
         fixture.destroy();
@@ -218,7 +218,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('true');
+        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
 
         tick();
         fixture.destroy();
@@ -235,10 +235,10 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
         tick();
 
-        expect(comp.isLate).toBe(true);
+        expect(comp.isLate).toBeTrue();
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('false');
+        expect(submitButton.attributes['ng-reflect-disabled']).toBe('false');
 
         tick();
         fixture.destroy();
@@ -257,7 +257,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         const submitButton = debugElement.query(By.css('jhi-button'));
         expect(submitButton).toBeDefined();
-        expect(submitButton.attributes['ng-reflect-disabled']).toEqual('true');
+        expect(submitButton.attributes['ng-reflect-disabled']).toBe('true');
 
         tick();
         fixture.destroy();
@@ -274,14 +274,14 @@ describe('FileUploadSubmissionComponent', () => {
         tick();
         comp.participation.initializationDate = dayjs();
 
-        expect(comp.isActive).toBe(true);
+        expect(comp.isActive).toBeTrue();
 
         comp.fileUploadExercise.dueDate = dayjs().subtract(1, 'days');
 
         fixture.detectChanges();
         tick();
 
-        expect(comp.isActive).toBe(false);
+        expect(comp.isActive).toBeFalse();
 
         tick();
         fixture.destroy();
@@ -320,10 +320,10 @@ describe('FileUploadSubmissionComponent', () => {
 
         const unreferencedFeedback = comp.unreferencedFeedback;
 
-        expect(unreferencedFeedback).not.toBe(undefined);
+        expect(unreferencedFeedback).toBeDefined();
         expect(unreferencedFeedback).toHaveLength(2);
-        expect(unreferencedFeedback![0].isSubsequent).toBe(undefined);
-        expect(unreferencedFeedback![1].isSubsequent).toBe(true);
+        expect(unreferencedFeedback![0].isSubsequent).toBeUndefined();
+        expect(unreferencedFeedback![1].isSubsequent).toBeTrue();
     });
 
     it('should download file', () => {
@@ -332,27 +332,27 @@ describe('FileUploadSubmissionComponent', () => {
 
         comp.downloadFile('');
 
-        expect(fileServiceStub).toHaveBeenCalledTimes(1);
+        expect(fileServiceStub).toHaveBeenCalledOnce();
     });
 
     it('should decide over deactivation correctly', () => {
         const submission = createFileUploadSubmission();
 
-        expect(comp.canDeactivate()).toBe(true);
+        expect(comp.canDeactivate()).toBeTrue();
 
         submission.submitted = true;
         comp.submission = submission;
 
-        expect(comp.canDeactivate()).toBe(true);
+        expect(comp.canDeactivate()).toBeTrue();
 
         comp.submissionFile = new File([''], 'exampleSubmission.png');
 
-        expect(comp.canDeactivate()).toBe(true);
+        expect(comp.canDeactivate()).toBeTrue();
 
         submission.submitted = false;
         comp.submission = submission;
 
-        expect(comp.canDeactivate()).toBe(false);
+        expect(comp.canDeactivate()).toBeFalse();
     });
 
     it('should set alert correctly', () => {
@@ -373,7 +373,7 @@ describe('FileUploadSubmissionComponent', () => {
 
         comp.submitExercise();
 
-        expect(comp.isActive).toBe(false);
+        expect(comp.isActive).toBeFalse();
         expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
 
         submission.participation.exercise = undefined;
@@ -381,7 +381,7 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
         comp.submitExercise();
 
-        expect(comp.isActive).toBe(false);
+        expect(comp.isActive).toBeFalse();
         expect(jhiWarningSpy).toHaveBeenCalledWith('artemisApp.fileUploadExercise.submitDeadlineMissed');
     });
 

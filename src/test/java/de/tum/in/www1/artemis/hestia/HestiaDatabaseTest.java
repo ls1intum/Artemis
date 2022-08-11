@@ -26,7 +26,7 @@ import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepositor
  * This currently includes ProgrammingExerciseTask, ProgrammingExerciseSolutionEntry and CodeHint.
  * It tests if the addition and deletion of these models works as expected.
  */
-public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
@@ -150,7 +150,7 @@ public class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucket
         }
         codeHint.setSolutionEntries(allSolutionEntries);
         codeHint = codeHintRepository.save(codeHint);
-        task.setCodeHints(Set.of(codeHint));
+        task.setExerciseHints(Set.of(codeHint));
         programmingExerciseTaskRepository.save(task);
         assertThat(programmingExerciseSolutionEntryRepository.findByCodeHintId(codeHint.getId())).isEqualTo(allSolutionEntries);
         assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).containsExactly(codeHint);

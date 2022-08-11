@@ -32,10 +32,12 @@ import { DomainCommand } from 'app/shared/markdown-editor/domainCommands/domainC
 import { UnorderedListCommand } from 'app/shared/markdown-editor/commands/unorderedListCommand';
 import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/headingThree.command';
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
-import { faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
+import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
+import { v4 as uuid } from 'uuid';
 
 export enum MarkdownEditorHeight {
-    INLINE = 60,
+    INLINE = 100,
     SMALL = 200,
     MEDIUM = 500,
     LARGE = 1000,
@@ -64,6 +66,7 @@ const getAceMode = (mode: EditorMode) => {
     encapsulation: ViewEncapsulation.None,
 })
 export class MarkdownEditorComponent implements AfterViewInit {
+    public MultiOptionCommand = MultiOptionCommand;
     public DomainMultiOptionCommand = DomainMultiOptionCommand;
     public DomainTagCommand = DomainTagCommand;
     // This ref is used for entering the fullscreen mode.
@@ -111,7 +114,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
         new UnorderedListCommand(),
     ];
 
-    /** {array} containing all header commands accessible for the markdown editor per defaulT*/
+    /** {array} containing all header commands accessible for the markdown editor per default*/
     @Input() headerCommands: Command[] = [new HeadingOneCommand(), new HeadingTwoCommand(), new HeadingThreeCommand()];
 
     /** {domainCommands} containing all domain commands which need to be set by the parent component which contains the markdown editor */
@@ -121,6 +124,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
     @Output() textWithDomainCommandsFound = new EventEmitter<[string, DomainCommand | null][]>();
 
     @Output() onPreviewSelect = new EventEmitter();
+    @Output() onEditSelect = new EventEmitter();
 
     /** {showPreviewButton}
      * 1. true -> the preview of the editor is used
@@ -159,8 +163,13 @@ export class MarkdownEditorComponent implements AfterViewInit {
     // Icons
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
+    faAngleRight = faAngleRight;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
+    uniqueMarkdownEditorId: string;
+
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+    }
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -248,10 +257,14 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        // unregister previously set event listeners for class elements
-        interact('.markdown-editor').unset();
+        // Use a unique, random ID to select the editor
+        // This is required to select the correct one in case multiple editors are used at the same time
+        const selector = '#' + this.uniqueMarkdownEditorId;
 
-        this.interactResizable = interact('.markdown-editor')
+        // unregister previously set event listeners for class elements
+        interact(selector).unset();
+
+        this.interactResizable = interact(selector)
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
@@ -269,12 +282,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.aceEditorContainer.getEditor().resize();
             })
-            .on('resizemove', function (event: any) {
+            .on('resizemove', (event: any) => {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
+                this.aceEditorContainer.getEditor().resize();
             });
     }
 
@@ -295,7 +308,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
              * will contain the splitted text with the corresponding domainCommandIdentifier which
              * will be emitted to the parent component */
             const commandTextsMappedToCommandIdentifiers: [string, DomainCommand | null][] = [];
-            /** create a remainingMarkdownText of the markdown text to loop trough it and find the domainCommandIdentifier */
+            /** create a remainingMarkdownText of the markdown text to loop through it and find the domainCommandIdentifier */
             let remainingMarkdownText = this.markdown.slice(0);
 
             /** create string with the identifiers to use for RegEx by deleting the [] of the domainCommandIdentifiers */
@@ -370,6 +383,8 @@ export class MarkdownEditorComponent implements AfterViewInit {
         this.previewMode = !this.previewMode;
         if (this.previewMode) {
             this.onPreviewSelect.emit();
+        } else {
+            this.onEditSelect.emit();
         }
         // The text must only be parsed when the active tab before event was edit, otherwise the text can't have changed.
         if (event.activeId === 'editor_edit') {

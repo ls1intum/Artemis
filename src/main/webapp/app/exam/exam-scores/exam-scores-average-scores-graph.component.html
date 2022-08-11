@@ -1,5 +1,5 @@
-<div class="row mb-1">
-    <div #containerRef class="col-md-7 align-items-center">
+<div class="row d-flex justify-content-center mb-1">
+    <div #containerRef class="col-md-8 col-11 align-items-center px-0">
         <h6 class="text-center">{{ 'artemisApp.examScores.exerciseGroupTitle' | artemisTranslate: { groupTitle: this.averageScores.title } }}</h6>
         <ngx-charts-bar-horizontal
             [view]="[containerRef.offsetWidth, 100]"
@@ -8,7 +8,7 @@
             [xAxis]="true"
             [yAxis]="true"
             [xScaleMax]="xScaleMax"
-            [xAxisTickFormatting]="formatTicks"
+            [xAxisTickFormatting]="xAxisTickFormatting"
             (select)="onSelect($event)"
         >
             <ng-template #tooltipTemplate let-model="model">

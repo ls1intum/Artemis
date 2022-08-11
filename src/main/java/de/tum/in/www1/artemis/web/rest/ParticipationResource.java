@@ -9,8 +9,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -39,6 +39,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.feature.FeatureToggleService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
@@ -97,13 +98,16 @@ public class ParticipationResource {
 
     private final QuizBatchService quizBatchService;
 
+    private final QuizScheduleService quizScheduleService;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
             Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
-            ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService) {
+            ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
+            QuizScheduleService quizScheduleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -123,6 +127,7 @@ public class ParticipationResource {
         this.exerciseDateService = exerciseDateService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizBatchService = quizBatchService;
+        this.quizScheduleService = quizScheduleService;
     }
 
     /**
@@ -299,7 +304,6 @@ public class ParticipationResource {
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("Cannot set individual due dates for exam exercises", ENTITY_NAME, "examexercise");
         }
-
         if (exercise instanceof QuizExercise) {
             throw new BadRequestAlertException("Cannot set individual due dates for quiz exercises", ENTITY_NAME, "quizexercise");
         }
@@ -416,7 +420,7 @@ public class ParticipationResource {
             resultCount += participation.getResults().size();
         }
         long end = System.currentTimeMillis();
-        log.info("Found {} particpations with {} results in {}ms", participations.size(), resultCount, end - start);
+        log.info("Found {} participations with {} results in {}ms", participations.size(), resultCount, end - start);
         return ResponseEntity.ok().body(participations);
     }
 
@@ -493,9 +497,7 @@ public class ParticipationResource {
             throw new AccessForbiddenException();
         }
         MappingJacksonValue response;
-        if (exercise instanceof QuizExercise) {
-            // fetch again to load some additional objects
-            var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(exercise.getId());
+        if (exercise instanceof QuizExercise quizExercise) {
             response = participationForQuizExercise(quizExercise, user);
         }
         else {
@@ -516,18 +518,21 @@ public class ParticipationResource {
 
     private @Nullable MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
         if (quizExercise.isQuizEnded()) {
-            // quiz has ended => get participation from database and add full quizExercise
-            // TODO: first check if the participation actually exists, if not, don't even load the quizExercise and return a "please be patient" message so that the user waits
+            // When the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission + result) has not yet been stored in the database
+            // (because for 1500 students this can take up to 60s), we would get a lot of errors here -> wait until all submissions are process and available in the DB
+            // TODO: Handle this case here properly and show a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)
+            // Edge case: if students got their participation via before all processing was done and the reload their results will be gone until processing is finished
+            if (!quizScheduleService.finishedProcessing(quizExercise.getId())) {
+                return null;
+            }
 
+            // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            // TODO: we get a lot of error message here, when the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission
-            // + result) has not yet been stored in the database (because for 1500 students this can take up to 60s). We should handle this case here properly
-            // The best would be a message to the user: please wait while the quiz results are being processed (show a progress animation in the client)
             StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, user.getLogin());
-            // avoid problems due to bidirectional associations between submission and result during serialization
             if (participation == null) {
                 return null;
             }
+            // avoid problems due to bidirectional associations between submission and result during serialization
             for (Result result : participation.getResults()) {
                 if (result.getSubmission() != null) {
                     result.getSubmission().setResults(null);
@@ -536,7 +541,8 @@ public class ParticipationResource {
             }
             return new MappingJacksonValue(participation);
         }
-        var quizBatch = quizBatchService.getQuizBatchForStudent(quizExercise, user);
+        quizExercise.setQuizBatches(null); // not available here
+        var quizBatch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
 
         if (quizBatch.isPresent() && quizBatch.get().isSubmissionAllowed()) {
             // Quiz is active => construct Participation from
@@ -558,7 +564,7 @@ public class ParticipationResource {
             quizExercise.filterSensitiveInformation();
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             if (quizExercise.getAllowedNumberOfAttempts() != null) {
-                var attempts = submissionRepository.countByExerciseIdAndStudentId(quizExercise.getId(), user.getId());
+                var attempts = submissionRepository.countByExerciseIdAndStudentLogin(quizExercise.getId(), user.getLogin());
                 quizExercise.setRemainingNumberOfAttempts(quizExercise.getAllowedNumberOfAttempts() - attempts);
             }
             StudentParticipation participation = new StudentParticipation().exercise(quizExercise);

@@ -350,7 +350,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
 
         translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+        expect(setupGraphSpy).toHaveBeenCalledOnce();
     }));
 
     it('should initialize with tutor leaderboard entry', () => {
@@ -381,7 +381,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         const setupGraphSpy = jest.spyOn(comp, 'setupGraph');
 
         translateService.use('en'); // Change language.
-        expect(setupGraphSpy).toHaveBeenCalledTimes(1);
+        expect(setupGraphSpy).toHaveBeenCalledOnce();
     });
 
     it('should set unassessedSubmission if lock limit is not reached', () => {
@@ -397,8 +397,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
         expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBe(undefined);
-        expect(comp.submissionLockLimitReached).toBe(false);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
+        expect(comp.submissionLockLimitReached).toBeFalse();
         expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
     });
 
@@ -408,12 +408,12 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).toBeCalledTimes(2);
+        expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBe(undefined);
-        expect(comp.submissionLockLimitReached).toBe(true);
+        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
+        expect(comp.submissionLockLimitReached).toBeTrue();
         expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
     });
 
@@ -459,7 +459,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should set exam and stats properties', () => {
-        expect(comp.exam).toBe(undefined);
+        expect(comp.exam).toBeUndefined();
 
         comp.loadAll();
         expect(comp.exercise.id).toBe(modelingExercise.id);
@@ -469,29 +469,29 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     it('should calculateStatus DRAFT', () => {
-        expect(modelingSubmission.latestResult).toBe(undefined);
-        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBe(true);
+        expect(modelingSubmission.latestResult).toBeUndefined();
+        expect(comp.calculateSubmissionStatusIsDraft(modelingSubmission)).toBeTrue();
     });
 
     it('should call hasBeenCompletedByTutor', () => {
         comp.exampleSubmissionsCompletedByTutor = [{ id: 1 }, { id: 2 }];
-        expect(comp.hasBeenCompletedByTutor(1)).toBe(true);
+        expect(comp.hasBeenCompletedByTutor(1)).toBeTrue();
     });
 
     it('should call readInstruction', () => {
         const tutorParticipationServiceCreateStub = jest.spyOn(tutorParticipationService, 'create');
         const tutorParticipation = { id: 1, status: TutorParticipationStatus.REVIEWED_INSTRUCTIONS };
         tutorParticipationServiceCreateStub.mockImplementation(() => {
-            expect(comp.isLoading).toBe(true);
+            expect(comp.isLoading).toBeTrue();
             return of(new HttpResponse({ body: tutorParticipation, headers: new HttpHeaders() }));
         });
 
-        expect(comp.tutorParticipation).toBe(undefined);
-        expect(comp.isLoading).toBe(false);
+        expect(comp.tutorParticipation).toBeUndefined();
+        expect(comp.isLoading).toBeFalse();
 
         comp.readInstruction();
 
-        expect(comp.isLoading).toBe(false);
+        expect(comp.isLoading).toBeFalse();
 
         expect(comp.tutorParticipation).toEqual(tutorParticipation);
         expect(comp.tutorParticipationStatus).toEqual(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
@@ -631,7 +631,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             };
             const complaintQuery = comp.getComplaintQueryParams(complaintComplaint);
 
-            expect(complaintQuery).toBe(undefined);
+            expect(complaintQuery).toBeUndefined();
         });
 
         it('Expect present complaint to delegate the correct query', () => {
@@ -663,7 +663,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             comp.submissionsWithComplaints = fakeDTOList;
             const submissionToView = comp.getSubmissionToViewFromComplaintSubmission(inputSubmission);
 
-            expect(submissionToView).toBe(undefined);
+            expect(submissionToView).toBeUndefined();
         });
 
         it('Expect submission without results to gain an empty list', () => {
@@ -716,7 +716,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     });
 
     describe('pie chart interaction', () => {
-        let event: { value?: number; name?: string };
+        let event: any;
 
         it('should not navigate if user is not instructor', () => {
             jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(false);
@@ -727,20 +727,21 @@ describe('ExerciseAssessmentDashboardComponent', () => {
             expect(routingStub).not.toHaveBeenCalled();
         });
 
-        it('should not navigate if user is instructor but clicked the chart legend', () => {
-            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            event = { name: 'assessed submissions' };
+        it('should navigate if user is instructor but clicked the chart legend', () => {
+            event = 'test';
 
-            comp.navigateToExerciseSubmissionOverview(event);
-
-            expect(routingStub).not.toHaveBeenCalled();
+            assertRoutingPerformed();
         });
 
         it('should navigate if user is instructor and clicked pie part', () => {
-            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
-            event = { value: 40 };
+            event = { name: 'test', value: 40 };
 
+            assertRoutingPerformed();
+        });
+        const assertRoutingPerformed = () => {
+            jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const exercises = [programmingExercise, modelingExercise, textExercise, fileUploadExercise];
+            comp.assessments = [event];
 
             exercises.forEach((preparedExercise) => {
                 comp.exercise = preparedExercise;
@@ -749,9 +750,11 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.navigateToExerciseSubmissionOverview(event);
 
-                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions']);
+                expect(routingStub).toHaveBeenCalledWith(['course-management', 42, preparedExercise.type + '-exercises', preparedExercise.id, 'submissions'], {
+                    queryParams: { filterOption: 0 },
+                });
             });
-        });
+        };
     });
 
     it('should toggle second correction', () => {
@@ -768,7 +771,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.toggleSecondCorrection();
 
-        expect(comp.togglingSecondCorrectionButton).toBe(false);
+        expect(comp.togglingSecondCorrectionButton).toBeFalse();
         expect(comp.secondCorrectionEnabled).toBe(secondCorrectionEnabled);
         expect(comp.numberOfCorrectionRoundsEnabled).toBe(2);
     });
@@ -792,7 +795,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         fixture.detectChanges();
 
-        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledTimes(1);
+        expect(sortMoreFeedbackRowsSpy).toHaveBeenCalledOnce();
 
         submissionServiceSpy.mockReturnValue(throwError(() => errorResponse));
 
@@ -804,7 +807,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
         comp.loadAll();
 
-        expect(alertServiceSpy).toHaveBeenCalledTimes(1);
+        expect(alertServiceSpy).toHaveBeenCalledOnce();
         expect(alertServiceSpy).toHaveBeenCalledWith('error.http.400');
     });
 
@@ -824,17 +827,6 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         comp.sortMoreFeedbackRows();
 
         expect(sortServiceFunctionSpy).toHaveBeenCalledWith(comp.submissionsWithMoreFeedbackRequests, expect.any(Function), false);
-    });
-
-    it('should check if complaint locked', () => {
-        comp.exercise = exercise;
-        const complaintService = TestBed.inject(ComplaintService);
-        const complaintServiceSpy = jest.spyOn(complaintService, 'isComplaintLockedForLoggedInUser');
-
-        const complaint: Complaint = { id: 20 };
-        comp.isComplaintLocked(complaint);
-
-        expect(complaintServiceSpy).toHaveBeenCalledWith(complaint, exercise);
     });
 
     it('should return submission language', () => {

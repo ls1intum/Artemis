@@ -22,6 +22,12 @@
             },
             "noResult": "No graded result",
             "resultString": "Result Text",
+            "resultStringBuildFailed": "Build failed",
+            "resultStringBuildSuccessfulNoTests": "Build successful, no tests executed",
+            "resultStringBuildSuccessfulTests": "{{ numberOfTestsPassed }} of {{ numberOfTestsTotal }} passed",
+            "resultStringNonProgramming": "Score {{ relativeScore }}%, {{ points }} of {{ maxPoints }} points",
+            "resultStringProgramming": "Score {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ points }} of {{ maxPoints }} points",
+            "resultStringProgrammingCodeIssues": "Score {{ relativeScore }}%, {{ buildAndTestMessage }}, {{ numberOfIssues }} issues, {{ points }} of {{ maxPoints }} points",
             "completionDate": "Completion Date",
             "successful": "Successful",
             "buildArtifact": "Build Artifact",
@@ -74,7 +80,8 @@
             },
             "notLatestSubmission": "Note: This result and feedback is <strong>not</strong> based on the latest submission.",
             "seeMore": "See more",
-            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback may be shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after the due date has passed for all students."
+            "noFeedback": "No feedback available",
+            "afterDueDateFeedbackHidden": "Even after the due date not for all test cases a detailed feedback is shown. This could be the case if other students are still working on the exercise (e.g. to allow for the compensation of sick days). Those feedbacks will automatically become visible after {{date}}."
         }
     }
 }

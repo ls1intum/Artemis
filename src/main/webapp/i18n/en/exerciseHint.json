@@ -5,7 +5,7 @@
             "home": {
                 "title": "Exercise Hints",
                 "createLabel": "Create a new Exercise Hint",
-                "createOrEditLabel": "Create or edit an Exercise Hint",
+                "editLabel": "Edit an Exercise Hint",
                 "notFound": "No Exercise Hint found"
             },
             "created": "Created new Exercise Hint with identifier {{ param }}",
@@ -18,20 +18,28 @@
                 "title": "Exercise Hint"
             },
             "title": "Title",
+            "task": "Task",
+            "taskTooltip": "It is not recommended to assign code hints to other tasks since these are specifically generated for a task.",
+            "displayThreshold": "Unlock after number of unsuccessful submissions",
+            "displayThresholdTooltip": "The number of unsuccessful submissions for a task after which this hint should become available. Setting this value to zero means that the hint is always visible.",
+            "description": "Description",
+            "descriptionTooltip": "This text is displayed to students who are shown this hint.",
             "content": "Content",
             "exercise": "Exercise",
+            "exerciseHintButtonTooltip": "See available and activated hints for this exercise.",
+            "availableHintsAlertMessage": "New hints available for task '{{ taskName }}'.",
             "studentDialog": {
                 "title": "Exercise Hints",
-                "tooltip": "Open hints for this exercise"
+                "tooltip": "Open hints for this exercise",
+                "activate": "Activate",
+                "activatedHintsTitle": "Already activated hints",
+                "availableHintsTitle": "New available hints",
+                "activateTooltip": "The hint will be activated and added to your displayed hints.",
+                "display": "Display",
+                "collapse": "Collapse",
+                "rateHintQuestion": "How helpful was this hint?",
+                "availableHintTaskDescription": "Having issues solving the task '{{ taskName }}'? You can take a look at the following example solution."
             }
-        },
-        "codeHint": {
-            "type": "Code Hint",
-            "entry": "Entry",
-            "entries": "Entries",
-            "removeEntryQuestion": "Are you sure you want to remove this entry?",
-            "noEntries": "This code hint has no solution entries.",
-            "deleted": "Deleted Code Hint with identifier {{ param }}"
         }
     }
 }

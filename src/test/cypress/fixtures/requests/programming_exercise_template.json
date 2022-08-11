@@ -17,6 +17,8 @@
     "teamMode": false,
     "assessmentDueDateError": false,
     "dueDateError": false,
+    "exampleSolutionPublicationDateError": false,
+    "exampleSolutionPublicationDateWarning": false,
     "presentationScoreEnabled": false,
     "templateParticipation": {
         "type": "template"

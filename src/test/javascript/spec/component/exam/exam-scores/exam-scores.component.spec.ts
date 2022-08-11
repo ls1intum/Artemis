@@ -437,7 +437,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).toBe(5);
+        expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -519,7 +519,7 @@ describe('ExamScoresComponent', () => {
         expect(groupResult1!.averagePercentage).toBe((averagePoints / groupResult1!.maxPoints) * 100);
 
         // expect correct average points for exercises
-        expect(groupResult1!.exerciseResults.length).toBe(5);
+        expect(groupResult1!.exerciseResults).toHaveLength(5);
         groupResult1!.exerciseResults.forEach((exResult) => {
             let averageExPoints = 0;
             let exInfo;
@@ -557,7 +557,7 @@ describe('ExamScoresComponent', () => {
         comp.exportExamResults(testOptions);
 
         const generatedRows = exportAsCsvStub.mock.calls[0][1];
-        expect(generatedRows.length).toBe(noOfSubmittedExercises);
+        expect(generatedRows).toHaveLength(noOfSubmittedExercises);
         const user1Row = generatedRows[0];
         validateUserRow(
             user1Row,
@@ -622,9 +622,9 @@ describe('ExamScoresComponent', () => {
         jest.spyOn(gradingSystemService, 'findMatchingGradeStep').mockReturnValue(gradingScale.gradeSteps[0]);
         fixture.detectChanges();
 
-        expect(comp.gradingScaleExists).toBe(true);
+        expect(comp.gradingScaleExists).toBeTrue();
         expect(comp.gradingScale).toEqual(gradingScale);
-        expect(comp.isBonus).toBe(false);
+        expect(comp.isBonus).toBeFalse();
     });
 
     it('should filter non-empty submissions', () => {
@@ -641,7 +641,7 @@ describe('ExamScoresComponent', () => {
 
         comp.toggleFilterForNonEmptySubmission();
 
-        expect(comp.filterForNonEmptySubmissions).toBe(true);
+        expect(comp.filterForNonEmptySubmissions).toBeTrue();
     });
 
     describe('test table filtering', () => {
@@ -811,21 +811,21 @@ describe('ExamScoresComponent', () => {
         comp.isBonus = false;
         fixture.detectChanges();
 
-        expect(comp.showPassedMedian).toBe(true);
+        expect(comp.showPassedMedian).toBeTrue();
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(false);
+        expect(comp.showPassedMedian).toBeFalse();
 
         comp.toggleMedian(MedianType.OVERALL);
 
         expect(comp.overallChartMedian).toBe(50);
-        expect(comp.showOverallMedian).toBe(true);
+        expect(comp.showOverallMedian).toBeTrue();
 
         comp.toggleMedian(MedianType.PASSED);
 
-        expect(comp.showPassedMedian).toBe(true);
-        expect(comp.showOverallMedian).toBe(false);
+        expect(comp.showPassedMedian).toBeTrue();
+        expect(comp.showOverallMedian).toBeFalse();
     });
 
     it('should return data label correctly if noOfExamsFiltered is 0', () => {

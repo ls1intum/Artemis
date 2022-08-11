@@ -11,11 +11,10 @@
     >
         <jhi-programming-exercise-instructions
             #preview
-            *ngIf="exerciseHints"
+            *ngIf="exercise"
             class="editable-instruction-container__instructions"
             [participation]="participation"
             [exercise]="exercise"
-            [exerciseHints]="exerciseHints"
             [generateHtmlEvents]="generateHtmlSubject.asObservable()"
             [personalParticipation]="false"
         ></jhi-programming-exercise-instructions>
@@ -53,7 +52,6 @@
         <jhi-programming-exercise-instruction-instructor-analysis
             *ngIf="exercise?.id"
             [exerciseTestCases]="exerciseTestCases"
-            [exerciseHints]="exerciseHints"
             [problemStatement]="exercise.problemStatement || ''"
             [taskRegex]="taskRegex"
             (problemStatementAnalysis)="onAnalysisUpdate($event)"

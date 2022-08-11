@@ -41,6 +41,7 @@ describe('VideoUnitComponent', () => {
             .then(() => {
                 videoUnitComponentFixture = TestBed.createComponent(VideoUnitComponent);
                 videoUnitComponent = videoUnitComponentFixture.componentInstance;
+                videoUnitComponent.videoUnit = videoUnit;
             });
     });
 
@@ -48,13 +49,7 @@ describe('VideoUnitComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        videoUnitComponentFixture.detectChanges();
-        expect(videoUnitComponent).not.toBeNull();
-    });
-
     it('should iFrame correctly', () => {
-        videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponent.isCollapsed = false;
         videoUnitComponentFixture.detectChanges(); // ngInit
         const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
@@ -62,14 +57,12 @@ describe('VideoUnitComponent', () => {
     });
 
     it('should not have iFrame', () => {
-        videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
         const iFrame = videoUnitComponentFixture.debugElement.nativeElement.querySelector('#videoFrame');
         expect(iFrame).toBeNull();
     });
 
     it('should collapse when clicked', () => {
-        videoUnitComponent.videoUnit = videoUnit;
         videoUnitComponentFixture.detectChanges(); // ngInit
         expect(videoUnitComponent.isCollapsed).toBeTrue();
         const handleCollapseSpy = jest.spyOn(videoUnitComponent, 'handleCollapse');
@@ -83,4 +76,31 @@ describe('VideoUnitComponent', () => {
 
         handleCollapseSpy.mockRestore();
     });
+
+    it('should call complete callback when uncollapsed after timeout', () => {
+        return new Promise<void>((done) => {
+            jest.useFakeTimers();
+            jest.spyOn(global, 'setTimeout');
+            videoUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(videoUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            videoUnitComponent.handleCollapse(new Event('click'));
+            expect(setTimeout).toHaveBeenCalledTimes(1);
+            expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000 * 60 * 5);
+            jest.runAllTimers();
+        });
+    }, 1000);
+
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            videoUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(videoUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            videoUnitComponent.handleClick(new Event('click'), false);
+        });
+    }, 1000);
 });

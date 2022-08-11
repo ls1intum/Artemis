@@ -83,6 +83,28 @@ describe('AttachmentUnitComponent', () => {
         const downloadButton = attachmentUnitComponentFixture.debugElement.nativeElement.querySelector('#downloadButton');
         expect(downloadButton).not.toBeNull();
         downloadButton.click();
-        expect(downloadFileStub).toHaveBeenCalledTimes(1);
+        expect(downloadFileStub).toHaveBeenCalledOnce();
     });
+
+    it('should call completion callback when downloaded', () => {
+        return new Promise<void>((done) => {
+            attachmentUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(attachmentUnit);
+                expect(event.completed).toBeTrue();
+                done();
+            });
+            attachmentUnitComponent.downloadAttachment();
+        });
+    }, 1000);
+
+    it('should call completion callback when clicked', () => {
+        return new Promise<void>((done) => {
+            attachmentUnitComponent.onCompletion.subscribe((event) => {
+                expect(event.lectureUnit).toEqual(attachmentUnit);
+                expect(event.completed).toBeFalse();
+                done();
+            });
+            attachmentUnitComponent.handleClick(new Event('click'), false);
+        });
+    }, 1000);
 });

@@ -44,8 +44,9 @@
                     id="text-editor"
                     #textEditor
                     class="text-editor-textarea"
+                    [maxlength]="maxCharacterCount"
                     [(ngModel)]="answer"
-                    [readonly]="!isActive || !submission"
+                    [readonly]="!isActive || !submission || !isOwnerOfParticipation"
                     [disabled]="!isActive || !submission"
                     (keydown.tab)="onTextEditorTab(textEditor, $event)"
                     (input)="onTextEditorInput($event)"
@@ -70,7 +71,7 @@
                             }}:
                         </b>
                         <hr />
-                        <jhi-text-result [result]="result"></jhi-text-result>
+                        <jhi-text-result [result]="result" [course]="course"></jhi-text-result>
                         <hr />
                     </div>
                     <jhi-additional-feedback

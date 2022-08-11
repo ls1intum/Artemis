@@ -114,7 +114,7 @@ describe('TestwiseCoverageReport Component', () => {
 
     it('should filter coverage file reports for test case', () => {
         comp.changeReportsBySelectedTestCases('testBubbleSort()');
-        expect(comp.displayedTestCaseNames.get('testBubbleSort()')).toBe(false);
+        expect(comp.displayedTestCaseNames.get('testBubbleSort()')).toBeFalse();
         expect(comp.fileReportByFileName.size).toBe(2);
         expect(comp.fileReportByFileName.get('src/de/tum/in/ase/BubbleSort.java')?.testwiseCoverageEntries).toEqual([reportEntries[1]]);
     });

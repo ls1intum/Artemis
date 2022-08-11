@@ -228,21 +228,21 @@ describe('Grading System Service', () => {
     });
 
     it('should match grade percentage correctly', () => {
-        expect(service.matchGradePercentage(gradeStep2, 40)).toEqual(true);
-        expect(service.matchGradePercentage(gradeStep2, 70)).toEqual(true);
-        expect(service.matchGradePercentage(gradeStep2, 80)).toEqual(false);
+        expect(service.matchGradePercentage(gradeStep2, 40)).toBeTrue();
+        expect(service.matchGradePercentage(gradeStep2, 70)).toBeTrue();
+        expect(service.matchGradePercentage(gradeStep2, 80)).toBeFalse();
     });
 
     it('should find matching grade step', () => {
         expect(service.findMatchingGradeStep(gradeSteps, 30)).toEqual(gradeStep1);
         expect(service.findMatchingGradeStep(gradeSteps, 90)).toEqual(gradeStep3);
         expect(service.findMatchingGradeStep(gradeSteps, 150)).toEqual(gradeStep3);
-        expect(service.findMatchingGradeStep(gradeSteps, -10)).toEqual(undefined);
+        expect(service.findMatchingGradeStep(gradeSteps, -10)).toBeUndefined();
     });
 
     it('should find max grade correctly', () => {
         expect(service.maxGrade(gradeSteps)).toEqual(gradeStep3.gradeName);
-        expect(service.maxGrade([])).toEqual('');
+        expect(service.maxGrade([])).toBe('');
     });
 
     it('should set grade points correctly', () => {

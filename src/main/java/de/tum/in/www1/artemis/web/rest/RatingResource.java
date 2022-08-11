@@ -129,7 +129,7 @@ public class RatingResource {
     }
 
     /**
-     * Check if currently logged in user in the owner of the participation, if this is not the case throw an AccessForbiddenException
+     * Check if currently logged-in user in the owner of the participation, if this is not the case throw an AccessForbiddenException
      *
      * @param resultId - Id of the result that the participation belongs to
      */

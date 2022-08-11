@@ -6,15 +6,15 @@ import { Course } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
 import { AlertService } from 'app/core/util/alert.service';
-import { round, roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
+import { round } from 'app/shared/util/utils';
 import dayjs from 'dayjs/esm';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { getLatestSubmissionResult, setLatestSubmissionResult } from 'app/entities/submission.model';
 import { GradeType } from 'app/entities/grading-scale.model';
-import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 import { getRelativeWorkingTimeExtension, normalWorkingTime } from 'app/exam/participate/exam.utils';
 import { Exercise } from 'app/entities/exercise.model';
+import { StudentExamWithGradeDTO } from 'app/exam/exam-scores/exam-score-dtos.model';
 
 @Component({
     selector: 'jhi-student-exam-detail',
@@ -25,10 +25,12 @@ import { Exercise } from 'app/entities/exercise.model';
 export class StudentExamDetailComponent implements OnInit {
     courseId: number;
     studentExam: StudentExam;
+    achievedPointsPerExercise: { [exerciseId: number]: number };
     course: Course;
     student: User;
     isSavingWorkingTime = false;
     isTestRun = false;
+    isTestExam: boolean;
     maxTotalPoints = 0;
     achievedTotalPoints = 0;
     bonusTotalPoints = 0;
@@ -57,7 +59,6 @@ export class StudentExamDetailComponent implements OnInit {
         private artemisDurationFromSecondsPipe: ArtemisDurationFromSecondsPipe,
         private alertService: AlertService,
         private modalService: NgbModal,
-        private gradingSystemService: GradingSystemService,
     ) {}
 
     /**
@@ -74,24 +75,20 @@ export class StudentExamDetailComponent implements OnInit {
     loadStudentExam() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.examId = Number(this.route.snapshot.paramMap.get('examId'));
-        this.route.data.subscribe(({ studentExam }) => this.setStudentExam(studentExam));
-        this.calculateGrade();
+        this.route.data.subscribe(({ studentExam }) => this.setStudentExamWithGrade(studentExam));
+        this.isTestExam = this.studentExam.exam!.testExam!;
     }
 
     /**
      * Sets grade related information if a grading scale exists for the exam
      */
-    calculateGrade() {
-        const achievedPercentageScore = (this.achievedTotalPoints / this.maxTotalPoints) * 100;
-        this.gradingSystemService.matchPercentageToGradeStepForExam(this.courseId, this.examId, achievedPercentageScore).subscribe((gradeObservable) => {
-            if (gradeObservable && gradeObservable.body) {
-                this.gradingScaleExists = true;
-                const gradeDTO = gradeObservable.body;
-                this.grade = gradeDTO.gradeName;
-                this.passed = gradeDTO.isPassingGrade;
-                this.isBonus = gradeDTO.gradeType === GradeType.BONUS;
-            }
-        });
+    setExamGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
+        if (studentExamWithGrade?.studentResult?.overallGrade != undefined) {
+            this.gradingScaleExists = true;
+            this.grade = studentExamWithGrade.studentResult.overallGrade;
+            this.passed = !!studentExamWithGrade.studentResult.hasPassed;
+            this.isBonus = studentExamWithGrade.gradeType === GradeType.BONUS;
+        }
     }
 
     /**
@@ -117,16 +114,38 @@ export class StudentExamDetailComponent implements OnInit {
 
     /**
      * Sets the student exam, initialised the component which allows changing the working time and sets the score of the student.
+     * @param studentExamWithGrade
+     */
+    private setStudentExamWithGrade(studentExamWithGrade: StudentExamWithGradeDTO) {
+        if (studentExamWithGrade.studentExam == undefined) {
+            // This should not happen, the server endpoint should return studentExamWithGrade.studentExam.
+            throw new Error('studentExamWithGrade.studentExam is undefined');
+        }
+
+        this.studentExam = studentExamWithGrade.studentExam;
+        this.achievedPointsPerExercise = studentExamWithGrade.achievedPointsPerExercise;
+
+        this.initWorkingTimeForm();
+
+        this.maxTotalPoints = studentExamWithGrade.maxPoints ?? 0;
+        this.achievedTotalPoints = studentExamWithGrade.studentResult.overallPointsAchieved ?? 0;
+        this.bonusTotalPoints = studentExamWithGrade.maxBonusPoints ?? 0;
+
+        this.student = studentExamWithGrade.studentExam.user!;
+        this.course = studentExamWithGrade.studentExam.exam!.course!;
+
+        studentExamWithGrade.studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
+        this.setExamGrade(studentExamWithGrade);
+    }
+
+    /**
+     * Sets the student exam, initialised the component which allows changing the working time and sets the score of the student.
      * @param studentExam
      */
     private setStudentExam(studentExam: StudentExam) {
         this.studentExam = studentExam;
 
         this.initWorkingTimeForm();
-
-        this.maxTotalPoints = 0;
-        this.achievedTotalPoints = 0;
-        this.bonusTotalPoints = 0;
 
         this.student = this.studentExam.user!;
         this.course = this.studentExam.exam!.course!;
@@ -142,21 +161,9 @@ export class StudentExamDetailComponent implements OnInit {
      * @private
      */
     private initExercise(exercise: Exercise) {
-        this.maxTotalPoints += exercise.maxPoints!;
-        this.bonusTotalPoints += exercise.bonusPoints!;
-
-        if (
-            exercise.studentParticipations?.length &&
-            exercise.studentParticipations.length > 0 &&
-            exercise.studentParticipations[0].results?.length &&
-            exercise.studentParticipations[0].results.length > 0
-        ) {
-            if (exercise.studentParticipations[0].submissions && exercise.studentParticipations[0].submissions.length > 0) {
-                exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
-                setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
-            }
-
-            this.achievedTotalPoints += roundValueSpecifiedByCourseSettings((exercise.studentParticipations[0].results[0].score! * exercise.maxPoints!) / 100, this.course);
+        if (exercise.studentParticipations?.[0]?.submissions?.[0]) {
+            exercise.studentParticipations[0].submissions[0].results = exercise.studentParticipations[0].results;
+            setLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0], getLatestSubmissionResult(exercise?.studentParticipations[0].submissions?.[0]));
         }
     }
 

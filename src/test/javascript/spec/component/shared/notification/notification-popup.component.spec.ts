@@ -72,13 +72,13 @@ describe('Notification Popup Component', () => {
         it('should get authentication state', () => {
             jest.spyOn(accountService, 'getAuthenticationState');
             notificationPopupComponent.ngOnInit();
-            expect(accountService.getAuthenticationState).toHaveBeenCalledTimes(1);
+            expect(accountService.getAuthenticationState).toHaveBeenCalledOnce();
         });
 
         it('should subscribe to notification updates', () => {
             jest.spyOn(notificationService, 'subscribeToNotificationUpdates');
             notificationPopupComponent.ngOnInit();
-            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledTimes(1);
+            expect(notificationService.subscribeToNotificationUpdates).toHaveBeenCalledOnce();
         });
     });
 
@@ -103,9 +103,9 @@ describe('Notification Popup Component', () => {
                 jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
                 const notificationElement = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div'));
                 notificationElement.nativeElement.click();
-                expect(notificationPopupComponent.removeNotification).toHaveBeenCalledTimes(1);
+                expect(notificationPopupComponent.removeNotification).toHaveBeenCalledOnce();
                 expect(notificationPopupComponent.notifications).toBeEmpty();
-                expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledTimes(1);
+                expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
             });
 
             it('should navigate to quiz target when quiz notification is clicked', () => {
@@ -113,8 +113,8 @@ describe('Notification Popup Component', () => {
                 jest.spyOn(router, 'navigateByUrl');
                 const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
                 button.nativeElement.click();
-                expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledTimes(1);
-                expect(router.navigateByUrl).toHaveBeenCalledTimes(1);
+                expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
+                expect(router.navigateByUrl).toHaveBeenCalledOnce();
             });
         });
 
@@ -126,8 +126,8 @@ describe('Notification Popup Component', () => {
             jest.spyOn(examExerciseUpdateService, 'navigateToExamExercise').mockReturnValue();
             const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
             button.nativeElement.click();
-            expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledTimes(1);
-            expect(examExerciseUpdateService.navigateToExamExercise).toHaveBeenCalledTimes(1);
+            expect(notificationPopupComponent.navigateToTarget).toHaveBeenCalledOnce();
+            expect(examExerciseUpdateService.navigateToExamExercise).toHaveBeenCalledOnce();
         });
     });
 
@@ -149,10 +149,10 @@ describe('Notification Popup Component', () => {
             const otherNotification = generateQuizNotification(2);
             notificationPopupComponent.notifications = [otherNotification];
             notificationPopupComponent.ngOnInit();
-            expect(notificationPopupComponent.notifications.length).toEqual(2);
+            expect(notificationPopupComponent.notifications).toHaveLength(2);
             expect(notificationPopupComponent.notifications[0]).toEqual(quizNotification);
             tick(30000);
-            expect(notificationPopupComponent.notifications.length).toEqual(1);
+            expect(notificationPopupComponent.notifications).toHaveLength(1);
             expect(notificationPopupComponent.notifications[0]).toEqual(otherNotification);
         }));
 

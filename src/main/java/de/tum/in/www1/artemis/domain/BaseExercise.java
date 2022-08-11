@@ -14,8 +14,8 @@ import com.fasterxml.jackson.annotation.JsonView;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.DifficultyLevel;
 import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
+import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.view.QuizView;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @MappedSuperclass
 public abstract class BaseExercise extends DomainObject {
@@ -202,30 +202,10 @@ public abstract class BaseExercise extends DomainObject {
     public abstract boolean isExamExercise();
 
     /**
-     * This method is used to validate the dates of an exercise. A date is valid if there is no dueDateError or assessmentDueDateError
-     * @throws BadRequestAlertException if the dates are not valid
-     */
-    public void validateDates() {
-        // All fields are optional, so there is no error if none of them is set
-        if (getReleaseDate() == null && getDueDate() == null && getAssessmentDueDate() == null && getExampleSolutionPublicationDate() == null) {
-            return;
-        }
-        if (isExamExercise()) {
-            throw new BadRequestAlertException("An exam exercise may not have any dates set!", getTitle(), "invalidDatesForExamExercise");
-        }
-        // at least one is set, so we have to check the two possible errors
-        boolean areDatesValid = isBeforeAndNotNull(getReleaseDate(), getDueDate()) && isValidAssessmentDueDate(getReleaseDate(), getDueDate(), getAssessmentDueDate());
-
-        if (!areDatesValid) {
-            throw new BadRequestAlertException("The exercise dates are not valid", getTitle(), "noValidDates");
-        }
-    }
-
-    /**
      * This method is used to validate the assessmentDueDate of an exercise. An assessmentDueDate is valid if it is after the releaseDate and dueDate. A given assessmentDueDate is invalid without an according dueDate
      * @return true if there is no assessmentDueDateError
      */
-    private static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
+    protected static boolean isValidAssessmentDueDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate) {
         if (assessmentDueDate == null) {
             return true;
         }
@@ -233,17 +213,33 @@ public abstract class BaseExercise extends DomainObject {
         if (dueDate == null) {
             return false;
         }
-        return isBeforeAndNotNull(dueDate, assessmentDueDate) && isBeforeAndNotNull(releaseDate, assessmentDueDate);
+        return isNotAfterAndNotNull(dueDate, assessmentDueDate) && isNotAfterAndNotNull(releaseDate, assessmentDueDate);
+    }
+
+    /**
+     * This method is used to validate the exampleSolutionPublicationDate of an exercise. An exampleSolutionPublicationDate is valid if it is after the releaseDate and dueDate.
+     * Any given exampleSolutionPublicationDate is valid if releaseDate and dueDate are not set.
+     * exampleSolutionPublicationDate is valid if it is not set.
+     * @return true if there is no exampleSolutionPublicationDateError
+     */
+    protected static boolean isValidExampleSolutionPublicationDate(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime exampleSolutionPublicationDate,
+            IncludedInOverallScore includedInOverallScore) {
+        if (exampleSolutionPublicationDate == null) {
+            return true;
+        }
+
+        return (isNotAfterAndNotNull(dueDate, exampleSolutionPublicationDate) || includedInOverallScore == IncludedInOverallScore.NOT_INCLUDED)
+                && isNotAfterAndNotNull(releaseDate, exampleSolutionPublicationDate);
     }
 
     /**
      * This method is used to validate if the previousDate is before the laterDate.
      * @return true if the previousDate is valid
      */
-    private static boolean isBeforeAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
+    protected static boolean isNotAfterAndNotNull(ZonedDateTime previousDate, ZonedDateTime laterDate) {
         if (previousDate == null || laterDate == null) {
             return true;
         }
-        return previousDate.isBefore(laterDate);
+        return !previousDate.isAfter(laterDate);
     }
 }

@@ -23,8 +23,10 @@ import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
+import { By } from '@angular/platform-browser';
 import { PLACEHOLDER_USER_REACTED, ReactingUsersOnPostingPipe } from 'app/shared/pipes/reacting-users-on-posting.pipe';
 import { metisCourse, metisPostExerciseUser1, metisUser1, sortedAnswerArray } from '../../../../../helpers/sample/metis-sample-data';
+import { EmojiComponent } from 'app/shared/metis/emoji/emoji.component';
 
 describe('PostReactionsBarComponent', () => {
     let component: PostReactionsBarComponent;
@@ -39,7 +41,14 @@ describe('PostReactionsBarComponent', () => {
     beforeEach(() => {
         return TestBed.configureTestingModule({
             imports: [HttpClientTestingModule, MockModule(OverlayModule), MockModule(EmojiModule), MockModule(PickerModule)],
-            declarations: [PostReactionsBarComponent, TranslatePipeMock, MockPipe(ReactingUsersOnPostingPipe), MockDirective(NgbTooltip), MockComponent(FaIconComponent)],
+            declarations: [
+                PostReactionsBarComponent,
+                TranslatePipeMock,
+                MockPipe(ReactingUsersOnPostingPipe),
+                MockDirective(NgbTooltip),
+                MockComponent(FaIconComponent),
+                EmojiComponent,
+            ],
             providers: [
                 MockProvider(SessionStorageService),
                 { provide: MetisService, useClass: MetisService },
@@ -81,7 +90,7 @@ describe('PostReactionsBarComponent', () => {
         metisCourse.isAtLeastTutor = false;
         metisService.setCourse(metisCourse);
         component.ngOnInit();
-        expect(component.currentUserIsAtLeastTutor).toEqual(false);
+        expect(component.currentUserIsAtLeastTutor).toBeFalse();
         fixture.detectChanges();
         const reaction = getElement(debugElement, 'ngx-emoji');
         expect(reaction).toBeDefined();
@@ -99,9 +108,9 @@ describe('PostReactionsBarComponent', () => {
         metisCourse.isAtLeastTutor = true;
         metisService.setCourse(metisCourse);
         component.ngOnInit();
-        expect(component.currentUserIsAtLeastTutor).toEqual(true);
+        expect(component.currentUserIsAtLeastTutor).toBeTrue();
         fixture.detectChanges();
-        const reactions = getElements(debugElement, 'ngx-emoji');
+        const reactions = getElements(debugElement, 'jhi-emoji');
         // emojis to be displayed it the user reaction, the pin, archive and the show answers toggle emoji
         expect(reactions).toHaveLength(4);
         expect(component.reactionMetaDataMap).toEqual({
@@ -112,8 +121,8 @@ describe('PostReactionsBarComponent', () => {
             },
         });
         // set correct tooltips for tutor and post that is not pinned and not archived
-        expect(component.archiveTooltip).toEqual('artemisApp.metis.archivePostTutorTooltip');
-        expect(component.pinTooltip).toEqual('artemisApp.metis.pinPostTutorTooltip');
+        expect(component.archiveTooltip).toBe('artemisApp.metis.archivePostTutorTooltip');
+        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTutorTooltip');
     });
 
     it('should invoke metis service method with correctly built reaction to create it', () => {
@@ -149,8 +158,8 @@ describe('PostReactionsBarComponent', () => {
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting.id!, DisplayPriority.PINNED);
         component.ngOnChanges();
         // set correct tooltips for tutor and post that is pinned and not archived
-        expect(component.pinTooltip).toEqual('artemisApp.metis.removePinPostTutorTooltip');
-        expect(component.archiveTooltip).toEqual('artemisApp.metis.archivePostTutorTooltip');
+        expect(component.pinTooltip).toBe('artemisApp.metis.removePinPostTutorTooltip');
+        expect(component.archiveTooltip).toBe('artemisApp.metis.archivePostTutorTooltip');
     });
 
     it('should invoke metis service method when archive icon is toggled', () => {
@@ -164,8 +173,8 @@ describe('PostReactionsBarComponent', () => {
         expect(metisServiceUpdateDisplayPriorityMock).toHaveBeenCalledWith(component.posting.id!, DisplayPriority.ARCHIVED);
         component.ngOnChanges();
         // set correct tooltips for tutor and post that is archived and not pinned
-        expect(component.pinTooltip).toEqual('artemisApp.metis.pinPostTutorTooltip');
-        expect(component.archiveTooltip).toEqual('artemisApp.metis.removeArchivePostTutorTooltip');
+        expect(component.pinTooltip).toBe('artemisApp.metis.pinPostTutorTooltip');
+        expect(component.archiveTooltip).toBe('artemisApp.metis.removeArchivePostTutorTooltip');
     });
 
     it('should show non-clickable pin emoji with correct tooltip for student when post is pinned', () => {
@@ -179,7 +188,7 @@ describe('PostReactionsBarComponent', () => {
         pinEmoji.click();
         expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
         // set correct tooltips for student and post that is pinned
-        expect(component.pinTooltip).toEqual('artemisApp.metis.pinnedPostTooltip');
+        expect(component.pinTooltip).toBe('artemisApp.metis.pinnedPostTooltip');
     });
 
     it('should show non-clickable archive emoji with correct tooltip for student when post is archived', () => {
@@ -193,15 +202,15 @@ describe('PostReactionsBarComponent', () => {
         archiveEmoji.click();
         expect(metisServiceUpdateDisplayPriorityMock).not.toHaveBeenCalled();
         // set correct tooltips for student and post that is archived
-        expect(component.archiveTooltip).toEqual('artemisApp.metis.archivedPostTooltip');
+        expect(component.archiveTooltip).toBe('artemisApp.metis.archivedPostTooltip');
     });
 
     it('start discussion button should be visible if post does not yet have any answers', () => {
         component.posting = post;
         component.sortedAnswerPosts = [];
         fixture.detectChanges();
-        const startDiscussion = fixture.debugElement.nativeElement.querySelector('#startDiscussionButton');
-        expect(startDiscussion.innerHTML).toContain('startDiscussion');
+        const startDiscussion = fixture.debugElement.query(By.css('.reply-btn')).nativeElement;
+        expect(startDiscussion.innerHTML).toContain('reply');
     });
 
     it('should display button to show single answer', () => {
@@ -209,7 +218,7 @@ describe('PostReactionsBarComponent', () => {
         component.sortedAnswerPosts = [metisPostExerciseUser1];
         component.showAnswers = false;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#expandAnswersButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('showSingleAnswer');
     });
 
@@ -217,7 +226,7 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.showAnswers = false;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#expandAnswersButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.expand-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('showMultipleAnswers');
     });
 
@@ -225,7 +234,7 @@ describe('PostReactionsBarComponent', () => {
         component.posting = post;
         component.showAnswers = true;
         fixture.detectChanges();
-        const answerNowButton = fixture.debugElement.nativeElement.querySelector('#collapseAnswersButton');
+        const answerNowButton = fixture.debugElement.query(By.css('.collapse-answers-btn')).nativeElement;
         expect(answerNowButton.innerHTML).toContain('collapseAnswers');
     });
 });

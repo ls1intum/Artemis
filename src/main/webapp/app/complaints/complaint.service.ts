@@ -1,13 +1,15 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import dayjs from 'dayjs/esm';
-
 import { Complaint, ComplaintType } from 'app/entities/complaint.model';
 import { ComplaintResponseService } from 'app/complaints/complaint-response.service';
 import { Exercise } from 'app/entities/exercise.model';
 import { map } from 'rxjs/operators';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
+import { Course } from 'app/entities/course.model';
+import { AssessmentType } from 'app/entities/assessment-type.model';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 
 export type EntityResponseType = HttpResponse<Complaint>;
 export type EntityResponseTypeArray = HttpResponse<Complaint[]>;
@@ -81,13 +83,15 @@ export class ComplaintService implements IComplaintService {
      * @param examId the id of the exam
      */
     create(complaint: Complaint, examId?: number): Observable<EntityResponseType> {
-        const copy = this.convertDateFromClient(complaint);
+        const copy = this.convertComplaintDatesFromClient(complaint);
         if (examId) {
             return this.http
                 .post<Complaint>(`${this.resourceUrl}/exam/${examId}`, copy, { observe: 'response' })
-                .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+                .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
         }
-        return this.http.post<Complaint>(this.resourceUrl, copy, { observe: 'response' }).pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+        return this.http
+            .post<Complaint>(this.resourceUrl, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
     /**
@@ -97,7 +101,7 @@ export class ComplaintService implements IComplaintService {
     findBySubmissionId(submissionId: number): Observable<EntityResponseType> {
         return this.http
             .get<Complaint>(`${this.resourceUrl}/submissions/${submissionId}`, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.convertDateFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.convertComplaintEntityResponseDatesFromServer(res)));
     }
 
     /**
@@ -107,7 +111,7 @@ export class ComplaintService implements IComplaintService {
     getComplaintsForTestRun(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
             .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/complaints-for-test-run-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
+            .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
     }
 
     /**
@@ -117,7 +121,7 @@ export class ComplaintService implements IComplaintService {
     getMoreFeedbackRequestsForTutor(exerciseId: number): Observable<EntityResponseTypeArray> {
         return this.http
             .get<Complaint[]>(`${this.apiUrl}/exercises/${exerciseId}/more-feedback-for-assessment-dashboard`, { observe: 'response' })
-            .pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
+            .pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
     }
 
     /**
@@ -222,32 +226,61 @@ export class ComplaintService implements IComplaintService {
         return false;
     }
 
-    private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
-        return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertDateFromServerArray(res)));
+    /**
+     * Calculates the date until which a complaint can be filed at least
+     * @param exercise for which the student can complain
+     * @param studentParticipation of the student in the exercise that can complain
+     * @param course in which the exercise is
+     * @return the date until which the student can complain
+     */
+    getIndividualComplaintDueDate(exercise: Exercise, course: Course, studentParticipation?: StudentParticipation): dayjs.Dayjs | undefined {
+        const lastResult = studentParticipation?.results?.last();
+        // No complaints if there is no result or the exercise does not support complaints
+        if (!lastResult || !exercise.dueDate || (exercise.assessmentType === AssessmentType.AUTOMATIC && !exercise.allowComplaintsForAutomaticAssessments)) {
+            return undefined;
+        }
+
+        const now = dayjs();
+        let complaintStartDate;
+        if (exercise.allowComplaintsForAutomaticAssessments) {
+            complaintStartDate = exercise.dueDate;
+        } else if (lastResult.rated && !exercise.assessmentDueDate) {
+            complaintStartDate = lastResult.completionDate;
+        } else if (lastResult.rated && now.isAfter(exercise.assessmentDueDate)) {
+            complaintStartDate = exercise.assessmentDueDate!.isAfter(lastResult.completionDate) ? exercise.assessmentDueDate : lastResult.completionDate;
+        } else {
+            return undefined;
+        }
+
+        return dayjs(complaintStartDate).add(course.maxComplaintTimeDays!, 'days');
     }
 
-    private convertDateFromClient(complaint: Complaint): Complaint {
+    private requestComplaintsFromUrl(url: string): Observable<EntityResponseTypeArray> {
+        return this.http.get<Complaint[]>(url, { observe: 'response' }).pipe(map((res: EntityResponseTypeArray) => this.convertComplaintEntityResponseArrayDateFromServer(res)));
+    }
+
+    private convertComplaintDatesFromClient(complaint: Complaint): Complaint {
         return Object.assign({}, complaint, {
-            submittedTime: complaint.submittedTime && dayjs(complaint.submittedTime).isValid ? complaint.submittedTime.toJSON() : undefined,
+            submittedTime: convertDateFromClient(complaint.submittedTime),
         });
     }
 
-    private convertDateFromServer(res: EntityResponseType): EntityResponseType {
+    private convertComplaintEntityResponseDatesFromServer(res: EntityResponseType): EntityResponseType {
         if (res.body) {
             res.body.submittedTime = res.body.submittedTime ? dayjs(res.body.submittedTime) : undefined;
             if (res.body?.complaintResponse) {
-                this.complaintResponseService.convertDatesToDayjs(res.body.complaintResponse);
+                this.complaintResponseService.convertComplaintResponseDatesFromServer(res.body.complaintResponse);
             }
         }
         return res;
     }
 
-    private convertDateFromServerArray(res: EntityResponseTypeArray): EntityResponseTypeArray {
+    private convertComplaintEntityResponseArrayDateFromServer(res: EntityResponseTypeArray): EntityResponseTypeArray {
         if (res.body) {
             res.body.forEach((complaint) => {
-                complaint.submittedTime = complaint.submittedTime ? dayjs(complaint.submittedTime) : undefined;
+                complaint.submittedTime = convertDateFromServer(complaint.submittedTime);
                 if (complaint.complaintResponse) {
-                    this.complaintResponseService.convertDatesToDayjs(complaint.complaintResponse);
+                    this.complaintResponseService.convertComplaintResponseDatesFromServer(complaint.complaintResponse);
                 }
             });
         }

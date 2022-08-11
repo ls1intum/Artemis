@@ -116,12 +116,17 @@ $border-color: lighten($body-bg, 10);
 // Base for dark spaces
 $neutral-dark: rgb(24, 26, 24); // (not bootstrap)
 
+$neutral-dark-l-5: lighten($neutral-dark, 5%);
+$neutral-dark-l-10: lighten($neutral-dark, 10%);
+$neutral-dark-l-15: lighten($neutral-dark, 15%);
+$neutral-dark-l-20: lighten($neutral-dark, 20%);
+
 // Footer
 $footer-bg: $neutral-dark;
 
 // Cards
 $card-bg: $neutral-dark;
-$card-cap-bg: lighten($neutral-dark, 5%);
+$card-cap-bg: $neutral-dark-l-5;
 $card-border-color: $border-color;
 
 // Navbar
@@ -139,12 +144,12 @@ $slightly-darker-body-bg: darken($body-bg, 10);
 $brighter-body-bg: lighten($body-bg, 10);
 
 $dropdown-bg: $neutral-dark;
-$popover-bg: lighten($neutral-dark, 5);
+$popover-bg: $neutral-dark-l-5;
 $popover-header-bg: $gray-700;
 $modal-content-bg: $neutral-dark;
 
 // Borders
-$theme-switch-box-border-color: lighten($neutral-dark, 15);
+$theme-switch-box-border-color: $neutral-dark-l-15;
 
 // Global.scss colors
 $colored-btn-font: #fff;
@@ -160,7 +165,7 @@ $browserupgrade-color: black;
 $browserupgrade-color-background: #ccc;
 $ng-valid-border: green;
 $ng-invalid-border: red;
-$gutter-background: #f1f1f1;
+$gutter-background: #bbb;
 $error-color: white;
 $error-background: red;
 $readonly-background: #eee;
@@ -177,8 +182,8 @@ $positive-color: $success;
 $positive-background: $gray-800;
 
 $artemis-pre-color: white;
-$artemis-pre-background: lighten($neutral-dark, 10);
-$artemis-pre-border: lighten($neutral-dark, 20);
+$artemis-pre-background: $neutral-dark-l-10;
+$artemis-pre-border: $neutral-dark-l-20;
 
 $code-success-color: green;
 $code-success-background: #f2f9f2;
@@ -216,7 +221,7 @@ $mat-form-field-outline: #ccc;
 
 // Feature Overview
 $fo-wrapper-background: $neutral-dark;
-$fo-container-box-icon-background: lighten($neutral-dark, 10);
+$fo-container-box-icon-background: $neutral-dark-l-10;
 $fo-blue-font-color: #4188d3;
 
 // Header Participation
@@ -247,6 +252,9 @@ $reaction-button-reacted-color: $gray-800;
 $reaction-button-reacted-accent-color: $metis-blue;
 $reaction-button-emoji-count-color: $gray-200;
 
+$metis-post-tag-selector-tag-option-background: $neutral-dark;
+$metis-post-tag-selector-tag-option-hover-background: $neutral-dark-l-5;
+
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
@@ -255,8 +263,8 @@ $course-exercise-card-border-color: $border-color;
 $course-exercise-card-background: $neutral-dark;
 
 // Component: color selector
-$color-selector-background: lighten($neutral-dark, 10);
-$color-selector-border: lighten($neutral-dark, 20);
+$color-selector-background: $neutral-dark-l-10;
+$color-selector-border: $neutral-dark-l-20;
 $color-selector-box-shadow: rgba(0, 0, 0, 0.3);
 
 // Component: Statistics average score graph
@@ -278,7 +286,7 @@ $edit-quiz-footer-background: $brighter-body-bg;
 $edit-quiz-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $quiz-exercise-detail-max-score-background: $artemis-dark;
 $quiz-exercise-detail-max-score-color: white;
-$quiz-edit-question-border: lighten($neutral-dark, 10%);
+$quiz-edit-question-border: $neutral-dark-l-10;
 $quiz-edit-question-background: $neutral-dark;
 
 $edit-quiz-q-dnd-drop-location-background: white;
@@ -286,9 +294,9 @@ $edit-quiz-q-dnd-drop-location-color: black;
 $edit-quiz-q-dnd-drop-location-hover-bg: rgba(255, 255, 255, 0.8);
 
 // Quiz Exercises
-$quiz-drag-items-background: lighten($neutral-dark, 5%);
-$quiz-drag-item-background: lighten($neutral-dark, 10%);
-$quiz-drag-item-border: lighten($neutral-dark, 20%);
+$quiz-drag-items-background: $neutral-dark-l-5;
+$quiz-drag-item-background: $neutral-dark-l-10;
+$quiz-drag-item-border: $neutral-dark-l-20;
 $quiz-drag-item-color: white;
 
 $quiz-navigation-background: $neutral-dark;
@@ -319,7 +327,7 @@ $quiz-scoring-info-student-modal-question-correct: $success;
 $quiz-scoring-info-student-modal-question-wrong: $warning;
 
 $quiz-question-background: $neutral-dark;
-$quiz-question-border-color: lighten($neutral-dark, 20%);
+$quiz-question-border-color: $neutral-dark-l-20;
 
 $dnd-question-drop-location-background: white;
 $dnd-question-drop-location-border-color: black;
@@ -332,7 +340,7 @@ $dnd-question-drop-location-results-sample-background: white;
 $dnd-question-drop-location-result-symbol-color: $warning;
 $dnd-question-drop-location-result-invalid-color: $danger;
 $dnd-question-drop-location-drag-item-background: white;
-$dnd-question-dnd-items-drag-items-background: lighten($neutral-dark, 10%);
+$dnd-question-dnd-items-drag-items-background: $neutral-dark-l-10;
 $dnd-question-drop-list-receiving-background: rgba(173, 216, 230, 0.8);
 $dnd-question-drop-list-dragging-background: rgb(144, 238, 144);
 
@@ -347,8 +355,8 @@ $mc-question-answer-option-border: transparentize(#fff, 0.8);
 $mc-question-answer-option-hover-background: transparentize(#fff, 0.97);
 
 // Programming Exercises
-$programming-exercise-instruction-step-wizard-card-header-background: lighten($neutral-dark, 5%);
-$programming-exercise-instruction-step-wizard-card-header-border: lighten($neutral-dark, 10%);
+$programming-exercise-instruction-step-wizard-card-header-background: $neutral-dark-l-5;
+$programming-exercise-instruction-step-wizard-card-header-border: $neutral-dark-l-10;
 $programming-exercise-instruction-step-wizard-row-before-background: #ccc;
 $programming-exercise-instruction-step-wizard-btn-border-color: #ccc;
 $programming-exercise-instruction-step-wizard-circle-not-done-color: $gray-700;
@@ -356,16 +364,16 @@ $programming-exercise-instruction-step-wizard-test-passing-hover-color: #f8f9fa;
 
 // SGI
 $edit-sqi-grading-instructions-update-border: $border-color;
-$edit-sqi-criterion-title-row-background: lighten($neutral-dark, 5%);
+$edit-sqi-criterion-title-row-background: $neutral-dark-l-5;
 
 $sgi-assessment-layout-zero-background: darken($warning, 40);
 $sgi-assessment-layout-positive-background: darken($success, 30);
 $sgi-assessment-layout-negative-background: darken($danger, 45);
 
 // Code Editor
-$code-editor-file-browser-header-background: lighten($neutral-dark, 5%);
-$code-editor-file-browser-header-border: lighten($neutral-dark, 10%);
-$code-editor-file-browser-tree-hover: lighten($neutral-dark, 5%);
+$code-editor-file-browser-header-background: $neutral-dark-l-5;
+$code-editor-file-browser-header-border: $neutral-dark-l-10;
+$code-editor-file-browser-tree-hover: $neutral-dark-l-5;
 $code-editor-file-browser-input-background: darken($neutral-dark, 10%);
 $code-editor-file-browser-input-color: white;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
@@ -383,9 +391,12 @@ $overview-refresh-overlay-color: $gray-400;
 
 // Lecture Unit
 $lecture-unit-card-body-background: $neutral-dark;
-$lecture-unit-card-header-background: lighten($neutral-dark, 5%);
+$lecture-unit-card-header-background: $neutral-dark-l-5;
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
+
+// Lecture Attachments
+$lecture-attachment-edit-overlay-color: rgba(0, 0, 0, 0.9);
 
 // Notification sidebar
 $notification-sb-background: $body-bg;
@@ -404,8 +415,8 @@ $text-editor-border-color: $gray-800;
 // Exam (Manage)
 $exam-checklist-exercise-group-table-background: $gray-800;
 
-$exercise-group-border-color: lighten($neutral-dark, 10%);
-$exercise-group-header-background: lighten($neutral-dark, 5%);
+$exercise-group-border-color: $neutral-dark-l-10;
+$exercise-group-header-background: $neutral-dark-l-5;
 $exercise-group-header-badge-color: $warning;
 
 // Grading system
@@ -417,10 +428,11 @@ $exam-students-dropdown-item-active: $success;
 $exam-students-dropdown-item-already-registered-color: #212529;
 $exam-students-dropdown-item-already-registered-background-color: #e9f6ec;
 $exam-students-dropdown-item-already-registered-background-hover-color: #daf2e0;
-$exam-students-datatable-row-newly-registered-background-color: lighten($neutral-dark, 20%);
+$exam-students-datatable-row-newly-registered-background-color: $neutral-dark-l-20;
 
 // Data table
 $data-table-icon-right: white;
+$data-table-icon-down: white;
 $data-table-transitioning-container-active-background-color: rgba(0, 0, 0, 0.5);
 $data-table-dropdown-item-selected-background-color: $primary;
 
@@ -437,7 +449,7 @@ $team-short-name-background: transparentize($blue, 0.85);
 $team-short-name-color: $blue;
 
 // Exam
-$exam-navigation-bar-background-color: lighten($neutral-dark, 5%);
+$exam-navigation-bar-background-color: $neutral-dark-l-5;
 $exam-navigation-bar-synced-color: white;
 $exam-navigation-bar-synced-background-color: #3e8acc;
 $exam-navigation-bar-not-synced-color: #1a1a1a;
@@ -448,12 +460,16 @@ $exam-navigation-bar-exercise-index-color: white;
 $exam-timer-label-color: white;
 $exam-timer-remaining-time-background: black;
 $exam-timer-critical-background: $warning;
-$exam-exercise-overview-table-background: lighten($neutral-dark, 5%);
+$exam-exercise-overview-table-background: $neutral-dark-l-5;
 $exam-participation-footer-background: $neutral-dark;
 $exam-participation-footer-box-shadow: rgba(0, 0, 0, 0.7);
 $exam-participation-footer-connected-background: #114d4f;
 $exam-participation-footer-disconnected-background: #6c4e05;
 $exam-text-exam-summary-background: transparent;
+
+// Exam Monitoring
+$exam-monitoring-card-border-color: $border-color;
+$exam-monitoring-card-footer-background-color: rgba($white, 0.02);
 
 // Assessment
 $textblock-assessment-span-hover-background: $gray-700;
@@ -527,8 +543,8 @@ $apollon-primary-contrast: white;
 $apollon-secondary: $gray-600;
 $apollon-warning-yellow: $warning;
 $apollon-background: $neutral-dark;
-$apollon-background-variant: lighten($neutral-dark, 10);
-$apollon-gray: lighten($neutral-dark, 5);
+$apollon-background-variant: $neutral-dark-l-10;
+$apollon-gray: $neutral-dark-l-5;
 $apollon-gray-variant: $gray-100;
 
 // NGX Graph Colors
@@ -541,3 +557,7 @@ $graph-green: rgba(40, 164, 40, 1);
 $graph-red: rgba(204, 0, 0, 1);
 $graph-yellow: rgba(230, 174, 6, 1);
 $graph-black: rgb(229, 229, 229);
+
+// User-Management
+$user-management-background-color: rgba($white, 0.02);
+$user-management-border-color: rgba($white, 0.15);

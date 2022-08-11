@@ -13,6 +13,7 @@ import {
     getStudentExams,
     updateWorkingTime,
     evaluateQuizzes,
+    startStudentExamForUser,
     submitExam,
 } from './requests/exam.js';
 import { submitRandomTextAnswerExam, newTextExercise } from './requests/text.js';
@@ -87,7 +88,7 @@ export function setup() {
 
         newTextExercise(artemis, exerciseGroup1);
 
-        createQuizExercise(artemis, undefined, exerciseGroup2, false);
+        createQuizExercise(artemis, undefined, exerciseGroup2, false, false);
 
         newModelingExercise(artemis, exerciseGroup3);
 
@@ -141,7 +142,9 @@ export default function (data) {
 
         sleep(30);
 
-        const studentExam = getExamForUser(artemis, data.courseId, data.examId);
+        const studentExamId = startStudentExamForUser(artemis, data.courseId, data.examId).id;
+
+        const studentExam = getExamForUser(artemis, data.courseId, data.examId, studentExamId);
 
         console.log(studentExam.exam.startDate);
         const parsedStartDate = new Date(Date.parse(studentExam.exam.startDate));

@@ -9,7 +9,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 import javax.persistence.*;
@@ -22,7 +21,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -30,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 
 /**
@@ -145,6 +144,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("user")
     private Set<Organization> organizations = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private Set<LectureUnitCompletion> completedLectureUnits = new HashSet<>();
 
     public String getLogin() {
         return login;
@@ -311,6 +313,14 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.organizations = organizations;
     }
 
+    public Set<LectureUnitCompletion> getCompletedLectureUnits() {
+        return completedLectureUnits;
+    }
+
+    public void setCompletedLectureUnits(Set<LectureUnitCompletion> completedLectureUnits) {
+        this.completedLectureUnits = completedLectureUnits;
+    }
+
     public Set<GuidedTourSetting> getGuidedTourSettings() {
         return this.guidedTourSettings;
     }
@@ -335,9 +345,12 @@ public class User extends AbstractAuditingEntity implements Participant {
         return Set.of(this);
     }
 
+    /**
+     * @return an unmodifiable list of all granted authorities
+     */
     @JsonIgnore
-    public List<GrantedAuthority> getGrantedAuthorities() {
-        return getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).collect(Collectors.toList());
+    public List<SimpleGrantedAuthority> getGrantedAuthorities() {
+        return getAuthorities().stream().map(authority -> new SimpleGrantedAuthority(authority.getName())).toList();
     }
 
     @Override

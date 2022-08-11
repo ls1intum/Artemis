@@ -18,10 +18,11 @@ import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.scheduled.quiz.QuizScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -66,13 +67,15 @@ public class ParticipationService {
 
     private final UrlService urlService;
 
+    private final CoverageReportRepository coverageReportRepository;
+
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
             ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
-            UrlService urlService) {
+            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository, UrlService urlService,
+            CoverageReportRepository coverageReportRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -90,34 +93,41 @@ public class ParticipationService {
         this.ratingRepository = ratingRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.urlService = urlService;
+        this.coverageReportRepository = coverageReportRepository;
     }
 
     /**
      * This method is triggered when a student starts an exercise. It creates a Participation which connects the corresponding student and exercise. Additionally, it configures
      * repository / build plan related stuff for programming exercises. In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
      *
-     * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
-     * @param participant the user or team who starts the exercise
+     * @param exercise                the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
+     * @param participant             the user or team who starts the exercise
      * @param createInitialSubmission whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startExercise(Exercise exercise, Participant participant, boolean createInitialSubmission) {
+        return startExerciseWithInitializationDate(exercise, participant, createInitialSubmission, null);
+    }
+
+    /**
+     * This method is called when an StudentExam for a test exam is set up for conduction.
+     * It creates a Participation which connects the corresponding student and exercise. The test exam is linked with the iitializationDate = startedDate (StudentExam)
+     * Additionally, it configures repository / build plan related stuff for programming exercises.
+     * In the case of modeling or text exercises, it also initializes and stores the corresponding submission.
+     *
+     * @param exercise                - the exercise for which a new participation is to be created
+     * @param participant             - the user for which the new participation is to be created
+     * @param createInitialSubmission - whether an initial empty submission should be created for text, modeling, quiz, file-upload or not
+     * @param initializationDate      - the date which should be set as the initializationDate of the Participation. Links studentExam <-> participation
+     * @return a new participation for the given exercise and user
+     */
+    public StudentParticipation startExerciseWithInitializationDate(Exercise exercise, Participant participant, boolean createInitialSubmission, ZonedDateTime initializationDate) {
         // common for all exercises
         // Check if participation already exists
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyState(exercise, participant);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
-            // create a new participation only if no participation can be found
-            if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation();
-            }
-            else {
-                participation = new StudentParticipation();
-            }
-            participation.setInitializationState(UNINITIALIZED);
-            participation.setExercise(exercise);
-            participation.setParticipant(participant);
-            participation = studentParticipationRepository.saveAndFlush(participation);
+            participation = createNewParticipationWithInitializationDate(exercise, participant, initializationDate);
         }
         else {
             // make sure participation and exercise are connected
@@ -128,7 +138,7 @@ public class ParticipationService {
         if (exercise instanceof ProgrammingExercise) {
             // fetch again to get additional objects
             var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+            participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, initializationDate == null);
         }
         else {// for all other exercises: QuizExercise, ModelingExercise, TextExercise, FileUploadExercise
             if (participation.getInitializationState() == null || participation.getInitializationState() == UNINITIALIZED
@@ -155,14 +165,42 @@ public class ParticipationService {
     }
 
     /**
+     * Helper Method to create a new Participation for the
+     *
+     * @param exercise           the exercise for which a participation should be created
+     * @param participant        the participant for the participation
+     * @param initializationDate (optional) Value for the initializationDate of the Participation
+     * @return a StudentParticipation for the exercise and participant with an optional specified initializationDate
+     */
+    private StudentParticipation createNewParticipationWithInitializationDate(Exercise exercise, Participant participant, ZonedDateTime initializationDate) {
+        StudentParticipation participation;
+        // create a new participation only if no participation can be found
+        if (exercise instanceof ProgrammingExercise) {
+            participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
+        }
+        else {
+            participation = new StudentParticipation();
+        }
+        participation.setInitializationState(UNINITIALIZED);
+        participation.setExercise(exercise);
+        participation.setParticipant(participant);
+        // StartedDate is used to link a Participation to a test exam exercise
+        if (initializationDate != null) {
+            participation.setInitializationDate(initializationDate);
+        }
+        return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    /**
      * Start a programming exercise participation (which does not exist yet) by creating and configuring a student git repository (step 1) and a student build plan (step 2)
      * based on the templates in the given programming exercise
      *
-     * @param exercise the programming exercise that the currently active user (student) wants to start
-     * @param participation inactive participation
+     * @param exercise              the programming exercise that the currently active user (student) wants to start
+     * @param participation         inactive participation
+     * @param setInitializationDate flag if the InitializationDate should be set to the current time
      * @return started participation
      */
-    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation) {
+    private StudentParticipation startProgrammingExercise(ProgrammingExercise exercise, ProgrammingExerciseStudentParticipation participation, boolean setInitializationDate) {
         // Step 1a) create the student repository (based on the template repository)
         participation = copyRepository(participation);
         // Step 1b) configure the student repository (e.g. access right, etc.)
@@ -177,8 +215,13 @@ public class ParticipationService {
         // Note: we configure the repository webhook last, so that the potential empty commit does not trigger a new programming submission (see empty-commit-necessary)
         // Step 3) configure the web hook of the student repository
         participation = configureRepositoryWebHook(participation);
+        // Step 4a) Set the InitializationState to initialized to indicate, the programming exercise is ready
         participation.setInitializationState(INITIALIZED);
-        participation.setInitializationDate(ZonedDateTime.now());
+        // Step 4b) Set the InitializationDate to the current time
+        if (setInitializationDate) {
+            // Note: For test exams, the InitializationDate is set to the StudentExam: startedDate in {#link #startExerciseWithInitializationDate}
+            participation.setInitializationDate(ZonedDateTime.now());
+        }
         // after saving, we need to make sure the object that is used after the if statement is the right one
         return participation;
     }
@@ -188,8 +231,8 @@ public class ParticipationService {
      * If the participation had to be newly created or there were no submissions yet for the existing participation, a new submission is created with the given submission type.
      * For external submissions, the submission is assumed to be submitted immediately upon creation.
      *
-     * @param exercise the exercise for which to create a participation and submission
-     * @param participant the user/team for which to create a participation and submission
+     * @param exercise       the exercise for which to create a participation and submission
+     * @param participant    the user/team for which to create a participation and submission
      * @param submissionType the type of submission to create if none exist yet
      * @return the participation connecting the given exercise and user
      */
@@ -199,7 +242,7 @@ public class ParticipationService {
         if (optionalStudentParticipation.isEmpty()) {
             // create a new participation only if no participation can be found
             if (exercise instanceof ProgrammingExercise) {
-                participation = new ProgrammingExerciseStudentParticipation();
+                participation = new ProgrammingExerciseStudentParticipation(versionControlService.get().getDefaultBranchOfArtemis());
             }
             else {
                 participation = new StudentParticipation();
@@ -342,8 +385,9 @@ public class ParticipationService {
             final var participantIdentifier = participation.getParticipantIdentifier();
             // NOTE: we have to get the repository slug of the template participation here, because not all exercises (in particular old ones) follow the naming conventions
             final var templateRepoName = urlService.getRepositorySlugFromRepositoryUrl(programmingExercise.getTemplateParticipation().getVcsRepositoryUrl());
+            String templateBranch = versionControlService.get().getOrRetrieveBranchOfExercise(programmingExercise);
             // the next action includes recovery, which means if the repository has already been copied, we simply retrieve the repository url and do not copy it again
-            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, projectKey, participantIdentifier);
+            var newRepoUrl = versionControlService.get().copyRepository(projectKey, templateRepoName, templateBranch, projectKey, participantIdentifier);
             // add the userInfo part to the repoURL only if the participation belongs to a single student (and not a team of students)
             if (participation.getStudent().isPresent()) {
                 newRepoUrl = newRepoUrl.withUser(participantIdentifier);
@@ -362,7 +406,7 @@ public class ParticipationService {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.REPO_CONFIGURED)) {
             // do not allow the student to access the repository if this is an exam exercise that has not started yet
             boolean allowAccess = !exercise.isExamExercise() || ZonedDateTime.now().isAfter(exercise.getIndividualReleaseDate());
-            versionControlService.get().configureRepository(exercise, participation.getVcsRepositoryUrl(), participation.getStudents(), allowAccess);
+            versionControlService.get().configureRepository(exercise, participation, allowAccess);
             participation.setInitializationState(InitializationState.REPO_CONFIGURED);
             return programmingExerciseStudentParticipationRepository.saveAndFlush(participation);
         }
@@ -393,8 +437,8 @@ public class ParticipationService {
     private ProgrammingExerciseStudentParticipation configureBuildPlan(ProgrammingExerciseStudentParticipation participation) {
         if (!participation.getInitializationState().hasCompletedState(InitializationState.BUILD_PLAN_CONFIGURED)) {
             try {
-                String defaultBranch = versionControlService.get().getDefaultBranchOfRepository(participation.getVcsRepositoryUrl());
-                continuousIntegrationService.get().configureBuildPlan(participation, defaultBranch);
+                String branch = versionControlService.get().getOrRetrieveBranchOfStudentParticipation(participation);
+                continuousIntegrationService.get().configureBuildPlan(participation, branch);
             }
             catch (ContinuousIntegrationException ex) {
                 // this means something with the configuration of the build plan is wrong.
@@ -438,7 +482,7 @@ public class ParticipationService {
     /**
      * Get one participation (in any state) by its participant and exercise.
      *
-     * @param exercise the exercise for which to find a participation
+     * @param exercise    the exercise for which to find a participation
      * @param participant the short name of the team
      * @return the participation of the given team and exercise in any state
      */
@@ -458,7 +502,7 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise with all its results.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username   the username of the student
+     * @param username the username of the student
      * @return the participation of the given student and exercise in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginAnyStateWithEagerResults(Exercise exercise, String username) {
@@ -478,7 +522,7 @@ public class ParticipationService {
      * Get one participation (in any state) by its student and exercise with eager submissions.
      *
      * @param exercise the exercise for which to find a participation
-     * @param username   the username of the student
+     * @param username the username of the student
      * @return the participation of the given student and exercise with eager submissions in any state
      */
     public Optional<StudentParticipation> findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(Exercise exercise, String username) {
@@ -575,7 +619,7 @@ public class ParticipationService {
      * Only sets individual due dates if the exercise has a due date and the
      * individual due date is after this regular due date.
      *
-     * @param exercise the {@code participations} belong to.
+     * @param exercise       the {@code participations} belong to.
      * @param participations for which the individual due date should be updated.
      * @return all participations where the individual due date actually changed.
      */
@@ -667,6 +711,7 @@ public class ParticipationService {
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
             resultsToBeDeleted.addAll(submission.getResults());
+            coverageReportRepository.deleteBySubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
         resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
@@ -678,8 +723,8 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given exercise
      *
-     * @param exerciseId the id of the exercise
-     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param exerciseId       the id of the exercise
+     * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
     @Transactional // ok
@@ -694,8 +739,8 @@ public class ParticipationService {
     /**
      * Delete all participations belonging to the given team
      *
-     * @param teamId the id of the team
-     * @param deleteBuildPlan specify if build plan should be deleted
+     * @param teamId           the id of the team
+     * @param deleteBuildPlan  specify if build plan should be deleted
      * @param deleteRepository specify if repository should be deleted
      */
     @Transactional // ok

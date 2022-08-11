@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -11,10 +12,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
 
 import com.fasterxml.jackson.annotation.*;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
-import de.tum.in.www1.artemis.domain.DomainObject;
-import de.tum.in.www1.artemis.domain.LearningGoal;
-import de.tum.in.www1.artemis.domain.Lecture;
+import de.tum.in.www1.artemis.domain.*;
 
 @Entity
 @Table(name = "lecture_unit")
@@ -27,11 +27,16 @@ import de.tum.in.www1.artemis.domain.Lecture;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 // Annotation necessary to distinguish between concrete implementations of lecture-content when deserializing from JSON
 @JsonSubTypes({ @JsonSubTypes.Type(value = AttachmentUnit.class, name = "attachment"), @JsonSubTypes.Type(value = ExerciseUnit.class, name = "exercise"),
-        @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"), })
-public abstract class LectureUnit extends DomainObject {
+        @JsonSubTypes.Type(value = TextUnit.class, name = "text"), @JsonSubTypes.Type(value = VideoUnit.class, name = "video"),
+        @JsonSubTypes.Type(value = OnlineUnit.class, name = "online") })
+public abstract class LectureUnit extends DomainObject implements Completable {
 
     @Transient
     private boolean visibleToStudents;
+
+    @Transient
+    @JsonSerialize
+    private boolean completed;
 
     @Column(name = "name")
     private String name;
@@ -54,6 +59,10 @@ public abstract class LectureUnit extends DomainObject {
     @OrderBy("title")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     public Set<LearningGoal> learningGoals = new HashSet<>();
+
+    @OneToMany(mappedBy = "lectureUnit", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnore
+    private Set<LectureUnitCompletion> completedUsers = new HashSet<>();
 
     public String getName() {
         return name;
@@ -91,11 +100,37 @@ public abstract class LectureUnit extends DomainObject {
         this.learningGoals = learningGoals;
     }
 
+    public boolean isCompleted() {
+        return completed;
+    }
+
+    public void setCompleted(boolean completed) {
+        this.completed = completed;
+    }
+
+    public Set<LectureUnitCompletion> getCompletedUsers() {
+        return completedUsers;
+    }
+
+    public void setCompletedUsers(Set<LectureUnitCompletion> completedUsers) {
+        this.completedUsers = completedUsers;
+    }
+
     @JsonProperty("visibleToStudents")
     public boolean isVisibleToStudents() {
         if (releaseDate == null) {
             return true;
         }
         return releaseDate.isBefore(ZonedDateTime.now());
+    }
+
+    @Override
+    public boolean isCompletedFor(User user) {
+        return getCompletedUsers().stream().map(LectureUnitCompletion::getUser).anyMatch(user1 -> user1.getId().equals(user.getId()));
+    }
+
+    @Override
+    public Optional<ZonedDateTime> getCompletionDate(User user) {
+        return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
     }
 }

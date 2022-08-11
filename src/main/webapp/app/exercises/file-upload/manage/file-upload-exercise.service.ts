@@ -18,10 +18,10 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
 
     /**
      * Sends request to create new file upload exercise
-     * @param fileUploadExercise that will be send to the server
+     * @param fileUploadExercise that will be sent to the server
      */
     create(fileUploadExercise: FileUploadExercise): Observable<EntityResponseType> {
-        let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
@@ -37,7 +37,7 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
      */
     update(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = FileUploadExerciseService.formatFilePattern(copy);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
@@ -76,14 +76,14 @@ export class FileUploadExerciseService implements ExerciseServicable<FileUploadE
     }
 
     /**
-     * Re-evaluates and updates an file upload exercise.
+     * Re-evaluates and updates a file upload exercise.
      *
      * @param fileUploadExercise that should be updated of type {FileUploadExercise}
      * @param req optional request options
      */
     reevaluateAndUpdate(fileUploadExercise: FileUploadExercise, req?: any): Observable<EntityResponseType> {
         const options = createRequestOption(req);
-        let copy = ExerciseService.convertDateFromClient(fileUploadExercise);
+        let copy = ExerciseService.convertExerciseDatesFromClient(fileUploadExercise);
         copy = ExerciseService.setBonusPointsConstrainedByIncludedInOverallScore(copy);
         copy.categories = ExerciseService.stringifyExerciseCategories(copy);
         return this.http

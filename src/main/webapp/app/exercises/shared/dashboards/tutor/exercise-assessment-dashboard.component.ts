@@ -71,7 +71,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     exerciseGroupId: number;
     isExamMode = false;
     isTestRun = false;
-    isAtLeastInstructor = false;
     isLoading = false;
 
     statsForDashboard = new StatsForDashboard();
@@ -146,10 +145,11 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     ratingsDashboardInfo = new AssessmentDashboardInformationEntry(0, 0);
 
     // graph
-    view: [number, number] = [350, 150];
+    view: [number, number] = [330, 150];
     legendPosition = LegendPosition.Below;
     assessments: any[];
     customColors: any[];
+    isAutomaticAssessedProgrammingExercise = false;
 
     // links
     submissionsLink: any[];
@@ -216,6 +216,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         if (this.programmingExercise && this.programmingExercise.assessmentType === AssessmentType.AUTOMATIC && this.programmingExercise.allowComplaintsForAutomaticAssessments) {
             const numberOfComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
             const numberOfResolvedComplaintsLabel = this.translateService.instant('artemisApp.exerciseAssessmentDashboard.numberOfResolvedComplaints');
+            this.isAutomaticAssessedProgrammingExercise = true;
             this.customColors = [
                 { name: numberOfComplaintsLabel, value: GraphColors.YELLOW },
                 { name: numberOfResolvedComplaintsLabel, value: GraphColors.GREEN },
@@ -273,7 +274,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 this.numberOfCorrectionRoundsEnabled = this.secondCorrectionEnabled ? 2 : 1;
                 this.formattedGradingInstructions = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.gradingInstructions);
                 this.formattedProblemStatement = this.artemisMarkdown.safeHtmlForMarkdown(this.exercise.problemStatement);
-                this.isAtLeastInstructor = this.accountService.isAtLeastInstructorForExercise(this.exercise);
 
                 switch (this.exercise.type) {
                     case ExerciseType.TEXT:
@@ -535,7 +535,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     };
 
     /**
-     * Get all submissions that dont have an assessment for all correction rounds
+     * Get all submissions that don't have an assessment for all correction rounds
      * If not in examMode correction rounds defaults to 0.
      * @private
      */
@@ -779,9 +779,27 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * not the legend
      */
     navigateToExerciseSubmissionOverview(event: any): void {
-        if (event.value && this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
-            this.navigationUtilService.routeInNewTab(['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions']);
+        if (!this.accountService.hasAnyAuthorityDirect([Authority.INSTRUCTOR])) {
+            return;
         }
+        // If the user selects a part in the pie, the corresponding event contains the name of the selected part as attribute
+        // If the user selects the legend entry, the event consists only of the legend label as string
+        const identifier = event.name ?? event;
+        let index = 0;
+        const route = ['course-management', this.courseId, this.exercise.type! + '-exercises', this.exerciseId, 'submissions'];
+        if (this.isAutomaticAssessedProgrammingExercise) {
+            // the filter option for complaints are an element of {3,4}.
+            // We give an offset of 3 in advance to determine the correct filter option via the chart part names
+            index = 3;
+            route[4] = 'complaints';
+        }
+        this.assessments.forEach((data, i) => {
+            if (data.name === identifier) {
+                index += i;
+            }
+        });
+
+        this.navigationUtilService.routeInNewTab(route, { queryParams: { filterOption: index } });
     }
 
     sortSubmissionRows(correctionRound: number) {

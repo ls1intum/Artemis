@@ -242,7 +242,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getFeedbacks().stream().filter(Feedback::isStaticCodeAnalysisFeedback).count())
                 .isEqualTo(StaticCodeAnalysisTool.getToolsForProgrammingLanguage(programmingLanguage).size());
 
-        // Call again and shouln't re-create new submission.
+        // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipationStaticCodeAnalysis, resultNotification);
         assertThat(programmingSubmissionRepository.findAll()).hasSameSizeAs(submissions);
     }
@@ -299,7 +299,7 @@ public class ProgrammingExerciseResultTestService {
         assertThat(result.getFeedbacks()).hasSize(6);
         assertThat(result.getFeedbacks().stream().filter((fb) -> fb.getType() == FeedbackType.AUTOMATIC).count()).isEqualTo(3);
 
-        // Call again and shouln't re-create new submission.
+        // Call again and shouldn't re-create new submission.
         gradingService.processNewProgrammingExerciseResult(programmingExerciseStudentParticipation, resultNotification);
         assertThat(programmingSubmissionRepository.findAll()).hasSize(1);
     }

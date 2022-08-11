@@ -3,7 +3,6 @@ import { CloneRepoButtonComponent } from 'app/shared/components/clone-repo-butto
 import { TranslateService } from '@ngx-translate/core';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
-import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
 import { MockProfileService } from '../../helpers/mocks/service/mock-profile.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
@@ -28,7 +27,6 @@ describe('JhiCloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
     let fixture: ComponentFixture<CloneRepoButtonComponent>;
     let profileService: ProfileService;
-    let sourceTreeService: SourceTreeService;
     let accountService: AccountService;
 
     let localStorageUseSshRetrieveStub: jest.SpyInstance;
@@ -78,15 +76,12 @@ describe('JhiCloneRepoButtonComponent', () => {
                 { provide: ProfileService, useClass: MockProfileService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
-                MockProvider(SourceTreeService, {}),
             ],
         }).compileComponents();
 
         fixture = TestBed.createComponent(CloneRepoButtonComponent);
         component = fixture.componentInstance;
         profileService = TestBed.inject(ProfileService);
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        sourceTreeService = TestBed.inject(SourceTreeService);
         accountService = TestBed.inject(AccountService);
 
         const localStorageMock = fixture.debugElement.injector.get(LocalStorageService);
@@ -181,6 +176,17 @@ describe('JhiCloneRepoButtonComponent', () => {
 
         url = component.getHttpOrSshRepositoryUrl(false);
         expect(url).toBe(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+    });
+
+    it('should add the user login and token to the URL', () => {
+        component.user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
+        component.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.useSsh = false;
+        component.isTeamParticipation = false;
+        component.versionControlAccessTokenRequired = true;
+
+        const url = component.getHttpOrSshRepositoryUrl();
+        expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {

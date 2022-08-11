@@ -60,7 +60,7 @@ describe('TeamUpdateDialogComponent', () => {
         const closeButton = debugElement.query(By.css('button.btn-close'));
         expect(closeButton).not.toBeNull();
         closeButton.nativeElement.click();
-        expect(dismissSpy).toHaveBeenCalledTimes(1);
+        expect(dismissSpy).toHaveBeenCalledOnce();
 
         const cancelButton = debugElement.query(By.css('button.cancel'));
         expect(cancelButton).not.toBeNull();
@@ -80,7 +80,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that title is correct for creating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).not.toBeNull();
-        expect(modalTitle.nativeElement.textContent.trim()).toEqual(`artemisApp.team.createTeam.label(${mockExercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).toBe(`artemisApp.team.createTeam.label(${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
@@ -150,7 +150,7 @@ describe('TeamUpdateDialogComponent', () => {
         // Check that title is correct for updating a team
         const modalTitle = debugElement.query(By.css('.modal-title'));
         expect(modalTitle).not.toBeNull();
-        expect(modalTitle.nativeElement.textContent.trim()).toEqual(`artemisApp.team.updateTeam.label(${mockExercise.title})`);
+        expect(modalTitle.nativeElement.textContent.trim()).toBe(`artemisApp.team.updateTeam.label(${mockExercise.title})`);
 
         // Check that a submit button exists
         const submitButton = debugElement.query(By.css('button[type=submit]'));
