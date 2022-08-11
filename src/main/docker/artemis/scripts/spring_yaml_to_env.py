@@ -6,9 +6,9 @@ variable representation.
 """
 
 import logging
+from argparse import ArgumentParser
 from collections import OrderedDict
 from functools import reduce
-from optparse import OptionParser
 from typing import Any, Dict, List, Optional, Tuple
 
 import yaml
@@ -52,6 +52,13 @@ def path_to_spring_env_property(path: List[str]) -> str:
 
 
 def save_value(result: Dict[str, str], option_name: List[str], value: str) -> None:
+    """
+    Adds the given config entry to the result.
+
+    :param result: The dictionary holding the key-value-pairs of environment variables.
+    :param option_name: The key of the config entry as YAML path.
+    :param value: The value of the config entry.
+    """
     result[path_to_spring_env_property(option_name)] = value
 
 
@@ -102,10 +109,6 @@ def flatten_list(
     return result
 
 
-def is_simple_value(value: Any) -> bool:
-    return isinstance(value, int) or isinstance(value, float) or isinstance(value, str)
-
-
 def flatten_yaml(
     yml: Dict[str, Any], current_path: Optional[List[str]] = None
 ) -> Dict[str, str]:
@@ -133,28 +136,46 @@ def flatten_yaml(
             result.update(flatten_list(value, path))
         elif isinstance(value, bool):
             save_value(result, path, str(value).lower())
-        elif is_simple_value(value):
+        elif isinstance(value, (float, int, str)):
             save_value(result, path, str(value))
         elif value is None:
             save_value(result, path, "")
         else:
-            logging.warning(f"Unknown YAML element: path={path}, value={value}")
+            logging.warning("Unknown YAML element: path=%s, value=%s", path, value)
 
     return result
 
 
 def parse_yaml(yaml_src: str) -> Dict[str, Any]:
+    """
+    Parses some YAML structure.
+
+    :param yaml_src: The YAML source.
+    :return: The parsed YAML.
+    """
     return yaml.full_load(yaml_src)
 
 
 def flatten_yaml_file(filename: str) -> Dict[str, str]:
-    with open(filename) as f:
-        file_content: str = f.read()
-        y = parse_yaml(file_content)
-        return flatten_yaml(y)
+    """
+    Converts a single YAML file into the environment variable key-value-mappings.
+
+    :param filename: The file that should be converted.
+    :return: The mapping of environment variables to their values.
+    """
+    with open(filename, encoding="UTF-8") as file:
+        file_content: str = file.read()
+        parsed_yaml = parse_yaml(file_content)
+        return flatten_yaml(parsed_yaml)
 
 
 def main(files: List[str], sort: bool = False) -> None:
+    """
+    Main entry point to the script.
+
+    :param files: The list of YAML files that should be converted.
+    :param sort: True, if the config keys should be sorted lexicographically.
+    """
     result: OrderedDict[str, str] = OrderedDict()
 
     for file in files:
@@ -168,14 +189,18 @@ def main(files: List[str], sort: bool = False) -> None:
         print(f'{key}="{result[key]}"')
 
 
-def option_parser() -> OptionParser:
-    usage = "%prog [options] yaml-file..."
+def argument_parser() -> ArgumentParser:
+    """
+    Builds the argument parser.
+
+    :return: The argument parser.
+    """
     description = (
         "Converts a list of Spring configuration YAML files into a combined list of "
         "environment variable mappings."
     )
-    parser = OptionParser(usage=usage, description=description)
-    parser.add_option(
+    parser = ArgumentParser(description=description)
+    parser.add_argument(
         "-s",
         "--sort",
         dest="sort",
@@ -183,9 +208,12 @@ def option_parser() -> OptionParser:
         help="sort config options lexicographically",
         default=False,
     )
+    parser.add_argument(
+        "yaml_files", nargs="*", help="YAML files that should be converted"
+    )
     return parser
 
 
 if __name__ == "__main__":
-    (options, args) = option_parser().parse_args()
-    main(args, options.sort)
+    args = argument_parser().parse_args()
+    main(args.yaml_files, args.sort)
