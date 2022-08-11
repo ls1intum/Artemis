@@ -135,11 +135,15 @@ public class StudentExamService {
             log.error("saveSubmissions threw an exception", e);
         }
 
+        // NOTE: only for test runs and test exams, the quizzes should be evaluated automatically
         if (studentExam.isTestRun() || studentExam.getExam().isTestExam()) {
             // immediately evaluate quiz participations for test runs and test exams
             examQuizService.evaluateQuizParticipationsForTestRunAndTestExam(studentExam);
         }
-        else if (!studentExam.isTestRun()) {
+
+        // NOTE: only for real exams and test exams, the student repositories need to be locked
+        // For test runs, this is not needed, because instructors have admin permissions on the VCS project (which contains the repository) anyway
+        if (!studentExam.isTestRun()) {
             try {
                 // lock the programming exercise repository access (important in case of early exam submissions)
                 lockStudentRepositories(currentUser, existingStudentExam);
@@ -431,6 +435,7 @@ public class StudentExamService {
     public void setUpTestExamExerciseParticipationsAndSubmissions(StudentExam studentExam, ZonedDateTime startedDate) {
         List<StudentParticipation> generatedParticipations = Collections.synchronizedList(new ArrayList<>());
         setUpExerciseParticipationsAndSubmissionsWithInitializationDate(studentExam, generatedParticipations, startedDate);
+        // TODO: Michael Allgaier: schedule an unlock operation for all involved student repositories of this student exam (test exam) at the end of the individual working
         studentParticipationRepository.saveAll(generatedParticipations);
     }
 
@@ -472,10 +477,11 @@ public class StudentExamService {
                         participation = participationService.startExercise(exercise, student, true);
                     }
                     generatedParticipations.add(participation);
-                    // Unlock Repositories only if the exam starts within 5 minutes
-                    if (exercise instanceof ProgrammingExercise programmingExercise
-                            && ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now())) {
-                        instanceMessageSendService.sendUnlockAllRepositories(programmingExercise.getId());
+                    // Unlock repository only if the real exam starts within 5 minutes or if we have a test exam or test run
+                    if (exercise instanceof ProgrammingExercise programmingExercise && (studentExam.isTestRun() || studentExam.getExam().isTestExam()
+                            || ProgrammingExerciseScheduleService.getExamProgrammingExerciseUnlockDate(programmingExercise).isBefore(ZonedDateTime.now()))) {
+                        // Note: only unlock the programming exercise student repository for the affected user (Important: Do NOT invoke unlockAll)
+                        programmingExerciseParticipationService.unlockStudentRepository(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
                     }
                     log.info("SUCCESS: Start exercise for student exam {} and exercise {} and student {}", studentExam.getId(), exercise.getId(), student.getId());
                 }
