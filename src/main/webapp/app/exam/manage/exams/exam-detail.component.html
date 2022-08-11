@@ -36,7 +36,7 @@
                     <fa-icon [icon]="faEye"></fa-icon>
                     <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
-                <a *ngIf="isAdmin" [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
+                <a *ngIf="isAdmin" [routerLink]="getExamRoutesByIdentifier('participant-scores')" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
@@ -44,6 +44,11 @@
                     <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>
                 <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
+                    <fa-icon [icon]="faAward"></fa-icon>
+                    <span>{{ 'artemisApp.examManagement.bonusSource' | artemisTranslate }}</span>
+                </a>
+                <a [routerLink]="getExamRoutesByIdentifier('bonus')" class="btn btn-info mt-1">
+                    <!-- TODO: Ata Check if grading scale exists and it is not BONUS type to enable button -->
                     <fa-icon [icon]="faAward"></fa-icon>
                     <span>{{ 'artemisApp.examManagement.bonusSource' | artemisTranslate }}</span>
                 </a>
