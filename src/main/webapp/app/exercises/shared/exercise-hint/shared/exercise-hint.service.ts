@@ -138,9 +138,7 @@ export class ExerciseHintService implements IExerciseHintService {
      * @param exerciseId Id of the exercise of which to retrieve all available exercise hints
      */
     getAvailableExerciseHints(exerciseId: number): Observable<HttpResponse<ExerciseHint[]>> {
-        return this.http
-            .get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints/available`, { observe: 'response' })
-            .pipe(tap((res) => res?.body?.forEach((hint) => this.sendTitlesToEntityTitleService(hint, exerciseId))));
+        return this.http.get<ExerciseHint[]>(`${this.resourceUrl}/${exerciseId}/exercise-hints/available`, { observe: 'response' });
     }
 
     /**
