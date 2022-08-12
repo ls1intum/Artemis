@@ -35,7 +35,7 @@ export class FileService {
         const restOfUrl = downloadUrlComponents.join('/');
         const normalizedDownloadUrl = restOfUrl + '/' + encodeURIComponent(fileName);
         const newWindow = window.open('about:blank');
-        lastValueFrom(this.http.get('api/files/attachments/access-token/' + fileName, { observe: 'response', responseType: 'text' })).then(
+        lastValueFrom(this.http.get(`${normalizedDownloadUrl}/access-token`, { observe: 'response', responseType: 'text' })).then(
             (result: HttpResponse<string>) => {
                 newWindow!.location.href = `${normalizedDownloadUrl}?access_token=${result.body}`;
             },

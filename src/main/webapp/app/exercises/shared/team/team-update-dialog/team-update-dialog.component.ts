@@ -11,7 +11,7 @@ import { cloneDeep, isEmpty, omit } from 'lodash-es';
 import { TeamAssignmentConfig } from 'app/entities/team-assignment-config.model';
 import { debounceTime, switchMap } from 'rxjs/operators';
 import { Exercise } from 'app/entities/exercise.model';
-import { shortNamePattern } from 'app/shared/constants/input.constants';
+import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { faBan, faExclamationTriangle, faSave, faSpinner, faTrashAlt } from '@fortawesome/free-solid-svg-icons';
 
 export type StudentTeamConflict = { studentLogin: string; teamId: string };
@@ -46,7 +46,7 @@ export class TeamUpdateDialogComponent implements OnInit {
 
     private shortNameValidator = new Subject<string>();
     readonly shortNameAlreadyTakenErrorCode = 'alreadyTaken';
-    readonly shortNamePattern = shortNamePattern; // must start with a letter and cannot contain special characters
+    readonly shortNamePattern = SHORT_NAME_PATTERN; // must start with a letter and cannot contain special characters
 
     // Icons
     faSave = faSave;

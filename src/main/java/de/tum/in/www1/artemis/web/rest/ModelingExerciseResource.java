@@ -148,22 +148,24 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(result.getId());
         groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
 
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, result.getId().toString())).body(result);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
 
     /**
-     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
+     * Search for all modeling exercises by id, title and course title. The result is pageable since there might be hundreds
      * of exercises in the DB.
      *
-     * @param search The pageable search containing the page size, page number and query string
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("modeling-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
+        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
     /**
@@ -213,8 +215,7 @@ public class ModelingExerciseResource {
         groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
                 instanceMessageSendService);
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, modelingExercise.getId().toString()))
-                .body(updatedModelingExercise);
+        return ResponseEntity.ok(updatedModelingExercise);
     }
 
     /**
@@ -363,8 +364,7 @@ public class ModelingExerciseResource {
         final var newModelingExercise = modelingExerciseImportService.importModelingExercise(originalModelingExercise, importedExercise);
         ModelingExercise result = modelingExerciseRepository.save(newModelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
-        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId()))
-                .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, newModelingExercise.getId().toString())).body(newModelingExercise);
+        return ResponseEntity.created(new URI("/api/modeling-exercises/" + newModelingExercise.getId())).body(newModelingExercise);
     }
 
     /**

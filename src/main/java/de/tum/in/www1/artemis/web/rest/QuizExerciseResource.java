@@ -120,16 +120,15 @@ public class QuizExerciseResource {
     @PostMapping("/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
-        log.debug("REST request to create QuizExercise : {}", quizExercise);
+        log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "idexists", "A new quizExercise cannot already have an ID")).body(null);
+            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idexists");
         }
 
         // check if quiz is valid
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see below in update Quiz)
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
 
         quizExercise.validateGeneralSettings();
@@ -159,7 +158,7 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> updateQuizExercise(@RequestBody QuizExercise quizExercise,
             @RequestParam(value = "notificationText", required = false) String notificationText) throws URISyntaxException {
-        log.debug("REST request to update QuizExercise : {}", quizExercise);
+        log.info("REST request to update quiz exercise : {}", quizExercise);
         if (quizExercise.getId() == null) {
             return createQuizExercise(quizExercise);
         }
@@ -167,7 +166,7 @@ public class QuizExerciseResource {
         // check if quiz is valid
         if (!quizExercise.isValid()) {
             // TODO: improve error message and tell the client why the quiz is invalid (also see above in create Quiz)
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "invalidQuiz", "The quiz exercise is invalid")).body(null);
+            throw new BadRequestAlertException("The quiz exercise is invalid", ENTITY_NAME, "invalidQuiz");
         }
 
         quizExercise.validateGeneralSettings();
@@ -186,8 +185,7 @@ public class QuizExerciseResource {
         // check if quiz is has already started
         var batches = quizBatchRepository.findAllByQuizExercise(originalQuiz);
         if (batches.stream().anyMatch(QuizBatch::isStarted)) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizHasStarted",
-                    "The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.")).body(null);
+            throw new BadRequestAlertException("The quiz has already started. Use the re-evaluate endpoint to make retroactive corrections.", ENTITY_NAME, "quizHasStarted");
         }
 
         quizExercise.reconnectJSONIgnoreAttributes();
@@ -199,8 +197,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
-
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, quizExercise.getId().toString())).body(quizExercise);
+        return ResponseEntity.ok(quizExercise);
     }
 
     /**
@@ -212,7 +209,7 @@ public class QuizExerciseResource {
     @GetMapping(value = "/courses/{courseId}/quiz-exercises")
     @PreAuthorize("hasRole('TA')")
     public List<QuizExercise> getQuizExercisesForCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get all QuizExercises for the course with id : {}", courseId);
+        log.info("REST request to get all quiz exercises for the course with id : {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, user);
@@ -238,6 +235,7 @@ public class QuizExerciseResource {
     @GetMapping("/{examId}/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
     public List<QuizExercise> getQuizExercisesForExam(@PathVariable Long examId) {
+        log.info("REST request to get all quiz exercises for the exam with id : {}", examId);
         List<QuizExercise> quizExercises = quizExerciseRepository.findByExamId(examId);
         Course course = quizExercises.get(0).getCourseViaExerciseGroupOrCourseMember();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
@@ -262,7 +260,7 @@ public class QuizExerciseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizExercise> getQuizExercise(@PathVariable Long quizExerciseId) {
         // TODO: Split this route in two: One for normal and one for exam exercises
-        log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        log.info("REST request to get quiz exercise : {}", quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (quizExercise.isExamExercise()) {
@@ -285,7 +283,7 @@ public class QuizExerciseResource {
     @GetMapping("/quiz-exercises/{quizExerciseId}/recalculate-statistics")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizExercise> recalculateStatistics(@PathVariable Long quizExerciseId) {
-        log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        log.info("REST request to recalculate quiz statistics : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, null)) {
             throw new AccessForbiddenException();
@@ -304,7 +302,7 @@ public class QuizExerciseResource {
     @GetMapping("/quiz-exercises/{quizExerciseId}/for-student")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizExercise> getQuizExerciseForStudent(@PathVariable Long quizExerciseId) {
-        log.debug("REST request to get QuizExercise : {}", quizExerciseId);
+        log.info("REST request to get quiz exercise : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user)) {
@@ -312,6 +310,7 @@ public class QuizExerciseResource {
         }
         quizExercise.setQuizBatches(null); // remove proxy and load batches only if required
         var batch = quizBatchService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin());
+        log.info("Found batch {} for user {}", batch.orElse(null), user.getLogin());
         quizExercise.setQuizBatches(batch.stream().collect(Collectors.toSet()));
         // filter out information depending on quiz state
         quizExercise.applyAppropriateFilterForStudents(batch.orElse(null));
@@ -329,26 +328,24 @@ public class QuizExerciseResource {
     @PostMapping("/quiz-exercises/{quizExerciseId}/join")
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<QuizBatch> joinBatch(@PathVariable Long quizExerciseId, @RequestBody QuizBatchJoinDTO joinRequest) {
-        log.debug("REST request to join Batch : {}", quizExerciseId);
+        log.info("REST request to join quiz batch : {}, {}", quizExerciseId, joinRequest);
         QuizExercise quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         if (!authCheckService.isAllowedToSeeExercise(quizExercise, user) || !quizExercise.isQuizStarted() || quizExercise.isQuizEnded()) {
             throw new AccessForbiddenException();
         }
         if (quizScheduleService.getQuizBatchForStudentByLogin(quizExercise, user.getLogin()).isPresent()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizBatchPending", "Previous submission for this quiz is still pending."))
-                    .build();
+            throw new BadRequestAlertException("Previous submission for this quiz is still pending.", ENTITY_NAME, "quizBatchPending");
         }
 
         var submissions = submissionRepository.countByExerciseIdAndStudentLogin(quizExerciseId, user.getLogin());
         if (quizExercise.getAllowedNumberOfAttempts() != null && submissions >= quizExercise.getAllowedNumberOfAttempts()) {
-            return ResponseEntity.badRequest()
-                    .headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", "quizAttemptsExceeded", "Maximum number of attempts reached.")).build();
+            throw new BadRequestAlertException("Maximum number of attempts reached.", ENTITY_NAME, "quizAttemptsExceeded");
         }
 
         try {
-            return ResponseEntity.ok(quizBatchService.joinBatch(quizExercise, user, joinRequest.password, joinRequest.batchId));
+            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password);
+            return ResponseEntity.ok(batch);
         }
         catch (QuizJoinException ex) {
             return ResponseEntity.notFound().headers(HeaderUtil.createFailureAlert(applicationName, true, "quizExercise", ex.getError(), ex.getMessage())).build();
@@ -364,7 +361,7 @@ public class QuizExerciseResource {
     @PutMapping("/quiz-exercises/{quizExerciseId}/add-batch")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizBatch> addBatch(@PathVariable Long quizExerciseId) {
-        log.debug("REST request to add batch : {}", quizExerciseId);
+        log.info("REST request to add quiz batch : {}", quizExerciseId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithBatchesElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, quizExercise, user);
@@ -386,7 +383,7 @@ public class QuizExerciseResource {
     @PutMapping("/quiz-exercises/{quizBatchId}/start-batch")
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<QuizBatch> startBatch(@PathVariable Long quizBatchId) {
-        log.debug("REST request to start batch : {}", quizBatchId);
+        log.info("REST request to start quiz batch : {}", quizBatchId);
         QuizBatch batch = quizBatchRepository.findByIdElseThrow(quizBatchId);
         QuizExercise quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(batch.getQuizExercise().getId());
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -418,7 +415,7 @@ public class QuizExerciseResource {
     @PutMapping("/quiz-exercises/{quizExerciseId}/{action}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> performActionForQuizExercise(@PathVariable Long quizExerciseId, @PathVariable String action) {
-        log.debug("REST request to immediately start QuizExercise : {}", quizExerciseId);
+        log.debug("REST request to perform action {} on quiz exercise {}", action, quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, quizExercise, user);
@@ -514,7 +511,7 @@ public class QuizExerciseResource {
     @DeleteMapping("/quiz-exercises/{quizExerciseId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> deleteQuizExercise(@PathVariable Long quizExerciseId) {
-        log.info("REST request to delete QuizExercise : {}", quizExerciseId);
+        log.info("REST request to delete quiz exercise : {}", quizExerciseId);
         var quizExercise = quizExerciseRepository.findByIdElseThrow(quizExerciseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, quizExercise, user);
@@ -528,7 +525,7 @@ public class QuizExerciseResource {
 
     /**
      * PUT /quiz-exercises/:quizExerciseId/re-evaluate : Re-evaluates an existing quizExercise.
-     *
+     * <p>
      * 1. reset not allowed changes and set flag updateResultsAndStatistics if a recalculation of results and statistics is necessary
      * 2. save changed quizExercise
      * 3. if flag is set: -> change results if an answer or a question is set invalid -> recalculate statistics and results and save them.
@@ -541,20 +538,19 @@ public class QuizExerciseResource {
     @PutMapping("/quiz-exercises/{quizExerciseId}/re-evaluate")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<QuizExercise> reEvaluateQuizExercise(@PathVariable Long quizExerciseId, @RequestBody QuizExercise quizExercise) {
-        log.debug("REST request to re-evaluate QuizExercise : {}", quizExercise);
+        log.info("REST request to re-evaluate quiz exercise : {}", quizExerciseId);
         QuizExercise originalQuizExercise = quizExerciseRepository.findByIdWithQuestionsAndStatisticsElseThrow(quizExerciseId);
 
         if (originalQuizExercise.isExamExercise()) {
             // Re-evaluation of an exam quiz is only possible if all students finished their exam
             ZonedDateTime latestIndividualExamEndDate = examDateService.getLatestIndividualExamEndDate(originalQuizExercise.getExerciseGroup().getExam());
             if (latestIndividualExamEndDate == null || latestIndividualExamEndDate.isAfter(ZonedDateTime.now())) {
-                return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "examOfQuizExerciseNotEnded",
-                        "The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.")).build();
+                throw new BadRequestAlertException("The exam of the quiz exercise has not ended yet. Re-evaluation is only allowed after an exam has ended.", ENTITY_NAME,
+                        "examOfQuizExerciseNotEnded");
             }
         }
         else if (!originalQuizExercise.isQuizEnded()) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createFailureAlert(applicationName, true, ENTITY_NAME, "quizExerciseNotEnded",
-                    "The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.")).build();
+            throw new BadRequestAlertException("The quiz exercise has not ended yet. Re-evaluation is only allowed after a quiz has ended.", ENTITY_NAME, "quizExerciseNotEnded");
         }
 
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -568,17 +564,20 @@ public class QuizExerciseResource {
     }
 
     /**
-     * Search for all quiz exercises by title and course title. The result is pageable since there
+     * Search for all quiz exercises by id, title and course title. The result is pageable since there
      * might be hundreds of exercises in the DB.
      *
-     * @param search The pageable search containing the page size, page number and query string
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("/quiz-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<QuizExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search, @RequestParam(defaultValue = "true") Boolean isCourseFilter,
+            @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, user));
+        return ResponseEntity.ok(quizExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
     /**
@@ -597,6 +596,7 @@ public class QuizExerciseResource {
     @PostMapping("/quiz-exercises/import/{sourceExerciseId}")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<QuizExercise> importExercise(@PathVariable long sourceExerciseId, @RequestBody QuizExercise importedExercise) throws URISyntaxException {
+        log.info("REST request to import from quiz exercise : {}", sourceExerciseId);
         if (sourceExerciseId <= 0 || (importedExercise.getCourseViaExerciseGroupOrCourseMember() == null && importedExercise.getExerciseGroup() == null)) {
             log.debug("Either the courseId or exerciseGroupId must be set for an import");
             throw new BadRequestAlertException("Either the courseId or exerciseGroupId must be set for an import", ENTITY_NAME, "noCourseIdOrExerciseGroupId");

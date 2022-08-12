@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintActivationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
+import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseTaskRepository;
 import de.tum.in.www1.artemis.service.hestia.ExerciseHintService;
 import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseTaskService;
 
@@ -51,6 +52,9 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private ExerciseHintActivationRepository exerciseHintActivationRepository;
+
+    @Autowired
+    private ProgrammingExerciseTaskRepository programmingExerciseTaskRepository;
 
     @Autowired
     private ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository;
@@ -95,6 +99,21 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @AfterEach
     void tearDown() {
         database.resetDatabase();
+    }
+
+    @Test
+    void testGetAvailableExerciseHintsTasksWithoutTestCases() {
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+        addResultWithFailedTestCases(exercise.getTestCases());
+        for (ProgrammingExerciseTask sortedTask : sortedTasks) {
+            sortedTask.getTestCases().clear();
+            programmingExerciseTaskRepository.save(sortedTask);
+        }
+        exercise.setProblemStatement(exercise.getProblemStatement().replaceAll("\\([^()]+\\)", "()"));
+        exerciseRepository.save(exercise);
+        var availableExerciseHints = exerciseHintService.getAvailableExerciseHints(exercise, student);
+        assertThat(availableExerciseHints).isEmpty();
     }
 
     @Test
