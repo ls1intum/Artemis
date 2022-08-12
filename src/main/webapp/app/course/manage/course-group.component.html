@@ -1,15 +1,19 @@
 <div>
-    <h2>
-        <span>{{ course?.title }} - </span>
-        <span *ngIf="filteredUsersSize < allCourseGroupUsers.length"> {{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf">out of</span> </span>
-        {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
-        <span class="text-muted">({{ courseGroupName }})</span>
-        <jhi-user-import-button *ngIf="course?.isAtLeastInstructor" class="ms-4" [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="loadAll()"></jhi-user-import-button>
-        <button *ngIf="course?.isAtLeastInstructor && allCourseGroupUsers.length > 0" class="btn btn-primary btn-sm float-end" (click)="exportUserInformation()">
-            <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-            <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
-        </button>
-    </h2>
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
+        <h2 class="mb-1">
+            <span>{{ course?.title }} - </span>
+            <span *ngIf="filteredUsersSize < allCourseGroupUsers.length"> {{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf">out of</span> </span>
+            {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
+            <span class="text-muted">({{ courseGroupName }})</span>
+        </h2>
+        <div class="d-flex mt-1 mb-1 gap-1">
+            <jhi-user-import-button *ngIf="course?.isAtLeastInstructor" [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="loadAll()"></jhi-user-import-button>
+            <button *ngIf="course?.isAtLeastInstructor && allCourseGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
+                <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
+                <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
+            </button>
+        </div>
+    </div>
     <jhi-data-table
         id="registered-students"
         [isLoading]="isLoading"

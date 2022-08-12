@@ -4,9 +4,9 @@ Customizing Courses
     :local:
     :depth: 2
 
-Courses contain `exercises </user/exercises>`_,  `exams </user/exam_mode>`_ and lectures.
+Courses contain :ref:`exercises <exercises>`,  :ref:`exams <exams>` and lectures.
 Different roles can be attached to different sets of course participants: Instructors, Editors, Tutors and Users.
-You can find a detailed listing of the different roles and their corresponding permissions `here </admin/accessRights>`_.
+You can find a detailed listing of the different roles and their corresponding permissions :ref:`here <admin_access_rights>`.
 
 Creating courses
 ----------------
@@ -28,9 +28,9 @@ Administrators can then specify options in the creation form, Instructors can la
 - **Amount of decimal places used for calculating the scores**: Specify the granularity for score calculations. You might have to increase this value if you create exercises with a small number of maximum points and a large number of tests.
 - **Default Programming Language**: The programming language that should be preselected when a new programming exercise is created in this course.
 - **Customize group names**: Allows specifying custom group names that should be used in external user management systems. Default group names (based on the course short name) will be used if not specified. **Note**: Only administrators can change this setting. Instructors can not change it.
-- **Enable complaints**: Whether complaints should be enabled in this course. Details regarding complaints can be found `here </user/exercises/general#complaints>`_.
-- **Enable more feedback requests**: Whether more feedback requests should be enabled in this course. Details regarding more feedback requests can be found `here </user/exercises/general#more-feedback-requests>`_.
-- **Enable postings by students**: Whether the posting sections should be enabled for lectures and exercises. More details regarding this can be found `here </user/communication>`_.
+- **Enable complaints**: Whether complaints should be enabled in this course. Details regarding complaints can be found :ref:`here <exercise_complaints>`.
+- **Enable more feedback requests**: Whether more feedback requests should be enabled in this course. Details regarding more feedback requests can be found :ref:`here <exercise_more_feedback_request>`.
+- **Enable postings by students**: Whether the posting sections should be enabled for lectures and exercises. More details regarding this can be found :ref:`here <communication>`.
 - **Online Course**: Whether this course should be part of an external online course using the LTI interface (e.g. on edX). This requires additional setup by administrators. **Note:** Online Course and Student Course Registration Enabled are mutually exclusive.
 - **Student Course Registration Enabled**: Whether students should be able to register themselves. If enabled, students can register for the course by clicking |course_register| in their |course_overview|. An optional confirmation message can be specified, it will be shown to students during the registration and can be used e.g. to inform students about examination rules. **Note:** Online Course and Student Course Registration Enabled are mutually exclusive.
 - **Presentation Score**: Whether students have to hold presentations in this course, e.g. to be eligible for an exam bonus. The required minimum number of presentations can be defined if this option is enabled. Note that you can define for every exercise whether it should be eligible for the presentation score within the exercise settings.

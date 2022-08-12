@@ -10,7 +10,7 @@ import { ExerciseType } from 'app/entities/exercise.model';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
-import { FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
+import { DomainChange, DomainType, FileType } from 'app/exercises/programming/shared/code-editor/model/code-editor.model';
 import { PlagiarismSubmission } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmission';
 import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/text/TextSubmissionElement';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
@@ -118,7 +118,8 @@ describe('Text Submission Viewer Component', () => {
     });
 
     it('handles file selection', () => {
-        comp.plagiarismSubmission = { submissionId: 1 } as PlagiarismSubmission<TextSubmissionElement>;
+        const submissionId = 1;
+        comp.plagiarismSubmission = { submissionId } as PlagiarismSubmission<TextSubmissionElement>;
 
         const fileName = Object.keys(files)[1];
         const expectedHeaders = new HttpHeaders().append('content-type', 'text/plain');
@@ -127,7 +128,8 @@ describe('Text Submission Viewer Component', () => {
 
         comp.handleFileSelect(fileName);
 
-        expect(repositoryService.getFile).toHaveBeenCalledWith(fileName);
+        const expectedDomain: DomainChange = [DomainType.PARTICIPATION, { id: submissionId }];
+        expect(repositoryService.getFile).toHaveBeenCalledWith(fileName, expectedDomain);
         expect(comp.currentFile).toEqual(fileName);
     });
 
@@ -167,7 +169,7 @@ describe('Text Submission Viewer Component', () => {
         expect(result).toEqual(expectedResult);
     });
 
-    it('inserts match tokens', () => {
+    it('should insert match tokens', () => {
         const mockMatches = [
             {
                 from: {
@@ -198,6 +200,35 @@ describe('Text Submission Viewer Component', () => {
 
         const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
         const expectedFileContent = `<span class="plagiarism-match">Lorem ipsum dolor</span> sit amet.\n<span class="plagiarism-match">Consetetur sadipscing elitr</span>.`;
+
+        const updatedFileContent = comp.insertMatchTokens(fileContent);
+
+        expect(updatedFileContent).toEqual(expectedFileContent);
+    });
+
+    it('should return a non-empty string even if matches have undefined "from" and "to" values', () => {
+        const mockMatches = [
+            {
+                from: undefined as unknown as TextSubmissionElement,
+                to: {
+                    column: 13,
+                    line: 1,
+                    length: 5,
+                } as TextSubmissionElement,
+            },
+            {
+                from: {
+                    column: 1,
+                    line: 2,
+                    length: 10,
+                } as TextSubmissionElement,
+                to: undefined as unknown as TextSubmissionElement,
+            },
+        ];
+        jest.spyOn(comp, 'getMatchesForCurrentFile').mockReturnValue(mockMatches);
+
+        const fileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
+        const expectedFileContent = `Lorem ipsum dolor sit amet.\nConsetetur sadipscing elitr.`;
 
         const updatedFileContent = comp.insertMatchTokens(fileContent);
 
