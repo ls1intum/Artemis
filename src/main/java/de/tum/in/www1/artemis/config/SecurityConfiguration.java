@@ -18,7 +18,6 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -105,29 +104,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
     }
 
     @Override
-    public void configure(WebSecurity web) {
-        // @formatter:off
-        web.ignoring()
-            .antMatchers(HttpMethod.OPTIONS, "/**")
-            .antMatchers("/app/**/*.{js,html}")
-            .antMatchers("/i18n/**")
-            .antMatchers("/content/**")
-            .antMatchers("/api-docs/**")
-            .antMatchers("/api.html")
-            .antMatchers("/test/**");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
-        web.ignoring()
-            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*");
-    }
-
-    @Override
     protected void configure(HttpSecurity http) throws Exception {
         // @formatter:off
         http
@@ -176,6 +152,20 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/time").permitAll()
+        .and()
+            .authorizeRequests()
+            .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+            .antMatchers("/app/**/*.{js,html}").permitAll()
+            .antMatchers("/i18n/**").permitAll()
+            .antMatchers("/content/**").permitAll()
+            .antMatchers("/api-docs/**").permitAll()
+            .antMatchers("/api.html").permitAll()
+            .antMatchers("/test/**").permitAll()
+            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH).permitAll()
+            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*").permitAll()
+            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*").permitAll()
+            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH).permitAll()
+            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
     }
