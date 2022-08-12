@@ -106,7 +106,7 @@ describe('Organization Service', () => {
     });
 
     it('should delete an Organization', async () => {
-        service.deleteOrganization(elemDefault.id!).subscribe((resp) => expect(resp.ok));
+        service.deleteOrganization(elemDefault.id!).subscribe((resp) => expect(resp.ok).toBeTrue());
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
     });
@@ -114,7 +114,7 @@ describe('Organization Service', () => {
     it('should add a user to an Organization', async () => {
         const user1 = new User();
         user1.login = 'testUser';
-        service.addUserToOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok));
+        service.addUserToOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok).toBeTrue());
         const req = httpMock.expectOne({ method: 'POST' });
         req.flush(JSON.stringify(elemDefault));
     });
@@ -122,7 +122,7 @@ describe('Organization Service', () => {
     it('should delete a user from an Organization', async () => {
         const user1 = new User();
         user1.login = 'testUser';
-        service.removeUserFromOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok));
+        service.removeUserFromOrganization(elemDefault.id!, user1.login).subscribe((resp) => expect(resp.ok).toBeTrue());
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });
     });
