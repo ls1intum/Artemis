@@ -10,6 +10,7 @@ import { VERSION } from 'app/app.constants';
 import { ParticipationWebsocketService } from 'app/overview/participation-websocket.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { GitInformationService, GitInformation } from 'app/shared/layouts/navbar/git-information.service';
 import { LoginService } from 'app/core/login/login.service';
 import { ActivatedRoute, NavigationEnd, Router, RouterEvent } from '@angular/router';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
@@ -66,6 +67,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     inProduction: boolean;
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
+    gitCommitId: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -118,6 +120,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
         private sessionStorage: SessionStorageService,
         private accountService: AccountService,
         private profileService: ProfileService,
+        private gitInformationService: GitInformationService,
         private participationWebsocketService: ParticipationWebsocketService,
         public guidedTourService: GuidedTourService,
         private router: Router,
@@ -178,6 +181,15 @@ export class NavbarComponent implements OnInit, OnDestroy {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
+            }
+        });
+
+        this.gitInformationService.getGitInformation().subscribe((gitInformation: GitInformation) => {
+            if (gitInformation) {
+                this.gitCommitId = gitInformation.commit.id.abbrev;
+                if (!this.inProduction) {
+                    this.version = `${this.version} - ${this.gitCommitId}`;
+                }
             }
         });
 
