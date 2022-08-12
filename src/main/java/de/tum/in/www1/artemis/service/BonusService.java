@@ -39,9 +39,9 @@ public class BonusService {
         return bonusRepository.save(bonus);
     }
 
-    public String calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale targetGradingScale, Double targetPoints, GradingScale sourceGradingScale, Double sourcePoints,
+    public String calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale, Double sourcePoints,
             double calculationSign) {
-        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, calculationSign);
+        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, bonusToGradingScale, basePoints, sourceGradingScale, sourcePoints, calculationSign);
     }
 
 }

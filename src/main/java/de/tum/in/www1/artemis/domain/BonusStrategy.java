@@ -8,7 +8,7 @@ public enum BonusStrategy implements IBonusStrategy {
     GRADES_DISCRETE {
 
         @Override
-        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale targetGradingScale, Double targetPoints, GradingScale sourceGradingScale,
+        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
                 Double sourcePoints, double calculationSign) {
             // TODO: Ata Implement.
 
@@ -18,35 +18,35 @@ public enum BonusStrategy implements IBonusStrategy {
     GRADES_CONTINUOUS {
 
         @Override
-        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale targetGradingScale, Double targetPoints, GradingScale sourceGradingScale,
+        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
                 Double sourcePoints, double calculationSign) {
             int sourceMaxPoints = getSourceGradingScaleMaxPoints(sourceGradingScale);
             double sourcePercentage = sourcePoints / sourceMaxPoints * 100.0;
 
             GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(sourcePercentage, sourceGradingScale.getId());
 
-            int targetMaxPoints = targetGradingScale.getExam().getMaxPoints();
-            double targetPercentage = targetPoints / targetMaxPoints * 100.0;
-            GradeStep targetRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(targetPercentage, targetGradingScale.getId());
+            int bonusToMaxPoints = bonusToGradingScale.getExam().getMaxPoints();
+            double bonusToPercentage = basePoints / bonusToMaxPoints * 100.0;
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(bonusToPercentage, bonusToGradingScale.getId());
 
-            return Double.toString(targetRawGradeStep.getNumericValue() + calculationSign * bonusGradeStep.getNumericValue());
+            return Double.toString(bonusToRawGradeStep.getNumericValue() + calculationSign * bonusGradeStep.getNumericValue());
         }
     },
     POINTS {
 
         @Override
-        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale targetGradingScale, Double targetPoints, GradingScale sourceGradingScale,
+        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
                 Double sourcePoints, double calculationSign) {
             int sourceMaxPoints = getSourceGradingScaleMaxPoints(sourceGradingScale);
             double sourcePercentage = sourcePoints / sourceMaxPoints * 100.0;
 
             GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(sourcePercentage, sourceGradingScale.getId());
 
-            double targetPointsWithBonus = targetPoints + calculationSign * bonusGradeStep.getNumericValue();
-            int targetMaxPoints = targetGradingScale.getExam().getMaxPoints();
+            double bonusToPointsWithBonus = basePoints + calculationSign * bonusGradeStep.getNumericValue();
+            int bonusToMaxPoints = bonusToGradingScale.getExam().getMaxPoints();
 
-            double targetPercentage = targetPointsWithBonus / targetMaxPoints * 100.0;
-            return gradingScaleRepository.matchPercentageToGradeStep(targetPercentage, targetGradingScale.getId()).getGradeName();
+            double bonusToPercentage = bonusToPointsWithBonus / bonusToMaxPoints * 100.0;
+            return gradingScaleRepository.matchPercentageToGradeStep(bonusToPercentage, bonusToGradingScale.getId()).getGradeName();
         }
     };
 

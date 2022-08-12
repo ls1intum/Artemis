@@ -117,14 +117,14 @@ export class BonusService {
     /**
      * TODO: Ata
      * @param bonus bonus.source.gradeSteps are assumed to be sorted
-     * @param target gradeSteps are assumed to be sorted
+     * @param bonusTo gradeSteps are assumed to be sorted
      */
-    generateBonusExamples(bonus: Bonus, target: GradeStepsDTO): BonusExample[] {
+    generateBonusExamples(bonus: Bonus, bonusTo: GradeStepsDTO): BonusExample[] {
         if (!bonus.source) {
             throw new Error(`Bonus.source is empty: ${bonus.source}`);
         }
-        const bonusExamples = this.generateExampleExamAndBonusPoints(target, bonus.source);
-        bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, target));
+        const bonusExamples = this.generateExampleExamAndBonusPoints(bonusTo, bonus.source);
+        bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, bonusTo));
         return bonusExamples;
     }
 
@@ -134,21 +134,21 @@ export class BonusService {
 
     /**
      * TODO: Ata
-     * @param target gradeSteps are assumed to be sorted
+     * @param bonusTo gradeSteps are assumed to be sorted
      * @param source gradeSteps are assumed to be sorted
      */
-    private generateExampleExamAndBonusPoints(target: GradeStepsDTO, source: GradingScale): BonusExample[] {
+    private generateExampleExamAndBonusPoints(bonusTo: GradeStepsDTO, source: GradingScale): BonusExample[] {
         const examples: BonusExample[] = [];
         examples.push(new BonusExample(0, undefined));
 
-        let targetGradeStepIndex = target.gradeSteps.findIndex((gs) => gs.isPassingGrade);
+        let bonusToGradeStepIndex = bonusTo.gradeSteps.findIndex((gs) => gs.isPassingGrade);
         let sourceGradeStepIndex = source.gradeSteps.length - 1;
 
         const sourceMaxPoints = this.gradingSystemService.getGradingScaleMaxPoints(source);
 
         for (let i = 0; i < 3; i++) {
-            const targetGradeStep = target.gradeSteps[targetGradeStepIndex];
-            const examStudentPoints = this.getIncludedBoundaryPoints(targetGradeStep, target.maxPoints!) ?? targetGradeStep.lowerBoundPoints;
+            const bonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
+            const examStudentPoints = this.getIncludedBoundaryPoints(bonusToGradeStep, bonusTo.maxPoints!) ?? bonusToGradeStep.lowerBoundPoints;
 
             const sourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
             const bonusStudentPoints = this.getIncludedBoundaryPoints(sourceGradeStep, sourceMaxPoints) ?? sourceGradeStep.lowerBoundPoints;
@@ -156,12 +156,12 @@ export class BonusService {
             examples.push(new BonusExample(examStudentPoints!, bonusStudentPoints!));
 
             sourceGradeStepIndex = this.modulo(sourceGradeStepIndex - 1, source.gradeSteps.length);
-            targetGradeStepIndex = this.modulo(targetGradeStepIndex + 1, target.gradeSteps.length);
+            bonusToGradeStepIndex = this.modulo(bonusToGradeStepIndex + 1, bonusTo.gradeSteps.length);
         }
 
-        targetGradeStepIndex = target.gradeSteps.length - 1;
-        const lastTargetGradeStep = target.gradeSteps[targetGradeStepIndex];
-        const lastExamStudentPoints = this.getIncludedBoundaryPoints(lastTargetGradeStep, target.maxPoints!) ?? lastTargetGradeStep.lowerBoundPoints;
+        bonusToGradeStepIndex = bonusTo.gradeSteps.length - 1;
+        const lastbonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
+        const lastExamStudentPoints = this.getIncludedBoundaryPoints(lastbonusToGradeStep, bonusTo.maxPoints!) ?? lastbonusToGradeStep.lowerBoundPoints;
 
         sourceGradeStepIndex = source.gradeSteps.length - 1;
         const lastSourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
@@ -172,8 +172,8 @@ export class BonusService {
         return examples;
     }
 
-    calculateFinalGrade(bonusExample: BonusExample, bonus: Bonus, target: GradeStepsDTO) {
-        const examGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(target.gradeSteps, bonusExample.examStudentPoints, target.maxPoints!);
+    calculateFinalGrade(bonusExample: BonusExample, bonus: Bonus, bonusTo: GradeStepsDTO) {
+        const examGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.examStudentPoints, bonusTo.maxPoints!);
         bonusExample.examGrade = examGradeStep?.gradeName;
 
         if (!bonus.source) {
@@ -187,23 +187,23 @@ export class BonusService {
         );
         bonusExample.bonusGrade = this.gradingSystemService.getNumericValueForGradeName(bonusGradeStep?.gradeName);
 
-        this.calculateBonusForStrategy(bonusExample, bonus, target);
+        this.calculateBonusForStrategy(bonusExample, bonus, bonusTo);
     }
 
-    calculateBonusForStrategy(bonusExample: BonusExample, bonus: Bonus, target: GradeStepsDTO) {
+    calculateBonusForStrategy(bonusExample: BonusExample, bonus: Bonus, bonusTo: GradeStepsDTO) {
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS:
                 bonusExample.finalPoints = bonusExample.examStudentPoints + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
-                if (this.doesBonusExceedMax(bonusExample.finalPoints, target.maxPoints!, bonus.weight!)) {
-                    bonusExample.finalPoints = target.maxPoints ?? 0;
+                if (this.doesBonusExceedMax(bonusExample.finalPoints, bonusTo.maxPoints!, bonus.weight!)) {
+                    bonusExample.finalPoints = bonusTo.maxPoints ?? 0;
                 }
-                const finalGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(target.gradeSteps, bonusExample.finalPoints, target.maxPoints!);
+                const finalGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.finalPoints, bonusTo.maxPoints!);
                 bonusExample.finalGrade = finalGradeStep?.gradeName;
                 break;
             case BonusStrategy.GRADES_CONTINUOUS:
                 const examGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(bonusExample.examGrade as string)!;
                 bonusExample.finalGrade = examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
-                const maxGrade = this.gradingSystemService.maxGrade(target.gradeSteps);
+                const maxGrade = this.gradingSystemService.maxGrade(bonusTo.gradeSteps);
                 const maxGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(maxGrade)!;
                 if (this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!)) {
                     bonusExample.finalGrade = maxGrade;
