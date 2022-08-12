@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
@@ -83,7 +84,7 @@ public class BonusResource {
      * GET /courses/{courseId}/exams/{examId}/bonus : Find bonus source for exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the bonus source belongs
+     * @param examId   the exam to which the bonus source belongs
      * @return ResponseEntity with status 200 (Ok) with body the bonus source if it exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/bonus")
@@ -167,10 +168,10 @@ public class BonusResource {
      * POST /courses/{courseId}/exams/{examId}/bonus : Create bonus source for exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam to which the bonus source belongs
-     * @param bonus the bonus source which will be created
+     * @param examId   the exam to which the bonus source belongs
+     * @param bonus    the bonus source which will be created
      * @return ResponseEntity with status 201 (Created) with body the new bonus source if no such exists for the course
-     *         and if it is correctly formatted and 400 (Bad request) otherwise
+     * and if it is correctly formatted and 400 (Bad request) otherwise
      */
     @PostMapping("/courses/{courseId}/exams/{examId}/bonus")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -183,17 +184,16 @@ public class BonusResource {
         Course course = courseRepository.findByIdElseThrow(courseId);
         // Optional<Bonus> existingBonus = bonusRepository.findBySourceExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        checkIsAtLeastInstructorForGradingScaleCourse(bonus.getSource());
+
+        GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
+        bonus.setSource(sourceGradingScaleFromDb);
+        checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScaleFromDb);
 
         // validateBonus(existingBonus, bonus);
         GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
         bonusToGradingScale.addBonusFrom(bonus);
         bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
 
-        if (bonus.getSource() != null) {
-            var sourceFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
-            bonus.setSource(sourceFromDb);
-        }
         Bonus savedBonus = bonusService.saveBonus(bonus);
         gradingScaleRepository.save(bonusToGradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
@@ -210,12 +210,16 @@ public class BonusResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Bonus> updateBonus(@RequestBody Bonus bonus) {
         log.debug("REST request to update a bonus source: {}", bonus.getId());
-        Bonus oldBonus = bonusRepository.findById(bonus.getId()).orElseThrow();
-        GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId()).orElseThrow(); // TODO: Ata Remove
+        Bonus oldBonus = bonusRepository.findById(bonus.getId()).orElseThrow(() -> new EntityNotFoundException("Bonus", bonus.getId()));
+        GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByBonusFromId(oldBonus.getId())
+                .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonus.getId()));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, bonusToGradingScale.getExam().getCourse(), null);
 
-        GradingScale sourceGradingScale = oldBonus.getSource();
-        checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
+        if (bonus.getSource() != null && !oldBonus.getSource().getId().equals(bonus.getSource().getId())) {
+            var sourceFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
+            bonus.setSource(sourceFromDb);
+            checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
+        }
 
         bonusToGradingScale.addBonusFrom(bonus);
         bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
