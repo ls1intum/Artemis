@@ -73,67 +73,60 @@ public interface ExamRepository extends JpaRepository<Exam, Long> {
     /**
      * Query which fetches all the exams for which the user is instructor in the course and matching the search criteria.
      *
-     * @param partialTitle     exam title search term
-     * @param partialExamTitle course title search term
-     * @param groups           user groups
-     * @param pageable         Pageable
+     * @param searchTerm search term
+     * @param groups     user groups
+     * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT DISTINCT e FROM Exam e
                     WHERE e.course.instructorGroupName IN :groups
-                    AND (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
               """)
-    Page<Exam> findByTitleInExamOrCourseAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("partialExamTitle") String partialExamTitle,
-            @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Exam> queryBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
      * Query which fetches all the exams with at least one exercise group for which the user is instructor in the course and matching the search criteria.
      *
-     * @param partialTitle     exam title search term
-     * @param partialExamTitle course title search term
-     * @param groups           user groups
-     * @param pageable         Pageable
+     * @param searchTerm search term
+     * @param groups     user groups
+     * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT DISTINCT e FROM Exam e
                     WHERE e.course.instructorGroupName IN :groups
-                    AND (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    AND (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
                     AND e.exerciseGroups IS NOT EMPTY
               """)
-    Page<Exam> findByTitleInExamOrCourseAndAtLeastOneExerciseGroupAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle,
-            @Param("partialExamTitle") String partialExamTitle, @Param("groups") Set<String> groups, Pageable pageable);
+    Page<Exam> queryNonEmptyBySearchTermInCoursesWhereInstructor(@Param("searchTerm") String searchTerm, @Param("groups") Set<String> groups, Pageable pageable);
 
     /**
      * Query which fetches all the exams for an admin and matching the search criteria.
      *
-     * @param partialTitle     exam title search term
-     * @param partialExamTitle course title search term
-     * @param pageable         Pageable
+     * @param searchTerm search term
+     * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT DISTINCT e FROM Exam e
-                    WHERE (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
               """)
-    Page<Exam> findByTitleInExamOrCourse(@Param("partialTitle") String partialTitle, @Param("partialExamTitle") String partialExamTitle, Pageable pageable);
+    Page<Exam> queryBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     /**
      * Query which fetches all the exams with at least one exercise Group for an admin and matching the search criteria.
      *
-     * @param partialTitle     exam title search term
-     * @param partialExamTitle course title search term
-     * @param pageable         Pageable
+     * @param searchTerm search term
+     * @param pageable   Pageable
      * @return Page with search results
      */
     @Query("""
             SELECT DISTINCT e FROM Exam e
-                    WHERE (e.title LIKE %:partialTitle% OR e.course.title LIKE %:partialExamTitle%)
+                    WHERE (CONCAT(e.id, '') = :#{#searchTerm} OR e.title LIKE %:searchTerm% OR e.course.title LIKE %:searchTerm%)
                     AND e.exerciseGroups IS NOT EMPTY
               """)
-    Page<Exam> findByTitleInExamOrCourseWithAtLeastOneExerciseGroup(@Param("partialTitle") String partialTitle, @Param("partialExamTitle") String partialExamTitle,
-            Pageable pageable);
+    Page<Exam> queryNonEmptyBySearchTermInAllCourses(@Param("searchTerm") String searchTerm, Pageable pageable);
 
     // IMPORTANT: NEVER use the following EntityGraph because it will lead to crashes for exams with many users
     // The problem is that 2000 student Exams with 10 exercises and 2000 existing participations would load 2000*10*2000 = 40 mio objects

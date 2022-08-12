@@ -994,18 +994,18 @@ public class ExamService {
         final Page<Exam> examPage;
         if (authorizationCheckService.isAdmin(user)) {
             if (withExercises) {
-                examPage = examRepository.findByTitleInExamOrCourseWithAtLeastOneExerciseGroup(searchTerm, searchTerm, pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInAllCourses(searchTerm, pageable);
             }
             else {
-                examPage = examRepository.findByTitleInExamOrCourse(searchTerm, searchTerm, pageable);
+                examPage = examRepository.queryBySearchTermInAllCourses(searchTerm, pageable);
             }
         }
         else {
             if (withExercises) {
-                examPage = examRepository.findByTitleInExamOrCourseAndAtLeastOneExerciseGroupAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryNonEmptyBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
             }
             else {
-                examPage = examRepository.findByTitleInExamOrCourseAndUserHasAccessToCourse(searchTerm, searchTerm, user.getGroups(), pageable);
+                examPage = examRepository.queryBySearchTermInCoursesWhereInstructor(searchTerm, user.getGroups(), pageable);
             }
         }
         return new SearchResultPageDTO<>(examPage.getContent(), examPage.getTotalPages());

@@ -98,12 +98,15 @@ jobs:
           if (context.eventName === "pull_request") {
             return "pr-" + context.issue.number;
           }
+          if (context.eventName === "release") {
+            return "latest";
+          }
           if (context.eventName === "push") {
             if (context.ref.startsWith("refs/tags/")) {
               return context.ref.slice(10);
             }
             if (context.ref === "refs/heads/develop") {
-              return "latest";
+              return "develop";
             }
           }
           return "FALSE";

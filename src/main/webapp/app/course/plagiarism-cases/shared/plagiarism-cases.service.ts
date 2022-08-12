@@ -6,6 +6,7 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
@@ -54,12 +55,12 @@ export class PlagiarismCasesService {
     /* Student */
 
     /**
-     * Get the plagiarism case id for the student for the given course and exercise
+     * Get the plagiarism case info for the student for the given course and exercise
      * @param { number } courseId id of the course
      * @param { number } exerciseId id of the exercise
      */
-    public getPlagiarismCaseIdForStudent(courseId: number, exerciseId: number): Observable<HttpResponse<number>> {
-        return this.http.get<number>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
+    public getPlagiarismCaseInfoForStudent(courseId: number, exerciseId: number): Observable<HttpResponse<PlagiarismCaseInfo>> {
+        return this.http.get<PlagiarismCaseInfo>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
     }
 
     /**
