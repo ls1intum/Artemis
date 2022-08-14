@@ -93,7 +93,7 @@ export class EditAttachmentUnitComponent implements OnInit {
         formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
 
         this.attachmentUnitService.update(this.lectureId, this.attachmentUnit.id!, formData, this.notificationText).subscribe({
-            next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+            next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
             error: (res: HttpErrorResponse) => onError(this.alertService, res),
             complete: () => (this.isLoading = false),
         });
