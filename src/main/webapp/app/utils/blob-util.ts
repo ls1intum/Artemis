@@ -9,8 +9,6 @@ declare var WebKitBlobBuilder: any;
 /**
  * Shim for
  * [`new Blob()`](https://developer.mozilla.org/en-US/docs/Web/API/Blob.Blob)
- * to support
- * [older browsers that use the deprecated `BlobBuilder` API](http://caniuse.com/blob).
  *
  * Example:
  *
@@ -19,8 +17,7 @@ declare var WebKitBlobBuilder: any;
  * ```
  *
  * @param parts - content of the Blob
- * @param properties - usually `{type: myContentType}`,
- *                           you can also pass a string for the content type
+ * @param properties - usually `{type: myContentType}`, you can also pass a string for the content type
  * @returns Blob
  */
 export function createBlob(parts: BlobPart[], properties?: BlobPropertyBag | string): Blob {
@@ -29,26 +26,7 @@ export function createBlob(parts: BlobPart[], properties?: BlobPropertyBag | str
     if (typeof properties === 'string') {
         properties = { type: properties }; // infer content type
     }
-    try {
-        return new Blob(parts, properties);
-    } catch (e) {
-        if (e.name !== 'TypeError') {
-            throw e;
-        }
-        const Builder =
-            typeof BlobBuilder !== 'undefined'
-                ? BlobBuilder
-                : typeof MSBlobBuilder !== 'undefined'
-                ? MSBlobBuilder
-                : typeof MozBlobBuilder !== 'undefined'
-                ? MozBlobBuilder
-                : WebKitBlobBuilder;
-        const builder = new Builder();
-        for (let i = 0; i < parts.length; i += 1) {
-            builder.append(parts[i]);
-        }
-        return builder.getBlob(properties.type);
-    }
+    return new Blob(parts, properties);
 }
 
 /**
