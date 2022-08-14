@@ -48,21 +48,20 @@ public class AttachmentUnitService {
     public AttachmentUnit createAttachmentUnit(AttachmentUnit attachmentUnit, Attachment attachment, Lecture lecture, MultipartFile file, boolean keepFilename) {
         // persist lecture unit before lecture to prevent "null index column for collection" error
         attachmentUnit.setLecture(null);
-        attachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
+        AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.saveAndFlush(attachmentUnit);
         attachmentUnit.setLecture(lecture);
-        lecture.addLectureUnit(attachmentUnit);
+        lecture.addLectureUnit(savedAttachmentUnit);
         lectureRepository.save(lecture);
 
         // Default attachment
         attachment.setVersion(0);
 
         handleFile(file, attachment, keepFilename);
-        attachment.setAttachmentUnit(attachmentUnit);
+        attachment.setAttachmentUnit(savedAttachmentUnit);
         Attachment savedAttachment = attachmentRepository.saveAndFlush(attachment);
-        evictCache(file, attachmentUnit);
 
-        AttachmentUnit savedAttachmentUnit = attachmentUnitRepository.save(attachmentUnit);
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
+        evictCache(file, savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }
@@ -93,9 +92,9 @@ public class AttachmentUnitService {
         handleFile(updateFile, existingAttachment, keepFilename);
 
         Attachment savedAttachment = attachmentRepository.saveAndFlush(existingAttachment);
-        evictCache(updateFile, savedAttachmentUnit);
 
         prepareAttachmentUnitForClient(savedAttachmentUnit, savedAttachment);
+        evictCache(updateFile, savedAttachmentUnit);
 
         return savedAttachmentUnit;
     }
