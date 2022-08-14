@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import javax.validation.constraints.NotNull;
@@ -83,7 +84,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         var builder = MockMvcRequestBuilders.multipart(HttpMethod.PUT, "/api/lectures/" + lecture1.getId() + "/attachment-units/" + attachmentUnit.getId());
         if (fileContent != null) {
-            var filePart = new MockMultipartFile("file", "", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes());
+            var filePart = new MockMultipartFile("file", "", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes(StandardCharsets.UTF_8));
             builder.file(filePart);
         }
 
@@ -94,7 +95,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             throws Exception {
         var attachmentUnitPart = new MockMultipartFile("attachmentUnit", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachmentUnit).getBytes());
         var attachmentPart = new MockMultipartFile("attachment", "", MediaType.APPLICATION_JSON_VALUE, mapper.writeValueAsString(attachment).getBytes());
-        var filePart = new MockMultipartFile("file", "testFile.pdf", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes());
+        var filePart = new MockMultipartFile("file", "testFile.pdf", MediaType.TEXT_PLAIN_VALUE, fileContent.getBytes(StandardCharsets.UTF_8));
 
         return MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/lectures/" + lecture1.getId() + "/attachment-units").file(attachmentUnitPart).file(attachmentPart)
                 .file(filePart).contentType(MediaType.MULTIPART_FORM_DATA_VALUE);

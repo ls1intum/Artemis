@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service;
 
-import static java.nio.file.StandardCopyOption.*;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import java.io.*;
@@ -57,11 +56,19 @@ public class FileService implements DisposableBean {
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
 
+    /**
+     * Extends the default allowed file extensions with the provided one
+     * @param fileExtension file extension to add
+     */
     public void addAllowedFileExtension(String fileExtension) {
         this.allowedFileExtensions.add(fileExtension);
     }
 
-    public void addRemoveFileExtension(String fileExtension) {
+    /**
+     * Removes the provided file extension from the allowed file extensions
+     * @param fileExtension file extension to remove
+     */
+    public void removeFileExtension(String fileExtension) {
         this.allowedFileExtensions.remove(fileExtension);
     }
 
