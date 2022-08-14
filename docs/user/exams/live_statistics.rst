@@ -62,7 +62,6 @@ This section provides a user-friendly overview of the exam live statistics dashb
 
 The header of the box contains the title of the respective subsection. In addition, there is a short description of the exercise details that instructors can see. To get more details, instructors can click on the right arrow and navigate to the exercises section, which provides detailed statistics about the current progress of each exercise. The box contains multiple charts:
 
-.. _exam_live_statistics_section_overview_exercise_annotated:
 .. figure:: instructor/exam_live_statistics_section_overview_exercise_annotated.png
    :alt: The exercise section
    :align: center
@@ -79,7 +78,6 @@ At the bottom left **(C)**, the diagram shows the number of initial navigations 
 
 The header of the box contains the title of the activity log section. In addition, there is a short description of the activities that instructors can see. Similar to the previous section, instructors can click on the arrow to get more details and navigate to the activity log section, which provides detailed statistics about the performed actions and the current progress of each student. The box also contains multiple charts:
 
-.. _exam_live_statistics_section_overview_activity_annotated:
 .. figure:: instructor/exam_live_statistics_section_overview_activity_annotated.png
    :alt: The activity log section
    :align: center
@@ -127,4 +125,5 @@ Each time a student *saves* the current exercise state, we display the associate
    :align: center
 
     The activity log table contains details per action. We display different action detail badges containing relevant information depending on the received action.
+
 
