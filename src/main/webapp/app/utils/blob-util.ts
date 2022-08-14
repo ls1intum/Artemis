@@ -1,10 +1,6 @@
 // Note: these utility functions were taken from https://github.com/nolanlawson/blob-util because it was not maintained any more since May 2018
 // All functions were converted into the appropriate TypeScript syntax. Unused functions are commented out
-
-declare var BlobBuilder: any;
-declare var MozBlobBuilder: any;
-declare var MSBlobBuilder: any;
-declare var WebKitBlobBuilder: any;
+// Removed legacy code as Artemis only supports browsers that support the intended functionality
 
 /**
  * Shim for
@@ -57,19 +53,11 @@ export function objectToJsonBlob(obj: object) {
 export function blobToBinaryString(blob: Blob): Promise<string> {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        const hasBinaryString = typeof reader.readAsBinaryString === 'function';
         reader.onloadend = () => {
-            if (hasBinaryString) {
-                return resolve((reader.result as string) || '');
-            }
-            resolve(arrayBufferToBinaryString(reader.result as ArrayBuffer));
+            return resolve((reader.result as string) || '');
         };
         reader.onerror = reject;
-        if (hasBinaryString) {
-            reader.readAsBinaryString(blob);
-        } else {
-            reader.readAsArrayBuffer(blob);
-        }
+        reader.readAsBinaryString(blob);
     });
 }
 

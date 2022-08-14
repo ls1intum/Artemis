@@ -21,21 +21,9 @@ export class AttachmentUnitService {
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
-    createOld(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
-        return this.httpClient
-            .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
-    }
-
     create(formData: FormData, lectureId: number): Observable<EntityResponseType> {
         return this.httpClient
             .post<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units?keepFilename=true`, formData, { observe: 'response' })
-            .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
-    }
-
-    updateOld(attachmentUnit: AttachmentUnit, lectureId: number): Observable<EntityResponseType> {
-        return this.httpClient
-            .put<AttachmentUnit>(`${this.resourceURL}/lectures/${lectureId}/attachment-units`, attachmentUnit, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.lectureUnitService.convertLectureUnitResponseDatesFromServer(res)));
     }
 
