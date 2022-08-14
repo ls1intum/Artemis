@@ -60,7 +60,7 @@ This section provides a user-friendly overview of the exam live statistics dashb
 4.1 Exercises
 ^^^^^^^^^^^^^
 
-The header of the box contains the title of the respective subsection. In addition, there is a short description of the exercise details that instructors can see. To get more details, instructors can click on the right arrow and navigate to the exercises section, which provides detailed statistics about the current progress of each exercise. The box contains multiple charts shown in figure :numref:`exam_live_statistics_section_overview_exercise_annotated`.
+The header of the box contains the title of the respective subsection. In addition, there is a short description of the exercise details that instructors can see. To get more details, instructors can click on the right arrow and navigate to the exercises section, which provides detailed statistics about the current progress of each exercise. The box contains multiple charts:
 
 .. _exam_live_statistics_section_overview_exercise_annotated:
 .. figure:: instructor/exam_live_statistics_section_overview_exercise_annotated.png
@@ -77,7 +77,7 @@ At the bottom left **(C)**, the diagram shows the number of initial navigations 
 4.2 Activity log
 ^^^^^^^^^^^^^^^^
 
-The header of the box contains the title of the activity log section. In addition, there is a short description of the activities that instructors can see. Similar to the previous section, instructors can click on the arrow to get more details and navigate to the activity log section, which provides detailed statistics about the performed actions and the current progress of each student. The box also contains multiple charts shown in figure :numref:`exam_live_statistics_section_overview_exercise_annotated`.
+The header of the box contains the title of the activity log section. In addition, there is a short description of the activities that instructors can see. Similar to the previous section, instructors can click on the arrow to get more details and navigate to the activity log section, which provides detailed statistics about the performed actions and the current progress of each student. The box also contains multiple charts:
 
 .. _exam_live_statistics_section_overview_activity_annotated:
 .. figure:: instructor/exam_live_statistics_section_overview_activity_annotated.png
