@@ -261,6 +261,11 @@ During the exam creation and configuration, you can create your exam and configu
 
    Exam Status Overview
 
+1.8 Live Statistics
+^^^^^^^^^^^^^^^^^^^
+
+For more details, please visit the :doc:`./live_statistics` page.
+
 .. _exam_conduction:
 
 2. **Conduction**

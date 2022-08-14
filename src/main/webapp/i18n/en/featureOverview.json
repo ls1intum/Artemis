@@ -80,6 +80,11 @@
                     "title": "Create Grading Keys",
                     "shortDescription": "Create a grading key with custom or default grade steps for a course or an exam.",
                     "descriptionTextOne": "Scores are helpful to assess individual exercises but at the end of a semester you and your students would like to see a standard grade. On the grading key page, you can have a grading key for each course and exam, define the grade steps by specifying intervals, the minimum passing grade and the lower/upper bound inclusivity. The default grading key can also be generated with a single click. Artemis then automatically handles mapping scores to grade steps or bonus points, as well as calculating student result statistics based on grade steps."
+                },
+                "liveStatistics": {
+                    "title": "Live Statistics",
+                    "shortDescription": "Using Live Statistics, instructors can collect student interactions with the exam. This provides further opportunities for statistics.",
+                    "descriptionTextOne": "TODO"
                 }
             }
         },
