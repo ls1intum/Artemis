@@ -13,7 +13,7 @@ import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { base64StringToBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 @Component({ selector: 'jhi-attachment-unit-form', template: '' })
 class AttachmentUnitFormStubComponent {
@@ -106,8 +106,8 @@ describe('EditAttachmentUnitComponent', () => {
 
                 baseFormData = new FormData();
                 baseFormData.append('file', fakeBlob, 'updated file');
-                baseFormData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(attachment)).toString('base64')));
-                baseFormData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(attachmentUnit)).toString('base64')));
+                baseFormData.append('attachment', objectToJsonBlob(attachment));
+                baseFormData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
                 jest.spyOn(attachmentUnitService, 'findById').mockReturnValue(
                     of(
@@ -221,8 +221,8 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         const formData = new FormData();
-        formData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(attachment)).toString('base64')));
-        formData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(attachmentUnit)).toString('base64')));
+        formData.append('attachment', objectToJsonBlob(attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
         updateAttachmentUnitSpy.mockReturnValue(of({ body: attachmentUnit, status: 200 }));
         attachmentUnitFormStubComponent.formSubmitted.emit(attachmentUnitFormData);

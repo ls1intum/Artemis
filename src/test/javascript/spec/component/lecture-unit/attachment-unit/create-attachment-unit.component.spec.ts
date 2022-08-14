@@ -13,7 +13,7 @@ import { HttpResponse } from '@angular/common/http';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentUnit } from 'app/entities/lecture-unit/attachmentUnit.model';
 import { By } from '@angular/platform-browser';
-import { base64StringToBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 @Component({ selector: 'jhi-attachment-unit-form', template: '' })
 class AttachmentUnitFormStubComponent {
@@ -114,8 +114,8 @@ describe('CreateAttachmentUnitComponent', () => {
 
         const formData = new FormData();
         formData.append('file', fakeBlob, attachmentUnitFormData.fileProperties.fileName);
-        formData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(attachment)).toString('base64')));
-        formData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(attachmentUnit)).toString('base64')));
+        formData.append('attachment', objectToJsonBlob(attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(attachmentUnit));
 
         const attachmentUnitResponse: HttpResponse<AttachmentUnit> = new HttpResponse({
             body: attachmentUnit,

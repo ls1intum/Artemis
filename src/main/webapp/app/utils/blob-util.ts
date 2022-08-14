@@ -52,6 +52,15 @@ export function createBlob(parts: BlobPart[], properties?: BlobPropertyBag | str
 }
 
 /**
+ * Convert any object into a blob of a JSON representation of the object.
+ *
+ * @param obj - the object to convert to a blob
+ */
+export function objectToJsonBlob(obj: object) {
+    return createBlob([JSON.stringify(obj)], { type: 'application/json' });
+}
+
+/**
  * Convert a `Blob` to a binary string.
  *
  * Example:

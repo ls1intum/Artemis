@@ -9,7 +9,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { combineLatest } from 'rxjs';
-import { base64StringToBlob } from 'app/utils/blob-util';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
@@ -89,8 +89,8 @@ export class EditAttachmentUnitComponent implements OnInit {
         if (file) {
             formData.append('file', file, fileName);
         }
-        formData.append('attachment', base64StringToBlob(Buffer.from(JSON.stringify(this.attachment)).toString('base64'), 'application/json'));
-        formData.append('attachmentUnit', base64StringToBlob(Buffer.from(JSON.stringify(this.attachmentUnit)).toString('base64'), 'application/json'));
+        formData.append('attachment', objectToJsonBlob(this.attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
 
         this.attachmentUnitService.update(this.lectureId, this.attachmentUnit.id!, formData, this.notificationText).subscribe({
             next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
