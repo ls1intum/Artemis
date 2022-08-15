@@ -29,7 +29,7 @@ export class EditTutorialGroupComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.findById(tutorialGroupId, this.courseId);
+                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.courseId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )

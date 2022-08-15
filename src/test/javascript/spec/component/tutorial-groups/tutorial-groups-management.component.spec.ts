@@ -75,7 +75,7 @@ describe('TutorialGroupsManagementComponent', () => {
         exampleTutorialGroup.id = 1;
 
         const tutorialGroupsService = TestBed.inject(TutorialGroupsService);
-        const getAllForCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllForCourse').mockReturnValue(
+        const getAllForCourseSpy = jest.spyOn(tutorialGroupsService, 'getAllOfCourse').mockReturnValue(
             of(
                 new HttpResponse({
                     body: [exampleTutorialGroup],

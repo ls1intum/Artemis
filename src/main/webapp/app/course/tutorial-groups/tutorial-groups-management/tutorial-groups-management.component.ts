@@ -33,7 +33,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
     public loadTutorialGroups() {
         this.isLoading = true;
         this.tutorialGroupService
-            .getAllForCourse(this.courseId)
+            .getAllOfCourse(this.courseId)
             .pipe(
                 map((res: HttpResponse<TutorialGroup[]>) => res.body),
                 finalize(() => {

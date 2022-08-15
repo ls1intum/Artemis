@@ -89,7 +89,7 @@ describe('EditTutorialGroupComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'findById').mockReturnValue(of(response));
+        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
         const tutorialGroupFormStubComponent: TutorialGroupFormStubComponent = editTutorialGroupComponentFixture.debugElement.query(
             By.directive(TutorialGroupFormStubComponent),
         ).componentInstance;
@@ -116,7 +116,7 @@ describe('EditTutorialGroupComponent', () => {
             body: tutorialGroupInDatabase,
             status: 200,
         });
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'findById').mockReturnValue(of(findByIdResponse));
+        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(findByIdResponse));
 
         editTutorialGroupComponentFixture.detectChanges();
         expect(findByIdStub).toHaveBeenCalledWith(1, 1);

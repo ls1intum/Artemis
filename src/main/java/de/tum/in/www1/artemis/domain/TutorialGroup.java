@@ -65,6 +65,23 @@ public class TutorialGroup extends DomainObject {
     @JsonIgnoreProperties("registeredTutorialGroups")
     private Set<User> registeredStudents = new HashSet<>();
 
+    public TutorialGroup() {
+        // Empty constructor needed for Jackson.
+    }
+
+    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String location, Language language, User teachingAssistant,
+            Set<User> registeredStudents) {
+        this.course = course;
+        this.title = title;
+        this.additionalInformation = additionalInformation;
+        this.capacity = capacity;
+        this.isOnline = isOnline;
+        this.location = location;
+        this.language = language;
+        this.teachingAssistant = teachingAssistant;
+        this.registeredStudents = registeredStudents;
+    }
+
     public String getTitle() {
         return title;
     }

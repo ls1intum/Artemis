@@ -1,8 +1,9 @@
 package de.tum.in.www1.artemis;
 
-import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -11,13 +12,16 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import com.google.common.collect.ImmutableSet;
 
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -53,50 +57,78 @@ public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambo
         userRepository.save(ModelFactory.generateActivatedUser("editor42"));
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
 
-        // creating course
         var course = this.database.createCourse();
         exampleCourseId = course.getId();
 
-        // create example tutorial group
-        exampleOneTutorialGroupId = createAndSaveTutorialGroup(exampleCourseId, "GuildOfAssassins", userRepository.findOneByLogin("tutor1").get(),
-                ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(), userRepository.findOneByLogin("student3").get(),
-                        userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get())).getId();
+        exampleOneTutorialGroupId = createAndSaveTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
+                userRepository.findOneByLogin("tutor1").get(), ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
+                        userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get())).getId();
 
-        exampleTwoTutorialGroupId = createAndSaveTutorialGroup(exampleCourseId, "GuildOfAlchemists", userRepository.findOneByLogin("tutor2").get(),
-                ImmutableSet.of(userRepository.findOneByLogin("student6").get(), userRepository.findOneByLogin("student7").get())).getId();
+        exampleTwoTutorialGroupId = createAndSaveTutorialGroup(exampleCourseId, "ExampleTitle2", "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN,
+                userRepository.findOneByLogin("tutor2").get(), ImmutableSet.of(userRepository.findOneByLogin("student6").get(), userRepository.findOneByLogin("student7").get()))
+                        .getId();
     }
 
-    private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, User teachingAssistant, Set<User> registeredStudents) {
+    private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String location,
+            Language language, User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepository.findByIdElseThrow(courseId);
-        var tutorialGroup = createTutorialGroup(title, teachingAssistant, registeredStudents, course);
+
+        var tutorialGroup = new TutorialGroup(course, title, additionalInformation, capacity, isOnline, location, language, teachingAssistant, registeredStudents);
+
         return tutorialGroupRepository.save(tutorialGroup);
     }
 
-    private TutorialGroup createTutorialGroup(String title, User teachingAssistant, Set<User> registeredStudents, Course course) {
+    private TutorialGroup createNewTutorialGroup() {
+        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
         var tutorialGroup = new TutorialGroup();
-        tutorialGroup.setTitle(title);
         tutorialGroup.setCourse(course);
-        tutorialGroup.setTeachingAssistant(teachingAssistant);
-        tutorialGroup.setRegisteredStudents(registeredStudents);
+        tutorialGroup.setTitle("NewTitle");
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin("tutor1").get());
         return tutorialGroup;
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void getTutorialGroup_asInstructor_shouldReturnTutorialGroup() throws Exception {
-        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
-        assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    void getTutorialGroup_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+    @WithMockUser(value = "instructor42", roles = "INSTRUCTOR")
+    void request_instructorNotInCourse_shouldReturnForbidden() throws Exception {
+        request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.FORBIDDEN, TutorialGroup.class);
         request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN, TutorialGroup.class);
+        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", createNewTutorialGroup(), TutorialGroup.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups",
+                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN);
+        request.postWithoutResponseBody(
+                "/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + userRepository.findOneByLogin("student6").get().getLogin(),
+                HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
+        request.delete(
+                "/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + userRepository.findOneByLogin("student1").get().getLogin(),
+                HttpStatus.FORBIDDEN);
+
+    }
+
+    @Test
+    @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
+    void request_courseIdNotMatchesPathId_returnConflict() throws Exception {
+        request.get("/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.CONFLICT, TutorialGroup.class);
+        request.delete("/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.CONFLICT);
+        request.putWithResponseBody("/api/courses/" + 0 + "/tutorial-groups",
+                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.CONFLICT);
+        request.postWithoutResponseBody(
+                "/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + userRepository.findOneByLogin("student6").get().getLogin(),
+                HttpStatus.CONFLICT, new LinkedMultiValueMap<>());
+        request.delete("/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + userRepository.findOneByLogin("student1").get().getLogin(),
+                HttpStatus.CONFLICT);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void getTitle_asUser_shouldReturnTitle() throws Exception {
+        var tutorialGroupTitle = request.get("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/title", HttpStatus.OK, String.class);
+        assertThat(tutorialGroupTitle).isEqualTo("ExampleTitle1");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void getTutorialGroups_asInstructor_shouldReturnTutorialGroups() throws Exception {
+    void getAllOfCourse_asInstructor_shouldReturnTutorialGroups() throws Exception {
         var tutorialGroupsOfCourse = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.OK, TutorialGroup.class);
         assertThat(tutorialGroupsOfCourse).hasSize(2);
         assertThat(tutorialGroupsOfCourse.stream().map(TutorialGroup::getId).collect(ImmutableSet.toImmutableSet())).containsExactlyInAnyOrder(exampleOneTutorialGroupId,
@@ -104,103 +136,143 @@ public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    void getTutorialGroups_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.FORBIDDEN, TutorialGroup.class);
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getOneOfCourse_asInstructor_shouldReturnTutorialGroup() throws Exception {
+        var tutorialGroup = request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK, TutorialGroup.class);
+        assertThat(tutorialGroup.getId()).isEqualTo(exampleOneTutorialGroupId);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void createTutorialGroup_asInstructor_shouldCreateTutorialGroup() throws Exception {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
-        var tutorialGroup = createTutorialGroup("GuildOfActors", userRepository.findOneByLogin("tutor3").get(),
-                ImmutableSet.of(userRepository.findOneByLogin("student8").get(), userRepository.findOneByLogin("student9").get()), course);
-
-        var persistedTutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.CREATED);
+    void create_asInstructor_shouldCreateTutorialGroup() throws Exception {
+        var persistedTutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", createNewTutorialGroup(), TutorialGroup.class,
+                HttpStatus.CREATED);
         assertThat(persistedTutorialGroup.getId()).isNotNull();
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    void createTutorialGroup_instructorNotInCourse_shouldReturnForbidden() throws Exception {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
-        var tutorialGroup = createTutorialGroup("GuildOfAlchemists", userRepository.findOneByLogin("tutor3").get(), emptySet(), course);
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void createTutorialGroup_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
-        var tutorialGroup = createTutorialGroup("  GuildOfAssassins  ", userRepository.findOneByLogin("tutor3").get(), emptySet(), course);
-
+    void create_WithIdInBody_shouldReturnBadRequest() throws Exception {
+        var tutorialGroup = createNewTutorialGroup();
+        tutorialGroup.setId(22L);
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void createTutorialGroup_tutorialGroupWithEmptyTitle_shouldReturnBadRequest() throws Exception {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
-        var tutorialGroup = createTutorialGroup("    ", userRepository.findOneByLogin("tutor3").get(), emptySet(), course);
-
+    void create_tutorialGroupWithTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
+        var tutorialGroup = createNewTutorialGroup();
+        tutorialGroup.setTitle("ExampleTitle1");
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void createTutorialGroup_tutorialGroupWithNullTitle_shouldReturnBadRequest() throws Exception {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
-        var tutorialGroup = createTutorialGroup(null, userRepository.findOneByLogin("tutor3").get(), emptySet(), course);
-
-        request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+    void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
+        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK);
+        request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.NOT_FOUND, TutorialGroup.class);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
-        TutorialGroup existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+    void update_asInstructor_shouldUpdateTutorialGroup() throws Exception {
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
         existingTutorialGroup.setTitle("Updated");
 
-        TutorialGroup updatedTutorialGroup = request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class,
-                HttpStatus.OK);
+        var updatedTutorialGroup = request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.OK);
 
         assertThat(updatedTutorialGroup.getTitle()).isEqualTo("Updated");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateLearningGoal_withNullTitle_shouldReturnBadRequest() throws Exception {
-        TutorialGroup existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
-        existingTutorialGroup.setTitle(null);
-
+    void update_withTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        existingTutorialGroup.setTitle("  ExampleTitle2  ");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateLearningGoal_withEmptyTitle_shouldReturnBadRequest() throws Exception {
-        TutorialGroup existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
-        existingTutorialGroup.setTitle("    ");
-
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+    void update_withoutId_shouldReturnBadRequest() throws Exception {
+        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", createNewTutorialGroup(), TutorialGroup.class, HttpStatus.BAD_REQUEST);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateLearningGoal_withTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
-        TutorialGroup existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
-        existingTutorialGroup.setTitle("  GuildOfAlchemists  ");
-
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+    void registerStudent_asInstructor_shouldRegisterStudent() throws Exception {
+        var student6 = userRepository.findOneByLogin("student6").get();
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        assertThat(tutorialGroup.getRegisteredStudents()).contains(student6);
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
-    void updateTutorialGroup_instructorNotInCourse_shouldReturnForbidden() throws Exception {
-        TutorialGroup existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
-        existingTutorialGroup.setTitle("Updated");
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void registerStudent_studentNotFound_shouldReturnNotFound() throws Exception {
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + "studentXX", HttpStatus.NOT_FOUND,
+                new LinkedMultiValueMap<>());
+    }
 
-        request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.FORBIDDEN);
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void registerStudent_studentRegistered_shouldReturnOk() throws Exception {
+        var student1 = userRepository.findOneByLogin("student1").get();
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void deregisterStudent_asInstructor_shouldDeRegisterStudent() throws Exception {
+        var student1 = userRepository.findOneByLogin("student1").get();
+        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.OK);
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        assertThat(tutorialGroup.getRegisteredStudents()).doesNotContain(student1);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void deregisterStudent_studentNotRegistered_shouldReturnOk() throws Exception {
+        var student6 = userRepository.findOneByLogin("student6").get();
+        request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student6.getLogin(), HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void deregisterStudent_studentNotFound_shouldReturnNotFound() throws Exception {
+        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + "studentXX", HttpStatus.NOT_FOUND);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void registerMultipleStudents_asInstructor_shouldRegisterStudents() throws Exception {
+        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
+
+        var student6 = userRepository.findOneByLogin("student6").get();
+        student6.setRegistrationNumber("number6");
+        userRepository.saveAndFlush(student6);
+
+        var studentsToAdd = new ArrayList<StudentDTO>();
+
+        var studentInCourse = new StudentDTO();
+        studentInCourse.setLogin(student6.getLogin());
+        studentInCourse.setRegistrationNumber(student6.getRegistrationNumber());
+
+        var studentNotInCourse = new StudentDTO();
+        studentNotInCourse.setLogin("studentXX");
+        studentNotInCourse.setRegistrationNumber("numberXX");
+
+        studentsToAdd.add(studentInCourse);
+        studentsToAdd.add(studentNotInCourse);
+
+        List<StudentDTO> notFoundStudents = request.postListWithResponseBody(
+                "/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register-multiple", studentsToAdd, StudentDTO.class, HttpStatus.OK);
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        assertThat(tutorialGroup.getRegisteredStudents()).contains(student6);
+        assertThat(notFoundStudents).containsExactly(studentNotInCourse);
     }
 
 }

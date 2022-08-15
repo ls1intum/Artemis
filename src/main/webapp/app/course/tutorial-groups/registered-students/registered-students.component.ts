@@ -38,9 +38,9 @@ export class RegisteredStudentsComponent implements OnInit {
 
     handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
 
-    addToGroup = (login: string) => this.tutorialGroupService.registerStudentToTutorialGroup(this.course.id!, this.tutorialGroup.id!, login);
+    addToGroup = (login: string) => this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login);
 
-    removeFromGroup = (login: string) => this.tutorialGroupService.deregisterStudentFromTutorialGroup(this.course.id!, this.tutorialGroup.id!, login);
+    removeFromGroup = (login: string) => this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login);
 
     get exportFilename(): string {
         if (this.course && this.tutorialGroup) {
@@ -59,7 +59,7 @@ export class RegisteredStudentsComponent implements OnInit {
                 switchMap(([params, data]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.course = data.course;
-                    return this.tutorialGroupService.findById(tutorialGroupId, this.course.id!);
+                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.course.id!);
                 }),
                 finalize(() => (this.isLoading = false)),
             )

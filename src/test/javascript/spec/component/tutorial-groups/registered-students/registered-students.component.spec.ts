@@ -89,7 +89,7 @@ describe('Registered Students Component', () => {
                 tutorialGroup.id = 123;
                 tutorialGroup.course = course;
                 tutorialGroup.registeredStudents = [tutorialGroupUserOne, tutorialGroupUserTwo];
-                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'findById').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
             });
     });
 

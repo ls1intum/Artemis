@@ -28,7 +28,7 @@ describe('TutorialGroupService', () => {
     it('should find a TutorialGroup', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
-            .findById(1, 1)
+            .getOneOfCourse(1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
@@ -69,7 +69,7 @@ describe('TutorialGroupService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .getAllForCourse(1)
+            .getAllOfCourse(1)
             .pipe(
                 take(1),
                 map((resp) => resp.body),
