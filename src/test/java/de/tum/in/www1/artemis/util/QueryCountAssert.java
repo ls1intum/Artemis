@@ -15,6 +15,12 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
         return new QueryCountAssert<>(interceptor, call, QueryCountAssert.class);
     }
 
+    /**
+     * Asserts that the amount of database queries realized during a REST call exactly match the expected amount
+     *
+     * @param times the amount of queries expected on the database
+     * @throws AssertionError if the expected calls do not match the actual queries on the database
+     */
     public T hasBeenCalledTimes(long times) throws E {
         var result = performCall();
         if (result.callCount != times) {
@@ -23,6 +29,12 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
         return result.result;
     }
 
+    /**
+     * Asserts that the amount of database queries realized during a REST call don't exceed the expected amount
+     *
+     * @param times the maximal amount of queries expected on the database
+     * @throws AssertionError if the number of actual queries on the database exceed the expected calls
+     */
     public T hasBeenCalledAtMostTimes(long times) throws E {
         var result = performCall();
         if (result.callCount > times) {
