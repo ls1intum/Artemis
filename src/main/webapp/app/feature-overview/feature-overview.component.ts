@@ -351,7 +351,7 @@ export class FeatureOverviewComponent implements OnInit {
             'featureOverview.instructor.feature.liveStatistics.descriptionTextOne',
             faEye,
             undefined,
-            '/content/images/feature-overview/instructors/exam_live_statistics_section_overview_section.png',
+            '/content/images/feature-overview/instructors/exam_live_statistics.png',
         );
 
         this.features = [
