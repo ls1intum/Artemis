@@ -92,11 +92,11 @@ describe('Participation Service', () => {
     }));
 
     it('should delete for guided tour', fakeAsync(() => {
-        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok));
+        service.deleteForGuidedTour(123).subscribe((resp) => expect(resp.ok).toBeTrue());
         let request = httpMock.expectOne({ method: 'DELETE' });
         expect(request.request.params.keys()).toHaveLength(0);
 
-        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok));
+        service.deleteForGuidedTour(123, { a: 'param' }).subscribe((resp) => expect(resp.ok).toBeTrue());
         request = httpMock.expectOne({ method: 'DELETE' });
         expect(request.request.params.keys()).toHaveLength(1);
         expect(request.request.params.get('a')).toBe('param');
@@ -237,7 +237,7 @@ describe('Participation Service', () => {
     }));
 
     it('should delete a Participation', fakeAsync(() => {
-        service.delete(123).subscribe((resp) => expect(resp.ok));
+        service.delete(123).subscribe((resp) => expect(resp.ok).toBeTrue());
 
         const req = httpMock.expectOne({ method: 'DELETE' });
         req.flush({ status: 200 });

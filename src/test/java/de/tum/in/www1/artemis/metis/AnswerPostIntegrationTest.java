@@ -45,7 +45,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(5, 5, 0, 1);
+        database.addUsers(5, 5, 4, 4);
         student1 = database.getUserByLogin("student1");
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
@@ -333,7 +333,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream()
-                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                .filter(post -> post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
                         || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(post.getAuthor().getId())))
                 .toList();
 
@@ -370,7 +370,7 @@ class AnswerPostIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         database.assertSensitiveInformationHidden(returnedPosts);
         existingPostsWithAnswers = existingPostsWithAnswers.stream()
                 .filter(post -> post.getAnswers().stream().noneMatch(answerPost -> Boolean.TRUE.equals(answerPost.doesResolvePost()))
-                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(post.getAuthor().getId()))
+                        && (post.getAnswers().stream().anyMatch(answerPost -> student1.getId().equals(answerPost.getAuthor().getId()))
                                 || post.getReactions().stream().anyMatch(reaction -> student1.getId().equals(reaction.getUser().getId()))))
                 .toList();
 

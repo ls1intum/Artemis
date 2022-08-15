@@ -41,7 +41,7 @@
                         [panelDescriptionHeader]="'artemisApp.examMonitoring.table.panelDescriptionHeader' | artemisTranslate"
                     >
                         <div>
-                            <div *ngFor="let content of this.table" class="row mb-1">
+                            <div *ngFor="let content of this.table" class="row mb-1 g-0">
                                 <div class="col-7">{{ 'artemisApp.examMonitoring.table.' + content.translateValue | artemisTranslate }}:</div>
                                 <div class="col-5">{{ content.value }}</div>
                             </div>
