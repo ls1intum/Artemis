@@ -4,6 +4,16 @@
 Live Statistics
 ***************
 
+The live statistics system tracks following interactions:
+
+* **Started Exam**
+* **Ended Exam**
+* **Handed In Early**
+* **Continued After Handed In Early**
+* **Switched Exercise**
+* **Saved Exercise**
+* **Connection Updated**
+
 1. Enable/Disable
 =================
 
@@ -28,6 +38,14 @@ In the exam live statistics dashboard, instructors can see the current status of
    :align: center
 
    The exam live statistics status indicates that the exam live statistics is disabled
+
+Admins can enable and disable this feature via the global feature toggle.
+
+.. figure:: instructor/exam_live_statistics_feature_toggle_globally.png
+   :alt: Exam live statistics feature toggle
+   :align: center
+
+   The exam live statistics feature toggle
 
 
 2. Navigate to the Dashboard
