@@ -8,9 +8,7 @@ import static org.mockito.Mockito.*;
 import java.util.*;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
@@ -50,9 +48,6 @@ class LtiServiceTest {
     @Mock
     private LtiUserIdRepository ltiUserIdRepository;
 
-    @Mock
-    private HttpServletResponse response;
-
     private Exercise exercise;
 
     private LtiService ltiService;
@@ -71,7 +66,7 @@ class LtiServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository, response);
+        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository);
         Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
         exercise = new TextExercise();
@@ -205,21 +200,6 @@ class LtiServiceTest {
     }
 
     @Test
-    void handleLaunchRequest_noAuthenticationWasSuccessful() {
-        launchRequest.setCustom_require_existing_user(true);
-        when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
-        when(response.containsHeader("Set-Cookie")).thenReturn(true);
-        List<String> headers = new ArrayList<>();
-        headers.add("JSESSIONID=(123);");
-        when(response.getHeaders("Set-Cookie")).thenReturn(headers);
-        when(response.getHeader("Set-Cookie")).thenReturn(headers.get(0));
-        String sessionId = "(123)";
-        ltiService.handleLaunchRequest(launchRequest, exercise);
-
-        assertThat(ltiService.launchRequestForSession).containsEntry(sessionId, Pair.of(launchRequest, exercise));
-    }
-
-    @Test
     void handleLaunchRequest_alreadyAuthenticated() {
         launchRequest.setCustom_require_existing_user(true);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
@@ -302,15 +282,5 @@ class LtiServiceTest {
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
         ltiService.onNewResult(participation);
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
-    }
-
-    @Test
-    void handleLaunchRequestForSession() {
-        String sessionId = "sessionId";
-        ltiService.launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
-        onSuccessfulAuthenticationSetup(user, ltiUserId);
-        ltiService.handleLaunchRequestForSession(sessionId);
-        onSuccessfulAuthenticationAssertions(user, ltiUserId);
-        assertThat(ltiService.launchRequestForSession).isEmpty();
     }
 }

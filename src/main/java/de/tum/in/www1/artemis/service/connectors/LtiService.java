@@ -1,15 +1,11 @@
 package de.tum.in.www1.artemis.service.connectors;
 
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotNull;
 
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
@@ -29,7 +25,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.util.StringUtils;
 
@@ -90,21 +85,14 @@ public class LtiService {
 
     private final HttpClient client;
 
-    // Ok, Spring actually injects the response for the current context using a proxy
-    // TODO Although this works, this is a bad design practice and we should move all response related code to the controller
-    private final HttpServletResponse response;
-
-    public final Map<String, Pair<LtiLaunchRequestDTO, Exercise>> launchRequestForSession = new HashMap<>();
-
     public LtiService(UserCreationService userCreationService, UserRepository userRepository, LtiOutcomeUrlRepository ltiOutcomeUrlRepository, ResultRepository resultRepository,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository, HttpServletResponse response) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, LtiUserIdRepository ltiUserIdRepository) {
         this.userCreationService = userCreationService;
         this.userRepository = userRepository;
         this.ltiOutcomeUrlRepository = ltiOutcomeUrlRepository;
         this.resultRepository = resultRepository;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.ltiUserIdRepository = ltiUserIdRepository;
-        this.response = response;
         this.client = HttpClientBuilder.create().build();
     }
 
@@ -125,37 +113,9 @@ public class LtiService {
             onSuccessfulLtiAuthentication(launchRequest, exercise);
         }
         else {
+            // We do not currently have a way to allow users to login by themselves later, so we throw an exception for now, later this branch might be useful
+            throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
 
-            /*
-             * None of the auth methods were successful. -> Map the launchRequest to the Session ID -> If the user signs in manually later, we use it in
-             * LtiAuthenticationSuccessListener
-             */
-
-            // Find (new) session ID
-            String sessionId = null;
-            if (response.containsHeader("Set-Cookie")) {
-                for (String cookie : response.getHeaders("Set-Cookie")) {
-                    if (cookie.contains("JSESSIONID")) {
-                        Pattern pattern = Pattern.compile("=(.*?);");
-                        Matcher matcher = pattern.matcher(response.getHeader("Set-Cookie"));
-                        if (matcher.find()) {
-                            sessionId = matcher.group(1);
-                        }
-                        break;
-                    }
-                }
-            }
-            if (sessionId == null) {
-                WebAuthenticationDetails authDetails = (WebAuthenticationDetails) SecurityContextHolder.getContext().getAuthentication().getDetails();
-                log.info("Remembering launchRequest for session ID {}", authDetails.getSessionId());
-                sessionId = authDetails.getSessionId();
-            }
-
-            // Found it. Remember the launch request for later login.
-            if (sessionId != null) {
-                log.info("Remembering launchRequest for session ID {}", sessionId);
-                launchRequestForSession.put(sessionId, Pair.of(launchRequest, exercise));
-            }
         }
     }
 
@@ -494,26 +454,6 @@ public class LtiService {
                     }
                 }));
             }
-        }
-    }
-
-    /**
-     * Handle launch request which was initiated earlier by a LTI consumer
-     *
-     * @param sessionId The ID of the current user's session (JSESSIONID)
-     */
-    public void handleLaunchRequestForSession(String sessionId) {
-        if (launchRequestForSession.containsKey(sessionId)) {
-
-            log.info("Found LTI launchRequest for session ID {}", sessionId);
-
-            LtiLaunchRequestDTO launchRequest = launchRequestForSession.get(sessionId).getLeft();
-            Exercise exercise = launchRequestForSession.get(sessionId).getRight();
-
-            onSuccessfulLtiAuthentication(launchRequest, exercise);
-
-            // clean up
-            launchRequestForSession.remove(sessionId);
         }
     }
 }
