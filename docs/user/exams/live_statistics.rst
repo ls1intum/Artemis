@@ -1,6 +1,8 @@
 .. _live_statistics:
 
 ***************
+Live Statistics
+***************
 
 1. Enable/Disable
 =================
@@ -19,13 +21,13 @@ In the exam live statistics dashboard, instructors can see the current status of
    :alt: Exam live statistics enabled
    :align: center
 
-   The exam live statistics status indicator indicates that the exam live statistics is enabled
+   The exam live statistics status indicates that the exam live statistics is enabled
 
 .. figure:: instructor/exam_live_statistics_disabled.png
    :alt: Exam live statistics disabled
    :align: center
 
-   The exam live statistics status indicator indicates that the exam live statistics is disabled
+   The exam live statistics status indicates that the exam live statistics is disabled
 
 
 2. Navigate to the Dashboard
