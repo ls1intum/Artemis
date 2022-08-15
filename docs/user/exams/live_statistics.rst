@@ -4,7 +4,7 @@
 Live Statistics
 ***************
 
-The live statistics system tracks following interactions:
+The live statistics system tracks the following student interactions:
 
 * **Started Exam**
 * **Ended Exam**
