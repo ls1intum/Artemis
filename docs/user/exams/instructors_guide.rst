@@ -39,12 +39,14 @@ During the exam creation and configuration, you can create your exam and configu
 1.2 Configure Exam
 ^^^^^^^^^^^^^^^^^^^
 **1.2.1 Exam Mode**
+
 - Artemis supports two exam modes. The conduction of normal exams and test exams.
 - The normal exam mode is suitable for conducting end-of-semester exams. Students can view and edit the exam between the configured working time. Afterwards you can perform a manual or automated evaluation of the students' submissions. The results will be published on the specified date.
 - Test exams provide you with the possibility to provide students with a practice opportunity for the end-of-semester exam. The main difference is that you choose an working window within which students can freely start the exam. Students then have the configured working time to complete the exam. After submitting, students immediately get the automated assessment for programming and quizzes. Manual correction of the submissions is not necessary.
 
 .. _configure_exam:
 **1.2.2 Create Exam**
+
 - When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc.
 - You can choose between the exam and test exam mode.
 - The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``.
@@ -79,7 +81,10 @@ During the exam creation and configuration, you can create your exam and configu
 
    Exam Assessment and Student Review
 
+
+
 **1.2.3 Import Exam**
+
 - Alternatively, you can import an existing exam by clicking on |import_exam|.
 - Artemis displays a list of all available exams. To select one specific exam for the import, click on the |import_individual_exam| button.
 
@@ -119,6 +124,7 @@ During the exam creation and configuration, you can create your exam and configu
    Exercise Groups with different Exercise Variants
 
 **1.3.1 Import Exercise Groups**
+
 - Artemis exam mode allows you to import one or more exercise groups from an existing exam.
 - The import process consists of a two-step process.
 - When you click on |import_exercise_group|, you can select one exam, from which exercise group(s) should be imported.
