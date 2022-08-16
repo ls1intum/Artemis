@@ -24,10 +24,17 @@
             },
             "examples": {
                 "title": "Examples",
-                "helpText": "(You can try out custom scenarios by editing the last row)"
+                "helpText": "(You can try out custom scenarios by editing the last row)",
+                "examPoints": "Exam Points",
+                "examGrade": "Exam Grade",
+                "bonusSourceStudentPoints": "Bonus Source Student Points",
+                "bonusGrade": "Bonus",
+                "finalPoints": "Final Points",
+                "finalGrade": "Final Grade"
             },
             "title": "Bonus",
-            "finalGradeLimit": "(You cannot get a final grade better than {{maxGrade}})",
+            "finalGradeLimit": "(You cannot get a final grade better than {{maxPossibleGrade}})",
+            "finalGradeFromPoints": "Final Points will determine Final Grade by matching against the non-bonus grade scale.",
             "formula": "Formula",
             "deleteQuestion": "Do you really want to delete the bonus?"
         }

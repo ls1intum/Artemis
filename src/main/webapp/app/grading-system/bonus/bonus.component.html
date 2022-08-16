@@ -5,27 +5,30 @@
 </ng-template>
 <h2>{{ 'artemisApp.bonus.title' | artemisTranslate }}</h2>
 <div class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusStrategy.title">Select a Bonus Strategy</span>
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusStrategy.title">Select a bonus strategy</span>
     <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusStrategy.helpText' }"></ng-container>
     <jhi-mode-picker [options]="bonusStrategyOptions" [(value)]="currentBonusStrategyOption" (valueChange)="onBonusStrategyInputChange()"></jhi-mode-picker>
 </div>
 <div *ngIf="currentBonusStrategyOption === BonusStrategyOptions.GRADES" class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.discreteness.title">Select discreteness</span>
+    <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.discreteness.helpText' }"></ng-container>
     <jhi-mode-picker [options]="bonusStrategyDiscreteness" [(value)]="currentBonusStrategyDiscreteness" (valueChange)="onBonusStrategyInputChange()"></jhi-mode-picker>
 </div>
-<div class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.TODO: Ata">Mode</span>
+<div *ngIf="bonus.id || currentBonusStrategyOption === BonusStrategyOptions.POINTS || currentBonusStrategyDiscreteness" class="form-group">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.calculation.title">Select calculation</span>
+    <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.calculation.helpText' }"></ng-container>
     <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="generateExamples()"></jhi-mode-picker>
 </div>
-<div class="form-group">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.TODO: Ata">Select bonus source</span>
-    <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="onBonusSourceChange($event)" title="Select bonus source">
+<div *ngIf="bonus.id || bonus.weight" class="form-group">
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.title">Select bonus source</span>
+    <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }"></ng-container>
+    <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="onBonusSourceChange($event)" [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate">
         <option *ngFor="let sourceGradingScale of sourceGradingScales" [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
     </select>
 </div>
 <h6>{{ 'artemisApp.gradingSystem.overview.info' | artemisTranslate }}</h6>
 <div *ngIf="bonus.source?.gradeSteps" class="fs-5">
-    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.gradingSystem.inclusivity.title">Inclusivity</span>
+    <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.selectedBonusSource">Selected Bonus Source Grading Key</span>
     <table class="table table-striped">
         <thead>
             <tr>
@@ -47,7 +50,7 @@
         </tbody>
     </table>
 </div>
-<h6>{{ 'artemisApp.TODO: Ata Formula' | artemisTranslate }}</h6>
+<h6>{{ 'artemisApp.bonus.formula' | artemisTranslate }}</h6>
 <div *ngIf="bonus.bonusStrategy && bonus.weight && examGradeStepsDTO" class="fs-4 pb-5">
     <div class="d-flex py-2 align-items-center">
         <div class="p-2">
@@ -63,8 +66,7 @@
         </div>
     </div>
     <div class="row fs-5">
-        ({{ 'artemisApp.TODO: Ata You cannot get a final grade better than ' | artemisTranslate }}{{ maxPossibleGrade() }}
-        )
+        {{ 'artemisApp.bonus.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
     </div>
 </div>
 <div *ngIf="examples?.length" class="fs-5">
@@ -72,12 +74,12 @@
     <table class="table table-striped">
         <thead>
             <tr>
-                <th>{{ 'artemisApp.TODO: Ata examStudentPoints' | artemisTranslate }}</th>
-                <th>{{ 'artemisApp.TODO: Ata examGrade' | artemisTranslate }}</th>
-                <th>{{ 'artemisApp.TODO: Ata bonusStudentPoints' | artemisTranslate }}</th>
-                <th>{{ 'artemisApp.TODO: Ata bonusGrade' | artemisTranslate }}</th>
-                <th *ngIf="currentBonusStrategyOption == BonusStrategyOptions.POINTS">{{ 'artemisApp.TODO: Ata finalPoints' | artemisTranslate }}</th>
-                <th>{{ 'artemisApp.TODO: Ata finalGrade' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.bonus.examples.examPoints' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.bonus.examples.examGrade' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.bonus.examples.bonusSourceStudentPoints' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.bonus.examples.bonusGrade' | artemisTranslate }}</th>
+                <th *ngIf="currentBonusStrategyOption == BonusStrategyOptions.POINTS">{{ 'artemisApp.bonus.examples.finalPoints' | artemisTranslate }}</th>
+                <th>{{ 'artemisApp.bonus.examples.finalGrade' | artemisTranslate }}</th>
             </tr>
         </thead>
         <tbody>
@@ -122,7 +124,7 @@
         jhiDeleteButton
         [entityTitle]="''"
         [buttonSize]="ButtonSize.MEDIUM"
-        deleteQuestion="artemisApp.TODO: Ata.deleteQuestion"
+        deleteQuestion="artemisApp.bonus.deleteQuestion"
         (delete)="delete()"
         [dialogError]="dialogError$"
         [disabled]="isLoading"
