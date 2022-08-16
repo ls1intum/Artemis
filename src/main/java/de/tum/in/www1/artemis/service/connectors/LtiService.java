@@ -147,7 +147,7 @@ public class LtiService {
         }
 
         final String email = launchRequest.getLis_person_contact_email_primary();
-        if (StringUtils.isEmpty(launchRequest.getLis_person_contact_email_primary())) {
+        if (StringUtils.isEmpty(email)) {
             throw new InternalAuthenticationServiceException("No email address sent by launch request. Please make sure the user has an accessible email address.");
         }
 
