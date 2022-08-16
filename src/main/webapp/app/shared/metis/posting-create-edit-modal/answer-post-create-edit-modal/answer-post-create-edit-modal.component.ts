@@ -78,6 +78,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
+                this.isInputOpen = false;
                 this.createEditAnswerPostContainerRef?.clear();
             },
             error: () => {
