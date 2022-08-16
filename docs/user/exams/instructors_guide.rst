@@ -22,7 +22,7 @@ Timeline of an Artemis Online Exam
 
 1. **Creation and Configuration**
 ---------------------------------
-During the exam creation and configuration, you can create your exam and configure it to fit your needs. Add exercises with different variants, register students, generate :ref:`student exams <student_exams>` and conduct test runs. For more information see :ref:`configure exam <configure_exam>`.
+During the exam creation and configuration, you can create your exam and configure it to fit your needs. Add exercises with different variants, register students, generate :ref:`student exams <student_exams>` and conduct test runs. For more information see `1.2 Create and Configure Exam`_.
 
 
 1.1 Accessing the Exam Management Page
@@ -36,9 +36,11 @@ During the exam creation and configuration, you can create your exam and configu
 
 - You can create an exam by clicking on |create_new_exam|.
 
+.. _configure_exam:
+
 1.2 Create and Configure Exam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. _configure_exam:
+
 
 **1.2.1 Exam Mode**
 ^^^^^^^^^^^^^^^^^^^^
