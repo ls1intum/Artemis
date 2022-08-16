@@ -79,11 +79,6 @@ class LtiServiceTest {
         ltiUserId = new LtiUserId();
         ltiUserId.setUser(user);
         ltiOutcomeUrl = new LtiOutcomeUrl();
-
-        ReflectionTestUtils.setField(ltiService, "USER_GROUP_NAME_EDX", Optional.of(""));
-        ReflectionTestUtils.setField(ltiService, "USER_GROUP_NAME_U4I", Optional.of(""));
-        ReflectionTestUtils.setField(ltiService, "USER_PREFIX_EDX", Optional.of(""));
-        ReflectionTestUtils.setField(ltiService, "USER_PREFIX_U4I", Optional.of(""));
     }
 
     @Test

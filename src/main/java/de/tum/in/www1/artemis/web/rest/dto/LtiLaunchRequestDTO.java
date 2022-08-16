@@ -24,6 +24,8 @@ public class LtiLaunchRequestDTO {
 
     private String lti_version;
 
+    private String ext_user_username;
+
     private String context_id;
 
     private String context_label;
@@ -53,6 +55,8 @@ public class LtiLaunchRequestDTO {
     private String oauth_consumer_key;
 
     private String oauth_signature;
+
+    private String tool_consumer_instance_name;
 
     private Boolean custom_require_existing_user = false;
 
@@ -131,6 +135,14 @@ public class LtiLaunchRequestDTO {
 
     public void setLti_message_type(String lti_message_type) {
         this.lti_message_type = lti_message_type;
+    }
+
+    public String getExt_user_username() {
+        return ext_user_username;
+    }
+
+    public void setExt_user_username(String ext_user_username) {
+        this.ext_user_username = ext_user_username;
     }
 
     public String getLti_version() {
@@ -251,6 +263,14 @@ public class LtiLaunchRequestDTO {
 
     public void setOauth_signature(String oauth_signature) {
         this.oauth_signature = oauth_signature;
+    }
+
+    public String getTool_consumer_instance_name() {
+        return tool_consumer_instance_name;
+    }
+
+    public void setTool_consumer_instance_name(String tool_consumer_instance_name) {
+        this.tool_consumer_instance_name = tool_consumer_instance_name;
     }
 
     public String getContext_label() {

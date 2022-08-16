@@ -45,9 +45,7 @@ import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
 @Service
 public class LtiService {
 
-    public static final String TUMX = "TUMx";
-
-    public static final String U4I = "U4I";
+    public static final String LTI_GROUP_NAME = "lti";
 
     protected static final List<SimpleGrantedAuthority> SIMPLE_USER_LIST_AUTHORITY = Collections.singletonList(new SimpleGrantedAuthority(Role.STUDENT.getAuthority()));
 
@@ -58,18 +56,6 @@ public class LtiService {
 
     @Value("${artemis.lti.oauth-secret:#{null}}")
     private Optional<String> OAUTH_SECRET;
-
-    @Value("${artemis.lti.user-prefix-edx:#{null}}")
-    private Optional<String> USER_PREFIX_EDX;
-
-    @Value("${artemis.lti.user-prefix-u4i:#{null}}")
-    private Optional<String> USER_PREFIX_U4I;
-
-    @Value("${artemis.lti.user-group-name-edx:#{null}}")
-    private Optional<String> USER_GROUP_NAME_EDX;
-
-    @Value("${artemis.lti.user-group-name-u4i:#{null}}")
-    private Optional<String> USER_GROUP_NAME_U4I;
 
     private final UserCreationService userCreationService;
 
@@ -115,7 +101,6 @@ public class LtiService {
         else {
             // We do not currently have a way to allow users to login by themselves later, so we throw an exception for now, later this branch might be useful
             throw new InternalAuthenticationServiceException("Could not find existing user or create new LTI user.");
-
         }
     }
 
@@ -175,63 +160,51 @@ public class LtiService {
             return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
         }
 
-        final String username = createUsernameFromLaunchRequest(launchRequest);
-        final String fullname = getUserFullNameFromLaunchRequest(launchRequest);
-
         // 3. Case: Lookup user with the LTI email address. Sign in as this user.
         // Check if lookup by email is enabled
         if (launchRequest.getCustom_lookup_user_by_email()) {
             // check if a user with this email address exists
             final var usernameLookupByEmail = artemisAuthenticationProvider.getUsernameForEmail(email);
             if (usernameLookupByEmail.isPresent()) {
-                return loginUserByEmail(launchRequest, usernameLookupByEmail.get(), email, fullname);
+                return loginUserByEmail(usernameLookupByEmail.get(), email);
             }
         }
 
         // 4. Case: Create new user
         // Check if an existing user is required
         if (!launchRequest.getCustom_require_existing_user()) {
-            return createNewUserFromLaunchRequest(launchRequest, email, username, fullname);
+            final String username = createUsernameFromLaunchRequest(launchRequest);
+            final String lastName = getUserLastNameFromLaunchRequest(launchRequest);
+            return createNewUserFromLaunchRequest(launchRequest, email, username, lastName);
         }
 
         return Optional.empty();
     }
 
     /**
-     * Gets the fullname for the user considering the requests sent by the different LTI consumers
+     * Gets the last name for the user considering the requests sent by the different LTI consumers
+     *
+     * @param launchRequest the LTI launch request
+     * @return the last name for the LTI user
      */
-    private String getUserFullNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
-        if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+    private String getUserLastNameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
+        if (!StringUtils.isEmpty(launchRequest.getLis_person_name_family())) {
+            return launchRequest.getLis_person_name_family();
+        }
+        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
             return launchRequest.getLis_person_sourcedid();
         }
-        else if (!StringUtils.isEmpty(launchRequest.getLis_person_name_full())) {
-            return launchRequest.getLis_person_name_full();
-        }
-        return launchRequest.getUser_id();
+        return "";
     }
 
     @NotNull
-    private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String fullname) {
+    private Optional<Authentication> createNewUserFromLaunchRequest(LtiLaunchRequestDTO launchRequest, String email, String username, String lastName) {
         final var user = userRepository.findOneByLogin(username).orElseGet(() -> {
             final User newUser;
             final var groups = new HashSet<String>();
-            // TODO: Generic user creation: newUser = userCreationService.createUser(launchRequest.getLis_person_name_full(), null, groups,
-            // launchRequest.getLis_person_name_given(), launchRequest.getLis_person_name_family(), email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
-                groups.add(USER_GROUP_NAME_EDX.get());
-                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_EDX.get(), fullname, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            }
-            else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
-                groups.add(USER_GROUP_NAME_U4I.get());
-                newUser = userCreationService.createUser(username, null, groups, USER_GROUP_NAME_U4I.get(), fullname, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-            }
-            else {
-                newUser = userCreationService.createUser(username, null, groups, "", fullname, email, null, null, Constants.DEFAULT_LANGUAGE, true);
-                /*
-                 * TODO: This needs to be generic String message = "User group not activated or unknown context_label sent in LTI Launch Request: " + launchRequest;
-                 * log.error(message); throw new InternalAuthenticationServiceException(message);
-                 */
-            }
+            groups.add(LTI_GROUP_NAME);
+            String firstName = launchRequest.getLis_person_name_given() != null ? launchRequest.getLis_person_name_given() : "";
+            newUser = userCreationService.createUser(username, null, groups, firstName, lastName, email, null, null, Constants.DEFAULT_LANGUAGE, true);
             newUser.setActivationKey(null);
             userRepository.save(newUser);
             log.info("Created new user {}", newUser);
@@ -244,36 +217,37 @@ public class LtiService {
         return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
     }
 
-    private Optional<Authentication> loginUserByEmail(LtiLaunchRequestDTO launchRequest, String username, String email, String fullname) {
+    private Optional<Authentication> loginUserByEmail(String username, String email) {
         log.info("Signing in as {}", username);
-        var firstName = "";
-        if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent()) {
-            firstName = USER_GROUP_NAME_EDX.get();
-        }
-        else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent()) {
-            firstName = USER_GROUP_NAME_U4I.get();
-        }
-        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), firstName, fullname, email, true);
-
+        final var user = artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true);
         return Optional.of(new UsernamePasswordAuthenticationToken(user.getLogin(), user.getPassword(), SIMPLE_USER_LIST_AUTHORITY));
     }
 
+    /**
+     * Gets the username for the LTI user prefixed with the specific LMS platform
+     *
+     * @param launchRequest the LTI launch request
+     * @return the username for the LTI user
+     */
     @NotNull
     private String createUsernameFromLaunchRequest(LtiLaunchRequestDTO launchRequest) {
-        final String username;
-        // TODO: This should be generic, why do we consider the context_label and create specific groups?
-        if (TUMX.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_EDX.isPresent() && USER_PREFIX_EDX.isPresent()) {
-            username = USER_PREFIX_EDX.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        String username;
+
+        if (!StringUtils.isEmpty(launchRequest.getExt_user_username())) {
+            username = launchRequest.getExt_user_username();
         }
-        else if (U4I.equals(launchRequest.getContext_label()) && USER_GROUP_NAME_U4I.isPresent() && USER_PREFIX_U4I.isPresent()) {
-            username = USER_PREFIX_U4I.get() + (launchRequest.getLis_person_sourcedid() != null ? launchRequest.getLis_person_sourcedid() : launchRequest.getUser_id());
+        else if (!StringUtils.isEmpty(launchRequest.getLis_person_sourcedid())) {
+            username = launchRequest.getLis_person_sourcedid();
+        }
+        else if (!StringUtils.isEmpty(launchRequest.getUser_id())) {
+            username = launchRequest.getUser_id();
         }
         else {
-            username = launchRequest.getLis_person_contact_email_primary();
-            // throw new InternalAuthenticationServiceException("Unknown context_label sent in LTI Launch Request: " + launchRequest);
+            String userEmail = launchRequest.getLis_person_contact_email_primary();
+            username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
         }
 
-        return username;
+        return launchRequest.getTool_consumer_instance_name() + "_" + username;
     }
 
     /**
@@ -290,15 +264,12 @@ public class LtiService {
             user.setGroups(groups);
             userCreationService.saveUser(user);
 
-            // TODO: Why isn't this done for edx users? Should this not be done for ALL lti users?
-            if (!user.getLogin().startsWith("edx")) {
-                // try to sync with authentication service for actual users (not for edx users)
-                try {
-                    artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
-                }
-                catch (ArtemisAuthenticationException e) {
-                    // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
-                }
+            // try to sync with authentication service TODO: is there an issue with removing the old edx check?
+            try {
+                artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
+            }
+            catch (ArtemisAuthenticationException e) {
+                // This might throw exceptions, for example if the group does not exist on the authentication service. We can safely ignore it
             }
         }
     }

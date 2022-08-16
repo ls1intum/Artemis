@@ -156,10 +156,6 @@ You can override the following configuration options in this file.
            id: artemis_lti
            oauth-key: artemis_lti_key
            oauth-secret: <secret>    # only important for online courses on the edX platform, can typically be ignored
-           user-prefix-edx: edx_
-           user-prefix-u4i: u4i_
-           user-group-name-edx: edx
-           user-group-name-u4i: u4i
        git:
            name: Artemis
            email: artemis@in.tum.de
