@@ -47,9 +47,10 @@ During the exam creation and configuration, you can create your exam and configu
 - The normal exam mode is suitable for conducting end-of-semester exams. Students can view and work on the exam between the configured working time. Afterwards you can perform a manual or automated evaluation of the students' submissions. The results will be published on the specified date.
 - Test exams provide you with the possibility to provide students with a practice opportunity for the end-of-semester exam. The main difference is that you choose a working window within which students can freely start the exam. Students then have the configured working time to complete the exam. After submitting, students immediately get the automated assessment for programming and quizzes. Manual correction of the submissions is not necessary.
 
+.. _create_exam:
+
 **1.2.2 Create Exam**
 ^^^^^^^^^^^^^^^^^^^^^^
-.. _create_exam:
 
 - When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc.
 - You can choose between the exam and test exam mode.
@@ -98,7 +99,7 @@ During the exam creation and configuration, you can create your exam and configu
    :align: center
 
 - You are now presented with the *Import Exam* view. All information except for the dates are copied from the exam you selected for the import. You can find more information regarding this view at the section :ref:`create exam <create_exam>`.
-- Additionally, you can select or deselect exercises which are imported alongside the exam. You can find more informations regarding the exercise import in :ref:`the exercise group import <exercise_import>`
+- Additionally, you can select or deselect exercises which are imported alongside the exam. You can find more informations regarding the exercise import in :ref:`section regarding the exercise group import <exercise_import>`.
 
 
 .. _exercise_groups:
@@ -133,8 +134,10 @@ During the exam creation and configuration, you can create your exam and configu
    :alt: First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported
    :align: center
 
-**Step 2: Select Exercises and Exercise Groups**
 .. _exercise_import:
+
+**Step 2: Select Exercises and Exercise Groups**
+
 
 - In the next step you can select or deselect exercises which should be imported alongside the exercise groups.
 - You can also change the ``title`` and ``isMandatory`` of an exercise group, as well as the ``title`` (and ``short-name`` for programming exercises) for the individual exercises.
@@ -470,7 +473,7 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 4. **Publication of Results**
 -----------------------------
 
-You can specify the moment when Artemis publishes the results of the exam, see :ref:`create exam <create_exam>` This is usually when the :ref:`exam assessment <exam_assessment>` ends, but you can specify this at any point in time. During the publication of the results, the student can view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file, see `4.1 Exam Scores`_.
+You can specify the moment when Artemis publishes the results of the exam in the :ref:`create exam <create_exam>` section. This is usually when the :ref:`exam assessment <exam_assessment>` ends, but you can specify this at any point in time. During the publication of the results, the student can view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file, see `4.1 Exam Scores`_.
 
 4.1 Exam Scores
 ^^^^^^^^^^^^^^^
@@ -499,7 +502,7 @@ You can specify the moment when Artemis publishes the results of the exam, see :
 
 5. **Student Review**
 ---------------------
-During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes made in the :ref:`assessment <exam_assessment>`. Students can provide their reasoning through a text message to clarify their objections. You can set the student review period in the :ref:`exam configuration <exam_creation_and_configuration>`, see :ref:`create exam <create_exam>`.
+During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes made in the :ref:`assessment <exam_assessment>`. Students can provide their reasoning through a text message to clarify their objections. You can set the student review period in the :ref:`create exam <create_exam>` during the :ref:`exam configuration <exam_creation_and_configuration>`.
 
 - Students can submit complaints about their assessment in the *Summary* page.
 - During the student review, a complaint button will appear for every manually assessed exercise.
