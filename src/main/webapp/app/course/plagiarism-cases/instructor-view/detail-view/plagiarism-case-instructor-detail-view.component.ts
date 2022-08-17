@@ -12,6 +12,7 @@ import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService } from 'app/core/theme/theme.service';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -47,6 +48,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         private route: ActivatedRoute,
         private alertService: AlertService,
         private translateService: TranslateService,
+        private themeService: ThemeService,
     ) {}
 
     ngOnInit(): void {
@@ -218,9 +220,9 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     /**
-     * exports the plagiarism case with all relevant information as PDF
+     * Prints the whole page using the theme service
      */
     printPlagiarismCase(): void {
-        window.print();
+        this.themeService.print();
     }
 }
