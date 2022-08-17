@@ -221,6 +221,9 @@ export class GitDiffFileComponent implements OnInit {
             highlightActiveLine: false,
             highlightGutterLine: false,
         });
+        editor.getEditor().renderer.setOptions({
+            showFoldWidgets: false,
+        });
         editor.getEditor().renderer.$cursorLayer.element.style.display = 'none';
         const editorMode = this.aceModeList.getModeForPath(this.filePath ?? this.previousFilePath ?? '').name;
         editor.setMode(editorMode);
