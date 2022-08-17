@@ -12,6 +12,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonIncludeProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import de.tum.in.www1.artemis.domain.Course;
+
 /**
  * An AnswerPost.
  */
@@ -66,6 +68,15 @@ public class AnswerPost extends Posting {
 
     public void setPost(Post post) {
         this.post = post;
+    }
+
+    /**
+     * Helper method to extract the course an AnswerPost belongs to, which is found in different locations based on the parent Post's context
+     * @return the course AnswerPost belongs to
+     */
+    @Override
+    public Course getCoursePostingBelongsTo() {
+        return this.post.getCoursePostingBelongsTo();
     }
 
     @Override
