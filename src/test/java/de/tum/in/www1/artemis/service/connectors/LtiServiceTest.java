@@ -75,25 +75,17 @@ class LtiServiceTest {
         user = new User();
         user.setLogin("login");
         user.setPassword("password");
-        user.setGroups(new HashSet<>());
+        user.setGroups(new HashSet<>(Collections.singleton(LtiService.LTI_GROUP_NAME)));
         ltiUserId = new LtiUserId();
         ltiUserId.setUser(user);
         ltiOutcomeUrl = new LtiOutcomeUrl();
     }
 
     @Test
-    void handleLaunchRequest_LTILaunchFromEdx() {
+    void handleLaunchRequest_LTILaunchFromEdxStudio() {
         launchRequest.setUser_id("student");
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
         String expectedMessage = "Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.";
-        assertThat(exception.getMessage()).isEqualTo(expectedMessage);
-    }
-
-    @Test
-    void handleLaunchRequest_InvalidContextLabel() {
-        launchRequest.setContext_label("randomLabel");
-        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
-        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest;
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
@@ -125,72 +117,44 @@ class LtiServiceTest {
         launchRequest.setCustom_lookup_user_by_email(true);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.of(username));
-        when(artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), "", launchRequest.getLis_person_sourcedid(), email, true))
-                .thenReturn(user);
+        when(artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true)).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-        ltiService.handleLaunchRequest(launchRequest, exercise);
-        onSuccessfulAuthenticationAssertions(user, ltiUserId);
-    }
-
-    @Test
-    void handleLaunchRequest_lookupWithLtiEmailAddressWithContextLabelTumx() {
-        String username = "username";
-        String email = launchRequest.getLis_person_contact_email_primary();
-        launchRequest.setCustom_lookup_user_by_email(true);
-        when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
-        when(artemisAuthenticationProvider.getUsernameForEmail(email)).thenReturn(Optional.of(username));
-        when(artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), "", launchRequest.getLis_person_sourcedid(), email, true))
-                .thenReturn(user);
-
-        onSuccessfulAuthenticationSetup(user, ltiUserId);
-        launchRequest.setContext_label("TUMx");
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
     @Test
     void handleLaunchRequest_newUserIsNotRequired() {
-        String username = launchRequest.getLis_person_sourcedid();
+        String username = "moodle_username";
+        String firstName = "firstName";
+        String lastName = "lastName";
+
+        launchRequest.setTool_consumer_instance_name("moodle");
+        launchRequest.setExt_user_username("username");
+        launchRequest.setLis_person_name_given(firstName);
+        launchRequest.setLis_person_name_family(lastName);
+
         Set<String> groups = new HashSet<>();
-        groups.add("");
+        groups.add(LtiService.LTI_GROUP_NAME);
         user.setActivated(false);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
-        when(userCreationService.createUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null, null,
-                "en", true)).thenReturn(user);
+        when(userCreationService.createUser(username, null, groups, firstName, lastName, launchRequest.getLis_person_contact_email_primary(), null, null, "en", true))
+                .thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
         ltiService.handleLaunchRequest(launchRequest, exercise);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
-
-        SecurityContextHolder.clearContext();
-        launchRequest.setContext_label("randomLabel");
-        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
-        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
-        assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
     @Test
-    void handleLaunchRequest_newUserIsNotRequiredWithContextLabelTumx() {
-        String username = launchRequest.getLis_person_sourcedid();
-        Set<String> groups = new HashSet<>();
-        groups.add("");
-        user.setActivated(false);
+    void handleLaunchRequest_noAuthentication() {
+        launchRequest.setCustom_require_existing_user(true);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
-        when(userRepository.findOneByLogin(username)).thenReturn(Optional.empty());
-        when(userCreationService.createUser(username, null, groups, "", launchRequest.getLis_person_sourcedid(), launchRequest.getLis_person_contact_email_primary(), null, null,
-                "en", true)).thenReturn(user);
 
-        onSuccessfulAuthenticationSetup(user, ltiUserId);
-        launchRequest.setContext_label("TUMx");
-        ltiService.handleLaunchRequest(launchRequest, exercise);
-        onSuccessfulAuthenticationAssertions(user, ltiUserId);
-
-        SecurityContextHolder.clearContext();
-        launchRequest.setContext_label("randomLabel");
         var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
-        String expectedMessage = "Unknown context_label sent in LTI Launch Request: " + launchRequest.toString();
+        String expectedMessage = "Could not find existing user or create new LTI user.";
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
 
@@ -234,6 +198,7 @@ class LtiServiceTest {
 
     private void onSuccessfulAuthenticationAssertions(User user, LtiUserId ltiUserId) {
         assertThat(user.getGroups()).contains(courseStudentGroupName);
+        assertThat(user.getGroups()).contains(LtiService.LTI_GROUP_NAME);
         assertThat("ff30145d6884eeb2c1cef50298939383").isEqualTo(ltiUserId.getLtiUserId());
         assertThat("some.outcome.service.url.com").isEqualTo(ltiOutcomeUrl.getUrl());
         assertThat("someResultSourceId").isEqualTo(ltiOutcomeUrl.getSourcedId());
