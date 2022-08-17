@@ -42,18 +42,16 @@ export class GitDiffFilePanelComponent implements OnInit {
             .first();
 
         this.addedLineCount = this.diffEntries
+            .filter((entry) => entry && entry.filePath && entry.startLine && entry.lineCount)
             .flatMap((entry) => {
-                if (entry && entry.filePath && entry.startLine && entry.lineCount) {
-                    return this.solutionFileContent?.split('\n').slice(entry.startLine - 1, entry.startLine + entry.lineCount - 1);
-                }
+                return this.solutionFileContent?.split('\n').slice(entry.startLine! - 1, entry.startLine! + entry.lineCount! - 1);
             })
             .filter((line) => line && line.trim().length !== 0).length;
 
         this.removedLineCount = this.diffEntries
+            .filter((entry) => entry && entry.previousFilePath && entry.previousStartLine && entry.previousLineCount)
             .flatMap((entry) => {
-                if (entry && entry.previousFilePath && entry.previousStartLine && entry.previousLineCount) {
-                    return this.templateFileContent?.split('\n').slice(entry.previousStartLine - 1, entry.previousStartLine + entry.previousLineCount - 1);
-                }
+                return this.templateFileContent?.split('\n').slice(entry.previousStartLine! - 1, entry.previousStartLine! + entry.previousLineCount! - 1);
             })
             .filter((line) => line && line.trim().length !== 0).length;
     }
