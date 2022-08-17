@@ -216,7 +216,7 @@ export const examManagementRoute: Routes = [
         component: BonusComponent,
         data: {
             authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.TODO: Ata',
+            pageTitle: 'artemisApp.bonus.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -848,15 +848,6 @@ export const examManagementRoute: Routes = [
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             usePathForBreadcrumbs: true,
             pageTitle: 'artemisApp.apollonDiagram.detail.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
-    {
-        path: ':examId/bonus/:bonusId',
-        component: BonusComponent,
-        data: {
-            authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-            pageTitle: 'artemisApp.todo: Ata',
         },
         canActivate: [UserRouteAccessService],
     },
