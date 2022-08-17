@@ -101,13 +101,12 @@ A project maintainer merges your changes into the ``develop`` branch.
 Stale Bot
 =========
 
-If the pull request doesn't have any activity for at least 7 days, the stale bot will mark the PR as `stale``.
+If the pull request doesn't have any activity for at least 7 days, the stale bot will mark the PR as `stale`.
 The `stale` status can simply be removed by adding a comment or a commit to the PR. 
-After the PR is marked as `stale` the bot waits another 14 days until the PR will be closed (21 days in total).
+After the PR is marked as `stale`, the bot waits another 14 days until the PR will be closed (21 days in total).
 Adding activity to the PR will remove the `stale` label again and reset the stale timer. 
-To prevent the bot from adding the `stale` label to the PR in the first place, the `no-stale` label 
-can be used. This label should only be utilized, if the PR is blocked by another PR or the PR needs 
-help from another developer. 
+To prevent the bot from adding the `stale` label to the PR in the first place, the `no-stale` label can be used.
+This label should only be utilized if the PR is blocked by another PR or the PR needs help from another developer. 
 
 A full documentation on this bit can be found here:
 https://github.com/actions/stale
