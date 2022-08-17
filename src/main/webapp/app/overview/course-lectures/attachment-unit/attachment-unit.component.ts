@@ -76,6 +76,7 @@ export class AttachmentUnitComponent {
                 case 'png':
                 case 'jpg':
                 case 'jpeg':
+                case 'gif':
                 case 'svg':
                     return faFileImage;
                 case 'pdf':

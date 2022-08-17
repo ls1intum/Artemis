@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { MAX_FILE_SIZE } from 'app/shared/constants/input.constants';
 import { lastValueFrom } from 'rxjs';
-import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
+import { FILE_EXTENSIONS, MARKDOWN_FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 export interface FileUploadResponse {
     path?: string;
@@ -14,6 +14,7 @@ type Options = {
 
 @Injectable({ providedIn: 'root' })
 export class FileUploaderService {
+    readonly acceptedMarkdownFileExtensions = MARKDOWN_FILE_EXTENSIONS;
     readonly acceptedFileExtensions = FILE_EXTENSIONS;
 
     constructor(private http: HttpClient) {}
@@ -22,30 +23,31 @@ export class FileUploaderService {
      * Uploads a generic file to the server.
      */
     uploadFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
-        return this.handleFileUpload('/api/fileUpload', file, fileName, options);
+        return this.handleFileUpload('/api/fileUpload', this.acceptedFileExtensions, file, fileName, options);
     }
 
     /**
      * Uploads a file for the markdown editor to the server.
      */
     uploadMarkdownFile(file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
-        return this.handleFileUpload('/api/markdown-file-upload', file, fileName, options);
+        return this.handleFileUpload('/api/markdown-file-upload', this.acceptedMarkdownFileExtensions, file, fileName, options);
     }
 
     /**
      * Uploads a file to the server. It verifies the file extensions and file size.
      * @param endpoint The API endpoint to upload the file to
+     * @param allowedExtensions The allowed extensions for the file
      * @param file The file to upload
      * @param fileName The name of the file
      * @param options The options dictionary (e.g, { keepFileName: true })
      * @return A promise with the response from the server or an error
      * @private
      */
-    private handleFileUpload(endpoint: string, file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
+    private handleFileUpload(endpoint: string, allowedExtensions: string[], file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
-        if (this.acceptedFileExtensions.indexOf(fileExtension) === -1) {
+        if (allowedExtensions.indexOf(fileExtension) === -1) {
             return Promise.reject(
-                new Error('Unsupported file type! Only the following file extensions are allowed: ' + this.acceptedFileExtensions.map((extension) => `.${extension}`).join(', ')),
+                new Error('Unsupported file type! Only the following file extensions are allowed: ' + allowedExtensions.map((extension) => `.${extension}`).join(', ')),
             );
         }
 

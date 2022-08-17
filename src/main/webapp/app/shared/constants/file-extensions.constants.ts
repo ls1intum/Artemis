@@ -1,8 +1,18 @@
-// NOTE: this list has to be kept in sync with the extensions defined in FileResource.java
+/**
+ * The list of file extensions that are allowed to be uploaded in a Markdown editor.
+ * NOTE: Has to be kept in sync with the server-side definitions in FileResource.java
+ */
+export const MARKDOWN_FILE_EXTENSIONS = ['png', 'jpg', 'jpeg', 'gif', 'svg', 'pdf'];
+
+/**
+ * The global list of file extensions that are allowed to be uploaded.
+ * NOTE: Has to be kept in sync with the server-side definitions in FileResource.java
+ */
 export const FILE_EXTENSIONS = [
     'png',
     'jpg',
     'jpeg',
+    'gif',
     'svg',
     'pdf',
     'zip',
