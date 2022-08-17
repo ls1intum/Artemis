@@ -652,21 +652,21 @@ describe('QuizExercise Management Detail Component', () => {
             it('should set quiz exercise to entity when adding MC question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addMultipleChoiceQuestion();
-                expect(initializeNewQuizExerciseStub).toBeCalled();
+                expect(initializeNewQuizExerciseStub).toHaveBeenCalled();
                 expect(comp.quizExercise).toEqual(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding Dnd question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addDragAndDropQuestion();
-                expect(initializeNewQuizExerciseStub).toBeCalled();
+                expect(initializeNewQuizExerciseStub).toHaveBeenCalled();
                 expect(comp.quizExercise).toEqual(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding SA question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addShortAnswerQuestion();
-                expect(initializeNewQuizExerciseStub).toBeCalled();
+                expect(initializeNewQuizExerciseStub).toHaveBeenCalled();
                 expect(comp.quizExercise).toEqual(quizExercise);
             });
         });

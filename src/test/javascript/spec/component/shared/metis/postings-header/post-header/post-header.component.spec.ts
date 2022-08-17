@@ -15,6 +15,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { PostingMarkdownEditorComponent } from 'app/shared/metis/posting-markdown-editor/posting-markdown-editor.component';
 import { PostingButtonComponent } from 'app/shared/metis/posting-button/posting-button.component';
 import { metisAnnouncement, metisPostLectureUser1 } from '../../../../../helpers/sample/metis-sample-data';
+import { UserRole } from 'app/shared/metis/metis.util';
 
 describe('PostHeaderComponent', () => {
     let component: PostHeaderComponent;
@@ -30,13 +31,13 @@ describe('PostHeaderComponent', () => {
             providers: [FormBuilder, { provide: MetisService, useClass: MockMetisService }],
             declarations: [
                 PostHeaderComponent,
+                FaIconComponent, // we want to test the type of rendered icons, therefore we cannot mock the component
                 MockComponent(PostCreateEditModalComponent),
                 MockPipe(ArtemisTranslatePipe),
                 MockPipe(ArtemisDatePipe),
                 MockDirective(NgbTooltip),
                 MockComponent(PostingMarkdownEditorComponent),
                 MockComponent(PostingButtonComponent),
-                MockComponent(FaIconComponent),
                 MockComponent(ConfirmIconComponent),
             ],
         })
@@ -95,5 +96,22 @@ describe('PostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.editIcon')).not.toBeNull();
         expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
+    });
+
+    it.each`
+        input                  | expect
+        ${UserRole.INSTRUCTOR} | ${'fa fa-user-graduate'}
+        ${UserRole.TUTOR}      | ${'fa fa-user-check'}
+        ${UserRole.USER}       | ${'fa fa-user'}
+    `('should display relevant icon and tooltip for author authority', (param: { input: UserRole; expect: string }) => {
+        component.posting = metisAnnouncement;
+        component.posting.authorRole = param.input;
+        component.ngOnInit();
+        fixture.detectChanges();
+
+        // should display relevant icon for author authority
+        const icon = getElement(debugElement, 'fa-icon');
+        expect(icon).not.toBeNull();
+        expect(icon.innerHTML).toInclude(param.expect);
     });
 });

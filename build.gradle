@@ -25,6 +25,7 @@ plugins {
     // this allows us to find outdated dependencies via ./gradlew dependencyUpdates
     id "com.github.ben-manes.versions" version "0.42.0"
     id "com.github.andygoossens.modernizer" version "1.6.2"
+    id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id "info.solidsoft.pitest" version "1.7.4"
     id "org.owasp.dependencycheck" version "7.1.1"
 }
