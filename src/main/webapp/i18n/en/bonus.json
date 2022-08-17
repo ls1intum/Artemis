@@ -30,13 +30,25 @@
                 "bonusSourceStudentPoints": "Bonus Source Student Points",
                 "bonusGrade": "Bonus",
                 "finalPoints": "Final Points",
-                "finalGrade": "Final Grade"
+                "finalGrade": "Final Grade",
+                "any": "(Any)"
+            },
+            "formula": {
+                "title": "Formula",
+                "examPoints": "Exam<br/>Points",
+                "examGrade": "Exam<br/>Grade",
+                "bonusSourceStudentPoints": "Bonus Source Student Points",
+                "bonusGrade": "Bonus",
+                "finalPoints": "Final<br/>Points",
+                "finalGrade": "Final<br/>Grade",
+                "finalGradeLimit": "(You cannot get a final grade better than {{maxPossibleGrade}})",
+                "finalGradeFromPoints": "Final Points will determine Final Grade by matching against the non-bonus grade scale."
             },
             "title": "Bonus",
-            "finalGradeLimit": "(You cannot get a final grade better than {{maxPossibleGrade}})",
-            "finalGradeFromPoints": "Final Points will determine Final Grade by matching against the non-bonus grade scale.",
-            "formula": "Formula",
-            "deleteQuestion": "Do you really want to delete the bonus?"
+            "deleteQuestion": "Do you really want to delete the bonus?",
+            "updated": "Bonus updated.",
+            "created": "Bonus created.",
+            "deleted": "Bonus deleted."
         }
     }
 }

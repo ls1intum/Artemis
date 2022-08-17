@@ -54,7 +54,7 @@ export class BonusComponent implements OnInit {
 
     readonly bonusStrategyDiscreteness = [BonusStrategyDiscreteness.DISCRETE, BonusStrategyDiscreteness.CONTINUOUS].map((bonusStrategyDiscreteness) => ({
         value: bonusStrategyDiscreteness,
-        labelKey: 'artemisApp..bonus.discreteness.' + BonusStrategyDiscreteness[bonusStrategyDiscreteness].toLowerCase(),
+        labelKey: 'artemisApp.bonus.discreteness.' + BonusStrategyDiscreteness[bonusStrategyDiscreteness].toLowerCase(),
         btnClass: 'btn-secondary',
     }));
 
@@ -131,19 +131,8 @@ export class BonusComponent implements OnInit {
                         this.examGradeStepsDTO = gradeSteps;
                         this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
                         this.gradingSystemService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
-                        // if (gradeSteps.maxPoints !== undefined) {
-                        //     if (!this.isExam) {
-                        //         // calculate course max points based on exercises
-                        //         const course = this.courseCalculationService.getCourse(this.courseId!);
-                        //         const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
-                        //         this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
-                        //     } else {
-                        //         // for exams the max points filed should equal the total max points (otherwise exams can't be started)
-                        //         this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
-                        //     }
-                        // }
                     } else {
-                        // TODO: Ata Return to exam detail page and alert error.
+                        throw new Error(`No grade steps found for bonus calculation. Bonus to course id "${this.courseId}", exam id "${this.examId}"`);
                     }
                 }),
             ),
@@ -224,34 +213,6 @@ export class BonusComponent implements OnInit {
             .subscribe((bonusResponse) => {
                 this.setBonus(bonusResponse.body!);
             });
-
-        // this.gradingScale.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale.gradeSteps);
-        // this.setInclusivity();
-        // this.gradingScale.gradeSteps = this.setPassingGrades(this.gradingScale.gradeSteps);
-        // // new grade steps shouldn't have ids set
-        // this.gradingScale.gradeSteps.forEach((gradeStep) => {
-        //     gradeStep.id = undefined;
-        // });
-        // if (this.isExam) {
-        //     this.gradingScale.exam = this.exam;
-        //     this.gradingScale.exam!.maxPoints = this.maxPoints;
-        // } else {
-        //     this.gradingScale.course = this.course;
-        //     this.gradingScale.course!.maxPoints = this.maxPoints;
-        // }
-        // if (this.existingGradingScale) {
-        //     if (this.isExam) {
-        //         this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
-        //     } else {
-        //         this.handleSaveObservable(this.gradingSystemService.updateGradingScaleForCourse(this.courseId!, this.gradingScale));
-        //     }
-        // } else {
-        //     if (this.isExam) {
-        //         this.handleSaveObservable(this.gradingSystemService.createGradingScaleForExam(this.courseId!, this.examId!, this.gradingScale));
-        //     } else {
-        //         this.handleSaveObservable(this.gradingSystemService.createGradingScaleForCourse(this.courseId!, this.gradingScale));
-        //     }
-        // }
     }
 
     delete() {
@@ -266,9 +227,13 @@ export class BonusComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe((bonusResponse) => {
-                this.setBonus(bonusResponse.body || new Bonus());
-            });
+            .subscribe(
+                (bonusResponse) => {
+                    this.setBonus(bonusResponse.body || new Bonus());
+                    this.dialogErrorSource.next('');
+                },
+                (error) => this.dialogErrorSource.next(error.message),
+            );
     }
 
     isFormValid() {
@@ -329,7 +294,7 @@ export class BonusComponent implements OnInit {
      * @param weight a positive or negative number
      */
     getCalculationSign(weight: number): string {
-        return weight > 0 ? '+' : '-';
+        return weight > 0 ? '+' : '−';
     }
 
     maxPossibleGrade() {
