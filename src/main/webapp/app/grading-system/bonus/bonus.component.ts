@@ -143,15 +143,19 @@ export class BonusComponent implements OnInit {
                 }),
             )
             .subscribe(() => {
-                if (this.bonus.source) {
-                    const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.source!.id);
-                    if (!sourceGradingScale) {
-                        throw new Error(`sourceGradingScale not found for id: ${this.bonus.source.id}`);
-                    }
-                    this.bonus.source = sourceGradingScale;
-                    this.onBonusSourceChange(sourceGradingScale);
-                }
+                this.setSourceGradingScale();
             });
+    }
+
+    private setSourceGradingScale() {
+        if (this.bonus.source) {
+            const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.source!.id);
+            if (!sourceGradingScale) {
+                throw new Error(`sourceGradingScale not found for id: ${this.bonus.source.id}`);
+            }
+            this.bonus.source = sourceGradingScale;
+            this.onBonusSourceChange(sourceGradingScale);
+        }
     }
 
     generateExamples() {
@@ -210,9 +214,7 @@ export class BonusComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe((bonusResponse) => {
-                this.setBonus(bonusResponse.body!);
-            });
+            .subscribe();
     }
 
     delete() {
