@@ -34,6 +34,7 @@ public class ExamActivity extends DomainObject {
     @OneToOne
     @JoinColumn(name = "student_exam_id", insertable = false, updatable = false)
     @JsonIgnore
+    @SuppressWarnings("unused")
     private StudentExam studentExam;
 
     /**

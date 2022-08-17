@@ -65,6 +65,7 @@ public class StudentExam extends AbstractAuditingEntity {
     private Set<ExamSession> examSessions = new HashSet<>();
 
     @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @SuppressWarnings("unused")
     private ExamActivity examActivity;
 
     public Boolean isSubmitted() {
