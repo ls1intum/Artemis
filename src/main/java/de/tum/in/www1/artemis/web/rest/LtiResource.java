@@ -18,6 +18,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
+import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -90,6 +91,13 @@ public class LtiResource {
             String message = "LTI not configured on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.";
             log.warn(message);
             response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
+            return;
+        }
+
+        if (StringUtils.isEmpty(launchRequest.getCustom_consumer_instance_name())) {
+            String message = "LTI launch request must contain non-empty custom parameter 'consumer_instance_name'.";
+            log.warn(message);
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
             return;
         }
 

@@ -146,6 +146,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         this.checkExceptions(requestBody);
     }
 
+    @Test
+    @WithAnonymousUser
+    void launchAsAnonymousUser_withEmptyBody() throws Throwable {
+        Long exerciseId = programmingExercise.getId();
+        request.postWithoutLocation("/api/lti/launch/" + exerciseId, "", HttpStatus.BAD_REQUEST, null);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { edxRequestBody, moodleRequestBody })
     @WithAnonymousUser

@@ -247,7 +247,7 @@ public class LtiService {
             username = userEmail.substring(0, userEmail.indexOf('@')); // Get the initial part of the user's email
         }
 
-        return launchRequest.getTool_consumer_instance_name() + "_" + username;
+        return launchRequest.getCustom_consumer_instance_name() + "_" + username;
     }
 
     /**
@@ -264,7 +264,8 @@ public class LtiService {
             user.setGroups(groups);
             userCreationService.saveUser(user);
 
-            // try to sync with authentication service TODO: is there an issue with removing the old edx check?
+            // TODO: is there an issue with removing the old edx check?
+            // try to sync with authentication service
             try {
                 artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
             }
