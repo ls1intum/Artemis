@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.WebsocketMessagingService;
 import de.tum.in.www1.artemis.service.exam.*;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 import de.tum.in.www1.artemis.service.util.ExamExerciseStartPreparationStatus;
@@ -82,13 +83,16 @@ public class StudentExamResource {
 
     private final InstanceMessageSendService instanceMessageSendService;
 
+    private final WebsocketMessagingService messagingService;
+
     @Value("${info.student-exam-store-session-data:#{true}}")
     private boolean storeSessionDataInStudentExamSession;
 
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService) {
+            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService,
+            WebsocketMessagingService messagingService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -103,6 +107,7 @@ public class StudentExamResource {
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
+        this.messagingService = messagingService;
     }
 
     /**
@@ -237,6 +242,8 @@ public class StudentExamResource {
             throw new AccessForbiddenException("You can only submit between start and end of the exam.");
         }
 
+        messagingService.sendMessage("/topic/exam/" + examId + "/submitted", "");
+
         return studentExamService.submitStudentExam(existingStudentExam, studentExam, currentUser);
     }
 
@@ -275,6 +282,11 @@ public class StudentExamResource {
         if (!user.getId().equals(studentExam.getUser().getId())) {
             throw new AccessForbiddenException("The requested exam does not belong to the requesting user");
         }
+
+        if (!Boolean.TRUE.equals(studentExam.isStarted())) {
+            messagingService.sendMessage("/topic/exam/" + examId + "/started", "");
+        }
+
         // In case the studentExam is not yet started, a new participation wit a specific initialization date should be created - isStarted uses Boolean
         if (studentExam.getExam().isTestExam()) {
             prepareStudentExamForConductionWithInitializationDateSet(request, user, studentExam, (studentExam.isStarted() == null || !studentExam.isStarted()));
