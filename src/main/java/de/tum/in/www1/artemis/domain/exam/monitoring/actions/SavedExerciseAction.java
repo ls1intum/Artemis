@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 /**
@@ -42,6 +43,10 @@ public class SavedExerciseAction extends ExamAction {
      */
     @Column(name = "exercise_id")
     private Long exerciseId;
+
+    public SavedExerciseAction() {
+        this.type = ExamActionType.SAVED_EXERCISE;
+    }
 
     public boolean isForced() {
         return forced;

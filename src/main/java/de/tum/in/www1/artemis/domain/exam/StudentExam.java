@@ -15,6 +15,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.AbstractAuditingEntity;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 
 @Entity
 @Table(name = "student_exam")
@@ -62,6 +63,9 @@ public class StudentExam extends AbstractAuditingEntity {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("studentExam")
     private Set<ExamSession> examSessions = new HashSet<>();
+
+    @OneToOne(mappedBy = "studentExam", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    private ExamActivity examActivity;
 
     public Boolean isSubmitted() {
         return submitted;

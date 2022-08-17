@@ -20,19 +20,18 @@ import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
 @Entity
 @Table(name = "exam_action")
 @Inheritance(strategy = InheritanceType.SINGLE_TABLE)
-@DiscriminatorColumn(name = "type", discriminatorType = DiscriminatorType.STRING)
+@DiscriminatorColumn(name = "discriminator_type", discriminatorType = DiscriminatorType.STRING)
 @DiscriminatorOptions(force = true)
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.EXISTING_PROPERTY, property = "type", visible = true)
 // @formatter:off
-@JsonSubTypes({@JsonSubTypes.Type(value = ConnectionUpdatedAction.class, name = "CONNECTION_UPDATED"),
-               @JsonSubTypes.Type(value = StartedExamAction.class, name = "STARTED_EXAM"),
-               @JsonSubTypes.Type(value = SwitchedExerciseAction.class, name = "SWITCHED_EXERCISE"),
-               @JsonSubTypes.Type(value = SavedExerciseAction.class, name = "SAVED_EXERCISE"),
-               @JsonSubTypes.Type(value = HandedInEarlyAction.class, name = "HANDED_IN_EARLY"),
-               @JsonSubTypes.Type(value = ContinuedAfterHandedInEarlyAction.class, name = "CONTINUED_AFTER_HAND_IN_EARLY"),
-               @JsonSubTypes.Type(value = EndedExamAction.class, name = "ENDED_EXAM")})
+@JsonSubTypes({@JsonSubTypes.Type(value = ConnectionUpdatedAction.class, name = "CO"),
+               @JsonSubTypes.Type(value = StartedExamAction.class, name = "ST"),
+               @JsonSubTypes.Type(value = SwitchedExerciseAction.class, name = "SW"),
+               @JsonSubTypes.Type(value = SavedExerciseAction.class, name = "SA"),
+               @JsonSubTypes.Type(value = HandedInEarlyAction.class, name = "HA"),
+               @JsonSubTypes.Type(value = ContinuedAfterHandedInEarlyAction.class, name = "CA"),
+               @JsonSubTypes.Type(value = EndedExamAction.class, name = "EN")})
 // @formatter:on
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ExamAction extends DomainObject {
@@ -65,8 +64,6 @@ public class ExamAction extends DomainObject {
     /**
      * Defines the type of the performed action (necessary to avoid DTOs)
      */
-    @Column(name = "type", nullable = false, insertable = false, updatable = false)
-    @Enumerated(EnumType.STRING)
     protected ExamActionType type;
 
     public ZonedDateTime getTimestamp() {

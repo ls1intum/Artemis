@@ -26,7 +26,7 @@
             <column name="timestamp" type="datetime">
                 <constraints nullable="false"/>
             </column>
-            <column name="type" type="VARCHAR(255)">
+            <column name="discriminator_type" type="VARCHAR(5)">
                 <constraints nullable="false"/>
             </column>
             <column name="session_id" type="BIGINT">

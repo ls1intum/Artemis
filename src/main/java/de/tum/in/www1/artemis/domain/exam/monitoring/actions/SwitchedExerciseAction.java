@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 /**
@@ -18,6 +19,10 @@ public class SwitchedExerciseAction extends ExamAction {
      */
     @Column(name = "exercise_id")
     private Long exerciseId;
+
+    public SwitchedExerciseAction() {
+        this.type = ExamActionType.SWITCHED_EXERCISE;
+    }
 
     public Long getExerciseId() {
         return exerciseId;

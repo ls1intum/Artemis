@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 /**
@@ -18,6 +19,10 @@ public class ConnectionUpdatedAction extends ExamAction {
      */
     @Column(name = "connected")
     private boolean connected;
+
+    public ConnectionUpdatedAction() {
+        this.type = ExamActionType.CONNECTION_UPDATED;
+    }
 
     public boolean isConnected() {
         return connected;

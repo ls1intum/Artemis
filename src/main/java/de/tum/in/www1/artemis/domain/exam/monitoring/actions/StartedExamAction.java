@@ -4,6 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
 
+import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
 
 /**
@@ -18,6 +19,10 @@ public class StartedExamAction extends ExamAction {
      */
     @Column(name = "session_id")
     private Long sessionId;
+
+    public StartedExamAction() {
+        this.type = ExamActionType.STARTED_EXAM;
+    }
 
     public Long getSessionId() {
         return sessionId;

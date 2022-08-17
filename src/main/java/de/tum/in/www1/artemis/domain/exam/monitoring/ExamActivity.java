@@ -8,10 +8,12 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.exam.StudentExam;
 
 /**
  * In order to extend the actions in the future, this ExamActivity serves as a container of actions performed per student.
@@ -28,6 +30,11 @@ public class ExamActivity extends DomainObject {
      */
     @Column(name = "student_exam_id")
     private Long studentExamId;
+
+    @OneToOne
+    @JoinColumn(name = "student_exam_id", insertable = false, updatable = false)
+    @JsonIgnore
+    private StudentExam studentExam;
 
     /**
      * A set of unique actions performed by the student during the exam.
@@ -47,10 +54,6 @@ public class ExamActivity extends DomainObject {
 
     public void addExamAction(ExamAction examAction) {
         this.examActions.add(examAction);
-    }
-
-    public void addExamActions(List<ExamAction> examActions) {
-        this.examActions.addAll(examActions);
     }
 
     public List<ExamAction> getExamActions() {

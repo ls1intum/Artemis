@@ -225,10 +225,13 @@ public class ExamMonitoringScheduleService {
      * @param examId specific exam
      */
     public void executeExamActivitySaveTask(Long examId) {
+        logger.info("Execute scheduled task for exam live statistics ({}).", examId);
         examCache.performCacheWriteIfPresent(examId, examMonitoringCache -> {
             // Save actions in database
             examActivityService.saveAll(((ExamMonitoringCache) examMonitoringCache).getActivities().values());
+            logger.info("Saved all actions of the exam live statistics into the database ({}).", examId);
             ((ExamMonitoringCache) examMonitoringCache).getActivities().clear();
+            logger.info("Cleared the cache of the exam live statistics ({}).", examId);
             return examMonitoringCache;
         });
     }

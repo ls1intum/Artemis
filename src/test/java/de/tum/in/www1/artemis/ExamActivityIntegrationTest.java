@@ -25,8 +25,11 @@ import de.tum.in.www1.artemis.domain.enumeration.ExamActionType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.exam.monitoring.ExamAction;
+import de.tum.in.www1.artemis.domain.exam.monitoring.ExamActivity;
 import de.tum.in.www1.artemis.domain.exam.monitoring.actions.*;
+import de.tum.in.www1.artemis.repository.ExamActivityRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
+import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.StudentExamRepository;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActionService;
 import de.tum.in.www1.artemis.service.exam.monitoring.ExamActivityService;
@@ -55,7 +58,13 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private ExamActivityService examActivityService;
 
     @Autowired
+    private ExamActivityRepository examActivityRepository;
+
+    @Autowired
     private ExamActionService examActionService;
+
+    @Autowired
+    private ExerciseRepository exerciseRepo;
 
     private Course course;
 
@@ -262,5 +271,116 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var savedActions = examActionService.findByExamActivityId(examActivity.getId());
 
         assertThat(savedActions.size()).isEqualTo(0);
+    }
+
+    private void prepareLargeTestWithVariableStudentExams(ArrayList<ExamAction> actions, ArrayList<StudentExam> studentExams, ArrayList<ExamActivity> examActivities,
+            int numberOfStudentExams, int numberOfActionsEachPerType) {
+        // Create Student Exams
+        for (int i = 0; i < numberOfStudentExams; i++) {
+            studentExams.add(database.addStudentExam(exam));
+            studentExam.setWorkingTime(7200);
+            studentExamRepository.save(studentExam);
+        }
+
+        // Create Actions
+        for (int i = 0; i < numberOfStudentExams; ++i) {
+            for (ExamActionType type : ExamActionType.values()) {
+                for (int n = 0; n < numberOfActionsEachPerType; ++n) {
+                    actions.add(createExamActionBasedOnType(type));
+                }
+            }
+        }
+
+        var types = ExamActionType.values().length;
+
+        // Assign Student Exams to Actions
+        for (int i = 0; i < numberOfStudentExams; i++) {
+            for (int j = i * numberOfActionsEachPerType * types; j < numberOfActionsEachPerType * (i + 1) * types; j++) {
+                var studentExam = studentExams.get(i);
+                actions.get(j).setStudentExamId(studentExam.getId());
+                actions.get(j).setExamActivityId(studentExam.getId());
+            }
+        }
+
+        // Perform actions
+        for (ExamAction action : actions) {
+            examActivityResource.updatePerformedExamActions(exam.getId(), action);
+        }
+
+        // Expect ExamActivity saved
+        for (StudentExam studentExam : studentExams) {
+            var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
+            examActivities.add(examActivity);
+        }
+
+        // Save Exam Actions in Database
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testMultipleExamActionSavedInDatabase() {
+        var actions = new ArrayList<ExamAction>();
+        var studentExams = new ArrayList<StudentExam>();
+        var examActivities = new ArrayList<ExamActivity>();
+
+        var numberOfStudentExams = 10;
+        var numberOfActionsEachPerType = 10;
+
+        prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
+
+        for (ExamActivity examActivity : examActivities) {
+            var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+            assertEquals(numberOfActionsEachPerType * ExamActionType.values().length, savedActions.size());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testMultipleExamActionSavedInDatabaseAndDeleteAfterward() {
+        var actions = new ArrayList<ExamAction>();
+        var studentExams = new ArrayList<StudentExam>();
+        var examActivities = new ArrayList<ExamActivity>();
+
+        var numberOfStudentExams = 10;
+        var numberOfActionsEachPerType = 10;
+
+        prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
+
+        // Delete Student Exams
+        var length = studentExamRepository.findAll().size();
+        studentExamRepository.deleteAll(studentExams);
+        assertEquals(length - studentExams.size(), studentExamRepository.findAll().size());
+
+        // All Actions should be deleted
+        for (ExamActivity examActivity : examActivities) {
+            var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+            assertEquals(0, savedActions.size());
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testClearExamActionsAndKeepExercisesUnchanged() {
+        exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(this.course);
+        exam.setMonitoring(true);
+        exam = examRepository.save(exam);
+
+        var actions = new ArrayList<ExamAction>();
+        var studentExams = new ArrayList<StudentExam>();
+        var examActivities = new ArrayList<ExamActivity>();
+
+        var numberOfStudentExams = 10;
+        var numberOfActionsEachPerType = 10;
+
+        prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
+
+        var exercises = exerciseRepo.findAllExercisesByCourseId(this.course.getId());
+
+        examActivityRepository.deleteAll();
+
+        assertEquals(0, examActivityRepository.findAll().size());
+
+        assertEquals(exercises, exerciseRepo.findAllExercisesByCourseId(this.course.getId()));
     }
 }
