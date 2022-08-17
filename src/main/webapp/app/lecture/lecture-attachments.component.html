@@ -153,13 +153,19 @@
 
                 <div class="row">
                     <div class="col-12">
-                        <button id="upload-attachment" type="submit" [disabled]="isUploadingAttachment" (click)="uploadLectureAttachmentAndSave()" class="btn btn-primary me-2">
+                        <button
+                            id="upload-attachment"
+                            type="submit"
+                            [disabled]="isUploadingAttachment || !isSubmitPossible"
+                            (click)="uploadLectureAttachmentAndSave()"
+                            class="btn btn-primary me-2"
+                        >
                             <fa-icon [icon]="faPaperclip"></fa-icon>&nbsp;
                             <span *ngIf="isUploadingAttachment" jhiTranslate="artemisApp.lecture.attachments.uploading"></span>
                             <span *ngIf="!isUploadingAttachment" jhiTranslate="entity.action.saveAttachment"></span>
                         </button>
                         <button type="submit" (click)="cancel()" class="btn btn-default">
-                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel"> Cancel</span>
+                            <fa-icon [icon]="faTimes"></fa-icon>&nbsp;<span jhiTranslate="entity.action.cancel">Cancel</span>
                         </button>
                     </div>
                 </div>

@@ -63,6 +63,10 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
+    get isSubmitPossible() {
+        return this.attachmentToBeCreated?.name && (this.attachmentFile || this.attachmentToBeCreated?.link);
+    }
+
     addAttachment() {
         const newAttachment = new Attachment();
         newAttachment.lecture = this.lecture;
