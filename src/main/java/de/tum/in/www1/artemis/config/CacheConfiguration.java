@@ -159,7 +159,6 @@ public class CacheConfiguration {
 
         QuizScheduleService.configureHazelcast(config);
         ExamMonitoringScheduleService.configureHazelcast(config);
-
         return Hazelcast.newHazelcastInstance(config);
     }
 

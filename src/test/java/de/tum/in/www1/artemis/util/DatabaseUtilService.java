@@ -835,21 +835,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext) {
-        List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i);
-            postToAdd.setLecture(lectureContext);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
-        }
-        return posts;
-    }
-
     private List<Post> createBasicPosts(Exercise exerciseContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i);
+            Post postToAdd = createBasicPost(i, "student");
             postToAdd.setExercise(exerciseContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -857,16 +846,21 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase) {
-        Post postToAdd = createBasicPost(0);
-        postToAdd.setPlagiarismCase(plagiarismCase);
-        return postRepository.save(postToAdd);
+    private List<Post> createBasicPosts(Lecture lectureContext) {
+        List<Post> posts = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            Post postToAdd = createBasicPost(i, "tutor");
+            postToAdd.setLecture(lectureContext);
+            postRepository.save(postToAdd);
+            posts.add(postToAdd);
+        }
+        return posts;
     }
 
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = createBasicPost(i);
+            Post postToAdd = createBasicPost(i, "editor");
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
             postRepository.save(postToAdd);
@@ -875,13 +869,19 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private Post createBasicPost(Integer i) {
+    private Post createBasicPost(PlagiarismCase plagiarismCase) {
+        Post postToAdd = createBasicPost(0, "instructor");
+        postToAdd.setPlagiarismCase(plagiarismCase);
+        return postRepository.save(postToAdd);
+    }
+
+    private Post createBasicPost(Integer i, String usernamePrefix) {
         Post post = new Post();
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
+        post.setAuthor(getUserByLoginWithoutAuthorities(String.format("%s%s", usernamePrefix, (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
@@ -1808,15 +1808,19 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public Course addCourseWithOneReleasedModelExerciseWithKnowledge() {
+    public Course addCourseWithOneReleasedModelExerciseWithKnowledge(String title) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
-        modelingExercise.setTitle("Text");
+        modelingExercise.setTitle(title);
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         course.addExercises(modelingExercise);
         courseRepo.save(course);
         exerciseRepo.save(modelingExercise);
         return course;
+    }
+
+    public Course addCourseWithOneReleasedModelExerciseWithKnowledge() {
+        return addCourseWithOneReleasedModelExerciseWithKnowledge("Text");
     }
 
     public Course addCourseWithOneReleasedTextExercise() {
@@ -1829,17 +1833,21 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise(String title, String shortName) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         ProgrammingExercise programmingExercise = new ProgrammingExercise();
         programmingExercise.setExerciseGroup(exerciseGroup);
-        populateProgrammingExercise(programmingExercise, "TESTEXFOREXAM", "Testtitle", false);
+        populateProgrammingExercise(programmingExercise, shortName, title, false);
 
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         programmingExercise = addSolutionParticipationForProgrammingExercise(programmingExercise);
         programmingExercise = addTemplateParticipationForProgrammingExercise(programmingExercise);
 
         return programmingExercise;
+    }
+
+    public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExercise() {
+        return addCourseExamExerciseGroupWithOneProgrammingExercise("Testtitle", "TESTEXFOREXAM");
     }
 
     public ProgrammingExercise addProgrammingExerciseToExam(Exam exam, int exerciseGroupNumber) {
@@ -1857,15 +1865,16 @@ public class DatabaseUtilService {
         return programmingExercise;
     }
 
-    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise(String title) {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
-        ModelingExercise classExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram,
-                exerciseGroup.getExam().getCourse());
-        classExercise.setTitle("ClassDiagram");
-        classExercise.setExerciseGroup(exerciseGroup);
-
+        ModelingExercise classExercise = ModelFactory.generateModelingExerciseForExam(DiagramType.ClassDiagram, exerciseGroup);
+        classExercise.setTitle(title);
         classExercise = modelingExerciseRepository.save(classExercise);
         return classExercise;
+    }
+
+    public ModelingExercise addCourseExamExerciseGroupWithOneModelingExercise() {
+        return addCourseExamExerciseGroupWithOneModelingExercise("ClassDiagram");
     }
 
     public ProgrammingSubmission createProgrammingSubmission(Participation participation, boolean buildFailed, String commitHash) {
