@@ -36,9 +36,27 @@ During the exam creation and configuration, you can create your exam and configu
 
 - You can create an exam by clicking on |create_new_exam|.
 
+.. _configure_exam:
+
 1.2 Create and Configure Exam
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-- When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc. The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``.
+
+
+1.2.1 Exam Mode
+"""""""""""""""
+
+- Artemis supports two exam modes. The conduction of normal exams and test exams.
+- The normal exam mode is suitable for conducting end-of-semester exams. Students can view and work on the exam between the configured working time. Afterwards you can perform a manual or automated evaluation of the students' submissions. The results will be published on the specified date.
+- Test exams provide you with the possibility to provide students with a practice opportunity for the end-of-semester exam. The main difference is that you choose a working window within which students can freely start the exam. Students then have the configured working time to complete the exam. After submitting, students immediately get the automated assessment for programming and quizzes. Manual correction of the submissions is not necessary.
+
+.. _create_exam:
+
+1.2.2 Create Exam
+"""""""""""""""""
+
+- When you click on |create_new_exam| you are presented with the *Create Exam* view. Here you can set the basic information such as ``title``, ``examiner`` etc.
+- You can choose between the exam and test exam mode.
+- The :ref:`timeline of the exam <timeline>` is defined by the dates: ``visible from``, ``start of working time``, ``end of working time``, ``release date of results``, ``begin of student review``, ``end of student review``.
 - The first three dates are mandatory when you create an exam. The rest can be set when required.
 - The ``grace period`` defines the amount of time the students have at their disposal to hand in their exam after the ``working time`` is over. This is set to 3 minutes by default.
 - _`Before the exam's assessment` you can choose the ``Number of correction rounds in exam``. If you want two tutors to assess a student's exam subsequently, set the number to two here. This enables the :ref:`second correction <second_correction_explanation>`.
@@ -70,7 +88,23 @@ During the exam creation and configuration, you can create your exam and configu
 
    Exam Assessment and Student Review
 
-    .. _exercise_groups:
+
+
+1.2.3 Import Exam
+"""""""""""""""""
+
+-  Instead of creating a new exam, you can import an existing exam by clicking on |import_exam| from any of the courses you are an instructor in.
+- Artemis displays a list of all available exams. To select one specific exam for the import, click on the |import_individual_exam| button.
+
+.. figure:: instructor/exam_import_selection.png
+   :alt: List with all exams available for import
+   :align: center
+
+- You are now presented with the *Import Exam* view. All information except for the dates are copied from the exam you selected for the import. You can find more information regarding this view at the section :ref:`create exam <create_exam>`.
+- Additionally, you can select or deselect exercises which are imported alongside the exam. You can find more information regarding the exercise import in the :ref:`section regarding the exercise group import <exercise_import>`.
+
+
+.. _exercise_groups:
 
 1.3 Exercise Groups
 ^^^^^^^^^^^^^^^^^^^
@@ -86,6 +120,39 @@ During the exam creation and configuration, you can create your exam and configu
    :align: center
 
    Exercise Groups with different Exercise Variants
+
+1.3.1 Import Exercise Groups
+""""""""""""""""""""""""""""
+
+- Artemis exam mode allows you to import one or more exercise groups from an existing exam.
+- The import process consists of two steps.
+
+**Step 1: Select Exam**
+
+- When you click on |import_exercise_group|, you can select one exam from which exercise group(s) should be imported.
+- To select one exam, click on |select_exercise_group|.
+
+.. figure:: instructor/exercise_group_import_exam.png
+   :alt: First step in the process to import exercise group(s). You can select one exam, from which exercise group(s) should be imported
+   :align: center
+
+.. _exercise_import:
+
+**Step 2: Select Exercises and Exercise Groups**
+
+- In the next step you can select or deselect exercises which should be imported alongside the exercise groups.
+- You can also change the ``title`` and ``isMandatory`` of an exercise group, as well as the ``title`` (and ``short-name`` for programming exercises) for the individual exercises.
+- The title and short name of programming exercises must be unique. If you want to import an exercise group into the same course, you must change the title and short name before you can import the exercise group.
+- After you have started the import by clicking on |import_exam|, Artemis checks if the title and short name of the selected programming exercise(s) are unique. If they are not unique, a warning is displayed and you have to change the corresponding title and short name.
+
+.. note::
+    - Further changes to the individual exercises can be made after the import by editing the respective exercise.
+    - Programming exercises are imported using their initial configuration. This import functionality cannot be used for changing the submission policy, for activating / deactivating the static code analysis or for creating new build plans. In this case, please import the exercises individually into the exercise groups.
+
+.. figure:: instructor/exercise_group_import_exercises.png
+   :alt: Second step in the process to import exercise group(s). You can select or deselect individual exercises, which should be imported alongside the exercise group(s).
+   :align: center
+
 
 1.4 Add Exercises
 ^^^^^^^^^^^^^^^^^
@@ -408,7 +475,7 @@ If you want you can also enable the :ref:`second correction <Before the exam's a
 4. **Publication of Results**
 -----------------------------
 
-You can specify the moment when Artemis publishes the results of the exam, see `1.2 Create and Configure Exam`_. This is usually when the :ref:`exam assessment <exam_assessment>` ends, but you can specify this at any point in time. During the publication of the results, the student can view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file, see `4.1 Exam Scores`_.
+You can specify the moment when Artemis publishes the results of the exam, see `1.2.2 Create Exam`_. This is usually when the :ref:`exam assessment <exam_assessment>` ends, but you can specify this at any point in time. During the publication of the results, the student can view their results from their summary page. You can also view the exam statistics from the exam *Scores* page and export the data into external platforms such as `TUM Online <https://campus.tum.de>`_ as a ``CSV`` file, see `4.1 Exam Scores`_.
 
 4.1 Exam Scores
 ^^^^^^^^^^^^^^^
@@ -437,7 +504,7 @@ You can specify the moment when Artemis publishes the results of the exam, see `
 
 5. **Student Review**
 ---------------------
-During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes made in the :ref:`assessment <exam_assessment>`. Students can provide their reasoning through a text message to clarify their objections. You can set the student review period in the :ref:`exam configuration <exam_creation_and_configuration>`, see `1.2 Create and Configure Exam`_.
+During the review period, students have the opportunity to review the assessment of their exam. If they find inconsistencies, they can submit complaints about perceived mistakes made in the :ref:`assessment <exam_assessment>`. Students can provide their reasoning through a text message to clarify their objections. You can set the student review period in the :ref:`exam configuration <exam_creation_and_configuration>`, see `1.2.2 Create Exam`_.
 
 - Students can submit complaints about their assessment in the *Summary* page.
 - During the student review, a complaint button will appear for every manually assessed exercise.
@@ -496,3 +563,7 @@ Artemis collects the complaints submitted by the students during the :ref:`stude
 .. |add_grade_step| image:: instructor/buttons/add_grade_step.png
 .. |import_export| image:: instructor/buttons/import_export.png
 .. |generate_default_grade_key| image:: instructor/buttons/generate_default_grade_key.png
+.. |import_exam| image:: instructor/buttons/import_exam.png
+.. |import_individual_exam| image:: instructor/buttons/import_individual_exam.png
+.. |import_exercise_group| image:: instructor/buttons/import_exercise_group.png
+.. |select_exercise_group| image:: instructor/buttons/select_exercise_group.png
