@@ -85,6 +85,11 @@
                     "title": "Notenschlüssel Erstellen",
                     "shortDescription": "Erstelle einen Notenschlüssel mit benutzerdefinierten oder vorgegebenen Notenstufen für einen Kurs oder eine Prüfung.",
                     "descriptionTextOne": "Punkte sind hilfreich, um einzelne Übungen zu bewerten, aber am Ende eines Semesters möchten du und die Studierenden eine Note erhalten. Auf der Notenschlüssel-Seite kannst du für jeden Kurs und jede Prüfung einen Notenschlüssel festlegen und die Notenstufen definieren, indem du die Intervalle, die Mindestnote und die untere/obere Grenze angibst. Der Standard-Notenschlüssel kann auch mit einem einzigen Klick erstellt werden. Artemis kümmert sich dann automatisch um die Zuordnung von Noten zu Notenstufen oder Bonuspunkten und um die Berechnung der Ergebnisstatistik auf der Grundlage der Notenstufen."
+                },
+                "liveStatistics": {
+                    "title": "Live Statistik",
+                    "shortDescription": "Mithilfe der Live Statistik können Lehrende die Interaktionen der Studierenden mit der Klausur sammeln. Dies bietet weitere Möglichkeiten für Statistiken.",
+                    "descriptionTextOne": "Artemis bietet die Möglichkeit, dass Lehrende während der Klausur die Interaktion der Studierenden mit der Klausur verfolgen können. Hierbei werden die Interaktionen gesammelt, anschließend aufbereitet und den Lehrenden in verschiedenen Varianten visuell dargestellt. So bietet Artemis die Möglichkeit, dass Lehrende unter anderem die aktuelle Aufgabe der Studierenden einsehen können."
                 }
             }
         },

@@ -328,6 +328,12 @@ During the exam creation and configuration, you can create your exam and configu
 
    Exam Status Overview
 
+1.9 Live Statistics
+^^^^^^^^^^^^^^^^^^^
+
+Artemis can collect live statistics about the student behaviour during the exam.
+For more details, please visit the :ref:`live statistics <live_statistics>` page.
+
 .. _exam_conduction:
 
 2. **Conduction**

@@ -364,6 +364,16 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/grade_key_editor.png',
         );
+
+        const featureLiveStatistics = new Feature(
+            'featureOverview.instructor.feature.liveStatistics.title',
+            'featureOverview.instructor.feature.liveStatistics.shortDescription',
+            'featureOverview.instructor.feature.liveStatistics.descriptionTextOne',
+            faEye,
+            undefined,
+            '/content/images/feature-overview/instructors/exam_live_statistics.png',
+        );
+
         this.features = [
             featureCreateConductAssess,
             featureConfiguration,
@@ -381,6 +391,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureStatistics,
             featureChecklist,
             featureGradeKey,
+            featureLiveStatistics,
         ];
     }
 
