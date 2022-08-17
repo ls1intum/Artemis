@@ -94,14 +94,6 @@ public class FileResource {
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
             "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
-    public void addAllowedFileExtension(String fileExtension) {
-        this.allowedFileExtensions.add(fileExtension);
-    }
-
-    public void addRemoveFileExtension(String fileExtension) {
-        this.allowedFileExtensions.remove(fileExtension);
-    }
-
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
             AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserRepository userRepository) {
