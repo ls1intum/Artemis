@@ -62,15 +62,14 @@
         <div class="case-body">
             <section>
                 <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
-                <div class="row">
-                    <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
-                    <!-- new post button -->
-                    <div class="col-2 mt-2" *ngIf="(!posts || posts.length === 0) && createdPost">
-                        <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
-                            <span class="d-none d-md-inline">{{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}</span>
-                        </button>
-                        <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)"></jhi-post-create-edit-modal>
-                    </div>
+
+                <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
+
+                <div *ngIf="(!posts || posts.length === 0) && createdPost">
+                    <button class="btn btn-md btn-primary" (click)="createEditModal.open()">
+                        {{ 'artemisApp.plagiarism.plagiarismCases.notifyStudent' | artemisTranslate }}
+                    </button>
+                    <jhi-post-create-edit-modal #createEditModal [posting]="createdPost" (onCreate)="onStudentNotified($event)"></jhi-post-create-edit-modal>
                 </div>
             </section>
             <section class="d-print-none">

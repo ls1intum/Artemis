@@ -3,7 +3,7 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
 import { combineLatest, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -26,6 +26,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     private paramSubscription: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
 
+    getExerciseUrlSegment = getExerciseUrlSegment;
     getIcon = getIcon;
     faUser = faUser;
 
@@ -57,23 +58,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
         this.postsSubscription = this.metisService.posts.pipe().subscribe((posts: Post[]) => {
             this.posts = posts;
         });
-    }
-
-    /**
-     * Get the url segment for different types of exercises.
-     * @param exerciseType type of exercise
-     */
-    getExerciseUrlSegment(exerciseType?: ExerciseType) {
-        switch (exerciseType) {
-            case ExerciseType.TEXT:
-                return 'text-exercises';
-            case ExerciseType.MODELING:
-                return 'modeling-exercises';
-            case ExerciseType.PROGRAMMING:
-                return 'programming-exercises';
-            default:
-                throw Error('Unexpected exercise type ' + exerciseType);
-        }
     }
 
     ngOnDestroy(): void {

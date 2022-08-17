@@ -4,7 +4,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { ExerciseType, getIcon } from 'app/entities/exercise.model';
+import { getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
@@ -32,6 +32,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
     activeTab = 1;
 
+    getExerciseUrlSegment = getExerciseUrlSegment;
     getIcon = getIcon;
     faUser = faUser;
     faPrint = faPrint;
@@ -200,23 +201,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
             cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
             aspoLink: 'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1',
         });
-    }
-
-    /**
-     * Get the url segment for different types of exercises.
-     * @param exerciseType type of exercise
-     */
-    getExerciseUrlSegment(exerciseType?: ExerciseType) {
-        switch (exerciseType) {
-            case ExerciseType.TEXT:
-                return 'text-exercises';
-            case ExerciseType.MODELING:
-                return 'modeling-exercises';
-            case ExerciseType.PROGRAMMING:
-                return 'programming-exercises';
-            default:
-                throw Error('Unexpected exercise type ' + exerciseType);
-        }
     }
 
     /**
