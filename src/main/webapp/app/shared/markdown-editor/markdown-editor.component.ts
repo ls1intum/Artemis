@@ -462,6 +462,7 @@ export class MarkdownEditorComponent implements AfterViewInit {
 
                     let textToAdd = `[${file.name}](${res.path})\n`;
                     if (extension !== 'pdf') {
+                        // Show file as embedded image
                         textToAdd = '!' + textToAdd;
                     }
 

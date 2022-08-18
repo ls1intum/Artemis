@@ -45,7 +45,7 @@ export class FileUploaderService {
      */
     private handleFileUpload(endpoint: string, allowedExtensions: string[], file: Blob | File, fileName?: string, options?: Options): Promise<FileUploadResponse> {
         const fileExtension = fileName ? fileName.split('.').pop()!.toLocaleLowerCase() : file['name'].split('.').pop().toLocaleLowerCase();
-        if (allowedExtensions.indexOf(fileExtension) === -1) {
+        if (!allowedExtensions.includes(fileExtension)) {
             return Promise.reject(
                 new Error('Unsupported file type! Only the following file extensions are allowed: ' + allowedExtensions.map((extension) => `.${extension}`).join(', ')),
             );

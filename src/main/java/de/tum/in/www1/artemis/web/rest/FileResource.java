@@ -568,26 +568,32 @@ public class FileResource {
         // Sanitize the filename and replace all invalid characters with an underscore
         filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
 
+        // Check the allowed file extensions
         final String fileExtension = FilenameUtils.getExtension(filename);
+        final Set<String> allowedExtensions;
+
+        if (markdown) {
+            allowedExtensions = allowedMarkdownFileExtensions;
+        }
+        else {
+            allowedExtensions = allowedFileExtensions;
+        }
+
+        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedMarkdownFileExtensions));
+        }
+
+        // Set the appropriate values depending on the use case (markdown editor or other file upload)
         final String filePath;
         final String fileNameAddition;
         final StringBuilder responsePath = new StringBuilder();
 
-        // Check the allowed file extensions and set the appropriate values depending on the use case
         if (markdown) {
-            if (this.allowedMarkdownFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-                return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedMarkdownFileExtensions));
-            }
-
             filePath = FilePathService.getMarkdownFilePath();
             fileNameAddition = "Markdown_";
             responsePath.append("/api/files/markdown/");
         }
         else {
-            if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-                return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
-            }
-
             filePath = FilePathService.getTempFilePath();
             fileNameAddition = "Temp_";
             responsePath.append("/api/files/temp/");
