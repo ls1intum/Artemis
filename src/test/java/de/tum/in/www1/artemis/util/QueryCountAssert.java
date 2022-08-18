@@ -16,7 +16,7 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
     }
 
     /**
-     * Asserts that the amount of database queries realized during a REST call exactly match the expected amount
+     * Asserts that the number of database queries executed during a REST call exactly matches the expected count
      *
      * @param times the amount of queries expected on the database
      * @return the result of the original call for which this assertion has been performed
