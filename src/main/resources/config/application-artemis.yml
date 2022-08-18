@@ -88,6 +88,7 @@ artemis:
     lti: # only important for online courses that use LTI, can typically be ignored
         id: artemis_lti
         oauth-key: artemis_lti_key
+        oauth-secret: fake-secret
     git:
         name: Artemis
         email: artemis.in@tum.de
