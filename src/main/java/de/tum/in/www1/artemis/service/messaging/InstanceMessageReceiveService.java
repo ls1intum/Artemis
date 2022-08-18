@@ -26,27 +26,27 @@ public class InstanceMessageReceiveService {
 
     private final Logger log = LoggerFactory.getLogger(InstanceMessageReceiveService.class);
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final ProgrammingExerciseScheduleService programmingExerciseScheduleService;
-
-    private final ModelingExerciseRepository modelingExerciseRepository;
 
     private final ModelingExerciseScheduleService modelingExerciseScheduleService;
 
     private final ExamLiveStatisticsScheduleService examLiveStatisticsScheduleService;
 
-    private final TextExerciseRepository textExerciseRepository;
-
-    private final ExerciseRepository exerciseRepository;
-
     private final NotificationScheduleService notificationScheduleService;
 
     private final Optional<AtheneScheduleService> atheneScheduleService;
 
-    private final UserRepository userRepository;
-
     private final UserScheduleService userScheduleService;
+
+    private final TextExerciseRepository textExerciseRepository;
+
+    private final ExerciseRepository exerciseRepository;
+
+    private final ProgrammingExerciseRepository programmingExerciseRepository;
+
+    private final ModelingExerciseRepository modelingExerciseRepository;
+
+    private final UserRepository userRepository;
 
     public InstanceMessageReceiveService(ProgrammingExerciseRepository programmingExerciseRepository, ProgrammingExerciseScheduleService programmingExerciseScheduleService,
             ModelingExerciseRepository modelingExerciseRepository, ModelingExerciseScheduleService modelingExerciseScheduleService,

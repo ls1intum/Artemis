@@ -9,9 +9,9 @@ import { TextSubmissionElement } from 'app/exercises/shared/plagiarism/types/tex
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { Course } from 'app/entities/course.model';
 import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { Exercise, getCourseId } from 'app/entities/exercise.model';
 
 @Component({
     selector: 'jhi-plagiarism-header',
@@ -20,7 +20,7 @@ import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 })
 export class PlagiarismHeaderComponent {
     @Input() comparison: PlagiarismComparison<TextSubmissionElement | ModelingSubmissionElement>;
-    @Input() course: Course;
+    @Input() exercise: Exercise;
     @Input() splitControlSubject: Subject<string>;
 
     readonly plagiarismStatus = PlagiarismStatus;
@@ -60,7 +60,7 @@ export class PlagiarismHeaderComponent {
     updatePlagiarismStatus(status: PlagiarismStatus) {
         // store comparison in variable in case comparison changes while request is made
         const comparison = this.comparison;
-        this.plagiarismCasesService.updatePlagiarismComparisonStatus(this.course.id!, comparison.id, status).subscribe(() => {
+        this.plagiarismCasesService.updatePlagiarismComparisonStatus(getCourseId(this.exercise)!, comparison.id, status).subscribe(() => {
             comparison.status = status;
         });
     }
