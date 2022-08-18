@@ -426,8 +426,8 @@ or at least to remind developers in case they do. It's especially important for 
 However, we should consider carefully before adding such assertions to a test as it makes the test more tedious to maintain.
 
 An example on how to track how many database calls are performed during a REST call is shown below. It uses the ``HibernateQueryInterceptor`` which counts the number of queries.
-For ease of use, a custom assert ``assertThatDb`` was added that allows to do the check in one line.
-
+For ease of use, a custom assert ``assertThatDb`` was added that allows to do the check in one line. It also returns the original result of the REST call and so allows you to
+add any other assertions to the test, as shown below.
 .. code-block:: java
 
     public class TestClass {
@@ -435,7 +435,8 @@ For ease of use, a custom assert ``assertThatDb`` was added that allows to do th
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         public void testQueryCount() throws Exception {
-            assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
+            List<Course> courses = assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
+            assertThat(courses).isNotNull();
         }
     }
 
