@@ -130,7 +130,7 @@ class LtiServiceTest {
         String firstName = "firstName";
         String lastName = "lastName";
 
-        launchRequest.setTool_consumer_instance_name("moodle");
+        launchRequest.setCustom_consumer_instance_name("moodle");
         launchRequest.setExt_user_username("username");
         launchRequest.setLis_person_name_given(firstName);
         launchRequest.setLis_person_name_family(lastName);

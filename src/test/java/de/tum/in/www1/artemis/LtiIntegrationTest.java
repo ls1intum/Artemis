@@ -47,7 +47,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Autowired
     private LtiResource ltiResource;
 
-    private final String edxRequestBody = """
+    private static final String EDX_REQUEST_BODY = """
             custom_component_display_name=Exercise\
             &lti_version=LTI-1p0\
             &oauth_nonce=171298047571430710991572204884\
@@ -55,12 +55,13 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &context_id=course-v1%3ATUMx%2BSEECx%2B1T2018\
             &oauth_signature_method=HMAC-SHA1\
             &oauth_timestamp=1572204884\
+            &custom_consumer_instance_name=edx\
             &custom_require_existing_user=false\
+            &custom_lookup_user_by_email=false\
             &lis_person_contact_email_primary=anh.montag%40tum.de\
             &oauth_signature=GYXApaIv0x7k%2FOPT9%2FoU38IBQRc%3D\
             &context_title=Software+Engineering+Essentials\
             &lti_message_type=basic-lti-launch-request\
-            &custom_lookup_user_by_email=false\
             &launch_presentation_return_url=\
             &context_label=TUMx\
             &user_id=ff30145d6884eeb2c1cef50298939383\
@@ -73,7 +74,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &lis_person_sourcedid=lovaiible\
             &oauth_callback=about%3Ablank""";
 
-    private final String moodleRequestBody = """
+    private static final String MOODLE_REQUEST_BODY = """
             oauth_version=1.0\
             &oauth_timestamp=1659585343\
             &oauth_nonce=ce994a9669026380ec4d2c6e2722460a\
@@ -106,6 +107,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &tool_consumer_instance_guid=localhost\
             &tool_consumer_instance_name=New+Site\
             &tool_consumer_instance_description=New+Site\
+            &custom_consumer_instance_name=moodle\
             &custom_lookup_user_by_email=true\
             &launch_presentation_document_target=window\
             &launch_presentation_return_url=http%3A%2F%2Flocalhost%3A81%2Fmod%2Flti%2Freturn.php%3Fcourse%3D3%26launch_container%3D4%26instanceid%3D5%26sesskey%3DBG6zIkjI4p\
@@ -129,7 +131,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { edxRequestBody, moodleRequestBody })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser(String requestBody) throws Exception {
         Long exerciseId = programmingExercise.getId();
@@ -154,7 +156,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { edxRequestBody, moodleRequestBody })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
     void launchAsAnonymousUser_withEmptyConfig(String requestBody) throws Throwable {
         ConfigUtil.testWithChangedConfig(ltiResource, "LTI_ID", Optional.empty(), () -> {
@@ -164,7 +166,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { edxRequestBody, moodleRequestBody })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsRecentlyCreatedStudent(String requestBody) throws Exception {
         Long exerciseId = programmingExercise.getId();
@@ -182,7 +184,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     @ParameterizedTest
-    @ValueSource(strings = { edxRequestBody, moodleRequestBody })
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
     void launchAsExistingStudent(String requestBody) throws Exception {
 
@@ -208,13 +210,16 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     private void checkExceptions(String requestBody) throws Exception {
-        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody, HttpStatus.NOT_FOUND, new HttpHeaders());
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
         doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any());
-        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody, HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders());
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
         doReturn("error").when(ltiService).verifyRequest(any());
-        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody, HttpStatus.UNAUTHORIZED, new HttpHeaders());
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.UNAUTHORIZED, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     @Test

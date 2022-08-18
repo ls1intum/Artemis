@@ -9,6 +9,7 @@ public class AuthenticationIntegrationTestHelper {
         ltiLaunchRequest.setContext_id("contextId123");
         ltiLaunchRequest.setContext_label("U4I");
         ltiLaunchRequest.setCustom_component_display_name("someDisplayName");
+        ltiLaunchRequest.setCustom_consumer_instance_name("moodle");
         ltiLaunchRequest.setCustom_lookup_user_by_email(false);
         ltiLaunchRequest.setCustom_require_existing_user(false);
         ltiLaunchRequest.setLaunch_presentation_locale("EN");
