@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.web.rest;
 
+import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.INITIALIZED;
 import static java.time.ZonedDateTime.now;
 
 import java.net.URI;
@@ -30,6 +31,7 @@ import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
@@ -92,6 +94,8 @@ public class ParticipationResource {
 
     private final SubmissionRepository submissionRepository;
 
+    private final ResultRepository resultRepository;
+
     private final ExerciseDateService exerciseDateService;
 
     private final InstanceMessageSendService instanceMessageSendService;
@@ -106,7 +110,7 @@ public class ParticipationResource {
             Optional<ContinuousIntegrationService> continuousIntegrationService, UserRepository userRepository, StudentParticipationRepository studentParticipationRepository,
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
-            ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
+            ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
             QuizScheduleService quizScheduleService) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
@@ -124,6 +128,7 @@ public class ParticipationResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
         this.submissionRepository = submissionRepository;
+        this.resultRepository = resultRepository;
         this.exerciseDateService = exerciseDateService;
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizBatchService = quizBatchService;
@@ -528,7 +533,7 @@ public class ParticipationResource {
 
             // quiz has ended => get participation from database and add full quizExercise
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
-            StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
             if (participation == null) {
                 return null;
             }
@@ -550,7 +555,7 @@ public class ParticipationResource {
             quizExercise = quizExerciseRepository.findByIdWithQuestionsElseThrow(quizExercise.getId());
             quizExercise.setQuizBatches(quizBatch.stream().collect(Collectors.toSet()));
             quizExercise.filterForStudentsDuringQuiz();
-            StudentParticipation participation = participationService.participationForQuizWithResult(quizExercise, user.getLogin());
+            StudentParticipation participation = participationForQuizWithResult(quizExercise, user.getLogin());
             // set view
             var view = quizExercise.viewForStudentsInQuizExercise(quizBatch.get());
             MappingJacksonValue value = new MappingJacksonValue(participation);
@@ -704,6 +709,58 @@ public class ParticipationResource {
         checkAccessPermissionAtLeastInstructor(participation, user);
         List<Submission> submissions = submissionRepository.findAllWithResultsAndAssessorByParticipationId(participationId);
         return ResponseEntity.ok(submissions);
+    }
+
+    /**
+     * Get a participation for the given quiz and username.
+     * If the quiz hasn't ended, participation is constructed from cached submission.
+     * If the quiz has ended, we first look in the database for the participation and construct one if none was found
+     *
+     * @param quizExercise the quiz exercise to attach to the participation
+     * @param username     the username of the user that the participation belongs to
+     * @return the found or created participation with a result
+     */
+    private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
+        if (quizExercise.isQuizEnded()) {
+            // try getting participation from database
+            Optional<StudentParticipation> optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
+
+            if (optionalParticipation.isEmpty()) {
+                log.error("Participation in quiz {} not found for user {}", quizExercise.getTitle(), username);
+                // TODO properly handle this case
+                return null;
+            }
+            StudentParticipation participation = optionalParticipation.get();
+            // add exercise
+            participation.setExercise(quizExercise);
+
+            // add the appropriate result
+            Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
+            participation.setResults(new HashSet<>());
+            if (result != null) {
+                participation.addResult(result);
+            }
+            return participation;
+        }
+
+        // Look for Participation in ParticipationHashMap first
+        StudentParticipation participation = quizScheduleService.getParticipation(quizExercise.getId(), username);
+        if (participation != null) {
+            return participation;
+        }
+
+        // get submission from HashMap
+        QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
+
+        // construct result
+        Result result = new Result().submission(quizSubmission);
+
+        // construct participation
+        participation = new StudentParticipation();
+        participation.setInitializationState(INITIALIZED);
+        participation.setExercise(quizExercise);
+        participation.addResult(result);
+        return participation;
     }
 
     public static final class Endpoints {
