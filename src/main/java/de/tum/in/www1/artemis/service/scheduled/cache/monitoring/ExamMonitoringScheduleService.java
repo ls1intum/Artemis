@@ -190,8 +190,7 @@ public class ExamMonitoringScheduleService {
                 return;
             }
             // 3 am after the end of the exam
-            ZonedDateTime endOfExamDay = exam.getEndDate().toLocalDate().atTime(LocalTime.MAX).atZone(ZoneId.systemDefault());
-            var schedulingTime = endOfExamDay.plus(STATISTICS_THREE_HOURS_DELAY, ChronoUnit.SECONDS);
+            var schedulingTime = getSchedulingTime(exam);
             var scheduledFuture = scheduler.schedule(() -> this.executeExamActivitySaveTask(examId), schedulingTime.toInstant());
 
             scheduledExamLiveStatistics.put(examId, scheduledFuture);
@@ -201,6 +200,18 @@ public class ExamMonitoringScheduleService {
             logger.info("Exam {} monitoring save task already registered", examId);
             // this is expected if we run on multiple nodes
         }
+    }
+
+    /**
+     * Helper method to return the scheduling time.
+     * @param exam to schedule
+     * @return time of scheduling
+     */
+    public ZonedDateTime getSchedulingTime(Exam exam) {
+        // 3 am after the end of the exam
+        ZonedDateTime endOfExamDay = exam.getEndDate().toLocalDate().atTime(LocalTime.MAX).atZone(ZoneId.systemDefault());
+        // The maximum supported LocalTime, '23:59:59.999999999'. This is the time just before midnight at the end of the day -> add one and truncate the seconds
+        return endOfExamDay.plus(STATISTICS_THREE_HOURS_DELAY + 1, ChronoUnit.SECONDS).truncatedTo(ChronoUnit.MINUTES);
     }
 
     /**

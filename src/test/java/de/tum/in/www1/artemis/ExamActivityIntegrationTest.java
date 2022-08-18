@@ -2,8 +2,10 @@ package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -16,6 +18,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -39,7 +42,7 @@ import de.tum.in.www1.artemis.web.rest.ExamActivityResource;
 
 class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    @Autowired
+    @SpyBean
     private ExamMonitoringScheduleService examMonitoringScheduleService;
 
     @Autowired
@@ -312,9 +315,6 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             var examActivity = examActivityService.findByStudentExamId(studentExam.getId());
             examActivities.add(examActivity);
         }
-
-        // Save Exam Actions in Database
-        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
     }
 
     @Test
@@ -328,6 +328,9 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var numberOfActionsEachPerType = 10;
 
         prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
+
+        // Save Exam Actions in Database
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
 
         for (ExamActivity examActivity : examActivities) {
             var savedActions = examActionService.findByExamActivityId(examActivity.getId());
@@ -346,6 +349,9 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var numberOfActionsEachPerType = 10;
 
         prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
+
+        // Save Exam Actions in Database
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
 
         // Delete Student Exams
         var length = studentExamRepository.findAll().size();
@@ -375,6 +381,9 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
 
+        // Save Exam Actions in Database
+        examMonitoringScheduleService.executeExamActivitySaveTask(exam.getId());
+
         var exercises = exerciseRepo.findAllExercisesByCourseId(this.course.getId());
 
         examActivityRepository.deleteAll();
@@ -382,5 +391,48 @@ class ExamActivityIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertEquals(0, examActivityRepository.findAll().size());
 
         assertEquals(exercises, exerciseRepo.findAllExercisesByCourseId(this.course.getId()));
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSchedulingTime() {
+        exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(this.course);
+        var examEndDate = ZonedDateTime.of(2018, 1, 1, 0, 0, 0, 0, ZoneId.systemDefault());
+        exam.setEndDate(examEndDate);
+        exam.setMonitoring(true);
+        exam = examRepository.save(exam);
+
+        var schedulingTime = examMonitoringScheduleService.getSchedulingTime(exam);
+
+        assertEquals(ZonedDateTime.of(2018, 1, 2, 3, 0, 0, 0, ZoneId.systemDefault()), schedulingTime);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testSchedulingSave() throws InterruptedException {
+        exam = database.setupExamWithExerciseGroupsExercisesRegisteredStudents(this.course);
+        exam.setEndDate(ZonedDateTime.now().plusSeconds(5));
+        exam.setMonitoring(true);
+        exam = examRepository.save(exam);
+
+        doReturn(ZonedDateTime.now().plusSeconds(10)).when(examMonitoringScheduleService).getSchedulingTime(exam);
+
+        examMonitoringScheduleService.startSchedule();
+
+        var actions = new ArrayList<ExamAction>();
+        var studentExams = new ArrayList<StudentExam>();
+        var examActivities = new ArrayList<ExamActivity>();
+
+        var numberOfStudentExams = 10;
+        var numberOfActionsEachPerType = 10;
+
+        prepareLargeTestWithVariableStudentExams(actions, studentExams, examActivities, numberOfStudentExams, numberOfActionsEachPerType);
+
+        Thread.sleep(20000);
+
+        for (ExamActivity examActivity : examActivities) {
+            var savedActions = examActionService.findByExamActivityId(examActivity.getId());
+            assertEquals(numberOfActionsEachPerType * ExamActionType.values().length, savedActions.size());
+        }
     }
 }
