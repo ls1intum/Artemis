@@ -140,7 +140,7 @@ public class ResultResource {
      * @return a ResponseEntity to the CI system
      */
     @PostMapping(Constants.NEW_RESULT_RESOURCE_PATH)
-    public ResponseEntity<?> notifyNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
+    public ResponseEntity<?> processNewProgrammingExerciseResult(@RequestHeader("Authorization") String token, @RequestBody Object requestBody) {
         log.debug("Received result notify (NEW)");
         if (token == null || !token.equals(artemisAuthenticationTokenValue)) {
             log.info("Cancelling request with invalid token {}", token);
