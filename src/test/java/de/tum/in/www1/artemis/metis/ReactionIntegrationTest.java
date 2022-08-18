@@ -55,7 +55,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         // used to test hibernate validation using custom ReactionConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
-        database.addUsers(5, 5, 0, 1);
+        database.addUsers(5, 5, 4, 4);
 
         // initialize test setup and get all existing posts with answers (three posts, one in each context, are initialized with one answer each): 3 answers in total (with author
         // student1)

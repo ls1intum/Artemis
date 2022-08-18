@@ -31,12 +31,10 @@ import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
 import de.tum.in.www1.artemis.service.dto.AbstractBuildResultNotificationDTO;
-import de.tum.in.www1.artemis.service.hestia.ProgrammingExerciseGitDiffReportService;
 import de.tum.in.www1.artemis.service.hestia.TestwiseCoverageService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.web.rest.dto.ProgrammingExerciseGradingStatisticsDTO;
@@ -54,6 +52,8 @@ public class ProgrammingExerciseGradingService {
     private final ProgrammingExerciseTestCaseService testCaseService;
 
     private final ProgrammingSubmissionService programmingSubmissionService;
+
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -81,29 +81,25 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService;
-
-    private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
-
     private final BuildLogEntryService buildLogService;
 
     private final TestwiseCoverageService testwiseCoverageService;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
-            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate,
+            StaticCodeAnalysisService staticCodeAnalysisService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
-            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingExerciseGitDiffReportService programmingExerciseGitDiffReportService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
-            BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService) {
+            SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
+            TestwiseCoverageService testwiseCoverageService) {
         this.testCaseService = testCaseService;
         this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
         this.versionControlService = versionControlService;
+        this.programmingTriggerService = programmingTriggerService;
         this.messagingTemplate = messagingTemplate;
         this.staticCodeAnalysisService = staticCodeAnalysisService;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
@@ -115,8 +111,6 @@ public class ProgrammingExerciseGradingService {
         this.submissionPolicyService = submissionPolicyService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.exerciseDateService = exerciseDateService;
-        this.programmingExerciseGitDiffReportService = programmingExerciseGitDiffReportService;
-        this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.buildLogService = buildLogService;
         this.testwiseCoverageService = testwiseCoverageService;
     }
@@ -288,7 +282,6 @@ public class ProgrammingExerciseGradingService {
      *
      * @param lastSemiAutomaticResultId The latest manual result for the same submission (which must exist in the database)
      * @param newAutomaticResult The new automatic result
-     * @param programmingExercise The programming exercise
      * @return The updated semi-automatic result
      */
     private Result updateLatestSemiAutomaticResultWithNewAutomaticFeedback(long lastSemiAutomaticResultId, Result newAutomaticResult) {
@@ -323,7 +316,7 @@ public class ProgrammingExerciseGradingService {
             return;
         }
         try {
-            programmingSubmissionService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
+            programmingTriggerService.triggerTemplateBuildAndNotifyUser(programmingExerciseId, submission.getCommitHash(), SubmissionType.TEST);
         }
         catch (EntityNotFoundException ex) {
             // If for some reason the programming exercise does not have a template participation, we can only log and abort.

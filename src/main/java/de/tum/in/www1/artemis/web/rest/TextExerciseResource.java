@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.TextPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -83,7 +83,7 @@ public class TextExerciseResource {
 
     private final ExampleSubmissionRepository exampleSubmissionRepository;
 
-    private final GroupNotificationService groupNotificationService;
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -98,9 +98,9 @@ public class TextExerciseResource {
     public TextExerciseResource(TextExerciseRepository textExerciseRepository, TextExerciseService textExerciseService, FeedbackRepository feedbackRepository,
             ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository, UserRepository userRepository,
             AuthorizationCheckService authCheckService, CourseService courseService, StudentParticipationRepository studentParticipationRepository,
-            ParticipationRepository participationRepository, ResultRepository resultRepository, GroupNotificationService groupNotificationService,
-            TextExerciseImportService textExerciseImportService, TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository,
-            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository,
+            ParticipationRepository participationRepository, ResultRepository resultRepository, TextExerciseImportService textExerciseImportService,
+            TextSubmissionExportService textSubmissionExportService, ExampleSubmissionRepository exampleSubmissionRepository, ExerciseService exerciseService,
+            GradingCriterionRepository gradingCriterionRepository, TextBlockRepository textBlockRepository, GroupNotificationScheduleService groupNotificationScheduleService,
             InstanceMessageSendService instanceMessageSendService, TextPlagiarismDetectionService textPlagiarismDetectionService, CourseRepository courseRepository,
             TextAssessmentKnowledgeService textAssessmentKnowledgeService) {
         this.feedbackRepository = feedbackRepository;
@@ -117,7 +117,7 @@ public class TextExerciseResource {
         this.resultRepository = resultRepository;
         this.textExerciseImportService = textExerciseImportService;
         this.textSubmissionExportService = textSubmissionExportService;
-        this.groupNotificationService = groupNotificationService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
@@ -160,8 +160,7 @@ public class TextExerciseResource {
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         TextExercise result = textExerciseRepository.save(textExercise);
         instanceMessageSendService.sendTextExerciseSchedule(result.getId());
-        groupNotificationService.checkNotificationsForNewExercise(textExercise, instanceMessageSendService);
-
+        groupNotificationScheduleService.checkNotificationsForNewExercise(textExercise);
         return ResponseEntity.created(new URI("/api/text-exercises/" + result.getId())).body(result);
     }
 
@@ -210,10 +209,7 @@ public class TextExerciseResource {
         participationRepository.removeIndividualDueDatesIfBeforeDueDate(updatedTextExercise, textExerciseBeforeUpdate.getDueDate());
         instanceMessageSendService.sendTextExerciseSchedule(updatedTextExercise.getId());
         exerciseService.checkExampleSubmissions(updatedTextExercise);
-
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText,
-                instanceMessageSendService);
-
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(textExerciseBeforeUpdate, updatedTextExercise, notificationText);
         return ResponseEntity.ok(updatedTextExercise);
     }
 
@@ -321,7 +317,7 @@ public class TextExerciseResource {
         }
 
         // if no results, check if there are really no results or the relation to results was not updated yet
-        if (participation.getResults().size() <= 0) {
+        if (participation.getResults().size() == 0) {
             List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participation.getId());
             participation.setResults(new HashSet<>(results));
         }
