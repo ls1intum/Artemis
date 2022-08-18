@@ -33,6 +33,7 @@ public class QueryCountAssert<T, E extends Exception> extends AbstractAssert<Que
      * Asserts that the amount of database queries realized during a REST call don't exceed the expected amount
      *
      * @param times the maximal amount of queries expected on the database
+     * @return the result of the original call for which this assertion has been performed
      * @throws AssertionError if the number of actual queries on the database exceed the expected calls
      */
     public T hasBeenCalledAtMostTimes(long times) throws E {
