@@ -130,14 +130,14 @@ describe('QuizExerciseImportComponent', () => {
         pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<QuizExercise>));
 
         fixture.detectChanges();
-        expect(comp.isCourseFilter).toBe(true);
-        expect(comp.isExamFilter).toBe(true);
+        expect(comp.isCourseFilter).toBeTrue();
+        expect(comp.isExamFilter).toBeTrue();
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();
         tick();
-        expect(comp.isCourseFilter).toBe(false);
-        expect(comp.isExamFilter).toBe(false);
+        expect(comp.isCourseFilter).toBeFalse();
+        expect(comp.isExamFilter).toBeFalse();
 
         expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
         tick(300);
