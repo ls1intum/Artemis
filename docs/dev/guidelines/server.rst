@@ -435,8 +435,8 @@ add any other assertions to the test, as shown below.
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
         public void testQueryCount() throws Exception {
-            List<Course> courses = assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
-            assertThat(courses).isNotNull();
+            Course course = assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
+            assertThat(course).isNotNull();
         }
     }
 
