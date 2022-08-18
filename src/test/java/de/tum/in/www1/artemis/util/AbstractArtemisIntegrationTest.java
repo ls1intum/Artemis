@@ -25,7 +25,7 @@ import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.notifications.SingleUserNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
 
@@ -72,7 +72,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected SimpMessageSendingOperations messagingTemplate;
 
     @SpyBean
-    protected ProgrammingSubmissionService programmingSubmissionService;
+    protected ProgrammingTriggerService programmingTriggerService;
 
     @SpyBean
     protected ProgrammingExerciseGradingService programmingExerciseGradingService;
@@ -116,9 +116,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     public void resetSpyBeans() {
-        Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, programmingSubmissionService,
-                examAccessService, instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService,
-                scheduleService, javaMailSender, mailService);
+        Mockito.reset(ltiService, gitService, groupNotificationService, singleUserNotificationService, websocketMessagingService, messagingTemplate, examAccessService, mailService,
+                instanceMessageSendService, programmingExerciseScheduleService, programmingExerciseParticipationService, urlService, scoreService, scheduleService, javaMailSender,
+                programmingTriggerService);
     }
 
     @Override
