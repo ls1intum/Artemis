@@ -143,6 +143,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
         doReturn(projectKey).when(urlService).getProjectKeyFromRepositoryUrl(any());
     }
 
+    /**
+     * Allows to test the number of database queries during a REST call by passing in the REST call and returning a QueryCountAssert objcct
+     *
+     * @param call the REST call during which the number of database queries will be tracked
+     * @return a QueryCountAssert object allowing to test how many queries were done during the call
+     */
     protected <T, E extends Exception> QueryCountAssert<T, E> assertThatDb(ThrowingProducer<T, E> call) {
         return QueryCountAssert.assertThatDb(queryInterceptor, call);
     }
