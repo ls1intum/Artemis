@@ -580,7 +580,7 @@ public class FileResource {
         }
 
         if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedMarkdownFileExtensions));
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions));
         }
 
         // Set the appropriate values depending on the use case (markdown editor or other file upload)
