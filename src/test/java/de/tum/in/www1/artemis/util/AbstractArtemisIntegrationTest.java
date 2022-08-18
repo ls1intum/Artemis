@@ -144,7 +144,7 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     }
 
     /**
-     * Allows to test the number of database queries during a REST call by passing in the REST call and returning a QueryCountAssert objcct
+     * Allows to test the number of database queries during a REST call by passing in the REST call and returning a QueryCountAssert object
      *
      * @param call the REST call during which the number of database queries will be tracked
      * @return a QueryCountAssert object allowing to test how many queries were done during the call
