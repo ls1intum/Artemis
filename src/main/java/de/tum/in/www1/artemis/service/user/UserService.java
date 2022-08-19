@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.service.user;
 
+import static de.tum.in.www1.artemis.config.Constants.*;
+import static de.tum.in.www1.artemis.config.Constants.PASSWORD_MAX_LENGTH;
 import static de.tum.in.www1.artemis.domain.Authority.ADMIN_AUTHORITY;
 import static de.tum.in.www1.artemis.security.Role.*;
 
@@ -34,6 +36,7 @@ import de.tum.in.www1.artemis.service.dto.UserDTO;
 import de.tum.in.www1.artemis.service.ldap.LdapUserDto;
 import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
+import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.EmailAlreadyUsedException;
 import de.tum.in.www1.artemis.web.rest.errors.PasswordViolatesRequirementsException;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
@@ -463,6 +466,30 @@ public class UserService {
 
             log.debug("Changed password for User: {}", user);
         });
+    }
+
+    /**
+     * Check the username and password for validity. Throws Exception if invalid.
+     * @param username The username to check
+     * @param password The password to check
+     */
+    public void checkUsernameAndPasswordValidity(String username, String password) {
+
+        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
+            throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
+        }
+        else if (username.length() > USERNAME_MAX_LENGTH) {
+            throw new AccessForbiddenException("The username has to be less than " + USERNAME_MAX_LENGTH + " characters long");
+        }
+
+        // Note: the password can be null, then a random one will be generated (Create) or it won't be changed (Update).
+        // If the password is not null, its length has to be at least PASSWORD_MIN_LENGTH
+        if (password != null && password.length() < PASSWORD_MIN_LENGTH) {
+            throw new AccessForbiddenException("The password has to be at least " + PASSWORD_MIN_LENGTH + " characters long");
+        }
+        else if (password != null && password.length() > PASSWORD_MAX_LENGTH) {
+            throw new AccessForbiddenException("The password has to be less than " + PASSWORD_MAX_LENGTH + " characters long");
+        }
     }
 
     private void clearUserCaches(User user) {

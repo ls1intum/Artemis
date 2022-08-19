@@ -1,6 +1,5 @@
 import { ComponentFixture, fakeAsync, inject, TestBed, tick } from '@angular/core/testing';
 import { AuthorityFilter, OriginFilter, StatusFilter, UserFilter, UserManagementComponent, UserStorageKey } from 'app/admin/user-management/user-management.component';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { MockAccountService } from '../../helpers/mocks/service/mock-account.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,11 +23,12 @@ import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-
 import { LocalStorageService } from 'ngx-webstorage';
 import { MockCourseManagementService } from '../../helpers/mocks/service/mock-course-management.service';
 import { Course } from 'app/entities/course.model';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 describe('UserManagementComponent', () => {
     let comp: UserManagementComponent;
     let fixture: ComponentFixture<UserManagementComponent>;
-    let userService: UserService;
+    let userService: AdminUserService;
     let accountService: AccountService;
     let eventManager: EventManager;
     let courseManagementService: CourseManagementService;
@@ -88,7 +88,7 @@ describe('UserManagementComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UserManagementComponent);
                 comp = fixture.componentInstance;
-                userService = TestBed.inject(UserService);
+                userService = TestBed.inject(AdminUserService);
                 accountService = TestBed.inject(AccountService);
                 eventManager = TestBed.inject(EventManager);
                 courseManagementService = TestBed.inject(CourseManagementService);
@@ -203,7 +203,7 @@ describe('UserManagementComponent', () => {
         comp.deleteUser('test');
         expect(deleteSpy).toHaveBeenCalledOnce();
         expect(deleteSpy).toHaveBeenCalledWith('test');
-        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/users/test');
+        const reqD = httpMock.expectOne(SERVER_API_URL + 'api/admin/users/test');
         reqD.flush(null, { status, statusText });
 
         if (status === 200) {

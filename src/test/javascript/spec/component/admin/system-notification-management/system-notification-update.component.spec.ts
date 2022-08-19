@@ -17,8 +17,7 @@ import { AdminSystemNotificationService } from 'app/shared/notification/system-n
 describe('SystemNotificationManagementUpdateComponent', () => {
     let updateComponentFixture: ComponentFixture<SystemNotificationManagementUpdateComponent>;
     let updateComponent: SystemNotificationManagementUpdateComponent;
-    let service: SystemNotificationService;
-    let adminService: AdminSystemNotificationService;
+    let service: AdminSystemNotificationService;
 
     const route = {
         parent: {
@@ -36,8 +35,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
             .then(() => {
                 updateComponentFixture = TestBed.createComponent(SystemNotificationManagementUpdateComponent);
                 updateComponent = updateComponentFixture.componentInstance;
-                service = TestBed.inject(SystemNotificationService);
-                adminService = TestBed.inject(AdminSystemNotificationService);
+                service = TestBed.inject(AdminSystemNotificationService);
             });
     });
 
@@ -63,7 +61,7 @@ describe('SystemNotificationManagementUpdateComponent', () => {
 
     it('should update / create if save is clicked', fakeAsync(() => {
         const saveSpy = jest.spyOn(updateComponent, 'save');
-        jest.spyOn(adminService, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
+        jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse<SystemNotification>()));
         updateComponentFixture.detectChanges();
 
         const button = updateComponentFixture.debugElement.nativeElement.querySelector('#saveButton');

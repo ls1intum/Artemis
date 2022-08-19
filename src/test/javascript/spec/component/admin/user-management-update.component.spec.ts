@@ -8,7 +8,6 @@ import { ArtemisTestModule } from '../../test.module';
 import { UserManagementUpdateComponent } from 'app/admin/user-management/user-management-update.component';
 import { User } from 'app/core/user/user.model';
 import { JhiLanguageHelper } from 'app/core/language/language.helper';
-import { UserService } from 'app/core/user/user.service';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
 import { LocalStorageService, SessionStorageService } from 'ngx-webstorage';
@@ -26,11 +25,12 @@ import { Title } from '@angular/platform-browser';
 import * as Sentry from '@sentry/browser';
 
 import { LANGUAGES } from 'app/core/language/language.constants';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 describe('User Management Update Component', () => {
     let comp: UserManagementUpdateComponent;
     let fixture: ComponentFixture<UserManagementUpdateComponent>;
-    let service: UserService;
+    let service: AdminUserService;
     let titleService: Title;
 
     const parentRoute = {
@@ -63,7 +63,7 @@ describe('User Management Update Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(UserManagementUpdateComponent);
                 comp = fixture.componentInstance;
-                service = TestBed.inject(UserService);
+                service = TestBed.inject(AdminUserService);
                 modalService = TestBed.inject(NgbModal);
                 titleService = TestBed.inject(Title);
                 translateService = TestBed.inject(TranslateService);

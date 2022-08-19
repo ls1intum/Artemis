@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest, Subject, Subscription } from 'rxjs';
 import { onError } from 'app/shared/util/global.utils';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { SortingOrder } from 'app/shared/table/pageable-table';
@@ -19,6 +18,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize } from 'app/shared/components/button.component';
+import { AdminUserService } from 'app/core/user/admin-user.service';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
@@ -128,7 +128,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     readonly medium = ButtonSize.MEDIUM;
 
     constructor(
-        private userService: UserService,
+        private userService: AdminUserService,
         private alertService: AlertService,
         private accountService: AccountService,
         private parseLinks: ParseLinks,
