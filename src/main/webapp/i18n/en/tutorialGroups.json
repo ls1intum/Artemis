@@ -34,7 +34,8 @@
                 "placeholder": "Select a teaching assistant that will be responsible for this group.",
                 "loadingText": "Loading teaching assistants...",
                 "notFoundText": "No teaching assistants found in this course.",
-                "requiredValidationError": "A tutorial groups needs a teaching assistant assigned!"
+                "requiredValidationError": "A tutorial groups needs a teaching assistant assigned!",
+                "taHelp": "You can search by typing into the field."
             },
             "registeredStudentInput": {
                 "label": "Registered Students",

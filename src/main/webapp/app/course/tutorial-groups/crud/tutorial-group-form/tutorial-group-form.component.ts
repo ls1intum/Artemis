@@ -1,13 +1,15 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { catchError, concat, finalize, map, Observable, of } from 'rxjs';
+import { catchError, concat, finalize, map, merge, mergeAll, Observable, of, OperatorFunction, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { Language } from 'app/entities/course.model';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -19,7 +21,6 @@ export interface TutorialGroupFormData {
     language?: Language;
 }
 
-// user with label for ng-select
 export class UserWithLabel extends User {
     label: string;
 }
@@ -50,7 +51,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     form: FormGroup;
     teachingAssistantsAreLoading = false;
-    teachingAssistants$: Observable<User[]>;
+    teachingAssistants: UserWithLabel[];
+    @ViewChild('teachingAssistantInput') taTypeAhead: NgbTypeahead;
+    taFocus$ = new Subject<string>();
+    taClick$ = new Subject<string>();
 
     constructor(private fb: FormBuilder, private courseManagementService: CourseManagementService, private alertService: AlertService) {}
 
@@ -87,7 +91,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit(): void {
-        this.teachingAssistants$ = this.getTeachingAssistantsInCourse();
+        this.getTeachingAssistantsInCourse();
         this.initializeForm();
     }
 
@@ -106,6 +110,18 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     trackId(index: number, item: User) {
         return item.id;
     }
+
+    taFormatter = (user: UserWithLabel) => user.label;
+
+    taSearch: OperatorFunction<string, readonly UserWithLabel[]> = (text$: Observable<string>) => {
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = this.taClick$.pipe(filter(() => !this.taTypeAhead.isPopupOpen()));
+        const inputFocus$ = this.taFocus$;
+
+        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+            map((term) => (term === '' ? this.teachingAssistants : this.teachingAssistants.filter((ta) => ta.label.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+        );
+    };
 
     private initializeForm() {
         if (this.form) {
@@ -164,6 +180,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
                     this.teachingAssistantsAreLoading = false;
                 }),
             ),
-        );
+        ).subscribe((users: UserWithLabel[]) => {
+            this.teachingAssistants = users;
+        });
     }
 }

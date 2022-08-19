@@ -31,21 +31,21 @@
             <!-- Teaching Assistant -->
             <div class="form-group">
                 <label class="required" for="teachingAssistant">{{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.label' | artemisTranslate }}</label>
-                <ng-select
+                <input
                     id="teachingAssistant"
-                    [items]="teachingAssistants$ | async"
-                    [loading]="teachingAssistantsAreLoading"
-                    [loadingText]="'artemisApp.tutorialGroupForm.teachingAssistantsLoading' | artemisTranslate"
-                    [placeholder]="'artemisApp.tutorialGroupForm.teachingAssistantInput.placeholder' | artemisTranslate"
-                    [notFoundText]="'artemisApp.tutorialGroupForm.teachingAssistantInput.notFoundText' | artemisTranslate"
+                    type="text"
+                    class="form-control"
                     formControlName="teachingAssistant"
-                    bindLabel="label"
-                >
-                    <ng-template ng-option-tmp let-item="item" let-search="searchTerm">
-                        <div><ngb-highlight [result]="item.label" [term]="search"></ngb-highlight></div>
-                        <small><b>Id:</b> {{ item.id }} | <b>E-Mail:</b> {{ item.email }}</small>
-                    </ng-template>
-                </ng-select>
+                    [placeholder]="'artemisApp.tutorialGroupForm.teachingAssistantInput.placeholder' | artemisTranslate"
+                    [ngbTypeahead]="taSearch"
+                    [inputFormatter]="taFormatter"
+                    [resultFormatter]="taFormatter"
+                    [editable]="false"
+                    #teachingAssistantInput="ngbTypeahead"
+                    (focus)="taFocus$.next($any($event).target.value)"
+                    (click)="taClick$.next($any($event).target.value)"
+                />
+                <small id="taHelp" class="form-text text-muted">{{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.taHelp' | artemisTranslate }}</small>
                 <div *ngIf="teachingAssistantControl?.invalid && (teachingAssistantControl?.dirty || teachingAssistantControl?.touched)" class="alert alert-danger">
                     <div *ngIf="teachingAssistantControl?.errors?.required">
                         {{ 'artemisApp.tutorialGroupForm.teachingAssistantInput.requiredValidationError' | artemisTranslate }}
