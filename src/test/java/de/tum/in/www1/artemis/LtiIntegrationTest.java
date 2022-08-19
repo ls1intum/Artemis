@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.net.URI;
 import java.time.*;
 import java.time.temporal.ChronoUnit;
+import java.util.Objects;
 import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
@@ -57,7 +58,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &oauth_timestamp=1572204884\
             &custom_consumer_instance_name=edx\
             &custom_require_existing_user=false\
-            &custom_lookup_user_by_email=false\
+            &custom_lookup_user_by_email=true\
             &lis_person_contact_email_primary=anh.montag%40tum.de\
             &oauth_signature=GYXApaIv0x7k%2FOPT9%2FoU38IBQRc%3D\
             &context_title=Software+Engineering+Essentials\
@@ -123,6 +124,8 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAll().get(0);
+
+        jiraRequestMockProvider.enableMockingOfRequests();
     }
 
     @AfterEach
@@ -130,10 +133,25 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         database.resetDatabase();
     }
 
+    private void addJiraMocks(String requestBody) throws Exception {
+        String email = "";
+        if (Objects.equals(requestBody, EDX_REQUEST_BODY)) {
+            email = "anh.montag@tum.de";
+        }
+        if (Objects.equals(requestBody, MOODLE_REQUEST_BODY)) {
+            email = "carlosmoodle@email.com";
+        }
+
+        jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
+        jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
+    }
+
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
-    void launchAsAnonymousUser(String requestBody) throws Exception {
+    void launchAsAnonymousUserWithExistingEmail(String requestBody) throws Exception {
+        addJiraMocks(requestBody);
+
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
