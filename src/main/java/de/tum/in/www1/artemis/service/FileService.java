@@ -61,6 +61,20 @@ public class FileService implements DisposableBean {
     public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
 
     /**
+     * Filenames for which the template filename differs from the filename it should have in the repository.
+     */
+    // @formatter:off
+    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(Map.entry("git.ignore.file", ".gitignore"), Map.entry("git.attributes.file", ".gitattributes"),
+        Map.entry("Makefile.file", "Makefile"), Map.entry("dune.file", "dune"), Map.entry("Fast.file", "Fastfile"), Map.entry("App.file", "Appfile"),
+        Map.entry("Scan.file", "Scanfile"), Map.entry("gradlew.file", "gradlew"));
+    // @formatter:on
+
+    /**
+     * These directories get falsely marked as files and should be ignored during copying.
+     */
+    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
+
+    /**
      * Extends the default allowed file extensions with the provided one
      *
      * @param fileExtension file extension to add
@@ -77,20 +91,6 @@ public class FileService implements DisposableBean {
     public void removeFileExtension(String fileExtension) {
         this.allowedFileExtensions.remove(fileExtension);
     }
-
-    /**
-     * Filenames for which the template filename differs from the filename it should have in the repository.
-     */
-    // @formatter:off
-    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(Map.entry("git.ignore.file", ".gitignore"), Map.entry("git.attributes.file", ".gitattributes"),
-        Map.entry("Makefile.file", "Makefile"), Map.entry("dune.file", "dune"), Map.entry("Fast.file", "Fastfile"), Map.entry("App.file", "Appfile"),
-        Map.entry("Scan.file", "Scanfile"), Map.entry("gradlew.file", "gradlew"));
-    // @formatter:on
-
-    /**
-     * These directories get falsely marked as files and should be ignored during copying.
-     */
-    private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
 
     @Override
     public void destroy() {
@@ -149,7 +149,7 @@ public class FileService implements DisposableBean {
         final StringBuilder responsePath = new StringBuilder(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH);
 
         try {
-            File newFile = createNewFile(filePath, fileNameAddition, filename, fileExtension, keepFileName);
+            File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
             responsePath.append(newFile.toPath().getFileName());
 
             // copy contents of uploaded file into newly created file
@@ -186,14 +186,15 @@ public class FileService implements DisposableBean {
      */
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
         createDirectory(filePath);
-        boolean fileCreated = false;
+        boolean fileCreated;
         File newFile;
+        String newFilename = filename;
         do {
             if (!keepFileName) {
-                filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
-            String path = Path.of(filePath, filename).toString();
+            String path = Path.of(filePath, newFilename).toString();
 
             newFile = new File(path);
             if (keepFileName && newFile.exists()) {
@@ -440,13 +441,12 @@ public class FileService implements DisposableBean {
         // create the file (retry if filename already exists)
         boolean fileCreated;
         File newFile;
-        String filename;
+        String filename = originalFilename;
         do {
             if (keepFileName) {
-                if (originalFilename.contains(DEFAULT_FILE_SUBPATH)) {
-                    originalFilename = originalFilename.replace(DEFAULT_FILE_SUBPATH, "");
+                if (filename.contains(DEFAULT_FILE_SUBPATH)) {
+                    filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
                 }
-                filename = originalFilename;
             }
             else {
                 filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
@@ -456,7 +456,7 @@ public class FileService implements DisposableBean {
 
             newFile = new File(path);
             if (keepFileName && newFile.exists()) {
-                newFile.delete();
+                Files.delete(newFile.toPath());
             }
             fileCreated = newFile.createNewFile();
         }
