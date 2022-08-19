@@ -4,76 +4,92 @@
     </div>
 </div>
 
-<div *ngIf="!isLoading && lecture" class="container">
+<div *ngIf="!isLoading && lecture">
     <!-- Lecture Unit Rows-->
-    <div class="row mb-4" *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify">
-        <div class="col-1 my-auto mx-auto">
-            <jhi-learning-goals-popover
-                *ngIf="lecture.course?.id"
-                [courseId]="lecture.course!.id!"
-                [learningGoals]="lectureUnit.learningGoals || []"
-                [navigateTo]="'learningGoalManagement'"
-            ></jhi-learning-goals-popover>
-        </div>
-        <div class="col-9 mx-auto col-md-7 offset-md-2" [ngSwitch]="lectureUnit.type">
-            <span class="badge bg-info">
-                {{
-                    getLectureUnitReleaseDate(lectureUnit)
-                        ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
-                        : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
-                }}
-            </span>
-
-            <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
-            <div *ngSwitchCase="LectureUnitType.ATTACHMENT">
-                <span class="badge bg-info">
-                    {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
-                </span>
-                <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
-            </div>
-            <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>
-            <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
-            <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
-        </div>
-        <div class="col-1 my-auto" style="min-width: 100px">
-            <div class="container">
-                <div class="row mx-auto mb-1">
-                    <button id="{{ 'up-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveUp(i)" [disabled]="i === 0">
-                        <fa-icon [icon]="faArrowUp" [fixedWidth]="true" [size]="'lg'"></fa-icon>
-                    </button>
-                </div>
-                <div class="row mx-auto">
-                    <button id="{{ 'down-' + i }}" type="button" class="btn btn-primary btn-circle" (click)="moveDown(i)" [disabled]="i === lectureUnits.length - 1">
-                        <fa-icon [icon]="faArrowDown" [fixedWidth]="true" [size]="'lg'"></fa-icon>
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="col-1 my-auto">
-            <button
-                class="rounded-pill"
-                *ngIf="lecture.isAtLeastInstructor"
-                jhiDeleteButton
-                [actionType]="getActionType(lectureUnit)"
-                [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
-                [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
-                [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
-                (delete)="deleteLectureUnit(lectureUnit.id!)"
-                [dialogError]="dialogError$"
-            >
-                <fa-icon [icon]="faTimes"></fa-icon>
-            </button>
-            <a *ngIf="editButtonAvailable(lectureUnit)" class="btn mt-1 btn-sm btn-primary edit rounded-pill" [routerLink]="editButtonRouterLink(lectureUnit)">
-                <fa-icon [icon]="faPencilAlt"></fa-icon>
-                <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
-            </a>
-        </div>
+    <div class="w-100 d-flex justify-content-end" [class.justify-content-center]="!lectureUnits?.length">
+        <jhi-unit-creation-card></jhi-unit-creation-card>
     </div>
+    <div class="component-container" cdkDropList (cdkDropListDropped)="drop($event)">
+        <div
+            class="lecture-unit-container"
+            [class.attachment]="lectureUnit.type === LectureUnitType.ATTACHMENT"
+            *ngFor="let lectureUnit of lectureUnits; index as i; trackBy: identify"
+            cdkDrag
+        >
+            <div class="custom-handle d-none d-sm-flex">
+                <svg viewBox="3 1 5 13" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="4.5" cy="2.5" r=".6" fill="currentColor" />
+                    <circle cx="4.5" cy="4.5" r=".6" fill="currentColor" />
+                    <circle cx="4.5" cy="6.499" r=".6" fill="currentColor" />
+                    <circle cx="4.5" cy="8.499" r=".6" fill="currentColor" />
+                    <circle cx="4.5" cy="10.498" r=".6" fill="currentColor" />
+                    <circle cx="4.5" cy="12.498" r=".6" fill="currentColor" />
+                    <circle cx="6.5" cy="2.5" r=".6" fill="currentColor" />
+                    <circle cx="6.5" cy="4.5" r=".6" fill="currentColor" />
+                    <circle cx="6.5" cy="6.499" r=".6" fill="currentColor" />
+                    <circle cx="6.5" cy="8.499" r=".6" fill="currentColor" />
+                    <circle cx="6.5" cy="10.498" r=".6" fill="currentColor" />
+                    <circle cx="6.5" cy="12.498" r=".6" fill="currentColor" />
+                </svg>
+            </div>
+            <div class="lecture-unit-type-container" [ngSwitch]="lectureUnit.type">
+                <div class="unit-badges d-flex flex-column gap-1">
+                    <div class="badge bg-info">
+                        {{
+                            getLectureUnitReleaseDate(lectureUnit)
+                                ? ('artemisApp.lectureUnit.details.releaseDateSet' | artemisTranslate) + (getLectureUnitReleaseDate(lectureUnit) | artemisDate)
+                                : ('artemisApp.lectureUnit.details.releaseDateNotSet' | artemisTranslate)
+                        }}
+                    </div>
+                    <div class="badge bg-info attachment-badge" *ngSwitchCase="LectureUnitType.ATTACHMENT">
+                        {{ ('artemisApp.lectureUnit.details.attachmentVersion' | artemisTranslate) + getAttachmentVersion(lectureUnit) }}
+                    </div>
+                </div>
 
-    <!-- Unit Creation Card Row-->
-    <div class="row">
-        <div class="col-10 col-md-8 offset-md-2 mx-auto">
-            <jhi-unit-creation-card></jhi-unit-creation-card>
+                <jhi-exercise-unit *ngSwitchCase="LectureUnitType.EXERCISE" [exerciseUnit]="lectureUnit" [isPresentationMode]="true" [course]="lecture.course!"></jhi-exercise-unit>
+                <div *ngSwitchCase="LectureUnitType.ATTACHMENT">
+                    <jhi-attachment-unit [attachmentUnit]="lectureUnit" [isPresentationMode]="true"></jhi-attachment-unit>
+                </div>
+                <jhi-video-unit *ngSwitchCase="LectureUnitType.VIDEO" [videoUnit]="lectureUnit" [isPresentationMode]="true"></jhi-video-unit>
+                <jhi-text-unit *ngSwitchCase="LectureUnitType.TEXT" [textUnit]="lectureUnit" [isPresentationMode]="true"></jhi-text-unit>
+                <jhi-online-unit *ngSwitchCase="LectureUnitType.ONLINE" [onlineUnit]="lectureUnit" [isPresentationMode]="true"></jhi-online-unit>
+            </div>
+            <div class="d-flex gap-1 flex-column justify-content-center col-3 col-sm-2 col-lg-1" role="group">
+                <jhi-learning-goals-popover
+                    *ngIf="lecture.course?.id"
+                    [courseId]="lecture.course!.id!"
+                    [learningGoals]="lectureUnit.learningGoals || []"
+                    [navigateTo]="'learningGoalManagement'"
+                ></jhi-learning-goals-popover>
+                <div class="d-flex gap-1 w-100">
+                    <a
+                        type="button"
+                        *ngIf="editButtonAvailable(lectureUnit)"
+                        class="btn btn-primary btn-sm edit flex-grow-1"
+                        [routerLink]="editButtonRouterLink(lectureUnit)"
+                        [ngbTooltip]="'entity.action.edit' | artemisTranslate"
+                    >
+                        <fa-icon [icon]="faPencilAlt"></fa-icon>
+                    </a>
+                    <button
+                        type="button"
+                        class="btn btn-danger btn-sm flex-grow-1"
+                        *ngIf="lecture.isAtLeastInstructor"
+                        jhiDeleteButton
+                        [renderButtonStyle]="false"
+                        [renderButtonText]="false"
+                        [ngbTooltip]="'entity.action.' + getActionType(lectureUnit) | artemisTranslate"
+                        [actionType]="getActionType(lectureUnit)"
+                        [entityTitle]="lectureUnitService.getLectureUnitName(lectureUnit) || ''"
+                        [deleteQuestion]="getDeleteQuestionKey(lectureUnit)"
+                        [deleteConfirmationText]="getDeleteConfirmationTextKey(lectureUnit)"
+                        (delete)="deleteLectureUnit(lectureUnit.id!)"
+                        [dialogError]="dialogError$"
+                    >
+                        <fa-icon [icon]="faTimes"></fa-icon>
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 </div>
