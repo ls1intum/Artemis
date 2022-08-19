@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.*;
 import de.tum.in.www1.artemis.domain.participation.*;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.VersionControlException;
 import de.tum.in.www1.artemis.repository.*;
@@ -22,7 +21,6 @@ import de.tum.in.www1.artemis.repository.hestia.CoverageReportRepository;
 import de.tum.in.www1.artemis.service.connectors.ContinuousIntegrationService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -38,8 +36,6 @@ public class ParticipationService {
     private final Optional<ContinuousIntegrationService> continuousIntegrationService;
 
     private final Optional<VersionControlService> versionControlService;
-
-    private final QuizScheduleService quizScheduleService;
 
     private final ParticipationRepository participationRepository;
 
@@ -72,10 +68,9 @@ public class ParticipationService {
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
-            ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, QuizScheduleService quizScheduleService,
-            ParticipationRepository participationRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository, UrlService urlService,
-            CoverageReportRepository coverageReportRepository) {
+            ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, ParticipationRepository participationRepository,
+            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
+            ParticipantScoreRepository participantScoreRepository, UrlService urlService, CoverageReportRepository coverageReportRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -89,7 +84,6 @@ public class ParticipationService {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.quizScheduleService = quizScheduleService;
         this.ratingRepository = ratingRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.urlService = urlService;
@@ -299,58 +293,6 @@ public class ParticipationService {
         }
 
         return studentParticipation;
-    }
-
-    /**
-     * Get a participation for the given quiz and username.
-     * If the quiz hasn't ended, participation is constructed from cached submission.
-     * If the quiz has ended, we first look in the database for the participation and construct one if none was found
-     *
-     * @param quizExercise the quiz exercise to attach to the participation
-     * @param username     the username of the user that the participation belongs to
-     * @return the found or created participation with a result
-     */
-    public StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
-        if (quizExercise.isQuizEnded()) {
-            // try getting participation from database
-            Optional<StudentParticipation> optionalParticipation = findOneByExerciseAndStudentLoginAnyState(quizExercise, username);
-
-            if (optionalParticipation.isEmpty()) {
-                log.error("Participation in quiz {} not found for user {}", quizExercise.getTitle(), username);
-                // TODO properly handle this case
-                return null;
-            }
-            StudentParticipation participation = optionalParticipation.get();
-            // add exercise
-            participation.setExercise(quizExercise);
-
-            // add the appropriate result
-            Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
-            participation.setResults(new HashSet<>());
-            if (result != null) {
-                participation.addResult(result);
-            }
-            return participation;
-        }
-
-        // Look for Participation in ParticipationHashMap first
-        StudentParticipation participation = quizScheduleService.getParticipation(quizExercise.getId(), username);
-        if (participation != null) {
-            return participation;
-        }
-
-        // get submission from HashMap
-        QuizSubmission quizSubmission = quizScheduleService.getQuizSubmission(quizExercise.getId(), username);
-
-        // construct result
-        Result result = new Result().submission(quizSubmission);
-
-        // construct participation
-        participation = new StudentParticipation();
-        participation.setInitializationState(INITIALIZED);
-        participation.setExercise(quizExercise);
-        participation.addResult(result);
-        return participation;
     }
 
     /**

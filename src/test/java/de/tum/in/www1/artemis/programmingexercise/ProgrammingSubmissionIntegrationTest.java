@@ -13,7 +13,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.junit.jupiter.api.AfterEach;
@@ -101,6 +100,8 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @AfterEach
     void tearDown() {
         database.resetDatabase();
+        bitbucketRequestMockProvider.reset();
+        bambooRequestMockProvider.reset();
     }
 
     @Test
@@ -373,6 +374,9 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     @WithMockUser(username = "student1", roles = "USER")
     void triggerFailedBuild_CIException() throws Exception {
         var participation = createExerciseWithSubmissionAndParticipation();
+        bambooRequestMockProvider.enableMockingOfRequests(true);
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
+        mockConnectorRequestsForResumeParticipation(exercise, participation.getParticipantIdentifier(), participation.getParticipant().getParticipants(), true);
 
         doThrow(ContinuousIntegrationException.class).when(continuousIntegrationService).triggerBuild(participation);
         String url = "/api" + Constants.PROGRAMMING_SUBMISSION_RESOURCE_PATH + participation.getId() + "/trigger-failed-build";
@@ -382,17 +386,15 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     private ProgrammingExerciseStudentParticipation createExerciseWithSubmissionAndParticipation() {
         var user = database.getUserByLogin("student1");
         exercise.setDueDate(ZonedDateTime.now().minusDays(1));
-        programmingExerciseRepository.save(exercise);
+        exercise = programmingExerciseRepository.save(exercise);
         var submission = new ProgrammingSubmission();
         submission.setType(SubmissionType.MANUAL);
         submission = database.addProgrammingSubmission(exercise, submission, user.getLogin());
         var optionalParticipation = programmingExerciseStudentParticipationRepository.findById(submission.getParticipation().getId());
         assertThat(optionalParticipation).isPresent();
-        final var participation = optionalParticipation.get();
+        var participation = optionalParticipation.get();
         participation.setBuildPlanId(null);
-        programmingExerciseStudentParticipationRepository.save(participation);
-        doReturn(Optional.of(submission)).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
-
+        participation = programmingExerciseStudentParticipationRepository.save(participation);
         return participation;
     }
 
@@ -415,7 +417,6 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
         String login = "student1";
         StudentParticipation participation = database.addStudentParticipationForProgrammingExercise(exercise, login);
         bambooRequestMockProvider.mockTriggerBuild((ProgrammingExerciseParticipation) participation);
-        doReturn(Optional.empty()).when(programmingSubmissionService).getLatestPendingSubmission(anyLong(), anyBoolean());
 
         String url = "/api/programming-submissions/" + participation.getId() + "/trigger-failed-build";
         request.postWithoutLocation(url, null, HttpStatus.NOT_FOUND, new HttpHeaders());
