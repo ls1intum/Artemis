@@ -1,6 +1,6 @@
 <ng-template #helpTextTemplate let-translationKey="translationKey">
     <ng-template #tipContent><span [innerHTML]="translationKey | artemisTranslate | safeHtml"></span></ng-template>
-    <fa-icon *ngIf="bonus.id" [icon]="faQuestionCircle" class="text-secondary" placement="top" [ngbTooltip]="tipContent"></fa-icon>
+    <fa-icon *ngIf="bonus.id" [icon]="faQuestionCircle" class="text-secondary" placement="right" [ngbTooltip]="tipContent"></fa-icon>
     <label *ngIf="!bonus.id" [innerHTML]="translationKey | artemisTranslate | safeHtml" class="d-block py-1"></label>
 </ng-template>
 <h2>{{ 'artemisApp.bonus.title' | artemisTranslate }}</h2>
@@ -14,44 +14,44 @@
     <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.discreteness.helpText' }"></ng-container>
     <jhi-mode-picker [options]="bonusStrategyDiscreteness" [(value)]="currentBonusStrategyDiscreteness" (valueChange)="onBonusStrategyInputChange()"></jhi-mode-picker>
 </div>
-<div *ngIf="bonus.id || currentBonusStrategyOption === BonusStrategyOptions.POINTS || currentBonusStrategyDiscreteness" class="form-group">
+<div *ngIf="bonus.id || currentBonusStrategyOption === BonusStrategyOptions.POINTS || currentBonusStrategyDiscreteness !== undefined" class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.calculation.title">Select calculation</span>
     <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.calculation.helpText' }"></ng-container>
     <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="generateExamples()"></jhi-mode-picker>
 </div>
-<div *ngIf="bonus.id || bonus.weight" class="form-group">
+<div *ngIf="bonus.id || bonus.weight !== undefined" class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.title">Select bonus source</span>
     <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }"></ng-container>
     <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="onBonusSourceChange($event)" [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate">
         <option *ngFor="let sourceGradingScale of sourceGradingScales" [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
     </select>
 </div>
-<ng-container *ngIf="bonus.id || bonus.source">
-    <ng-container *ngIf="bonus.source?.gradeSteps">
-        <h5 class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.selectedBonusSource">Selected Bonus Source Grading Key</h5>
-        <div class="fs-5">
-            <table class="table table-striped">
-                <thead>
-                    <tr>
-                        <th>{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}</th>
-                        <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
-                        <th *ngIf="hasPointsSet()">{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr *ngFor="let gradeStep of bonus.source?.gradeSteps; let i = index; let last = last">
-                        <td>{{ gradeStep.gradeName }}</td>
-                        <td>
-                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
-                        </td>
-                        <td *ngIf="hasPointsSet()">
-                            <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </ng-container>
+<ng-container *ngIf="bonus.source?.gradeSteps">
+    <h5 class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.selectedBonusSource">Selected Bonus Source Grading Key</h5>
+    <div class="fs-5">
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>{{ 'artemisApp.exam.examSummary.bonus' | artemisTranslate }}</th>
+                    <th>{{ 'artemisApp.exam.examSummary.interval' | artemisTranslate }}</th>
+                    <th *ngIf="hasPointsSet()">{{ 'artemisApp.exam.examSummary.intervalPoints' | artemisTranslate }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr *ngFor="let gradeStep of bonus.source?.gradeSteps; let i = index; let last = last">
+                    <td>{{ gradeStep.gradeName }}</td>
+                    <td>
+                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
+                    </td>
+                    <td *ngIf="hasPointsSet()">
+                        <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.POINTS:last | safeHtml"></span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</ng-container>
+<ng-container *ngIf="bonus.bonusStrategy && bonus.source && bonus.weight">
     <h5>{{ 'artemisApp.bonus.formula.title' | artemisTranslate }}</h5>
     <div *ngIf="bonus.bonusStrategy && bonus.weight && examGradeStepsDTO" class="fs-3 pb-5">
         <div class="d-flex py-2 align-items-center">
@@ -61,10 +61,10 @@
                 >
             </div>
             <div class="p-2">
-                <strong class="fs-1">{{ getCalculationSign(bonus.weight) }}</strong>
+                <strong class="calculation-sign">{{ getCalculationSign(bonus.weight) }}</strong>
             </div>
             <div class="p-2"><strong [innerHTML]="'artemisApp.bonus.formula.bonusGrade' | artemisTranslate | safeHtml"></strong></div>
-            <div class="p-2"><strong class="fs-1">=</strong></div>
+            <div class="p-2"><strong class="calculation-sign">=</strong></div>
             <div class="p-2">
                 <strong
                     [innerHTML]="'artemisApp.bonus.formula.' + (bonus.bonusStrategy === BonusStrategy.POINTS ? 'finalPoints' : 'finalGrade') | artemisTranslate | safeHtml"
@@ -80,7 +80,8 @@
     </div>
     <div *ngIf="examples?.length" class="fs-5">
         <h5>
-            {{ 'artemisApp.bonus.examples.title' | artemisTranslate }} <em>{{ 'artemisApp.bonus.examples.helpText' | artemisTranslate }}</em>
+            {{ 'artemisApp.bonus.examples.title' | artemisTranslate }}
+            <em>{{ 'artemisApp.bonus.examples.helpText' | artemisTranslate }}</em>
         </h5>
         <table class="table table-striped">
             <thead>
@@ -95,12 +96,12 @@
             </thead>
             <tbody>
                 <tr *ngFor="let example of examples">
-                    <td>{{ example.examStudentPoints }}</td>
+                    <td>{{ example.studentPointsOfBonusTo }}</td>
                     <td>{{ example.examGrade }}</td>
-                    <td>{{ example.bonusStudentPoints ?? ('artemisApp.bonus.examples.any' | artemisTranslate) }}</td>
+                    <td>{{ example.studentPointsOfBonusSource ?? ('artemisApp.bonus.examples.any' | artemisTranslate) }}</td>
                     <td>{{ example.bonusGrade }}</td>
                     <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS">
-                        {{ example.examStudentPoints }} {{ getCalculationSign(bonus.weight!) }} {{ example.bonusGrade }} = {{ example.finalPoints }}
+                        {{ example.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ example.bonusGrade }} = {{ example.finalPoints }}
                     </td>
                     <td>
                         <ng-container *ngIf="bonus.bonusStrategy === BonusStrategy.GRADES_CONTINUOUS"
@@ -110,12 +111,12 @@
                     </td>
                 </tr>
                 <tr>
-                    <td><input [(ngModel)]="dynamicExample.examStudentPoints" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
+                    <td><input [(ngModel)]="dynamicExample.studentPointsOfBonusTo" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
                     <td>{{ dynamicExample.examGrade }}</td>
-                    <td><input [(ngModel)]="dynamicExample.bonusStudentPoints" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
+                    <td><input [(ngModel)]="dynamicExample.studentPointsOfBonusSource" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
                     <td>{{ dynamicExample.bonusGrade }}</td>
                     <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS && dynamicExample.finalPoints">
-                        {{ dynamicExample.examStudentPoints }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} = {{ dynamicExample.finalPoints }}
+                        {{ dynamicExample.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} = {{ dynamicExample.finalPoints }}
                     </td>
                     <td>
                         <ng-container *ngIf="bonus.bonusStrategy === BonusStrategy.GRADES_CONTINUOUS && dynamicExample.finalGrade"

@@ -353,7 +353,7 @@
             "studentExams": "Klausuren der Studierenden",
             "students": "Studierende",
             "gradingSystem": "Notenschlüssel",
-            "bonusSource": "Bonus Source",
+            "bonus": "Bonus",
             "testExam": {
                 "realExam": "Klausur",
                 "testExam": "Testklausur",

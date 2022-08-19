@@ -2,9 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { finalize, tap } from 'rxjs/operators';
+import { catchError, finalize, tap } from 'rxjs/operators';
 import { faExclamationTriangle, faPlus, faSave, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
@@ -13,6 +13,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
+import { AlertService } from 'app/core/util/alert.service';
 
 enum BonusStrategyOption {
     GRADES,
@@ -52,7 +53,7 @@ export class BonusComponent implements OnInit {
         btnClass: 'btn-secondary',
     }));
 
-    readonly bonusStrategyDiscreteness = [BonusStrategyDiscreteness.DISCRETE, BonusStrategyDiscreteness.CONTINUOUS].map((bonusStrategyDiscreteness) => ({
+    readonly bonusStrategyDiscreteness = [BonusStrategyDiscreteness.CONTINUOUS].map((bonusStrategyDiscreteness) => ({
         value: bonusStrategyDiscreteness,
         labelKey: 'artemisApp.bonus.discreteness.' + BonusStrategyDiscreteness[bonusStrategyDiscreteness].toLowerCase(),
         btnClass: 'btn-secondary',
@@ -60,13 +61,13 @@ export class BonusComponent implements OnInit {
 
     readonly calculationSigns = [
         {
-            value: this.CALCULATION_PLUS,
-            label: '+',
+            value: this.CALCULATION_MINUS,
+            label: '−',
             btnClass: 'btn-secondary',
         },
         {
-            value: this.CALCULATION_MINUS,
-            label: '−',
+            value: this.CALCULATION_PLUS,
+            label: '+',
             btnClass: 'btn-secondary',
         },
     ];
@@ -103,7 +104,9 @@ export class BonusComponent implements OnInit {
         private bonusService: BonusService,
         private gradingSystemService: GradingSystemService,
         private route: ActivatedRoute,
+        private router: Router,
         private translateService: TranslateService,
+        private alertService: AlertService,
     ) {}
 
     ngOnInit(): void {
@@ -135,6 +138,11 @@ export class BonusComponent implements OnInit {
                         throw new Error(`No grade steps found for bonus calculation. Bonus to course id "${this.courseId}", exam id "${this.examId}"`);
                     }
                 }),
+                catchError((error) => {
+                    this.alertService.error(error.message);
+                    this.navigateToExam();
+                    throw new Error(`No grade scale found for bonus calculation. Bonus to course id "${this.courseId}", exam id "${this.examId}"`);
+                }),
             ),
         ])
             .pipe(
@@ -145,6 +153,10 @@ export class BonusComponent implements OnInit {
             .subscribe(() => {
                 this.setSourceGradingScale();
             });
+    }
+
+    private navigateToExam() {
+        this.router.navigate(['course-management', this.courseId, 'exams', this.examId]);
     }
 
     private setSourceGradingScale() {
@@ -189,6 +201,7 @@ export class BonusComponent implements OnInit {
 
     onBonusStrategyInputChange() {
         this.bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
+        this.generateExamples();
     }
 
     convertFromInputsToBonusStrategy(
@@ -198,7 +211,14 @@ export class BonusComponent implements OnInit {
         if (bonusStrategyOption === BonusStrategyOption.POINTS) {
             return BonusStrategy.POINTS;
         } else if (bonusStrategyOption === BonusStrategyOption.GRADES) {
-            return bonusStrategyDiscreteness === BonusStrategyDiscreteness.DISCRETE ? BonusStrategy.GRADES_DISCRETE : BonusStrategy.GRADES_CONTINUOUS;
+            switch (bonusStrategyDiscreteness) {
+                case BonusStrategyDiscreteness.CONTINUOUS:
+                    return BonusStrategy.GRADES_CONTINUOUS;
+                case BonusStrategyDiscreteness.DISCRETE:
+                    return BonusStrategy.GRADES_DISCRETE;
+                default:
+                    return undefined;
+            }
         }
         return undefined;
         // throw new Error('Unexpected args for convertFromOptionToBonusStrategy'); // TODO: Ata Decide whether remove

@@ -1,6 +1,8 @@
 
 package de.tum.in.www1.artemis.domain;
 
+import org.apache.commons.lang.NotImplementedException;
+
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 
 public enum BonusStrategy implements IBonusStrategy {
@@ -10,9 +12,7 @@ public enum BonusStrategy implements IBonusStrategy {
         @Override
         public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
                 Double sourcePoints, double calculationSign) {
-            // TODO: Ata Implement.
-
-            return null;
+            throw new NotImplementedException("GRADES_DISCRETE bonus strategy not yet implemented");
         }
     },
     GRADES_CONTINUOUS {

@@ -22,9 +22,8 @@ export enum BonusStrategy {
 export class BonusExample {
     public examGrade?: number | string;
     public bonusGrade?: number;
-    // public calculatedBonus?: number;
     public finalPoints?: number;
     public finalGrade?: number | string;
 
-    constructor(public examStudentPoints: number, public bonusStudentPoints: number | undefined) {}
+    constructor(public studentPointsOfBonusTo: number, public studentPointsOfBonusSource: number | undefined) {}
 }

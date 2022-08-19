@@ -139,8 +139,6 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             """)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(@Param("partialTitle") String partialTitle, Pageable pageable);
 
-    // Page<GradingScale> findByCourse_TitleIgnoreCaseContainingOrExam_TitleIgnoreCaseContaining(String partialCourseTitle, String partialExamTitle, Pageable pageable);
-
     @EntityGraph(type = LOAD, attributePaths = "bonusFrom")
     Optional<GradingScale> findWithEagerBonusFromByBonusFromId(@Param("bonusId") Long bonusId);
 
