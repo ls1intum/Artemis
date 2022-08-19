@@ -56,8 +56,13 @@ public class FileService implements DisposableBean {
     // NOTE: this list has to be the same as in file-uploader.service.ts
     private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
 
+    public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
+
+    public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
+
     /**
      * Extends the default allowed file extensions with the provided one
+     *
      * @param fileExtension file extension to add
      */
     public void addAllowedFileExtension(String fileExtension) {
@@ -66,6 +71,7 @@ public class FileService implements DisposableBean {
 
     /**
      * Removes the provided file extension from the allowed file extensions
+     *
      * @param fileExtension file extension to remove
      */
     public void removeFileExtension(String fileExtension) {
@@ -76,16 +82,9 @@ public class FileService implements DisposableBean {
      * Filenames for which the template filename differs from the filename it should have in the repository.
      */
     // @formatter:off
-    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(
-        Map.entry("git.ignore.file", ".gitignore"),
-        Map.entry("git.attributes.file", ".gitattributes"),
-        Map.entry("Makefile.file", "Makefile"),
-        Map.entry("dune.file", "dune"),
-        Map.entry("Fast.file", "Fastfile"),
-        Map.entry("App.file", "Appfile"),
-        Map.entry("Scan.file", "Scanfile"),
-        Map.entry("gradlew.file", "gradlew")
-    );
+    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(Map.entry("git.ignore.file", ".gitignore"), Map.entry("git.attributes.file", ".gitattributes"),
+        Map.entry("Makefile.file", "Makefile"), Map.entry("dune.file", "dune"), Map.entry("Fast.file", "Fastfile"), Map.entry("App.file", "Appfile"),
+        Map.entry("Scan.file", "Scanfile"), Map.entry("gradlew.file", "gradlew"));
     // @formatter:on
 
     /**
@@ -125,16 +124,14 @@ public class FileService implements DisposableBean {
 
     /**
      * Helper method which handles the file creation for both normal file uploads and for markdown
-     * @param file The file to be uploaded
+     *
+     * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
      * @param keepFileName specifies if original file name should be kept
-     * @param markdown boolean which is set to true, when we are uploading a file within the markdown editor
+     * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
      * @return The path of the file
      */
     @NotNull
     public String handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) {
-        // NOTE: Maximum file size is set in resources/config/application.yml
-        // Currently set to 10 MB
-
         // check for file type
         String filename = file.getOriginalFilename();
         if (filename == null) {
@@ -147,52 +144,13 @@ public class FileService implements DisposableBean {
             throw new BadRequestException("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
         }
 
-        final String filePath;
-        final String fileNameAddition;
-        final StringBuilder responsePath = new StringBuilder();
-
-        // set the appropriate values depending on the use case
-        if (markdown) {
-            filePath = FilePathService.getMarkdownFilePath();
-            fileNameAddition = "Markdown_";
-            responsePath.append("/api/files/markdown/");
-        }
-        else {
-            filePath = FilePathService.getTempFilePath();
-            fileNameAddition = "Temp_";
-            responsePath.append("/api/files/temp/");
-        }
+        final String filePath = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
+        final String fileNameAddition = markdown ? "Markdown_" : "Temp_";
+        final StringBuilder responsePath = new StringBuilder(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH);
 
         try {
-            // create folder if necessary
-            File folder;
-            folder = new File(filePath);
-            if (!folder.exists()) {
-                if (!folder.mkdirs()) {
-                    log.error("Could not create directory: {}", filePath);
-                    throw new InternalServerErrorException("Could not create directory");
-                }
-            }
-
-            // create file (generate new filename, if file already exists)
-            boolean fileCreated;
-            File newFile;
-
-            do {
-                if (!keepFileName) {
-                    filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8)
-                            + "." + fileExtension;
-                }
-                String path = Path.of(filePath, filename).toString();
-
-                newFile = new File(path);
-                if (keepFileName && newFile.exists()) {
-                    newFile.delete();
-                }
-                fileCreated = newFile.createNewFile();
-            }
-            while (!fileCreated);
-            responsePath.append(filename);
+            File newFile = createNewFile(filePath, fileNameAddition, filename, fileExtension, keepFileName);
+            responsePath.append(newFile.toPath().getFileName());
 
             // copy contents of uploaded file into newly created file
             Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
@@ -203,6 +161,49 @@ public class FileService implements DisposableBean {
             log.error("Could not save file", e);
             throw new InternalServerErrorException("Could not create file");
         }
+    }
+
+    /**
+     * Creates a directory for the given path if it doesn't exist yet.
+     * @param filePath the path of the directory to create
+     */
+    private void createDirectory(String filePath) {
+        File folder = new File(filePath);
+        if (!folder.exists() && !folder.mkdirs()) {
+            log.error("Could not create directory: {}", filePath);
+            throw new InternalServerErrorException("Could not create directory");
+        }
+    }
+
+    /**
+     * Creates a new file from given contents
+     * @param filePath the path to save the file to excluding the filename
+     * @param filename the filename of the file to save
+     * @param fileNameAddition the addition to the filename to make sure it is unique
+     * @param fileExtension the extension of the file to save
+     * @param keepFileName specifies if original file name should be kept
+     * @return the created file
+     */
+    private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
+        createDirectory(filePath);
+        boolean fileCreated = false;
+        File newFile;
+        do {
+            if (!keepFileName) {
+                filename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                        + fileExtension;
+            }
+            String path = Path.of(filePath, filename).toString();
+
+            newFile = new File(path);
+            if (keepFileName && newFile.exists()) {
+                Files.delete(newFile.toPath());
+            }
+            fileCreated = newFile.createNewFile();
+        }
+        while (!fileCreated);
+
+        return newFile;
     }
 
     /**
@@ -362,7 +363,7 @@ public class FileService implements DisposableBean {
 
         // check for known path to convert
         if (actualPath.contains(FilePathService.getTempFilePath())) {
-            return "/api/files/temp/" + filename;
+            return DEFAULT_FILE_SUBPATH + filename;
         }
         if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
@@ -442,8 +443,8 @@ public class FileService implements DisposableBean {
         String filename;
         do {
             if (keepFileName) {
-                if (originalFilename.contains("/api/files/temp/")) {
-                    originalFilename = originalFilename.replace("/api/files/temp/", "");
+                if (originalFilename.contains(DEFAULT_FILE_SUBPATH)) {
+                    originalFilename = originalFilename.replace(DEFAULT_FILE_SUBPATH, "");
                 }
                 filename = originalFilename;
             }
