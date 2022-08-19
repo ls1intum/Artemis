@@ -474,7 +474,7 @@ public class ExamResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get score for exam : {}", examId);
+        log.info("REST request to get score for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
         log.info("get scores for exam {} took {}ms", examId, System.currentTimeMillis() - start);

@@ -104,6 +104,8 @@ public class ExamService {
 
     private final CacheManager cacheManager;
 
+    private final ObjectMapper defaultObjectMapper;
+
     public ExamService(ExerciseDeletionService exerciseDeletionService, ExamRepository examRepository, StudentExamRepository studentExamRepository, ExamQuizService examQuizService,
             InstanceMessageSendService instanceMessageSendService, TutorLeaderboardService tutorLeaderboardService, AuditEventRepository auditEventRepository,
             StudentParticipationRepository studentParticipationRepository, ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository,
@@ -132,6 +134,7 @@ public class ExamService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.cacheManager = cacheManager;
+        this.defaultObjectMapper = new ObjectMapper();
     }
 
     /**
@@ -302,12 +305,11 @@ public class ExamService {
         Set<StudentExam> studentExams = studentExamRepository.findByExamId(examId); // fetched without test runs
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
 
-        ObjectMapper objectMapper = new ObjectMapper();
         for (StudentExam studentExam : studentExams) {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
-            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, gradingScale, true);
+            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, gradingScale, true);
             scores.studentResults.add(studentResult);
         }
 
@@ -334,10 +336,9 @@ public class ExamService {
 
         // Adding exam information to DTO
         var scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
-        var objectMapper = new ObjectMapper();
 
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
-        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, objectMapper, gradingScale, false);
+        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, gradingScale, false);
         var studentExamWithGradeDTO = new StudentExamWithGradeDTO(studentExam, studentResult);
 
         gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
@@ -355,18 +356,16 @@ public class ExamService {
      * achieved per exercise by the relevant student if the given studentExam is assessed.
      * Calculates the corresponding grade if a GradingScale is given.
      *
-     * @param studentExam a StudentExam instance that will have its points and grades calculated if it is assessed
-     * @param participationsOfStudent StudentParticipation list for the given studentExam
-     * @param exam the relevant exam
-     * @param scores provides max point value and modified if multiple correction rounds are calculated
-     * @param objectMapper needed for {@link #hasNonEmptySubmission(Set, Exercise, ObjectMapper)}
-     * @param gradingScale optional GradingScale that will be used to set the grade type and the achieved grade if present
+     * @param studentExam                    a StudentExam instance that will have its points and grades calculated if it is assessed
+     * @param participationsOfStudent        StudentParticipation list for the given studentExam
+     * @param exam                           the relevant exam
+     * @param scores                         provides max point value and modified if multiple correction rounds are calculated
+     * @param gradingScale                   optional GradingScale that will be used to set the grade type and the achieved grade if present
      * @param calculateFirstCorrectionPoints flag to determine whether to calculate the first correction results or not
      * @return exam result for a student who participated in the exam
      */
-    @NotNull
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
-            ExamScoresDTO scores, ObjectMapper objectMapper, Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints) {
+            ExamScoresDTO scores, Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints) {
         User user = studentExam.getUser();
         var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
                 studentExam.isSubmitted());
@@ -393,7 +392,8 @@ public class ExamService {
                 }
 
                 // Check whether the student attempted to solve the exercise
-                boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise, objectMapper);
+                // TODO: we should evaluate this value earlier, ideally directly in the database
+                boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
                 studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
                         exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
             }
@@ -528,12 +528,11 @@ public class ExamService {
     /**
      * Checks whether one of the submissions is not empty
      *
-     * @param submissions         Submissions to check
-     * @param exercise            Exercise of the submissions
-     * @param jacksonObjectMapper Mapper to parse a modeling exercise model string to JSON
+     * @param submissions Submissions to check
+     * @param exercise    Exercise of the submissions
      * @return true if at least one submission is not empty else false
      */
-    private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise, ObjectMapper jacksonObjectMapper) {
+    private boolean hasNonEmptySubmission(Set<Submission> submissions, Exercise exercise) {
         if (exercise instanceof ProgrammingExercise) {
             return submissions.stream().anyMatch(submission -> submission.getType() == SubmissionType.MANUAL);
         }
@@ -548,7 +547,7 @@ public class ExamService {
         else if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissions.iterator().next();
             try {
-                return !modelingSubmission.isEmpty(jacksonObjectMapper);
+                return !modelingSubmission.isEmpty(this.defaultObjectMapper);
             }
             catch (Exception e) {
                 // Then the student most likely submitted something which breaks the model, if parsing fails

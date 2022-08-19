@@ -30,7 +30,7 @@ public class QuizSubmission extends Submission {
     @Column(name = "quiz_batch")
     private Long quizBatch;
 
-    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.EAGER, orphanRemoval = true)
+    @OneToMany(mappedBy = "submission", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonView(QuizView.Before.class)
     private Set<SubmittedAnswer> submittedAnswers = new HashSet<>();
