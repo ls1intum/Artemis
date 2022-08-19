@@ -4,7 +4,6 @@ import { CourseManagementComponent } from './course-management.component';
 import { CourseDetailComponent } from './detail/course-detail.component';
 import { CourseUpdateComponent } from './course-update.component';
 import { CourseManagementExercisesComponent } from './course-management-exercises.component';
-import { CourseGroupMembershipComponent } from 'app/shared/course-group/course-group.component';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { RatingListComponent } from 'app/exercises/shared/rating/rating-list/rating-list.component';
 import { LearningGoalManagementComponent } from 'app/course/learning-goals/learning-goal-management/learning-goal-management.component';
