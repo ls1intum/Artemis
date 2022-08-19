@@ -114,7 +114,7 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         for (GraphType graph : artemisGraphs) {
             int periodIndex = 0;
             var parameters = buildParameters(span, periodIndex, graph);
-            Integer[] result = request.get("/api/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
+            Integer[] result = request.get("/api/admin/management/statistics/data", HttpStatus.OK, Integer[].class, parameters);
             assertThat(result).hasSize(expectedResultLength);
         }
     }

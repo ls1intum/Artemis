@@ -11,7 +11,9 @@ import { ExerciseCategory } from 'app/entities/exercise-category.model';
 
 @Injectable({ providedIn: 'root' })
 export class StatisticsService {
-    private resourceUrl = SERVER_API_URL + 'api/management/statistics/';
+    private basePath = 'management/statistics/';
+    private resourceUrl = SERVER_API_URL + this.basePath;
+    private adminResourceUrls = SERVER_API_URL + 'admin/' + this.basePath;
 
     constructor(private http: HttpClient) {}
 
@@ -23,7 +25,7 @@ export class StatisticsService {
             .set('span', '' + span)
             .set('periodIndex', '' + periodIndex)
             .set('graphType', '' + graphType);
-        return this.http.get<number[]>(`${this.resourceUrl}data`, { params });
+        return this.http.get<number[]>(`${this.adminResourceUrls}data`, { params });
     }
 
     /**

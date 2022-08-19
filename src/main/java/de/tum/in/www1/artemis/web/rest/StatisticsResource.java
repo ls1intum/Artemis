@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.dto.ExerciseManagementStatisticsDTO;
  * REST controller for managing statistics.
  */
 @RestController
-@RequestMapping("/api")
+@RequestMapping("api/")
 @PreAuthorize("hasRole('TA')")
 public class StatisticsResource {
 
@@ -52,16 +52,15 @@ public class StatisticsResource {
     }
 
     /**
-     * GET management/statistics/data : get the graph data in the last "span" days in the given period.
+     * GET admin/management/statistics/data : get the graph data in the last "span" days in the given period.
      *
      * @param span        the spanTime of which the amount should be calculated
      * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
      * @param graphType   the type of graph the data should be fetched
      * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
      */
-    @GetMapping("management/statistics/data")
+    @GetMapping("admin/management/statistics/data")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
         log.debug("REST request to get graph data");
         return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));
