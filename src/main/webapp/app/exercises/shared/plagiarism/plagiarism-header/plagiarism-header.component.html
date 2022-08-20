@@ -8,21 +8,11 @@
 
     <div class="plagiarism-header-right">
         <!-- Disable buttons for exam exercises since they are currently not supported -->
-        <button
-            [disabled]="comparison.status === plagiarismStatus.CONFIRMED || exercise.exerciseGroup"
-            class="btn btn-success btn-sm"
-            (click)="confirmPlagiarism()"
-            data-qa="confirm-plagiarism-button"
-        >
+        <button [disabled]="comparison.status === plagiarismStatus.CONFIRMED" class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button">
             {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
         </button>
 
-        <button
-            [disabled]="comparison.status === plagiarismStatus.DENIED || exercise.exerciseGroup"
-            class="btn btn-danger btn-sm"
-            (click)="denyPlagiarism()"
-            data-qa="deny-plagiarism-button"
-        >
+        <button [disabled]="comparison.status === plagiarismStatus.DENIED" class="btn btn-danger btn-sm" (click)="denyPlagiarism()" data-qa="deny-plagiarism-button">
             {{ 'artemisApp.plagiarism.deny' | artemisTranslate }}
         </button>
 

@@ -217,6 +217,7 @@ public class Post extends Posting {
             return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
         else if (this.plagiarismCase != null) {
+            // TODO: Ata Fix getExercise is null
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
 

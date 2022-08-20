@@ -85,7 +85,8 @@
                 "notNotified": "Not yet notified",
                 "respondedByStudent": "Student has given a statement",
                 "notResponded": "Not yet responded",
-                "noCases": "No plagiarism cases in this course",
+                "noCourseCases": "No plagiarism cases in this course",
+                "noExamCases": "No plagiarism cases in this exam",
                 "notifyStudent": "Notify student",
                 "studentNotified": "Student has been notified."
             },

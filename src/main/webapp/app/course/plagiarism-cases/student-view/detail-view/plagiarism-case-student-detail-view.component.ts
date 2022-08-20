@@ -3,7 +3,7 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { getIcon } from 'app/entities/exercise.model';
+import { getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
 import { combineLatest, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -35,7 +35,7 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase = res.body!;
-                    this.metisService.setCourse(this.plagiarismCase.exercise!.course!);
+                    this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
                         plagiarismCaseId: this.plagiarismCase!.id,

@@ -25,8 +25,17 @@ export class PlagiarismCasesService {
      * Get all plagiarism cases for the instructor of the course with the given id
      * @param { number } courseId id of the course
      */
-    public getPlagiarismCasesForInstructor(courseId: number): Observable<EntityArrayResponseType> {
+    public getCoursePlagiarismCasesForInstructor(courseId: number): Observable<EntityArrayResponseType> {
         return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases/for-instructor`, { observe: 'response' });
+    }
+
+    /**
+     * Get all plagiarism cases for the instructor of the exam with the given id
+     * @param { number } courseId id of the course
+     * @param { number } examId id of the exam
+     */
+    public getExamPlagiarismCasesForInstructor(courseId: number, examId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/plagiarism-cases/for-instructor`, { observe: 'response' });
     }
 
     /**

@@ -36,9 +36,13 @@
                     <fa-icon [icon]="faEye"></fa-icon>
                     <span>{{ 'entity.action.scores' | artemisTranslate }}</span>
                 </a>
-                <a *ngIf="isAdmin" [routerLink]="['/course-management', this.exam.course?.id, 'exams', this.exam.id, 'participant-scores']" class="btn btn-primary mt-1">
+                <a *ngIf="isAdmin" [routerLink]="getExamRoutesByIdentifier('participant-scores')" class="btn btn-primary mt-1">
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
+                </a>
+                <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md ms-1">
+                    <fa-icon [icon]="faHeartBroken"></fa-icon>
+                    <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
                 </a>
                 <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
                     <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
