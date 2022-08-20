@@ -7,8 +7,6 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
@@ -19,7 +17,6 @@ import de.tum.in.www1.artemis.domain.leaderboard.tutor.*;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.web.rest.ProgrammingExerciseGradingResource;
 import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 @Service
@@ -30,8 +27,6 @@ public class TutorLeaderboardService {
     private final ComplaintRepository complaintRepository;
 
     private final UserRepository userRepository;
-
-    private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGradingResource.class);
 
     public TutorLeaderboardService(ResultRepository resultRepository, ComplaintRepository complaintRepository, UserRepository userRepository) {
         this.resultRepository = resultRepository;

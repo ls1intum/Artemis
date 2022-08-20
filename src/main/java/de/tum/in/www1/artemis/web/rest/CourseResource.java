@@ -987,7 +987,7 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLivetime(@PathVariable Long courseId) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);

@@ -164,14 +164,6 @@ public class ComplaintService {
                 ComplaintType.MORE_FEEDBACK);
     }
 
-    public long countComplaintsByExerciseId(long exerciseId) {
-        return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.COMPLAINT);
-    }
-
-    public long countMoreFeedbackRequestsByExerciseId(long exerciseId) {
-        return complaintRepository.countComplaintsByExerciseIdAndComplaintType(exerciseId, ComplaintType.MORE_FEEDBACK);
-    }
-
     /**
      * Calculates the number of unevaluated complaints and feedback requests for assessment dashboard participation graph
      *
