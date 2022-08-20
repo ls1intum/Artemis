@@ -24,7 +24,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     UserRepository userRepository;
@@ -270,8 +270,6 @@ public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambo
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerMultipleStudents_asInstructor_shouldRegisterStudents() throws Exception {
-        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
-
         var student6 = userRepository.findOneByLogin("student6").get();
         student6.setRegistrationNumber("number6");
         userRepository.saveAndFlush(student6);

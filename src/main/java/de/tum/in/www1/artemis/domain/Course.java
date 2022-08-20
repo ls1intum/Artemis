@@ -176,9 +176,9 @@ public class Course extends DomainObject {
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("course")
-    private Set<TutorGroup> tutorGroups = new HashSet<>();
+    @OrderBy("title")
+    private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -485,14 +485,6 @@ public class Course extends DomainObject {
         this.lectures = lectures;
     }
 
-    public Set<TutorGroup> getTutorGroups() {
-        return tutorGroups;
-    }
-
-    public void setTutorGroups(Set<TutorGroup> tutorGroups) {
-        this.tutorGroups = tutorGroups;
-    }
-
     public Set<Exam> getExams() {
         return exams;
     }
@@ -657,6 +649,14 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public Set<TutorialGroup> getTutorialGroups() {
+        return tutorialGroups;
+    }
+
+    public void setTutorialGroups(Set<TutorialGroup> tutorialGroups) {
+        this.tutorialGroups = tutorialGroups;
     }
 
     public void validateOnlineCourseAndRegistrationEnabled() {
