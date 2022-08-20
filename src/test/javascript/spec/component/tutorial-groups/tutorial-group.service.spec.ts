@@ -3,6 +3,7 @@ import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { map, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
+import { StudentDTO } from 'app/entities/student-dto.model';
 
 describe('TutorialGroupService', () => {
     let service: TutorialGroupsService;
@@ -25,7 +26,7 @@ describe('TutorialGroupService', () => {
         httpMock.verify();
     });
 
-    it('should find a TutorialGroup', fakeAsync(() => {
+    it('getOneOfCourse', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
             .getOneOfCourse(1, 1)
@@ -37,7 +38,7 @@ describe('TutorialGroupService', () => {
         tick();
     }));
 
-    it('should create a Tutorial Group', fakeAsync(() => {
+    it('create', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, id: 0 };
         const expected = { ...returnedFromService };
         service
@@ -50,7 +51,7 @@ describe('TutorialGroupService', () => {
         tick();
     }));
 
-    it('should update a TutorialGroup', fakeAsync(() => {
+    it('update', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, title: 'Test' };
         const expected = { ...returnedFromService };
 
@@ -64,7 +65,7 @@ describe('TutorialGroupService', () => {
         tick();
     }));
 
-    it('should return a list of Tutorial Groups', fakeAsync(() => {
+    it('getAllOfCourse', fakeAsync(() => {
         const returnedFromService = { ...elemDefault, title: 'Test' };
         const expected = { ...returnedFromService };
 
@@ -77,6 +78,57 @@ describe('TutorialGroupService', () => {
             .subscribe((body) => expect(body).toContainEqual(expected));
 
         const req = httpMock.expectOne({ method: 'GET' });
+        req.flush([returnedFromService]);
+        tick();
+    }));
+
+    it('deregisterStudent', fakeAsync(() => {
+        service
+            .deregisterStudent(1, 1, 'login')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({});
+        tick();
+    }));
+
+    it('registerStudent', fakeAsync(() => {
+        service
+            .registerStudent(1, 1, 'login')
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'POST' });
+        req.flush({});
+        tick();
+    }));
+
+    it('delete', fakeAsync(() => {
+        service
+            .delete(1, 1)
+            .pipe(take(1))
+            .subscribe((res) => expect(res.body).toEqual({}));
+
+        const req = httpMock.expectOne({ method: 'DELETE' });
+        req.flush({});
+        tick();
+    }));
+
+    it('registerMultipleStudents', fakeAsync(() => {
+        const returnedFromService = new StudentDTO();
+        returnedFromService.login = 'login';
+        const expected = { ...returnedFromService };
+
+        service
+            .registerMultipleStudents(1, 1, [returnedFromService])
+            .pipe(
+                take(1),
+                map((resp) => resp.body),
+            )
+            .subscribe((body) => expect(body).toContainEqual(expected));
+
+        const req = httpMock.expectOne({ method: 'POST' });
         req.flush([returnedFromService]);
         tick();
     }));
