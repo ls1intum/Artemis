@@ -9,6 +9,7 @@
         "manageTutorialGroups": {
             "title": "Tutorial Groups Management",
             "tableCaption": "Tutorial Groups defined for this course",
+            "createButton": "Create Tutorial Group",
             "columns": {
                 "id": "ID",
                 "title": "Title",
