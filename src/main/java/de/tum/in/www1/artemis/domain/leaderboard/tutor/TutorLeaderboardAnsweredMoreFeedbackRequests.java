@@ -25,9 +25,9 @@ public class TutorLeaderboardAnsweredMoreFeedbackRequests {
     }
 
     public TutorLeaderboardAnsweredMoreFeedbackRequests(Long userId, Long answeredRequests, Double points) {
-        this.userId = userId;
-        this.answeredRequests = answeredRequests;
-        this.points = points;
+        this.userId = userId == null ? 0 : userId;
+        this.answeredRequests = answeredRequests == null ? 0 : answeredRequests;
+        this.points = points == null ? 0 : points;
     }
 
     public TutorLeaderboardAnsweredMoreFeedbackRequests() {

@@ -25,9 +25,9 @@ public class TutorLeaderboardComplaintResponses {
     }
 
     public TutorLeaderboardComplaintResponses(Long userId, Long complaintResponses, Double points) {
-        this.userId = userId;
-        this.complaintResponses = complaintResponses;
-        this.points = points;
+        this.userId = userId == null ? 0 : userId;
+        this.complaintResponses = complaintResponses == null ? 0 : complaintResponses;
+        this.points = points == null ? 0 : points;
     }
 
     public TutorLeaderboardComplaintResponses() {

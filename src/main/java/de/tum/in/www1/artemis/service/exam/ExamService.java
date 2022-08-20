@@ -418,7 +418,7 @@ public class ExamService {
         // If the participation is not contained in the list, it is empty, i.e. hasNonEmptySubmission is true when the participation is contained
 
         for (var quizSubmittedAnswerCount : quizSubmittedAnswerCounts) {
-            if (quizSubmittedAnswerCount.getParticipationId() == studentParticipation.getId()) {
+            if (quizSubmittedAnswerCount.participationId() == studentParticipation.getId()) {
                 return true;
             }
         }
