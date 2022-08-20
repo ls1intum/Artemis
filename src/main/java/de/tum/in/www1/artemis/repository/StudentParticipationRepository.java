@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -959,4 +960,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             exercise.setTestRunParticipationsExist(Boolean.TRUE);
         }
     }
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount(
+                count(a.id),
+                s.id,
+                p.id
+            )
+            FROM
+                SubmittedAnswer a
+                LEFT JOIN a.submission s
+                LEFT JOIN s.participation p
+            WHERE
+                p.exercise.exerciseGroup.exam.id = :examId
+            GROUP BY s.id
+            """)
+    List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 }

@@ -35,6 +35,7 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -265,6 +266,9 @@ public class ExamService {
         Exam exam = examRepository.findWithExerciseGroupsAndExercisesById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         List<StudentParticipation> studentParticipations = studentParticipationRepository.findByExamIdWithSubmissionRelevantResult(examId); // without test run participations
+        log.info("Try to find quiz submitted answer counts");
+        List<QuizSubmittedAnswerCount> submittedAnswerCounts = studentParticipationRepository.findSubmittedAnswerCountForQuizzesInExam(examId);
+        log.info("Found " + submittedAnswerCounts.size() + " quiz submitted answer counts");
 
         // Adding exam information to DTO
         ExamScoresDTO scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
@@ -308,7 +312,8 @@ public class ExamService {
             // Adding student results information to DTO
             List<StudentParticipation> participationsOfStudent = studentParticipations.stream()
                     .filter(studentParticipation -> studentParticipation.getStudent().get().getId().equals(studentExam.getUser().getId())).toList();
-            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, gradingScale, true);
+            ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, gradingScale, true,
+                    submittedAnswerCounts);
             scores.studentResults.add(studentResult);
         }
 
@@ -337,7 +342,7 @@ public class ExamService {
         var scores = new ExamScoresDTO(exam.getId(), exam.getTitle(), exam.getMaxPoints());
 
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
-        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, gradingScale, false);
+        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, scores, gradingScale, false, null);
         var studentExamWithGradeDTO = new StudentExamWithGradeDTO(studentExam, studentResult);
 
         gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
@@ -364,7 +369,7 @@ public class ExamService {
      * @return exam result for a student who participated in the exam
      */
     private ExamScoresDTO.StudentResult calculateStudentResultWithGrade(StudentExam studentExam, List<StudentParticipation> participationsOfStudent, Exam exam,
-            ExamScoresDTO scores, Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints) {
+            ExamScoresDTO scores, Optional<GradingScale> gradingScale, boolean calculateFirstCorrectionPoints, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts) {
         User user = studentExam.getUser();
         var studentResult = new ExamScoresDTO.StudentResult(user.getId(), user.getName(), user.getEmail(), user.getLogin(), user.getRegistrationNumber(),
                 studentExam.isSubmitted());
@@ -391,12 +396,14 @@ public class ExamService {
                 }
 
                 // Check whether the student attempted to solve the exercise
-                // TODO: we should evaluate this value for quizzes earlier, ideally directly in the database
                 boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
+                // special handling for quizzes to avoid performance issues
+                if (exercise instanceof QuizExercise && quizSubmittedAnswerCounts != null) {
+                    hasNonEmptySubmission = hasNonEmptySubmissionInQuiz(studentParticipation, quizSubmittedAnswerCounts);
+                }
                 studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
                         exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
             }
-
         }
 
         if (scores.maxPoints != null) {
@@ -404,6 +411,18 @@ public class ExamService {
             calculateGradeInfo(studentResult, gradingScale, scores.maxPoints);
         }
         return studentResult;
+    }
+
+    private boolean hasNonEmptySubmissionInQuiz(StudentParticipation studentParticipation, List<QuizSubmittedAnswerCount> quizSubmittedAnswerCounts) {
+        // If an entry is NOT available, it means the quiz submission is empty, i.e.
+        // If the participation is not contained in the list, it is empty, i.e. hasNonEmptySubmission is true when the participation is contained
+
+        for (var quizSubmittedAnswerCount : quizSubmittedAnswerCounts) {
+            if (quizSubmittedAnswerCount.getParticipationId() == studentParticipation.getId()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
