@@ -6,20 +6,33 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-group
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { map, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
+import { SortService } from 'app/shared/service/sort.service';
+import { Language } from 'app/entities/course.model';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
     templateUrl: './tutorial-groups-management.component.html',
+    styleUrls: ['./tutorial-groups.management.component.scss'],
 })
 export class TutorialGroupsManagementComponent implements OnInit {
     courseId: number;
     isLoading = false;
     tutorialGroups: TutorialGroup[];
-
+    GERMAN = Language.GERMAN;
+    ENGLISH = Language.ENGLISH;
+    faSort = faSort;
     faPlus = faPlus;
+    sortingPredicate = 'title';
+    ascending = true;
 
-    constructor(private tutorialGroupService: TutorialGroupsService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
+    constructor(
+        private tutorialGroupService: TutorialGroupsService,
+        private sortService: SortService,
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.activatedRoute.parent!.paramMap.subscribe((parentParams) => {
@@ -41,8 +54,13 @@ export class TutorialGroupsManagementComponent implements OnInit {
                 }),
             )
             .subscribe({
-                next: (res: TutorialGroup[]) => {
-                    this.tutorialGroups = res;
+                next: (tutorialGroups: TutorialGroup[]) => {
+                    this.tutorialGroups = tutorialGroups.map((tutorialGroup) => {
+                        if (!tutorialGroup.registeredStudents) {
+                            tutorialGroup.registeredStudents = [];
+                        }
+                        return tutorialGroup;
+                    });
                 },
                 error: (errorResponse: HttpErrorResponse) => onError(this.alertService, errorResponse),
             });
@@ -50,5 +68,9 @@ export class TutorialGroupsManagementComponent implements OnInit {
 
     trackId(index: number, item: TutorialGroup) {
         return item.id;
+    }
+
+    sortRows() {
+        this.sortService.sortByProperty(this.tutorialGroups, this.sortingPredicate, this.ascending);
     }
 }

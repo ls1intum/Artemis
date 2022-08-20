@@ -12,22 +12,78 @@
             </div>
 
             <div class="table-responsive">
-                <table class="table table-striped">
+                <table class="table table-sm table-striped table-hover">
+                    <caption>
+                        {{
+                            'artemisApp.manageTutorialGroups.tableCaption' | artemisTranslate
+                        }}
+                    </caption>
                     <thead>
-                        <tr>
-                            <th><span>ID</span></th>
-                            <th><span>Title</span></th>
-                            <th><span>Teaching Assistant</span></th>
-                            <th><span>Number of Registered Students</span></th>
-                            <th></th>
+                        <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
+                            <th jhiSortBy="id">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.id' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="title">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.title' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="teachingAssistant.name">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.teachingAssistant' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="capacity">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.capacity' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="registeredStudents.length">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.registeredStudents' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="isOnline">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.isOnline' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="location">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.location' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="language">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.language' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="language">
+                                {{ 'artemisApp.manageTutorialGroups.columns.additionalInfo' | artemisTranslate }}
+                            </th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId" id="tutorial-group-row-{{ tutorialGroup.id }}">
                             <td>{{ tutorialGroup.id }}</td>
-                            <td>{{ tutorialGroup?.title }}</td>
+                            <td>
+                                <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
+                            </td>
                             <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
-                            <td>{{ tutorialGroup.registeredStudents == undefined ? 0 : tutorialGroup.registeredStudents?.length }}</td>
+                            <td>{{ tutorialGroup.capacity }}</td>
+                            <td>{{ tutorialGroup.registeredStudents?.length }}</td>
+                            <td>
+                                {{
+                                    (tutorialGroup.isOnline ? 'artemisApp.manageTutorialGroups.columns.online' : 'artemisApp.manageTutorialGroups.columns.offline')
+                                        | artemisTranslate
+                                }}
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.location }} </span>
+                            </td>
+                            <td>
+                                {{
+                                    (tutorialGroup.language === GERMAN ? 'artemisApp.tutorialGroupForm.languageInput.german' : 'artemisApp.tutorialGroupForm.languageInput.english')
+                                        | artemisTranslate
+                                }}
+                            </td>
+                            <td>
+                                <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.additionalInformation }} </span>
+                            </td>
                             <td>
                                 <jhi-tutorial-group-row-buttons
                                     [courseId]="courseId"

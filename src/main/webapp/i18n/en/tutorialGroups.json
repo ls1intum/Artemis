@@ -8,6 +8,20 @@
         },
         "manageTutorialGroups": {
             "title": "Tutorial Groups Management",
+            "tableCaption": "Tutorial Groups defined for this course",
+            "columns": {
+                "id": "ID",
+                "title": "Title",
+                "teachingAssistant": "Teaching Assistant",
+                "capacity": "Capacity",
+                "registeredStudents": "Registered Students",
+                "isOnline": "Online/Offline",
+                "online": "Online",
+                "offline": "Offline",
+                "location": "Location",
+                "language": "Language",
+                "additionalInfo": "Additional Information"
+            },
             "deleteButton": {
                 "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                 "typeNameToConfirm": "Please enter the title of the tutorial group to confirm."

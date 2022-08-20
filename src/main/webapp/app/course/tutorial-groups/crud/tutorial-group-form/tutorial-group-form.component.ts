@@ -1,13 +1,12 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseGroup } from 'app/entities/course.model';
+import { CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { catchError, concat, finalize, map, merge, mergeAll, Observable, of, OperatorFunction, Subject } from 'rxjs';
+import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { Language } from 'app/entities/course.model';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 
@@ -135,7 +134,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false],
             location: [undefined, [Validators.maxLength(2000)]],
-            language: [undefined],
+            language: [this.GERMAN],
         });
     }
 

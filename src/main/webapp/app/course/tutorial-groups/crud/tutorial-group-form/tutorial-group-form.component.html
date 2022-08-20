@@ -84,10 +84,9 @@
                 </div>
                 <div class="col-auto my-auto">
                     <label for="language">{{ 'artemisApp.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
-                    <select id="language" class="form-select">
-                        <option [value]="undefined">{{ 'artemisApp.tutorialGroupForm.languageInput.placeholder' | artemisTranslate }}</option>
-                        <option [value]="GERMAN">{{ 'artemisApp.tutorialGroupForm.languageInput.english' | artemisTranslate }}</option>
-                        <option [value]="ENGLISH">{{ 'artemisApp.tutorialGroupForm.languageInput.german' | artemisTranslate }}</option>
+                    <select id="language" class="form-select" formControlName="language">
+                        <option [value]="GERMAN">{{ 'artemisApp.tutorialGroupForm.languageInput.german' | artemisTranslate }}</option>
+                        <option [value]="ENGLISH">{{ 'artemisApp.tutorialGroupForm.languageInput.english' | artemisTranslate }}</option>
                     </select>
                 </div>
             </div>
