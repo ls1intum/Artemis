@@ -115,7 +115,7 @@ public class LearningGoalResource {
      */
     @GetMapping("/courses/{courseId}/goals/{learningGoalId}/relations")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Set<LearningGoalRelation>> getLearningGoalProgress(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    public ResponseEntity<Set<LearningGoalRelation>> getLearningGoalRelations(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get relations for LearningGoal : {}", learningGoalId);
         var learningGoal = findLearningGoal(Role.STUDENT, learningGoalId, courseId, false, false);
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(learningGoal.getId());
@@ -310,18 +310,18 @@ public class LearningGoalResource {
     @PostMapping("/courses/{courseId}/goals/{tailLearningGoalId}/relations/{headLearningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoalRelation> createLearningGoalRelation(@PathVariable Long courseId, @PathVariable Long tailLearningGoalId,
-            @PathVariable Long headLearningGoalId, @RequestParam(defaultValue = "") String typeString) {
+            @PathVariable Long headLearningGoalId, @RequestParam(defaultValue = "") String type) {
         log.info("REST request to create a relation between learning goals {} and {}", tailLearningGoalId, headLearningGoalId);
         var tailLearningGoal = findLearningGoal(Role.INSTRUCTOR, tailLearningGoalId, courseId, false, false);
         var headLearningGoal = findLearningGoal(Role.INSTRUCTOR, headLearningGoalId, courseId, false, false);
 
         try {
-            var type = LearningGoalRelation.RelationType.valueOf(typeString);
+            var relationType = LearningGoalRelation.RelationType.valueOf(type);
 
             var relation = new LearningGoalRelation();
             relation.setTailLearningGoal(tailLearningGoal);
             relation.setHeadLearningGoal(headLearningGoal);
-            relation.setType(type);
+            relation.setType(relationType);
             learningGoalRelationRepository.save(relation);
 
             return ResponseEntity.ok().body(relation);

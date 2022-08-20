@@ -26,3 +26,12 @@ export class LearningGoal implements BaseEntity {
 
     constructor() {}
 }
+
+export class LearningGoalRelation implements BaseEntity {
+    public id?: number;
+    public tailLearningGoal?: LearningGoal;
+    public headLearningGoal?: LearningGoal;
+    public type?: string;
+
+    constructor() {}
+}
