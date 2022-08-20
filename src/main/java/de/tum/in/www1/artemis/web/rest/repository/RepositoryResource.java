@@ -191,7 +191,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove) {
-        log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.getCurrentFilePath(), fileMove.getNewFilename(), domainId);
+        log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.currentFilePath(), fileMove.newFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);

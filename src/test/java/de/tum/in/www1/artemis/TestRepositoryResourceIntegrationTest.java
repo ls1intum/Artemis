@@ -189,9 +189,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFileName);
-        fileMove.setNewFilename(newLocalFileName);
+        FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isFalse();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isTrue();
@@ -213,7 +211,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         programmingExerciseRepository.save(programmingExercise);
         FileMove fileMove = createRenameFileMove();
 
-        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.getCurrentFilePath()));
+        doReturn(Optional.of(testRepo.localRepoFile)).when(gitService).getFileByName(any(), eq(fileMove.currentFilePath()));
 
         Repository mockRepository = mock(Repository.class);
         doReturn(mockRepository).when(gitService).getOrCheckoutRepository(any(), eq(true));
@@ -228,10 +226,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFileName))).isTrue();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFileName))).isFalse();
 
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFileName);
-        fileMove.setNewFilename(newLocalFileName);
-        return fileMove;
+        return new FileMove(currentLocalFileName, newLocalFileName);
     }
 
     @Test
@@ -241,9 +236,7 @@ class TestRepositoryResourceIntegrationTest extends AbstractSpringIntegrationBam
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFolderName);
-        fileMove.setNewFilename(newLocalFolderName);
+        FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(testRepoBaseUrl + programmingExercise.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + currentLocalFolderName))).isFalse();
         assertThat(Files.exists(Path.of(testRepo.localRepoFile + "/" + newLocalFolderName))).isTrue();

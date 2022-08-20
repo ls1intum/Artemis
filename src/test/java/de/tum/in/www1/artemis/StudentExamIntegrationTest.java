@@ -1374,12 +1374,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.maxPoints).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints).isEqualTo(5.0);
         assertThat(studentExamGradeInfoFromServer.gradeType).isNull();
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved).isEqualTo(29.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved).isEqualTo(100.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade).isNull();
-        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed).isNull();
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchievedInFirstCorrection).isEqualTo(0.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallGradeInFirstCorrection).isNull();
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved()).isEqualTo(29.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved()).isEqualTo(100.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade()).isNull();
+        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed()).isFalse();
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallGradeInFirstCorrection()).isNull();
 
         assertThat(studentExamGradeInfoFromServer.studentExam).isNull();
 
@@ -1474,12 +1474,12 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.maxPoints).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints).isEqualTo(5.0);
         assertThat(studentExamGradeInfoFromServer.gradeType).isEqualTo(GradeType.GRADE);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved).isEqualTo(29.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved).isEqualTo(100.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade).isEqualTo("1.0");
-        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed).isTrue();
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchievedInFirstCorrection).isEqualTo(0.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallGradeInFirstCorrection).isEqualTo("5.0");
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved()).isEqualTo(29.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved()).isEqualTo(100.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade()).isEqualTo("1.0");
+        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed()).isTrue();
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchievedInFirstCorrection()).isEqualTo(0.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallGradeInFirstCorrection()).isEqualTo("5.0");
 
         assertThat(studentExamGradeInfoFromServer.studentExam).isNull();
 
@@ -1576,9 +1576,9 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
                 StudentExamWithGradeDTO.class);
 
         assertThat(studentExamGradeInfoFromServerForUserId.gradeType).isEqualTo(studentExamGradeInfoFromServer.gradeType);
-        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.overallGrade).isEqualTo(studentExamGradeInfoFromServer.studentResult.overallGrade);
-        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.overallPointsAchieved).isEqualTo(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved);
-        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.hasPassed).isEqualTo(studentExamGradeInfoFromServer.studentResult.hasPassed);
+        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.overallGrade()).isEqualTo(studentExamGradeInfoFromServer.studentResult.overallGrade());
+        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.overallPointsAchieved()).isEqualTo(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved());
+        assertThat(studentExamGradeInfoFromServerForUserId.studentResult.hasPassed()).isEqualTo(studentExamGradeInfoFromServer.studentResult.hasPassed());
     }
 
     @Test
@@ -1613,10 +1613,10 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.maxPoints).isEqualTo(29.0);
         assertThat(studentExamGradeInfoFromServer.maxBonusPoints).isEqualTo(5.0);
         assertThat(studentExamGradeInfoFromServer.gradeType).isEqualTo(GradeType.GRADE);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved).isEqualTo(29.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved).isEqualTo(100.0);
-        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade).isEqualTo("1.0");
-        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed).isTrue();
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallPointsAchieved()).isEqualTo(29.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallScoreAchieved()).isEqualTo(100.0);
+        assertThat(studentExamGradeInfoFromServer.studentResult.overallGrade()).isEqualTo("1.0");
+        assertThat(studentExamGradeInfoFromServer.studentResult.hasPassed()).isTrue();
     }
 
     @Test

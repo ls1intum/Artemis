@@ -446,9 +446,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isTrue();
         String newLocalFileName = "newFileName";
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFileName);
-        fileMove.setNewFilename(newLocalFileName);
+        FileMove fileMove = new FileMove(currentLocalFileName, newLocalFileName);
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFileName))).isFalse();
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFileName))).isTrue();
@@ -460,9 +458,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isTrue();
         String newLocalFolderName = "newFolderName";
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isFalse();
-        FileMove fileMove = new FileMove();
-        fileMove.setCurrentFilePath(currentLocalFolderName);
-        fileMove.setNewFilename(newLocalFolderName);
+        FileMove fileMove = new FileMove(currentLocalFolderName, newLocalFolderName);
         request.postWithoutLocation(studentRepoBaseUrl + participation.getId() + "/rename-file", fileMove, HttpStatus.OK, null);
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + currentLocalFolderName))).isFalse();
         assertThat(Files.exists(Path.of(studentRepository.localRepoFile + "/" + newLocalFolderName))).isTrue();
