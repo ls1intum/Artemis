@@ -3,8 +3,6 @@ package de.tum.in.www1.artemis.service;
 import java.util.List;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Rating;
@@ -18,8 +16,6 @@ import de.tum.in.www1.artemis.repository.ResultRepository;
  */
 @Service
 public class RatingService {
-
-    private final Logger log = LoggerFactory.getLogger(ResultService.class);
 
     private final RatingRepository ratingRepository;
 
@@ -47,15 +43,6 @@ public class RatingService {
      */
     public List<Rating> getAllRatingsByCourse(long courseId) {
         return ratingRepository.findAllByResult_Participation_Exercise_Course_Id(courseId);
-    }
-
-    /**
-     * Get number of ratings for the "courseId" Course
-     * @param courseId - id of the course that the ratings are fetched for
-     * @return number of Ratings given for exercises of this course
-     */
-    public long countRatingsByCourse(long courseId) {
-        return ratingRepository.countByResult_Participation_Exercise_Course_Id(courseId);
     }
 
     /**
