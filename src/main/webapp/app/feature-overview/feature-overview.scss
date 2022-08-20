@@ -142,7 +142,7 @@
                     text-align: center;
                 }
 
-                p:before {
+                p::before {
                     content: ' ';
                     display: table;
                     width: 15em;
