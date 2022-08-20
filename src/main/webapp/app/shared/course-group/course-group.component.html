@@ -12,7 +12,7 @@
                 (finish)="importFinish.emit()"
                 [tutorialGroup]="tutorialGroup"
             ></jhi-user-import-button>
-            <button *ngIf="course?.isAtLeastInstructor && allCourseGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
+            <button *ngIf="course?.isAtLeastInstructor && allGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
                 <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Users</span>
             </button>
