@@ -9,6 +9,7 @@ import { of } from 'rxjs';
 import { CourseGroup } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
+import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 
 describe('TutorialGroupFormComponent', () => {
     let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;
@@ -16,7 +17,7 @@ describe('TutorialGroupFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule],
             declarations: [TutorialGroupFormComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(CourseManagementService, {
