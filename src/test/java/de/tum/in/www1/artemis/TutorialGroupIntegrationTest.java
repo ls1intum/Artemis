@@ -87,9 +87,7 @@ public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambo
         return tutorialGroup;
     }
 
-    @Test
-    @WithMockUser(value = "instructor42", roles = "INSTRUCTOR")
-    void request_instructorNotInCourse_shouldReturnForbidden() throws Exception {
+    private void testJustForInstructorEndpoints() throws Exception {
         request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups", HttpStatus.FORBIDDEN, TutorialGroup.class);
         request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN, TutorialGroup.class);
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", createNewTutorialGroup(), TutorialGroup.class, HttpStatus.FORBIDDEN);
@@ -102,7 +100,30 @@ public class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambo
         request.delete(
                 "/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + userRepository.findOneByLogin("student1").get().getLogin(),
                 HttpStatus.FORBIDDEN);
+    }
 
+    @Test
+    @WithMockUser(value = "instructor42", roles = "INSTRUCTOR")
+    void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void request_asTutor_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void request_asStudent_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void request_asEditor_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
     }
 
     @Test
