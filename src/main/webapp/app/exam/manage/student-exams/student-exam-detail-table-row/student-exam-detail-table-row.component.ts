@@ -65,7 +65,16 @@ export class StudentExamDetailTableRowComponent implements OnChanges {
             route = getExerciseSubmissionsLink(exercise.type, this.courseId, exercise.id!, this.examId, exercise.exerciseGroup?.id!);
         } else if (submission) {
             this.openingAssessmentEditorForNewSubmission = true;
-            route = getLinkToSubmissionAssessment(exercise.type, this.courseId, exercise.id!, undefined, submission.id!, this.examId, exercise.exerciseGroup?.id!, resultId);
+            route = getLinkToSubmissionAssessment(
+                exercise.type,
+                this.courseId,
+                exercise.id!,
+                this.studentParticipation?.id,
+                submission.id!,
+                this.examId,
+                exercise.exerciseGroup?.id!,
+                resultId,
+            );
             this.openingAssessmentEditorForNewSubmission = false;
         }
         return route;

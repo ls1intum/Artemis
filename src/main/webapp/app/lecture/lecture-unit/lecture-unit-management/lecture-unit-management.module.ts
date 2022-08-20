@@ -23,6 +23,7 @@ import { ArtemisLectureUnitsModule } from 'app/overview/course-lectures/lecture-
 import { EditOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/edit-online-unit/edit-online-unit.component';
 import { CreateOnlineUnitComponent } from 'app/lecture/lecture-unit/lecture-unit-management/create-online-unit/create-online-unit.component';
 import { OnlineUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-management/online-unit-form/online-unit-form.component';
+import { DragDropModule } from '@angular/cdk/drag-drop';
 
 @NgModule({
     imports: [
@@ -34,6 +35,7 @@ import { OnlineUnitFormComponent } from 'app/lecture/lecture-unit/lecture-unit-m
         ArtemisLectureUnitsModule,
         FormDateTimePickerModule,
         ArtemisLearningGoalsModule,
+        DragDropModule,
     ],
     declarations: [
         LectureUnitManagementComponent,

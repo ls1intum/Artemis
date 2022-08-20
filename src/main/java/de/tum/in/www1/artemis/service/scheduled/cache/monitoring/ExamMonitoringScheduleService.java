@@ -70,7 +70,6 @@ public class ExamMonitoringScheduleService {
      */
     public static void configureHazelcast(Config config) {
         ExamCache.configureHazelcast(config);
-        config.getScheduledExecutorConfig(Constants.HAZELCAST_MONITORING_SCHEDULER).setPoolSize(16).setCapacity(1000).setDurability(1);
     }
 
     /**

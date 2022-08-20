@@ -102,8 +102,8 @@
 
     <div class="container flex-container">
         <div class="row">
-            <div class="col-md-8 section-card">
-                <div class="section-content" *ngIf="courseWithExercises">
+            <div class="col-md-8 section-card p-0">
+                <div class="section-content px-3 py-1" *ngIf="courseWithExercises">
                     <div *ngIf="futureExercises && futureExercises.length > 0">
                         <div class="control-label" (click)="showFutureExercises = !showFutureExercises">
                             <fa-icon class="control-icon" [icon]="showFutureExercises ? faAngleDown : faAngleUp"></fa-icon>

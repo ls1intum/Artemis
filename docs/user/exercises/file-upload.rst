@@ -11,64 +11,67 @@ Overview
 
 Conducting a file upload exercise consists of 3 steps:
 
-1. **Instructor prepares exercise:** Creates and configures the exercise in Artemis.
-2. **Student solves exercise:** Creates a submission file, and uploads it.
-3. **Instructor assesses submissions:** Review the handed in files and create manual results for the students.
+1. Setup of the exercise in Artemis
+2. Submission by a student
+3. Assessment by the staff
 
 Setup
 --------
 
 The following sections describe the supported features and the process of creating a new file upload exercise.
 
-- Open |course-management|
-- Navigate into **Exercises** of your preferred course
+- Open |course-management|.
+- Navigate into **Exercises** of your preferred course.
 
-    .. figure:: programming/course-management-course-dashboard.png
+    .. figure:: general/course-management-course-dashboard-exercises.png
               :align: center
 
-- Click on **Create new file upload exercise**
+- Click on **Create a new file upload exercise**.
 
     .. figure:: file-upload/create-new-file-upload-exercise.png
               :align: center
 
-- Fill out all mandatory values and click on |save|
-- The exercise specific ``File Pattern`` defines which file types students can upload as solution.
+- Fill out all mandatory values and click on |save|.
+- The exercise-specific **File Pattern** defines which file types students can upload as solution. The input field accepts all file endings without leading dot separated by commas.
 
-    .. figure::  file-upload/file_upload_exercise_creation.png
+    .. figure::  file-upload/file-upload-exercise-creation-pattern.png
               :align: center
 
-  Result: **File Upload Exercise**
+- Result: **File Upload Exercise**.
 
     .. figure:: file-upload/course-dashboard-exercise-file-upload.png
               :align: center
 
-- Click the |edit| button of the file upload exercise and adapt the interactive problem statement. There you can also set release and due dates.
+- Click the |edit| button of the file upload exercise to update the configuration and assessment instructions.
 - You can get an overview of the exercise by clicking on the title.
 
 Student Submission
 ------------------
 
-- When the exercise is released the students can upload the requested file.
+- When the exercise is released, the students can upload the requested file.
 - They can choose a file with |browse| and then submit the file with |submit|.
 
-    .. figure:: file-upload/file_upload_exercise_student_view.png
+    .. figure:: file-upload/file-upload-exercise-student-view.png
               :align: center
 
-- After a file was uploaded it can then be downloaded again with the link below.
+- After a file is uploaded it can then be downloaded again by clicking on **Download file**.
 
-    .. figure:: file-upload/file_upload_exercise_student_submitted.png
+    .. figure:: file-upload/file-upload-exercise-student-view-submitted.png
               :align: center
 
 Assessment
 ----------
 
-- When the due date is over you can assess the submissions. From the assessment dashboard go to exercise assessment dashboard of the file upload exercise.
-- There you can assess the submitted student submissions, by first downloading the file, and then creating feedback with points.
+- When the due date is over, you can assess the submissions. From the assessment dashboard, go to exercise the assessment dashboard of the file upload exercise.
+- There you can assess the submitted student submissions, by first downloading the file, and then adding feedback with points.
 
-.. |edit| image:: programming/edit.png
-.. |course-management| image:: programming/course-management.png
-.. |save| image:: file-upload/save_button.png
-.. |submit| image:: file-upload/submit.png
+    .. figure:: file-upload/file-upload-exercise-assessment.png
+              :align: center
+
+.. |edit| image:: general/edit-button.png
+.. |course-management| image:: general/course-management.png
+.. |save| image:: general/save-button.png
+.. |submit| image:: general/submit-button.png
     :scale: 50
-.. |browse| image:: file-upload/browse.png
+.. |browse| image:: file-upload/choose-file-button.png
     :scale: 50

@@ -14,6 +14,7 @@ import { faBan, faCheckDouble, faExclamationTriangle, faFont, faSave } from '@fo
 import { tap } from 'rxjs/operators';
 import { ExerciseType } from 'app/entities/exercise.model';
 import { ExamExerciseImportComponent } from 'app/exam/manage/exams/exam-exercise-import/exam-exercise-import.component';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 @Component({
     selector: 'jhi-exam-update',
@@ -40,6 +41,8 @@ export class ExamUpdateComponent implements OnInit {
     faExclamationTriangle = faExclamationTriangle;
     faCheckDouble = faCheckDouble;
     faFont = faFont;
+
+    readonly FeatureToggle = FeatureToggle;
 
     constructor(
         private route: ActivatedRoute,
