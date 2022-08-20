@@ -206,12 +206,13 @@ public class QuizExerciseService {
     private void updateResultsOnQuizChanges(QuizExercise quizExercise) {
         // change existing results if an answer or and question was deleted
         List<Result> results = resultRepository.findByParticipationExerciseIdOrderByCompletionDateAsc(quizExercise.getId());
-        log.debug("Found {} results to update for quiz re-evaluate", results.size());
+        log.info("Found {} results to update for quiz re-evaluate", results.size());
         List<QuizSubmission> submissions = new ArrayList<>();
         for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
+            QuizSubmission quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(result.getSubmission().getId());
+            result.setSubmission(quizSubmission);
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
                 // Delete all references to question and question-elements if the question was changed

@@ -784,8 +784,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         assertThat(result.getScore()).isEqualTo(11.1);
 
-        var submittedAnswers = ((QuizSubmission) result.getSubmission()).getSubmittedAnswers();
-        for (SubmittedAnswer submittedAnswer : submittedAnswers) {
+        quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(result.getSubmission().getId());
+        for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {
             // MC submitted answers 0 points as one correct and one false -> ALL_OR_NOTHING
             if (submittedAnswer instanceof MultipleChoiceSubmittedAnswer) {
                 assertThat(submittedAnswer.getScoreInPoints()).isEqualTo(0D);

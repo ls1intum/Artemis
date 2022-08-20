@@ -27,15 +27,19 @@ public class QuizStatisticService {
 
     private final QuizQuestionStatisticRepository quizQuestionStatisticRepository;
 
+    private final QuizSubmissionRepository quizSubmissionRepository;
+
     private final SimpMessageSendingOperations messagingTemplate;
 
     public QuizStatisticService(StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, SimpMessageSendingOperations messagingTemplate,
-            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository) {
+            QuizPointStatisticRepository quizPointStatisticRepository, QuizQuestionStatisticRepository quizQuestionStatisticRepository,
+            QuizSubmissionRepository quizSubmissionRepository) {
         this.studentParticipationRepository = studentParticipationRepository;
         this.resultRepository = resultRepository;
         this.quizPointStatisticRepository = quizPointStatisticRepository;
         this.quizQuestionStatisticRepository = quizQuestionStatisticRepository;
         this.messagingTemplate = messagingTemplate;
+        this.quizSubmissionRepository = quizSubmissionRepository;
     }
 
     /**
@@ -68,8 +72,9 @@ public class QuizStatisticService {
             Result latestRatedResult = null;
             Result latestUnratedResult = null;
 
+            var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
             // update all Results of a participation
-            for (Result result : resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId())) {
+            for (Result result : results) {
 
                 // find the latest rated Result
                 if (Boolean.TRUE.equals(result.isRated()) && (latestRatedResult == null || latestRatedResult.getCompletionDate().isBefore(result.getCompletionDate()))) {
@@ -81,8 +86,14 @@ public class QuizStatisticService {
                 }
             }
             // update statistics with the latest rated und unrated Result
-            quizExercise.addResultToAllStatistics(latestRatedResult);
-            quizExercise.addResultToAllStatistics(latestUnratedResult);
+            if (latestRatedResult != null && latestRatedResult.getSubmission() != null) {
+                var latestRatedSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(latestRatedResult.getSubmission().getId());
+                quizExercise.addResultToAllStatistics(latestRatedResult, latestRatedSubmission);
+            }
+            if (latestUnratedResult != null && latestUnratedResult.getSubmission() != null) {
+                var latestUnratedSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(latestUnratedResult.getSubmission().getId());
+                quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
+            }
         }
 
         // save changed Statistics
@@ -114,7 +125,8 @@ public class QuizStatisticService {
                 if (Boolean.FALSE.equals(result.isRated())) {
                     quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
-                quiz.addResultToAllStatistics(result);
+                var quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(result.getSubmission().getId());
+                quiz.addResultToAllStatistics(result, quizSubmission);
             }
             // save statistics
             quizPointStatisticRepository.save(quiz.getQuizPointStatistic());

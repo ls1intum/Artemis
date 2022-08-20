@@ -649,12 +649,10 @@ public class QuizExercise extends Exercise {
      *
      * @param result       the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
      */
-    public void addResultToAllStatistics(Result result) {
+    public void addResultToAllStatistics(Result result, QuizSubmission quizSubmission) {
 
         // update QuizPointStatistic with the result
         if (result != null) {
-            // check if result contains a quizSubmission if true -> it's not necessary to fetch it from the database
-            QuizSubmission quizSubmission = (QuizSubmission) result.getSubmission();
             getQuizPointStatistic().addResult(result.getScore(), result.isRated());
             for (QuizQuestion quizQuestion : getQuizQuestions()) {
                 // update QuestionStatistics with the result

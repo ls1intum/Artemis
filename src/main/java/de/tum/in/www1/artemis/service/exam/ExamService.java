@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.modeling.ModelingSubmission;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
-import de.tum.in.www1.artemis.domain.quiz.QuizSubmission;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -392,7 +391,7 @@ public class ExamService {
                 }
 
                 // Check whether the student attempted to solve the exercise
-                // TODO: we should evaluate this value earlier, ideally directly in the database
+                // TODO: we should evaluate this value for quizzes earlier, ideally directly in the database
                 boolean hasNonEmptySubmission = hasNonEmptySubmission(studentParticipation.getSubmissions(), exercise);
                 studentResult.exerciseGroupIdToExerciseResult.put(exercise.getExerciseGroup().getId(), new ExamScoresDTO.ExerciseResult(exercise.getId(), exercise.getTitle(),
                         exercise.getMaxPoints(), relevantResult.getScore(), achievedPoints, hasNonEmptySubmission));
@@ -555,8 +554,10 @@ public class ExamService {
             }
         }
         else if (exercise instanceof QuizExercise) {
-            QuizSubmission quizSubmission = (QuizSubmission) submissions.iterator().next();
-            return quizSubmission != null && !quizSubmission.getSubmittedAnswers().isEmpty();
+            // NOTE: due to performance concerns, this is currently not supported and we return true to avoid additional expensive database operations
+            return true;
+            // QuizSubmission quizSubmission = (QuizSubmission) submissions.iterator().next();
+            // return quizSubmission != null && !quizSubmission.getSubmittedAnswers().isEmpty();
         }
         else {
             throw new IllegalArgumentException("The exercise type of the exercise with id " + exercise.getId() + " is not supported");

@@ -20,13 +20,21 @@ public interface SubmittedAnswerRepository extends JpaRepository<SubmittedAnswer
 
     Set<SubmittedAnswer> findBySubmission(QuizSubmission quizSubmission);
 
-    default void findQuizSubmissionsSubmittedAnswers(Collection<StudentParticipation> participations) {
+    /**
+     * Loads submitted answers from the database in case there is a QuizSubmission in one of the passed student participation
+     * Assumes that submissions are loaded eagerly in case they exist
+     * @param participations the student participations for which the submitted answers in quiz submissions should be loaded
+     */
+    default void loadQuizSubmissionsSubmittedAnswers(Collection<StudentParticipation> participations) {
         for (var participation : participations) {
             if (participation.getExercise() instanceof QuizExercise) {
-                if (participation.getSubmissions() != null && participation.getSubmissions().size() > 0) {
-                    var quizSubmission = (QuizSubmission) participation.getSubmissions().iterator().next();
-                    var submittedAnswers = findBySubmission(quizSubmission);
-                    quizSubmission.setSubmittedAnswers(submittedAnswers);
+                if (participation.getSubmissions() != null) {
+                    for (var submission : participation.getSubmissions()) {
+                        var quizSubmission = (QuizSubmission) submission;
+                        // submitted answers can only be lazy loaded in many cases, so we load them explicitly for each submission here
+                        var submittedAnswers = findBySubmission(quizSubmission);
+                        quizSubmission.setSubmittedAnswers(submittedAnswers);
+                    }
                 }
             }
         }

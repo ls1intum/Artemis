@@ -25,4 +25,11 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
             WHERE submission.id = :#{#submissionId}
             """)
     Optional<QuizSubmission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
+
+    @Query("""
+            SELECT DISTINCT submission FROM QuizSubmission submission
+            LEFT JOIN FETCH submission.submittedAnswers
+            WHERE submission.id = :#{#submissionId}
+            """)
+    QuizSubmission findByIdWithEagerSubmittedAnswers(@Param("submissionId") long submissionId);
 }
