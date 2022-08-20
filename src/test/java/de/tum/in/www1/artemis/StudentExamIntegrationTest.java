@@ -1842,6 +1842,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
         assertThat(result.getScore()).isEqualTo(44.4);
         var resultQuizSubmission = (QuizSubmission) result.getSubmission();
+        resultQuizSubmission = quizSubmissionRepository.findWithEagerResultAndFeedbackById(resultQuizSubmission.getId()).get();
         assertThat(resultQuizSubmission.getScoreInPoints()).isEqualTo(4D);
         var submittedAnswers = resultQuizSubmission.getSubmittedAnswers();
         for (SubmittedAnswer submittedAnswer : submittedAnswers) {

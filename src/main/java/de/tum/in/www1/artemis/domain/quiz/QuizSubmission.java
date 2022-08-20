@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonView;
 
@@ -130,6 +131,7 @@ public class QuizSubmission extends Submission {
     }
 
     @Override
+    @JsonIgnore
     public boolean isEmpty() {
         return submittedAnswers == null || submittedAnswers.isEmpty();
     }
