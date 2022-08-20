@@ -42,6 +42,7 @@ import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.service.QuizSubmissionService;
 import de.tum.in.www1.artemis.service.TextAssessmentKnowledgeService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.*;
@@ -55,6 +56,15 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+
+    @Autowired
+    private QuizExerciseRepository quizExerciseRepository;
+
+    @Autowired
+    private QuizSubmissionRepository quizSubmissionRepository;
+
+    @Autowired
+    private QuizSubmissionService quizSubmissionService;
 
     @Autowired
     private CourseRepository courseRepo;
@@ -1782,6 +1792,18 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     assertThat(participation.getSubmissions()).hasSize(1);
                     submission = participation.getSubmissions().iterator().next();
                 }
+
+                // make sure to create submitted answers
+                if (exercise instanceof QuizExercise quizExercise) {
+                    var quizQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions();
+                    for (var quizQuestion : quizQuestions) {
+                        var submittedAnswer = database.generateSubmittedAnswerFor(quizQuestion, true);
+                        var quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(submission.getId());
+                        quizSubmission.addSubmittedAnswers(submittedAnswer);
+                        quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().get());
+                    }
+                }
+
                 // Create results
                 var firstResult = new Result().score(correctionResultScore).rated(true).completionDate(now().minusMinutes(5));
                 firstResult.setParticipation(participation);
@@ -1918,6 +1940,13 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 assertThat(exerciseResult.title()).isEqualTo(originalExercise.getTitle());
                 assertThat(exerciseResult.maxScore()).isEqualTo(originalExercise.getMaxPoints());
                 assertThat(exerciseResult.achievedScore()).isEqualTo(resultScore);
+                if (originalExercise instanceof QuizExercise) {
+                    assertThat(exerciseResult.hasNonEmptySubmission()).isTrue();
+                }
+                else {
+                    assertThat(exerciseResult.hasNonEmptySubmission()).isFalse();
+                }
+                // TODO: create a test where hasNonEmptySubmission() is false for a quiz
                 assertEquals(exerciseResult.achievedPoints(), originalExercise.getMaxPoints() * resultScore / 100, EPSILON);
             }
         }
