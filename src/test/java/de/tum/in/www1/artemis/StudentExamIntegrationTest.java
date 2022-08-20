@@ -128,9 +128,11 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
 
     private final List<LocalRepository> studentRepos = new ArrayList<>();
 
+    private final int students = 10;
+
     @BeforeEach
     void initTestCase() throws Exception {
-        users = programmingExerciseTestService.setupTestUsers(10, 1, 0, 2);
+        users = programmingExerciseTestService.setupTestUsers(students, 1, 0, 2);
         users.remove(database.getUserByLogin("admin")); // the admin is not registered for the course and therefore cannot access the student exam so we need to remove it
         course1 = database.addEmptyCourse();
         exam1 = database.addActiveExamWithRegisteredUser(course1, users.get(1));
@@ -246,7 +248,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     }
 
     private List<StudentExam> prepareStudentExamsForConduction(boolean early) throws Exception {
-        for (int i = 1; i <= 22; i++) {
+        for (int i = 1; i <= students + 5; i++) {
             bitbucketRequestMockProvider.mockUserExists("student" + i);
         }
 
@@ -1584,15 +1586,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGradedStudentExamSummaryWithGradingScaleAsStudentAfterPublishResultsWithOtherUserId() throws Exception {
-        StudentExam studentExam = createStudentExamWithResultsAndAssessments();
+        createStudentExamWithResultsAndAssessments();
 
         GradingScale gradingScale = createGradeScale();
         gradingScale.setExam(exam2);
         gradingScaleRepository.save(gradingScale);
 
         // users tries to access exam summary after results are published
-        database.changeUser(studentExam.getUser().getLogin());
+        User student2 = database.getUserByLogin("student2");
+        database.changeUser(student2.getLogin());
         User student3 = database.getUserByLogin("student3");
+        // Note: student2 cannot see the grade summary for student3
         request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/grade-summary?userId=" + student3.getId(), HttpStatus.FORBIDDEN,
                 StudentExamWithGradeDTO.class);
     }
