@@ -647,7 +647,8 @@ public class QuizExercise extends Exercise {
     /**
      * add Result to all Statistics of the given QuizExercise
      *
-     * @param result       the result which will be added (NOTE: add the submission to the result previously (this would improve the performance)
+     * @param result            the result which will be added
+     * @param quizSubmission    the quiz submission which corresponds to the result and includes the submitted answers (loaded eagerly)
      */
     public void addResultToAllStatistics(Result result, QuizSubmission quizSubmission) {
 
