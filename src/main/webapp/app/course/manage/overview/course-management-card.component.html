@@ -239,10 +239,10 @@
             <fa-icon [icon]="faFlag"></fa-icon>
             <span [innerHTML]="'artemisApp.learningGoal.learningGoalButton' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
-        <!-- ToDo: Implement feature toggle for tutor group management similar to posts enabled-->
         <a
             *ngIf="course.isAtLeastInstructor"
             [routerLink]="['/course-management', course.id, 'tutorial-groups-management']"
+            [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
             [ngbTooltip]="'artemisApp.tutorialGroups.tutorialGroupsButton' | artemisTranslate"
             id="course-card-open-tutorial-groups"

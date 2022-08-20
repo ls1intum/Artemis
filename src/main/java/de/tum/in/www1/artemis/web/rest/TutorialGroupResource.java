@@ -25,6 +25,8 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.service.feature.Feature;
+import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -67,6 +69,7 @@ public class TutorialGroupResource {
      */
     @GetMapping(value = "/tutorial-groups/{tutorialGroupId}/title")
     @PreAuthorize("hasRole('USER')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
         final var title = tutorialGroupRepository.getTutorialGroupTitle(tutorialGroupId);
         return title == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(title);
@@ -80,6 +83,7 @@ public class TutorialGroupResource {
      */
     @GetMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<TutorialGroup>> getAllOfCourse(@PathVariable Long courseId) {
         log.debug("REST request to get all tutorial groups of course with id: {}", courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
@@ -102,6 +106,7 @@ public class TutorialGroupResource {
      */
     @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long tutorialGroupId, @PathVariable Long courseId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
 
@@ -122,6 +127,7 @@ public class TutorialGroupResource {
      */
     @PostMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> create(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) throws URISyntaxException {
         log.debug("REST request to create TutorialGroup: {} in course: {}", tutorialGroup, courseId);
         if (tutorialGroup.getId() != null) {
@@ -141,6 +147,7 @@ public class TutorialGroupResource {
 
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.info("REST request to delete a TutorialGroup : {}", tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
@@ -159,6 +166,7 @@ public class TutorialGroupResource {
      */
     @PutMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) {
         log.debug("REST request to update TutorialGroup : {}", tutorialGroup);
         if (tutorialGroup.getId() == null) {
@@ -180,6 +188,7 @@ public class TutorialGroupResource {
 
     @DeleteMapping(value = "/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
@@ -196,6 +205,7 @@ public class TutorialGroupResource {
 
     @PostMapping(value = "/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
@@ -225,6 +235,7 @@ public class TutorialGroupResource {
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<List<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to register {} to tutorial group {} of course {}", studentDtos, tutorialGroupId, courseId);

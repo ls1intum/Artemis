@@ -27,6 +27,7 @@ import {
     faWrench,
     faPersonChalkboard,
 } from '@fortawesome/free-solid-svg-icons';
+import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -45,6 +46,7 @@ export enum DoughnutChartType {
 })
 export class CourseDetailComponent implements OnInit, OnDestroy {
     readonly DoughnutChartType = DoughnutChartType;
+    readonly FeatureToggle = FeatureToggle;
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;

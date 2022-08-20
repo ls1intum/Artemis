@@ -5,7 +5,7 @@ import { distinctUntilChanged, map, tap } from 'rxjs/operators';
 import { HttpClient } from '@angular/common/http';
 
 /**
- * FeatureToggle, currently only supports PROGRAMMING_EXERCISES
+ * FeatureToggles
  * @readonly
  * @enum {string}
  */
@@ -13,6 +13,7 @@ export enum FeatureToggle {
     ProgrammingExercises = 'ProgrammingExercises',
     PlagiarismChecks = 'PlagiarismChecks',
     Exports = 'Exports',
+    TutorialGroups = 'TutorialGroups',
 }
 export type ActiveFeatureToggles = Array<FeatureToggle>;
 
