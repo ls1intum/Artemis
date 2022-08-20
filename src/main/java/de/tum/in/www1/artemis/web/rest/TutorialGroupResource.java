@@ -67,7 +67,7 @@ public class TutorialGroupResource {
      * @param tutorialGroupId the id of the tutorial group
      * @return ResponseEntity with status 200 (OK) and with body containing the title of the tutorial group
      */
-    @GetMapping(value = "/tutorial-groups/{tutorialGroupId}/title")
+    @GetMapping("/tutorial-groups/{tutorialGroupId}/title")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
@@ -91,7 +91,7 @@ public class TutorialGroupResource {
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
-        // ToDo: Optimization: Do not send all registered student information but just the number in a DTO
+        // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegisteredStudents(courseId);
 
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
@@ -145,6 +145,13 @@ public class TutorialGroupResource {
         return ResponseEntity.created(new URI("/api/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
     }
 
+    /**
+     * DELETE courses/:courseId/tutorial-groups/:tutorialGroupId : delete a tutorial group.
+     *
+     * @param courseId        the id of the course to which the tutorial groups belong to
+     * @param tutorialGroupId the id of the tutorial group to delete
+     * @return the ResponseEntity with status 200 (OK)
+     */
     @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
@@ -186,7 +193,15 @@ public class TutorialGroupResource {
         return ResponseEntity.ok(updatedTutorialGroup);
     }
 
-    @DeleteMapping(value = "/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    /**
+     * DELETE courses/:courseId/tutorial-groups/:tutorialGroupId/deregister/:studentLogin : deregister a student from a tutorial group.
+     *
+     * @param courseId        the id of the course to which the tutorial groups belong to
+     * @param tutorialGroupId the id of the tutorial group
+     * @param studentLogin    the login of the student to deregister
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
@@ -203,7 +218,15 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(null);
     }
 
-    @PostMapping(value = "/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
+    /**
+     * POST courses/:courseId/tutorial-groups/:tutorialGroupId/register/:studentLogin : register a student to a tutorial group.
+     *
+     * @param courseId        the id of the course to which the tutorial groups belong to
+     * @param tutorialGroupId the id of the tutorial group
+     * @param studentLogin    the login of the student to register
+     * @return the ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
