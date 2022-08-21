@@ -31,6 +31,12 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     private ResultRepository resultRepo;
 
     @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepo;
+
+    @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
 
     @Autowired
@@ -302,6 +308,20 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((ModelingSubmission) exampleSubmission.getSubmission()).getModel()).isEqualTo(((ModelingSubmission) submission).getModel());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getScore()).isEqualTo(submission.getLatestResult().getScore());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void importExampleSubmissionCopiesGradingInstruction() throws Exception {
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(modelingExercise);
+        gradingCriterionRepo.saveAll(gradingCriteria);
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(modelingExercise, "instructor1");
+        Submission originalSubmission = submissionRepository.findAll().get(0);
+        Optional<Result> orginalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
+
+        ExampleSubmission exampleSubmission = importExampleSubmission(modelingExercise.getId(), originalSubmission.getId(), HttpStatus.OK);
+        assertThat(exampleSubmission.getSubmission().getResults().get(0).getFeedbacks().get(0).getGradingInstruction().getId())
+                .isEqualTo(orginalResult.get().getFeedbacks().get(0).getGradingInstruction().getId());
     }
 
     @Test
