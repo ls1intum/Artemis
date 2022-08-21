@@ -91,4 +91,10 @@ public interface ProgrammingSubmissionRepository extends JpaRepository<Programmi
     default ProgrammingSubmission findByResultIdElseThrow(Long resultId) {
         return findByResultId(resultId).orElseThrow(() -> new EntityNotFoundException("Programming Submission for Result", resultId));
     }
+
+    @NotNull
+    default ProgrammingSubmission findByIdWithEagerResultsFeedbacksAssessorElseThrow(Long submissionId) {
+        return findWithEagerResultsFeedbacksAssessorById(submissionId)
+                .orElseThrow(() -> new EntityNotFoundException("Programming submission with id \"" + submissionId + "\" does not exist"));
+    }
 }

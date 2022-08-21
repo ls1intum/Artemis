@@ -8,6 +8,7 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.metis.Posting;
+import de.tum.in.www1.artemis.domain.metis.UserRole;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
@@ -127,6 +128,24 @@ public abstract class PostingService {
             throw new BadRequestAlertException("Postings are not enabled for this course", getEntityName(), "400", true);
         }
         return course;
+    }
+
+    /**
+     * helper method that assigns authorRoles of postings in accordance to user groups and authorities
+     * @param posting       posting to assign authorRole
+     * @param postingCourse course that the post belongs to, must be explicitly fetched and provided to handle new post creation case
+     */
+    void setAuthorRoleForPosting(Posting posting, Course postingCourse) {
+        if (authorizationCheckService.isAtLeastInstructorInCourse(postingCourse, posting.getAuthor())) {
+            posting.setAuthorRole(UserRole.INSTRUCTOR);
+        }
+        else if (authorizationCheckService.isTeachingAssistantInCourse(postingCourse, posting.getAuthor())
+                || authorizationCheckService.isEditorInCourse(postingCourse, posting.getAuthor())) {
+            posting.setAuthorRole(UserRole.TUTOR);
+        }
+        else {
+            posting.setAuthorRole(UserRole.USER);
+        }
     }
 
     abstract String getEntityName();

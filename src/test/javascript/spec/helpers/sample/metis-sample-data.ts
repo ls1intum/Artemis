@@ -22,6 +22,7 @@ export const metisExercise2 = { id: 1, title: 'Second Metis  Exercise', type: Ex
 export const metisUser1 = { id: 1, name: 'username1', login: 'login1', groups: ['metisStudents'] } as User;
 export const metisUser2 = { id: 2, name: 'username2', login: 'login2', groups: ['metisStudents'] } as User;
 export const metisTutor = { id: 3, name: 'username3', login: 'login3', groups: ['metisTutors'] } as User;
+
 export const metisTags = ['Tag1', 'Tag2'];
 
 export const metisUpVoteReactionUser1 = { id: 1, user: metisUser1, emojiId: VOTE_EMOJI_ID } as Reaction;

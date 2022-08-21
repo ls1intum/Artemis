@@ -212,6 +212,28 @@ public class Post extends Posting {
         return getCourseWideContext() != null && otherPost.getCourseWideContext() != null && getCourseWideContext() == otherPost.getCourseWideContext();
     }
 
+    /**
+     * Helper method to extract the course a Post belongs to, which is found in different locations based on the Post's context
+     * @return the course Post belongs to
+     */
+    @Override
+    public Course getCoursePostingBelongsTo() {
+        if (this.course != null) {
+            return this.course;
+        }
+        else if (this.lecture != null) {
+            return this.lecture.getCourse();
+        }
+        else if (this.exercise != null) {
+            return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+        else if (this.plagiarismCase != null) {
+            return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+        }
+
+        return null;
+    }
+
     @Override
     public String toString() {
         return "Post{" + "id=" + getId() + ", content='" + getContent() + "'" + ", creationDate='" + getCreationDate() + "'" + ", visibleForStudents='" + isVisibleForStudents()
