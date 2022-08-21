@@ -10,7 +10,7 @@ import de.tum.in.www1.artemis.domain.User;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class ScoreDTO {
 
-    public Long studentId;
+    public final Long studentId;
 
     public String studentLogin;
 
@@ -26,9 +26,5 @@ public class ScoreDTO {
         this.pointsAchieved = 0.0;
         this.scoreAchieved = 0.0;
         this.regularPointsAchievable = 0.0;
-    }
-
-    public ScoreDTO() {
-        // for jackson
     }
 }

@@ -340,20 +340,15 @@ public class ExamService {
      */
     @NotNull
     public StudentExamWithGradeDTO calculateStudentResultWithGradeAndPoints(StudentExam studentExam, List<StudentParticipation> participationsOfStudent) {
-        Exam exam = studentExam.getExam();
-
-        Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(exam.getId());
-        ExamScoresDTO.StudentResult studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null);
-        var studentExamWithGradeDTO = new StudentExamWithGradeDTO(studentExam, studentResult);
-
-        gradingScale.ifPresent(scale -> studentExamWithGradeDTO.gradeType = scale.getGradeType());
-
-        List<Exercise> exercises = studentExam.getExercises();
-        studentExamWithGradeDTO.maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
-        studentExamWithGradeDTO.maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
-        studentExamWithGradeDTO.achievedPointsPerExercise = calculateAchievedPointsForExercises(participationsOfStudent, exam.getCourse());
-
-        return studentExamWithGradeDTO;
+        var exam = studentExam.getExam();
+        var gradingScale = gradingScaleRepository.findByExamId(exam.getId());
+        var studentResult = calculateStudentResultWithGrade(studentExam, participationsOfStudent, exam, gradingScale, false, null);
+        var exercises = studentExam.getExercises();
+        var maxPoints = calculateMaxPointsSum(exercises, exam.getCourse());
+        var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
+        var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
+        var achievedPointsPerExercise = calculateAchievedPointsForExercises(participationsOfStudent, exam.getCourse());
+        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentResult, achievedPointsPerExercise);
     }
 
     /**

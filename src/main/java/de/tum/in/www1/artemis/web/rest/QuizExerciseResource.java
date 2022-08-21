@@ -349,7 +349,7 @@ public class QuizExerciseResource {
         }
 
         try {
-            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password);
+            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
             return ResponseEntity.ok(batch);
         }
         catch (QuizJoinException ex) {

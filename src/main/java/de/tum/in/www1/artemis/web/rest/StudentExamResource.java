@@ -446,7 +446,6 @@ public class StudentExamResource {
         submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
-        studentExamWithGradeDTO.studentExam = null;  // To save bandwidth.
 
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
