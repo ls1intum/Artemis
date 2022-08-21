@@ -1,15 +1,21 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.*;
 
 import java.util.List;
 
+import org.jsoup.Connection;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -18,6 +24,7 @@ import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.OnlineUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.OnlineResourceDTO;
 
 class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -34,6 +41,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     private OnlineUnit onlineUnit;
 
+    private MockedStatic<Jsoup> jsoupMock;
+
     @BeforeEach
     void initTestCase() throws Exception {
         this.database.addUsers(1, 1, 0, 1);
@@ -47,6 +56,8 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         userRepository.save(ModelFactory.generateActivatedUser("student42"));
         userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
         userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+
+        jsoupMock = mockStatic(Jsoup.class);
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -57,6 +68,7 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @AfterEach
     void resetDatabase() {
+        jsoupMock.close();
         database.resetDatabase();
     }
 
@@ -154,6 +166,24 @@ class OnlineUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         this.onlineUnit = (OnlineUnit) lectureRepository.findByIdWithLectureUnitsElseThrow(lecture1.getId()).getLectureUnits().stream().findFirst().get();
         OnlineUnit onlineUnitFromRequest = request.get("/api/lectures/" + lecture1.getId() + "/online-units/" + this.onlineUnit.getId(), HttpStatus.OK, OnlineUnit.class);
         assertThat(this.onlineUnit.getId()).isEqualTo(onlineUnitFromRequest.getId());
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void getOnlineResource() throws Exception {
+        String url = "https://www.google.de";
+        var connectionMock = mock(Connection.class);
+        jsoupMock.when(() -> Jsoup.connect(url)).thenReturn(connectionMock);
+        when(connectionMock.timeout(anyInt())).thenReturn(connectionMock);
+        when(connectionMock.maxBodySize(anyInt())).thenReturn(connectionMock);
+        when(connectionMock.get()).thenReturn(new Document(url));
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("link", url);
+        OnlineResourceDTO onlineResourceDTO = request.get("/api/lectures/online-units/fetch-online-resource", HttpStatus.OK, OnlineResourceDTO.class, params);
+        assertThat(onlineResourceDTO.url()).isEqualTo(url);
+        assertThat(onlineResourceDTO.title()).isNull();
+        assertThat(onlineResourceDTO.description()).isNull();
     }
 
     @Test
