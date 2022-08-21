@@ -75,14 +75,18 @@ public class PlagiarismCaseResource {
     @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
-        log.debug("REST request to get all plagiarism cases for instructor in course with id: {}", courseId);
+        log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
 
-        // TODO: Ata Either add course id to findByExamIdWithPlagiarismSubmissionsAndComparison or remove it from request params.
         var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
+        plagiarismCases.forEach(plagiarismCase -> {
+            if (plagiarismCase.getExercise().getExerciseGroup().getExam().getCourse().getId() != courseId) {
+                throw new AccessForbiddenException("Exercise with id " + plagiarismCase.getExercise().getId() + " is not related to the given course id " + courseId);
+            }
+        });
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
