@@ -908,7 +908,7 @@ public class DatabaseUtilService {
     private List<Post> createBasicPosts(Conversation conversation) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
-            Post postToAdd = createBasicPost(i);
+            Post postToAdd = createBasicPost(i, "tutor");
             postToAdd.setCourse(conversation.getCourse());
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
