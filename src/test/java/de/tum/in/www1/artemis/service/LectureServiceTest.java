@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.service;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -49,7 +50,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, false);
         course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.get(0).getId());
-        lecture = course.getLectures().stream().findFirst().get();
+        // always use the lecture with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
+        lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
 
         // Add a custom attachment for filtering tests
         testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
@@ -89,6 +91,9 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testPageableResults() {
+        // the database should contain 2 lectures (see createCoursesWithExercisesAndLecturesAndLectureUnits) both with the same title
+        // to enable a proper search after title, we change it
+
         PageableSearchDTO<String> pageable = database.configureLectureSearch(lecture.getTitle());
         pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
         pageable.setPageSize(1);
