@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
@@ -43,20 +44,20 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @BeforeEach
     void initTestCase() throws Exception {
         List<User> users = database.addUsers(1, 0, 1, 0);
-        this.student = users.get(0);
-        this.editor = users.get(1);
+        student = users.get(0);
+        editor = users.get(1);
 
-        List<Course> courses = this.database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, false);
-        this.course = this.courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.get(0).getId());
-        this.lecture = course.getLectures().stream().findFirst().get();
+        List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, false);
+        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.get(0).getId());
+        lecture = course.getLectures().stream().findFirst().get();
 
         // Add a custom attachment for filtering tests
-        this.testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
-        this.lecture.addAttachments(this.testAttachment);
+        testAttachment = ModelFactory.generateAttachment(ZonedDateTime.now().plusDays(1));
+        lecture.addAttachments(testAttachment);
 
-        assertThat(this.lecture).isNotNull();
-        assertThat(this.lecture.getLectureUnits()).isNotEmpty();
-        assertThat(this.lecture.getAttachments()).isNotEmpty();
+        assertThat(lecture).isNotNull();
+        assertThat(lecture.getLectureUnits()).isNotEmpty();
+        assertThat(lecture.getAttachments()).isNotEmpty();
     }
 
     @AfterEach
@@ -67,28 +68,28 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testFilterActiveAttachments_editor() {
-        Set<Lecture> testLectures = lectureService.filterActiveAttachments(this.course.getLectures(), editor);
-        Lecture testLecture = testLectures.stream().filter(l -> l.getId() == this.lecture.getId()).findFirst().get();
+        Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), editor);
+        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
         assertThat(testLecture).isNotNull();
-        assertThat(testLecture.getAttachments()).containsExactlyElementsOf(this.lecture.getAttachments());
+        assertThat(testLecture.getAttachments()).containsExactlyElementsOf(lecture.getAttachments());
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "STUDENT")
     void testFilterActiveAttachments_student() {
-        Set<Lecture> testLectures = lectureService.filterActiveAttachments(this.course.getLectures(), student);
-        Lecture testLecture = testLectures.stream().filter(l -> l.getId() == this.lecture.getId()).findFirst().get();
+        Set<Lecture> testLectures = lectureService.filterActiveAttachments(course.getLectures(), student);
+        Lecture testLecture = testLectures.stream().filter(aLecture -> Objects.equals(aLecture.getId(), lecture.getId())).findFirst().get();
         assertThat(testLecture).isNotNull();
         assertThat(testLecture.getAttachments()).isNotEmpty();
-        assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(this.lecture.getAttachments());
+        assertThat(testLecture.getAttachments()).containsOnlyOnceElementsOf(lecture.getAttachments());
         // Ensure that the attachment with future release date was filtered
-        assertThat(testLecture.getAttachments()).doesNotContain(this.testAttachment);
+        assertThat(testLecture.getAttachments()).doesNotContain(testAttachment);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testPageableResults() {
-        PageableSearchDTO<String> pageable = this.database.configureLectureSearch(lecture.getTitle());
+        PageableSearchDTO<String> pageable = database.configureLectureSearch(lecture.getTitle());
         pageable.setSortedColumn(Lecture.LectureSearchColumn.ID.name());
         pageable.setPageSize(1);
 
@@ -102,7 +103,7 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     }
 
     private SearchResultPageDTO<Lecture> searchQueryWithUser(String query, User user) {
-        PageableSearchDTO<String> pageable = this.database.configureLectureSearch(query);
+        PageableSearchDTO<String> pageable = database.configureLectureSearch(query);
         return lectureService.getAllOnPageWithSize(pageable, user);
     }
 
