@@ -44,7 +44,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Course.
@@ -442,7 +441,7 @@ public class CourseResource {
         course.setExercises(interestingExercises);
         List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+        return ResponseEntity.ok(course);
     }
 
     /**
@@ -458,10 +457,8 @@ public class CourseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Set<Long> exerciseIdsOfCourse = exerciseRepository.findAllIdsByCourseId(courseId);
-
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        StatsForDashboardDTO stats = courseService.getStatsForDashboardDTO(courseId, course, exerciseIdsOfCourse);
+        StatsForDashboardDTO stats = courseService.getStatsForDashboardDTO(course);
         return ResponseEntity.ok(stats);
     }
 
@@ -484,7 +481,7 @@ public class CourseResource {
             course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+        return ResponseEntity.ok(course);
     }
 
     /**
@@ -499,7 +496,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        return ResponseEntity.ok(course);
     }
 
     /**

@@ -558,14 +558,22 @@ public class CourseService {
         return total > 0.0 ? Math.round(positive * 1000.0 / total) / 10.0 : 0.0;
     }
 
-    public StatsForDashboardDTO getStatsForDashboardDTO(long courseId, Course course, Set<Long> exerciseIdsOfCourse) {
+    /**
+     * calculate statistics for the course administration dashboard
+     *
+     * @param course the course for which the statistics should be calculated
+     * @return a DTO containing the statistics
+     */
+    public StatsForDashboardDTO getStatsForDashboardDTO(Course course) {
+        Set<Long> courseExerciseIds = exerciseRepository.findAllIdsByCourseId(course.getId());
+
         StatsForDashboardDTO stats = new StatsForDashboardDTO();
 
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse);
-        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
+        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(courseExerciseIds);
+        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(courseExerciseIds);
 
-        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
-        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
+        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(courseExerciseIds);
+        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(courseExerciseIds);
         stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
 
         // no examMode here, so it's the same as totalNumberOfAssessments
@@ -573,22 +581,23 @@ public class CourseService {
         stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
         stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
 
-        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
+        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(course.getId());
         stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(courseId);
+        final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(course.getId());
         stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-        final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
+        final long numberOfComplaints = complaintService.countComplaintsByCourseId(course.getId());
         stats.setNumberOfComplaints(numberOfComplaints);
-        final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(courseId);
+        final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(course.getId());
         stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
+        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(),
+                course.getId());
         stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(courseId);
+        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(course.getId());
         stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
 
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
+        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, courseExerciseIds);
         stats.setTutorLeaderboardEntries(leaderboardEntries);
-        stats.setNumberOfRatings(ratingRepository.countByResult_Participation_Exercise_Course_Id(courseId));
+        stats.setNumberOfRatings(ratingRepository.countByResult_Participation_Exercise_Course_Id(course.getId()));
         return stats;
     }
 
