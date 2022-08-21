@@ -1,6 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -13,6 +13,9 @@ import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tu
 import { LoadingIndicatorContainerStubComponent } from '../../helpers/stubs/loading-indicator-container-stub.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { SortDirective } from 'app/shared/sort/sort.directive';
+import { SortByDirective } from 'app/shared/sort/sort-by.directive';
+import { SortService } from 'app/shared/service/sort.service';
 
 @Component({ selector: 'jhi-tutorial-group-row-buttons', template: '' })
 class TutorialGroupRowButtonsStubComponent {
@@ -32,10 +35,13 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockPipe(ArtemisTranslatePipe),
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
+                MockDirective(SortDirective),
+                MockDirective(SortByDirective),
             ],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
+                MockProvider(SortService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -87,5 +93,22 @@ describe('TutorialGroupsManagementComponent', () => {
         tutorialGroupsManagementComponentFixture.detectChanges();
         expect(tutorialGroupsManagementComponent.tutorialGroups).toEqual([exampleTutorialGroup]);
         expect(getAllForCourseSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should call sort service', () => {
+        const group1 = new TutorialGroup();
+        group1.id = 1;
+        const group2 = new TutorialGroup();
+        group2.id = 2;
+
+        tutorialGroupsManagementComponent.tutorialGroups = [group1, group2];
+        tutorialGroupsManagementComponent.sortingPredicate = 'id';
+        tutorialGroupsManagementComponent.ascending = false;
+
+        const sortService = TestBed.inject(SortService);
+        const sortServiceSpy = jest.spyOn(sortService, 'sortByProperty');
+
+        tutorialGroupsManagementComponent.sortRows();
+        expect(sortServiceSpy).toHaveBeenCalledWith([group1, group2], 'id', false);
     });
 });
