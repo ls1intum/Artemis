@@ -14,6 +14,7 @@ import {
     faEye,
     faFile,
     faFileAlt,
+    faFilePen,
     faHdd,
     faMagic,
     faMicrochip,
@@ -138,6 +139,15 @@ export class FeatureOverviewComponent implements OnInit {
         );
         featureConduction.centerAndExpandImage();
 
+        const featureExamMode = new Feature(
+            'featureOverview.students.feature.examMode.title',
+            'featureOverview.students.feature.examMode.shortDescription',
+            'featureOverview.students.feature.examMode.descriptionTextOne',
+            faFilePen,
+            undefined,
+            '/content/images/feature-overview/students/exam_mode.png',
+        );
+
         const featureOffline = new Feature(
             'featureOverview.students.feature.offline.title',
             'featureOverview.students.feature.offline.shortDescription',
@@ -181,6 +191,7 @@ export class FeatureOverviewComponent implements OnInit {
 
         this.features = [
             featureConduction,
+            featureExamMode,
             featureOffline,
             featureUserInterface,
             featureCodeEditor,
@@ -225,6 +236,15 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/import_students.png',
             '/content/images/feature-overview/instructors/fully_configurable.png',
+        );
+
+        const featureExamMode = new Feature(
+            'featureOverview.instructor.feature.examMode.title',
+            'featureOverview.instructor.feature.examMode.shortDescription',
+            'featureOverview.instructor.feature.examMode.descriptionTextOne',
+            faFilePen,
+            undefined,
+            '/content/images/feature-overview/instructors/exam_mode.png',
         );
 
         const featureExerciseTypes = new Feature(
@@ -344,9 +364,20 @@ export class FeatureOverviewComponent implements OnInit {
             undefined,
             '/content/images/feature-overview/instructors/grade_key_editor.png',
         );
+
+        const featureLiveStatistics = new Feature(
+            'featureOverview.instructor.feature.liveStatistics.title',
+            'featureOverview.instructor.feature.liveStatistics.shortDescription',
+            'featureOverview.instructor.feature.liveStatistics.descriptionTextOne',
+            faEye,
+            undefined,
+            '/content/images/feature-overview/instructors/exam_live_statistics.png',
+        );
+
         this.features = [
             featureCreateConductAssess,
             featureConfiguration,
+            featureExamMode,
             featureExerciseTypes,
             featureExerciseVariants,
             featureTestRuns,
@@ -360,6 +391,7 @@ export class FeatureOverviewComponent implements OnInit {
             featureStatistics,
             featureChecklist,
             featureGradeKey,
+            featureLiveStatistics,
         ];
     }
 
