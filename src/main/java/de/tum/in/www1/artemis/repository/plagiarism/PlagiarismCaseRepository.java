@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.plagiarism;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -52,6 +53,15 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
             AND p.id IS NOT NULL
             """)
     Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPost(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            LEFT JOIN FETCH plagiarismCase.post p
+            WHERE plagiarismCase.exercise.id IN :exerciseIds
+            AND plagiarismCase.student.id = :userId
+            AND p.id IS NOT NULL
+            """)
+    List<PlagiarismCase> findByStudentIdAndExerciseIdsWithPost(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase

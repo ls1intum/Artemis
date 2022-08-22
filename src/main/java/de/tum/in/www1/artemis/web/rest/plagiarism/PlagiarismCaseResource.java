@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -170,6 +173,31 @@ public class PlagiarismCaseResource {
         }
         // in all other cases the response is empty
         return ResponseEntity.ok(null);
+    }
+
+    /**
+     * Retrieves plagiarismCases related to given exercise ids for the student for the exercises where the plagiarism comparison was confirmed and the student was notified
+     *
+     * @param courseId the id of the course
+     * @param exerciseIds the ids of the exercises
+     * @return a list of plagiarism case id and verdict values for the exercises only for the exercises where the comparison was confirmed and the student was notified
+     */
+    @GetMapping("courses/{courseId}/plagiarism-cases")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<Long, PlagiarismCaseInfoDTO>> getPlagiarismCasesForExercisesForStudent(@PathVariable long courseId,
+            @RequestParam(name = "exerciseId") Set<Long> exerciseIds) {
+        log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseIds);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        var plagiarismCases = plagiarismCaseRepository.findByStudentIdAndExerciseIdsWithPost(user.getId(), exerciseIds);
+        var plagiarismCaseInfoDTOs = plagiarismCases.stream()
+                // the following line is already checked in the SQL statement, but we want to ensure it 100%
+                .filter(plagiarismCase -> plagiarismCase.getPost() != null).collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
+                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict())));
+
+        return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {

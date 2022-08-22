@@ -73,6 +73,19 @@ export class PlagiarismCasesService {
     }
 
     /**
+     * Get the plagiarism case infos for the student for the given course and exercise id list for the exercises that the student is allowed to access.
+     * @param { number } courseId id of the course
+     * @param { number[] } exerciseIds ids of the exercises
+     */
+    public getPlagiarismCaseInfosForStudent(courseId: number, exerciseIds: number[]): Observable<HttpResponse<{ [exerciseId: number]: PlagiarismCaseInfo }>> {
+        let params = new HttpParams();
+        for (const exerciseId of exerciseIds) {
+            params = params.append('exerciseId', exerciseId);
+        }
+        return this.http.get<PlagiarismCaseInfo[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases`, { params, observe: 'response' });
+    }
+
+    /**
      * Get the plagiarism case with the given id for the student
      * @param { number } courseId id of the course
      * @param { number } plagiarismCaseId id of the plagiarismCase
