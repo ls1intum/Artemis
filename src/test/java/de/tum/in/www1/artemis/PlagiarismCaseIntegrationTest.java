@@ -279,15 +279,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPlagiarismCaseInfoWithoutVerdictForExerciseForStudent() throws Exception {
-        Post post = new Post();
-        post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));
-        post.setTitle("Title Plagiarism Case Post");
-        post.setContent("Content Plagiarism Case Post");
-        post.setVisibleForStudents(true);
-        post.setPlagiarismCase(plagiarismCase1);
-        post = postRepository.save(post);
-        plagiarismCase1.setPost(post);
-        plagiarismCaseRepository.save(plagiarismCase1);
+        addPost();
 
         var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK,
                 PlagiarismCaseInfoDTO.class);
@@ -295,9 +287,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         assertThat(plagiarismCaseInfo.getVerdict()).as("should get null verdict before it is set").isNull();
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testGetPlagiarismCaseInfoWithVerdictForExerciseForStudent() throws Exception {
+    private void addPost() {
         Post post = new Post();
         post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));
         post.setTitle("Title Plagiarism Case Post");
@@ -306,14 +296,44 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         post.setPlagiarismCase(plagiarismCase1);
         post = postRepository.save(post);
         plagiarismCase1.setPost(post);
+        plagiarismCaseRepository.save(plagiarismCase1);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetPlagiarismCaseInfoWithVerdictForExerciseForStudent() throws Exception {
         var verdict = PlagiarismVerdict.NO_PLAGIARISM;
         plagiarismCase1.setVerdict(verdict);
-        plagiarismCaseRepository.save(plagiarismCase1);
+
+        addPost();
 
         var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK,
                 PlagiarismCaseInfoDTO.class);
         assertThat(plagiarismCaseInfo.getId()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
         assertThat(plagiarismCaseInfo.getVerdict()).as("should get the verdict after it is set").isEqualTo(verdict);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetMultiplePlagiarismCaseInfosForStudent() throws Exception {
+        var emptyPlagiarismCaseInfosResponse = request.get(
+                "/api/courses/" + course.getId() + "/plagiarism-case?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK,
+                String.class);
+
+        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
+
+        addPost();
+
+        // It should give error when no exercise id is specified
+        request.get("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.BAD_REQUEST, String.class);
+
+        var plagiarismCaseInfosResponse = request.getMap(
+                "/api/courses/" + course.getId() + "/plagiarism-cases?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK,
+                Long.class, PlagiarismCaseInfoDTO.class);
+
+        assertThat(plagiarismCaseInfosResponse).hasSize(1);
+        assertThat(plagiarismCaseInfosResponse.get(courseTextExercise.getId()).getId()).as("should only return plagiarism cases with post").isEqualTo(plagiarismCase1.getId());
+
     }
 
     @Test
