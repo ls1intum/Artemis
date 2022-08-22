@@ -93,6 +93,14 @@ public class TextExerciseImportService extends ExerciseImportService {
             newTextBlock.setSubmission(newSubmission);
             newTextBlock.setText(originalTextBlock.getText());
             newTextBlock.computeId();
+            if (originalTextBlock.getType() != null) {
+                if (originalTextBlock.getType() == TextBlockType.AUTOMATIC) {
+                    newTextBlock.automatic();
+                }
+                else {
+                    newTextBlock.manual();
+                }
+            }
             textBlockRepository.save(newTextBlock);
             newTextBlocks.add(newTextBlock);
         }
