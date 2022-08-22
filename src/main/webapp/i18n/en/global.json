@@ -313,7 +313,7 @@
         "invalid.auxiliary.repository.checkout.directory": "At least one Auxiliary Repository checkout directory is invalid or duplicated. Please make sure all checkout directories are appropriate and do not contain duplications.",
         "invalid.auxiliary.repository.description": "The description of at least one Auxiliary Repository is too long!",
         "invalid.testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
-        "invalid.page.request": "The page request seems to be invalid. Please make sure that enough number of {{entityName}} entities exist, so that the request page can be created.",
+        "invalid.page.request": "The page request seems to be invalid. Please make sure that enough {{entityName}} entities exist, so that the request page can be created.",
         "unexpectedError": "An unexpected error occurred: {{error}}",
         "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
         "exerciseNotDefined": "The exercise is not defined.",
