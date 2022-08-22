@@ -1,5 +1,5 @@
 <div class="plagiarism-details" *ngIf="comparison">
-    <jhi-plagiarism-header [splitControlSubject]="splitControlSubject" [course]="exercise.course!" [comparison]="comparison"></jhi-plagiarism-header>
+    <jhi-plagiarism-header [splitControlSubject]="splitControlSubject" [exercise]="exercise" [comparison]="comparison"></jhi-plagiarism-header>
 
     <jhi-plagiarism-split-view [comparison]="comparison" [exercise]="exercise" [splitControlSubject]="splitControlSubject"></jhi-plagiarism-split-view>
 </div>
