@@ -24,12 +24,16 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final TextBlockRepository textBlockRepository;
 
+    private final TextSubmissionRepository textSubmissionRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
+            TextSubmissionRepository textSubmissionRepository) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
     }
 
     /**
@@ -136,8 +140,9 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, new HashMap<>()));
+            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
+            newSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(newSubmission.getId());
             updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);
         }
         return newSubmission;
