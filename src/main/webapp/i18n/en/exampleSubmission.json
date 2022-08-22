@@ -59,8 +59,8 @@
             "useAsExampleSubmissionLabel": "Use as an Example Submission",
             "searchSubmission": "Search for Submission",
             "submissionSize": "Submission Size",
-            "textSubmissionSizeHint": "This number shows the number of words in the text.",
-            "modelingSubmissionSizeHint": "This number shows the number of elements used in the model.",
+            "textSubmissionSizeHint": "This value shows the number of words in the text.",
+            "modelingSubmissionSizeHint": "This value shows the number of elements used in the model.",
             "exampleAssessmentCreated": "Example Assessment Created",
             "exampleAssessmentWarning": "You need to complete the assessment to use this submission in the assessment training."
         },
