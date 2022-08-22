@@ -6,6 +6,7 @@
             "notFound": "We couldn't find any unassessed file upload submissions, please go back.",
             "addFeedback": "Add new Feedback",
             "assessInstruction": "Please click the \"Add new Feedback\" button.",
+            "assessInstructionWithDropOption": "Please click the \"Add new Feedback\" button or drag an assessment instruction and drop it here.",
             "deleteAssessment": "Delete Assessment {{ index }} ?",
             "dashboard": {
                 "heading": "Submissions and assessments of file upload exercise \"{{exerciseTitle}}\""

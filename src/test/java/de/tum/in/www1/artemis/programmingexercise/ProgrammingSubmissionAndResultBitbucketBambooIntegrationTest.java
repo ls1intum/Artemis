@@ -371,7 +371,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertNoNewSubmissionsAndIsSubmission(submission);
     }
 
-    // TODO: write a test case that invokes notifyPush on ProgrammingSubmissionService with two identical commits. This test should then expect an IllegalStateException
+    // TODO: write a test case that invokes processNewProgrammingSubmission on ProgrammingSubmissionService with two identical commits. This test should then expect an
+    // IllegalStateException
 
     /**
      * This is the case where an instructor manually triggers the build from the CI.
