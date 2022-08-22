@@ -15,7 +15,7 @@
                 </h5>
             </div>
             <div class="col-auto d-flex align-items-center gap-3 pe-0">
-                <button id="downloadButton" class="btn btn-primary btn-sm" (click)="downloadAttachment()">
+                <button id="downloadButton" class="btn btn-primary btn-sm" (click)="downloadAttachment($event)">
                     <fa-icon [icon]="faDownload"></fa-icon>
                     <span class="d-none d-md-inline" jhiTranslate="artemisApp.attachmentUnit.download">Download</span>
                 </button>
