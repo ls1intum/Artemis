@@ -37,6 +37,7 @@
             "assessCorrectly": "Assess correctly",
             "createNewSubmission": "Create new example submission",
             "editExampleSubmission": "Edit example submission",
+            "editExampleSubmissionConfirmationQuestion": "Are you sure you want to edit the example submission? The current assessment will be permanently deleted and you have to assess the submission again.",
             "updateExampleSubmission": "Update example submission",
             "problemStatement": "Problem Statement",
             "sampleSolution": "Example Solution",
