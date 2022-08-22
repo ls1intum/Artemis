@@ -69,7 +69,8 @@ public class PlagiarismCaseResource {
     /**
      * Retrieves all plagiarism cases related to an exam for the instructor view.
      *
-     * @param courseId the id of the course
+     * @param courseId the course id to which the exam belongs
+     * @param examId the id of the exam
      * @return all plagiarism cases of the course
      */
     @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
