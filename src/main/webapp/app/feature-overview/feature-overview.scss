@@ -67,21 +67,25 @@
                 flex-direction: column;
                 align-items: center;
                 color: var(--fo-blue-font-color);
+                gap: 25px;
 
                 .fa {
+                    flex: 0 0 40%;
                     font-size: 60px;
                     transition: 0.2s;
-                    flex: 0;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-end;
                 }
 
                 .title {
-                    flex: 1;
+                    flex: 0 0 60%;
                     display: flex;
                     flex-direction: column;
-                    justify-content: center;
-                    padding: 20px 10px;
+                    justify-content: flex-start;
                     text-align: center;
                     opacity: 1;
+                    margin: 0;
                 }
 
                 .feature-short-description {
