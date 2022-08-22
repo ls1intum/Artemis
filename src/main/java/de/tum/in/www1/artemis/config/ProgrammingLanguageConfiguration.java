@@ -94,7 +94,7 @@ public class ProgrammingLanguageConfiguration {
             return ProjectType.tryFromString(projectType);
         }
         catch (IllegalArgumentException ex) {
-            throw new IllegalArgumentException("Unknown project type for " + language + ": " + projectType, ex);
+            throw new IllegalArgumentException("Unknown project type for " + language + ": " + projectType);
         }
     }
 
