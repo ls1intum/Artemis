@@ -103,17 +103,17 @@ public class ExampleSubmissionService {
         ExampleSubmission newExampleSubmission = new ExampleSubmission();
         newExampleSubmission.setExercise(exercise);
 
+        var gradingCriteria = this.gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
+        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).forEach(gradingInstruction -> {
+            gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction);
+        });
+
         if (exercise instanceof ModelingExercise) {
             ModelingSubmission modelingSubmission = (ModelingSubmission) submissionRepository.findOneWithEagerResultAndFeedback(submissionId);
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), modelingSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             modelingSubmission.setParticipation(null);
-
-            var gradingCriteria = this.gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exercise.getId());
-            Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
-            gradingCriteria.stream().flatMap(gradingCriterion -> gradingCriterion.getStructuredGradingInstructions().stream()).forEach(gradingInstruction -> {
-                gradingInstructionCopyTracker.put(gradingInstruction.getId(), gradingInstruction);
-            });
 
             newExampleSubmission.setSubmission(modelingExerciseImportService.copySubmission(modelingSubmission, gradingInstructionCopyTracker));
         }
@@ -122,7 +122,7 @@ public class ExampleSubmissionService {
             checkGivenExerciseIdSameForSubmissionParticipation(exercise.getId(), textSubmission.getParticipation().getExercise().getId());
             // example submission does not need participation
             textSubmission.setParticipation(null);
-            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission));
+            newExampleSubmission.setSubmission(textExerciseImportService.copySubmission(textSubmission, gradingInstructionCopyTracker));
         }
         return exampleSubmissionRepository.save(newExampleSubmission);
     }
