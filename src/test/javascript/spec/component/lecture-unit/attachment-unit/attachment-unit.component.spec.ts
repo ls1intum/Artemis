@@ -93,7 +93,9 @@ describe('AttachmentUnitComponent', () => {
                 expect(event.completed).toBeTrue();
                 done();
             });
-            attachmentUnitComponent.downloadAttachment();
+            const stopPropagation = jest.fn();
+            attachmentUnitComponent.downloadAttachment({ stopPropagation } as any as Event);
+            expect(stopPropagation).toHaveBeenCalledOnce();
         });
     }, 1000);
 
