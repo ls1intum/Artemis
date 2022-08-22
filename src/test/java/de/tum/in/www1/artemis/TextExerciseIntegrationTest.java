@@ -511,7 +511,26 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.addAndSaveTextBlocksToTextSubmission(Set.of(manualTextBlock, automaticTextBlock), (TextSubmission) exampleSubmission.getSubmission());
 
         database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
-        request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        TextExercise newTextExercise = request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
+        assertThat(newTextExercise.getExampleSubmissions()).hasSize(1);
+        ExampleSubmission newExampleSubmission = newTextExercise.getExampleSubmissions().iterator().next();
+        var textBlocks = ((TextSubmission) newExampleSubmission.getSubmission()).getBlocks();
+        assertThat(textBlocks).hasSize(2);
+
+        TextBlock manualTextBlockFromImport = textBlocks.stream().filter(tb -> tb.getText().equals(manualTextBlock.getText())).findFirst().get();
+        assertThat(manualTextBlockFromImport.getId()).isNotEqualTo(manualTextBlock.getId());
+        assertTextBlocksHaveSameContent(manualTextBlock, manualTextBlockFromImport);
+
+        TextBlock automaticTextBlockFromImport = textBlocks.stream().filter(tb -> tb.getText().equals(automaticTextBlock.getText())).findFirst().get();
+        assertThat(automaticTextBlockFromImport.getId()).isNotEqualTo(automaticTextBlock.getId());
+        assertTextBlocksHaveSameContent(automaticTextBlock, automaticTextBlockFromImport);
+    }
+
+    private static void assertTextBlocksHaveSameContent(TextBlock manualTextBlock, TextBlock manualTextBlockFromImport) {
+        assertThat(manualTextBlockFromImport.getType()).isEqualTo(manualTextBlock.getType());
+        assertThat(manualTextBlockFromImport.getStartIndex()).isEqualTo(manualTextBlock.getStartIndex());
+        assertThat(manualTextBlockFromImport.getEndIndex()).isEqualTo(manualTextBlock.getEndIndex());
+        assertThat(manualTextBlockFromImport.getText()).isEqualTo(manualTextBlock.getText());
     }
 
     @Test
