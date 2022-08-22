@@ -41,10 +41,10 @@ class ProgrammingLanguageConfigurationTest {
 
     @Test
     void testUnknownProgrammingLanguageConfigured() {
-        defaultConfig.put("scala", Map.of("default", OVERRIDDEN_IMAGE_NAME));
+        defaultConfig.put("whitespace", Map.of("default", OVERRIDDEN_IMAGE_NAME));
         var config = new ProgrammingLanguageConfiguration();
 
-        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown programming language: scala");
+        assertThatThrownBy(() -> config.setImages(defaultConfig)).isInstanceOf(IllegalArgumentException.class).hasMessageContaining("Unknown programming language: whitespace");
     }
 
     @Test
