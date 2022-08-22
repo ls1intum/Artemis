@@ -32,7 +32,7 @@ public class ProgrammingExerciseTestCaseService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final AuditEventRepository auditEventRepository;
 
@@ -51,10 +51,10 @@ public class ProgrammingExerciseTestCaseService {
     private final ProgrammingExerciseTaskService programmingExerciseTaskService;
 
     public ProgrammingExerciseTestCaseService(ProgrammingExerciseTestCaseRepository testCaseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ProgrammingSubmissionService programmingSubmissionService, AuditEventRepository auditEventRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
+            ProgrammingTriggerService programmingTriggerService, AuditEventRepository auditEventRepository, ProgrammingExerciseTaskService programmingExerciseTaskService) {
         this.testCaseRepository = testCaseRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
-        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingTriggerService = programmingTriggerService;
         this.auditEventRepository = auditEventRepository;
         this.programmingExerciseTaskService = programmingExerciseTaskService;
     }
@@ -117,7 +117,7 @@ public class ProgrammingExerciseTestCaseService {
         testCaseRepository.saveAll(updatedTests);
         programmingExerciseTaskService.updateTasksFromProblemStatement(programmingExercise);
         // At least one test was updated with a new weight or runAfterDueDate flag. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTests;
     }
 
@@ -169,7 +169,7 @@ public class ProgrammingExerciseTestCaseService {
         }
         List<ProgrammingExerciseTestCase> updatedTestCases = testCaseRepository.saveAll(testCases);
         // The tests' weights were updated. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
         return updatedTestCases;
     }
 

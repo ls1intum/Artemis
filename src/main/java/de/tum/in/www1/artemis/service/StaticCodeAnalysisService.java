@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.CategoryState;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.repository.StaticCodeAnalysisCategoryRepository;
 import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 
 @Service
 public class StaticCodeAnalysisService {
@@ -29,13 +29,13 @@ public class StaticCodeAnalysisService {
 
     private final StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository;
 
-    ProgrammingSubmissionService programmingSubmissionService;
+    private final ProgrammingTriggerService programmingTriggerService;
 
     public StaticCodeAnalysisService(StaticCodeAnalysisCategoryRepository staticCodeAnalysisCategoryRepository,
-            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingSubmissionService programmingSubmissionService) {
+            Map<ProgrammingLanguage, List<StaticCodeAnalysisDefaultCategory>> staticCodeAnalysisDefaultConfigurations, ProgrammingTriggerService programmingTriggerService) {
         this.staticCodeAnalysisCategoryRepository = staticCodeAnalysisCategoryRepository;
         this.staticCodeAnalysisDefaultConfigurations = staticCodeAnalysisDefaultConfigurations;
-        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingTriggerService = programmingTriggerService;
     }
 
     /**
@@ -104,7 +104,7 @@ public class StaticCodeAnalysisService {
         staticCodeAnalysisCategoryRepository.saveAll(originalCategories);
 
         // At least one category was updated. We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exerciseId);
 
         return originalCategories;
     }
@@ -137,7 +137,7 @@ public class StaticCodeAnalysisService {
         staticCodeAnalysisCategoryRepository.saveAll(categories);
 
         // We use this flag to inform the instructor about outdated student results.
-        programmingSubmissionService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
+        programmingTriggerService.setTestCasesChangedAndTriggerTestCaseUpdate(exercise.getId());
 
         return categories;
     }
