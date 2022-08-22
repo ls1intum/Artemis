@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -197,6 +198,22 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         Result storedResult = resultRepo.findDistinctWithFeedbackBySubmissionId(storedExampleSubmission.getSubmission().getId()).get();
         database.checkFeedbackCorrectlyStored(feedbacks, storedResult.getFeedbacks(), FeedbackType.MANUAL);
         assertThat(storedResult.isExampleResult()).as("stored result is flagged as example result").isTrue();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void prepareExampleTextSubmissionForAssessmentShouldCreateBlocks() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
+
+        ExampleSubmission unpreparedExampleSubmission = request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.OK, ExampleSubmission.class);
+        TextSubmission unpreparedTextSubmission = (TextSubmission) unpreparedExampleSubmission.getSubmission();
+        assertThat(unpreparedTextSubmission.getBlocks()).hasSize(0);
+
+        request.postWithoutResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/prepare-assessment", HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+        ExampleSubmission preparedExampleSubmission = request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.OK, ExampleSubmission.class);
+        TextSubmission preparedTextSubmission = (TextSubmission) preparedExampleSubmission.getSubmission();
+        assertThat(preparedTextSubmission.getBlocks()).hasSize(2);
     }
 
     @Test

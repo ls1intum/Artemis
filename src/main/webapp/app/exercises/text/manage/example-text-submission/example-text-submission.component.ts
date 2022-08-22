@@ -23,13 +23,14 @@ import { TextAssessmentBaseComponent } from 'app/exercises/text/assess/text-asse
 import { StructuredGradingCriterionService } from 'app/exercises/shared/structured-grading-criterion/structured-grading-criterion.service';
 import { notUndefined } from 'app/shared/util/global.utils';
 import { AssessButtonStates, Context, State, SubmissionButtonStates, UIStates } from 'app/exercises/text/manage/example-text-submission/example-text-submission-state.model';
-import { filter, switchMap, tap } from 'rxjs/operators';
+import { filter, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercises/shared/example-submission/example-submission-assess-command';
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { Observable, of } from 'rxjs';
+import { firstValueFrom, Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
+import { flatMap } from 'lodash-es';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 
@@ -222,13 +223,25 @@ export class ExampleTextSubmissionComponent extends TextAssessmentBaseComponent 
     }
 
     public async startAssessment(): Promise<void> {
-        this.result = new Result();
-        this.result.submission = this.submission;
-        this.submission!.results = [this.result];
-        this.prepareTextBlocksAndFeedbacks();
-        this.areNewAssessments = this.assessments.length <= 0;
-        this.validateFeedback();
-        this.state.assess();
+        this.exampleSubmissionService
+            .prepareForAssessment(this.exerciseId, this.exampleSubmissionId)
+            .pipe(
+                mergeMap(() => {
+                    return this.exampleSubmissionService.get(this.exampleSubmissionId);
+                }),
+            )
+            .subscribe((exampleSubmissionResponse: HttpResponse<ExampleSubmission>) => {
+                this.exampleSubmission = exampleSubmissionResponse.body!;
+                this.submission = this.exampleSubmission.submission as TextSubmission;
+
+                this.result = new Result();
+                this.result.submission = this.submission;
+                this.submission!.results = [this.result];
+                this.prepareTextBlocksAndFeedbacks();
+                this.areNewAssessments = this.assessments.length <= 0;
+                this.validateFeedback();
+                this.state.assess();
+            });
     }
 
     /**
