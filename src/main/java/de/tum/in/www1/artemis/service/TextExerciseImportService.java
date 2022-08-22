@@ -170,14 +170,25 @@ public class TextExerciseImportService extends ExerciseImportService {
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
-        Map<Integer, TextBlock> originalTextBlockMap = originalTextBlocks.stream().collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+        Map<Integer, TextBlock> originalManualTextBlockMap = originalTextBlocks.stream().filter(textBlock -> textBlock.getType() == TextBlockType.MANUAL)
+                .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+        Map<Integer, TextBlock> nonManualTextBlockMap = originalTextBlocks.stream().filter(textBlock -> textBlock.getType() != TextBlockType.MANUAL)
+                .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
 
         Map<String, String> textBlockIdPair = new HashMap<>();
 
         // collect <original text block id, new text block id> pair, it will help to find the feedback which has old reference
         newSubmissionTextBlocks.forEach(newTextBlock -> {
-            TextBlock oldTextBlock = originalTextBlockMap.get(newTextBlock.getStartIndex());
-            textBlockIdPair.put(oldTextBlock.getId(), newTextBlock.getId());
+            TextBlock oldTextBlock;
+            if (newTextBlock.getType() == TextBlockType.MANUAL) {
+                oldTextBlock = originalManualTextBlockMap.get(newTextBlock.getStartIndex());
+            }
+            else {
+                oldTextBlock = nonManualTextBlockMap.get(newTextBlock.getStartIndex());
+            }
+            if (oldTextBlock != null) {
+                textBlockIdPair.put(oldTextBlock.getId(), newTextBlock.getId());
+            }
         });
 
         // for each feedback in result, update the reference with new text block id

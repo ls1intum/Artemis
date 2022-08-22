@@ -499,15 +499,16 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         textExerciseRepository.save(textExercise);
 
         // Create example submission
-        var exampleSubmission = database.generateExampleSubmission("text", textExercise, true);
+        var exampleSubmission = database.generateExampleSubmission("Lorem Ipsum", textExercise, true);
         exampleSubmission = database.addExampleSubmission(exampleSubmission);
 
-        var textBlock = ModelFactory.generateTextBlock(0, 1, "test");
-        textBlock.setCluster(null);
-        textBlock.setAddedDistance(0);
-        textBlock.setStartIndex(0);
-        textBlock.setEndIndex(0);
-        database.addAndSaveTextBlocksToTextSubmission(Set.of(textBlock), (TextSubmission) exampleSubmission.getSubmission());
+        var automaticTextBlock = ModelFactory.generateTextBlock(1, 4, "orem");
+        automaticTextBlock.automatic();
+
+        var manualTextBlock = ModelFactory.generateTextBlock(1, 3, "ore");
+        manualTextBlock.manual();
+
+        database.addAndSaveTextBlocksToTextSubmission(Set.of(manualTextBlock, automaticTextBlock), (TextSubmission) exampleSubmission.getSubmission());
 
         database.addResultToSubmission(exampleSubmission.getSubmission(), AssessmentType.MANUAL);
         request.postWithResponseBody("/api/text-exercises/import/" + textExercise.getId(), textExercise, TextExercise.class, HttpStatus.CREATED);
