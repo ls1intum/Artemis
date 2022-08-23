@@ -53,9 +53,9 @@ $conversation-section-card-min-width: 215px;
                     cursor: pointer;
                     display: flex;
                     padding: 0.2rem;
+                    color: var(--metis-light-gray);
 
                     &-user {
-                        color: grey;
                         font-size: 14px;
                         white-space: nowrap;
                         overflow: hidden;
@@ -63,11 +63,12 @@ $conversation-section-card-min-width: 215px;
                     }
 
                     &.selected {
-                        background-color: transparentize(lightskyblue, 0.5);
+                        background-color: var(--metis-light-blue);
                     }
 
                     &:hover {
-                        background-color: lightskyblue;
+                        color: var(--metis-course-discussion-select-bg);
+                        background-color: var(--metis-blue);
                     }
                 }
             }
