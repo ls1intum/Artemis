@@ -264,7 +264,6 @@ public class LtiService {
             user.setGroups(groups);
             userCreationService.saveUser(user);
 
-            // TODO: is there an issue with removing the old edx check?
             // try to sync with authentication service
             try {
                 artemisAuthenticationProvider.addUserToGroup(user, courseStudentGroupName);
