@@ -222,7 +222,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         assertThat(examCourse.getId()).isNotEqualTo(course.getId());
 
-        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.FORBIDDEN, PlagiarismCase.class);
+        request.getList("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/plagiarism-cases/for-instructor", HttpStatus.CONFLICT, PlagiarismCase.class);
     }
 
     @Test
