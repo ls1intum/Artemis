@@ -81,9 +81,7 @@ public class PlagiarismCaseResource {
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, null)) {
-            throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
-        }
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
         if (!plagiarismCases.isEmpty()) {
@@ -188,7 +186,7 @@ public class PlagiarismCaseResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<Map<Long, PlagiarismCaseInfoDTO>> getPlagiarismCasesForExercisesForStudent(@PathVariable long courseId,
             @RequestParam(name = "exerciseId") Set<Long> exerciseIds) {
-        log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseIds);
+        log.debug("REST request to all plagiarism cases for student and exercises with ids: {}", exerciseIds);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);

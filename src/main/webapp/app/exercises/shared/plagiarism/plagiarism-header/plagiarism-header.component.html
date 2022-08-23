@@ -7,7 +7,6 @@
     </div>
 
     <div class="plagiarism-header-right">
-        <!-- Disable buttons for exam exercises since they are currently not supported -->
         <button [disabled]="comparison.status === plagiarismStatus.CONFIRMED" class="btn btn-success btn-sm" (click)="confirmPlagiarism()" data-qa="confirm-plagiarism-button">
             {{ 'artemisApp.plagiarism.confirm' | artemisTranslate }}
         </button>
