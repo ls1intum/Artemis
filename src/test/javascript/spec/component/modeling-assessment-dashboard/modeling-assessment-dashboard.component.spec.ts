@@ -108,7 +108,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         // check
         expect(getSubmissionsSpy).toHaveBeenCalledOnce();
         expect(registerChangeInResultsSpy).toHaveBeenCalledOnce();
-        expect(courseFindSpy).toHaveBeenCalledOnce();
+        expect(courseFindSpy).toHaveBeenCalledTimes(2);
         expect(exerciseFindSpy).toHaveBeenCalledOnce();
         expect(component.course).toEqual(course);
         expect(component.exercise).toEqual(modelingExercise as ModelingExercise);

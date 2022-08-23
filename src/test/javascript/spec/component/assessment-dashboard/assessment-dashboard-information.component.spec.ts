@@ -26,6 +26,7 @@ describe('AssessmentDashboardInformationComponent', () => {
 
         fixture = TestBed.createComponent(AssessmentDashboardInformationComponent);
         component = fixture.componentInstance;
+        component.course = { id: 10 } as Course;
     });
 
     afterEach(() => {
@@ -63,7 +64,6 @@ describe('AssessmentDashboardInformationComponent', () => {
     it('should set up links correctly', () => {
         component.isExamMode = false;
         component.examId = 42;
-        component.course = { id: 10 } as Course;
 
         jest.spyOn(component, 'setupGraph').mockImplementation();
 

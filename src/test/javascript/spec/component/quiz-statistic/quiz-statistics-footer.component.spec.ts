@@ -78,7 +78,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
         // check
-        expect(accountSpy).toHaveBeenCalledOnce();
+        expect(accountSpy).toHaveBeenCalledTimes(2);
         expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
         expect(loadSpy).toHaveBeenCalledWith(quizExercise);
         expect(comp.question).toEqual(question);

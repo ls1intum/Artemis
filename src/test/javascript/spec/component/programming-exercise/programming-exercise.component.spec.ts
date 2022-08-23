@@ -90,7 +90,7 @@ describe('ProgrammingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalledOnce();
+        expect(service.findAllProgrammingExercisesForCourse).toHaveBeenCalledTimes(2);
         expect(comp.programmingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });

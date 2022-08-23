@@ -77,7 +77,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
@@ -106,7 +106,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(resetLabelsSpy).toHaveBeenCalledOnce();
+            expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
             expect(addLastBarSpy).toHaveBeenCalledOnce();
             expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
             expect(loadSolutionSpy).toHaveBeenCalledOnce();
@@ -129,7 +129,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalledOnce();
+            expect(resetDataSpy).toHaveBeenCalledTimes(2);
             expect(addDataSpy).toHaveBeenCalledOnce();
             expect(updateDataSpy).toHaveBeenCalledOnce();
         });

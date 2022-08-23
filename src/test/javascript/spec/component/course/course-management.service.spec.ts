@@ -78,10 +78,10 @@ describe('Course Management Service', () => {
         expect(convertDatesForLecturesFromServerSpy).toHaveBeenCalledWith(courseForConversion.lectures);
     };
 
-    const expectAccessRightsToBeCalled = () => {
-        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalledOnce();
-        expect(isAtLeastEditorInCourseSpy).toHaveBeenCalledOnce();
-        expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalledOnce();
+    const expectAccessRightsToBeCalled = (tutorTimes: number, editorTimes: number, instructorTimes: number) => {
+        expect(isAtLeastTutorInCourseSpy).toHaveBeenCalledTimes(tutorTimes);
+        expect(isAtLeastEditorInCourseSpy).toHaveBeenCalledTimes(editorTimes);
+        expect(isAtLeastInstructorInCourseSpy).toHaveBeenCalledTimes(instructorTimes);
     };
 
     const requestAndExpectDateConversion = (method: string, url: string, flushedObject: any = returnedFromService, courseToCheck: Course, checkAccessRights?: boolean) => {
@@ -89,7 +89,7 @@ describe('Course Management Service', () => {
         req.flush(flushedObject);
         expectDateConversionToBeCalled(courseToCheck);
         if (checkAccessRights) {
-            expectAccessRightsToBeCalled();
+            expectAccessRightsToBeCalled(3, 3, 3);
         }
     };
 
@@ -291,7 +291,7 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
-        expectAccessRightsToBeCalled();
+        expectAccessRightsToBeCalled(3, 3, 3);
         tick();
     }));
 

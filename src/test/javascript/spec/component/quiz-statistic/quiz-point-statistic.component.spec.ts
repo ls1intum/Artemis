@@ -96,7 +96,7 @@ describe('QuizExercise Point Statistic Component', () => {
             jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
 
             // check
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
             expect(comp.quizExerciseChannel).toBe('/topic/courses/2/quizExercises');

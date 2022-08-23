@@ -102,7 +102,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(4);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/4');
@@ -131,7 +131,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadQuiz(quizExercise, false);
 
-            expect(generateStructureSpy).toHaveBeenCalledOnce();
+            expect(generateStructureSpy).toHaveBeenCalledTimes(2);
             expect(generateLettersSpy).toHaveBeenCalledOnce();
             expect(loadLayoutSpy).toHaveBeenCalledOnce();
             expect(loadDataSpy).toHaveBeenCalledOnce();
@@ -149,7 +149,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(resetLabelsSpy).toHaveBeenCalledOnce();
+            expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
             expect(addLastBarSpy).toHaveBeenCalledOnce();
             expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
         });
@@ -164,7 +164,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalledOnce();
+            expect(resetDataSpy).toHaveBeenCalledTimes(2);
             expect(addDataSpy).toHaveBeenCalledOnce();
             expect(updateDataSpy).toHaveBeenCalledOnce();
         });
@@ -178,7 +178,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.showSolution = true;
             comp.switchSolution();
 
-            expect(loadDataInDiagramSpy).toHaveBeenCalledOnce();
+            expect(loadDataInDiagramSpy).toHaveBeenCalledTimes(2);
             expect(comp.showSolution).toBeFalse();
         });
     });
@@ -190,7 +190,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.switchRated();
 
-            expect(loadDataInDiagramSpy).toHaveBeenCalledOnce();
+            expect(loadDataInDiagramSpy).toHaveBeenCalledTimes(2);
             expect(comp.rated).toBeFalse();
         });
     });

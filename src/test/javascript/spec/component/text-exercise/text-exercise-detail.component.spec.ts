@@ -85,7 +85,7 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalledOnce();
+            expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
@@ -123,7 +123,7 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalledOnce();
+            expect(exerciseServiceStub).toHaveBeenCalledTimes(2);
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);

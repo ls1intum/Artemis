@@ -206,7 +206,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(updateSpy).toHaveBeenCalledOnce();
+            expect(updateSpy).toHaveBeenCalledTimes(50);
         }));
 
         it('should check quiz end in intervals', fakeAsync(() => {
@@ -217,7 +217,7 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(checkQuizEndSpy).toHaveBeenCalledOnce();
+            expect(checkQuizEndSpy).toHaveBeenCalledTimes(50);
         }));
 
         it('should add alert on quiz end', fakeAsync(() => {
@@ -236,8 +236,8 @@ describe('QuizParticipationComponent', () => {
             fixture.detectChanges();
             discardPeriodicTasks();
 
-            expect(checkQuizEndSpy).toHaveBeenCalledOnce();
-            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
+            expect(alertSpy).toHaveBeenCalledTimes(20);
         }));
 
         it('should refresh quiz', () => {

@@ -1469,7 +1469,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.showExistingQuestionsFromCourse).toBeFalse();
                 expect(comp.showExistingQuestionsFromFile).toBeFalse();
                 expect(comp.showExistingQuestionsFromExam).toBeTrue();
-                expect(getElementStub).toHaveBeenCalledOnce();
+                expect(getElementStub).toHaveBeenCalledTimes(3);
                 expect(control.value).toBe('');
             });
         });
@@ -1534,7 +1534,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.onFileLoadImport(reader);
                 expect(verifyStub).toHaveBeenCalledWith(questions);
                 expect(comp.importFile).toBeUndefined();
-                expect(getElementStub).toHaveBeenCalledOnce();
+                expect(getElementStub).toHaveBeenCalledTimes(4);
                 expect(control.value).toBe('');
             });
 

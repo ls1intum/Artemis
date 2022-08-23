@@ -138,7 +138,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(statisticsServiceStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledTimes(2);
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
             expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
             expect(comp.doughnutStats.absoluteAveragePoints).toBe(5);

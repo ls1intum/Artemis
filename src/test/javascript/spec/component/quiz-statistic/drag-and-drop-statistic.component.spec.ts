@@ -73,7 +73,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/42');
@@ -102,7 +102,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(orderDropLocationSpy).toHaveBeenCalledOnce();
+            expect(orderDropLocationSpy).toHaveBeenCalledTimes(2);
             expect(resetLabelsSpy).toHaveBeenCalledOnce();
             expect(addLastBarSpy).toHaveBeenCalledOnce();
             expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
@@ -118,8 +118,8 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalledOnce();
-            expect(updateDataSpy).toHaveBeenCalledOnce();
+            expect(resetDataSpy).toHaveBeenCalledTimes(2);
+            expect(updateDataSpy).toHaveBeenCalledTimes(2);
         });
     });
 });

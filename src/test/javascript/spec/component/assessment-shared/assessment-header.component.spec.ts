@@ -275,7 +275,7 @@ describe('AssessmentHeaderComponent', () => {
 
         component.toggleHighlightDifferences();
 
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledOnce();
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
         expect(component.highlightDifferences).toBeTrue();
     });
 
@@ -285,7 +285,7 @@ describe('AssessmentHeaderComponent', () => {
 
         component.toggleHighlightDifferences();
 
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledOnce();
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
         expect(component.highlightDifferences).toBeFalse();
     });
 

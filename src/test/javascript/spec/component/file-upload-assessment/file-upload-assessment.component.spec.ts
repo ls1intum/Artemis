@@ -215,7 +215,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 404 })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledOnce();
+            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
             expect(comp.busy).toBeTrue();
         });
 
@@ -226,7 +226,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ error: { errorKey: 'lockedSubmissionsLimitReached' } })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalledOnce();
+            expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
             expect(comp.busy).toBeTrue();
         });
 
@@ -611,7 +611,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = createSubmission(exercise);
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         comp.navigateBack();
-        expect(navigateByUrlStub).toHaveBeenCalledOnce();
+        expect(navigateByUrlStub).toHaveBeenCalledTimes(2);
     });
 });
 

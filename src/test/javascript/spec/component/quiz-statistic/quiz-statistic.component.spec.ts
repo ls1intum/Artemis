@@ -97,7 +97,7 @@ describe('QuizExercise Statistic Component', () => {
             tick(); // simulate async
 
             // check
-            expect(accountSpy).toHaveBeenCalledOnce();
+            expect(accountSpy).toHaveBeenCalledTimes(100);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
         }));
