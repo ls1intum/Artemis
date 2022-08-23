@@ -8,6 +8,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class LtiLaunchRequestDTO {
 
+    // Method and variable names need to match the LTI standard
+
     private String lis_person_sourcedid;
 
     private String lis_person_name_given;
