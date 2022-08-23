@@ -41,7 +41,7 @@ import de.tum.in.www1.artemis.web.rest.util.ResponseUtil;
 
 /** REST controller for managing ModelingExercise. */
 @RestController
-@RequestMapping(ModelingExerciseResource.Endpoints.ROOT)
+@RequestMapping("api/")
 public class ModelingExerciseResource {
 
     private final Logger log = LoggerFactory.getLogger(ModelingExerciseResource.class);
@@ -283,14 +283,13 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * DELETE modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
+     * GET admin/modeling-exercises/:id/check-clusters : delete the clusters and elements of "id" modelingExercise.
      *
      * @param exerciseId the id of the modelingExercise to delete clusters and elements
      * @return the ResponseEntity with status 200 (OK)
      */
-    @GetMapping("modeling-exercises/{exerciseId}/check-clusters")
+    @GetMapping("admin/modeling-exercises/{exerciseId}/check-clusters")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<Integer> checkClusters(@PathVariable Long exerciseId) {
         log.info("REST request to check clusters of ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -301,14 +300,13 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * DELETE modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
+     * DELETE admin/modeling-exercises/:id/clusters : delete the clusters and elements of "id" modelingExercise.
      *
      * @param exerciseId the id of the modelingExercise to delete clusters and elements
      * @return the ResponseEntity with status 200 (OK)
      */
-    @DeleteMapping("modeling-exercises/{exerciseId}/clusters")
+    @DeleteMapping("admin/modeling-exercises/{exerciseId}/clusters")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<Void> deleteModelingExerciseClustersAndElements(@PathVariable Long exerciseId) {
         log.info("REST request to delete ModelingExercise : {}", exerciseId);
         var modelingExercise = modelingExerciseRepository.findByIdElseThrow(exerciseId);
@@ -320,7 +318,7 @@ public class ModelingExerciseResource {
     }
 
     /**
-     * POST modeling-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
+     * POST admin/modeling-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
      * (clustering task) for given exercise id As the clustering can be performed on a different
      * node, this will always return 200, despite an error could occur on the other node.
      *
@@ -328,9 +326,8 @@ public class ModelingExerciseResource {
      *                   triggered
      * @return the ResponseEntity with status 200 (OK)
      */
-    @PostMapping("modeling-exercises/{exerciseId}/trigger-automatic-assessment")
+    @PostMapping("admin/modeling-exercises/{exerciseId}/trigger-automatic-assessment")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
         instanceMessageSendService.sendModelingExerciseInstantClustering(exerciseId);
         return ResponseEntity.ok().build();
@@ -464,7 +461,7 @@ public class ModelingExerciseResource {
      * Server Error) if the modelingExercise couldn't be updated
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
-    @PutMapping(Endpoints.REEVALUATE_EXERCISE)
+    @PutMapping("modeling-exercises/{exerciseId}/re-evaluate")
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<ModelingExercise> reEvaluateAndUpdateModelingExercise(@PathVariable long exerciseId, @RequestBody ModelingExercise modelingExercise,
             @RequestParam(value = "deleteFeedback", required = false) Boolean deleteFeedbackAfterGradingInstructionUpdate) throws URISyntaxException {
@@ -482,19 +479,5 @@ public class ModelingExerciseResource {
         exerciseService.reEvaluateExercise(modelingExercise, deleteFeedbackAfterGradingInstructionUpdate);
 
         return updateModelingExercise(modelingExercise, null);
-    }
-
-    public static final class Endpoints {
-
-        public static final String ROOT = "api";
-
-        public static final String MODELING_EXERCISES = "modeling-exercises";
-
-        public static final String MODELING_EXERCISE = MODELING_EXERCISES + "/{exerciseId}";
-
-        public static final String REEVALUATE_EXERCISE = MODELING_EXERCISE + "/re-evaluate";
-
-        private Endpoints() {
-        }
     }
 }

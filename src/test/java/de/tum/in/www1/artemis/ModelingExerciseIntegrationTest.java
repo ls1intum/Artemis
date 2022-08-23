@@ -784,7 +784,7 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
     void deleteModelingExerciseClustersAndElementsAsAdmin() throws Exception {
         final Course course = database.addCourseWithOneModelingExercise();
         ModelingExercise modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        request.delete("/api/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
+        request.delete("/api/admin/modeling-exercises/" + modelingExercise.getId() + "/clusters", HttpStatus.OK);
     }
 
     @Test
