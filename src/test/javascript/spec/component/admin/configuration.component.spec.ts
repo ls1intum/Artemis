@@ -27,8 +27,8 @@ describe('Component Tests', () => {
             service = TestBed.inject(ConfigurationService);
         });
 
-        describe('OnInit', () => {
-            it('Should call load all on init', () => {
+        describe('onInit', () => {
+            it('should call load all on init', () => {
                 // GIVEN
                 const beans: Bean[] = [
                     {

@@ -25,7 +25,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should sort entries', () => {
+    it('should sort entries', () => {
         const entries = [
             { filePath: 'src/a.java', previousLine: 3 },
             { filePath: 'src/b.java', line: 1 },
@@ -49,7 +49,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.entries).toStrictEqual(expectedEntries);
     });
 
-    it('Should set added/removed lines to 1-0', () => {
+    it('should set added/removed lines to 1-0', () => {
         const entries = [{ filePath: 'src/a.java', code: 'Test' }] as ProgrammingExerciseFullGitDiffEntry[];
 
         comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;
@@ -58,7 +58,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(0);
     });
 
-    it('Should set added/removed lines to 4-1', () => {
+    it('should set added/removed lines to 4-1', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -73,7 +73,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(1);
     });
 
-    it('Should set added/removed lines to 3-2', () => {
+    it('should set added/removed lines to 3-2', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -88,7 +88,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(2);
     });
 
-    it('Should set added/removed lines to 2-3', () => {
+    it('should set added/removed lines to 2-3', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -103,7 +103,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(3);
     });
 
-    it('Should set added/removed lines to 1-4', () => {
+    it('should set added/removed lines to 1-4', () => {
         const entries = [
             {
                 filePath: 'src/a.java',
@@ -118,7 +118,7 @@ describe('ProgrammingExerciseFullGitDiffReport Component', () => {
         expect(comp.removedLineCount).toBe(4);
     });
 
-    it('Should set added/removed lines to 0-1', () => {
+    it('should set added/removed lines to 0-1', () => {
         const entries = [{ filePath: 'src/a.java', previousCode: '1' }] as ProgrammingExerciseFullGitDiffEntry[];
 
         comp.report = { entries } as ProgrammingExerciseFullGitDiffReport;

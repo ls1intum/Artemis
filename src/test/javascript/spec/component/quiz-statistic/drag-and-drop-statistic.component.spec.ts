@@ -65,7 +65,7 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
         quizExercise = { id: 42, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -103,9 +103,9 @@ describe('QuizExercise Drag And Drop Question Statistic Component', () => {
             comp.loadLayout();
 
             expect(orderDropLocationSpy).toHaveBeenCalledTimes(2);
-            expect(resetLabelsSpy).toHaveBeenCalledOnce();
-            expect(addLastBarSpy).toHaveBeenCalledOnce();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
+            expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
+            expect(addLastBarSpy).toHaveBeenCalledTimes(2);
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledTimes(2);
         });
     });
 

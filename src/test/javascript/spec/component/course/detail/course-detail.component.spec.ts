@@ -101,7 +101,7 @@ describe('Course Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call registerChangeInCourses on init', () => {
+    it('should call registerChangeInCourses on init', () => {
         const registerSpy = jest.spyOn(component, 'registerChangeInCourses');
 
         fixture.detectChanges();

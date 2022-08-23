@@ -66,7 +66,7 @@ describe('QuizExercise Statistic Footer Component', () => {
         examQuizExercise = { id: 43, quizStarted: true, course, quizQuestions: [question], exerciseGroup: { id: 11, exam: { id: 10 } } } as QuizExercise;
     });
 
-    it('Should load Quiz on Init', fakeAsync(() => {
+    it('should load Quiz on Init', fakeAsync(() => {
         // setup
         jest.useFakeTimers();
         const loadSpy = jest.spyOn(comp, 'loadQuiz');

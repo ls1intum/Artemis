@@ -29,7 +29,7 @@ describe('Alert Overlay Component Tests', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call alertService.get on init', () => {
+    it('should call alertService.get on init', () => {
         const getStub = jest.spyOn(alertService, 'get');
 
         // WHEN
@@ -39,7 +39,7 @@ describe('Alert Overlay Component Tests', () => {
         expect(getStub).toHaveBeenCalledOnce();
     });
 
-    it('Should close all alerts on destroy', () => {
+    it('should close all alerts on destroy', () => {
         const clearStub = jest.spyOn(alertService, 'closeAll');
 
         // WHEN
@@ -49,7 +49,7 @@ describe('Alert Overlay Component Tests', () => {
         expect(clearStub).toHaveBeenCalledOnce();
     });
 
-    it('Should call action callback if button is clicked', () => {
+    it('should call action callback if button is clicked', () => {
         comp.ngOnInit();
 
         const callback = jest.fn();
@@ -73,7 +73,7 @@ describe('Alert Overlay Component Tests', () => {
         expect(callback).toHaveBeenCalledOnce();
     });
 
-    it('Should close the alert if the close icon is clicked', () => {
+    it('should close the alert if the close icon is clicked', () => {
         comp.ngOnInit();
 
         const onClose = jest.fn();
@@ -96,7 +96,7 @@ describe('Alert Overlay Component Tests', () => {
         expect(alertService.get()).toHaveLength(0);
     });
 
-    it('Should not render the close icon if alert is not dismissible', () => {
+    it('should not render the close icon if alert is not dismissible', () => {
         comp.ngOnInit();
 
         alertService.addAlert({

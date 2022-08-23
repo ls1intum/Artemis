@@ -182,7 +182,7 @@ describe('QuizExercise Management Detail Component', () => {
         modalService = fixture.debugElement.injector.get(NgbModal);
     };
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         let quizExerciseServiceStub: jest.SpyInstance;
         let courseManagementServiceStub: jest.SpyInstance;
         let exerciseGroupServiceStub: jest.SpyInstance;
@@ -200,7 +200,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('without exam id', () => {
             beforeEach(waitForAsync(configureTestBed));
             beforeEach(configureFixtureAndServices);
-            it('Should call courseExerciseService.find and quizExerciseService.find', () => {
+            it('should call courseExerciseService.find and quizExerciseService.find', () => {
                 // GIVEN
                 configureStubs();
                 // WHEN
@@ -457,7 +457,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise = quizExercise;
             });
 
-            it('Should update duration and quizExercise.duration with same values', () => {
+            it('should update duration and quizExercise.duration with same values', () => {
                 comp.duration = { minutes: 15, seconds: 30 };
                 comp.onDurationChange();
 
@@ -466,7 +466,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(durationAsSeconds).toEqual(comp.quizExercise.duration);
             });
 
-            it('Should increase minutes when reaching 60 seconds', () => {
+            it('should increase minutes when reaching 60 seconds', () => {
                 comp.duration = { minutes: 0, seconds: 60 };
                 comp.onDurationChange();
 
@@ -474,7 +474,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.duration.seconds).toBe(0);
             });
 
-            it('Should decrease minutes when reaching -1 seconds', () => {
+            it('should decrease minutes when reaching -1 seconds', () => {
                 comp.duration = { minutes: 1, seconds: -1 };
                 comp.onDurationChange();
 
@@ -482,7 +482,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.duration.seconds).toBe(59);
             });
 
-            it('Should set duration to due date release date difference', () => {
+            it('should set duration to due date release date difference', () => {
                 comp.isExamMode = true;
                 comp.quizExercise.releaseDate = dayjs();
                 comp.quizExercise.dueDate = dayjs().add(1530, 's');

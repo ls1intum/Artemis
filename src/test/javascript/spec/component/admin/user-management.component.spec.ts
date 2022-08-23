@@ -124,7 +124,7 @@ describe('UserManagementComponent', () => {
     }));
 
     describe('setActive', () => {
-        it('Should update user and call load all', inject(
+        it('should update user and call load all', inject(
             [],
             fakeAsync(() => {
                 // GIVEN

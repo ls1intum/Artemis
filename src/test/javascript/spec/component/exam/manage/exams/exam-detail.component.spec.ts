@@ -206,7 +206,7 @@ describe('ExamDetailComponent', () => {
         expect(JSON.stringify(route)).toEqual(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
     });
 
-    it('Should reset an exam when reset exam is called', () => {
+    it('should reset an exam when reset exam is called', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN

@@ -157,7 +157,7 @@ describe('CourseOverviewComponent', () => {
         sessionStorage.clear();
     });
 
-    it('Should call all methods on init', async () => {
+    it('should call all methods on init', async () => {
         const getCourseStub = jest.spyOn(courseScoreCalculationService, 'getCourse');
         const subscribeToTeamAssignmentUpdatesStub = jest.spyOn(component, 'subscribeToTeamAssignmentUpdates');
         const subscribeForQuizChangesStub = jest.spyOn(component, 'subscribeForQuizChanges');

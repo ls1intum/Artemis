@@ -90,7 +90,7 @@ describe('FileUploadExercise Management Detail Component', () => {
     });
 
     describe('Title should contain exercise id and description list', () => {
-        it('Should call load all on init', fakeAsync(() => {
+        it('should call load all on init', fakeAsync(() => {
             const headers = new HttpHeaders().append('link', 'link;link');
             jest.spyOn(service, 'find').mockReturnValue(
                 of(
@@ -117,12 +117,12 @@ describe('FileUploadExercise Management Detail Component', () => {
         }));
     });
 
-    describe('OnInit with course exercise', () => {
+    describe('onInit with course exercise', () => {
         beforeEach(() => {
             route.params = of({ exerciseId: fileUploadExerciseWithCourse.id });
         });
 
-        it('Should call load on init and be not in exam mode', () => {
+        it('should call load on init and be not in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             jest.spyOn(service, 'find').mockReturnValue(
@@ -147,7 +147,7 @@ describe('FileUploadExercise Management Detail Component', () => {
         });
     });
 
-    describe('OnInit with exam exercise', () => {
+    describe('onInit with exam exercise', () => {
         const fileUploadExerciseWithExerciseGroup: FileUploadExercise = new FileUploadExercise(undefined, new ExerciseGroup());
         fileUploadExerciseWithExerciseGroup.id = 123;
 
@@ -155,7 +155,7 @@ describe('FileUploadExercise Management Detail Component', () => {
             route.params = of({ exerciseId: fileUploadExerciseWithExerciseGroup.id });
         });
 
-        it('Should call load on init and be in exam mode', () => {
+        it('should call load on init and be in exam mode', () => {
             // GIVEN
             const headers = new HttpHeaders().append('link', 'link;link');
             jest.spyOn(service, 'find').mockReturnValue(

@@ -60,7 +60,7 @@ describe('Course Exam Archive Button Component', () => {
         accountService = TestBed.inject(AccountService);
     });
 
-    describe('OnInit without required properties', () => {
+    describe('onInit without required properties', () => {
         beforeEach(() => {
             comp.archiveMode = 'Course';
         });
@@ -77,7 +77,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for not instructor', () => {
+    describe('onInit for not instructor', () => {
         const course = { id: 123, isAtLeastInstructor: false };
 
         beforeEach(() => {
@@ -95,7 +95,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for course that is not over', () => {
+    describe('onInit for course that is not over', () => {
         const course = { id: 123, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
@@ -115,7 +115,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for course that has no archive', () => {
+    describe('onInit for course that has no archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
 
         beforeEach(() => {
@@ -133,7 +133,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for course that has an archive', () => {
+    describe('onInit for course that has an archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
 
         beforeEach(fakeAsync(() => {
@@ -217,7 +217,7 @@ describe('Course Exam Archive Button Component', () => {
         }));
     });
 
-    describe('OnInit for exam that has an archive', () => {
+    describe('onInit for exam that has an archive', () => {
         const course = { id: 123, isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes') };
         const exam: Exam = { id: 123, endDate: dayjs().subtract(5, 'minutes'), examArchivePath: 'some-path', course };
 

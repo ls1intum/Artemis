@@ -109,7 +109,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         expect(getSubmissionsSpy).toHaveBeenCalledOnce();
         expect(registerChangeInResultsSpy).toHaveBeenCalledOnce();
         expect(courseFindSpy).toHaveBeenCalledTimes(2);
-        expect(exerciseFindSpy).toHaveBeenCalledOnce();
+        expect(exerciseFindSpy).toHaveBeenCalledTimes(2);
         expect(component.course).toEqual(course);
         expect(component.exercise).toEqual(modelingExercise as ModelingExercise);
     });

@@ -68,7 +68,7 @@ describe('QuizExercise Statistic Component', () => {
         quizServiceFindSpy.mockClear();
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         let loadQuizSuccessSpy: jest.SpyInstance;
         let loadDataSpy: jest.SpyInstance;
 
@@ -97,7 +97,7 @@ describe('QuizExercise Statistic Component', () => {
             tick(); // simulate async
 
             // check
-            expect(accountSpy).toHaveBeenCalledTimes(100);
+            expect(accountSpy).toHaveBeenCalledTimes(2);
             expect(quizServiceFindSpy).toHaveBeenCalledWith(42);
             expect(loadQuizSuccessSpy).toHaveBeenCalledWith(quizExercise);
         }));

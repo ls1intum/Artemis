@@ -61,7 +61,7 @@ describe('ModelingExercise Management Detail Component', () => {
         fixture.detectChanges();
     });
 
-    it('Should load exercise on init', fakeAsync(() => {
+    it('should load exercise on init', fakeAsync(() => {
         // GIVEN
         const subscribeSpy = jest.spyOn(eventManager, 'subscribe');
         const headers = new HttpHeaders().append('link', 'link;link');

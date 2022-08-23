@@ -94,7 +94,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
         } as QuizExercise;
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -132,9 +132,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.loadQuiz(quizExercise, false);
 
             expect(generateStructureSpy).toHaveBeenCalledTimes(2);
-            expect(generateLettersSpy).toHaveBeenCalledOnce();
-            expect(loadLayoutSpy).toHaveBeenCalledOnce();
-            expect(loadDataSpy).toHaveBeenCalledOnce();
+            expect(generateLettersSpy).toHaveBeenCalledTimes(2);
+            expect(loadLayoutSpy).toHaveBeenCalledTimes(2);
+            expect(loadDataSpy).toHaveBeenCalledTimes(2);
             expect(comp.questionTextRendered).toEqual({ changingThisBreaksApplicationSecurity: '<p>Test Question</p>' });
             expect(comp.sampleSolutions).toEqual([shortAnswerSolution]);
         });
@@ -150,8 +150,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.loadLayout();
 
             expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
-            expect(addLastBarSpy).toHaveBeenCalledOnce();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
+            expect(addLastBarSpy).toHaveBeenCalledTimes(2);
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -165,8 +165,8 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.loadData();
 
             expect(resetDataSpy).toHaveBeenCalledTimes(2);
-            expect(addDataSpy).toHaveBeenCalledOnce();
-            expect(updateDataSpy).toHaveBeenCalledOnce();
+            expect(addDataSpy).toHaveBeenCalledTimes(2);
+            expect(updateDataSpy).toHaveBeenCalledTimes(2);
         });
     });
 

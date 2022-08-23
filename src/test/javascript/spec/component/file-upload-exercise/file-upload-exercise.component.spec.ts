@@ -53,7 +53,7 @@ describe('FileUploadExercise Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call loadExercises on init', () => {
+    it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(service, 'findAllFileUploadExercisesForCourse').mockReturnValue(
@@ -74,7 +74,7 @@ describe('FileUploadExercise Management Component', () => {
         expect(comp.fileUploadExercises[0]).toEqual(fileUploadExercise);
     });
 
-    it('Should delete exercise', () => {
+    it('should delete exercise', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(fileUploadExerciseService, 'delete').mockReturnValue(
             of(
@@ -92,12 +92,12 @@ describe('FileUploadExercise Management Component', () => {
         expect(fileUploadExerciseService.delete).toHaveBeenCalledOnce();
     });
 
-    it('Should return exercise id', () => {
+    it('should return exercise id', () => {
         expect(comp.trackId(0, fileUploadExercise)).toBe(456);
     });
 
     describe('FileUploadExercise Search Exercises', () => {
-        it('Should show all exercises', () => {
+        it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('pdf', '', 'file-upload');
 
@@ -106,7 +106,7 @@ describe('FileUploadExercise Management Component', () => {
             expect(comp.filteredFileUploadExercises).toHaveLength(1);
         });
 
-        it('Should show no exercises', () => {
+        it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 

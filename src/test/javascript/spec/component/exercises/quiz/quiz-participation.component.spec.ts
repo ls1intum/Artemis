@@ -237,7 +237,7 @@ describe('QuizParticipationComponent', () => {
             discardPeriodicTasks();
 
             expect(checkQuizEndSpy).toHaveBeenCalledTimes(20);
-            expect(alertSpy).toHaveBeenCalledTimes(20);
+            expect(alertSpy).toHaveBeenCalledOnce();
         }));
 
         it('should refresh quiz', () => {
@@ -398,7 +398,7 @@ describe('QuizParticipationComponent', () => {
             expect(component.isSubmitting).toBeFalse();
             expect(component.unsavedChanges).toBeTrue();
 
-            expect(alertSpy).toHaveBeenCalledOnce();
+            expect(alertSpy).toHaveBeenCalledTimes(2);
         });
 
         it('should express timespan in humanized text', () => {

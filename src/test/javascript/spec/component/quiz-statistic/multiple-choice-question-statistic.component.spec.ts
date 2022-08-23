@@ -69,7 +69,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
         quizExercise = { id: 22, quizStarted: true, course, quizQuestions: [question] } as QuizExercise;
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should call functions on Init', () => {
             accountSpy = jest.spyOn(accountService, 'hasAnyAuthorityDirect').mockReturnValue(true);
             const loadQuizSpy = jest.spyOn(comp, 'loadQuiz');
@@ -107,9 +107,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.loadLayout();
 
             expect(resetLabelsSpy).toHaveBeenCalledTimes(2);
-            expect(addLastBarSpy).toHaveBeenCalledOnce();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
-            expect(loadSolutionSpy).toHaveBeenCalledOnce();
+            expect(addLastBarSpy).toHaveBeenCalledTimes(2);
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledTimes(2);
+            expect(loadSolutionSpy).toHaveBeenCalledTimes(2);
         });
     });
 
@@ -130,8 +130,8 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.loadData();
 
             expect(resetDataSpy).toHaveBeenCalledTimes(2);
-            expect(addDataSpy).toHaveBeenCalledOnce();
-            expect(updateDataSpy).toHaveBeenCalledOnce();
+            expect(addDataSpy).toHaveBeenCalledTimes(2);
+            expect(updateDataSpy).toHaveBeenCalledTimes(2);
         });
 
         it('should load solution data in diagram', () => {

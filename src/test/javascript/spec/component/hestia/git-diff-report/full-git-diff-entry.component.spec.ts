@@ -33,7 +33,7 @@ describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should setup editors', () => {
+    it('should setup editors', () => {
         jest.spyOn(comp.editorNow.getEditor(), 'setOptions');
         jest.spyOn(comp.editorNow.getEditor().getSession(), 'setValue');
         jest.spyOn(comp.editorPrevious.getEditor(), 'setOptions');
@@ -61,7 +61,7 @@ describe('ProgrammingExerciseFullGitDiffEntry Component', () => {
         expect(comp.editorPrevious.getEditor().container.style.background).toBe('rgba(248, 81, 73, 0.5)');
     });
 
-    it('Should give correct line for gutter', () => {
+    it('should give correct line for gutter', () => {
         comp.ngOnInit();
         const gutterRendererNow = comp.editorNow.getEditor().session.gutterRenderer;
         const gutterRendererPrevious = comp.editorPrevious.getEditor().session.gutterRenderer;

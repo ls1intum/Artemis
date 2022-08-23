@@ -43,7 +43,7 @@ describe('Create Test Run Modal Component', () => {
         jest.restoreAllMocks();
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should initialise the working time form', fakeAsync(() => {
             comp.exam = exam;
             // WHEN

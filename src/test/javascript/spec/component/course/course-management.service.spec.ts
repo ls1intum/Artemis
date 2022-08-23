@@ -291,7 +291,7 @@ describe('Course Management Service', () => {
             .subscribe((res) => expect(res.body).toEqual([{ ...course }]));
         const req = httpMock.expectOne({ method: 'GET', url: `${resourceUrl}/course-management-overview?testParam=testParamValue` });
         req.flush(returnedFromService);
-        expectAccessRightsToBeCalled(3, 3, 3);
+        expectAccessRightsToBeCalled(1, 1, 1);
         tick();
     }));
 

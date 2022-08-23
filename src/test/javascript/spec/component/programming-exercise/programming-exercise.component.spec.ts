@@ -72,7 +72,7 @@ describe('ProgrammingExercise Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call load all on init', () => {
+    it('should call load all on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(service, 'findAllProgrammingExercisesForCourse').mockReturnValue(
@@ -95,7 +95,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(comp.filteredProgrammingExercises[0]).toEqual(expect.objectContaining({ id: programmingExercise.id }));
     });
 
-    it('Should reset exercise', () => {
+    it('should reset exercise', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(exerciseService, 'reset').mockReturnValue(
             of(
@@ -117,7 +117,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
-    it('Should not reset exercise on error', () => {
+    it('should not reset exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(exerciseService, 'reset').mockReturnValue(throwError(() => httpErrorResponse));
         const mockSubscriber = jest.fn();
@@ -132,7 +132,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
-    it('Should delete exercise', () => {
+    it('should delete exercise', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(
             of(
@@ -154,7 +154,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
-    it('Should not delete exercise on error', () => {
+    it('should not delete exercise on error', () => {
         const httpErrorResponse = new HttpErrorResponse({ error: 'Forbidden', status: 403 });
         jest.spyOn(programmingExerciseService, 'delete').mockReturnValue(throwError(() => httpErrorResponse));
         const mockSubscriber = jest.fn();
@@ -169,7 +169,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(mockSubscriber).toHaveBeenCalledOnce();
     });
 
-    it('Should open import modal', () => {
+    it('should open import modal', () => {
         const mockReturnValue = { result: Promise.resolve({ id: 456 } as ProgrammingExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
@@ -178,7 +178,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('Should open edit selected modal', () => {
+    it('should open edit selected modal', () => {
         const mockReturnValue = { componentInstance: {}, closed: of() } as unknown as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
@@ -187,7 +187,7 @@ describe('ProgrammingExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('Should open repo export modal', () => {
+    it('should open repo export modal', () => {
         const mockReturnValue = { componentInstance: {} } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
@@ -196,12 +196,12 @@ describe('ProgrammingExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('Should return exercise id', () => {
+    it('should return exercise id', () => {
         expect(comp.trackId(0, programmingExercise)).toBe(456);
     });
 
     describe('ProgrammingExercise Search Exercises', () => {
-        it('Should show all exercises', () => {
+        it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'programming');
 
@@ -210,7 +210,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.filteredProgrammingExercises).toHaveLength(3);
         });
 
-        it('Should show no exercises', () => {
+        it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Exercise', '', 'text');
 
@@ -219,7 +219,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.filteredProgrammingExercises).toHaveLength(0);
         });
 
-        it('Should show first exercise', () => {
+        it('should show first exercise', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Exercise 1');
 
@@ -228,7 +228,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.filteredProgrammingExercises).toHaveLength(1);
         });
 
-        it('Should show last 2 exercises', () => {
+        it('should show last 2 exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('2');
 
@@ -239,7 +239,7 @@ describe('ProgrammingExercise Management Component', () => {
     });
 
     describe('ProgrammingExercise Select Exercises', () => {
-        it('Should add selected exercise to list', () => {
+        it('should add selected exercise to list', () => {
             // WHEN
             comp.toggleProgrammingExercise(programmingExercise);
 
@@ -247,7 +247,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.selectedProgrammingExercises[0]).toContainEntry(['id', programmingExercise.id]);
         });
 
-        it('Should remove selected exercise to list', () => {
+        it('should remove selected exercise to list', () => {
             // WHEN
             comp.toggleProgrammingExercise(programmingExercise);
             comp.toggleProgrammingExercise(programmingExercise);
@@ -256,7 +256,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.selectedProgrammingExercises).toHaveLength(0);
         });
 
-        it('Should select all', () => {
+        it('should select all', () => {
             // WHEN
             comp.toggleAllProgrammingExercises();
 
@@ -264,7 +264,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.selectedProgrammingExercises).toHaveLength(comp.programmingExercises.length);
         });
 
-        it('Should deselect all', () => {
+        it('should deselect all', () => {
             // WHEN
             comp.toggleAllProgrammingExercises(); // Select all
             comp.toggleAllProgrammingExercises(); // Deselect all
@@ -273,7 +273,7 @@ describe('ProgrammingExercise Management Component', () => {
             expect(comp.selectedProgrammingExercises).toHaveLength(0);
         });
 
-        it('Should check correctly if selected', () => {
+        it('should check correctly if selected', () => {
             // WHEN
             comp.toggleProgrammingExercise(programmingExercise);
 
