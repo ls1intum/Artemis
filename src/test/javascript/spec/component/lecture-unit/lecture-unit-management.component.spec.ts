@@ -28,6 +28,8 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { UnitCreationCardComponent } from 'app/lecture/lecture-unit/lecture-unit-management/unit-creation-card/unit-creation-card.component';
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
+import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({ selector: 'jhi-learning-goals-popover', template: '' })
 class LearningGoalsPopoverStubComponent {
@@ -127,42 +129,13 @@ describe('LectureUnitManagementComponent', () => {
             });
     });
 
-    it('should move down', () => {
+    it('should reorder', () => {
         const originalOrder = [...lecture.lectureUnits!];
         lectureUnitManagementComponentFixture.detectChanges();
-        const moveDownSpy = jest.spyOn(lectureUnitManagementComponent, 'moveDown');
-        const moveUpSpy = jest.spyOn(lectureUnitManagementComponent, 'moveUp');
-        const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#up-0'));
-        expect(upButton).toBeDefined();
-        upButton.nativeElement.click();
-        expect(moveUpSpy).not.toHaveBeenCalled();
-        // not moved as first one
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[0].id);
-        const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css('#down-0'));
-        expect(downButton).toBeDefined();
-        downButton.nativeElement.click();
-        expect(moveDownSpy).toHaveBeenCalledOnce();
+        lectureUnitManagementComponent.drop({ previousIndex: 0, currentIndex: 1 } as CdkDragDrop<LectureUnit[]>);
         expect(lectureUnitManagementComponent.lectureUnits[0].id).toEqual(originalOrder[1].id);
         expect(lectureUnitManagementComponent.lectureUnits[1].id).toEqual(originalOrder[0].id);
-    });
-
-    it('should move up', () => {
-        const originalOrder = [...lecture.lectureUnits!];
-        lectureUnitManagementComponentFixture.detectChanges();
-        const moveDownSpy = jest.spyOn(lectureUnitManagementComponent, 'moveDown');
-        const moveUpSpy = jest.spyOn(lectureUnitManagementComponent, 'moveUp');
-        const lastPosition = lectureUnitManagementComponent.lectureUnits.length - 1;
-        const downButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#down-${lastPosition}`));
-        expect(downButton).toBeDefined();
-        downButton.nativeElement.click();
-        expect(moveDownSpy).not.toHaveBeenCalled();
-
-        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition].id);
-        const upButton = lectureUnitManagementComponentFixture.debugElement.query(By.css(`#up-${lastPosition}`));
-        expect(upButton).toBeDefined();
-        upButton.nativeElement.click();
-        expect(moveUpSpy).toHaveBeenCalledOnce();
-        expect(lectureUnitManagementComponent.lectureUnits[lastPosition].id).toEqual(originalOrder[lastPosition - 1].id);
     });
 
     it('should navigate to edit attachment unit page', () => {
