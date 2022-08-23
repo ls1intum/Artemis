@@ -455,7 +455,7 @@ In a production setup, you have to at least change the user credentials (in the 
    In a production setup, you should use a random ``master.key``, then you have to follow the steps described in  `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
 
 4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
-   If you used the preset ``master.key`` and are running a development setup, the correct values are already correctly inserted in the template configuration in the beginning of this page.
+   If you used the preset ``master.key`` and are running a development setup, the preset values for the secrets can be found in the `artemis configuration template posted at the begging of this page <#artemis>`__.
 
 .. code:: yaml
 
@@ -465,19 +465,19 @@ In a production setup, you have to at least change the user credentials (in the 
             internal-admin:
                 username: artemis_admin
                 password: artemis-admin
-            version-control:
-                url: http://localhost:8081
-                user: artemis_admin
-                password: artemis_admin
-                ci-token: # generated in step 9
-            continuous-integration:
-                url: http://localhost:8080
-                user: artemis_admin
-                password: artemis_admin
-                vcs-credentials: artemis_gitlab_admin_credentials
-                artemis-authentication-token-key: artemis_notification_plugin_token
-                artemis-authentication-token-value: artemis_admin
-                secret-push-token: # generated in step 3
+        version-control:
+            url: http://localhost:8081
+            user: artemis_admin
+            password: artemis_admin
+            ci-token: # generated in step 9
+        continuous-integration:
+            url: http://localhost:8082
+            user: artemis_admin
+            password: artemis_admin
+            vcs-credentials: artemis_gitlab_admin_credentials
+            artemis-authentication-token-key: artemis_notification_plugin_token
+            artemis-authentication-token-value: artemis_admin
+            secret-push-token: # generated in step 3
 
 5. Open the ``src/main/resources/config/application-jenkins.yml`` and change the following:
     Again, if you are using a development setup, the template in the beginning of this page already contains the correct values.
@@ -534,6 +534,7 @@ Manual Jenkins Server Setup
    ::
 
        echo "client_max_body_size 16m;" > client_max_body_size.conf
+
 5. The NGINX default timeout is pretty low. For plagiarism check and unlocking student repos for the exam a higher timeout is advisable. Therefore we write our own nginx.conf and load it in the container.
 
 
