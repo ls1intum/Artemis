@@ -1231,7 +1231,7 @@ describe('QuizExercise Management Detail Component', () => {
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
-                jestExpect(console.error).toHaveBeenCalledOnce();
+                jestExpect(console.error).toHaveBeenCalled();
             };
 
             beforeEach(() => {
@@ -1555,7 +1555,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
                 await comp.importQuiz();
                 comp.onFileLoadImport(reader);
-                jestExpect(alertFunction).toHaveBeenCalledOnce();
+                jestExpect(alertFunction).toHaveBeenCalled();
                 window.alert = alert;
             });
         });
