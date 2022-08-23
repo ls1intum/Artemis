@@ -77,7 +77,7 @@ jobs:
     - name: Autobuild
       uses: github/codeql-action/autobuild@v2
       env:
-        NODE_OPTIONS: --max_old_space_size=6144
+        NODE_OPTIONS: --max-old-space-size=6144
 
     - run: rm -rf build/resources/main/static
 

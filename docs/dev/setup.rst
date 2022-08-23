@@ -522,7 +522,8 @@ above in Server Setup) and if you have configured
 with your TUM Online account.
 
 In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other scripts from ``package.json``,
-you can add a memory limit parameter (``--max_old_space_size=5120``) in the script.
+you can add a `memory limit parameter <https://nodejs.org/docs/latest-v16.x/api/cli.html#--max-old-space-sizesize-in-megabytes>`__
+(``--max-old-space-size=5120``) in the script.
 You can do it by changing the **start** script in ``package.json`` from:
 
 ::
@@ -533,9 +534,9 @@ to
 
 ::
 
-   "start": "node --max_old_space_size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
+   "start": "node --max-old-space-size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
 
-If you still face the issue, you can try to set a higher value than 5120. Possible values are 6144, 7168, and 8192.
+If you still face the issue, you can try to set a higher value than 5120 MB. Recommended values are 6144 (6GB), 7168 (7GB), and 8192 (8GB).
 
 The same change could be applied to each **ng** command as in the example above.
 
