@@ -97,7 +97,7 @@ export class FeatureToggleService {
      * Setter method for the state of a feature toggle.
      */
     setFeatureToggleState(featureToggle: FeatureToggle, active: boolean) {
-        const url = '/api/management/feature-toggle';
+        const url = '/api/admin/management/feature-toggle';
         const toggleParam = { [featureToggle]: active };
         return this.http.put(url, toggleParam);
     }
