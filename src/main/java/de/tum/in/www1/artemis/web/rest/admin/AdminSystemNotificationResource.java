@@ -50,7 +50,6 @@ public class AdminSystemNotificationResource {
      */
     @PostMapping("system-notifications")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<Notification> createSystemNotification(@RequestBody SystemNotification systemNotification) throws URISyntaxException {
         log.debug("REST request to save SystemNotification : {}", systemNotification);
         if (systemNotification.getId() != null) {
@@ -72,7 +71,6 @@ public class AdminSystemNotificationResource {
      */
     @PutMapping("system-notifications")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<SystemNotification> updateSystemNotification(@RequestBody SystemNotification systemNotification) {
         log.debug("REST request to update SystemNotification : {}", systemNotification);
         if (systemNotification.getId() == null) {
@@ -95,7 +93,6 @@ public class AdminSystemNotificationResource {
      */
     @DeleteMapping("system-notifications/{id}")
     @EnforceAdmin
-    // TODO /admin
     public ResponseEntity<Void> deleteSystemNotification(@PathVariable Long id) {
         log.debug("REST request to delete SystemNotification : {}", id);
         systemNotificationRepository.deleteById(id);
