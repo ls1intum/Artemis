@@ -120,7 +120,7 @@ describe('BlobUtil', () => {
             const binary = '';
             const arrayBuffer = binaryStringToArrayBuffer(binary);
             const bytes = new Uint8Array(arrayBuffer);
-            expect(bytes).toHaveLength(0);
+            expect(bytes).toBeEmpty();
         });
 
         it('should return an array buffer with the correct contents', () => {
