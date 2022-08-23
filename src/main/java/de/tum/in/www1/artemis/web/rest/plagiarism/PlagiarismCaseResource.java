@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing Plagiarism Cases.
@@ -29,6 +30,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RestController
 @RequestMapping("api/")
 public class PlagiarismCaseResource {
+
+    private static final String ENTITY_NAME = "plagiarismCase";
 
     private final CourseRepository courseRepository;
 
@@ -87,8 +90,8 @@ public class PlagiarismCaseResource {
         if (!plagiarismCases.isEmpty()) {
             var plagiarismCase = plagiarismCases.get(0);
             var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
-            if (exam.getCourse().getId() != courseId) {
-                throw new AccessForbiddenException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId);
+            if (!exam.getCourse().getId().equals(courseId)) {
+                throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
             }
         }
         return getPlagiarismCasesResponseEntity(plagiarismCases);
