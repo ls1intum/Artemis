@@ -8,7 +8,7 @@
                 {{ posting.author!.name }}
             </span>
             <span class="today-flag" *ngIf="postingIsOfToday">{{ todayFlag | artemisTranslate }}</span>
-            <span [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
+            <span container="body" [disableTooltip]="postingIsOfToday" ngbTooltip="{{ posting.creationDate | artemisDate: 'time' }}">
                 {{ postingIsOfToday ? (posting.creationDate | artemisDate: 'time') : (posting.creationDate | artemisDate: 'short-date') }}
             </span>
         </span>
