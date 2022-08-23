@@ -86,11 +86,13 @@ public class PlagiarismCaseResource {
         }
 
         var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
-        plagiarismCases.forEach(plagiarismCase -> {
-            if (plagiarismCase.getExercise().getExerciseGroup().getExam().getCourse().getId() != courseId) {
-                throw new AccessForbiddenException("Exercise with id " + plagiarismCase.getExercise().getId() + " is not related to the given course id " + courseId);
+        if (!plagiarismCases.isEmpty()) {
+            var plagiarismCase = plagiarismCases.get(0);
+            var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
+            if (exam.getCourse().getId() != courseId) {
+                throw new AccessForbiddenException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId);
             }
-        });
+        }
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
