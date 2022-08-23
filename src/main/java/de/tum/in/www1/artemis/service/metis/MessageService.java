@@ -24,13 +24,12 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
 public class MessageService extends PostingService {
-
-    private final UserRepository userRepository;
 
     private final ConversationService conversationService;
 
@@ -39,8 +38,7 @@ public class MessageService extends PostingService {
     protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
             ConversationService conversationService) {
-        super(courseRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
-        this.userRepository = userRepository;
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
     }
@@ -55,31 +53,41 @@ public class MessageService extends PostingService {
      * @return created message post that was persisted
      */
     public Post createMessage(Long courseId, Post messagePost) {
-        final User user = this.userRepository.getUserWithGroupsAndAuthorities();
-
-        // checks
-        if (messagePost.getId() != null) {
-            throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
-        }
-        final Course course = preCheckUserAndCourse(user, courseId);
-
-        // set author to current user
-        messagePost.setAuthor(user);
-        // set default value display priority -> NONE
-        messagePost.setDisplayPriority(DisplayPriority.NONE);
-
         if (messagePost.getConversation() != null) {
+
+            final User user = this.userRepository.getUserWithGroupsAndAuthorities();
+            Conversation conversation = null;
+
+            // checks
+            if (messagePost.getId() != null) {
+                throw new BadRequestAlertException("A new message post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+            }
+            final Course course = preCheckUserAndCourse(user, courseId);
+
+            // set author to current user
+            messagePost.setAuthor(user);
+            // set default value display priority -> NONE
+            messagePost.setDisplayPriority(DisplayPriority.NONE);
+
             if (messagePost.getConversation().getId() == null) {
-                // persist conversation for post if provided
+                // persist conversation for post if it is new
                 messagePost.setConversation(conversationService.createConversation(courseId, messagePost.getConversation()));
             }
-            conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
+            conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
+
+            Post savedMessage = messageRepository.save(messagePost);
+
+            conversation.setLastMessageDate(savedMessage.getCreationDate());
+            conversationService.updateConversation(conversation);
+
+            broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
+            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE));
+
+            return savedMessage;
         }
 
-        Post savedMessage = messageRepository.save(messagePost);
-        broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
-
-        return savedMessage;
+        // conversation object must be provided in all cases. we do not throw an exception here in order to not leak implementation details
+        return null;
     }
 
     /**
@@ -102,6 +110,8 @@ public class MessageService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+
+            setAuthorRoleOfPostings(conversationPosts.getContent());
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");

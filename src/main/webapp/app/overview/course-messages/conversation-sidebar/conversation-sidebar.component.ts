@@ -150,9 +150,6 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
                 next: (conversation: Conversation) => {
                     this.isTransitioning = false;
 
-                    // add newly created conversation to the beginning of current user's conversations
-                    this.conversations.unshift(conversation);
-
                     // select the new conversation
                     this.activeConversation = conversation;
                     this.selectConversation.emit(conversation);

@@ -26,8 +26,6 @@ public class AnswerMessageService extends PostingService {
 
     private static final String METIS_ANSWER_POST_ENTITY_NAME = "metis.answerPost";
 
-    private final UserRepository userRepository;
-
     private final AnswerPostRepository answerPostRepository;
 
     private final MessageRepository messageRepository;
@@ -37,8 +35,7 @@ public class AnswerMessageService extends PostingService {
     public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
             AnswerPostRepository answerPostRepository, MessageRepository messageRepository, ConversationService conversationService, ExerciseRepository exerciseRepository,
             LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate) {
-        super(courseRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
-        this.userRepository = userRepository;
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.answerPostRepository = answerPostRepository;
         this.messageRepository = messageRepository;
         this.conversationService = conversationService;

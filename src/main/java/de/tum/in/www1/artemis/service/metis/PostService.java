@@ -1,7 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
 import java.util.*;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import javax.validation.Valid;
@@ -50,8 +49,6 @@ public class PostService extends PostingService {
 
     public static final int TOP_K_SIMILARITY_RESULTS = 5;
 
-    private final UserRepository userRepository;
-
     private final PostRepository postRepository;
 
     private final PlagiarismCaseRepository plagiarismCaseRepository;
@@ -66,8 +63,7 @@ public class PostService extends PostingService {
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
             PlagiarismCaseRepository plagiarismCaseRepository) {
-        super(courseRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
-        this.userRepository = userRepository;
+        super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.postRepository = postRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;
         this.groupNotificationService = groupNotificationService;
@@ -545,32 +541,5 @@ public class PostService extends PostingService {
         if (post.getCourseWideContext() == CourseWideContext.ANNOUNCEMENT || post.getPlagiarismCase() != null) {
             authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
         }
-    }
-
-    /**
-     * helper method that fetches groups and authorities of all posting authors in a list of Posts
-     * @param postsInCourse list of posts whose authors are populated with their groups, authorities, and authorRole
-     */
-    private void setAuthorRoleOfPostings(List<Post> postsInCourse) {
-        // prepares a unique set of userIds that authored the current list of postings
-        Set<Long> userIds = new HashSet<>();
-        postsInCourse.forEach(post -> {
-            userIds.add(post.getAuthor().getId());
-            post.getAnswers().forEach(answerPost -> userIds.add(answerPost.getAuthor().getId()));
-        });
-
-        // fetches and sets groups and authorities of all posting authors involved, which are used to display author role icon in the posting header
-        // converts fetched set to hashmap type for performant matching of authors
-        Map<Long, User> authors = userRepository.findAllWithGroupsAndAuthoritiesByIdIn(userIds).stream().collect(Collectors.toMap(user -> user.getId(), Function.identity()));
-
-        // sets respective author role to display user authority icon on posting headers
-        postsInCourse.forEach(post -> {
-            post.setAuthor(authors.get(post.getAuthor().getId()));
-            setAuthorRoleForPosting(post, post.getCoursePostingBelongsTo());
-            post.getAnswers().forEach(answerPost -> {
-                answerPost.setAuthor(authors.get(answerPost.getAuthor().getId()));
-                setAuthorRoleForPosting(answerPost, answerPost.getCoursePostingBelongsTo());
-            });
-        });
     }
 }

@@ -11,6 +11,7 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 
 @Injectable()
 export class CourseMessagesService implements OnDestroy {
+    private conversationsOfUser: Conversation[];
     private conversations$: ReplaySubject<Conversation[]> = new ReplaySubject<Conversation[]>(1);
     private subscribedChannel?: string;
     userId: number;
@@ -43,7 +44,8 @@ export class CourseMessagesService implements OnDestroy {
 
     getConversationsOfUser(courseId: number): void {
         this.conversationService.getConversationsOfUser(courseId).subscribe((res) => {
-            this.conversations$.next(res.body!);
+            this.conversationsOfUser = res.body!;
+            this.conversations$.next(this.conversationsOfUser);
             this.createSubscription(courseId, this.userId);
         });
     }
@@ -56,9 +58,13 @@ export class CourseMessagesService implements OnDestroy {
         this.jhiWebsocketService.subscribe(channel);
 
         this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationDTO) => {
-            if (conversationDTO.crudAction === MetisPostAction.CREATE) {
-                this.getConversationsOfUser(courseId);
+            if (conversationDTO.crudAction === MetisPostAction.UPDATE) {
+                this.conversationsOfUser.splice(this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id));
             }
+
+            // add created/updated conversation to the beginning of the conversation list
+            this.conversationsOfUser.unshift(conversationDTO.conversation);
+            this.conversations$.next(this.conversationsOfUser);
         });
     }
 

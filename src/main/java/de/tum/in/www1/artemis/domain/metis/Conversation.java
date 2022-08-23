@@ -30,7 +30,7 @@ public class Conversation extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
-    @Column(name = "last_message_date", updatable = false)
+    @Column(name = "last_message_date")
     private ZonedDateTime lastMessageDate = ZonedDateTime.now();
 
     public Set<ConversationParticipant> getConversationParticipants() {

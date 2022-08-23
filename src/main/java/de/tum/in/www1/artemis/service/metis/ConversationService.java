@@ -122,11 +122,19 @@ public class ConversationService {
     }
 
     /**
+     * used to update the lastMessageDate property of a conversation
+     * @param conversation
+     */
+    public void updateConversation(Conversation conversation) {
+        conversationRepository.save(conversation);
+    }
+
+    /**
      * Broadcasts a conversation event in a course under a specific topic via websockets
      *
      * @param conversationDTO object including the affected conversation as well as the action
      */
-    private void broadcastForConversation(ConversationDTO conversationDTO) {
+    public void broadcastForConversation(ConversationDTO conversationDTO) {
         String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationDTO.getConversation().getCourse().getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
 
@@ -134,13 +142,15 @@ public class ConversationService {
                 conversationParticipant -> messagingTemplate.convertAndSend(conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
     }
 
-    void mayInteractWithConversationElseThrow(Long conversationId, User user) {
+    Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
         // use object fetched from database
         Conversation conversation = conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
         if (conversation == null
                 || conversation.getConversationParticipants().stream().noneMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId()))) {
             throw new AccessForbiddenException("User not allowed to access this conversation!");
         }
+
+        return conversation;
     }
 
     /**
