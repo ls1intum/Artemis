@@ -71,7 +71,7 @@ describe('Text Submission Viewer Component', () => {
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalled();
+        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
     });
 
