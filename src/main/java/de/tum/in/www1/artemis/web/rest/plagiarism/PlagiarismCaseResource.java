@@ -81,7 +81,7 @@ public class PlagiarismCaseResource {
     public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
         log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
-        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, userRepository.getUserWithGroupsAndAuthorities())) {
+        if (!authenticationCheckService.isAtLeastInstructorInCourse(course, null)) {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
 
