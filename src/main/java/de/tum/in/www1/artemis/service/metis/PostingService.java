@@ -12,7 +12,6 @@ import de.tum.in.www1.artemis.domain.metis.UserRole;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -27,8 +26,6 @@ public abstract class PostingService {
 
     final LectureRepository lectureRepository;
 
-    final PostRepository postRepository;
-
     final AuthorizationCheckService authorizationCheckService;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -37,12 +34,11 @@ public abstract class PostingService {
 
     private static final String METIS_WEBSOCKET_CHANNEL_PREFIX = "/topic/metis/";
 
-    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
+    protected PostingService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate) {
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
         this.lectureRepository = lectureRepository;
-        this.postRepository = postRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.messagingTemplate = messagingTemplate;
     }

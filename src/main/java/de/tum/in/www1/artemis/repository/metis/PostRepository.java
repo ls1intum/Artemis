@@ -53,21 +53,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
         }
     }
 
-    /**
-     * Generates SQL Query via specifications to find and sort Messages
-     * @param postContextFilter filtering and sorting properties for post objects
-     * @param pageable          paging object which contains the page number and number of records to fetch
-     * @return  returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
-     */
-    default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable) {
-        Specification<Post> specification = Specification.where(distinct())
-                .and(getCourseSpecification(postContextFilter.getCourseId(), postContextFilter.getLectureId(), postContextFilter.getExerciseId())
-                        .and(getConversationSpecification(postContextFilter.getConversationId())
-                                .and(getSortSpecification(true, postContextFilter.getPostSortCriterion(), postContextFilter.getSortingOrder()))));
-
-        return findAll(specification, pageable);
-    }
-
     @Query("""
             SELECT DISTINCT tag FROM Post post
             LEFT JOIN post.tags tag LEFT JOIN post.lecture lecture LEFT JOIN post.exercise exercise
@@ -93,10 +78,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
 
     default Post findPostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).filter(post -> post.getConversation() == null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
-    }
-
-    default Post findMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {
-        return findById(postId).filter(post -> post.getConversation() != null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
 
     default Post findPostOrMessagePostByIdElseThrow(Long postId) throws EntityNotFoundException {

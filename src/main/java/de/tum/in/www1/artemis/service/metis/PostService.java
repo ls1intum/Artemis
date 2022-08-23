@@ -66,7 +66,7 @@ public class PostService extends PostingService {
             ExerciseRepository exerciseRepository, LectureRepository lectureRepository, GroupNotificationService groupNotificationService,
             PostSimilarityComparisonStrategy postContentCompareStrategy, SimpMessageSendingOperations messagingTemplate, PlagiarismCaseService plagiarismCaseService,
             PlagiarismCaseRepository plagiarismCaseRepository) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
+        super(courseRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.postRepository = postRepository;
         this.plagiarismCaseRepository = plagiarismCaseRepository;

@@ -14,7 +14,7 @@ import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
@@ -30,17 +30,17 @@ public class AnswerMessageService extends PostingService {
 
     private final AnswerPostRepository answerPostRepository;
 
-    private final PostRepository postRepository;
+    private final MessageRepository messageRepository;
 
     private final ConversationService conversationService;
 
     public AnswerMessageService(CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService, UserRepository userRepository,
-            AnswerPostRepository answerPostRepository, PostRepository postRepository, ConversationService conversationService, ExerciseRepository exerciseRepository,
+            AnswerPostRepository answerPostRepository, MessageRepository messageRepository, ConversationService conversationService, ExerciseRepository exerciseRepository,
             LectureRepository lectureRepository, SimpMessageSendingOperations messagingTemplate) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
+        super(courseRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.answerPostRepository = answerPostRepository;
-        this.postRepository = postRepository;
+        this.messageRepository = messageRepository;
         this.conversationService = conversationService;
     }
 
@@ -62,7 +62,7 @@ public class AnswerMessageService extends PostingService {
         }
 
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
+        Post post = messageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
         conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
 
         // use post from database rather than user input

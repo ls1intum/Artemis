@@ -43,16 +43,6 @@ public class PostSpecs {
     }
 
     /**
-     * Specification to fetch Posts belonging to a Conversation
-     *
-     * @param conversationId id of the conversation the Posts belong to
-     * @return specification used to chain DB operations
-     */
-    public static Specification<Post> getConversationSpecification(Long conversationId) {
-        return (root, query, criteriaBuilder) -> criteriaBuilder.equal(root.get(Post_.CONVERSATION).get(Conversation_.ID), conversationId);
-    }
-
-    /**
      * Specification to fetch Posts belonging to a Lecture
      *
      * @param lectureId id of the lecture the Posts belong to

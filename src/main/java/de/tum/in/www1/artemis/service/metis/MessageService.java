@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.PostRepository;
+import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
@@ -28,18 +28,21 @@ import de.tum.in.www1.artemis.web.websocket.dto.metis.MetisCrudAction;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.PostDTO;
 
 @Service
-public class MessagePostService extends PostingService {
+public class MessageService extends PostingService {
 
     private final UserRepository userRepository;
 
     private final ConversationService conversationService;
 
-    protected MessagePostService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, PostRepository postRepository,
+    private final MessageRepository messageRepository;
+
+    protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
             ConversationService conversationService) {
-        super(courseRepository, exerciseRepository, lectureRepository, postRepository, authorizationCheckService, messagingTemplate);
+        super(courseRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.userRepository = userRepository;
         this.conversationService = conversationService;
+        this.messageRepository = messageRepository;
     }
 
     /**
@@ -73,7 +76,7 @@ public class MessagePostService extends PostingService {
             conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
         }
 
-        Post savedMessage = postRepository.save(messagePost);
+        Post savedMessage = messageRepository.save(messagePost);
         broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
 
         return savedMessage;
@@ -95,7 +98,7 @@ public class MessagePostService extends PostingService {
 
             conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
 
-            conversationPosts = postRepository.findMessages(postContextFilter, pageable);
+            conversationPosts = messageRepository.findMessages(postContextFilter, pageable);
 
             // protect sample solution, grading instructions, etc.
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
@@ -125,13 +128,13 @@ public class MessagePostService extends PostingService {
         }
         final Course course = preCheckUserAndCourse(user, courseId);
 
-        Post existingPost = postRepository.findMessagePostByIdElseThrow(postId);
+        Post existingPost = messageRepository.findMessagePostByIdElseThrow(postId);
         mayUpdateOrDeleteMessageElseThrow(existingPost, user);
 
         // update: allow overwriting of values only for depicted fields
         existingPost.setContent(messagePost.getContent());
 
-        Post updatedPost = postRepository.save(existingPost);
+        Post updatedPost = messageRepository.save(existingPost);
 
         // emit a post update via websocket
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
@@ -151,11 +154,11 @@ public class MessagePostService extends PostingService {
 
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
-        Post post = postRepository.findMessagePostByIdElseThrow(postId);
+        Post post = messageRepository.findMessagePostByIdElseThrow(postId);
         mayUpdateOrDeleteMessageElseThrow(post, user);
 
         // delete
-        postRepository.deleteById(postId);
+        messageRepository.deleteById(postId);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
