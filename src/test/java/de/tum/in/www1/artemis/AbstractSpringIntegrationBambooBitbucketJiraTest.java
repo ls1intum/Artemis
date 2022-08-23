@@ -527,8 +527,10 @@ public abstract class AbstractSpringIntegrationBambooBitbucketJiraTest extends A
         String repoProjectName = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
         bambooRequestMockProvider.mockUpdatePlanRepository(buildPlanId, "assignment", repoProjectName, defaultBranch);
         bambooRequestMockProvider.mockEnablePlan(projectKey, buildPlanId.split("-")[1], true, false);
-        for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
-            bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
+        if (Boolean.TRUE.equals(participation.getProgrammingExercise().isPublishBuildPlanUrl())) {
+            for (User user : ((StudentParticipation) participation).getParticipant().getParticipants()) {
+                bambooRequestMockProvider.mockGrantReadAccess(buildPlanId, projectKey, user);
+            }
         }
     }
 
