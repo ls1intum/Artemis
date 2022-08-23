@@ -35,9 +35,9 @@ public class ConversationService {
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    private final ConversationParticipantRepository conversationParticipantRepository;
-
     private final ConversationRepository conversationRepository;
+
+    private final ConversationParticipantRepository conversationParticipantRepository;
 
     private final SimpMessageSendingOperations messagingTemplate;
 
@@ -54,9 +54,9 @@ public class ConversationService {
     /**
      * Persists given conversation
      *
-     * @param courseId      id of course the conversation belongs to
-     * @param conversation  conversation to be persisted
-     * @return              persisted conversation
+     * @param courseId     id of course the conversation belongs to
+     * @param conversation conversation to be persisted
+     * @return persisted conversation
      */
     public Conversation createConversation(Long courseId, Conversation conversation) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
@@ -92,8 +92,8 @@ public class ConversationService {
     /**
      * fetch conversation from database by conversationId
      *
-     * @param conversationId  id of the conversation to fetch
-     * @return  fetched conversation
+     * @param conversationId id of the conversation to fetch
+     * @return fetched conversation
      */
     public Conversation getConversationById(Long conversationId) {
         return conversationRepository.findConversationByIdWithConversationParticipants(conversationId);
@@ -102,27 +102,21 @@ public class ConversationService {
     /**
      * fetch conversations from database by userId and courseId
      *
-     * @param courseId  id of course the conversations belongs to
-     * @return          fetched conversations
+     * @param courseId id of course the conversations belongs to
+     * @return fetched conversations
      */
     public List<Conversation> getConversationsOfUser(Long courseId) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
         List<Conversation> conversations = conversationRepository.findConversationsOfUserWithConversationParticipants(courseId, user.getId());
-
-        conversations.forEach(conversation -> {
-            conversation.getConversationParticipants().forEach(conversationParticipant -> {
-                if (!conversationParticipant.getUser().getId().equals(user.getId())) {
-                    conversationParticipant.filterSensitiveInformation();
-                }
-            });
-        });
+        conversations.stream().forEach(conversation -> filterSensitiveInformation(conversation, user));
 
         return conversations;
     }
 
     /**
      * used to update the lastMessageDate property of a conversation
+     *
      * @param conversation
      */
     public void updateConversation(Conversation conversation) {
@@ -155,13 +149,13 @@ public class ConversationService {
 
     /**
      * Helper method that prepares a conversationParticipant that will later be persisted
-     * @param conversationParticipant   conversationParticipant to be created
-     * @param conversation              conversation in association with the conversationParticipant
-     * @return                          returned conversationParticipant ready to be persisted
+     *
+     * @param conversationParticipant conversationParticipant to be created
+     * @param conversation            conversation in association with the conversationParticipant
+     * @return returned conversationParticipant ready to be persisted
      */
     private ConversationParticipant conversationParticipantToCreate(ConversationParticipant conversationParticipant, Conversation conversation) {
         conversationParticipant.setConversation(conversation);
-        conversationParticipant.setClosed(false);
         conversationParticipant.setLastRead(conversation.getLastMessageDate());
         return conversationParticipant;
     }
@@ -172,6 +166,20 @@ public class ConversationService {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         return course;
+    }
+
+    /**
+     * filters sensitive information such as last read times of other users
+     *
+     * @param user          user whose sensitive information will be preserved
+     * @param conversation  object to be filtered for sensitive information
+     */
+    static void filterSensitiveInformation(Conversation conversation, User user) {
+        conversation.getConversationParticipants().forEach(conversationParticipant -> {
+            if (!conversationParticipant.getUser().getId().equals(user.getId())) {
+                conversationParticipant.filterSensitiveInformation();
+            }
+        });
     }
 
     /**

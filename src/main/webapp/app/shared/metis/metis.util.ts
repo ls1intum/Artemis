@@ -42,6 +42,7 @@ export enum MetisPostAction {
     CREATE = 'CREATE',
     UPDATE = 'UPDATE',
     DELETE = 'DELETE',
+    READ_CONVERSATION = 'READ_CONVERSATION',
 }
 
 export interface PostContextFilter {

@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Conversation extends DomainObject {
 
-    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "conversation", cascade = CascadeType.REFRESH, orphanRemoval = true, fetch = FetchType.LAZY)
     private Set<ConversationParticipant> conversationParticipants = new HashSet<>();
 
     @ManyToOne

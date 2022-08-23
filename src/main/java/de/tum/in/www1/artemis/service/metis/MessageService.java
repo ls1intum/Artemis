@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import javax.validation.Valid;
@@ -14,11 +15,13 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
+import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -35,12 +38,15 @@ public class MessageService extends PostingService {
 
     private final MessageRepository messageRepository;
 
+    private final ConversationParticipantRepository conversationParticipantRepository;
+
     protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            ConversationService conversationService) {
+            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
+        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
@@ -102,9 +108,8 @@ public class MessageService extends PostingService {
         if (postContextFilter.getConversationId() != null) {
 
             final User user = userRepository.getUserWithGroupsAndAuthorities();
-            Conversation conversation = conversationService.getConversationById(postContextFilter.getConversationId());
 
-            conversationService.mayInteractWithConversationElseThrow(conversation.getId(), user);
+            Conversation conversation = conversationService.mayInteractWithConversationElseThrow(postContextFilter.getConversationId(), user);
 
             conversationPosts = messageRepository.findMessages(postContextFilter, pageable);
 
@@ -112,6 +117,15 @@ public class MessageService extends PostingService {
             conversationPosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
 
             setAuthorRoleOfPostings(conversationPosts.getContent());
+
+            // update the last time user has read the conversation
+            ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
+                    .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
+            readingParticipant.setLastRead(ZonedDateTime.now());
+            conversationParticipantRepository.save(readingParticipant);
+
+            conversationService.filterSensitiveInformation(conversation, user);
+            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION));
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");

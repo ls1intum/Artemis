@@ -153,7 +153,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {
         // check each individual conversationParticipant
         conversationParticipants.forEach(conversationParticipant -> {
-            assertThat(conversationParticipant.isClosed()).isFalse();
             assertThat(conversationParticipant.getUser()).isNotNull();
             assertThat(conversationParticipant.getLastRead()).isNotNull();
         });

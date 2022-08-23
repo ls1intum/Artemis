@@ -32,9 +32,6 @@ public class ConversationParticipant extends DomainObject {
     @Column(name = "last_read")
     private ZonedDateTime lastRead;
 
-    @Column(name = "closed")
-    private Boolean closed = false;
-
     public Conversation getConversation() {
         return conversation;
     }
@@ -59,16 +56,7 @@ public class ConversationParticipant extends DomainObject {
         this.lastRead = lastRead;
     }
 
-    public Boolean isClosed() {
-        return closed;
-    }
-
-    public void setClosed(Boolean closed) {
-        this.closed = closed;
-    }
-
     public void filterSensitiveInformation() {
         setLastRead(null);
-        setClosed(null);
     }
 }
