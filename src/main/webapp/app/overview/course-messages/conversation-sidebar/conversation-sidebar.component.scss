@@ -54,6 +54,8 @@ $conversation-section-card-min-width: 215px;
                     display: flex;
                     padding: 0.2rem;
                     color: var(--metis-light-gray);
+                    display: flex;
+                    justify-content: space-between;
 
                     &-user {
                         font-size: 14px;

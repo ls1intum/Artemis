@@ -42,6 +42,9 @@
                             <span class="conversation-list-item-user">
                                 {{ getNameOfConversationParticipant(conversation) }}
                             </span>
+                            <span *ngIf="isConversationUnread(conversation)">
+                                <fa-icon [icon]="faMessage"></fa-icon>
+                            </span>
                         </li>
                     </ul>
                 </div>

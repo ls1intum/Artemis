@@ -82,6 +82,7 @@ public class MessageService extends PostingService {
             conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
 
             Post savedMessage = messageRepository.save(messagePost);
+            auditConversationReadTimeOfUser(conversation, user);
 
             conversation.setLastMessageDate(savedMessage.getCreationDate());
             conversationService.updateConversation(conversation);
@@ -118,13 +119,7 @@ public class MessageService extends PostingService {
 
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
-            // update the last time user has read the conversation
-            ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
-                    .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
-            readingParticipant.setLastRead(ZonedDateTime.now());
-            conversationParticipantRepository.save(readingParticipant);
-
-            conversationService.filterSensitiveInformation(conversation, user);
+            auditConversationReadTimeOfUser(conversation, user);
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION));
         }
         else {
@@ -132,6 +127,14 @@ public class MessageService extends PostingService {
         }
 
         return conversationPosts;
+    }
+
+    private void auditConversationReadTimeOfUser(Conversation conversation, User user) {
+        // update the last time user has read the conversation
+        ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
+        readingParticipant.setLastRead(ZonedDateTime.now());
+        conversationParticipantRepository.save(readingParticipant);
     }
 
     /**

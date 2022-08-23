@@ -2,7 +2,7 @@ import { AfterViewInit, Component, EventEmitter, OnDestroy, OnInit, Output } fro
 import interact from 'interactjs';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
 
 import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
@@ -43,6 +43,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     faChevronRight = faChevronRight;
     faGripLinesVertical = faGripLinesVertical;
     faConversation = faComments;
+    faMessage = faMessage;
 
     constructor(protected courseMessagesService: CourseMessagesService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
 
@@ -178,6 +179,19 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     getNameOfConversationParticipant(conversation: Conversation): string {
         const participant = conversation.conversationParticipants!.find((conversationParticipants) => conversationParticipants.user.id !== this.courseMessagesService.userId)!.user;
         return participant.firstName!;
+    }
+
+    isConversationUnread(conversation: Conversation): boolean {
+        const conversationParticipant = conversation.conversationParticipants!.find(
+            (conversationParticipants) => conversationParticipants.user.id === this.courseMessagesService.userId,
+        )!;
+
+        if (conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
+            if (conversation.lastMessageDate > conversationParticipant.lastRead) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

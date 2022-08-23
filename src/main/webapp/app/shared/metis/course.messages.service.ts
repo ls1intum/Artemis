@@ -60,7 +60,10 @@ export class CourseMessagesService implements OnDestroy {
         this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationDTO) => {
             if (conversationDTO.crudAction === MetisPostAction.CREATE || conversationDTO.crudAction === MetisPostAction.UPDATE) {
                 if (conversationDTO.crudAction === MetisPostAction.UPDATE) {
-                    this.conversationsOfUser.splice(this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id));
+                    this.conversationsOfUser.splice(
+                        this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id),
+                        1,
+                    );
                 }
 
                 // add created/updated conversation to the beginning of the conversation list
