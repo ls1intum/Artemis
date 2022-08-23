@@ -38,7 +38,6 @@ import com.google.gson.JsonParser;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
-import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.exception.BitbucketException;
 import de.tum.in.www1.artemis.service.UrlService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
@@ -467,9 +466,8 @@ public class BitbucketRequestMockProvider {
     }
 
     public void mockPutDefaultBranch(String projectKey) throws BitbucketException {
-        var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
-
-        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
+        var defaultBranchPatternUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/branches/default";
+        mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(defaultBranchPatternUrl))).andExpect(method(HttpMethod.PUT)).andRespond(withStatus(HttpStatus.OK));
     }
 
     public void mockSetRepositoryPermissionsToReadOnly(String repositorySlug, String projectKey, Set<User> users) throws URISyntaxException {
@@ -522,7 +520,4 @@ public class BitbucketRequestMockProvider {
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET)).andRespond(withSuccess().body(body).contentType(MediaType.APPLICATION_JSON));
     }
 
-    public static String repositorySlugOf(ProgrammingExerciseStudentParticipation participation) {
-        return (participation.getProgrammingExercise().getProjectKey() + "-" + participation.getParticipantIdentifier()).toLowerCase();
-    }
 }
