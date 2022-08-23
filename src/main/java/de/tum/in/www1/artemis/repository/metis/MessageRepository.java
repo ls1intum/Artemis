@@ -22,13 +22,15 @@ public interface MessageRepository extends JpaRepository<Post, Long>, JpaSpecifi
 
     /**
      * Generates SQL Query via specifications to find and sort Messages
+     *
      * @param postContextFilter filtering and sorting properties for post objects
      * @param pageable          paging object which contains the page number and number of records to fetch
-     * @return  returns a Page of Posts or all Posts within a Page, which is treated as a List by the client.
+     * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable) {
-        Specification<Post> specification = Specification.where(
-                getCourseSpecification(postContextFilter.getCourseId()).and(getConversationSpecification(postContextFilter.getConversationId()).and(getSortSpecification())));
+        Specification<Post> specification = Specification
+                .where(getCourseSpecification(postContextFilter.getCourseId()).and(getConversationSpecification(postContextFilter.getConversationId())
+                        .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getSortSpecification())));
 
         return findAll(specification, pageable);
     }
