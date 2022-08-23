@@ -1798,7 +1798,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     var quizQuestions = quizExerciseRepository.findByIdWithQuestionsElseThrow(exercise.getId()).getQuizQuestions();
                     for (var quizQuestion : quizQuestions) {
                         var submittedAnswer = database.generateSubmittedAnswerFor(quizQuestion, true);
-                        var quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(submission.getId());
+                        var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(submission.getId());
                         quizSubmission.addSubmittedAnswers(submittedAnswer);
                         quizSubmissionService.saveSubmissionForExamMode(quizExercise, quizSubmission, participation.getStudent().get());
                     }

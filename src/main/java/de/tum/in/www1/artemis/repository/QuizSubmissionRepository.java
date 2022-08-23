@@ -1,7 +1,10 @@
 package de.tum.in.www1.artemis.repository;
 
+import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
+
 import java.util.Optional;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -26,10 +29,6 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
             """)
     Optional<QuizSubmission> findWithEagerResultAndFeedbackById(@Param("submissionId") long submissionId);
 
-    @Query("""
-            SELECT DISTINCT submission FROM QuizSubmission submission
-            LEFT JOIN FETCH submission.submittedAnswers
-            WHERE submission.id = :#{#submissionId}
-            """)
-    QuizSubmission findByIdWithEagerSubmittedAnswers(@Param("submissionId") long submissionId);
+    @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
+    QuizSubmission findWithEagerSubmittedAnswersById(@Param("submissionId") long submissionId);
 }

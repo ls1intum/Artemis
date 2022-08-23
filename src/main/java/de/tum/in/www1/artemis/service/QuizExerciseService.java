@@ -211,7 +211,7 @@ public class QuizExerciseService {
         for (Result result : results) {
 
             Set<SubmittedAnswer> submittedAnswersToDelete = new HashSet<>();
-            QuizSubmission quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(result.getSubmission().getId());
+            QuizSubmission quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
             result.setSubmission(quizSubmission);
 
             for (SubmittedAnswer submittedAnswer : quizSubmission.getSubmittedAnswers()) {

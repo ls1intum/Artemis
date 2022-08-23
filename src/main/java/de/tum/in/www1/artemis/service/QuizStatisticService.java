@@ -87,11 +87,11 @@ public class QuizStatisticService {
             }
             // update statistics with the latest rated und unrated Result
             if (latestRatedResult != null && latestRatedResult.getSubmission() != null) {
-                var latestRatedSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(latestRatedResult.getSubmission().getId());
+                var latestRatedSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(latestRatedResult.getSubmission().getId());
                 quizExercise.addResultToAllStatistics(latestRatedResult, latestRatedSubmission);
             }
             if (latestUnratedResult != null && latestUnratedResult.getSubmission() != null) {
-                var latestUnratedSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(latestUnratedResult.getSubmission().getId());
+                var latestUnratedSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(latestUnratedResult.getSubmission().getId());
                 quizExercise.addResultToAllStatistics(latestUnratedResult, latestUnratedSubmission);
             }
         }
@@ -125,7 +125,7 @@ public class QuizStatisticService {
                 if (Boolean.FALSE.equals(result.isRated())) {
                     quiz.removeResultFromAllStatistics(getPreviousResult(result));
                 }
-                var quizSubmission = quizSubmissionRepository.findByIdWithEagerSubmittedAnswers(result.getSubmission().getId());
+                var quizSubmission = quizSubmissionRepository.findWithEagerSubmittedAnswersById(result.getSubmission().getId());
                 quiz.addResultToAllStatistics(result, quizSubmission);
             }
             // save statistics
