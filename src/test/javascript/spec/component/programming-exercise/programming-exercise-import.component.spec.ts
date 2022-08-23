@@ -137,7 +137,7 @@ describe('ProgrammingExerciseImportComponent', () => {
         expect(comp.isCourseFilter).toBeFalse();
         expect(comp.isExamFilter).toBeFalse();
 
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
         tick(300);
 
         const expectedSearchObject = {

@@ -762,8 +762,8 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(ExportToCsv).toHaveBeenCalled();
-        expect(generateCsv).toHaveBeenCalled();
+        expect(ExportToCsv).toHaveBeenCalledOnce();
+        expect(generateCsv).toHaveBeenCalledOnce();
     });
 });
 

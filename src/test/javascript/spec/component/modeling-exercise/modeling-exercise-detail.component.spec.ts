@@ -79,8 +79,8 @@ describe('ModelingExercise Management Detail Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).toHaveBeenCalled();
-        expect(statisticsServiceStub).toHaveBeenCalled();
+        expect(findStub).toHaveBeenCalledOnce();
+        expect(statisticsServiceStub).toHaveBeenCalledOnce();
         expect(comp.modelingExercise).toEqual(modelingExercise);
         expect(comp.doughnutStats.participationsInPercent).toBe(100);
         expect(comp.doughnutStats.resolvedPostsInPercent).toBe(50);
@@ -93,6 +93,6 @@ describe('ModelingExercise Management Detail Component', () => {
     it('should destroy event manager on destroy', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         comp.ngOnDestroy();
-        expect(destroySpy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 });

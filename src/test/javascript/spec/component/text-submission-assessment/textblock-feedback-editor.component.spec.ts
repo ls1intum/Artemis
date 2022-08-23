@@ -148,7 +148,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         jest.spyOn(component['textareaElement'], 'focus');
         component.focus();
 
-        expect(component['textareaElement'].focus).toHaveBeenCalled();
+        expect(component['textareaElement'].focus).toHaveBeenCalledOnce();
     });
 
     it('should not focus to the text area if it is right conflicting feedback', () => {
@@ -175,7 +175,7 @@ describe('TextblockFeedbackEditorComponent', () => {
         const textarea = fixture.nativeElement.querySelector('textarea');
         textarea.dispatchEvent(event);
         fixture.detectChanges();
-        expect(component.escKeyup).toHaveBeenCalled();
+        expect(component.escKeyup).toHaveBeenCalledOnce();
     });
 
     it('should show confirmIcon if feedback dismission needs to be confirmed', () => {

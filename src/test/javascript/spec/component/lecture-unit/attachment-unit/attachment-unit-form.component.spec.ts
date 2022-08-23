@@ -91,7 +91,7 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,

@@ -77,7 +77,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(22);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/22');
@@ -89,7 +89,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
@@ -106,10 +106,10 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(resetLabelsSpy).toHaveBeenCalled();
-            expect(addLastBarSpy).toHaveBeenCalled();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalled();
-            expect(loadSolutionSpy).toHaveBeenCalled();
+            expect(resetLabelsSpy).toHaveBeenCalledOnce();
+            expect(addLastBarSpy).toHaveBeenCalledOnce();
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
+            expect(loadSolutionSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -129,9 +129,9 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalled();
-            expect(addDataSpy).toHaveBeenCalled();
-            expect(updateDataSpy).toHaveBeenCalled();
+            expect(resetDataSpy).toHaveBeenCalledOnce();
+            expect(addDataSpy).toHaveBeenCalledOnce();
+            expect(updateDataSpy).toHaveBeenCalledOnce();
         });
 
         it('should load solution data in diagram', () => {

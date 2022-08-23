@@ -102,7 +102,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).toHaveBeenCalledWith(4);
             expect(loadQuizSpy).toHaveBeenCalledWith(quizExercise, false);
             expect(comp.websocketChannelForData).toBe('/topic/statistic/4');
@@ -114,7 +114,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
 
             comp.ngOnInit();
 
-            expect(accountSpy).toHaveBeenCalled();
+            expect(accountSpy).toHaveBeenCalledOnce();
             expect(quizServiceFindSpy).not.toHaveBeenCalled();
             expect(loadQuizSpy).not.toHaveBeenCalled();
         });
@@ -131,10 +131,10 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadQuiz(quizExercise, false);
 
-            expect(generateStructureSpy).toHaveBeenCalled();
-            expect(generateLettersSpy).toHaveBeenCalled();
-            expect(loadLayoutSpy).toHaveBeenCalled();
-            expect(loadDataSpy).toHaveBeenCalled();
+            expect(generateStructureSpy).toHaveBeenCalledOnce();
+            expect(generateLettersSpy).toHaveBeenCalledOnce();
+            expect(loadLayoutSpy).toHaveBeenCalledOnce();
+            expect(loadDataSpy).toHaveBeenCalledOnce();
             expect(comp.questionTextRendered).toEqual({ changingThisBreaksApplicationSecurity: '<p>Test Question</p>' });
             expect(comp.sampleSolutions).toEqual([shortAnswerSolution]);
         });
@@ -149,9 +149,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadLayout();
 
-            expect(resetLabelsSpy).toHaveBeenCalled();
-            expect(addLastBarSpy).toHaveBeenCalled();
-            expect(loadInvalidLayoutSpy).toHaveBeenCalled();
+            expect(resetLabelsSpy).toHaveBeenCalledOnce();
+            expect(addLastBarSpy).toHaveBeenCalledOnce();
+            expect(loadInvalidLayoutSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -164,9 +164,9 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.loadData();
 
-            expect(resetDataSpy).toHaveBeenCalled();
-            expect(addDataSpy).toHaveBeenCalled();
-            expect(updateDataSpy).toHaveBeenCalled();
+            expect(resetDataSpy).toHaveBeenCalledOnce();
+            expect(addDataSpy).toHaveBeenCalledOnce();
+            expect(updateDataSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -178,7 +178,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.showSolution = true;
             comp.switchSolution();
 
-            expect(loadDataInDiagramSpy).toHaveBeenCalled();
+            expect(loadDataInDiagramSpy).toHaveBeenCalledOnce();
             expect(comp.showSolution).toBeFalse();
         });
     });
@@ -190,7 +190,7 @@ describe('QuizExercise Short Answer Question Statistic Component', () => {
             comp.ngOnInit();
             comp.switchRated();
 
-            expect(loadDataInDiagramSpy).toHaveBeenCalled();
+            expect(loadDataInDiagramSpy).toHaveBeenCalledOnce();
             expect(comp.rated).toBeFalse();
         });
     });

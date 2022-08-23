@@ -85,8 +85,8 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalled();
-            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(exerciseServiceStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.textExercise).toEqual(textExerciseWithCourse);
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
@@ -123,8 +123,8 @@ describe('TextExercise Management Detail Component', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(exerciseServiceStub).toHaveBeenCalled();
-            expect(statisticsServiceStub).toHaveBeenCalled();
+            expect(exerciseServiceStub).toHaveBeenCalledOnce();
+            expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.textExercise).toEqual(textExerciseWithExerciseGroup);
         });

@@ -70,7 +70,7 @@ describe('FileUploadExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(service.findAllFileUploadExercisesForCourse).toHaveBeenCalled();
+        expect(service.findAllFileUploadExercisesForCourse).toHaveBeenCalledOnce();
         expect(comp.fileUploadExercises[0]).toEqual(fileUploadExercise);
     });
 

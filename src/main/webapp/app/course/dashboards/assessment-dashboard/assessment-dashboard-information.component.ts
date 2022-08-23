@@ -32,7 +32,7 @@ export class AssessmentDashboardInformationEntry {
 })
 export class AssessmentDashboardInformationComponent implements OnInit, OnChanges, OnDestroy {
     @Input() isExamMode: boolean;
-    @Input() course?: Course;
+    @Input() course: Course;
     @Input() examId?: number;
     @Input() tutorId: number;
 
@@ -103,10 +103,10 @@ export class AssessmentDashboardInformationComponent implements OnInit, OnChange
     setupLinks() {
         const examRouteIfNeeded = this.isExamMode ? ['exams', this.examId!] : [];
 
-        this.complaintsLink = ['/course-management', this.course?.id].concat(examRouteIfNeeded).concat(['complaints']);
-        this.moreFeedbackRequestsLink = ['/course-management', this.course?.id].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
-        this.assessmentLocksLink = ['/course-management', this.course?.id].concat(examRouteIfNeeded).concat(['assessment-locks']);
-        this.ratingsLink = ['/course-management', this.course?.id, 'ratings'];
+        this.complaintsLink = ['/course-management', this.course.id].concat(examRouteIfNeeded).concat(['complaints']);
+        this.moreFeedbackRequestsLink = ['/course-management', this.course.id].concat(examRouteIfNeeded).concat(['more-feedback-requests']);
+        this.assessmentLocksLink = ['/course-management', this.course.id].concat(examRouteIfNeeded).concat(['assessment-locks']);
+        this.ratingsLink = ['/course-management', this.course.id, 'ratings'];
     }
 
     setupGraph() {

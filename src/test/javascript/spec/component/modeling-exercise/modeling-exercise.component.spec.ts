@@ -82,7 +82,7 @@ describe('ModelingExercise Management Component', () => {
         comp.ngOnInit();
 
         // THEN
-        expect(findStub).toHaveBeenCalled();
+        expect(findStub).toHaveBeenCalledOnce();
         expect(comp.modelingExercises[0]).toEqual(modelingExercise);
     });
 

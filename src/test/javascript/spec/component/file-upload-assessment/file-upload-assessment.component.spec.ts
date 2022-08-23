@@ -190,7 +190,7 @@ describe('FileUploadAssessmentComponent', () => {
             expect(comp.complaint).toEqual(complaint);
             expect(comp.result!.feedbacks?.length === 0).toBeTrue();
             expect(comp.busy).toBeFalse();
-            expect(handleFeedbackStub).toHaveBeenCalled();
+            expect(handleFeedbackStub).toHaveBeenCalledOnce();
         });
 
         it('should load optimal submission', () => {
@@ -215,7 +215,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 404 })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalled();
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -226,7 +226,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ error: { errorKey: 'lockedSubmissionsLimitReached' } })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalled();
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
 
@@ -237,7 +237,7 @@ describe('FileUploadAssessmentComponent', () => {
             TestBed.inject(ActivatedRoute);
             getFileUploadSubmissionForExerciseWithoutAssessmentStub.mockReturnValue(throwError(() => ({ status: 403 })));
             fixture.detectChanges();
-            expect(navigateByUrlStub).toHaveBeenCalled();
+            expect(navigateByUrlStub).toHaveBeenCalledOnce();
             expect(comp.busy).toBeTrue();
         });
     });
@@ -282,7 +282,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.addFeedback();
         expect(comp.unreferencedFeedback).toHaveLength(1);
         expect(comp.totalScore).toBe(0);
-        expect(handleFeedbackStub).toHaveBeenCalled();
+        expect(handleFeedbackStub).toHaveBeenCalledOnce();
     });
 
     it('should delete a feedback', () => {
@@ -517,7 +517,7 @@ describe('FileUploadAssessmentComponent', () => {
                 'assessment',
             ];
             expect(navigateStub).toHaveBeenCalledWith(expectedUrl);
-            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalled();
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
         });
 
         it('should not alert when no next result is found', () => {
@@ -527,7 +527,7 @@ describe('FileUploadAssessmentComponent', () => {
 
             comp.assessNext();
 
-            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalled();
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
             expect(alertServiceSpy).not.toHaveBeenCalled();
         });
 
@@ -538,8 +538,8 @@ describe('FileUploadAssessmentComponent', () => {
 
             comp.assessNext();
 
-            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalled();
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(getFileUploadSubmissionForExerciseWithoutAssessmentStub).toHaveBeenCalledOnce();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -588,7 +588,7 @@ describe('FileUploadAssessmentComponent', () => {
             const errorResponse = new HttpErrorResponse({ error: { message: 'Forbidden' }, status: 403 });
             jest.spyOn(complaintService, 'findBySubmissionId').mockReturnValue(throwError(() => errorResponse));
             comp.getComplaint();
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
         });
     });
 
@@ -602,8 +602,8 @@ describe('FileUploadAssessmentComponent', () => {
         fixture.detectChanges();
 
         comp.onCancelAssessment();
-        expect(windowConfirmStub).toHaveBeenCalled();
-        expect(cancelAssessmentStub).toHaveBeenCalled();
+        expect(windowConfirmStub).toHaveBeenCalledOnce();
+        expect(cancelAssessmentStub).toHaveBeenCalledOnce();
         expect(comp.isLoading).toBeFalse();
     });
 
@@ -611,7 +611,7 @@ describe('FileUploadAssessmentComponent', () => {
         comp.submission = createSubmission(exercise);
         navigateByUrlStub.mockReturnValue(Promise.resolve(true));
         comp.navigateBack();
-        expect(navigateByUrlStub).toHaveBeenCalled();
+        expect(navigateByUrlStub).toHaveBeenCalledOnce();
     });
 });
 

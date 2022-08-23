@@ -103,7 +103,7 @@ describe('GradeKeyOverviewComponent', () => {
         comp.printPDF();
 
         tick();
-        expect(printSpy).toHaveBeenCalled();
+        expect(printSpy).toHaveBeenCalledOnce();
     }));
 
     it('should properly determine that points are not set', () => {

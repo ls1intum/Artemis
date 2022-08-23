@@ -180,6 +180,6 @@ describe('AnswerPostHeaderComponent', () => {
         fixture.detectChanges();
         expect(getElement(debugElement, '.deleteIcon')).not.toBeNull();
         component.deletePosting();
-        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalled();
+        expect(metisServiceDeleteAnswerPostMock).toHaveBeenCalledOnce();
     });
 });

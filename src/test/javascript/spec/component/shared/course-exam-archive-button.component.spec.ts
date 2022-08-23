@@ -266,7 +266,7 @@ describe('Course Exam Archive Button Component', () => {
 
             comp.archive();
 
-            expect(downloadStub).toHaveBeenCalled();
+            expect(downloadStub).toHaveBeenCalledOnce();
         }));
 
         it('should reload exam on archive complete', fakeAsync(() => {
@@ -280,7 +280,7 @@ describe('Course Exam Archive Button Component', () => {
 
             expect(comp.isBeingArchived).toBeFalse();
             expect(comp.archiveButtonText).toEqual(comp.getArchiveButtonText());
-            expect(alertServiceSpy).toHaveBeenCalled();
+            expect(alertServiceSpy).toHaveBeenCalledOnce();
             expect(comp.exam).toBeDefined();
         }));
     });

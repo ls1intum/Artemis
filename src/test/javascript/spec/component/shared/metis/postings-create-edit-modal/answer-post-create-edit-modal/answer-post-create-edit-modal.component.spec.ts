@@ -74,7 +74,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         component.createEditAnswerPostContainerRef = viewContainerRef;
         fixture.detectChanges();
         component.close();
-        expect(viewContainerRefClear).toHaveBeenCalled();
+        expect(viewContainerRefClear).toHaveBeenCalledOnce();
     });
 
     it('should invoke updatePosting when confirming', () => {
@@ -104,7 +104,7 @@ describe('AnswerPostCreateEditModalComponent', () => {
         expect(metisServiceCreateSpy).toHaveBeenCalledWith({ ...component.posting, content: newContent });
         tick();
         expect(component.isLoading).toBeFalsy();
-        expect(onCreateSpy).toHaveBeenCalled();
+        expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 
     it('should invoke metis service with updated answer post', fakeAsync(() => {

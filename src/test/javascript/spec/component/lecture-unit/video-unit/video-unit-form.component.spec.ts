@@ -105,7 +105,7 @@ describe('VideoUnitFormComponent', () => {
         submitButton.click();
 
         return videoUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalled();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: exampleName,
                 description: exampleDescription,

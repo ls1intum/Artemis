@@ -302,7 +302,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
-        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
+        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalledOnce();
     }));
 
     it('should not check the assessment when it is invalid', () => {

@@ -206,14 +206,14 @@ describe('ExamExerciseRowButtonsComponent', () => {
             quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
             component.exercise = quizExercise;
             component.exportQuizById(true);
-            expect(quizExerciseExportSpy).toHaveBeenCalled();
+            expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
             expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, true, quizExercise.title);
         });
         it('should export Quiz, exportAll false', () => {
             quizExerciseServiceFindStub.mockReturnValue(of(quizResponse));
             component.exercise = quizExercise;
             component.exportQuizById(false);
-            expect(quizExerciseExportSpy).toHaveBeenCalled();
+            expect(quizExerciseExportSpy).toHaveBeenCalledOnce();
             expect(quizExerciseExportSpy).toHaveBeenCalledWith({}, false, quizExercise.title);
         });
     });

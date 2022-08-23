@@ -71,7 +71,7 @@ describe('VideoUnitComponent', () => {
         expect(container).not.toBeNull();
         container.click();
 
-        expect(handleCollapseSpy).toHaveBeenCalled();
+        expect(handleCollapseSpy).toHaveBeenCalledOnce();
         expect(videoUnitComponent.isCollapsed).toBeFalse();
 
         handleCollapseSpy.mockRestore();
