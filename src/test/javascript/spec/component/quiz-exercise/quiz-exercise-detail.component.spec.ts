@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { expect as jestExpect } from '@jest/globals';
 import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -1231,7 +1230,7 @@ describe('QuizExercise Management Detail Component', () => {
                 saveQuizWithPendingChangesCache();
                 expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
-                jestExpect(console.error).toHaveBeenCalled();
+                expect(console.error).toHaveBeenCalledOnce();
             };
 
             beforeEach(() => {
@@ -1529,7 +1528,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should call verify and import questions with right json', async () => {
                 expect(control.value).toBe('test');
                 await comp.importQuiz();
-                jestExpect(readAsText).toHaveBeenCalledWith(fakeFile);
+                expect(readAsText).toHaveBeenCalledWith(fakeFile);
                 expect(generateFileReaderStub).toHaveBeenCalledOnce();
                 comp.onFileLoadImport(reader);
                 expect(verifyStub).toHaveBeenCalledWith(questions);
@@ -1541,7 +1540,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should not call any functions without import file', async () => {
                 comp.importFile = undefined;
                 await comp.importQuiz();
-                jestExpect(readAsText).not.toHaveBeenCalled();
+                expect(readAsText).not.toHaveBeenCalled();
                 expect(generateFileReaderStub).not.toHaveBeenCalled();
                 expect(comp.importFile).toBeUndefined();
             });
@@ -1555,7 +1554,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
                 await comp.importQuiz();
                 comp.onFileLoadImport(reader);
-                jestExpect(alertFunction).toHaveBeenCalled();
+                expect(alertFunction).toHaveBeenCalledOnce();
                 window.alert = alert;
             });
         });
