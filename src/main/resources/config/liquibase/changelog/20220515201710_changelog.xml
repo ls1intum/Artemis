@@ -26,9 +26,6 @@
             <column name="conversation_id" type="BIGINT"/>
             <column name="user_id" type="BIGINT"/>
             <column name="last_read" type="TIMESTAMP"/>
-            <column name="closed" type="Boolean" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
         </createTable>
 
         <addForeignKeyConstraint baseColumnNames="conversation_id" baseTableName="post" constraintName="fk_post_conversation_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="conversation"/>
