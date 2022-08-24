@@ -52,6 +52,16 @@ public class ConversationResource {
     }
 
     /**
+     * Post /conversation : updates the time user read a conversation
+     **
+     */
+    @PostMapping("/conversation")
+    @PreAuthorize("hasRole('USER')")
+    public void auditReadTimeOfConversation(@RequestBody String conversationId) {
+        conversationService.auditConversationReadTimeOfUser(Long.parseLong(conversationId));
+    }
+
+    /**
      * POST /courses/{courseId}/conversations : create a new conversation
      *
      * @param courseId        course to associate the new conversation

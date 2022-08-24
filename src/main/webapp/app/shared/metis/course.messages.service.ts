@@ -64,12 +64,14 @@ export class CourseMessagesService implements OnDestroy {
                         this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id),
                         1,
                     );
+                    this.conversationService.auditConversationReadTimeOfUser(conversationDTO.conversation.id!);
                 }
 
                 // add created/updated conversation to the beginning of the conversation list
                 this.conversationsOfUser.unshift(conversationDTO.conversation);
             } else if (conversationDTO.crudAction === MetisPostAction.READ_CONVERSATION) {
                 this.conversationsOfUser[this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id)] = conversationDTO.conversation;
+                this.conversations$.next(this.conversationsOfUser);
             }
 
             this.conversations$.next(this.conversationsOfUser);

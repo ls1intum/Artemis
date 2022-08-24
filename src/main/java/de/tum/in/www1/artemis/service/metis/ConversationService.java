@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.service.metis;
 
+import java.time.ZonedDateTime;
 import java.util.List;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -189,5 +190,21 @@ public class ConversationService {
      */
     public String getEntityName() {
         return CONVERSATION_ENTITY_NAME;
+    }
+
+    public void auditConversationReadTimeOfUser(Long conversationId) {
+        final User user = this.userRepository.getUser();
+
+        Conversation conversation = mayInteractWithConversationElseThrow(conversationId, user);
+        auditConversationReadTimeOfUser(conversation, user);
+        broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION));
+    }
+
+    void auditConversationReadTimeOfUser(Conversation conversation, User user) {
+        // update the last time user has read the conversation
+        ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
+                .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
+        readingParticipant.setLastRead(ZonedDateTime.now());
+        conversationParticipantRepository.save(readingParticipant);
     }
 }

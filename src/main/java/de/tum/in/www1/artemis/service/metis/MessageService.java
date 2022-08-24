@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.service.metis;
 
-import java.time.ZonedDateTime;
 import java.util.Objects;
 
 import javax.validation.Valid;
@@ -15,7 +14,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
-import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -82,7 +80,7 @@ public class MessageService extends PostingService {
             conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
 
             Post savedMessage = messageRepository.save(messagePost);
-            auditConversationReadTimeOfUser(conversation, user);
+            conversationService.auditConversationReadTimeOfUser(conversation, user);
 
             conversation.setLastMessageDate(savedMessage.getCreationDate());
             conversationService.updateConversation(conversation);
@@ -119,7 +117,7 @@ public class MessageService extends PostingService {
 
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
-            auditConversationReadTimeOfUser(conversation, user);
+            conversationService.auditConversationReadTimeOfUser(conversation, user);
             conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION));
         }
         else {
@@ -127,14 +125,6 @@ public class MessageService extends PostingService {
         }
 
         return conversationPosts;
-    }
-
-    private void auditConversationReadTimeOfUser(Conversation conversation, User user) {
-        // update the last time user has read the conversation
-        ConversationParticipant readingParticipant = conversation.getConversationParticipants().stream()
-                .filter(conversationParticipant -> conversationParticipant.getUser().getId().equals(user.getId())).findAny().get();
-        readingParticipant.setLastRead(ZonedDateTime.now());
-        conversationParticipantRepository.save(readingParticipant);
     }
 
     /**

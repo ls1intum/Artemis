@@ -49,7 +49,7 @@
                     </ul>
                 </div>
                 <!-- no conversations -->
-                <div class="conversation-empty" *ngIf="!isLoading && conversations.length === 0">
+                <div class="conversation-empty" *ngIf="!isLoading && (conversations === undefined || conversations.length === 0)">
                     <fa-icon size="3x" [icon]="faConversation"></fa-icon>
                     <h5 class="mb-3 font-weight-bold">{{ 'artemisApp.messages.conversation.notFound' | artemisTranslate }}</h5>
                     <span jhiTranslate="artemisApp.messages.conversation.instructionForNewConversation"></span>

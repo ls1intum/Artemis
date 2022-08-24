@@ -39,6 +39,14 @@ export class ConversationService {
     }
 
     /**
+     * gets all conversations for user within course by courseId
+     * @param {conversationId}
+     */
+    auditConversationReadTimeOfUser = (conversationId: number) => {
+        return this.http.post<void>(`${this.resourceUrl}conversation`, conversationId.toString());
+    };
+
+    /**
      * takes a conversation and converts the date from the client
      * @param   {Conversation} conversation
      * @return  {Conversation}
