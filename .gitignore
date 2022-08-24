@@ -178,6 +178,7 @@ repos-download/
 /coverage
 /exports
 /src/main/resources/config/application-local*.yml
+/src/main/resources/config-env/artemis-override.env
 /src/test/cypress/screenshots/
 /src/test/cypress/videos/
 /src/test/cypress/build

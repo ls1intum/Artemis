@@ -5,7 +5,11 @@ services:
         build:
             context: ../../..
             dockerfile: src/main/docker/artemis/Dockerfile
-        env_file: .env
+        env_file:
+            - ../resources/config-env/artemis.env # artemis profile and general spring configs
+            - ../resources/config-env/artemis-dev.env # development profile
+            - ../resources/config-env/artemis-dev-db.env # docker compose Development-DB profile
+            - ../resources/config-env/artemis-override.env # local overrides and secrets (not under version control)
         ports:
             - 8080:8080
         networks:
