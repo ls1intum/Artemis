@@ -23,7 +23,7 @@
         ></fa-icon>
         <jhi-answer-post-create-edit-modal #editAnswerPostEditModal [posting]="posting" (isModalOpen)="isModalOpen.emit()"></jhi-answer-post-create-edit-modal>
         <jhi-confirm-icon
-            *ngIf="isAtLeastTutorInCourse || isAuthorOfPosting"
+            *ngIf="(isAtLeastTutorInCourse || isAuthorOfPosting) && !isCourseMessagesPage"
             iconSize="xs"
             (confirmEvent)="deletePosting()"
             [ngClass]="'deleteIcon clickable icon'"
@@ -31,27 +31,25 @@
             [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
         ></jhi-confirm-icon>
     </div>
-    <span *ngIf="!isCourseMessagesPage">
-        <ng-template #notResolved>
-            <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
-                <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
-            </div>
-        </ng-template>
-        <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
-            <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
-                <div *ngIf="posting.resolvesPost; else notResolved">
-                    <fa-icon
-                        class="resolved"
-                        [icon]="faCheck"
-                        [ngbTooltip]="
-                            isAtLeastTutorInCourse || isAuthorOfOriginalPost
-                                ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
-                                : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
-                        "
-                    >
-                    </fa-icon>
-                </div>
+    <ng-template #notResolved>
+        <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
+            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+        </div>
+    </ng-template>
+    <div *ngIf="!isCourseMessagesPage && !isAnswerOfAnnouncement" class="col-auto ps-0">
+        <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
+            <div *ngIf="posting.resolvesPost; else notResolved">
+                <fa-icon
+                    class="resolved"
+                    [icon]="faCheck"
+                    [ngbTooltip]="
+                        isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                            ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                            : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                    "
+                >
+                </fa-icon>
             </div>
         </div>
-    </span>
+    </div>
 </div>

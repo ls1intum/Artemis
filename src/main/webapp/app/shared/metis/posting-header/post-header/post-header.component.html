@@ -23,7 +23,7 @@
             [ngbTooltip]="'artemisApp.metis.editPosting' | artemisTranslate"
             container="body"
             [icon]="faPencilAlt"
-            (click)="createEditModal.open()"
+            (click)="!isCourseMessagesPage ? createEditModal.open() : isModalOpen.emit()"
         ></fa-icon>
         <jhi-post-create-edit-modal
             #createEditModal

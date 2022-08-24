@@ -19,6 +19,8 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Input() showAnswers: boolean;
     @Input() isCourseMessagesPage: boolean;
 
+    displayInlineInput = false;
+
     postIsResolved: boolean;
     pageType: PageType;
     contextInformation: ContextInformation;

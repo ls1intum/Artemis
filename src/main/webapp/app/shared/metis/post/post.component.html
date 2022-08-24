@@ -1,4 +1,9 @@
-<jhi-post-header [previewMode]="previewMode" [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="isModalOpen.emit()"></jhi-post-header>
+<jhi-post-header
+    [previewMode]="previewMode"
+    [posting]="posting"
+    [isCourseMessagesPage]="isCourseMessagesPage"
+    (isModalOpen)="isCourseMessagesPage ? (displayInlineInput = true) : isModalOpen.emit()"
+></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">
@@ -44,10 +49,12 @@
             </span>
         </div>
         <jhi-posting-content
+            *ngIf="!displayInlineInput"
             [previewMode]="previewMode"
             [content]="posting.content"
             [isAnnouncement]="posting.courseWideContext === CourseWideContext.ANNOUNCEMENT"
         ></jhi-posting-content>
     </div>
 </div>
-<jhi-post-footer [modalRef]="modalRef" [previewMode]="previewMode" [posting]="posting" [showAnswers]="showAnswers"></jhi-post-footer>
+<jhi-message-inline-input *ngIf="displayInlineInput" [posting]="posting"> </jhi-message-inline-input>
+<jhi-post-footer [modalRef]="modalRef" [previewMode]="previewMode" [posting]="posting" [showAnswers]="showAnswers" [isCourseMessagesPage]="isCourseMessagesPage"></jhi-post-footer>
