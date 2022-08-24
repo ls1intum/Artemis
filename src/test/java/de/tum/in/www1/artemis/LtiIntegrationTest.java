@@ -133,7 +133,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         database.resetDatabase();
     }
 
-    private void addJiraMocks(String requestBody) throws Exception {
+    private void addJiraMocks(String requestBody, boolean existingUser) throws Exception {
         String email = "";
         if (Objects.equals(requestBody, EDX_REQUEST_BODY)) {
             email = "anh.montag@tum.de";
@@ -142,15 +142,21 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             email = "carlosmoodle@email.com";
         }
 
-        jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
+        if (existingUser) {
+            jiraRequestMockProvider.mockGetUsernameForEmail(email, "existingUser");
+        }
+        else {
+            jiraRequestMockProvider.mockGetUsernameForEmailEmptyResponse(email);
+        }
+
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
     }
 
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithAnonymousUser
-    void launchAsAnonymousUserWithExistingEmail(String requestBody) throws Exception {
-        addJiraMocks(requestBody);
+    void launchAsAnonymousUser_WithoutExistingEmail(String requestBody) throws Exception {
+        addJiraMocks(requestBody, false);
 
         Long exerciseId = programmingExercise.getId();
         Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
@@ -162,8 +168,40 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(parameters.getFirst("login")).isNull();
         assertThat(parameters.getFirst("initialize")).isNotNull();
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
+    }
 
-        this.checkExceptions(requestBody);
+    @ParameterizedTest
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
+    @WithAnonymousUser
+    void launchAsAnonymousUser_WithExistingEmail(String requestBody) throws Exception {
+        addJiraMocks(requestBody, false);
+
+        Long exerciseId = programmingExercise.getId();
+        Long courseId = programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId();
+        URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
+
+        var uriComponents = UriComponentsBuilder.fromUri(header).build();
+        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
+        assertThat(parameters.getFirst("jwt")).isNotBlank();
+        assertThat(parameters.getFirst("login")).isNull();
+        assertThat(parameters.getFirst("initialize")).isNotNull();
+        assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
+    @WithAnonymousUser
+    void launchAsAnonymousUser_checkExceptions(String requestBody) throws Exception {
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+
+        doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any());
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
+
+        doReturn("error").when(ltiService).verifyRequest(any());
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.UNAUTHORIZED, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     @Test
@@ -197,8 +235,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(parameters.getFirst("initialize")).isNull();
         assertThat(parameters.getFirst("login")).isNull();
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
-
-        this.checkExceptions(requestBody);
     }
 
     @ParameterizedTest
@@ -222,22 +258,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         assertThat(parameters.getFirst("login")).isNull();
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
-        this.checkExceptions(requestBody);
-
         Mockito.reset(timeService);
-    }
-
-    private void checkExceptions(String requestBody) throws Exception {
-        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
-                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
-
-        doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any());
-        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders(),
-                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
-
-        doReturn("error").when(ltiService).verifyRequest(any());
-        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.UNAUTHORIZED, new HttpHeaders(),
-                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     @Test
