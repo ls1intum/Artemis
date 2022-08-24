@@ -9,7 +9,7 @@
             "warning": "Confirmation/Denial of plagiarism will be lost when refreshing the page.",
             "inspection": "Plagiarism Inspection",
             "plagiarism": "Plagiarism",
-            "submissions": "Student Submissions",
+            "submissions": "Submissions",
             "back": "Back",
             "empty": "There are no results.",
             "notFound": "No plagiarism found",
@@ -64,7 +64,7 @@
                 },
                 "verdict": {
                     "verdict": "Verdict",
-                    "text": "Decide what the consequences of the plagiarism are. Your decision can not be reverted.",
+                    "text": "Decide what the consequences of the plagiarism are. The decision can not be reverted.",
                     "description": "Decided on {{ date }} by {{ user }}",
                     "none": "Not yet decided",
                     "plagiarism": "Plagiarism",
