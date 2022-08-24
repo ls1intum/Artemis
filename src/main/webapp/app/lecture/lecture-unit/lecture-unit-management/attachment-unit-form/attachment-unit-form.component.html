@@ -39,7 +39,7 @@
                 <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
                 <fa-icon
                     [icon]="faQuestionCircle"
-                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensionsString }"
+                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
                 ></fa-icon>
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
@@ -48,7 +48,7 @@
                             id="fileInput"
                             type="file"
                             class="custom-file-input"
-                            [accept]="allowedFileExtensions"
+                            [accept]="acceptedFileExtensionsFileBrowser"
                             (change)="onFileChange($event)"
                             aria-describedby="fileHelp"
                             [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.chooseFile' | artemisTranslate"
