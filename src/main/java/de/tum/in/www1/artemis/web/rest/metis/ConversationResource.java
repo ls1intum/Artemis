@@ -51,6 +51,7 @@ public class ConversationResource {
         return new ResponseEntity<>(conversations, null, HttpStatus.OK);
     }
 
+    // TODO: Doesn't work at the moment. Requests sent via Postman are received but not the ones from the clients
     /**
      * Post /conversation : updates the time user read a conversation
      **
