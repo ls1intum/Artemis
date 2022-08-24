@@ -83,12 +83,14 @@ public class FileResource {
 
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
+     * Extensions must be lower-case without leading dots.
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
      */
     private final Set<String> allowedMarkdownFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf");
 
     /**
      * The global list of file extensions that are allowed to be uploaded.
+     * Extensions must be lower-case without leading dots.
      * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
      */
     private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
@@ -579,7 +581,7 @@ public class FileResource {
             allowedExtensions = allowedFileExtensions;
         }
 
-        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+        if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
             return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions));
         }
 

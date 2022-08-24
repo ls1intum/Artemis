@@ -35,7 +35,8 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
 
-    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    readonly allowedFileExtensions = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    readonly allowedFileExtensionsString = FILE_EXTENSIONS.join(', ');
 
     fileUploadErrorMessage?: string;
     faQuestionCircle = faQuestionCircle;

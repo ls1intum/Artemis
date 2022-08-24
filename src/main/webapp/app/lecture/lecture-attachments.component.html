@@ -110,7 +110,7 @@
                             <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.lecture.attachments.fileLimitation' | artemisTranslate }} </small>
                             <fa-icon
                                 [icon]="faQuestionCircle"
-                                [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                                [ngbTooltip]="'artemisApp.lecture.attachments.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensionsString }"
                             ></fa-icon>
                             <div class="input-group background-file">
                                 <div class="custom-file overflow-ellipsis">
@@ -119,6 +119,7 @@
                                         id="lectureAttachmentInput{{ attachmentToBeCreated.name }}"
                                         type="file"
                                         class="custom-file-input"
+                                        [accept]="allowedFileExtensions"
                                         [placeholder]="'artemisApp.lecture.attachments.chooseFile' | artemisTranslate"
                                         (change)="setLectureAttachment($event)"
                                     />

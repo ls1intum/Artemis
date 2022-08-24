@@ -29,7 +29,8 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     erroredFile?: Blob;
     errorMessage?: string;
 
-    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    readonly allowedFileExtensions = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+    readonly allowedFileExtensionsString = FILE_EXTENSIONS.join(', ');
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
