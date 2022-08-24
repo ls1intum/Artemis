@@ -49,7 +49,7 @@ export class ExamParticipationSummaryComponent implements OnInit {
         if (this.studentExamGradeInfoDTO) {
             this.studentExamGradeInfoDTO.studentExam = studentExam;
         }
-        this.loadPlagiarismCaseInfosForStudent();
+        this.tryLoadPlagiarismCaseInfosForStudent();
     }
 
     /**
@@ -116,9 +116,9 @@ export class ExamParticipationSummaryComponent implements OnInit {
         this.setExamWithOnlyIdAndStudentReviewPeriod();
     }
 
-    private loadPlagiarismCaseInfosForStudent() {
-        const exerciseIds = this.studentExam.exercises?.map((exercise) => exercise.id!);
-        if (exerciseIds?.length) {
+    private tryLoadPlagiarismCaseInfosForStudent() {
+        const exerciseIds = this.studentExam?.exercises?.map((exercise) => exercise.id!);
+        if (exerciseIds?.length && this.courseId) {
             this.plagiarismCasesService.getPlagiarismCaseInfosForStudent(this.courseId, exerciseIds).subscribe((res) => {
                 this.plagiarismCaseInfos = res.body ?? {};
             });
