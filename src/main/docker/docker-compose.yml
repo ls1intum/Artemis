@@ -1,4 +1,3 @@
-version: '2.4'
 services:
     artemis-app:
         platform: linux/x86_64
@@ -30,3 +29,5 @@ services:
 networks:
     artemis:
         driver: "bridge"
+volumes:
+    artemis-mysql-data:

@@ -1,5 +1,4 @@
 # This configuration is intended for development purpose, it's **your** responsibility to harden it for production
-version: '3.8'
 services:
   artemis-prometheus:
     image: prom/prometheus:v2.31.1

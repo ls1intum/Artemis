@@ -1,4 +1,3 @@
-version: "3.6"
 services:
     gitlab:
         build: gitlab
@@ -23,8 +22,7 @@ services:
             - '443:443'
         shm_size: '256m'
         networks:
-            gitlab:
-                ipv4_address: 172.20.0.2
+            - artemis
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
         container_name: gitlab-runner
@@ -34,16 +32,11 @@ services:
             - artemis-gitlabci-runner-config:/etc/gitlab-runner
         hostname: 'gitlab-runner'
         networks:
-            gitlab:
-                ipv4_address: 172.20.0.3
+            - artemis
 
 networks:
-  gitlab:
+  artemis:
       driver: "bridge"
-      ipam:
-        driver: default
-        config:
-            - subnet: 172.20.0.0/24
 
 volumes:
     artemis-gitlab-data:

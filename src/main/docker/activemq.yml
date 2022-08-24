@@ -1,4 +1,3 @@
-version: '2'
 services:
   activemq-broker:
     image: vromero/activemq-artemis:latest

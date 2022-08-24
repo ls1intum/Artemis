@@ -1,12 +1,11 @@
-version: '2.4'
 services:
     artemis-mysql:
         # Use this for arm64 processors (and remove the platform: linux/x86_64
         # image: ubuntu/mysql:8.0-21.10_beta
         image: mysql:8.0.27
         platform: linux/x86_64
-        # volumes:
-        #     - ~/volumes/jhipster/Artemis/mysql/:/var/lib/mysql/
+        volumes:
+            - artemis-mysql-data:/var/lib/mysql
         environment:
             - MYSQL_ALLOW_EMPTY_PASSWORD=yes
             - MYSQL_ROOT_PASSWORD=
@@ -14,9 +13,14 @@ services:
         ports:
             - 3306:3306
         command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
+        # mbind: Operation not permitted workaround for docker-compose (see https://github.com/docker-library/mysql/issues/303)
+        cap_add:
+            - SYS_NICE  # CAP_SYS_NICE
         networks:
             - artemis
 
 networks:
     artemis:
         driver: "bridge"
+volumes:
+    artemis-mysql-data:
