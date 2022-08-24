@@ -21,6 +21,8 @@ export class PostFooterComponent extends PostingFooterDirective<Post> implements
 
     @ViewChild(AnswerPostCreateEditModalComponent) answerPostCreateEditModal?: AnswerPostCreateEditModalComponent;
     @Input() showAnswers: boolean;
+    @Input() isCourseMessagesPage: boolean;
+
     sortedAnswerPosts: AnswerPost[];
     createdAnswerPost: AnswerPost;
     isAtLeastTutorInCourse: boolean;

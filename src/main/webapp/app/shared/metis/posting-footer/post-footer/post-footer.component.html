@@ -5,6 +5,7 @@
             [posting]="posting"
             [(showAnswers)]="showAnswers"
             [sortedAnswerPosts]="sortedAnswerPosts"
+            [isCourseMessagesPage]="isCourseMessagesPage"
             (openPostingCreateEditModal)="createAnswerPostModal.open()"
         ></jhi-post-reactions-bar>
     </div>
@@ -20,6 +21,7 @@
         *ngFor="let answerPost of sortedAnswerPosts; let isLastAnswer = last; trackBy: answerPostTrackByFn"
         [posting]="answerPost"
         [isLastAnswer]="isLastAnswer"
+        [isCourseMessagesPage]="isCourseMessagesPage"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
     >
     </jhi-answer-post>

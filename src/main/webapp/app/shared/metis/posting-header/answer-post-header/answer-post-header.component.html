@@ -31,25 +31,27 @@
             [confirmTooltip]="'artemisApp.metis.confirmDeleteAnswer' | artemisTranslate"
         ></jhi-confirm-icon>
     </div>
-    <ng-template #notResolved>
-        <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
-            <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
-        </div>
-    </ng-template>
-    <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
-        <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
-            <div *ngIf="posting.resolvesPost; else notResolved">
-                <fa-icon
-                    class="resolved"
-                    [icon]="faCheck"
-                    [ngbTooltip]="
-                        isAtLeastTutorInCourse || isAuthorOfOriginalPost
-                            ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
-                            : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
-                    "
-                >
-                </fa-icon>
+    <span *ngIf="!isCourseMessagesPage">
+        <ng-template #notResolved>
+            <div *ngIf="isAtLeastTutorInCourse || isAuthorOfOriginalPost">
+                <fa-icon class="icon notResolved" [icon]="faCheck" [ngbTooltip]="'artemisApp.metis.markAsResolvingAnswerTooltip' | artemisTranslate"> </fa-icon>
+            </div>
+        </ng-template>
+        <div *ngIf="!isAnswerOfAnnouncement" class="col-auto ps-0">
+            <div id="toggleElement" [ngClass]="isAtLeastTutorInCourse || isAuthorOfOriginalPost ? 'clickable' : ''" (click)="toggleResolvesPost()">
+                <div *ngIf="posting.resolvesPost; else notResolved">
+                    <fa-icon
+                        class="resolved"
+                        [icon]="faCheck"
+                        [ngbTooltip]="
+                            isAtLeastTutorInCourse || isAuthorOfOriginalPost
+                                ? ('artemisApp.metis.unmarkAsResolvingAnswerTooltip' | artemisTranslate)
+                                : ('artemisApp.metis.resolvingAnswerTooltip' | artemisTranslate)
+                        "
+                    >
+                    </fa-icon>
+                </div>
             </div>
         </div>
-    </div>
+    </span>
 </div>

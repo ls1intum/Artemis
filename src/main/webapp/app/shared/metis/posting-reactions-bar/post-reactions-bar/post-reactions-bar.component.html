@@ -37,28 +37,30 @@
             [recent]="selectedCourseEmojis"
         ></jhi-emoji-picker>
     </ng-template>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button pin"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && togglePin()"
-        >
-            <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
-        </button>
-    </div>
-    <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
-        <button
-            class="reaction-button archive"
-            [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
-            [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
-            [disabled]="!currentUserIsAtLeastTutor"
-            (click)="currentUserIsAtLeastTutor && toggleArchive()"
-        >
-            <jhi-emoji [emoji]="archiveEmojiId" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
-        </button>
-    </div>
+    <span *ngIf="!isCourseMessagesPage">
+        <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.PINNED || currentUserIsAtLeastTutor">
+            <button
+                class="reaction-button pin"
+                [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+                [class.reaction-button--reacted]="displayPriority === DisplayPriority.PINNED && currentUserIsAtLeastTutor"
+                [disabled]="!currentUserIsAtLeastTutor"
+                (click)="currentUserIsAtLeastTutor && togglePin()"
+            >
+                <jhi-emoji [emoji]="pinEmojiId" [ngbTooltip]="pinTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
+            </button>
+        </div>
+        <div class="col-auto p-0" *ngIf="displayPriority === DisplayPriority.ARCHIVED || currentUserIsAtLeastTutor">
+            <button
+                class="reaction-button archive"
+                [class.reaction-button--not-hoverable]="!currentUserIsAtLeastTutor"
+                [class.reaction-button--reacted]="displayPriority === DisplayPriority.ARCHIVED && currentUserIsAtLeastTutor"
+                [disabled]="!currentUserIsAtLeastTutor"
+                (click)="currentUserIsAtLeastTutor && toggleArchive()"
+            >
+                <jhi-emoji [emoji]="archiveEmojiId" [ngbTooltip]="archiveTooltip | artemisTranslate" [placement]="'auto'"></jhi-emoji>
+            </button>
+        </div>
+    </span>
     <!-- start discussion -->
     <div class="col-auto p-0" *ngIf="sortedAnswerPosts.length === 0">
         <button class="reaction-button clickable reply-btn" (click)="openPostingCreateEditModal.emit()">
