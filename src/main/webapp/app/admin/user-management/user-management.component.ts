@@ -122,7 +122,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
-    isLdapProfileActive = false;
+    isLdapProfileActive: boolean;
 
     // filters
     filters: UserFilter = new UserFilter();
