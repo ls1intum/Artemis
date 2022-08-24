@@ -28,6 +28,7 @@
 </div>
 <ng-container *ngIf="bonus.source?.gradeSteps">
     <h5 class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.selectedBonusSource">Selected Bonus Source Grading Key</h5>
+    <div class="mt-4 fs-5 no-flex-shrink">{{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.source) }}</div>
     <div class="fs-5">
         <table class="table table-striped">
             <thead>
@@ -78,7 +79,7 @@
             {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
         </div>
     </div>
-    <div *ngIf="examples?.length" class="fs-5">
+    <div *ngIf="examples.length" class="fs-5">
         <h5>
             {{ 'artemisApp.bonus.examples.title' | artemisTranslate }}
             <em>{{ 'artemisApp.bonus.examples.helpText' | artemisTranslate }}</em>

@@ -4,7 +4,6 @@ import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { map } from 'rxjs/operators';
-import { Course } from 'app/entities/course.model';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular';
 
@@ -314,7 +313,7 @@ export class GradingSystemService {
      * TODO: Ata
      * @param gradingScale
      */
-    getGradingScaleMaxPoints(gradingScale: GradingScale): number {
+    getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
         return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
     }
 

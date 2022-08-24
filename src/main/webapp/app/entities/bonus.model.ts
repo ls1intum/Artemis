@@ -1,14 +1,11 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 
 export class Bonus implements BaseEntity {
     public id?: number;
     public bonusStrategy?: BonusStrategy;
     public weight?: number;
     public source?: GradingScale;
-
-    // public target?: GradingScale; // TODO: Ata: Remove
 
     constructor() {}
 }

@@ -86,15 +86,15 @@ export class BonusComponent implements OnInit {
     currentBonusStrategyOption?: BonusStrategyOption;
     currentBonusStrategyDiscreteness?: BonusStrategyDiscreteness;
 
-    examples?: BonusExample[] = []; // TODO: Ata Remove empty array
+    examples: BonusExample[] = [];
     dynamicExample = new BonusExample(0, 0);
 
     bonus = new Bonus();
     invalidBonusMessage?: string;
 
-    state: PageableSearch = {
+    private state: PageableSearch = {
         page: 1,
-        pageSize: 10,
+        pageSize: 100,
         searchTerm: '',
         sortingOrder: SortingOrder.DESCENDING,
         sortedColumn: TableColumn.ID,
@@ -221,7 +221,6 @@ export class BonusComponent implements OnInit {
             }
         }
         return undefined;
-        // throw new Error('Unexpected args for convertFromOptionToBonusStrategy'); // TODO: Ata Decide whether remove
     }
 
     save(): void {
@@ -279,7 +278,7 @@ export class BonusComponent implements OnInit {
      * @see GradingSystemService.getGradingScaleMaxPoints
      * @param gradingScale
      */
-    getGradingScaleMaxPoints(gradingScale: GradingScale): number {
+    getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
         return this.gradingSystemService.getGradingScaleMaxPoints(gradingScale);
     }
 
