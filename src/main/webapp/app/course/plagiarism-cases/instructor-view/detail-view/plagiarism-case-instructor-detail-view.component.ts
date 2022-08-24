@@ -13,6 +13,7 @@ import { Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { abbreviateString } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
@@ -24,7 +25,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
-    exerciseTitle: string | undefined;
 
     verdictPointDeduction = 0;
     verdictMessage = '';
@@ -58,8 +58,6 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId, this.plagiarismCaseId).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase = res.body!;
-                this.exerciseTitle =
-                    this.plagiarismCase.exercise!.title!.length > 40 ? this.plagiarismCase.exercise?.title?.slice(0, 35) + '…' : this.plagiarismCase.exercise?.title;
 
                 this.verdictMessage = this.plagiarismCase.verdictMessage ?? '';
                 this.verdictPointDeduction = this.plagiarismCase.verdictPointDeduction ?? 0;
@@ -178,25 +176,23 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     /**
-     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
-     * this empty post has no course-wide context as well as the plagiarism case set as context
-     * it has an example text for the instructor and a default title containing the exercise title
+     * Creates a post for the student notification.
+     * This method invokes the metis service to create an empty default post (without course-wide context) that is needed for initialization of the modal.
+     * The plagiarism case is set as context and an example title and body for the instructor is generated.
      **/
     createEmptyPost(): void {
-        const studentName = this.plagiarismCase.student!.name;
-        const courseTitle =
-            this.plagiarismCase.exercise!.course!.title!.length > 40
-                ? this.plagiarismCase.exercise!.course!.title?.slice(0, 35) + '…'
-                : this.plagiarismCase.exercise!.course!.title;
+        const studentName = abbreviateString(this.plagiarismCase.student?.name ?? '', 70);
+        const exerciseTitle = abbreviateString(this.plagiarismCase.exercise?.title ?? '', 70);
+        const courseTitle = abbreviateString(this.plagiarismCase.exercise?.course?.title ?? '', 70);
 
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
         // Note the limit of 1.000 characters for the post's content
         this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
-            exercise: this.exerciseTitle,
+            exercise: exerciseTitle,
         });
         this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
             student: studentName,
-            exercise: this.exerciseTitle,
+            exercise: exerciseTitle,
             course: courseTitle,
             cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
             aspoLink: 'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1',

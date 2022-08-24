@@ -9,13 +9,13 @@
                     <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2"></jhi-plagiarism-case-verdict>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex flex-column">
-                    <p class="mb-1">
+                    <p class="mb-1 text-truncate">
                         <fa-icon [icon]="faUser"></fa-icon>
                         {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
                     </p>
-                    <p class="mb-0" *ngIf="plagiarismCase?.exercise">
+                    <p class="mb-0 text-truncate" *ngIf="plagiarismCase?.exercise">
                         <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
-                        {{ exerciseTitle }}
+                        {{ plagiarismCase.exercise!.title! }}
                     </p>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
