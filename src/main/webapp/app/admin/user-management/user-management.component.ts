@@ -209,9 +209,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.handleNavigation();
         });
         this.profileService.getProfileInfo().subscribe((profileInfo) => {
-            if (profileInfo.activeProfiles && profileInfo.activeProfiles?.includes('ldap')) {
-                this.isLdapProfileActive = true;
-            }
+            this.isLdapProfileActive = profileInfo.activeProfiles && profileInfo.activeProfiles?.includes('ldap');
         });
     }
 
@@ -310,12 +308,14 @@ export class UserManagementComponent implements OnInit, OnDestroy {
 
     /**
      * Method to add or remove a registration number filter and store the selected filters in the local store if required.
+     * @param registrationNumber corresponds to the registration number filter that is added or removed when the user clicks on the checkbox.
+     * When the filter is added, the value is set to the filter. Thus, when the value is present, the filter is toggled.
      */
-    toggleRegistrationNumberFilter(value?: RegistrationNumberFilter) {
+    toggleRegistrationNumberFilter(registrationNumber?: RegistrationNumberFilter) {
         const filter = this.filters.registrationNumberFilter;
         this.deselectFilter<RegistrationNumberFilter>(filter, this.registrationKey);
-        if (value) {
-            this.toggleFilter<RegistrationNumberFilter>(filter, value, this.registrationKey);
+        if (registrationNumber) {
+            this.toggleFilter<RegistrationNumberFilter>(filter, registrationNumber, this.registrationKey);
         }
     }
 

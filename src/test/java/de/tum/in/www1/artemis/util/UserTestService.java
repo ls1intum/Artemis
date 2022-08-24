@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import static de.tum.in.www1.artemis.repository.UserRepository.FILTER_WITHOUT_REG_NO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -807,7 +808,7 @@ public class UserTestService {
         Course course = database.addEmptyCourse();
         courseRepository.save(course);
 
-        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", Long.toString(course.getId()));
+        final var params = createParamsForPagingRequest("USER", "", FILTER_WITHOUT_REG_NO, "", Long.toString(course.getId()));
 
         List<User> result;
         List<User> users;
