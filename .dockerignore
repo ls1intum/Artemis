@@ -1,0 +1,33 @@
+# https://docs.docker.com/engine/reference/builder/#dockerignore-file
+classes/
+generated-sources/
+generated-test-sources/
+h2db/
+maven-archiver/
+maven-status/
+reports/
+surefire-reports/
+test-classes/
+test-results/
+www/
+!*.jar
+!*.war
+
+# exclude hidden directories like .git, .idea, .gradle, .cache, .github
+.*
+# exclude node_modules if installed locally
+node_modules
+# exclude build binaries
+build/*
+# except files for docker
+!build/docker
+#exclude data directory from ancient docker-compose in root directory
+data
+
+# files inside of the root directory not needed
+CITATION.cff
+CODE_OF_CONDUCT.md
+gradlew.bat
+LICENSE
+README.md
+SECURITY.md
