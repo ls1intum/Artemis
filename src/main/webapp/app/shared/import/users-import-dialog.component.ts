@@ -201,7 +201,7 @@ export class UsersImportDialogComponent implements OnDestroy {
                 error: () => this.onSaveError(),
             });
         } else {
-            this.alertService.error('importUsers.genericErrorMessage');
+            this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         }
     }
 
@@ -266,7 +266,7 @@ export class UsersImportDialogComponent implements OnDestroy {
      * Callback method that is called when the import request failed
      */
     onSaveError() {
-        this.alertService.error('importUsers.genericErrorMessage');
+        this.alertService.error('artemisApp.importUsers.genericErrorMessage');
         this.isImporting = false;
     }
 

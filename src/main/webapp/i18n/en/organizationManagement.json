@@ -1,38 +1,38 @@
 {
-    "organizationManagement": {
-        "title": "Organization management",
-        "name": "Name",
-        "shortName": "Short Name",
-        "url": "URL",
-        "description": "Description",
-        "logoUrl": "Logo URL",
-        "users": "Users",
-        "courses": "Courses",
-        "emailPattern": "Email Pattern",
-        "delete": {
-            "question": "Are you sure you want to delete the <strong>{{ title }}</strong> organization?"
-        },
-        "addLabel": "Add organization",
-        "addOrEditLabel": "Add or Edit organization",
-        "detail": {
-            "title": "Organization"
-        },
-        "userSearch": {
-            "usersPerPage": "{{number}} users per page",
-            "showAllUsers": "Show all users",
-            "searchForUsers": "Add a user to this organization by searching for login or name",
-            "searchNoResults": "No users found",
-            "removeFromOrganization": {
-                "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this organization?"
-            }
-        },
-        "modalSelector": {
-            "select": "Select",
-            "title": "Organizations"
-        },
-        "patternChangeWarning": "Changing the email pattern will trigger a re-assignment of all users to this organization"
-    },
     "artemisApp": {
+        "organizationManagement": {
+            "title": "Organization management",
+            "name": "Name",
+            "shortName": "Short Name",
+            "url": "URL",
+            "description": "Description",
+            "logoUrl": "Logo URL",
+            "users": "Users",
+            "courses": "Courses",
+            "emailPattern": "Email Pattern",
+            "delete": {
+                "question": "Are you sure you want to delete the <strong>{{ title }}</strong> organization?"
+            },
+            "addLabel": "Add organization",
+            "addOrEditLabel": "Add or Edit organization",
+            "detail": {
+                "title": "Organization"
+            },
+            "userSearch": {
+                "usersPerPage": "{{number}} users per page",
+                "showAllUsers": "Show all users",
+                "searchForUsers": "Add a user to this organization by searching for login or name",
+                "searchNoResults": "No users found",
+                "removeFromOrganization": {
+                    "modalQuestion": "Are you sure you want to remove the user with login <strong>{{ title }}</strong> from this organization?"
+                }
+            },
+            "modalSelector": {
+                "select": "Select",
+                "title": "Organizations"
+            },
+            "patternChangeWarning": "Changing the email pattern will trigger a re-assignment of all users to this organization"
+        },
         "organization": {
             "updated": "Organization updated!",
             "deleted": "Organization deleted!",
