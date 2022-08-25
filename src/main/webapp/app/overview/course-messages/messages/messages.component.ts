@@ -50,7 +50,7 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
      * subscribes to changes in the message container, in order display the bottom of the list at the messages page
      */
     ngAfterViewInit() {
-        this.scrollBottomSubscription = this.messages.changes.subscribe(this.scrollToBottom);
+        this.scrollBottomSubscription = this.messages.changes.subscribe(this.handleScrollOnNewMessage);
     }
 
     ngOnDestroy(): void {
@@ -61,14 +61,18 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
      * scrolls to the bottom of the message container if in messages page and posts exist for the selected conversation and
      * only the first page is fetched or user is scrolled to the last post of the conversation
      */
-    scrollToBottom = () => {
+    handleScrollOnNewMessage = () => {
         if (
             this.posts.length > 0 &&
             ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || Math.ceil(this.previousScrollDistanceFromTop) === this.messagesContainerHeight)
         ) {
-            this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+            this.scrollToBottomOfMessages();
         }
     };
+
+    scrollToBottomOfMessages() {
+        this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
+    }
 
     fetchLecturesAndExercisesOfCourse(): void {}
 }

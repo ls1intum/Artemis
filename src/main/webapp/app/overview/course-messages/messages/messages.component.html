@@ -45,7 +45,8 @@
                 >
                 </jhi-posting-thread>
             </div>
-            <jhi-message-inline-input *ngIf="inlineInputEnabled && conversation" [posting]="createdPost" (onCreate)="createEmptyPost()"> </jhi-message-inline-input>
+            <jhi-message-inline-input *ngIf="inlineInputEnabled && conversation" [posting]="createdPost" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()">
+            </jhi-message-inline-input>
         </div>
     </div>
 </div>
