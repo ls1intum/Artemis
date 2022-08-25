@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 // Custom object for sql query
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// Note: this POJO is used in a JPA query in ComplaintRepository and therefore cannot easily be converted into a record
 public class TutorLeaderboardComplaintResponses {
 
     private final long userId;
@@ -31,12 +32,6 @@ public class TutorLeaderboardComplaintResponses {
     }
 
     public TutorLeaderboardComplaintResponses() {
-        this.userId = 0L;
-        this.complaintResponses = 0L;
-        this.points = 0.0;
-    }
-
-    public Long getKey() {
-        return userId;
+        this(0L, 0L, 0.0);
     }
 }
