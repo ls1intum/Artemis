@@ -138,7 +138,6 @@ describe('UserManagementComponent', () => {
         expect(comp.users[0].id).toBe(1);
         expect(comp.totalItems).toBe(1);
         expect(comp.loadingSearchResult).toBeFalse();
-        expect(comp.isLdapProfileActive).toBeFalse();
     }));
 
     describe('setActive', () => {
