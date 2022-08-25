@@ -52,7 +52,7 @@ public class ConversationResource {
     }
 
     /**
-     * Post /conversation : updates the time user read a conversation
+     * Post /conversation : updates the time user reads a conversation
      **
      */
     @PostMapping("/conversation")
