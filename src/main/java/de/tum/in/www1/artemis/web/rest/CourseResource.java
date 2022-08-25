@@ -160,6 +160,7 @@ public class CourseResource {
         }
 
         // Make sure to preserve associations in updated entity
+        updatedCourse.setId(courseId);
         updatedCourse.setPrerequisites(existingCourse.getPrerequisites());
 
         updatedCourse.validateRegistrationConfirmationMessage();
