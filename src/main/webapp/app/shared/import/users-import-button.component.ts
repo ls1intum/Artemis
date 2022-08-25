@@ -13,7 +13,7 @@ import { faPlus } from '@fortawesome/free-solid-svg-icons';
             [btnType]="ButtonType.PRIMARY"
             [btnSize]="buttonSize"
             [icon]="faPlus"
-            [title]="'importUsers.buttonLabel'"
+            [title]="'artemisApp.importUsers.buttonLabel'"
             (onClick)="openUsersImportDialog($event)"
         ></jhi-button>
     `,
