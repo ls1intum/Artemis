@@ -4,6 +4,13 @@
         </jhi-posting-markdown-editor>
         <div class="col text-end">
             <button
+                *ngIf="editType == EditType.UPDATE"
+                jhi-posting-button
+                [buttonLabel]="'artemisApp.metis.cancel' | artemisTranslate"
+                class="btn btn-sm btn-outline-secondary"
+                (click)="isModalOpen.emit()"
+            ></button>
+            <button
                 jhi-posting-button
                 [buttonLoading]="isLoading"
                 [disabled]="!formGroup.valid"
