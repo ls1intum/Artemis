@@ -1,30 +1,24 @@
-<div class="creation-card bg-light text-primary container" id="unit-creation">
-    <div class="row">
-        <div class="col text-center">
-            <h4 class="font-weight-bold">
-                {{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}
-            </h4>
-        </div>
-    </div>
-    <div class="row">
-        <div class="col text-center">
-            <a id="createTextUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['text-units', 'create']">
+<div class="container" id="unit-creation">
+    <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
+        <div class="text-center text-primary me-2">{{ 'artemisApp.lectureUnit.unitCreationCard.title' | artemisTranslate }}:</div>
+        <div class="d-flex justify-content-center flex-wrap gap-1 align-items-center">
+            <a id="createTextUnitButton" class="btn btn-sm btn-primary" [routerLink]="['text-units', 'create']">
                 <fa-icon [icon]="faScroll"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.text">text</span>
             </a>
-            <a id="createExerciseUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['exercise-units', 'create']">
+            <a id="createExerciseUnitButton" class="btn btn-sm btn-primary" [routerLink]="['exercise-units', 'create']">
                 <fa-icon [icon]="faCheck"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.exercise">Exercise</span>
             </a>
-            <a id="createVideoUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['video-units', 'create']">
+            <a id="createVideoUnitButton" class="btn btn-sm btn-primary" [routerLink]="['video-units', 'create']">
                 <fa-icon [icon]="faVideo"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.video">Video</span>
             </a>
-            <a id="createOnlineUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['online-units', 'create']">
+            <a id="createOnlineUnitButton" class="btn btn-sm btn-primary" [routerLink]="['online-units', 'create']">
                 <fa-icon [icon]="faLink"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.online">Online</span>
             </a>
-            <a id="createAttachmentUnitButton" class="btn btn-lg btn-primary m-1 rounded-pill" [routerLink]="['attachment-units', 'create']">
+            <a id="createAttachmentUnitButton" class="btn btn-sm btn-primary" [routerLink]="['attachment-units', 'create']">
                 <fa-icon [icon]="faFileUpload"></fa-icon>
                 <span class="ms-1" jhiTranslate="artemisApp.lectureUnit.unitCreationCard.attachment">File</span>
             </a>
