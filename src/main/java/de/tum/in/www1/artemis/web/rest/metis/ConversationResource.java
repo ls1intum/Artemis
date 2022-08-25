@@ -51,15 +51,14 @@ public class ConversationResource {
         return new ResponseEntity<>(conversations, null, HttpStatus.OK);
     }
 
-    // TODO: Doesn't work at the moment. Requests sent via Postman are received but not the ones from the clients
     /**
      * Post /conversation : updates the time user read a conversation
      **
      */
     @PostMapping("/conversation")
     @PreAuthorize("hasRole('USER')")
-    public void auditReadTimeOfConversation(@RequestBody String conversationId) {
-        conversationService.auditConversationReadTimeOfUser(Long.parseLong(conversationId));
+    public void auditReadTimeOfConversation(@RequestBody Long conversationId) {
+        conversationService.auditConversationReadTimeOfUser(conversationId);
     }
 
     /**

@@ -42,8 +42,8 @@ export class ConversationService {
      * gets all conversations for user within course by courseId
      * @param {conversationId}
      */
-    auditConversationReadTimeOfUser = (conversationId: number) => {
-        return this.http.post<void>(`${this.resourceUrl}conversation`, conversationId.toString());
+    auditConversationReadTimeOfUser = (conversationId: number): void => {
+        this.http.post<void>(`${this.resourceUrl}conversation`, conversationId).subscribe();
     };
 
     /**
