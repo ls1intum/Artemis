@@ -215,6 +215,14 @@ describe('Profile Service', () => {
                 staticCodeAnalysis: true,
             },
         ],
+        git: {
+            branch: 'profile-service-spec',
+            commit: {
+                id: {
+                    abbrev: '95ef2a',
+                },
+            },
+        },
     };
 
     beforeEach(() => {

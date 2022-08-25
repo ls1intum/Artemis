@@ -41,13 +41,7 @@ export class ProfileInfo {
         commit: {
             id: {
                 abbrev: string;
-                full: string;
             };
-            message: {
-                full: string;
-                short: string;
-            };
-            time: string;
         };
     };
 }
