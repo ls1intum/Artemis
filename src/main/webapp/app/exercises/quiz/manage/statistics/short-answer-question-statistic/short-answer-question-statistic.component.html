@@ -3,7 +3,7 @@
         <h3>{{ quizExercise.title }}</h3>
         <div class="row">
             <div *ngIf="question" class="col">
-                <h3>{{ question.title }} <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="showStatistic.invalid"></span></h3>
+                <h3>{{ question.title }} <span class="invalid-question" *ngIf="question.invalid" jhiTranslate="artemisApp.showStatistic.invalid"></span></h3>
                 <div class="short-answer-question-display-statistic">
                     <div class="short-answer-question-display" *ngFor="let textPart of textParts">
                         <div class="short-answer-question-display__statistic-element" *ngFor="let element of textPart">
@@ -36,13 +36,13 @@
                     <div class="row">
                         <div class="col-md-7 text-start">
                             <p id="text" class="chart-title-text">
-                                <span *ngIf="rated" jhiTranslate="showStatistic.questionStatistic.titleRated"></span>
-                                <span *ngIf="!rated" jhiTranslate="showStatistic.questionStatistic.titleUnrated"></span>
+                                <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.questionStatistic.titleRated"></span>
+                                <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.questionStatistic.titleUnrated"></span>
                             </p>
                         </div>
                         <div class="col-md-5 text-end">
                             <p class="chart-title-text">
-                                <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
+                                <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
                             </p>
                         </div>
                     </div>
@@ -69,14 +69,14 @@
                     <div class="col-md-12 text-center button-row">
                         <button (click)="switchSolution()" type="button" class="btn btn-primary show-solution">
                             <fa-icon *ngIf="showSolution" [icon]="faCheckCircle"></fa-icon>&nbsp; <fa-icon *ngIf="!showSolution" [icon]="faTimesCircle"></fa-icon>&nbsp;
-                            <span *ngIf="showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
-                            <span *ngIf="!showSolution" jhiTranslate="showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
+                            <span *ngIf="showSolution" jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.hideSampleSolution"></span>
+                            <span *ngIf="!showSolution" jhiTranslate="artemisApp.showStatistic.dragAndDropQuestionStatistic.showSampleSolution"></span>
                         </button>
 
                         <button (click)="switchRated()" type="button" class="btn btn-primary">
                             <fa-icon [icon]="faSync"></fa-icon>&nbsp;
-                            <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
-                            <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                            <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+                            <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
                         </button>
                     </div>
                     <p>&nbsp;</p>
