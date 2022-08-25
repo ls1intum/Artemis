@@ -9,14 +9,14 @@
                     class="form-control"
                     id="title"
                     formControlName="title"
-                    [placeholder]="'artemisApp.tutorialGroupForm.titleInput.placeholder' | artemisTranslate"
+                    [placeholder]="'artemisApp.tutorialGroupForm.titleInput.placeholder' | artemisTranslate: { from: '12:00', to: '13:00' }"
                 />
                 <div *ngIf="titleControl?.invalid && (titleControl?.dirty || titleControl?.touched)" class="alert alert-danger">
                     <div *ngIf="titleControl?.errors?.required || titleControl?.errors?.pattern">
                         {{ 'artemisApp.tutorialGroupForm.titleInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="titleControl?.errors?.maxlength">
-                        {{ 'artemisApp.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.tutorialGroupForm.titleInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
                     </div>
                 </div>
             </div>
@@ -68,7 +68,7 @@
                 ></textarea>
                 <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
                     <div *ngIf="locationControl?.errors?.maxlength">
-                        {{ 'artemisApp.tutorialGroupForm.locationInput.maxLengthValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.tutorialGroupForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
                     </div>
                 </div>
             </div>
@@ -110,7 +110,7 @@
                 ></textarea>
                 <div *ngIf="additionalInformationControl?.invalid && (additionalInformationControl?.dirty || additionalInformationControl?.touched)" class="alert alert-danger">
                     <div *ngIf="additionalInformationControl?.errors?.maxlength">
-                        {{ 'artemisApp.tutorialGroupForm.additionalInformationInput.maxLengthValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.tutorialGroupForm.additionalInformationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
                     </div>
                 </div>
             </div>

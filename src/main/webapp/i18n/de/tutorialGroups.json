@@ -40,9 +40,9 @@
         "tutorialGroupForm": {
             "titleInput": {
                 "label": "Titel",
-                "placeholder": "Gruppe 1: Montag 12:00 - 13:00",
+                "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
                 "requiredValidationError": "Eine Übungsgruppe muss einen Titel haben!",
-                "maxLengthValidationError": "Der Titel darf maximal 255 Zeichen lang sein!"
+                "maxLengthValidationError": "Der Titel darf maximal {{ max }} Zeichen lang sein!"
             },
             "teachingAssistantInput": {
                 "label": "Tutor",
@@ -55,14 +55,14 @@
             "additionalInformationInput": {
                 "label": "Zusätzliche Informationen",
                 "placeholder": "Zusätzliche Informationen zu dieser Gruppe",
-                "maxLengthValidationError": "Die zusätzlichen Informationen dürfen maximal 2000 Zeichen lang sein!"
+                "maxLengthValidationError": "Die zusätzlichen Informationen dürfen maximal {{ max }} Zeichen lang sein!"
             },
             "locationInput": {
                 "labelOnline": "Meeting-Link",
                 "labelOffline": "Treffpunkt",
                 "placeholderOnline": "Wie können die Studenten an der online Übung teilnehmen?",
                 "placeholderOffline": "Wo können Studenten den Raum finden?",
-                "maxLengthValidationError": "Der Ort darf maximal 2000 Zeichen lang sein!"
+                "maxLengthValidationError": "Der Ort darf maximal {{ max }} Zeichen lang sein!"
             },
             "capacityInput": {
                 "label": "Kapazität",
