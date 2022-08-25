@@ -62,7 +62,10 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
      * only the first page is fetched or user is scrolled to the last post of the conversation
      */
     scrollToBottom = () => {
-        if (this.posts.length > 0 && ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || this.previousScrollDistanceFromTop === this.messagesContainerHeight)) {
+        if (
+            this.posts.length > 0 &&
+            ((this.content.nativeElement.scrollTop === 0 && this.page === 1) || Math.ceil(this.previousScrollDistanceFromTop) === this.messagesContainerHeight)
+        ) {
             this.content.nativeElement.scrollTop = this.content.nativeElement.scrollHeight;
         }
     };
