@@ -3,7 +3,7 @@ import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/Plagiarism
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
-import { getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
+import { getIcon } from 'app/entities/exercise.model';
 import { combineLatest, Subscription } from 'rxjs';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { Post } from 'app/entities/metis/post.model';
@@ -26,7 +26,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     private paramSubscription: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
 
-    getExerciseUrlSegment = getExerciseUrlSegment;
     getIcon = getIcon;
     faUser = faUser;
 

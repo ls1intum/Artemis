@@ -19,7 +19,7 @@
                     </p>
                 </div>
                 <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
-                    <a class="btn btn-secondary" [routerLink]="['/course-management', courseId, getExerciseUrlSegment(plagiarismCase.exercise!.type), plagiarismCase.exercise!.id]">
+                    <a class="btn btn-secondary" [routerLink]="['/courses', courseId, 'exercises', plagiarismCase.exercise!.id]">
                         <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise">Affected exercise</span>
                     </a>
                 </div>
