@@ -160,6 +160,9 @@ describe('ExampleTextSubmissionComponent', () => {
 
     it('should switch state when starting assessment', fakeAsync(() => {
         // GIVEN
+        jest.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         comp.ngOnInit();
