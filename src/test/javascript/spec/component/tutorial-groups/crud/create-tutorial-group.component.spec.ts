@@ -14,6 +14,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { User } from 'app/core/user/user.model';
+import { Language } from 'app/entities/course.model';
 
 @Component({ selector: 'jhi-tutorial-group-form', template: '' })
 class TutorialGroupFormStubComponent {
@@ -73,9 +74,14 @@ describe('CreateTutorialGroupComponent', () => {
         const exampleTeachingAssistant = new User();
         exampleTeachingAssistant.login = 'testLogin';
 
-        const formDate: TutorialGroupFormData = {
+        const formData: TutorialGroupFormData = {
             title: 'Test',
             teachingAssistant: exampleTeachingAssistant,
+            language: Language.GERMAN,
+            additionalInformation: 'Test Info',
+            capacity: 1,
+            isOnline: true,
+            location: 'Test Location',
         };
 
         const response: HttpResponse<TutorialGroup> = new HttpResponse({
@@ -91,16 +97,21 @@ describe('CreateTutorialGroupComponent', () => {
         const tutorialGroupForm: TutorialGroupFormStubComponent = createTutorialGroupComponentFixture.debugElement.query(
             By.directive(TutorialGroupFormStubComponent),
         ).componentInstance;
-        tutorialGroupForm.formSubmitted.emit(formDate);
+        tutorialGroupForm.formSubmitted.emit(formData);
 
         createTutorialGroupComponentFixture.whenStable().then(() => {
             const tutorialGroupCallArgument: TutorialGroup = createStub.mock.calls[0][0];
 
-            expect(tutorialGroupCallArgument.title).toEqual(formDate.title);
+            expect(tutorialGroupCallArgument.title).toEqual(formData.title);
+            expect(tutorialGroupCallArgument.teachingAssistant).toEqual(formData.teachingAssistant);
+            expect(tutorialGroupCallArgument.language).toEqual(formData.language);
+            expect(tutorialGroupCallArgument.additionalInformation).toEqual(formData.additionalInformation);
+            expect(tutorialGroupCallArgument.capacity).toEqual(formData.capacity);
+            expect(tutorialGroupCallArgument.isOnline).toEqual(formData.isOnline);
+            expect(tutorialGroupCallArgument.location).toEqual(formData.location);
 
             expect(createStub).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();
-
             navigateSpy.mockRestore();
         });
     }));

@@ -97,6 +97,7 @@ describe('EditTutorialGroupComponent', () => {
         editTutorialGroupComponentFixture.detectChanges();
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupOfResponse);
         expect(findByIdStub).toHaveBeenCalledWith(1, 1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editTutorialGroupComponent.formData.title).toEqual(tutorialGroupOfResponse.title);
         expect(tutorialGroupFormStubComponent.formData).toEqual(editTutorialGroupComponent.formData);
     });

@@ -92,6 +92,7 @@ describe('TutorialGroupsManagementComponent', () => {
 
         tutorialGroupsManagementComponentFixture.detectChanges();
         expect(tutorialGroupsManagementComponent.tutorialGroups).toEqual([exampleTutorialGroup]);
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledWith(1);
     });
 
