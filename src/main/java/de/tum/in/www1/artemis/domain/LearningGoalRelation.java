@@ -66,8 +66,9 @@ public class LearningGoalRelation extends DomainObject {
 
         @Override
         public String convertToDatabaseColumn(RelationType type) {
-            if (type == null)
+            if (type == null) {
                 return null;
+            }
 
             return switch (type) {
                 case GENERIC -> "G";

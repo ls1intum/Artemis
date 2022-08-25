@@ -159,7 +159,7 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
 
             expect(comp.backgroundColors).toEqual(['#fcba03', greyColor, '#fc03d2', greyColor]);
             expect(comp.backgroundSolutionColors).toEqual(['#fcba03', greyColor, '#fc03d2', greyColor]);
-            expect(comp.labels).toEqual(['test', 'B. showStatistic.invalid', 'test3', 'D. showStatistic.invalid']);
+            expect(comp.labels).toEqual(['test', 'B. artemisApp.showStatistic.invalid', 'test3', 'D. artemisApp.showStatistic.invalid']);
         });
 
         it('should navigate back if the quiz does not contain any questions', () => {
@@ -189,7 +189,12 @@ describe('QuizExercise Multiple Choice Question Statistic Component', () => {
             comp.loadSolutionLayout();
 
             expect(comp.backgroundSolutionColors).toEqual([greenColor, redColor, '#fc03d2', '#fc5203']);
-            expect(comp.solutionLabels).toEqual(['A. (showStatistic.questionStatistic.correct)', 'B. (showStatistic.questionStatistic.incorrect)', 'test3', 'test4']);
+            expect(comp.solutionLabels).toEqual([
+                'A. (artemisApp.showStatistic.questionStatistic.correct)',
+                'B. (artemisApp.showStatistic.questionStatistic.incorrect)',
+                'test3',
+                'test4',
+            ]);
         });
     });
 });

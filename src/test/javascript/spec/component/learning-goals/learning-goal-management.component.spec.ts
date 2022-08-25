@@ -18,6 +18,8 @@ import { By } from '@angular/platform-browser';
 import { CourseLearningGoalProgress, CourseLectureUnitProgress } from 'app/course/learning-goals/learning-goal-course-progress.dtos.model';
 import { cloneDeep } from 'lodash-es';
 import * as Sentry from '@sentry/browser';
+import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
+import { AccountService } from 'app/core/auth/account.service';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
@@ -42,7 +44,9 @@ describe('LearningGoalManagementComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
             ],
             providers: [
+                MockTranslateService,
                 MockProvider(AlertService),
+                MockProvider(AccountService),
                 MockProvider(LearningGoalService),
                 {
                     provide: ActivatedRoute,
@@ -105,6 +109,7 @@ describe('LearningGoalManagementComponent', () => {
             status: 200,
         });
 
+        jest.spyOn(learningGoalService, 'getLearningGoalRelations').mockReturnValue(of(new HttpResponse({ body: [], status: 200 })));
         const getAllForCourseSpy = jest.spyOn(learningGoalService, 'getAllForCourse').mockReturnValue(of(learningGoalsOfCourseResponse));
         const getProgressSpy = jest.spyOn(learningGoalService, 'getCourseProgress');
         jest.spyOn(learningGoalService, 'getAllPrerequisitesForCourse').mockReturnValue(of(prerequisitesOfCourseResponse));

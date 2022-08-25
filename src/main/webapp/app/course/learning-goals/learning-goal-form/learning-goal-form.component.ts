@@ -79,7 +79,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     formSubmitted: EventEmitter<LearningGoalFormData> = new EventEmitter<LearningGoalFormData>();
 
     form: FormGroup;
-    learningGoalsOfCourse: LearningGoal[] = [];
     selectedLectureInDropdown: Lecture;
     selectedLectureUnitsInTable: LectureUnit[] = [];
 
@@ -98,10 +97,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
         return this.form.get('description');
     }
 
-    get typeControl() {
-        return this.form.get('type');
-    }
-
     ngOnChanges(): void {
         this.initializeForm();
         if (this.isEditMode && this.formData) {
@@ -110,9 +105,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
     }
 
     ngOnInit(): void {
-        this.learningGoalService.getAllForCourse(this.courseId).subscribe((res) => {
-            this.learningGoalsOfCourse = res.body?.filter((learningGoal) => !this.formData.id || learningGoal.id !== this.formData.id) ?? [];
-        });
         this.initializeForm();
     }
 
@@ -145,7 +137,6 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const learningGoalFormData: LearningGoalFormData = { ...this.form.value };
-        console.log(learningGoalFormData);
         learningGoalFormData.connectedLectureUnits = this.selectedLectureUnitsInTable;
         this.formSubmitted.emit(learningGoalFormData);
     }

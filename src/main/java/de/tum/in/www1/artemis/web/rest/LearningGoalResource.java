@@ -302,9 +302,10 @@ public class LearningGoalResource {
 
     /**
      * POST /courses/:courseId/goals/:learningGoalId/relations
-     * @param courseId  the id of the course to which the learning goals belongs
-     * @param tailLearningGoalId the id of the prerequisite (learning goal) to add
-     * @param headLearningGoalId the id of the prerequisite (learning goal) to add
+     * @param courseId  the id of the course to which the learning goals belong
+     * @param tailLearningGoalId the id of the learning goal at the tail of the relation
+     * @param headLearningGoalId the id of the learning goal at the head of the relation
+     * @param type the type of the relation as request parameter
      * @return the ResponseEntity with status 200 (OK)
      */
     @PostMapping("/courses/{courseId}/goals/{tailLearningGoalId}/relations/{headLearningGoalId}")
@@ -333,8 +334,9 @@ public class LearningGoalResource {
 
     /**
      * DELETE /courses/:courseId/goals/:learningGoalId/relations/:learningGoalRelationId
-     * @param courseId the id of the course for which the learning goal is a prerequisite
-     * @param learningGoalId the id of the prerequisite (learning goal) to remove
+     * @param courseId the id of the course
+     * @param learningGoalId the id of the learning goal to which the relation belongs
+     * @param learningGoalRelationId the id of the learning goal relation
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}/relations/{learningGoalRelationId}")
@@ -344,6 +346,11 @@ public class LearningGoalResource {
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, false, false);
 
         var relation = learningGoalRelationRepository.findById(learningGoalRelationId).orElseThrow();
+
+        if (!relation.getTailLearningGoal().getId().equals(learningGoal.getId())) {
+            throw new BadRequestException("The relation does not belong to the specified learning goal");
+        }
+
         learningGoalRelationRepository.delete(relation);
 
         return ResponseEntity.ok().build();
