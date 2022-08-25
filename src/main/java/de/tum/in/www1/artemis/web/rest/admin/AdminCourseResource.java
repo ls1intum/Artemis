@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
  */
 @RestController
 @RequestMapping("api/admin/")
-@EnforceAdmin
 public class AdminCourseResource {
 
     private final Logger log = LoggerFactory.getLogger(AdminCourseResource.class);
@@ -58,6 +57,7 @@ public class AdminCourseResource {
      * @throws URISyntaxException if the Location URI syntax is incorrect
      */
     @PostMapping("courses")
+    @EnforceAdmin
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
@@ -93,6 +93,7 @@ public class AdminCourseResource {
      * @return the ResponseEntity with status 200 (OK)
      */
     @DeleteMapping("courses/{courseId}")
+    @EnforceAdmin
     public ResponseEntity<Void> deleteCourse(@PathVariable long courseId) {
         log.info("REST request to delete Course : {}", courseId);
         Course course = courseRepository.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(courseId);

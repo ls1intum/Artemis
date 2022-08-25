@@ -25,7 +25,6 @@ import tech.jhipster.web.util.ResponseUtil;
  */
 @RestController
 @RequestMapping("api/admin/audits")
-@EnforceAdmin
 public class AuditResource {
 
     private final AuditEventService auditEventService;
@@ -41,6 +40,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @GetMapping
+    @EnforceAdmin
     public ResponseEntity<List<AuditEvent>> getAll(@ApiParam Pageable pageable) {
         Page<AuditEvent> page = auditEventService.findAll(pageable);
         HttpHeaders headers = PaginationUtil.generatePaginationHttpHeaders(ServletUriComponentsBuilder.fromCurrentRequest(), page);
@@ -56,6 +56,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the list of AuditEvents in body
      */
     @GetMapping(params = { "fromDate", "toDate" })
+    @EnforceAdmin
     public ResponseEntity<List<AuditEvent>> getByDates(@RequestParam(value = "fromDate") LocalDate fromDate, @RequestParam(value = "toDate") LocalDate toDate,
             @ApiParam Pageable pageable) {
 
@@ -74,6 +75,7 @@ public class AuditResource {
      * @return the ResponseEntity with status 200 (OK) and the AuditEvent in body, or status 404 (Not Found)
      */
     @GetMapping("/{id:.+}")
+    @EnforceAdmin
     public ResponseEntity<AuditEvent> get(@PathVariable Long id) {
         return ResponseUtil.wrapOrNotFound(auditEventService.find(id));
     }
