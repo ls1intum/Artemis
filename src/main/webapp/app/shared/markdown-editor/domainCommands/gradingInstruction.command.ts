@@ -16,7 +16,7 @@ export class GradingInstructionCommand extends DomainTagCommand {
     public static readonly identifier = '[instruction]';
     // public static readonly text = ' Add grading instruction here';
 
-    buttonTranslationString = 'assessmentInstructions.instructions.editor.addInstruction';
+    buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addInstruction';
 
     instructionText(): string {
         return (

@@ -135,7 +135,7 @@ public class FileService implements DisposableBean {
      * @param newFilePath  the new file path (this file will be moved into its proper location, if it was a temporary file)
      * @param targetFolder the folder that a temporary file should be moved to
      * @param entityId     id of the entity this file belongs to (needed to generate
-     *                    public path). If this is null, a placeholder will be inserted where the id would be
+     *                     public path). If this is null, a placeholder will be inserted where the id would be
      * @return the resulting public path (is identical to newFilePath, if file didn't need to be moved)
      */
     public String manageFilesForUpdatedFilePath(String oldFilePath, String newFilePath, String targetFolder, Long entityId) {
@@ -458,24 +458,11 @@ public class FileService implements DisposableBean {
         Map<Pattern, Boolean> patternBooleanMap = sections.entrySet().stream().collect(Collectors.toMap(e -> Pattern.compile(".*%" + e.getKey() + ".*%.*"), Map.Entry::getValue));
         File file = new File(filePath);
         File tempFile = new File(filePath + "_temp");
-        FileReader fr;
-        FileWriter fw;
-        BufferedReader reader;
-        BufferedWriter writer;
-
-        try {
-            fr = new FileReader(file, StandardCharsets.UTF_8);
-            fw = new FileWriter(tempFile, StandardCharsets.UTF_8);
-        }
-        catch (IOException ex) {
+        if (!file.exists()) {
             throw new FilePathParsingException("File " + filePath + " should be updated but does not exist.");
         }
 
-        reader = new BufferedReader(fr);
-        writer = new BufferedWriter(fw);
-
-        try {
-
+        try (var reader = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8)); var writer = new BufferedWriter(new FileWriter(tempFile, StandardCharsets.UTF_8));) {
             Map.Entry<Pattern, Boolean> matchingStartPattern = null;
             String line = reader.readLine();
             while (line != null) {
@@ -516,23 +503,17 @@ public class FileService implements DisposableBean {
 
                 line = reader.readLine();
             }
-            // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
-            reader.close();
-            writer.close();
+        }
+        catch (IOException ex) {
+            throw new RuntimeException("Error encountered when reading File " + filePath + ".", ex);
+        }
+        // Accessing already opened files will cause an exception on Windows machines, therefore close the streams
+        try {
             Files.delete(file.toPath());
             FileUtils.moveFile(tempFile, new File(filePath));
         }
         catch (IOException ex) {
-            throw new RuntimeException("Error encountered when reading File " + filePath + ".");
-        }
-        finally {
-            try {
-                reader.close();
-                writer.close();
-            }
-            catch (IOException ex) {
-                log.info("Error encountered when closing file readers / writers for {}", file);
-            }
+            throw new RuntimeException("Error encountered when reading File " + filePath + ".", ex);
         }
     }
 
@@ -884,11 +865,8 @@ public class FileService implements DisposableBean {
      * @return Path to the written file
      */
     public Path writeStringToFile(String stringToWrite, Path path) {
-        try {
-            var fos = new FileOutputStream(path.toString());
-            var outStream = new OutputStreamWriter(fos, StandardCharsets.UTF_8);
+        try (var outStream = new OutputStreamWriter(new FileOutputStream(path.toString()), StandardCharsets.UTF_8)) {
             outStream.write(stringToWrite);
-            outStream.close();
         }
         catch (IOException e) {
             log.warn("Could not write given string in file {}.", path);

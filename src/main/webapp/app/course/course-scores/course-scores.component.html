@@ -2,18 +2,20 @@
     <h4>
         {{ course.title }}
         <small
-            jhiTranslate="instructorDashboard.exerciseResultSummery"
+            jhiTranslate="artemisApp.instructorDashboard.exerciseResultSummery"
             [translateValues]="{ exercisesLength: exercisesOfCourseThatAreIncludedInScoreCalculation.length, studentsLength: students.length }"
             >{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }} released exercises, {{ students.length }} students with results</small
         >
     </h4>
     <span *ngIf="!exportReady" style="color: grey"
-        ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="instructorDashboard.loadingStudents">Loading the results of all students...</span></span
+        ><fa-icon [icon]="faSpinner" [spin]="true"></fa-icon>&nbsp;<span jhitranslate="artemisApp.instructorDashboard.loadingStudents"
+            >Loading the results of all students...</span
+        ></span
     >
     <div class="row d-flex align-items-center">
         <div class="col-lg-9">
             <div class="text-center">
-                <h4 jhiTranslate="instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
+                <h4 jhiTranslate="artemisApp.instructorDashboard.courseScoreChart.scoreDistribution">Course score distribution</h4>
             </div>
             <jhi-participant-scores-distribution
                 *ngIf="scoresToDisplay"
@@ -30,17 +32,17 @@
                     <tr>
                         <th></th>
                         <th>
-                            <span jhiTranslate="instructorDashboard.statisticsTable.included">Included in score</span>
+                            <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.included">Included in score</span>
                         </th>
                         <th>
-                            <span jhiTranslate="instructorDashboard.statisticsTable.total">Total</span>
+                            <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.total">Total</span>
                         </th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
                         <th>
-                            <span jhiTranslate="instructorDashboard.statisticsTable.amountOfReleasedExercises"># of released exercises</span>
+                            <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.amountOfReleasedExercises"># of released exercises</span>
                         </th>
                         <td>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</td>
                         <td>{{ this.numberOfReleasedExercises }}</td>
@@ -53,9 +55,9 @@
                                     class="form-check-input"
                                     [checked]="highlightedType === highlightType.AVERAGE"
                                     (click)="highlightBar(highlightType.AVERAGE)"
-                                    ngbTooltip="{{ 'instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
+                                    ngbTooltip="{{ 'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
                                 />
-                                <label class="form-check-label" jhiTranslate="instructorDashboard.statisticsTable.averagePoints">Average points (score)</label>
+                                <label class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.averagePoints">Average points (score)</label>
                             </div>
                         </th>
                         <td id="average_points" [ngClass]="highlightedType">
@@ -71,9 +73,9 @@
                                     class="form-check-input"
                                     [checked]="highlightedType === highlightType.MEDIAN"
                                     (click)="highlightBar(highlightType.MEDIAN)"
-                                    ngbTooltip="{{ 'instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
+                                    ngbTooltip="{{ 'artemisApp.instructorDashboard.statisticsTable.highlightInChart' | artemisTranslate }}"
                                 />
-                                <label class="form-check-label" jhiTranslate="instructorDashboard.statisticsTable.medianPoints">Median points (score)</label>
+                                <label class="form-check-label" jhiTranslate="artemisApp.instructorDashboard.statisticsTable.medianPoints">Median points (score)</label>
                             </div>
                         </th>
                         <td id="median_points" [ngClass]="highlightedType">{{ this.medianPointsIncluded }} ({{ this.medianScoreIncluded }}%)</td>
@@ -81,7 +83,7 @@
                     </tr>
                     <tr>
                         <th>
-                            <span jhiTranslate="instructorDashboard.statisticsTable.standardPointDeviation">Standard point deviation</span>
+                            <span jhiTranslate="artemisApp.instructorDashboard.statisticsTable.standardPointDeviation">Standard point deviation</span>
                         </th>
                         <td>{{ this.standardDeviationPointsIncluded }}</td>
                         <td>{{ this.standardDeviationPointsTotal }}</td>
@@ -106,28 +108,30 @@
             <thead>
                 <tr jhiSort [(predicate)]="predicate" [(ascending)]="reverse" (sortChange)="sortRows()">
                     <th jhiSortBy="user.name">
-                        <span jhiTranslate="instructorDashboard.name">Name</span>
+                        <span jhiTranslate="artemisApp.instructorDashboard.name">Name</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="user.login">
-                        <span jhiTranslate="instructorDashboard.username">Username</span>
+                        <span jhiTranslate="artemisApp.instructorDashboard.username">Username</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="numberOfParticipatedExercises">
-                        <span jhiTranslate="instructorDashboard.participated">Participated in Exercises (%)</span>
+                        <span jhiTranslate="artemisApp.instructorDashboard.participated">Participated in Exercises (%)</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <th jhiSortBy="numberOfSuccessfulExercises">
-                        <span jhiTranslate="instructorDashboard.successful">Successful Exercises (%)</span>
+                        <span jhiTranslate="artemisApp.instructorDashboard.successful">Successful Exercises (%)</span>
                         <fa-icon [icon]="faSort"></fa-icon>
                     </th>
                     <ng-container *ngFor="let exerciseType of exerciseTypes">
                         <th *ngIf="maxNumberOfPointsPerExerciseType.get(exerciseType)! > 0" jhiSortBy="sumPointsPerExerciseType.{{ exerciseType }}">
-                            <span jhiTranslate="instructorDashboard.{{ exerciseType }}Points"></span>
+                            <span jhiTranslate="artemisApp.instructorDashboard.{{ exerciseType }}Points"></span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                     </ng-container>
-                    <th jhiSortBy="overallPoints"><span jhiTranslate="instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort"></fa-icon></th>
+                    <th jhiSortBy="overallPoints">
+                        <span jhiTranslate="artemisApp.instructorDashboard.overallScore">Overall Points (%)</span> <fa-icon [icon]="faSort"></fa-icon>
+                    </th>
                     <th *ngIf="gradingScaleExists" jhiSortBy="overallPoints">
                         <span>
                             {{
@@ -140,7 +144,7 @@
                     </th>
                 </tr>
                 <tr>
-                    <th><span jhiTranslate="instructorDashboard.max">Max</span></th>
+                    <th><span jhiTranslate="artemisApp.instructorDashboard.max">Max</span></th>
                     <th></th>
                     <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
                     <th>{{ exercisesOfCourseThatAreIncludedInScoreCalculation.length }}</th>
@@ -151,7 +155,7 @@
                     <th *ngIf="gradingScaleExists">{{ maxGrade }}</th>
                 </tr>
                 <tr>
-                    <th><span jhiTranslate="instructorDashboard.average">Average</span></th>
+                    <th><span jhiTranslate="artemisApp.instructorDashboard.average">Average</span></th>
                     <th></th>
                     <th>
                         {{ localize(averageNumberOfParticipatedExercises) }}

@@ -1,49 +1,51 @@
 {
-    "showStatistic": {
-        "participants": "Teilnahmen",
-        "chooseStatistic": "Wähle Statistik",
-        "previousStatistic": "Vorherige Statistik",
-        "nextStatistic": "Nächste Statistik",
-        "releaseStatistic": "Statistiken freigeben",
-        "rereleaseStatistic": "Statistiken sperren",
-        "switchToRated": "Zeige bewertete Ergebnisse",
-        "switchToUnrated": "Zeige unbewertete Ergebnisse",
-        "showSolution": "Zeige Lösung",
-        "hideSolution": "Verberge Lösung",
-        "quizPointStatisticTitle": "Punkteverteilung",
-        "quizStatisticTitle": "Quiz-Statistik",
-        "recalculateStatistics": "Statistiken neu berechnen",
-        "quizQuestions": "Quizfragen",
-        "quizPointStatistic": {
-            "maxScore": "Maximalpunkte: ",
-            "titleRated": "Punkteverteilung (bewertet)",
-            "titleUnrated": "Punkteverteilung (unbewertet)",
-            "xAxes": "Punkte",
-            "yAxes": "Häufigkeit"
-        },
-        "quizStatistic": {
-            "average": "Durchschnitt",
-            "titleRated": "Quiz-Statistik (bewertet)",
-            "titleUnrated": "Quiz-Statistik (unbewertet)",
-            "xAxes": "Fragen",
-            "yAxes": "Richtige Lösungen"
-        },
-        "questionStatistic": {
-            "titleRated": "Antwortverteilung (bewertet)",
-            "titleUnrated": "Antwortverteilung (unbewertet)",
-            "xAxes": "Antworten",
-            "yAxes": "Häufigkeit",
-            "correct": "richtig",
-            "incorrect": "falsch"
-        },
-        "dragAndDropQuestionStatistic": {
-            "xAxes": "DropLocation",
-            "yAxes": "Häufigkeit",
-            "showSampleSolution": "Zeige Beispiellösung",
-            "hideSampleSolution": "Verberge Beispiellösung"
-        },
-        "invalid": "(ungültig)",
-        "quizHasEnded": "Quiz ist zu Ende!",
-        "now": "Läuft"
+    "artemisApp": {
+        "showStatistic": {
+            "participants": "Teilnahmen",
+            "chooseStatistic": "Wähle Statistik",
+            "previousStatistic": "Vorherige Statistik",
+            "nextStatistic": "Nächste Statistik",
+            "releaseStatistic": "Statistiken freigeben",
+            "rereleaseStatistic": "Statistiken sperren",
+            "switchToRated": "Zeige bewertete Ergebnisse",
+            "switchToUnrated": "Zeige unbewertete Ergebnisse",
+            "showSolution": "Zeige Lösung",
+            "hideSolution": "Verberge Lösung",
+            "quizPointStatisticTitle": "Punkteverteilung",
+            "quizStatisticTitle": "Quiz-Statistik",
+            "recalculateStatistics": "Statistiken neu berechnen",
+            "quizQuestions": "Quizfragen",
+            "quizPointStatistic": {
+                "maxScore": "Maximalpunkte: ",
+                "titleRated": "Punkteverteilung (bewertet)",
+                "titleUnrated": "Punkteverteilung (unbewertet)",
+                "xAxes": "Punkte",
+                "yAxes": "Häufigkeit"
+            },
+            "quizStatistic": {
+                "average": "Durchschnitt",
+                "titleRated": "Quiz-Statistik (bewertet)",
+                "titleUnrated": "Quiz-Statistik (unbewertet)",
+                "xAxes": "Fragen",
+                "yAxes": "Richtige Lösungen"
+            },
+            "questionStatistic": {
+                "titleRated": "Antwortverteilung (bewertet)",
+                "titleUnrated": "Antwortverteilung (unbewertet)",
+                "xAxes": "Antworten",
+                "yAxes": "Häufigkeit",
+                "correct": "richtig",
+                "incorrect": "falsch"
+            },
+            "dragAndDropQuestionStatistic": {
+                "xAxes": "DropLocation",
+                "yAxes": "Häufigkeit",
+                "showSampleSolution": "Zeige Beispiellösung",
+                "hideSampleSolution": "Verberge Beispiellösung"
+            },
+            "invalid": "(ungültig)",
+            "quizHasEnded": "Quiz ist zu Ende!",
+            "now": "Läuft"
+        }
     }
 }

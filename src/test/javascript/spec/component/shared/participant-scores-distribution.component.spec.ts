@@ -108,7 +108,7 @@ describe('ParticipantScoresDistributionComponent', () => {
         expect(component.height).toBe(500);
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxes');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
-        expect(component.helpIconTooltip).toBe('instructorDashboard.courseScoreChart.noGradingScaleExplanation');
+        expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.noGradingScaleExplanation');
         expect(component.ngxColor.domain).toEqual(expectedColoring);
         expect(component.ngxData.map((data) => data.name)).toEqual(defaultLabels);
         expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
@@ -132,7 +132,7 @@ describe('ParticipantScoresDistributionComponent', () => {
         expect(component.gradingScaleExists).toBeTrue();
         expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
         expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
-        expect(component.helpIconTooltip).toBe('instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
+        expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
         expect(component.ngxColor.domain).toEqual(expectedColoring);
         expect(component.ngxData.map((data) => data.name)).toEqual(expectedLabels);
         expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
