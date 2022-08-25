@@ -670,7 +670,7 @@ describe('QuizParticipationComponent', () => {
             component.updateDisplayedTimes();
             fixture.detectChanges();
 
-            expect(component.remainingTimeText).toBe('showStatistic.quizHasEnded');
+            expect(component.remainingTimeText).toBe('artemisApp.showStatistic.quizHasEnded');
             expect(component.timeUntilStart).toBe('');
         });
     });
