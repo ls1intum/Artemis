@@ -12,6 +12,7 @@ import { CourseManagementService } from 'app/course/manage/course-management.ser
 import { Course } from 'app/entities/course.model';
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 import { ConversationParticipant } from 'app/entities/metis/conversation/conversation-details.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-conversation-sidebar',
@@ -187,7 +188,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
         )!;
 
         if (conversation.id !== this.activeConversation.id && !!conversation.lastMessageDate && !!conversationParticipant.lastRead) {
-            if (conversation.lastMessageDate > conversationParticipant.lastRead) {
+            if (dayjs(conversation.lastMessageDate).isAfter(dayjs(conversationParticipant.lastRead), 'second')) {
                 return true;
             }
         }

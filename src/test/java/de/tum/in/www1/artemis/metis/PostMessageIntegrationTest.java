@@ -94,7 +94,8 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
         checkCreatedMessagePost(postToSave, createdPost);
         assertThat(createdPost.getConversation().getId()).isNotNull();
-        assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId())).hasSize(1);
+        // assertThat(postRepository.findPostsByConversationId(createdPost.getConversation().getId())).hasSize(1);
+        assertThat(true).isEqualTo(false); // fail on purpose to adapt test
     }
 
     @Test

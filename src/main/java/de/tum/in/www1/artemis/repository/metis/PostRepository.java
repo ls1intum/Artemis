@@ -69,13 +69,6 @@ public interface PostRepository extends JpaRepository<Post, Long>, JpaSpecificat
             """)
     List<Post> findPostsByPlagiarismCaseId(@Param("plagiarismCaseId") Long plagiarismCaseId);
 
-    @Query("""
-             SELECT DISTINCT post FROM Post post
-             LEFT JOIN post.conversation conversation
-             WHERE conversation.id = :#{#conversationId}
-            """)
-    List<Post> findPostsByConversationId(@Param("conversationId") Long conversationId);
-
     default Post findPostByIdElseThrow(Long postId) throws EntityNotFoundException {
         return findById(postId).filter(post -> post.getConversation() == null).orElseThrow(() -> new EntityNotFoundException("Post", postId));
     }
