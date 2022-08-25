@@ -28,9 +28,8 @@ public interface MessageRepository extends JpaRepository<Post, Long>, JpaSpecifi
      * @return returns a Page of Messages
      */
     default Page<Post> findMessages(PostContextFilter postContextFilter, Pageable pageable) {
-        Specification<Post> specification = Specification
-                .where(getCourseSpecification(postContextFilter.getCourseId()).and(getConversationSpecification(postContextFilter.getConversationId())
-                        .and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getSortSpecification())));
+        Specification<Post> specification = Specification.where(
+                getConversationSpecification(postContextFilter.getConversationId()).and(getSearchTextSpecification(postContextFilter.getSearchText())).and(getSortSpecification()));
 
         return findAll(specification, pageable);
     }

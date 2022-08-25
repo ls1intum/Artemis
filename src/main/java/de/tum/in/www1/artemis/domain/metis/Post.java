@@ -230,6 +230,9 @@ public class Post extends Posting {
         else if (this.plagiarismCase != null) {
             return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
+        else if (this.conversation != null) {
+            return this.conversation.getCourse();
+        }
 
         return null;
     }

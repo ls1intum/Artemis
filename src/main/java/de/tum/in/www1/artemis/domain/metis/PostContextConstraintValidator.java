@@ -33,7 +33,7 @@ public class PostContextConstraintValidator implements ConstraintValidator<PostC
     }
 
     private static boolean messagePost(Post post) {
-        return post.getConversation() != null && post.getCourse() != null && post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() == null
+        return post.getConversation() != null && post.getCourse() == null && post.getExercise() == null && post.getLecture() == null && post.getCourseWideContext() == null
                 && post.getPlagiarismCase() == null;
     }
 }

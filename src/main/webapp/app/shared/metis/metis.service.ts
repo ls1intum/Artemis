@@ -325,7 +325,6 @@ export class MetisService implements OnDestroy {
             emptyPost.plagiarismCase = { id: plagiarismCase.id } as PlagiarismCase;
         } else if (conversation) {
             emptyPost.conversation = conversation;
-            emptyPost.course = this.course;
         } else {
             // set default
             emptyPost.courseWideContext = CourseWideContext.TECH_SUPPORT as CourseWideContext;

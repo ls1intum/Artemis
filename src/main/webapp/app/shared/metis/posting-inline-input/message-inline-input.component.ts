@@ -54,7 +54,7 @@ export class MessageInlineInputComponent extends PostingCreateEditModalDirective
         this.metisService.updatePost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
-                this.modalRef?.close();
+                this.isModalOpen.emit();
             },
             error: () => {
                 this.isLoading = false;

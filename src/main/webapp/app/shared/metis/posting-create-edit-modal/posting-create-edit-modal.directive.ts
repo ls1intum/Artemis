@@ -57,7 +57,6 @@ export abstract class PostingCreateEditModalDirective<T extends Posting> impleme
                 this.createPosting();
             }
         }
-        this.isModalOpen.emit();
     }
 
     abstract open(): void;
