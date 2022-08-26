@@ -73,7 +73,7 @@
                 "description": "The description of at least one Auxiliary Repository is longer than {{maxLength}} allowed characters!"
             },
             "testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
-            "page.request": "The page request seems to be invalid. Please make sure that enough number of {{entityName}} entities exist, so that the request page can be created."
+            "page.request": "The page request seems to be invalid. Please make sure that enough {{entityName}} entities exist, so that the request page can be created."
         },
         "idNull": "Invalid ID",
         "unexpectedError": "An unexpected error occurred: {{error}}",
