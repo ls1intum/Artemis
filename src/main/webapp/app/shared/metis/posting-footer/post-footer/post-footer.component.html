@@ -7,6 +7,7 @@
             [sortedAnswerPosts]="sortedAnswerPosts"
             [isCourseMessagesPage]="isCourseMessagesPage"
             (openPostingCreateEditModal)="createAnswerPostModal.open()"
+            (openThread)="openThread.emit()"
         ></jhi-post-reactions-bar>
     </div>
     <!-- Post tags -->

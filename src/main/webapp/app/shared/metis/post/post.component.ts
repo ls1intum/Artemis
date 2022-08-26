@@ -1,4 +1,4 @@
-import { AfterContentChecked, ChangeDetectorRef, Component, Input, OnChanges, OnInit } from '@angular/core';
+import { AfterContentChecked, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { Post } from 'app/entities/metis/post.model';
 import { PostingDirective } from 'app/shared/metis/posting.directive';
 import { MetisService } from 'app/shared/metis/metis.service';
@@ -18,6 +18,7 @@ export class PostComponent extends PostingDirective<Post> implements OnInit, OnC
     @Input() modalRef?: NgbModalRef;
     @Input() showAnswers: boolean;
     @Input() isCourseMessagesPage: boolean;
+    @Output() openThread = new EventEmitter<void>();
 
     displayInlineInput = false;
 

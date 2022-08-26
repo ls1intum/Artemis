@@ -13,7 +13,13 @@
                 "minQueryLengthHint": "Type min. {{ length }} letters"
             },
             "searchBarPlaceholder": "Search for a message within the current conversation",
-            "submit": "Send"
+            "submit": "Send",
+            "thread": {
+                "label": "Thread",
+                "show": "Show thread",
+                "hide": "Hide thread",
+                "reply": "Reply in thread"
+            }
         }
     }
 }

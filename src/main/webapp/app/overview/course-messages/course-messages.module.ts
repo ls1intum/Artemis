@@ -8,6 +8,7 @@ import { CourseMessagesComponent } from 'app/overview/course-messages/course-mes
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
 import { InfiniteScrollModule } from 'ngx-infinite-scroll';
+import { ThreadSidebarComponent } from 'app/overview/course-messages/thread-sidebar/thread-sidebar.component';
 
 const routes: Routes = [
     {
@@ -22,7 +23,6 @@ const routes: Routes = [
 
 @NgModule({
     imports: [RouterModule.forChild(routes), MetisModule, ArtemisSharedModule, ArtemisSharedComponentModule, ArtemisDataTableModule, InfiniteScrollModule],
-    declarations: [CourseMessagesComponent, ConversationSidebarComponent, MessagesComponent],
-    exports: [ConversationSidebarComponent],
+    declarations: [CourseMessagesComponent, ConversationSidebarComponent, ThreadSidebarComponent, MessagesComponent],
 })
 export class CourseMessagesModule {}

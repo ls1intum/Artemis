@@ -11,4 +11,5 @@ export class PostingThreadComponent {
     @Input() showAnswers: boolean;
     @Input() isCourseMessagesPage: boolean;
     @Output() isModalOpen = new EventEmitter<void>();
+    @Output() openThread = new EventEmitter<Post>();
 }

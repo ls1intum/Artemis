@@ -1,0 +1,37 @@
+<!-- uncollapsed posts -->
+<div class="h-100">
+    <div *ngIf="!collapsed" class="postings-container expanded-thread">
+        <div class="draggable-left">
+            <fa-icon [icon]="faGripLinesVertical"></fa-icon>
+        </div>
+        <div class="card">
+            <!-- header -->
+            <div class="card-header d-flex bg-primary text-white" [ngbTooltip]="'artemisApp.messages.thread.hide' | artemisTranslate" (click)="collapsed = true">
+                <div class="row flex-grow-1">
+                    <div class="col">
+                        <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.thread.label">Thread</h5>
+                    </div>
+                    <div class="col-auto">
+                        <fa-icon [icon]="faXmark"></fa-icon>
+                    </div>
+                </div>
+            </div>
+            <!-- body -->
+            <div class="card-body pt-0">
+                <div class="my-2" *ngIf="post !== undefined">
+                    <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
+                    <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
+                    <jhi-posting-thread [post]="post" [showAnswers]="true"></jhi-posting-thread>
+                </div>
+                <!-- loading posts -->
+                <div class="post-result-information row mt-2" *ngIf="isLoading">
+                    <div class="col-12">{{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}</div>
+                </div>
+                <!-- no posts -->
+                <div class="post-result-information row mt-2" *ngIf="!isLoading && posts.length === 0">
+                    <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

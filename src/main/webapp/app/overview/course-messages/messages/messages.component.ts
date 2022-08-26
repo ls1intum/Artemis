@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, EventEmitter, Input, OnDestroy, Output, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { faCircleNotch, faEnvelope } from '@fortawesome/free-solid-svg-icons';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PostOverviewDirective } from 'app/shared/metis/post-overview.directive';
@@ -13,6 +13,8 @@ import { Post } from 'app/entities/metis/post.model';
     providers: [MetisService],
 })
 export class MessagesComponent extends PostOverviewDirective implements AfterViewInit, OnDestroy {
+    @Output() openThread = new EventEmitter<Post>();
+
     @ViewChildren('postingThread') messages: QueryList<any>;
     @ViewChild('container') content: ElementRef;
     private previousScrollDistanceFromTop: number;

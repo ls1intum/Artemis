@@ -13,7 +13,12 @@
                 "minQueryLengthHint": "Mind. {{ length }} Buchstaben"
             },
             "searchBarPlaceholder": "Suchen Sie in der aktuellen Konversation nach einer Nachricht",
-            "submit": "Senden"
+            "submit": "Senden",
+            "thread": {
+                "label": "Thread",
+                "show": "Show thread",
+                "hide": "Hide thread"
+            }
         }
     }
 }
