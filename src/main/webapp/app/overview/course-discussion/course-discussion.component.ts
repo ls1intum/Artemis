@@ -20,8 +20,8 @@ import { CourseDiscussionDirective } from 'app/shared/metis/course-discussion.di
     providers: [MetisService],
 })
 export class CourseDiscussionComponent extends CourseDiscussionDirective implements OnInit, OnDestroy {
-    entitiesPerPageTranslation = 'organizationManagement.userSearch.usersPerPage';
-    showAllEntitiesTranslation = 'organizationManagement.userSearch.showAllUsers';
+    entitiesPerPageTranslation = 'artemisApp.organizationManagement.userSearch.usersPerPage';
+    showAllEntitiesTranslation = 'artemisApp.organizationManagement.userSearch.showAllUsers';
 
     exercises?: Exercise[];
     lectures?: Lecture[];

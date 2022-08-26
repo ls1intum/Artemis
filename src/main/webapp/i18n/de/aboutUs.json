@@ -1,69 +1,71 @@
 {
-    "aboutUsOverview": {
-        "title": "Artemis: Interaktives Lernen mit individuellem Feedback",
-        "feature": "Haupteigenschaften",
-        "exercises": {
-            "programming": {
-                "text": "<a href='{{ programmingUrl }}'>Programmieraufgaben</a> mit Versionskontrolle, automatischer individueller Rückmeldung und statischer Code-Analyse."
+    "artemisApp": {
+        "aboutUsOverview": {
+            "title": "Artemis: Interaktives Lernen mit individuellem Feedback",
+            "feature": "Haupteigenschaften",
+            "exercises": {
+                "programming": {
+                    "text": "<a href='{{ programmingUrl }}'>Programmieraufgaben</a> mit Versionskontrolle, automatischer individueller Rückmeldung und statischer Code-Analyse."
+                },
+                "quiz": {
+                    "text": "<a href={{ quizUrl }}>Quizaufgaben</a> mit Multiple-Choice-, Drag-and-Drop- und Freitext-Fragen im Einzel-, Synchron- oder Gruppenmodus zusätzlich mit einem Übungsmodus."
+                },
+                "modeling": {
+                    "text": "<a href={{ modelingUrl }}>Modellierungsaufgaben</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href={{ apollonUrl }}>Apollon</a> mit halbautomatischer Bewertung."
+                },
+                "text": {
+                    "text": "<a href={{ textUrl }}>Textaufgaben</a> mit halbautomatischer Bewertung (NLP) mit <a href={{ athenaUrl }}>Athena</a>."
+                },
+                "fileUpload": {
+                    "text": "<a href={{ fileUploadUrl }}>Aufgaben zum Hochladen von Dateien</a> mit manueller Bewertung."
+                }
             },
-            "quiz": {
-                "text": "<a href={{ quizUrl }}>Quizaufgaben</a> mit Multiple-Choice-, Drag-and-Drop- und Freitext-Fragen im Einzel-, Synchron- oder Gruppenmodus zusätzlich mit einem Übungsmodus."
+            "exam": {
+                "text": "<a href={{ examModeUrl }}>Prüfungsmodus:</a> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
             },
-            "modeling": {
-                "text": "<a href={{ modelingUrl }}>Modellierungsaufgaben</a> basierend auf dem einfach zu bedienenden Online-Modellierungseditor <a href={{ apollonUrl }}>Apollon</a> mit halbautomatischer Bewertung."
+            "grading": {
+                "text": "<a href={{ gradingUrl }}>Benotung:</a> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
             },
-            "text": {
-                "text": "<a href={{ textUrl }}>Textaufgaben</a> mit halbautomatischer Bewertung (NLP) mit <a href={{ athenaUrl }}>Athena</a>."
+            "assessment": {
+                "text": "<a href={{ assessmentUrl }}>Bewertung:</a> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
             },
-            "fileUpload": {
-                "text": "<a href={{ fileUploadUrl }}>Aufgaben zum Hochladen von Dateien</a> mit manueller Bewertung."
-            }
-        },
-        "exam": {
-            "text": "<a href={{ examModeUrl }}>Prüfungsmodus:</a> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
-        },
-        "grading": {
-            "text": "<a href={{ gradingUrl }}>Benotung:</a> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
-        },
-        "assessment": {
-            "text": "<a href={{ assessmentUrl }}>Bewertung:</a> Doppelblind-Bewertung mit strukturierten Bewertungskriterien, Ranglisten sowie Bewertungen/Beschwerden verbessert die Konsistenz/Fairness."
-        },
-        "communication": {
-            "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
-        },
-        "notifications": {
-            "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
-        },
-        "teamExercises": {
-            "text": "<a href={{ teamExercisesUrl }}>Gruppenaufgaben</a> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
-        },
-        "lectures": {
-            "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
-        },
-        "integratedMarkdownEditor": {
-            "text": "<a href={{ markdownEditorUrl }}>Integrierter Markdown-Editor:</a> Markdown wird verwendet, um Textinhalte auf der Plattform mit einem integrierten Markdown-Editor zu formatieren."
-        },
-        "plagiarismChecks": {
-            "text": "<a href={{ plagiarismChecksUrl }}>Plagiatsüberprüfungen:</a> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
-        },
-        "learningAnalytics": {
-            "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."
-        },
-        "scalable": {
-            "text": "<a href={{ scalingUrl }}>Skalierbar</a> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."
-        },
-        "highUserSatisfaction": {
-            "text": "<a href={{ userExperienceUrl }}>Hohe Benutzerzufriedenheit:</a> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
-        },
-        "customizable": {
-            "text": "<a href={{ customizableUrl }}>Anpassbar:</a> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
-        },
-        "openSource": {
-            "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
-        },
-        "getInTouch": "Kontakt",
-        "contributors": "Mitwirkende",
-        "projectManager": "Projekt Manager",
-        "website": "Webseite"
+            "communication": {
+                "text": "<a href={{ communicationUrl }}>Kommunikation:</a> Ankündigungen veröffentlichen. Fragen stellen, Kommentare abgeben und auf andere Beiträge reagieren. Fragen filtern."
+            },
+            "notifications": {
+                "text": "<a href = {{ notificationsURL }}>Benachrichtigungen:</a> Anpassbare Web- und E-Mail-Benachrichtigungen. Benutzer können verschiedene Benachrichtigungstypen aktivieren und deaktivieren."
+            },
+            "teamExercises": {
+                "text": "<a href={{ teamExercisesUrl }}>Gruppenaufgaben</a> mit Echtzeitzusammenarbeit und eigenen Tutoren pro Gruppe."
+            },
+            "lectures": {
+                "text": "<a href={{ lecturesUrl }}>Vorlesungen:</a> Hochladen von Vorlesungsfolien für mehrere Einheiten, integrieren von Videostreams, Vorlesungsaufzeichnungen und Aufgaben in Vorlesungen und definieren von Lernzielen."
+            },
+            "integratedMarkdownEditor": {
+                "text": "<a href={{ markdownEditorUrl }}>Integrierter Markdown-Editor:</a> Markdown wird verwendet, um Textinhalte auf der Plattform mit einem integrierten Markdown-Editor zu formatieren."
+            },
+            "plagiarismChecks": {
+                "text": "<a href={{ plagiarismChecksUrl }}>Plagiatsüberprüfungen:</a> Artemis integriert Plagiatsprüfungen für Programmieraufgaben (basierend auf <a href={{ jPlagUrl }}>JPlag</a>), Text- und Modellierungsaufgaben."
+            },
+            "learningAnalytics": {
+                "text": "<a href={{ learningAnalyticsUrl }}>Lernanalytik:</a> Statistiken, mit denen sich die Studierenden mit dem Kursdurchschnitt vergleichen können. Bewerten der durchschnittliche Leistung der Studierenden anhand von Aufgaben und Lernzielen."
+            },
+            "scalable": {
+                "text": "<a href={{ scalingUrl }}>Skalierbar</a> auf mehrere Kurse mit Tausenden von Studierenden. Konfigurieren von zusätzlichen Build-Agenten in der kontinuierlichen Integrationsumgebung."
+            },
+            "highUserSatisfaction": {
+                "text": "<a href={{ userExperienceUrl }}>Hohe Benutzerzufriedenheit:</a> Artemis ist einfach zu bedienen und bietet geführte Tutorials. Die Entwickler konzentrieren sich auf Benutzerfreundlichkeit, Benutzererfahrung und Leistung."
+            },
+            "customizable": {
+                "text": "<a href={{ customizableUrl }}>Anpassbar:</a> Artemis unterstützt mehrere Lehrende, Bearbeitende und Tutoren pro Kurs und erlaubt den Lehrenden viele Kurseinstellungen anzupassen."
+            },
+            "openSource": {
+                "text": "<a href={{ openSourceUrl }}>Open-source:</a> Kostenlos zu verwenden mit einer großen Gemeinschaft und vielen aktiven Entwicklern."
+            },
+            "getInTouch": "Kontakt",
+            "contributors": "Mitwirkende",
+            "projectManager": "Projekt Manager",
+            "website": "Webseite"
+        }
     }
 }

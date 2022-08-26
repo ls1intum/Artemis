@@ -7,7 +7,7 @@ export class CreditsCommand extends DomainTagCommand {
     // ' Add points students should get for this instruction here';
     displayCommandButton = false;
 
-    buttonTranslationString = 'assessmentInstructions.instructions.editor.addCredits';
+    buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addCredits';
 
     /**
      * @function execute

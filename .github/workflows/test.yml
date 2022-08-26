@@ -58,7 +58,7 @@ jobs:
         coverage-reports: build/reports/jacoco/test/jacocoTestReport.xml
       if: (github.event.pull_request.head.repo.full_name == github.event.pull_request.base.repo.full_name) && (success() || failure()) && github.event.pull_request.user.login != 'dependabot[bot]'
     - name: Annotate Server Test Results
-      uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
+      uses: ashley-taylor/junit-report-annotations-action@562e0277515cae408f30ad1ea2d6dea44fc1df87
       if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
       with:
         access-token: ${{ secrets.GITHUB_TOKEN }}
@@ -99,7 +99,7 @@ jobs:
         - name: TypeScript Test Without Typechecking
           run: npm run test:ci
         - name: Annotate Client Test Results
-          uses: ashley-taylor/junit-report-annotations-action@9ac2f823854c677f30e062dfe779445e33e5d380
+          uses: ashley-taylor/junit-report-annotations-action@562e0277515cae408f30ad1ea2d6dea44fc1df87
           if: always() && github.event.pull_request.user.login != 'dependabot[bot]'
           with:
               access-token: ${{ secrets.GITHUB_TOKEN }}

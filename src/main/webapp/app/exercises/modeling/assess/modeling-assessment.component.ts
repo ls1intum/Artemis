@@ -286,7 +286,7 @@ export class ModelingAssessmentComponent extends ModelingComponent implements Af
 
     private calculateNote(count: Number | undefined) {
         if (count) {
-            return this.artemisTranslatePipe.transform('modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
+            return this.artemisTranslatePipe.transform('artemisApp.modelingAssessment.impactWarning', { affectedSubmissionsCount: count });
         }
 
         return undefined;
