@@ -19,17 +19,7 @@
             <!-- body -->
             <div class="card-body pt-0">
                 <div class="my-2" *ngIf="post !== undefined">
-                    <fa-icon [icon]="faArrowLeft" (click)="resetCurrentPost()" class="back-button me-2 clickable"> </fa-icon>
-                    <span class="back-instruction">{{ 'artemisApp.metis.post.showAllPosts' | artemisTranslate }}</span>
-                    <jhi-posting-thread [post]="post" [showAnswers]="true"></jhi-posting-thread>
-                </div>
-                <!-- loading posts -->
-                <div class="post-result-information row mt-2" *ngIf="isLoading">
-                    <div class="col-12">{{ 'artemisApp.metis.loadingPosts' | artemisTranslate }}</div>
-                </div>
-                <!-- no posts -->
-                <div class="post-result-information row mt-2" *ngIf="!isLoading && posts.length === 0">
-                    <div class="col-12">{{ 'artemisApp.metis.noPosts' | artemisTranslate }}</div>
+                    <jhi-post [posting]="post" [showAnswers]="true" [isCourseMessagesPage]="true"></jhi-post>
                 </div>
             </div>
         </div>
