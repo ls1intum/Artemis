@@ -42,7 +42,7 @@
                     [showAnswers]="posts.length === 1"
                     [isCourseMessagesPage]="true"
                     (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
-                    (openThread)="openThread.emit($event)"
+                    (openThread)="setPostForThread($event)"
                 >
                 </jhi-posting-thread>
             </div>

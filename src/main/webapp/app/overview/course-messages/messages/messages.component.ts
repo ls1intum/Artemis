@@ -22,6 +22,7 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
     inlineInputEnabled = true;
 
     private scrollBottomSubscription: Subscription;
+    private postInThread: Post;
 
     // Icons
     faEnvelope = faEnvelope;
@@ -43,6 +44,8 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
 
     processReceivedPosts(posts: Post[]): void {
         this.posts = posts.slice().reverse();
+        this.postInThread = posts.find((post) => post.id === this.postInThread?.id)!;
+        this.openThread.emit(this.postInThread);
         this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
     }
 
@@ -55,6 +58,11 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
 
     ngOnDestroy(): void {
         this.scrollBottomSubscription?.unsubscribe();
+    }
+
+    setPostForThread(post: Post) {
+        this.postInThread = post;
+        this.openThread.emit(post);
     }
 
     /**
