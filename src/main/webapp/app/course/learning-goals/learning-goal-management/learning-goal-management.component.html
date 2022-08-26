@@ -33,19 +33,20 @@
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="head">Head Learning Goal</label>
-                                <select class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal">
-                                    <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
+                                <label for="type">Relation Type</label>
+                                <select class="form-select" id="type" name="type" [(ngModel)]="relationType">
+                                    <option value="RELATES" selected>Relates</option>
+                                    <option value="ASSUMES">Assumes</option>
+                                    <option value="EXTENDS">Extends</option>
+                                    <option value="MATCHES">Matches</option>
                                 </select>
                             </div>
                         </div>
                         <div class="col">
                             <div class="form-group">
-                                <label for="type">Relation Type</label>
-                                <select class="form-select" id="type" name="type" [(ngModel)]="relationType">
-                                    <option value="GENERIC" selected>Generic</option>
-                                    <option value="CONSECUTIVE">Consecutive</option>
-                                    <option value="PREREQUISITE">Prerequisite</option>
+                                <label for="head">Head Learning Goal</label>
+                                <select class="form-select" id="head" name="head" [(ngModel)]="headLearningGoal">
+                                    <option *ngFor="let learningGoal of learningGoals" [value]="learningGoal.id">{{ learningGoal.title }}</option>
                                 </select>
                             </div>
                         </div>
