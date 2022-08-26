@@ -7,6 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -164,20 +165,8 @@ public class FileService implements DisposableBean {
             return responsePath.toString();
         }
         catch (IOException e) {
-            log.error("Could not save file", e);
+            log.error("Could not save file {}", filename, e);
             throw new InternalServerErrorException("Could not create file");
-        }
-    }
-
-    /**
-     * Creates a directory for the given path if it doesn't exist yet.
-     * @param filePath the path of the directory to create
-     */
-    private void createDirectory(String filePath) {
-        File folder = new File(filePath);
-        if (!folder.exists() && !folder.mkdirs()) {
-            log.error("Could not create directory: {}", filePath);
-            throw new InternalServerErrorException("Could not create directory");
         }
     }
 
@@ -191,7 +180,13 @@ public class FileService implements DisposableBean {
      * @return the created file
      */
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
-        createDirectory(filePath);
+        try {
+            Files.createDirectory(Paths.get(filePath));
+        }
+        catch (IOException e) {
+            log.error("Could not create directory: {}", filePath);
+            throw e;
+        }
         boolean fileCreated;
         File newFile;
         String newFilename = filename;
@@ -200,9 +195,8 @@ public class FileService implements DisposableBean {
                 newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
-            String path = Path.of(filePath, newFilename).toString();
 
-            newFile = new File(path);
+            newFile = Path.of(filePath, newFilename).toFile();
             if (keepFileName && newFile.exists()) {
                 Files.delete(newFile.toPath());
             }
