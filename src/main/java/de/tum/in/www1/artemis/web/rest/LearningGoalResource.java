@@ -130,7 +130,7 @@ public class LearningGoalResource {
      */
     @DeleteMapping("/courses/{courseId}/goals/{learningGoalId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Void> deleteLectureUnit(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
+    public ResponseEntity<Void> deleteLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to delete a LearningGoal : {}", learningGoalId);
 
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, false, false);
@@ -167,7 +167,7 @@ public class LearningGoalResource {
     /**
      * GET /courses/:courseId/goals/:learningGoalId : gets the learning goal with the specified id
      *
-     * @param learningGoalId the id of the textUnit to retrieve
+     * @param learningGoalId the id of the learning goal to retrieve
      * @param courseId the id of the course to which the learning goal belongs
      * @return the ResponseEntity with status 200 (OK) and with body the learning goal, or with status 404 (Not Found)
      */

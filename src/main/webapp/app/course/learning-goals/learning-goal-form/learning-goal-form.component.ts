@@ -8,7 +8,7 @@ import { LectureUnit } from 'app/entities/lecture-unit/lectureUnit.model';
 import { TranslateService } from '@ngx-translate/core';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { intersection } from 'lodash-es';
-import { LearningGoal, LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
+import { LearningGoalTaxonomy } from 'app/entities/learningGoal.model';
 
 /**
  * Async Validator to make sure that a learning goal title is unique within a course
@@ -123,7 +123,7 @@ export class LearningGoalFormComponent implements OnInit, OnChanges {
                 [this.titleUniqueValidator(this.learningGoalService, this.courseId, initialTitle)],
             ],
             description: [undefined as string | undefined, [Validators.maxLength(10000)]],
-            type: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
+            taxonomy: [undefined, [Validators.pattern('^(' + Object.keys(this.learningGoalTaxonomy).join('|') + ')$')]],
         });
         this.selectedLectureUnitsInTable = [];
     }

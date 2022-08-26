@@ -7,7 +7,7 @@
             "learningGoalButton": "Lernziele",
             "title": "Lernziele",
             "description": "Beschreibung",
-            "taxonomy": "Taxonomy",
+            "taxonomy": "Taxonomie",
             "taxonomies": {
                 "remember": "Erinnern",
                 "understand": "Verstehen",

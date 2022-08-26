@@ -417,7 +417,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var relation = new LearningGoalRelation();
         relation.setTailLearningGoal(learningGoal);
         relation.setHeadLearningGoal(learningGoal1);
-        relation.setType(LearningGoalRelation.RelationType.CONSECUTIVE);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         learningGoalRelationRepository.save(relation);
 
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
@@ -442,12 +442,13 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
 
-        request.postWithoutResponseBody("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
-                + LearningGoalRelation.RelationType.CONSECUTIVE.name(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + LearningGoalRelation.RelationType.EXTENDS.name(),
+                HttpStatus.OK, new LinkedMultiValueMap<>());
 
         var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
         assertThat(relations).hasSize(1);
-        assertThat(relations.stream().findFirst().get().getType()).isEqualTo(LearningGoalRelation.RelationType.CONSECUTIVE);
+        assertThat(relations.stream().findFirst().get().getType()).isEqualTo(LearningGoalRelation.RelationType.EXTENDS);
     }
 
     @Test
@@ -456,8 +457,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
 
-        request.post("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type="
-                + LearningGoalRelation.RelationType.CONSECUTIVE.name(), null, HttpStatus.FORBIDDEN);
+        request.post(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + LearningGoalRelation.RelationType.EXTENDS.name(),
+                null, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -470,7 +472,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var relation = new LearningGoalRelation();
         relation.setTailLearningGoal(learningGoal);
         relation.setHeadLearningGoal(otherLearningGoal);
-        relation.setType(LearningGoalRelation.RelationType.CONSECUTIVE);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 
         var relations = request.getList("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations", HttpStatus.OK, LearningGoalRelation.class);
@@ -489,7 +491,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         var relation = new LearningGoalRelation();
         relation.setTailLearningGoal(learningGoal);
         relation.setHeadLearningGoal(otherLearningGoal);
-        relation.setType(LearningGoalRelation.RelationType.CONSECUTIVE);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         relation = learningGoalRelationRepository.save(relation);
 
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);

@@ -50,15 +50,19 @@ public class LearningGoalRelation extends DomainObject {
         /**
          * A generic relation between two learning goals.
          */
-        GENERIC,
+        RELATES,
         /**
-         * The tail learning goal is a prerequisite for the head learning goal.
+         * The tail learning goal assumes that the student already achieved the head learning goal.
          */
-        PREREQUISITE,
+        ASSUMES,
         /**
-         * The head learning goal is on the same topic but more detailed than the tail learning goal.
+         * The tail learning goal extends the head learning goal on the same topic in more detail.
          */
-        CONSECUTIVE;
+        EXTENDS,
+        /**
+         * The tail learning goal matches the head learning goal (e.g., a duplicate).
+         */
+        MATCHES;
     }
 
     @Converter
@@ -71,21 +75,24 @@ public class LearningGoalRelation extends DomainObject {
             }
 
             return switch (type) {
-                case GENERIC -> "G";
-                case PREREQUISITE -> "P";
-                case CONSECUTIVE -> "C";
+                case RELATES -> "R";
+                case ASSUMES -> "A";
+                case EXTENDS -> "E";
+                case MATCHES -> "M";
             };
         }
 
         @Override
         public RelationType convertToEntityAttribute(String value) {
-            if (value == null)
+            if (value == null) {
                 return null;
+            }
 
             return switch (value) {
-                case "G" -> RelationType.GENERIC;
-                case "P" -> RelationType.PREREQUISITE;
-                case "C" -> RelationType.CONSECUTIVE;
+                case "R" -> RelationType.RELATES;
+                case "A" -> RelationType.ASSUMES;
+                case "E" -> RelationType.EXTENDS;
+                case "M" -> RelationType.MATCHES;
                 default -> throw new IllegalArgumentException("Unknown RelationType: " + value);
             };
         }

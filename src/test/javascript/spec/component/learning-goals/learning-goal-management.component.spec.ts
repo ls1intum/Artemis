@@ -20,6 +20,8 @@ import { cloneDeep } from 'lodash-es';
 import * as Sentry from '@sentry/browser';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { AccountService } from 'app/core/auth/account.service';
+import { TranslateService } from '@ngx-translate/core';
+import { ArtemisTestModule } from '../../test.module';
 
 @Component({ selector: 'jhi-learning-goal-card', template: '<div><ng-content></ng-content></div>' })
 class LearningGoalCardStubComponent {
@@ -34,7 +36,7 @@ describe('LearningGoalManagementComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [RouterTestingModule.withRoutes([])],
+            imports: [ArtemisTestModule, RouterTestingModule.withRoutes([])],
             declarations: [
                 LearningGoalManagementComponent,
                 LearningGoalCardStubComponent,
@@ -44,8 +46,6 @@ describe('LearningGoalManagementComponent', () => {
                 MockDirective(HasAnyAuthorityDirective),
             ],
             providers: [
-                MockTranslateService,
-                MockProvider(AlertService),
                 MockProvider(AccountService),
                 MockProvider(LearningGoalService),
                 {
