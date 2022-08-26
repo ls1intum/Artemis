@@ -64,9 +64,15 @@ public class FileService implements DisposableBean {
      * Filenames for which the template filename differs from the filename it should have in the repository.
      */
     // @formatter:off
-    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(Map.entry("git.ignore.file", ".gitignore"), Map.entry("git.attributes.file", ".gitattributes"),
-        Map.entry("Makefile.file", "Makefile"), Map.entry("dune.file", "dune"), Map.entry("Fast.file", "Fastfile"), Map.entry("App.file", "Appfile"),
-        Map.entry("Scan.file", "Scanfile"), Map.entry("gradlew.file", "gradlew"));
+    private static final Map<String, String> FILENAME_REPLACEMENTS = Map.ofEntries(
+        Map.entry("git.ignore.file", ".gitignore"),
+        Map.entry("git.attributes.file", ".gitattributes"),
+        Map.entry("Makefile.file", "Makefile"),
+        Map.entry("dune.file", "dune"),
+        Map.entry("Fast.file", "Fastfile"),
+        Map.entry("App.file", "Appfile"),
+        Map.entry("Scan.file", "Scanfile"),
+        Map.entry("gradlew.file", "gradlew"));
     // @formatter:on
 
     /**
