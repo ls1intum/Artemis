@@ -17,7 +17,7 @@
             "thread": {
                 "label": "Thread",
                 "show": "Show thread",
-                "hide": "Hide thread",
+                "close": "Close thread",
                 "reply": "Reply in thread"
             }
         }

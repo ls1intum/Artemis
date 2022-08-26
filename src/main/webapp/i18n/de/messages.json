@@ -16,8 +16,9 @@
             "submit": "Senden",
             "thread": {
                 "label": "Thread",
-                "show": "Show thread",
-                "hide": "Hide thread"
+                "show": "Thread anzeigen",
+                "close": "Thread schließen",
+                "reply": "Antwort im Thread"
             }
         }
     }
