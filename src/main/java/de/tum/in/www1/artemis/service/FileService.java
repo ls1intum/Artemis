@@ -181,7 +181,7 @@ public class FileService implements DisposableBean {
      */
     private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
         try {
-            Files.createDirectory(Paths.get(filePath));
+            Files.createDirectories(Paths.get(filePath));
         }
         catch (IOException e) {
             log.error("Could not create directory: {}", filePath);
