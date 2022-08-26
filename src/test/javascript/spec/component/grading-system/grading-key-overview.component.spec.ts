@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, ActivatedRouteSnapshot, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -52,16 +52,16 @@ describe('GradeKeyOverviewComponent', () => {
 
     beforeEach(() => {
         route = {
-            snapshot: { params: {}, queryParams: { grade: studentGrade } },
+            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params },
             parent: {
                 snapshot: { params: {} },
                 parent: {
                     snapshot: {
-                        params: { courseId: 345, examId: 123 },
+                        params: { courseId: 345, examId: 123 } as Params,
                     },
                 },
             },
-        } as unknown as ActivatedRoute;
+        } as ActivatedRoute;
 
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
