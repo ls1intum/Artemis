@@ -82,15 +82,6 @@ const routes: Routes = [
             },
         ],
     },
-    {
-        path: 'courses/:courseId/statistics/grading-key',
-        component: GradingKeyOverviewComponent,
-        data: {
-            authorities: [Authority.USER],
-            pageTitle: 'artemisApp.gradingSystem.title',
-        },
-        canActivate: [UserRouteAccessService],
-    },
 ];
 
 @NgModule({
