@@ -1,6 +1,12 @@
 <form [formGroup]="formGroup" (ngSubmit)="confirm()">
     <div class="message-inline-input-form__wrapper">
-        <jhi-posting-markdown-editor formControlName="content" [editorHeight]="editorHeight" [maxContentLength]="maxContentLength" [isInputLengthDisplayed]="false">
+        <jhi-posting-markdown-editor
+            formControlName="content"
+            [editorHeight]="editorHeight"
+            [maxContentLength]="maxContentLength"
+            [isInputLengthDisplayed]="false"
+            (keydown.enter)="confirm()"
+        >
         </jhi-posting-markdown-editor>
         <div class="col text-end">
             <button
@@ -17,6 +23,7 @@
                 [buttonLabel]="'artemisApp.messages.submit' | artemisTranslate"
                 class="btn btn-sm btn-outline-secondary"
                 type="submit"
+                (keydown)="confirm()"
             ></button>
         </div>
     </div>
