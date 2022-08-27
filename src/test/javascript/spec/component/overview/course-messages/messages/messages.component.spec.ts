@@ -29,7 +29,7 @@ import { MockTranslateService } from '../../../../helpers/mocks/service/mock-tra
 import { MockRouter } from '../../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../../helpers/mocks/service/mock-local-storage.service';
 import { MessagesComponent } from 'app/overview/course-messages/messages/messages.component';
-import { MessageInlineInputComponent } from 'app/shared/metis/posting-inline-input/message-inline-input.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/message-inline-input/message-inline-input.component';
 import { getElement } from '../../../../helpers/utils/general.utils';
 
 describe('MessagesComponent', () => {

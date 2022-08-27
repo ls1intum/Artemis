@@ -3,7 +3,7 @@ import { MetisService } from 'app/shared/metis/metis.service';
 import { MockModule, MockPipe } from 'ng-mocks';
 import { FormBuilder, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { MessageInlineInputComponent } from 'app/shared/metis/posting-inline-input/message-inline-input.component';
+import { MessageInlineInputComponent } from 'app/shared/metis/message-inline-input/message-inline-input.component';
 import { MockMetisService } from '../../../../helpers/mocks/service/mock-metis-service.service';
 import { metisPostToCreateUser1 } from '../../../../helpers/sample/metis-sample-data';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';

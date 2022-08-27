@@ -11,10 +11,20 @@ import { MetisService } from 'app/shared/metis/metis.service';
 export class CourseMessagesComponent {
     selectedConversation: Conversation;
     postInThread: Post;
+    showPostThread = false;
 
     constructor() {}
 
     selectConversation(conversation: Conversation) {
         this.selectedConversation = conversation;
+    }
+
+    selectPostForThread(post: Post) {
+        this.showPostThread = false;
+
+        if (!!post) {
+            this.postInThread = post;
+            this.showPostThread = true;
+        }
     }
 }

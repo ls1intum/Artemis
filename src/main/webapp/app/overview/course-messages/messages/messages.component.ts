@@ -44,7 +44,9 @@ export class MessagesComponent extends PostOverviewDirective implements AfterVie
     processReceivedPosts(posts: Post[]): void {
         this.previousScrollDistanceFromTop = this.content.nativeElement.scrollHeight - this.content.nativeElement.scrollTop;
         this.posts = posts.slice().reverse();
-        this.setPostForThread(posts.find((post) => post.id === this.postInThread?.id)!);
+        if (this.postInThread) {
+            this.setPostForThread(posts.find((post) => post.id === this.postInThread?.id)!);
+        }
     }
 
     /**

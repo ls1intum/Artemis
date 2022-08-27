@@ -1,22 +1,24 @@
-import { AfterViewInit, Component, Input } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { AnswerPost } from 'app/entities/metis/answer-post.model';
 
 @Component({
     selector: 'jhi-thread-sidebar',
     templateUrl: './thread-sidebar.component.html',
     styleUrls: ['./thread-sidebar.component.scss'],
 })
-export class ThreadSidebarComponent implements AfterViewInit {
+export class ThreadSidebarComponent implements OnInit, AfterViewInit {
+    @Output() closePostThread = new EventEmitter<void>();
+
     collapsed = true;
     post?: Post;
+    createdAnswerPost: AnswerPost;
 
     @Input() set activePost(activePost: Post) {
-        this.collapsed = true;
         if (activePost) {
             this.post = activePost;
-            this.collapsed = false;
         }
     }
 
@@ -27,6 +29,13 @@ export class ThreadSidebarComponent implements AfterViewInit {
     faArrowLeft = faArrowLeft;
 
     constructor() {}
+
+    /**
+     * on initialization: updates the post tags and the context information
+     */
+    ngOnInit(): void {
+        this.createdAnswerPost = this.createEmptyAnswerPost();
+    }
 
     /**
      * makes discussion section expandable by configuring 'interact'
@@ -54,5 +63,16 @@ export class ThreadSidebarComponent implements AfterViewInit {
                 const target = event.target;
                 target.style.width = event.rect.width + 'px';
             });
+    }
+
+    /**
+     * creates empty default answer post that is needed on initialization of a newly opened modal to edit or create an answer post, with accordingly set resolvesPost flag
+     * @return AnswerPost created empty default answer post
+     */
+    createEmptyAnswerPost(): AnswerPost {
+        const answerPost = new AnswerPost();
+        answerPost.content = '';
+        answerPost.post = this.post;
+        return answerPost;
     }
 }

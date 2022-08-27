@@ -1,12 +1,12 @@
 <!-- uncollapsed posts -->
 <div class="h-100">
-    <div *ngIf="!collapsed" class="postings-container expanded-thread">
+    <div class="postings-container expanded-thread">
         <div class="draggable-left">
             <fa-icon [icon]="faGripLinesVertical"></fa-icon>
         </div>
         <div class="card">
             <!-- header -->
-            <div class="card-header d-flex bg-primary text-white" [ngbTooltip]="'artemisApp.messages.thread.close' | artemisTranslate" (click)="collapsed = true">
+            <div class="card-header d-flex bg-primary text-white" [ngbTooltip]="'artemisApp.messages.thread.close' | artemisTranslate" (click)="closePostThread.emit()">
                 <div class="row flex-grow-1">
                     <div class="col">
                         <h5 class="mb-0 fw-medium" jhiTranslate="artemisApp.messages.thread.label">Thread</h5>
@@ -20,6 +20,7 @@
             <div class="card-body pt-0">
                 <div class="my-2" *ngIf="post !== undefined">
                     <jhi-post [posting]="post" [showAnswers]="true" [isCourseMessagesPage]="true"></jhi-post>
+                    <jhi-message-reply-inline-input [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()"> </jhi-message-reply-inline-input>
                 </div>
             </div>
         </div>
