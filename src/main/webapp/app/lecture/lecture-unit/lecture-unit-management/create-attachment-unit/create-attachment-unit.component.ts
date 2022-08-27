@@ -68,10 +68,12 @@ export class CreateAttachmentUnitComponent implements OnInit {
         formData.append('attachment', objectToJsonBlob(this.attachmentToCreate));
         formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnitToCreate));
 
-        this.attachmentUnitService.create(formData, this.lectureId).subscribe({
-            next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
-            error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            complete: () => (this.isLoading = false),
-        });
+        this.attachmentUnitService
+            .create(formData, this.lectureId)
+            .subscribe({
+                next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
+                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+            })
+            .add(() => (this.isLoading = false));
     }
 }
