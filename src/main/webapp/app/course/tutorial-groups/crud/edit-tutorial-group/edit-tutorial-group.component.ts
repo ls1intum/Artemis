@@ -10,6 +10,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupSchedule } from 'app/entities/tutorialGroupSchedule.model';
 import timezones from 'timezones-list';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
@@ -53,8 +54,7 @@ export class EditTutorialGroupComponent implements OnInit {
                             this.tutorialGroupSchedule = this.tutorialGroup.tutorialGroupSchedule;
                             this.formData.schedule = {
                                 timeZone: timezones.find((tz) => tz.tzCode === this.tutorialGroupSchedule.timeZone)!,
-                                validFromInclusive: this.tutorialGroupSchedule.validFromInclusive,
-                                validToInclusive: this.tutorialGroupSchedule.validToInclusive,
+                                period: [this.tutorialGroupSchedule.validFromInclusive!.toDate(), this.tutorialGroupSchedule.validToInclusive!.toDate()],
                                 repetitionFrequency: this.tutorialGroupSchedule.repetitionFrequency,
                                 startTime: this.tutorialGroupSchedule.startTime,
                                 endTime: this.tutorialGroupSchedule.endTime,
@@ -86,13 +86,15 @@ export class EditTutorialGroupComponent implements OnInit {
             if (!this.tutorialGroup.tutorialGroupSchedule) {
                 this.tutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
             }
-            this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = schedule.validFromInclusive ? schedule.validFromInclusive : undefined;
-            this.tutorialGroup.tutorialGroupSchedule.validToInclusive = schedule.validToInclusive ? schedule.validToInclusive : undefined;
+            if (schedule.period && schedule.period.length === 2) {
+                this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs(schedule.period[0]);
+                this.tutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs(schedule.period[1]);
+            }
             this.tutorialGroup.tutorialGroupSchedule.dayOfWeek = schedule.dayOfWeek;
             this.tutorialGroup.tutorialGroupSchedule.startTime = schedule.startTime;
             this.tutorialGroup.tutorialGroupSchedule.endTime = schedule.endTime;
             this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = schedule.repetitionFrequency;
-            this.tutorialGroup.tutorialGroupSchedule.timeZone = schedule.timeZone.tzCode;
+            this.tutorialGroup.tutorialGroupSchedule.timeZone = schedule.timeZone!.tzCode;
         }
 
         this.isLoading = true;

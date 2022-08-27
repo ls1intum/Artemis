@@ -5,17 +5,14 @@ import { NgbCalendar, NgbDate, NgbDateParserFormatter, NgbTimeAdapter, NgbTimeSt
 import { merge, Observable, OperatorFunction, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 import timezones from 'timezones-list';
-import dayjs from 'dayjs/esm';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;
     startTime?: string;
     endTime?: string;
     repetitionFrequency?: number;
-    timeZone: TimeZone;
-    // not from reactive form
-    validFromInclusive?: dayjs.Dayjs | null;
-    validToInclusive?: dayjs.Dayjs | null;
+    timeZone?: TimeZone;
+    period?: Date[];
 }
 
 interface TimeZone {
@@ -110,33 +107,6 @@ export class ScheduleFormComponent implements OnInit {
         return this.formGroup.get('timeZone');
     }
 
-    isHovered(date: NgbDate) {
-        return this.fromDate && !this.toDate && this.hoveredDate && date.after(this.fromDate) && date.before(this.hoveredDate);
-    }
-
-    isInside(date: NgbDate) {
-        return this.toDate && date.after(this.fromDate) && date.before(this.toDate);
-    }
-
-    isRange(date: NgbDate) {
-        return date.equals(this.fromDate) || (this.toDate && date.equals(this.toDate)) || this.isInside(date) || this.isHovered(date);
-    }
-
-    onDateSelection(date: NgbDate) {
-        if (!this.fromDate && !this.toDate) {
-            this.fromDate = date;
-        } else if (this.fromDate && !this.toDate && date && date.after(this.fromDate)) {
-            this.toDate = date;
-        } else {
-            this.toDate = null;
-            this.fromDate = date;
-        }
-    }
-
-    validateInput(currentValue: NgbDate | null, input: string): NgbDate | null {
-        const parsed = this.formatter.parse(input);
-        return parsed && this.calendar.isValid(NgbDate.from(parsed)) ? NgbDate.from(parsed) : currentValue;
-    }
     tzSearch: OperatorFunction<string, readonly TimeZone[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
@@ -157,6 +127,7 @@ export class ScheduleFormComponent implements OnInit {
             startTime: ['13:00:00', [Validators.required]],
             endTime: ['14:00:00', [Validators.required]],
             repetitionFrequency: [1, [Validators.required]],
+            period: [undefined, [Validators.required]],
             timeZone: [
                 {
                     label: 'Europe/Berlin (GMT+01:00)',

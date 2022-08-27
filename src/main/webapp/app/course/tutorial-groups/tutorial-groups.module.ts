@@ -14,9 +14,10 @@ import { SchedulePickerComponent } from './crud/schedule-picker/schedule-picker/
 import { ScheduleManagementComponent } from './schedule-management/schedule-management.component';
 import { CalendarModule } from 'angular-calendar';
 import { ScheduleFormComponent } from './crud/tutorial-group-form/schedule-form/schedule-form.component';
+import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule, OwlDateTimeModule],
     declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,

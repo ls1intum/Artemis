@@ -109,22 +109,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
-        // setting non reactive form values
-        if (tutorialGroupFormData.schedule) {
-            tutorialGroupFormData.schedule.validFromInclusive = this.scheduleFormComponent.fromDate ? this.ngbDateToDayJs(this.scheduleFormComponent.fromDate) : null;
-            tutorialGroupFormData.schedule.validToInclusive = this.scheduleFormComponent.toDate ? this.ngbDateToDayJs(this.scheduleFormComponent.toDate) : null;
-        }
         this.formSubmitted.emit(tutorialGroupFormData);
-    }
-
-    ngbDateToDayJs(date?: NgbDate | null) {
-        // NgbDate month is 1 based, dayjs month is 0 based
-        return date ? dayjs.utc({ year: date.year, month: date.month - 1, day: date.day }) : null;
-    }
-
-    dayJsToNgbDate(date?: dayjs.Dayjs | null) {
-        // NgbDate month is 1 based, dayjs month is 0 based
-        return date ? new NgbDate(date.year(), date.month() + 1, date.date()) : null;
     }
 
     trackId(index: number, item: User) {
@@ -162,11 +147,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             formData.teachingAssistant = this.createUserWithLabel(formData.teachingAssistant);
         }
         this.form.patchValue(formData);
-        // setting non reactive form values
-        if (formData.schedule) {
-            this.scheduleFormComponent.fromDate = this.dayJsToNgbDate(formData.schedule.validFromInclusive);
-            this.scheduleFormComponent.toDate = this.dayJsToNgbDate(formData.schedule.validToInclusive);
-        }
     }
 
     private createUserWithLabel(user: User): UserWithLabel {

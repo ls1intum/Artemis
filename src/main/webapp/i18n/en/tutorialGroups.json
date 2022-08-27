@@ -96,20 +96,20 @@
                 "friday": "Friday",
                 "saturday": "Saturday",
                 "sunday": "Sunday"
+            },
+            "timeZoneInput": {
+                "label": "Time Zone",
+                "placeholder": "Select a Time Zone",
+                "requiredValidationError": "A time zone needs to be selected!",
+                "tzHelp": "You can search for a time zone by typing into the field."
+            },
+            "timeInput": {
+                "from": "Session starts at",
+                "to": "Session ends at"
+            },
+            "periodInput": {
+                "label": "Period in which the tutorial group meets: "
             }
-        },
-        "timeZoneInput": {
-            "label": "Time Zone",
-            "placeholder": "Select a Time Zone",
-            "requiredValidationError": "A time zone needs to be selected!",
-            "tzHelp": "You can search for a time zone by typing into the field."
-        },
-        "timeInput": {
-            "from": "Session starts at",
-            "to": "Session ends at"
-        },
-        "periodInput": {
-            "label": "Period in which the tutorial group meets: "
         }
     }
 }

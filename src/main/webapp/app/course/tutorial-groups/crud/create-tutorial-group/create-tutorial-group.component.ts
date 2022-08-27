@@ -8,6 +8,7 @@ import { TutorialGroupFormData } from 'app/course/tutorial-groups/crud/tutorial-
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { TutorialGroupSchedule } from 'app/entities/tutorialGroupSchedule.model';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-create-tutorial-group',
@@ -44,13 +45,15 @@ export class CreateTutorialGroupComponent implements OnInit {
         this.tutorialGroupToCreate.location = location;
         if (schedule) {
             this.tutorialGroupToCreate.tutorialGroupSchedule = new TutorialGroupSchedule();
-            this.tutorialGroupToCreate.tutorialGroupSchedule.validFromInclusive = schedule.validFromInclusive ? schedule.validFromInclusive : undefined;
-            this.tutorialGroupToCreate.tutorialGroupSchedule.validToInclusive = schedule.validToInclusive ? schedule.validToInclusive : undefined;
+            if (schedule.period && schedule.period.length === 2) {
+                this.tutorialGroupToCreate.tutorialGroupSchedule.validFromInclusive = dayjs(schedule.period[0]);
+                this.tutorialGroupToCreate.tutorialGroupSchedule.validToInclusive = dayjs(schedule.period[1]);
+            }
             this.tutorialGroupToCreate.tutorialGroupSchedule.dayOfWeek = schedule.dayOfWeek;
             this.tutorialGroupToCreate.tutorialGroupSchedule.startTime = schedule.startTime;
             this.tutorialGroupToCreate.tutorialGroupSchedule.endTime = schedule.endTime;
             this.tutorialGroupToCreate.tutorialGroupSchedule.repetitionFrequency = schedule.repetitionFrequency;
-            this.tutorialGroupToCreate.tutorialGroupSchedule.timeZone = schedule.timeZone.tzCode;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.timeZone = schedule.timeZone!.tzCode;
         }
 
         this.isLoading = true;
