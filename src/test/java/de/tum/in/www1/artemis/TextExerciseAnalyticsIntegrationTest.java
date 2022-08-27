@@ -119,6 +119,16 @@ class TextExerciseAnalyticsIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void testAddSingleCompleteAssessmentEvent_withExampleSubmission() {
+        textSubmission.setExampleSubmission(true);
+        textSubmissionRepository.saveAndFlush(textSubmission);
+        TextAssessmentEvent event = database.createSingleTextAssessmentEvent(course.getId(), tutor.getId(), exercise.getId(), studentParticipation.getId(), textSubmission.getId());
+        ResponseEntity<Void> responseEntity = textAssessmentEventResource.addAssessmentEvent(event);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
     /**
      * Tests the get events endpoint with admin role
      */

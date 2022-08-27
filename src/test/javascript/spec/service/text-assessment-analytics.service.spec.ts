@@ -13,9 +13,12 @@ import { Params, Router } from '@angular/router';
 import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { throwError } from 'rxjs';
+import { Location } from '@angular/common';
+import { MockProvider } from 'ng-mocks';
 
 describe('TextAssessmentAnalytics Service', () => {
     let service: TextAssessmentAnalytics;
+    let location: Location;
     let httpMock: HttpTestingController;
 
     const route = (): ActivatedRoute =>
@@ -33,6 +36,14 @@ describe('TextAssessmentAnalytics Service', () => {
             imports: [HttpClientTestingModule],
             providers: [
                 { provide: Router, useClass: MockRouter },
+                {
+                    provide: Location,
+                    useValue: {
+                        path(): string {
+                            return '/course/1/exercise/1/participation/1/submission/1';
+                        },
+                    },
+                },
                 { provide: SessionStorageService, useClass: MockSyncStorage },
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: LocalStorageService, useClass: MockSyncStorage },
@@ -47,6 +58,10 @@ describe('TextAssessmentAnalytics Service', () => {
         httpMock.expectOne({ url: `${SERVER_API_URL}management/info`, method: 'GET' });
     });
 
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
     it('should send assessment event if artemis analytics is enabled', fakeAsync(() => {
         service.analyticsEnabled = true;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
@@ -57,6 +72,15 @@ describe('TextAssessmentAnalytics Service', () => {
         service.analyticsEnabled = false;
         service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
         httpMock.expectNone({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
+    }));
+
+    it('should not send assessment event if on example submission path', fakeAsync(() => {
+        service.analyticsEnabled = true;
+        location = TestBed.inject(Location);
+        const pathSpy = jest.spyOn(location, 'path').mockReturnValue('/course/1/exercise/1/participation/1/example-submissions/1');
+        service.sendAssessmentEvent(TextAssessmentEventType.VIEW_AUTOMATIC_SUGGESTION_ORIGIN, FeedbackType.AUTOMATIC, TextBlockType.AUTOMATIC);
+        httpMock.expectNone({ url: `${SERVER_API_URL}api/analytics/text-assessment/events`, method: 'POST' });
+        expect(pathSpy).toHaveBeenCalledOnce();
     }));
 
     it('should subscribe to route parameters if artemis analytics is enabled', fakeAsync(() => {
