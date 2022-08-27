@@ -6,7 +6,7 @@ export class GradingScaleCommand extends DomainTagCommand {
     public static readonly text = 'Add instruction grading scale here (only visible for tutors)';
     displayCommandButton = false;
 
-    buttonTranslationString = 'assessmentInstructions.instructions.editor.addGradingScale';
+    buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addGradingScale';
 
     /**
      * @function execute
