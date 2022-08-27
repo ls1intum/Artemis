@@ -72,7 +72,13 @@ export class CreateAttachmentUnitComponent implements OnInit {
             .create(formData, this.lectureId)
             .subscribe({
                 next: () => this.router.navigate(['../../'], { relativeTo: this.activatedRoute }),
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    if (res.error.params === 'file' && res?.error?.title) {
+                        this.alertService.error(res.error.title);
+                    } else {
+                        onError(this.alertService, res);
+                    }
+                },
             })
             .add(() => (this.isLoading = false));
     }

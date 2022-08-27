@@ -42,7 +42,7 @@ import com.ibm.icu.text.CharsetDetector;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
-import de.tum.in.www1.artemis.web.rest.errors.BadRequestException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
@@ -148,7 +148,7 @@ public class FileService implements DisposableBean {
         filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
         String fileExtension = FilenameUtils.getExtension(filename);
         if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            throw new BadRequestException("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
+            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions), "file", null, true);
         }
 
         final String filePath = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
