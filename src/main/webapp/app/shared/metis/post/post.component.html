@@ -1,9 +1,4 @@
-<jhi-post-header
-    [previewMode]="previewMode"
-    [posting]="posting"
-    [isCourseMessagesPage]="isCourseMessagesPage"
-    (isModalOpen)="isCourseMessagesPage ? (displayInlineInput = true) : isModalOpen.emit()"
-></jhi-post-header>
+<jhi-post-header [previewMode]="previewMode" [posting]="posting" [isCourseMessagesPage]="isCourseMessagesPage" (isModalOpen)="displayInlineInput = true"></jhi-post-header>
 <div class="row align-items-center">
     <div class="col">
         <div class="mb-1">

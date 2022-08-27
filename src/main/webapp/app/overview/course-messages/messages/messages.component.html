@@ -41,13 +41,11 @@
                     [post]="post"
                     [showAnswers]="posts.length === 1"
                     [isCourseMessagesPage]="true"
-                    (isModalOpen)="inlineInputEnabled = !inlineInputEnabled"
                     (openThread)="setPostForThread($event)"
                 >
                 </jhi-posting-thread>
             </div>
-            <jhi-message-inline-input *ngIf="inlineInputEnabled && conversation" [posting]="createdPost" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()">
-            </jhi-message-inline-input>
+            <jhi-message-inline-input *ngIf="conversation" [posting]="createdPost" (onCreate)="createEmptyPost(); scrollToBottomOfMessages()"> </jhi-message-inline-input>
         </div>
     </div>
 </div>

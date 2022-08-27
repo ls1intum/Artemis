@@ -9,7 +9,6 @@ import { PostingDirective } from 'app/shared/metis/posting.directive';
 })
 export class AnswerPostComponent extends PostingDirective<AnswerPost> {
     @Input() isLastAnswer: boolean;
-    @Input() isCourseMessagesPage: boolean;
     @Output() openPostingCreateEditModal = new EventEmitter<void>();
     // ng-container to render answerPostCreateEditModalComponent
     @ViewChild('createEditAnswerPostContainer', { read: ViewContainerRef }) containerRef: ViewContainerRef;
