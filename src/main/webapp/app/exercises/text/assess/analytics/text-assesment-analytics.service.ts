@@ -68,11 +68,7 @@ export class TextAssessmentAnalytics {
     }
 
     private isExampleSubmissionRoute() {
-        if (!this.location) {
-            return false;
-        } else {
-            return this.location.path().includes('example-submission');
-        }
+        return !!this.location?.path().includes('example-submission');
     }
     /**
      * Subscribes to the route parameters and updates the respective id's accordingly.
