@@ -37,6 +37,9 @@
         "registeredStudents": {
             "title": "Registrierte Studenten"
         },
+        "manageSchedule": {
+            "title": "Plan"
+        },
         "tutorialGroupForm": {
             "titleInput": {
                 "label": "Titel",
@@ -50,7 +53,7 @@
                 "loadingText": "Lade Tutoren...",
                 "notFoundText": "Keine Tutoren gefunden in diesem Kurs",
                 "requiredValidationError": "Ein Tutor muss für diese Gruppe ausgewählt werden!",
-                "taHelp": "Du kannst suchen indem du in dieses Feld tippst"
+                "taHelp": "Du kannst nach einem Tutor suchen indem du in dieses Feld tippst"
             },
             "additionalInformationInput": {
                 "label": "Zusätzliche Informationen",
@@ -80,6 +83,32 @@
                 "isOnlineInput": {
                     "label": "Trifft sich diese Gruppe online? (Online-Übungsgruppe)"
                 }
+            }
+        },
+        "scheduleForm": {
+            "title": "Plan",
+            "weekDay": {
+                "label": "Wochentag an dem diese Übung stattfindet",
+                "monday": "Montag",
+                "tuesday": "Dienstag",
+                "wednesday": "Mittwoch",
+                "thursday": "Donnerstag",
+                "friday": "Freitag",
+                "saturday": "Samstag",
+                "sunday": "Sonntag"
+            },
+            "timeZoneInput": {
+                "label": "Zeitzone",
+                "placeholder": "Wähle eine Zeitzone aus",
+                "requiredValidationError": "Eine Zeitzone muss ausgewählt werden!",
+                "tzHelp": "Du kannst nach einer Zeitzone suchen indem du in dieses Feld tippst"
+            },
+            "timeInput": {
+                "from": "Übungsgruppe beginnt um",
+                "to": "Übungsgruppe endet um"
+            },
+            "periodInput": {
+                "label": "Zeitraum in der Übungsgruppen stattfinden: "
             }
         }
     }

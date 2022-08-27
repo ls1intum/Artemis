@@ -8,6 +8,8 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
+import { TutorialGroupSchedule } from 'app/entities/tutorialGroupSchedule.model';
+import timezones from 'timezones-list';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
@@ -16,6 +18,7 @@ import { AlertService } from 'app/core/util/alert.service';
 export class EditTutorialGroupComponent implements OnInit {
     isLoading = false;
     tutorialGroup: TutorialGroup;
+    tutorialGroupSchedule: TutorialGroupSchedule;
     formData: TutorialGroupFormData;
     courseId: number;
 
@@ -37,16 +40,28 @@ export class EditTutorialGroupComponent implements OnInit {
                 next: (tutorialGroupResult) => {
                     if (tutorialGroupResult.body) {
                         this.tutorialGroup = tutorialGroupResult.body;
+                        this.formData = {
+                            title: this.tutorialGroup.title,
+                            teachingAssistant: this.tutorialGroup.teachingAssistant,
+                            additionalInformation: this.tutorialGroup.additionalInformation,
+                            capacity: this.tutorialGroup.capacity,
+                            isOnline: this.tutorialGroup.isOnline,
+                            language: this.tutorialGroup.language,
+                            location: this.tutorialGroup.location,
+                        };
+                        if (this.tutorialGroup.tutorialGroupSchedule) {
+                            this.tutorialGroupSchedule = this.tutorialGroup.tutorialGroupSchedule;
+                            this.formData.schedule = {
+                                timeZone: timezones.find((tz) => tz.tzCode === this.tutorialGroupSchedule.timeZone)!,
+                                validFromInclusive: this.tutorialGroupSchedule.validFromInclusive,
+                                validToInclusive: this.tutorialGroupSchedule.validToInclusive,
+                                repetitionFrequency: this.tutorialGroupSchedule.repetitionFrequency,
+                                startTime: this.tutorialGroupSchedule.startTime,
+                                endTime: this.tutorialGroupSchedule.endTime,
+                                dayOfWeek: this.tutorialGroupSchedule.dayOfWeek,
+                            };
+                        }
                     }
-                    this.formData = {
-                        title: this.tutorialGroup.title,
-                        teachingAssistant: this.tutorialGroup.teachingAssistant,
-                        additionalInformation: this.tutorialGroup.additionalInformation,
-                        capacity: this.tutorialGroup.capacity,
-                        isOnline: this.tutorialGroup.isOnline,
-                        language: this.tutorialGroup.language,
-                        location: this.tutorialGroup.location,
-                    };
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
@@ -54,11 +69,12 @@ export class EditTutorialGroupComponent implements OnInit {
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
         // required fields
+        // ToDo: Check all other required fields and check form vor validity errors
         if (!formData?.title || !formData?.teachingAssistant) {
             return;
         }
 
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, schedule } = formData;
         this.tutorialGroup.title = title;
         this.tutorialGroup.teachingAssistant = teachingAssistant;
         this.tutorialGroup.additionalInformation = additionalInformation;
@@ -66,6 +82,18 @@ export class EditTutorialGroupComponent implements OnInit {
         this.tutorialGroup.isOnline = isOnline;
         this.tutorialGroup.language = language;
         this.tutorialGroup.location = location;
+        if (schedule) {
+            if (!this.tutorialGroup.tutorialGroupSchedule) {
+                this.tutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
+            }
+            this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = schedule.validFromInclusive ? schedule.validFromInclusive : undefined;
+            this.tutorialGroup.tutorialGroupSchedule.validToInclusive = schedule.validToInclusive ? schedule.validToInclusive : undefined;
+            this.tutorialGroup.tutorialGroupSchedule.dayOfWeek = schedule.dayOfWeek;
+            this.tutorialGroup.tutorialGroupSchedule.startTime = schedule.startTime;
+            this.tutorialGroup.tutorialGroupSchedule.endTime = schedule.endTime;
+            this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = schedule.repetitionFrequency;
+            this.tutorialGroup.tutorialGroupSchedule.timeZone = schedule.timeZone.tzCode;
+        }
 
         this.isLoading = true;
         this.tutorialGroupService

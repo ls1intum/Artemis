@@ -8,7 +8,9 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
-import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbDate, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { ScheduleFormComponent, ScheduleFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import dayjs from 'dayjs/esm';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -18,6 +20,7 @@ export interface TutorialGroupFormData {
     isOnline?: boolean;
     location?: string;
     language?: Language;
+    schedule?: ScheduleFormData;
 }
 
 export class UserWithLabel extends User {
@@ -54,6 +57,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     @ViewChild('teachingAssistantInput') taTypeAhead: NgbTypeahead;
     taFocus$ = new Subject<string>();
     taClick$ = new Subject<string>();
+
+    /** Passed as inputs to the schedule form*/
+    @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
 
     constructor(private fb: FormBuilder, private courseManagementService: CourseManagementService, private alertService: AlertService) {}
 
@@ -103,7 +109,22 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
+        // setting non reactive form values
+        if (tutorialGroupFormData.schedule) {
+            tutorialGroupFormData.schedule.validFromInclusive = this.scheduleFormComponent.fromDate ? this.ngbDateToDayJs(this.scheduleFormComponent.fromDate) : null;
+            tutorialGroupFormData.schedule.validToInclusive = this.scheduleFormComponent.toDate ? this.ngbDateToDayJs(this.scheduleFormComponent.toDate) : null;
+        }
         this.formSubmitted.emit(tutorialGroupFormData);
+    }
+
+    ngbDateToDayJs(date?: NgbDate | null) {
+        // NgbDate month is 1 based, dayjs month is 0 based
+        return date ? dayjs.utc({ year: date.year, month: date.month - 1, day: date.day }) : null;
+    }
+
+    dayJsToNgbDate(date?: dayjs.Dayjs | null) {
+        // NgbDate month is 1 based, dayjs month is 0 based
+        return date ? new NgbDate(date.year(), date.month() + 1, date.date()) : null;
     }
 
     trackId(index: number, item: User) {
@@ -111,7 +132,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     taFormatter = (user: UserWithLabel) => user.label;
-
     taSearch: OperatorFunction<string, readonly UserWithLabel[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.taClick$.pipe(filter(() => !this.taTypeAhead.isPopupOpen()));
@@ -121,7 +141,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             map((term) => (term === '' ? this.teachingAssistants : this.teachingAssistants.filter((ta) => ta.label.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
-
     private initializeForm() {
         if (this.form) {
             return;
@@ -143,6 +162,11 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             formData.teachingAssistant = this.createUserWithLabel(formData.teachingAssistant);
         }
         this.form.patchValue(formData);
+        // setting non reactive form values
+        if (formData.schedule) {
+            this.scheduleFormComponent.fromDate = this.dayJsToNgbDate(formData.schedule.validFromInclusive);
+            this.scheduleFormComponent.toDate = this.dayJsToNgbDate(formData.schedule.validToInclusive);
+        }
     }
 
     private createUserWithLabel(user: User): UserWithLabel {

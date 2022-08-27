@@ -1,4 +1,4 @@
-<form class="row">
+<div class="row">
     <div class="col-12">
         <form *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Title -->
@@ -114,7 +114,9 @@
                     </div>
                 </div>
             </div>
-            <div class="row">
+            <hr />
+            <jhi-schedule-form #scheduleForm [parentFormGroup]="form"></jhi-schedule-form>
+            <div class="row mt-2">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
                         <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
@@ -123,4 +125,4 @@
             </div>
         </form>
     </div>
-</form>
+</div>

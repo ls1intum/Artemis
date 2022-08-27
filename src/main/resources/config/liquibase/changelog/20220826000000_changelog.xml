@@ -1,0 +1,64 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
+    <changeSet author="stefanwaldhauser" id="20220826000000-1">
+        <createTable tableName="tutorial_group_schedule">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
+            </column>
+            <column name="day_of_week" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="start_time" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end_time" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_zone" type="TIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="repetition_frequency" type="SMALLINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_from_inclusive" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="valid_to_inclusive" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tutorial_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <createTable tableName="tutorial_group_session">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_session_PK"/>
+            </column>
+            <column name="start" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="tutorial_group_schedule_id" type="BIGINT">
+            </column>
+            <column name="tutorial_group_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <!-- fks for tutorial_group_schedule table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_schedule"
+                                 constraintName="fk_tutorial_group_schedule_tutorial_group_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
+                                 validate="true"/>
+        <!-- fks for tutorial_group_session table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_schedule_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
+                                 validate="true"/>
+    </changeSet>
+</databaseChangeLog>

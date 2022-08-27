@@ -10,9 +10,13 @@ import { RegisteredStudentsComponent } from './registered-students/registered-st
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
+import { SchedulePickerComponent } from './crud/schedule-picker/schedule-picker/schedule-picker.component';
+import { ScheduleManagementComponent } from './schedule-management/schedule-management.component';
+import { CalendarModule } from 'angular-calendar';
+import { ScheduleFormComponent } from './crud/tutorial-group-form/schedule-form/schedule-form.component';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule],
     declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,
@@ -20,6 +24,9 @@ import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.m
         EditTutorialGroupComponent,
         TutorialGroupRowButtonsComponent,
         RegisteredStudentsComponent,
+        SchedulePickerComponent,
+        ScheduleManagementComponent,
+        ScheduleFormComponent,
     ],
 })
 export class ArtemisTutorialGroupsModule {}

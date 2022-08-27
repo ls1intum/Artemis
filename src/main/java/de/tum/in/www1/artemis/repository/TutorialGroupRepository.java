@@ -48,6 +48,18 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             """)
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegisteredStudents(@Param("tutorialGroupId") long tutorialGroupId);
 
+    @Query("""
+            SELECT tutorialGroup
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+            WHERE tutorialGroup.id = :#{#tutorialGroupId}
+            """)
+    Optional<TutorialGroup> findByIdWithSessions(@Param("tutorialGroupId") long tutorialGroupId);
+
+    default TutorialGroup findByIdWithSessionsElseThrow(long tutorialGroupId) {
+        return findByIdWithSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    }
+
     default TutorialGroup findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(long tutorialGroupId) {
         return findByIdWithTeachingAssistantAndRegisteredStudents(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }

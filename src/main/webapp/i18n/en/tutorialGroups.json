@@ -37,6 +37,9 @@
         "registeredStudents": {
             "title": "Registered Students"
         },
+        "manageSchedule": {
+            "title": "Schedule"
+        },
         "tutorialGroupForm": {
             "titleInput": {
                 "label": "Title",
@@ -50,7 +53,7 @@
                 "loadingText": "Loading teaching assistants...",
                 "notFoundText": "No teaching assistants found in this course.",
                 "requiredValidationError": "A tutorial groups needs a teaching assistant assigned!",
-                "taHelp": "You can search by typing into the field."
+                "taHelp": "You can search for a teaching assistant by typing into the field."
             },
             "additionalInformationInput": {
                 "label": "Additional Information",
@@ -81,6 +84,32 @@
                     "label": "Does this tutorial group meet online? (Online-Tutorial)"
                 }
             }
+        },
+        "scheduleForm": {
+            "title": "Schedule",
+            "weekDay": {
+                "label": "Weekday on which the tutorial group meets",
+                "monday": "Monday",
+                "tuesday": "Tuesday",
+                "wednesday": "Wednesday",
+                "thursday": "Thursday",
+                "friday": "Friday",
+                "saturday": "Saturday",
+                "sunday": "Sunday"
+            }
+        },
+        "timeZoneInput": {
+            "label": "Time Zone",
+            "placeholder": "Select a Time Zone",
+            "requiredValidationError": "A time zone needs to be selected!",
+            "tzHelp": "You can search for a time zone by typing into the field."
+        },
+        "timeInput": {
+            "from": "Session starts at",
+            "to": "Session ends at"
+        },
+        "periodInput": {
+            "label": "Period in which the tutorial group meets: "
         }
     }
 }

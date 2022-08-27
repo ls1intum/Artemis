@@ -1,6 +1,8 @@
 package de.tum.in.www1.artemis.domain;
 
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import javax.persistence.*;
@@ -64,6 +66,31 @@ public class TutorialGroup extends DomainObject {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("registeredTutorialGroups")
     private Set<User> registeredStudents = new HashSet<>();
+
+    @OneToOne(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "tutorialGroup")
+    private TutorialGroupSchedule tutorialGroupSchedule;
+
+    @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
+    @JsonIgnoreProperties("tutorialGroup")
+    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
+    private List<TutorialGroupSession> tutorialGroupSessions = new ArrayList<>();
+
+    public TutorialGroupSchedule getTutorialGroupSchedule() {
+        return tutorialGroupSchedule;
+    }
+
+    public void setTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule) {
+        this.tutorialGroupSchedule = tutorialGroupSchedule;
+    }
+
+    public List<TutorialGroupSession> getTutorialGroupSessions() {
+        return tutorialGroupSessions;
+    }
+
+    public void setTutorialGroupSessions(List<TutorialGroupSession> tutorialGroupSessions) {
+        this.tutorialGroupSessions = tutorialGroupSessions;
+    }
 
     public TutorialGroup() {
         // Empty constructor needed for Jackson.

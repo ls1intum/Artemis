@@ -7,6 +7,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
+import { TutorialGroupSchedule } from 'app/entities/tutorialGroupSchedule.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group',
@@ -32,7 +33,7 @@ export class CreateTutorialGroupComponent implements OnInit {
             return;
         }
 
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, schedule } = formData;
 
         this.tutorialGroupToCreate.title = title;
         this.tutorialGroupToCreate.teachingAssistant = teachingAssistant;
@@ -41,6 +42,16 @@ export class CreateTutorialGroupComponent implements OnInit {
         this.tutorialGroupToCreate.isOnline = isOnline;
         this.tutorialGroupToCreate.language = language;
         this.tutorialGroupToCreate.location = location;
+        if (schedule) {
+            this.tutorialGroupToCreate.tutorialGroupSchedule = new TutorialGroupSchedule();
+            this.tutorialGroupToCreate.tutorialGroupSchedule.validFromInclusive = schedule.validFromInclusive ? schedule.validFromInclusive : undefined;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.validToInclusive = schedule.validToInclusive ? schedule.validToInclusive : undefined;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.dayOfWeek = schedule.dayOfWeek;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.startTime = schedule.startTime;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.endTime = schedule.endTime;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.repetitionFrequency = schedule.repetitionFrequency;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.timeZone = schedule.timeZone.tzCode;
+        }
 
         this.isLoading = true;
 

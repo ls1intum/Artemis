@@ -1,0 +1,124 @@
+<ng-container [formGroup]="parentFormGroup">
+    <div formGroupName="schedule">
+        <div>
+            <h3>{{ 'artemisApp.scheduleForm.title' | artemisTranslate }}</h3>
+        </div>
+        <div>
+            <!-- weekday -->
+            <div>
+                <div>
+                    <label class="required"> {{ 'artemisApp.scheduleForm.weekDay.label' | artemisTranslate }}</label>
+                </div>
+                <ng-container *ngFor="let weekDay of weekDays">
+                    <input formControlName="dayOfWeek" type="radio" class="btn-check" name="dayOfWeek" id="{{ weekDay.id }}" autocomplete="off" [value]="weekDay.value" checked />
+                    <label class="btn btn-outline-primary" for="{{ weekDay.id }}">{{ 'artemisApp.scheduleForm.weekDay.' + weekDay.translationKey | artemisTranslate }}</label>
+                </ng-container>
+            </div>
+            <!-- timezone -->
+            <div class="form-group">
+                <label class="required" for="timeZone">{{ 'artemisApp.scheduleForm.timeZoneInput.label' | artemisTranslate }}</label>
+                <input
+                    id="timeZone"
+                    type="text"
+                    class="form-control"
+                    formControlName="timeZone"
+                    [placeholder]="'artemisApp.scheduleForm.timeZoneInput.placeholder' | artemisTranslate"
+                    [resultFormatter]="tzResultFormatter"
+                    [inputFormatter]="tzInputFormatter"
+                    [ngbTypeahead]="tzSearch"
+                    [editable]="false"
+                    #timeZoneInput="ngbTypeahead"
+                    (focus)="tzFocus$.next($any($event).target.value)"
+                    (click)="tzClick$.next($any($event).target.value)"
+                />
+                <small id="tzHelp" class="form-text text-muted">{{ 'artemisApp.scheduleForm.timeZoneInput.tzHelp' | artemisTranslate }}</small>
+                <div *ngIf="timeZoneControl?.invalid && (timeZoneControl?.dirty || timeZoneControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="timeZoneControl?.errors?.required">
+                        {{ 'artemisApp.scheduleForm.timeZoneInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="row">
+                    <div class="col-auto my-auto">
+                        <span>{{ 'artemisApp.scheduleForm.timeInput.from' | artemisTranslate }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
+                    </div>
+                    <div class="col-auto my-auto">
+                        <span>{{ 'artemisApp.scheduleForm.timeInput.to' | artemisTranslate }}</span>
+                    </div>
+                    <div class="col-auto my-auto">
+                        <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Range Picker Not Form Based -->
+        <div class="row row-cols-sm-auto">
+            <div class="col-auto my-auto">
+                <span>{{ 'artemisApp.scheduleForm.periodInput.label' | artemisTranslate }}</span>
+            </div>
+            <div class="col-12">
+                <div class="dp-hidden position-absolute">
+                    <div class="input-group">
+                        <input
+                            name="datepicker"
+                            class="form-control"
+                            ngbDatepicker
+                            #datepicker="ngbDatepicker"
+                            [autoClose]="'outside'"
+                            (dateSelect)="onDateSelection($event)"
+                            [displayMonths]="2"
+                            [dayTemplate]="t"
+                            outsideDays="hidden"
+                            [startDate]="fromDate!"
+                            tabindex="-1"
+                        />
+                        <ng-template #t let-date let-focused="focused">
+                            <span
+                                class="custom-day"
+                                [class.focused]="focused"
+                                [class.range]="isRange(date)"
+                                [class.faded]="isHovered(date) || isInside(date)"
+                                (mouseenter)="hoveredDate = date"
+                                (mouseleave)="hoveredDate = null"
+                            >
+                                {{ date.day }}
+                            </span>
+                        </ng-template>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <input
+                        #dpFromDate
+                        class="form-control"
+                        placeholder="yyyy-mm-dd"
+                        name="dpFromDate"
+                        [value]="formatter.format(fromDate)"
+                        (input)="fromDate = validateInput(fromDate, dpFromDate.value)"
+                    />
+                    <button class="btn btn-outline-secondary calendar" (click)="datepicker.toggle()" type="button">
+                        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                    </button>
+                </div>
+            </div>
+            <div class="col-12">
+                <div class="input-group">
+                    <input
+                        #dpToDate
+                        class="form-control"
+                        placeholder="yyyy-mm-dd"
+                        name="dpToDate"
+                        [value]="formatter.format(toDate)"
+                        (input)="toDate = validateInput(toDate, dpToDate.value)"
+                    />
+                    <button class="btn btn-outline-secondary calendar" (click)="datepicker.toggle()" type="button">
+                        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</ng-container>

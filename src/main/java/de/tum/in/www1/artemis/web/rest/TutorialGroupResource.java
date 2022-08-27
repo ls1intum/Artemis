@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
@@ -20,9 +21,11 @@ import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
+import de.tum.in.www1.artemis.service.TutorialGroupScheduleService;
 import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -52,13 +55,20 @@ public class TutorialGroupResource {
 
     private final AuthorizationCheckService authorizationCheckService;
 
+    private final TutorialGroupScheduleService tutorialGroupScheduleService;
+
+    private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupScheduleService tutorialGroupScheduleService,
+            TutorialGroupSessionRepository tutorialGroupSessionRepository) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupScheduleService = tutorialGroupScheduleService;
+        this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
     }
 
     /**
@@ -119,6 +129,27 @@ public class TutorialGroupResource {
     }
 
     /**
+     * GET /courses/:courseId/tutorial-groups/:tutorialGroupId/tutorial-group : gets the sessions of the tutorial group with the specified id.
+     *
+     * @param tutorialGroupId the id of the tutorial group to retrieve the sessions for
+     * @param courseId        the id of the course to which the tutorial group belongs
+     * @return ResponseEntity with status 200 (OK) and with body the sessions of the tutorial group
+     */
+    @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<Set<TutorialGroupSession>> getSessions(@PathVariable Long tutorialGroupId, @PathVariable Long courseId) {
+        log.debug("REST request to get the sessions of tutorial group: {} of course: {}", tutorialGroupId, courseId);
+
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        checkTutorialCourseIdMatchesPathId(courseId, tutorialGroup);
+
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
+
+        return ResponseEntity.ok().body(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId));
+    }
+
+    /**
      * POST /courses/:courseId/tutorial-groups : creates a new tutorial group.
      *
      * @param courseId      the id of the course to which the tutorial group should be added
@@ -140,7 +171,14 @@ public class TutorialGroupResource {
 
         trimStringFields(tutorialGroup);
         checkTitleIsUnique(tutorialGroup);
+
+        TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
+        tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
+
+        if (tutorialGroupSchedule != null) {
+            tutorialGroupScheduleService.save(persistedTutorialGroup, tutorialGroupSchedule);
+        }
 
         return ResponseEntity.created(new URI("/api/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
     }
@@ -167,29 +205,43 @@ public class TutorialGroupResource {
     /**
      * PUT /courses/:courseId/tutorial-groups : Updates an existing tutorial group
      *
-     * @param courseId      the id of the course to which the tutorial group belongs
-     * @param tutorialGroup group the tutorial group to update
+     * @param courseId             the id of the course to which the tutorial group belongs
+     * @param changedTutorialGroup group the tutorial group to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup tutorialGroup) {
-        log.debug("REST request to update TutorialGroup : {}", tutorialGroup);
-        if (tutorialGroup.getId() == null) {
+    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @RequestBody @Valid TutorialGroup changedTutorialGroup) {
+        log.debug("REST request to update TutorialGroup : {}", changedTutorialGroup);
+        if (changedTutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroup.getId());
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(changedTutorialGroup.getId());
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
-        trimStringFields(tutorialGroup);
-        if (!tutorialGroupFromDatabase.getTitle().equals(tutorialGroup.getTitle())) {
-            checkTitleIsUnique(tutorialGroup);
+        trimStringFields(changedTutorialGroup);
+        if (!tutorialGroupFromDatabase.getTitle().equals(changedTutorialGroup.getTitle())) {
+            checkTitleIsUnique(changedTutorialGroup);
         }
-        overrideValues(tutorialGroup, tutorialGroupFromDatabase);
-
+        overrideValues(changedTutorialGroup, tutorialGroupFromDatabase);
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
+
+        // delete schedule
+        if (changedTutorialGroup.getTutorialGroupSchedule() == null && updatedTutorialGroup.getTutorialGroupSchedule() != null) {
+            tutorialGroupScheduleService.delete(updatedTutorialGroup.getTutorialGroupSchedule());
+        }
+        // create schedule
+        else if (changedTutorialGroup.getTutorialGroupSchedule() != null && updatedTutorialGroup.getTutorialGroupSchedule() == null) {
+            tutorialGroupScheduleService.save(updatedTutorialGroup, changedTutorialGroup.getTutorialGroupSchedule());
+        }
+        else {
+            if (!changedTutorialGroup.getTutorialGroupSchedule().sameSchedule(updatedTutorialGroup.getTutorialGroupSchedule())) {
+                tutorialGroupScheduleService.update(updatedTutorialGroup.getTutorialGroupSchedule(), changedTutorialGroup.getTutorialGroupSchedule());
+            }
+        }
+
         return ResponseEntity.ok(updatedTutorialGroup);
     }
 
