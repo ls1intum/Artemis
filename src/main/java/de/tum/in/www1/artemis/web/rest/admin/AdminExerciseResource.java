@@ -13,7 +13,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
-import de.tum.in.www1.artemis.web.rest.ExerciseResource;
 
 /**
  * REST controller for administrating Exercise.
@@ -22,7 +21,7 @@ import de.tum.in.www1.artemis.web.rest.ExerciseResource;
 @RequestMapping("api/admin/")
 public class AdminExerciseResource {
 
-    private final Logger log = LoggerFactory.getLogger(ExerciseResource.class);
+    private final Logger log = LoggerFactory.getLogger(AdminExerciseResource.class);
 
     private final AuthorizationCheckService authCheckService;
 

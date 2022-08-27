@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.repository.OrganizationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.OrganizationService;
-import de.tum.in.www1.artemis.web.rest.OrganizationResource;
 import de.tum.in.www1.artemis.web.rest.dto.OrganizationCountDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -30,7 +29,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/admin/")
 public class AdminOrganizationResource {
 
-    private final Logger log = LoggerFactory.getLogger(OrganizationResource.class);
+    private final Logger log = LoggerFactory.getLogger(AdminOrganizationResource.class);
 
     private static final String ENTITY_NAME = "organization";
 

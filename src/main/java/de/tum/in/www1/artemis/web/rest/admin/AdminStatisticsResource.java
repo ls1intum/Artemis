@@ -15,7 +15,6 @@ import de.tum.in.www1.artemis.domain.enumeration.SpanType;
 import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.StatisticsService;
-import de.tum.in.www1.artemis.web.rest.StatisticsResource;
 
 /**
  * REST controller for administrating statistics.
@@ -24,7 +23,7 @@ import de.tum.in.www1.artemis.web.rest.StatisticsResource;
 @RequestMapping("api/admin/")
 public class AdminStatisticsResource {
 
-    private final Logger log = LoggerFactory.getLogger(StatisticsResource.class);
+    private final Logger log = LoggerFactory.getLogger(AdminStatisticsResource.class);
 
     private final StatisticsService service;
 

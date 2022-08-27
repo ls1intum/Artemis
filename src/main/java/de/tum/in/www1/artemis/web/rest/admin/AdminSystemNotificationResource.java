@@ -14,7 +14,6 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.repository.SystemNotificationRepository;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.SystemNotificationService;
-import de.tum.in.www1.artemis.web.rest.SystemNotificationResource;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -25,7 +24,7 @@ import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 @RequestMapping("api/admin/")
 public class AdminSystemNotificationResource {
 
-    private final Logger log = LoggerFactory.getLogger(SystemNotificationResource.class);
+    private final Logger log = LoggerFactory.getLogger(AdminSystemNotificationResource.class);
 
     private static final String ENTITY_NAME = "systemNotification";
 
