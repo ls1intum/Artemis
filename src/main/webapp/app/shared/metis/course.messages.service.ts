@@ -13,6 +13,8 @@ import { Conversation } from 'app/entities/metis/conversation/conversation.model
 export class CourseMessagesService implements OnDestroy {
     private conversationsOfUser: Conversation[];
     private conversations$: ReplaySubject<Conversation[]> = new ReplaySubject<Conversation[]>(1);
+    private conversation$ = new ReplaySubject<Conversation>(1);
+
     private subscribedChannel?: string;
     userId: number;
 
@@ -35,7 +37,18 @@ export class CourseMessagesService implements OnDestroy {
      * @return {Observable<Conversation>}    created conversation
      */
     createConversation(courseId: number, conversation: Conversation): Observable<Conversation> {
-        return this.conversationService.create(courseId, conversation).pipe(map((res: HttpResponse<Conversation>) => res.body!));
+        this.conversationService
+            .create(courseId, conversation)
+            .pipe(map((res: HttpResponse<Conversation>) => res.body!))
+            .subscribe({
+                next: (receivedConversation: Conversation) => {
+                    this.conversationsOfUser.unshift(receivedConversation);
+                    this.conversations$.next(this.conversationsOfUser);
+                    this.conversation$.next(receivedConversation);
+                },
+            });
+
+        return this.conversation$;
     }
 
     get conversations(): Observable<Conversation[]> {

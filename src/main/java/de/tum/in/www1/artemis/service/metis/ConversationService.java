@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.service.metis;
 
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
 import org.springframework.stereotype.Service;
@@ -72,22 +73,31 @@ public class ConversationService {
         }
 
         final Course course = checkUserAndCourse(user, courseId);
-        conversation.setCourse(course);
 
-        Conversation savedConversation = conversationRepository.save(conversation);
+        List<Conversation> existingConversations = conversationRepository.findConversationsOfUserWithConversationParticipants(course.getId(), user.getId());
+        Optional<Conversation> existingConversation = existingConversations.stream().filter((conversation1) -> conversation1.getConversationParticipants().stream()
+                .anyMatch(conversationParticipant -> conversationParticipant.getUser().getId().equals(
+                        conversation.getConversationParticipants().toArray(new ConversationParticipant[conversation.getConversationParticipants().size()])[0].getUser().getId())))
+                .findAny();
 
-        ConversationParticipant conversationParticipantOfCurrentUser = new ConversationParticipant();
-        conversationParticipantOfCurrentUser.setUser(user);
-        conversation.getConversationParticipants().add(conversationParticipantOfCurrentUser);
+        if (!existingConversation.isPresent()) {
+            conversation.setCourse(course);
 
-        conversation.getConversationParticipants().forEach(conversationParticipant -> conversationParticipantToCreate(conversationParticipant, savedConversation));
-        conversationParticipantRepository.saveAll(conversation.getConversationParticipants());
-        savedConversation.setConversationParticipants(conversation.getConversationParticipants());
+            Conversation savedConversation = conversationRepository.save(conversation);
 
-        // informs involved users about a new conversation
-        broadcastForConversation(new ConversationDTO(savedConversation, MetisCrudAction.CREATE));
+            ConversationParticipant conversationParticipantOfCurrentUser = new ConversationParticipant();
+            conversationParticipantOfCurrentUser.setUser(user);
+            conversation.getConversationParticipants().add(conversationParticipantOfCurrentUser);
 
-        return savedConversation;
+            conversation.getConversationParticipants().forEach(conversationParticipant -> conversationParticipantToCreate(conversationParticipant, savedConversation));
+            conversationParticipantRepository.saveAll(conversation.getConversationParticipants());
+            savedConversation.setConversationParticipants(conversation.getConversationParticipants());
+
+            return savedConversation;
+        }
+        else {
+            return existingConversation.get();
+        }
     }
 
     /**
@@ -109,7 +119,7 @@ public class ConversationService {
     public List<Conversation> getConversationsOfUser(Long courseId) {
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
 
-        List<Conversation> conversations = conversationRepository.findConversationsOfUserWithConversationParticipants(courseId, user.getId());
+        List<Conversation> conversations = conversationRepository.findActiveConversationsOfUserWithConversationParticipants(courseId, user.getId());
         conversations.stream().forEach(conversation -> filterSensitiveInformation(conversation, user));
 
         return conversations;
