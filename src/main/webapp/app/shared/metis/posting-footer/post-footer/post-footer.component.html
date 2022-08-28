@@ -6,6 +6,7 @@
             [(showAnswers)]="showAnswers"
             [sortedAnswerPosts]="sortedAnswerPosts"
             [isCourseMessagesPage]="isCourseMessagesPage"
+            [isThreadSidebar]="isThreadSidebar"
             (openPostingCreateEditModal)="createAnswerPostModal.open()"
             (openThread)="openThread.emit()"
         ></jhi-post-reactions-bar>
@@ -23,6 +24,7 @@
         [posting]="answerPost"
         [isLastAnswer]="isLastAnswer"
         [isCourseMessagesPage]="isCourseMessagesPage"
+        [isThreadSidebar]="isThreadSidebar"
         (openPostingCreateEditModal)="createAnswerPostModal.open()"
     >
     </jhi-answer-post>

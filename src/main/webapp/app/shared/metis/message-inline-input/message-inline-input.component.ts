@@ -6,6 +6,7 @@ import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor
 import { Post } from 'app/entities/metis/post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
+import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 
 @Component({
     selector: 'jhi-message-inline-input',
@@ -26,7 +27,7 @@ export class MessageInlineInputComponent extends PostingCreateEditModalDirective
     resetFormGroup(): void {
         this.formGroup = this.formBuilder.group({
             // the pattern ensures that the content must include at least one non-whitespace character
-            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), Validators.pattern(/^(\n|.)*\S+(\n|.)*$/)]],
+            content: [this.posting.content, [Validators.required, Validators.maxLength(this.maxContentLength), PostContentValidationPattern]],
         });
     }
 

@@ -12,7 +12,6 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
 export class ThreadSidebarComponent implements OnInit, AfterViewInit {
     @Output() closePostThread = new EventEmitter<void>();
 
-    collapsed = true;
     post?: Post;
     createdAnswerPost: AnswerPost;
 

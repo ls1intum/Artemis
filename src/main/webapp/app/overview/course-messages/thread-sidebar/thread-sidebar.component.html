@@ -19,7 +19,7 @@
             <!-- body -->
             <div class="card-body pt-0">
                 <div class="my-2" *ngIf="post !== undefined">
-                    <jhi-post [posting]="post" [showAnswers]="true" [isCourseMessagesPage]="true"></jhi-post>
+                    <jhi-post [posting]="post" [showAnswers]="true" [isCourseMessagesPage]="true" [isThreadSidebar]="true"></jhi-post>
                     <jhi-message-reply-inline-input [posting]="createdAnswerPost" (onCreate)="createdAnswerPost = createEmptyAnswerPost()"> </jhi-message-reply-inline-input>
                 </div>
             </div>
