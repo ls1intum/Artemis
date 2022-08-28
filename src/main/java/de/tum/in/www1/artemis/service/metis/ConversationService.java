@@ -139,12 +139,17 @@ public class ConversationService {
      *
      * @param conversationDTO object including the affected conversation as well as the action
      */
-    public void broadcastForConversation(ConversationDTO conversationDTO) {
+    public void broadcastForConversation(ConversationDTO conversationDTO, Long userId) {
         String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationDTO.getConversation().getCourse().getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
 
-        conversationDTO.getConversation().getConversationParticipants().forEach(
-                conversationParticipant -> messagingTemplate.convertAndSend(conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
+        if (userId == null) {
+            conversationDTO.getConversation().getConversationParticipants().forEach(
+                    conversationParticipant -> messagingTemplate.convertAndSend(conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
+        }
+        else {
+            messagingTemplate.convertAndSend(conversationParticipantTopicName + userId, conversationDTO);
+        }
     }
 
     Conversation mayInteractWithConversationElseThrow(Long conversationId, User user) {
@@ -207,7 +212,7 @@ public class ConversationService {
 
         Conversation conversation = mayInteractWithConversationElseThrow(conversationId, user);
         auditConversationReadTimeOfUser(conversation, user);
-        broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION));
+        broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user.getId());
     }
 
     void auditConversationReadTimeOfUser(Conversation conversation, User user) {

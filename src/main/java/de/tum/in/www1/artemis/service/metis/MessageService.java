@@ -86,7 +86,7 @@ public class MessageService extends PostingService {
             conversationService.updateConversation(conversation);
 
             broadcastForPost(new PostDTO(savedMessage, MetisCrudAction.CREATE), course);
-            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE));
+            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.UPDATE), null);
 
             return savedMessage;
         }
@@ -118,7 +118,7 @@ public class MessageService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
-            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION));
+            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user.getId());
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");
