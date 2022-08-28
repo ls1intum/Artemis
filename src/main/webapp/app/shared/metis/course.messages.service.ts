@@ -71,19 +71,17 @@ export class CourseMessagesService implements OnDestroy {
         this.jhiWebsocketService.subscribe(channel);
 
         this.jhiWebsocketService.receive(channel).subscribe((conversationDTO: ConversationDTO) => {
+            const conversationIndexInCache = this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id);
             if (conversationDTO.crudAction === MetisPostAction.CREATE || conversationDTO.crudAction === MetisPostAction.UPDATE) {
-                if (conversationDTO.crudAction === MetisPostAction.UPDATE) {
-                    this.conversationsOfUser.splice(
-                        this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id),
-                        1,
-                    );
+                if (conversationIndexInCache !== -1) {
+                    this.conversationsOfUser.splice(conversationIndexInCache, 1);
                     this.conversationService.auditConversationReadTimeOfUser(conversationDTO.conversation.id!);
                 }
 
                 // add created/updated conversation to the beginning of the conversation list
                 this.conversationsOfUser.unshift(conversationDTO.conversation);
             } else if (conversationDTO.crudAction === MetisPostAction.READ_CONVERSATION) {
-                this.conversationsOfUser[this.conversationsOfUser.findIndex((conversation) => conversation.id === conversationDTO.conversation.id)] = conversationDTO.conversation;
+                this.conversationsOfUser[conversationIndexInCache] = conversationDTO.conversation;
                 this.conversations$.next(this.conversationsOfUser);
             }
 
