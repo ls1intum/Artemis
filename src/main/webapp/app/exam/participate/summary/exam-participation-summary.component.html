@@ -52,14 +52,14 @@
         </div>
         <div class="card-body question-card-body" [ngbCollapse]="isCollapsed(exercise.id!)">
             <div *ngIf="exercise.type !== QUIZ && exercise.type !== PROGRAMMING && resultsPublished">
-                <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary float-end" [routerLink]="generateLink(exercise)">
+                <a *ngIf="exercise.studentParticipations?.length" class="btn btn-primary ms-2 float-end" [routerLink]="generateLink(exercise)">
                     <fa-icon [icon]="faFolderOpen" [fixedWidth]="true"></fa-icon>
                     <span jhiTranslate="artemisApp.exam.examSummary.viewResult">&nbsp;View Result</span>
                 </a>
             </div>
             <a
                 *ngIf="plagiarismCaseInfos[exercise.id!]"
-                class="btn me-2 float-end"
+                class="btn ms-4 float-end"
                 [ngClass]="plagiarismCaseInfos[exercise.id!]!.verdict === PlagiarismVerdict.NO_PLAGIARISM ? 'btn-info' : 'btn-danger'"
                 [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfos[exercise.id!]!.id]"
             >
