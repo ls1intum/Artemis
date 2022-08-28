@@ -496,7 +496,7 @@ public class BambooRequestMockProvider {
      * @param buildPlanId the Bamboo build plan ID
      * @param projectKey the Bamboo project key
      * @param user the user that should get read access
-     * @throws URISyntaxException
+     * @throws URISyntaxException exception for wrong URLs
      */
     public void mockGrantReadAccess(String buildPlanId, String projectKey, User user) throws URISyntaxException {
         URI uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin()).build().toUri();

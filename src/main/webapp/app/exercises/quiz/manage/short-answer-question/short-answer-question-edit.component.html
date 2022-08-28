@@ -72,23 +72,29 @@
                 </select>
                 <jhi-quiz-scoring-info-modal></jhi-quiz-scoring-info-modal>
             </div>
-            <div class="form-group">
-                <div class="form-check custom-control custom-checkbox"></div>
-            </div>
-            <div class="form-group form-check custom-control custom-checkbox">
-                <input
-                    type="checkbox"
-                    id="{{ 'cbMatchLetterCase' + questionIndex }}"
-                    class="form-check-input custom-control-input"
-                    [(ngModel)]="shortAnswerQuestion.matchLetterCase"
-                    (ngModelChange)="questionUpdated.emit()"
-                />
-                <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
-                    'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate
-                }}</label>
-            </div>
+
             <div class="form-group match-percentage-container">
-                <div class="form-check custom-control custom-checkbox">
+                <span class="colon-suffix no-flex-shrink">{{ 'artemisApp.quizExercise.answerMatching.title' | artemisTranslate }}</span>
+
+                <div class="slider-container">
+                    <div class="slider-with-label">
+                        <input
+                            type="range"
+                            name="similarity-slider"
+                            min="50"
+                            max="100"
+                            step="1"
+                            value="85"
+                            id="{{ 'matchPercentageSlider' + questionIndex }}"
+                            [(ngModel)]="shortAnswerQuestion.similarityValue"
+                            (ngModelChange)="questionUpdated.emit()"
+                        />
+                        <p>{{ shortAnswerQuestion.similarityValue }} %</p>
+                    </div>
+                </div>
+                <jhi-match-percentage-info-modal></jhi-match-percentage-info-modal>
+
+                <div class="form-group form-check custom-control custom-checkbox">
                     <input
                         #inputElement
                         type="checkbox"
@@ -101,21 +107,18 @@
                         'artemisApp.quizExercise.matchPercentage.title' | artemisTranslate
                     }}</label>
                 </div>
-                <div class="slider-container">
-                    <div class="slider-with-label">
-                        <input
-                            type="range"
-                            min="50"
-                            max="100"
-                            step="1"
-                            value="85"
-                            id="{{ 'matchPercentageSlider' + questionIndex }}"
-                            [(ngModel)]="shortAnswerQuestion.similarityValue"
-                            (ngModelChange)="questionUpdated.emit()"
-                        />
-                        <p>{{ shortAnswerQuestion.similarityValue }} %</p>
-                    </div>
-                    <jhi-match-percentage-info-modal></jhi-match-percentage-info-modal>
+
+                <div class="form-group form-check custom-control custom-checkbox">
+                    <input
+                        type="checkbox"
+                        id="{{ 'cbMatchLetterCase' + questionIndex }}"
+                        class="form-check-input custom-control-input"
+                        [(ngModel)]="shortAnswerQuestion.matchLetterCase"
+                        (ngModelChange)="questionUpdated.emit()"
+                    />
+                    <label class="form-check-label custom-control-label" for="{{ 'cbMatchLetterCase' + questionIndex }}">{{
+                        'artemisApp.quizExercise.matchLetterCase.title' | artemisTranslate
+                    }}</label>
                 </div>
             </div>
             <div class="form-group" *ngIf="!reEvaluationInProgress">

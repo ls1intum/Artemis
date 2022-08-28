@@ -6,10 +6,11 @@ import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/Plagiari
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { PlagiarismSubmissionElement } from 'app/exercises/shared/plagiarism/types/PlagiarismSubmissionElement';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
+import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
 
 export type EntityResponseType = HttpResponse<PlagiarismCase>;
 export type EntityArrayResponseType = HttpResponse<PlagiarismCase[]>;
-export type StatementEntityResponseType = HttpResponse<string>;
+export type Comparison = PlagiarismComparison<PlagiarismSubmissionElement>;
 
 @Injectable({ providedIn: 'root' })
 export class PlagiarismCasesService {
@@ -43,7 +44,7 @@ export class PlagiarismCasesService {
      * @param { number } plagiarismCaseId id of the plagiarismCase
      * @param plagiarismVerdict plagiarism case verdict to save including the verdict itself and optionally the message or the point deduction
      */
-    public savePlagiarismCaseVerdict(
+    public saveVerdict(
         courseId: number,
         plagiarismCaseId: number,
         plagiarismVerdict: { verdict: PlagiarismVerdict; verdictMessage?: string; verdictPointDeduction?: number },
@@ -54,12 +55,12 @@ export class PlagiarismCasesService {
     /* Student */
 
     /**
-     * Get all plagiarism cases for the student of the course with the given id
+     * Get the plagiarism case info for the student for the given course and exercise
      * @param { number } courseId id of the course
      * @param { number } exerciseId id of the exercise
      */
-    public getPlagiarismCaseForStudent(courseId: number, exerciseId: number): Observable<EntityResponseType> {
-        return this.http.get<PlagiarismCase>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
+    public getPlagiarismCaseInfoForStudent(courseId: number, exerciseId: number): Observable<HttpResponse<PlagiarismCaseInfo>> {
+        return this.http.get<PlagiarismCaseInfo>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
     }
 
     /**
@@ -75,19 +76,11 @@ export class PlagiarismCasesService {
      * Get the plagiarism comparison with the given id
      * @param { number } courseId
      * @param { number } plagiarismComparisonId
-     * @param { string } studentLogin
      */
-    public getPlagiarismComparisonForSplitView(
-        courseId: number,
-        plagiarismComparisonId: number,
-        studentLogin = '',
-    ): Observable<HttpResponse<PlagiarismComparison<PlagiarismSubmissionElement>>> {
-        return this.http.get<PlagiarismComparison<PlagiarismSubmissionElement>>(
-            `${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view` + (studentLogin ? `?studentLogin=${studentLogin}` : ''),
-            {
-                observe: 'response',
-            },
-        );
+    public getPlagiarismComparisonForSplitView(courseId: number, plagiarismComparisonId: number): Observable<HttpResponse<Comparison>> {
+        return this.http.get<Comparison>(`${this.resourceUrl}/${courseId}/plagiarism-comparisons/${plagiarismComparisonId}/for-split-view`, {
+            observe: 'response',
+        });
     }
 
     /**

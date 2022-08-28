@@ -9,7 +9,7 @@ Lectures
 
 Overview
 --------
-Apart from :ref:`Exercises` and :ref:`Exams`, Artemis can also host the **Lectures** of a course.
+Apart from :ref:`Exercises <exercises>` and :ref:`Exams <exams>`, Artemis can also host the **Lectures** of a course.
 
 Students
 ^^^^^^^^

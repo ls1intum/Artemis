@@ -44,15 +44,13 @@
     </jhi-resizeable-container>
     <!--Feedbacks-->
     <div class="row mt-3">
-        <div class="col-md-6">
-            <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
-            <jhi-unreferenced-feedback
-                [(feedbacks)]="unreferencedFeedback"
-                (feedbacksChange)="validateAssessment()"
-                [readOnly]="readOnly"
-                [highlightDifferences]="highlightDifferences"
-            ></jhi-unreferenced-feedback>
-        </div>
+        <div *ngIf="invalidError" class="col-8 alert alert-danger" role="alert">{{ invalidError | artemisTranslate }}</div>
+        <jhi-unreferenced-feedback
+            [(feedbacks)]="unreferencedFeedback"
+            (feedbacksChange)="validateAssessment()"
+            [readOnly]="readOnly"
+            [highlightDifferences]="highlightDifferences"
+        ></jhi-unreferenced-feedback>
     </div>
 </ng-template>
 

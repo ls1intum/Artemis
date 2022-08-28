@@ -29,7 +29,6 @@
             "saveExampleAssessment": "Save Example Assessment",
             "showExampleSubmission": "Show Submission",
             "showExampleAssessment": "Show Assessment",
-            "exampleSubmissionsRequireExercise": "To create an example submission, you first need to finish creating the modeling exercise. You will be redirected automatically.",
             "exampleSubmissionForModelingExercise": "Example Submission for Modeling Exercise {{ exerciseTitle }}",
             "usedForTutorial": "Used for Tutorial",
             "apollonConversion": {

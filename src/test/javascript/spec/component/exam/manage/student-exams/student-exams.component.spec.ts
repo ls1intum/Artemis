@@ -30,6 +30,8 @@ import { TranslateDirective } from 'app/shared/language/translate.directive';
 import { MockTranslateService } from '../../../../helpers/mocks/service/mock-translate.service';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { StudentExamStatusComponent } from 'app/exam/manage/student-exams/student-exam-status/student-exam-status.component';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 describe('StudentExamsComponent', () => {
     let studentExamsComponentFixture: ComponentFixture<StudentExamsComponent>;
@@ -43,6 +45,7 @@ describe('StudentExamsComponent', () => {
     let exam: Exam;
     let modalService: NgbModal;
     let examManagementService: ExamManagementService;
+    const referenceDateNow = dayjs();
 
     const providers = [
         MockProvider(ExamManagementService, {
@@ -86,6 +89,14 @@ describe('StudentExamsComponent', () => {
                     }),
                 );
             },
+            getExerciseStartStatus: () => {
+                return of(
+                    new HttpResponse({
+                        body: undefined,
+                        status: 200,
+                    }),
+                );
+            },
             unlockAllRepositories: () => {
                 return of(
                     new HttpResponse({
@@ -110,7 +121,7 @@ describe('StudentExamsComponent', () => {
                     }),
                 );
             },
-        }),
+        } as any as ExamManagementService),
         MockProvider(StudentExamService, {
             findAllForExam: () => {
                 return of(
@@ -157,6 +168,7 @@ describe('StudentExamsComponent', () => {
         },
         { provide: AccountService, useClass: MockAccountService },
         { provide: TranslateService, useClass: MockTranslateService },
+        { provide: JhiWebsocketService, useClass: MockWebsocketService },
     ];
 
     beforeEach(() => {
@@ -496,5 +508,21 @@ describe('StudentExamsComponent', () => {
         expect(lockAllRepositoriesButton.nativeElement.disabled).toBeFalse();
         lockAllRepositoriesButton.nativeElement.click();
         expect(alertServiceSpy).toHaveBeenCalled();
+    });
+
+    it.each([
+        { status: undefined, expected: { running: false, percentage: 0, eta: undefined } },
+        { status: { finished: 0, failed: 0, overall: 0, startedAt: referenceDateNow }, expected: { running: false, percentage: 100, eta: undefined } },
+        { status: { finished: 0, failed: 0, overall: 1000, startedAt: referenceDateNow }, expected: { running: true, percentage: 0, eta: undefined } },
+        { status: { finished: 10, failed: 0, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: true, percentage: 1, eta: '2h45m0s' } },
+        { status: { finished: 90, failed: 10, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: true, percentage: 10, eta: '15m0s' } },
+        { status: { finished: 990, failed: 10, overall: 1000, startedAt: referenceDateNow.subtract(100, 's') }, expected: { running: false, percentage: 100, eta: undefined } },
+    ])('should correctly calculate exam preparation progress', ({ status, expected }) => {
+        jest.useFakeTimers().setSystemTime(referenceDateNow.toDate());
+        studentExamsComponent.setExercisePreparationStatus(status);
+        expect(studentExamsComponent.exercisePreparationRunning).toBe(expected.running);
+        expect(studentExamsComponent.exercisePreparationPercentage).toBe(expected.percentage);
+        expect(studentExamsComponent.exercisePreparationEta).toBe(expected.eta);
+        jest.useRealTimers();
     });
 });
