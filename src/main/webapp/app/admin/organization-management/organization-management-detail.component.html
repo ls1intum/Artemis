@@ -1,6 +1,6 @@
 <div>
     <h2>
-        <span jhiTranslate="organizationManagement.detail.title">Organization</span> [<b>{{ organization.name }}</b
+        <span jhiTranslate="artemisApp.organizationManagement.detail.title">Organization</span> [<b>{{ organization.name }}</b
         >]
     </h2>
     <div class="container">
@@ -9,24 +9,24 @@
                 <dl class="row-md jh-entity-details">
                     <dt><span jhiTranslate="global.field.id">Id</span></dt>
                     <dd>{{ organization.id }}</dd>
-                    <dt><span jhiTranslate="organizationManagement.name">Name</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.name">Name</span></dt>
                     <dd>{{ organization.name }}</dd>
-                    <dt><span jhiTranslate="organizationManagement.shortName">Short Name</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</span></dt>
                     <dd>{{ organization.shortName }}</dd>
-                    <dt><span jhiTranslate="organizationManagement.url">Url</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.url">Url</span></dt>
                     <dd>{{ organization.url }}</dd>
-                    <dt><span jhiTranslate="organizationManagement.logoUrl">Logo Url</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.logoUrl">Logo Url</span></dt>
                     <dd>{{ organization.logoUrl }}</dd>
-                    <dt><span jhiTranslate="organizationManagement.description">Description</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.description">Description</span></dt>
                     <dd>{{ organization.description }}</dd>
-                    <dt><span jhiTranslate="organizationManagement.emailPattern">Email Pattern</span></dt>
+                    <dt><span jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</span></dt>
                     <dd>{{ organization.emailPattern }}</dd>
                 </dl>
             </div>
         </div>
         <div class="row">
             <h3>
-                <span jhiTranslate="organizationManagement.courses">Courses</span>
+                <span jhiTranslate="artemisApp.organizationManagement.courses">Courses</span>
             </h3>
             <div class="table-responsive">
                 <table class="table table-striped">
@@ -56,7 +56,7 @@
     </div>
     <div class="container p-2">
         <h3>
-            <span jhiTranslate="organizationManagement.users">Users</span>
+            <span jhiTranslate="artemisApp.organizationManagement.users">Users</span>
         </h3>
         <jhi-data-table
             [isLoading]="isLoading"
@@ -66,10 +66,10 @@
             [isTransitioning]="isTransitioning"
             entityType="user"
             [allEntities]="organization.users!"
-            entitiesPerPageTranslation="organizationManagement.userSearch.usersPerPage"
-            showAllEntitiesTranslation="organizationManagement.userSearch.showAllUsers"
-            searchNoResultsTranslation="organizationManagement.userSearch.searchNoResults"
-            searchPlaceholderTranslation="organizationManagement.userSearch.searchForUsers"
+            entitiesPerPageTranslation="artemisApp.organizationManagement.userSearch.usersPerPage"
+            showAllEntitiesTranslation="artemisApp.organizationManagement.userSearch.showAllUsers"
+            searchNoResultsTranslation="artemisApp.organizationManagement.userSearch.searchNoResults"
+            searchPlaceholderTranslation="artemisApp.organizationManagement.userSearch.searchForUsers"
             [searchFields]="['login', 'name']"
             [searchTextFromEntity]="searchTextFromUser"
             [searchResultFormatter]="searchResultFormatter"
@@ -105,7 +105,7 @@
                     <ngx-datatable-column prop="login" [minWidth]="150" [width]="200" [maxWidth]="200">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('login')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="userManagement.login"> Login </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.login"> Login </span>
                                 <fa-icon [icon]="controls.iconForSortPropField('login')"></fa-icon>
                             </span>
                         </ng-template>
@@ -117,7 +117,7 @@
                     <ngx-datatable-column prop="name" [minWidth]="150" [width]="250" [maxWidth]="250">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('name')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="userManagement.name"> Name </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.name"> Name </span>
                                 <fa-icon [icon]="controls.iconForSortPropField('name')"></fa-icon>
                             </span>
                         </ng-template>
@@ -129,7 +129,7 @@
                     <ngx-datatable-column prop="email" [minWidth]="150" [width]="250">
                         <ng-template ngx-datatable-header-template>
                             <span class="datatable-header-cell-wrapper" (click)="controls.onSort('email')">
-                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="userManagement.email"> Email </span>
+                                <span class="datatable-header-cell-label bold sortable" jhiTranslate="artemisApp.userManagement.email"> Email </span>
                                 <fa-icon [icon]="controls.iconForSortPropField('email')"></fa-icon>
                             </span>
                         </ng-template>
@@ -146,7 +146,7 @@
                                     jhiDeleteButton
                                     [actionType]="ActionType.Remove"
                                     [entityTitle]="value.login"
-                                    deleteQuestion="organizationManagement.userSearch.removeFromOrganization.modalQuestion"
+                                    deleteQuestion="artemisApp.organizationManagement.userSearch.removeFromOrganization.modalQuestion"
                                     (delete)="removeFromOrganization(value)"
                                     [dialogError]="dialogError$"
                                 >
