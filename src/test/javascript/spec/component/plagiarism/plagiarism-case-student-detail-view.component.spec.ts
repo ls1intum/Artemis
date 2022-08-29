@@ -2,9 +2,9 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { PlagiarismCaseStudentDetailViewComponent } from 'app/course/plagiarism-cases/student-view/detail-view/plagiarism-case-student-detail-view.component';
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
-import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
-import { Observable, of } from 'rxjs';
+import { EntityResponseType, PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
+import { ActivatedRoute, Params } from '@angular/router';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { MockSyncStorage } from '../../helpers/mocks/service/mock-sync-storage.service';
@@ -19,13 +19,17 @@ describe('Plagiarism Cases Student View Component', () => {
     let component: PlagiarismCaseStudentDetailViewComponent;
     let fixture: ComponentFixture<PlagiarismCaseStudentDetailViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
+    let plagiarismCasesServiceSpy: jest.SpyInstance<Observable<EntityResponseType>>;
+
+    const ancestorRouteParamsSubject = new BehaviorSubject<Params>({ courseId: 1 });
+    const routeParamsSubject = new BehaviorSubject<Params>({ plagiarismCaseId: 1 });
 
     const parentRoute = {
         parent: {
-            params: of({ courseId: 1 }),
+            params: ancestorRouteParamsSubject.asObservable(),
         },
     } as any as ActivatedRoute;
-    const route = { parent: parentRoute, snapshot: { paramMap: convertToParamMap({ plagiarismCaseId: 1 }) } } as any as ActivatedRoute;
+    const route = { parent: parentRoute, params: routeParamsSubject.asObservable() } as any as ActivatedRoute;
 
     const exercise = {
         id: 1,
@@ -57,7 +61,16 @@ describe('Plagiarism Cases Student View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCaseStudentDetailViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
-        jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent').mockReturnValue(of({ body: plagiarismCase }) as Observable<HttpResponse<PlagiarismCase>>);
+        plagiarismCasesServiceSpy = jest.spyOn(plagiarismCasesService, 'getPlagiarismCaseDetailForStudent');
+        plagiarismCasesServiceSpy.mockImplementation(
+            (courseId, plagiarismCaseId) =>
+                of({
+                    body: {
+                        ...plagiarismCase,
+                        id: plagiarismCaseId,
+                    },
+                }) as Observable<HttpResponse<PlagiarismCase>>,
+        );
     });
 
     afterEach(() => {
@@ -69,6 +82,49 @@ describe('Plagiarism Cases Student View Component', () => {
         tick();
         expect(component.courseId).toBe(1);
         expect(component.plagiarismCaseId).toBe(1);
-        expect(component.plagiarismCase).toBe(plagiarismCase);
+        tick();
+        expect(component.plagiarismCase).toEqual(plagiarismCase);
+    }));
+
+    it('should load plagiarism case on route update', fakeAsync(() => {
+        component.ngOnInit();
+        tick();
+
+        // Test courseId change
+        ancestorRouteParamsSubject.next({ courseId: 2 });
+        tick();
+
+        expect(component.courseId).toBe(2);
+        expect(component.plagiarismCaseId).toBe(1);
+        tick();
+        expect(component.plagiarismCase?.id).toBe(1);
+
+        expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
+
+        // Test plagiarismCaseId update with the same id
+        routeParamsSubject.next({ plagiarismCaseId: 1 });
+        tick();
+
+        // plagiarismCaseId does not change so it should not update.
+        expect(plagiarismCasesServiceSpy).toHaveBeenCalledOnce();
+
+        // Test plagiarismCaseId change
+        routeParamsSubject.next({ plagiarismCaseId: 2 });
+        tick();
+
+        expect(component.courseId).toBe(2);
+        expect(component.plagiarismCaseId).toBe(1);
+        tick();
+        expect(component.plagiarismCase?.id).toBe(2);
+
+        expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(2);
+
+        // Test both courseId and plagiarismCaseId change
+        ancestorRouteParamsSubject.next({ courseId: 3 });
+        routeParamsSubject.next({ plagiarismCaseId: 4 });
+        tick();
+        expect(component.plagiarismCase?.id).toBe(4);
+
+        expect(plagiarismCasesServiceSpy).toHaveBeenCalledTimes(3);
     }));
 });

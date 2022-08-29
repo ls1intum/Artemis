@@ -28,10 +28,15 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private activatedRoute: ActivatedRoute) {}
 
     ngOnInit(): void {
-        this.paramSubscription = combineLatest({ params: this.activatedRoute.parent!.parent!.params }).subscribe((routeParams: { params: Params }) => {
-            const { params } = routeParams;
-            this.courseId = params.courseId;
-            this.plagiarismCaseId = Number(this.activatedRoute.snapshot.paramMap.get('plagiarismCaseId'));
+        this.paramSubscription = combineLatest({
+            ancestorParams: this.activatedRoute.parent!.parent!.params,
+            params: this.activatedRoute.params,
+        }).subscribe(({ ancestorParams, params }: { ancestorParams: Params; params: Params }) => {
+            this.courseId = ancestorParams.courseId;
+            this.plagiarismCaseId = Number(params.plagiarismCaseId);
+            if (this.plagiarismCase?.id === this.plagiarismCaseId) {
+                return;
+            }
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase = res.body!;
