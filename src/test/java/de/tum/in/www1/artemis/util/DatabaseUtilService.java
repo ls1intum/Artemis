@@ -873,6 +873,7 @@ public class DatabaseUtilService {
     private Post createBasicPost(PlagiarismCase plagiarismCase) {
         Post postToAdd = createBasicPost(0, "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
+        postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 
