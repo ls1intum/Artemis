@@ -1382,6 +1382,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().hasPassed()).isFalse();
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isEqualTo(0.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGradeInFirstCorrection()).isNull();
+        assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
 
         var studentExamFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
@@ -1480,6 +1481,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServer.studentResult().hasPassed()).isTrue();
         assertThat(studentExamGradeInfoFromServer.studentResult().overallPointsAchievedInFirstCorrection()).isEqualTo(0.0);
         assertThat(studentExamGradeInfoFromServer.studentResult().overallGradeInFirstCorrection()).isEqualTo("5.0");
+        assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
 
         var studentExamFromServer = request.get("/api/courses/" + course2.getId() + "/exams/" + exam2.getId() + "/student-exams/" + studentExam.getId() + "/conduction",
                 HttpStatus.OK, StudentExam.class);
@@ -1578,6 +1580,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         assertThat(studentExamGradeInfoFromServerForUserId.studentResult().overallPointsAchieved())
                 .isEqualTo(studentExamGradeInfoFromServer.studentResult().overallPointsAchieved());
         assertThat(studentExamGradeInfoFromServerForUserId.studentResult().hasPassed()).isEqualTo(studentExamGradeInfoFromServer.studentResult().hasPassed());
+        assertThat(studentExamGradeInfoFromServer.studentExam()).isEqualTo(studentExam);
     }
 
     @Test

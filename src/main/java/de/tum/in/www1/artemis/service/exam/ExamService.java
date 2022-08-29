@@ -348,7 +348,7 @@ public class ExamService {
         var maxBonusPoints = calculateMaxBonusPointsSum(exercises, exam.getCourse());
         var gradingType = gradingScale.map(GradingScale::getGradeType).orElse(null);
         var achievedPointsPerExercise = calculateAchievedPointsForExercises(participationsOfStudent, exam.getCourse());
-        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentResult, achievedPointsPerExercise);
+        return new StudentExamWithGradeDTO(maxPoints, maxBonusPoints, gradingType, studentExam, studentResult, achievedPointsPerExercise);
     }
 
     /**

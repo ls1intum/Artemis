@@ -17,6 +17,6 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
  * by including the grade in {@link ExamScoresDTO.StudentResult#overallGrade()}.
  */
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record StudentExamWithGradeDTO(Double maxPoints, Double maxBonusPoints, GradeType gradeType, ExamScoresDTO.StudentResult studentResult,
+public record StudentExamWithGradeDTO(Double maxPoints, Double maxBonusPoints, GradeType gradeType, StudentExam studentExam, ExamScoresDTO.StudentResult studentResult,
         Map<Long, Double> achievedPointsPerExercise) {
 }
