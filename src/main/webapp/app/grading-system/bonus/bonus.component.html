@@ -28,7 +28,7 @@
 </div>
 <ng-container *ngIf="bonus.source?.gradeSteps">
     <h5 class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.selectedBonusSource">Selected Bonus Source Grading Key</h5>
-    <div class="mt-4 fs-5 no-flex-shrink">{{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }}: {{ getGradingScaleMaxPoints(bonus.source) }}</div>
+    <div class="mt-4 fs-5 no-flex-shrink">{{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }} : {{ getGradingScaleMaxPoints(bonus.source) }}</div>
     <div class="fs-5">
         <table class="table table-striped">
             <thead>
@@ -103,12 +103,26 @@
                     <td>{{ example.bonusGrade }}</td>
                     <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS">
                         {{ example.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ example.bonusGrade }} = {{ example.finalPoints }}
+                        <fa-icon
+                            *ngIf="example.exceedsMax"
+                            [icon]="faExclamationTriangle"
+                            class="text-warning"
+                            placement="top"
+                            [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                        ></fa-icon>
                     </td>
                     <td>
                         <ng-container *ngIf="bonus.bonusStrategy === BonusStrategy.GRADES_CONTINUOUS"
                             >{{ example.examGrade }} {{ getCalculationSign(bonus.weight!) }} {{ example.bonusGrade }} =
                         </ng-container>
                         {{ example.finalGrade }}
+                        <fa-icon
+                            *ngIf="bonus.bonusStrategy !== BonusStrategy.POINTS && example.exceedsMax"
+                            [icon]="faExclamationTriangle"
+                            class="text-warning"
+                            placement="top"
+                            [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                        ></fa-icon>
                     </td>
                 </tr>
                 <tr>
@@ -118,6 +132,13 @@
                     <td>{{ dynamicExample.bonusGrade }}</td>
                     <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS && dynamicExample.finalPoints">
                         {{ dynamicExample.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} = {{ dynamicExample.finalPoints }}
+                        <fa-icon
+                            *ngIf="dynamicExample.exceedsMax"
+                            [icon]="faExclamationTriangle"
+                            class="text-warning"
+                            placement="top"
+                            [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                        ></fa-icon>
                     </td>
                     <td>
                         <ng-container *ngIf="bonus.bonusStrategy === BonusStrategy.GRADES_CONTINUOUS && dynamicExample.finalGrade"
@@ -125,6 +146,13 @@
                             =
                         </ng-container>
                         {{ dynamicExample.finalGrade }}
+                        <fa-icon
+                            *ngIf="bonus.bonusStrategy !== BonusStrategy.POINTS && dynamicExample.exceedsMax"
+                            [icon]="faExclamationTriangle"
+                            class="text-warning"
+                            placement="top"
+                            [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                        ></fa-icon>
                     </td>
                 </tr>
             </tbody>
