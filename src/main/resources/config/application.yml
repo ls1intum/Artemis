@@ -21,6 +21,9 @@ logging:
         tech.jhipster: INFO
         org.springframework.web.socket.config: INFO
         liquibase: INFO
+    logback:
+        rollingpolicy:
+            max-history: 90
 
 artemis:
     version: #project.version#
