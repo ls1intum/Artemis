@@ -98,6 +98,15 @@ export class BonusService {
 
             examples.push(new BonusExample(studentPointsOfBonusTo!, studentPointsOfBonusSource!));
 
+            // Source grade steps descend and bonusTo grade steps ascend to provide somewhat more balanced examples
+            // although this is not a hard rule.
+
+            if (i === 0 && sourceGradeStep.lowerBoundPoints === sourceMaxPoints && !sourceGradeStep.lowerBoundInclusive) {
+                // Edge case on first iteration: The condition above causes the sourceMaxPoints to be included in the
+                // next source grade step so we should skip it to not have examples with duplicate bonus values.
+                sourceGradeStepIndex = this.modulo(sourceGradeStepIndex - 1, source.gradeSteps.length);
+            }
+
             sourceGradeStepIndex = this.modulo(sourceGradeStepIndex - 1, source.gradeSteps.length);
             bonusToGradeStepIndex = this.modulo(bonusToGradeStepIndex + 1, bonusTo.gradeSteps.length);
         }
@@ -106,8 +115,11 @@ export class BonusService {
         const lastBonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
         const lastStudentPointsOfBonusTo = this.getIncludedBoundaryPoints(lastBonusToGradeStep, bonusTo.maxPoints!) ?? lastBonusToGradeStep.lowerBoundPoints;
 
-        sourceGradeStepIndex = source.gradeSteps.length - 1;
-        const lastSourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
+        let lastSourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
+        if (this.gradingSystemService.getNumericValueForGradeName(lastSourceGradeStep.gradeName) === 0) {
+            // A non-zero bonus serves better as an example.
+            lastSourceGradeStep = source.gradeSteps[source.gradeSteps.length - 1];
+        }
         const lastStudentPointsOfBonusSource = this.getIncludedBoundaryPoints(lastSourceGradeStep, sourceMaxPoints) ?? lastSourceGradeStep.lowerBoundPoints;
 
         examples.push(new BonusExample(lastStudentPointsOfBonusTo!, lastStudentPointsOfBonusSource!));
@@ -151,25 +163,30 @@ export class BonusService {
      */
     private calculateBonusForStrategy(bonusExample: BonusExample, bonus: Bonus, bonusTo: GradeStepsDTO) {
         switch (bonus.bonusStrategy) {
-            case BonusStrategy.POINTS:
+            case BonusStrategy.POINTS: {
                 bonusExample.finalPoints = bonusExample.studentPointsOfBonusTo + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
                 if (this.doesBonusExceedMax(bonusExample.finalPoints, bonusTo.maxPoints!, bonus.weight!)) {
+                    bonusExample.exceedsMax = true;
                     bonusExample.finalPoints = bonusTo.maxPoints ?? 0;
                 }
                 const finalGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.finalPoints, bonusTo.maxPoints!);
                 bonusExample.finalGrade = finalGradeStep?.gradeName;
                 break;
-            case BonusStrategy.GRADES_CONTINUOUS:
+            }
+            case BonusStrategy.GRADES_CONTINUOUS: {
                 const examGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(bonusExample.examGrade as string)!;
                 bonusExample.finalGrade = examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
                 const maxGrade = this.gradingSystemService.maxGrade(bonusTo.gradeSteps);
                 const maxGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(maxGrade)!;
                 if (this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!)) {
+                    bonusExample.exceedsMax = true;
                     bonusExample.finalGrade = maxGrade;
                 }
                 break;
-            case BonusStrategy.GRADES_DISCRETE:
+            }
+            case BonusStrategy.GRADES_DISCRETE: {
                 throw new Error('GRADES_DISCRETE bonus strategy not yet implemented');
+            }
         }
     }
 

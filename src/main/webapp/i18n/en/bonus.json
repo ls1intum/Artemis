@@ -31,7 +31,8 @@
                 "bonusGrade": "Bonus",
                 "finalPoints": "Final Points",
                 "finalGrade": "Final Grade",
-                "any": "(Any)"
+                "any": "(Any)",
+                "exceedsMax": "The final value exceeds the best possible value so it is capped there. If that is not intended, double check −/+ selection."
             },
             "formula": {
                 "title": "Formula",
