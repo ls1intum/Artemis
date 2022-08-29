@@ -113,7 +113,7 @@ describe('Plagiarism Cases Student View Component', () => {
         tick();
 
         expect(component.courseId).toBe(2);
-        expect(component.plagiarismCaseId).toBe(1);
+        expect(component.plagiarismCaseId).toBe(2);
         tick();
         expect(component.plagiarismCase?.id).toBe(2);
 
@@ -122,6 +122,10 @@ describe('Plagiarism Cases Student View Component', () => {
         // Test both courseId and plagiarismCaseId change
         ancestorRouteParamsSubject.next({ courseId: 3 });
         routeParamsSubject.next({ plagiarismCaseId: 4 });
+        tick();
+
+        expect(component.courseId).toBe(3);
+        expect(component.plagiarismCaseId).toBe(4);
         tick();
         expect(component.plagiarismCase?.id).toBe(4);
 
