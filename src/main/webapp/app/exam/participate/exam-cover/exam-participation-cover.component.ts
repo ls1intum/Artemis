@@ -162,7 +162,7 @@ export class ExamParticipationCoverComponent implements OnInit, OnDestroy {
      * updates all displayed (relative) times in the UI
      */
     updateDisplayedTimes(studentExam: StudentExam) {
-        const translationBasePath = 'showStatistic.';
+        const translationBasePath = 'artemisApp.showStatistic.';
         // update time until start
         if (this.exam && this.exam.startDate) {
             if (this.hasStarted()) {
