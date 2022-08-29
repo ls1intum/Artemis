@@ -1,0 +1,54 @@
+{
+    "artemisApp": {
+        "bonus": {
+            "bonusStrategy": {
+                "title": "Wähle eine Bonusstrategie",
+                "helpText": "NOTEN: Berechnet zunächst die angestrebte Prüfungsnote. Dann gilt der Bonus für diese.<br>PUNKTE: Erstens wird ein Bonus auf die Punkte des Schülers angewandt. Berechnet dann die Endnote, indem er die resultierenden Punkte mit dem Bewertungsschlüssel der Zielprüfung abgleicht.",
+                "grades": "NOTEN",
+                "points": "PUNKTE"
+            },
+            "discreteness": {
+                "title": "Wähle Diskretion",
+                "helpText": "DISKRET: Erhöht die Note des Schülers auf eine bessere Klassenstufe. Die Endnote entspricht einer der Notenstufen der Zielprüfung (z. B. von 1,3 auf 1,0 oder von B auf A). <br>KONTINUIERLICH: Der Bonus wird rechnerisch auf die Note des Schülers angewandt. Die Endnote kann ein beliebiger numerischer Wert zwischen dem besten und dem schlechtesten Notenstufenwert sein (z. B. von 1,3 bis 1,2).",
+                "discrete": "DISKRET",
+                "continuous": "KONTINUIERLICH"
+            },
+            "calculation": {
+                "title": "Wähle Berechnung",
+                "helpText": "− (Standardoption für NOTEN): Zieht den Bonus von den Noten/Punkten der Zielprüfung ab. Bevorzuge dies, wenn niedriger besser bedeutet.<br>+ (Standardoption für PUNKTE): Fügt einen Bonus zu den Noten/Punkten der Zielprüfung hinzu. Bevorzuge dies, wenn höher besser bedeutet."
+            },
+            "bonusSource": {
+                "title": "Wähle Bonusquelle",
+                "helpText": "Prüfungen und Kurse mit \"Bonus\"-Benotungsschlüsseln sind unten aufgeführt. Die Note des Schülers für den gewählten Kurs oder die Prüfung bestimmt die Höhe des Bonus.",
+                "selectedBonusSource": "Ausgewählte Bonusquelle Bewertungsschlüssel"
+            },
+            "examples": {
+                "title": "Beispiele",
+                "helpText": "(Du kannst eigene Szenarien ausprobieren, indem du die letzte Zeile bearbeitest Beispiele)",
+                "examPoints": "Prüfungspunkte",
+                "examGrade": "Prüfungsnote",
+                "bonusSourceStudentPoints": "Bonusquelle Studentenpunkte",
+                "bonusGrade": "Bonus",
+                "finalPoints": "Letzte Punkte",
+                "finalGrade": "Endnote",
+                "any": "(Any)"
+            },
+            "formula": {
+                "title": "Formel",
+                "examPoints": "Prüfungspunkte",
+                "examGrade": "Prüfungsnote",
+                "bonusSourceStudentPoints": "Bonusquelle Studentenpunkte",
+                "bonusGrade": "Bonus",
+                "finalPoints": "Letzte<br/>Punkte",
+                "finalGrade": "Endnote",
+                "finalGradeLimit": "(Du kannst keine bessere Abschlussnote als {{maxPossibleGrade}} bekommen)",
+                "finalGradeFromPoints": "Die Endpunkte bestimmen die Endnote, indem sie mit der nicht-bonusbasierten Notenskala abgeglichen werden."
+            },
+            "title": "Bonus",
+            "deleteQuestion": "Willst du den Bonus wirklich löschen?",
+            "updated": "Bonus aktualisiert.",
+            "created": "Bonus erstellt.",
+            "deleted": "Bonus gelöscht."
+        }
+    }
+}
