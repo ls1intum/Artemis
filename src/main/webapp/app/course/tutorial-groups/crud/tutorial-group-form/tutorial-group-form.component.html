@@ -115,11 +115,11 @@
                 </div>
             </div>
             <hr />
-            <jhi-schedule-form #scheduleForm [parentFormGroup]="form"></jhi-schedule-form>
+            <jhi-schedule-form #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
             <div class="row mt-2">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ 'entity.action.submit' | artemisTranslate }}</span>
+                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
                     </button>
                 </div>
             </div>

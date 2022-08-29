@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.TutorialGroup;
 import de.tum.in.www1.artemis.domain.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.TutorialGroupSession;
+import de.tum.in.www1.artemis.domain.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
@@ -29,11 +30,10 @@ public class TutorialGroupScheduleService {
         this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
-    // ToDo: Think about if transaction is needed here. A lot of validation needed that time zone and so on exists and dates, times make sense :(
-    public void save(TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
+    public void save(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
         TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
-        var individualSessions = generateSessions(savedSchedule);
+        var individualSessions = generateSessions(tutorialGroupsConfiguration, savedSchedule);
         tutorialGroupSessionRepository.saveAll(individualSessions);
     }
 
@@ -41,8 +41,8 @@ public class TutorialGroupScheduleService {
         tutorialGroupScheduleRepository.delete(tutorialGroupSchedule);
     }
 
-    public List<TutorialGroupSession> generateSessions(TutorialGroupSchedule tutorialGroupSchedule) {
-        ZoneId creationTimeZone = ZoneId.of(tutorialGroupSchedule.getTimeZone());
+    public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
+        ZoneId creationTimeZone = ZoneId.of(tutorialGroupsConfiguration.getTimeZone());
         LocalDate periodStart = LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive());
         LocalDate periodEnd = LocalDate.parse(tutorialGroupSchedule.getValidToInclusive());
 
@@ -55,8 +55,9 @@ public class TutorialGroupScheduleService {
 
         while (sessionStart.toLocalDate().isBefore(periodEnd) || sessionStart.toLocalDate().isEqual(periodEnd)) {
             TutorialGroupSession session = new TutorialGroupSession();
-            session.setStart(sessionStart.withZoneSameLocal(ZoneId.of("UTC")));
-            session.setEnd(sessionEnd.withZoneSameLocal(ZoneId.of("UTC")));
+            // save in UTC timezone for the database
+            session.setStart(sessionStart.withZoneSameInstant(ZoneId.of("UTC")));
+            session.setEnd(sessionEnd.withZoneSameInstant(ZoneId.of("UTC")));
             session.setTutorialGroupSchedule(tutorialGroupSchedule);
             session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
             sessions.add(session);
@@ -74,8 +75,8 @@ public class TutorialGroupScheduleService {
         return start;
     }
 
-    public void update(TutorialGroupSchedule oldSchedule, TutorialGroupSchedule newSchedule) {
+    public void update(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule oldSchedule, TutorialGroupSchedule newSchedule) {
         delete(oldSchedule);
-        save(oldSchedule.getTutorialGroup(), newSchedule);
+        save(tutorialGroupsConfiguration, oldSchedule.getTutorialGroup(), newSchedule);
     }
 }

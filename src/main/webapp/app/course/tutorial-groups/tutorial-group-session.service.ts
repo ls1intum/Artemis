@@ -3,7 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupSession } from 'app/entities/TutorialGroupSession.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 
 type EntityArrayResponseType = HttpResponse<TutorialGroupSession[]>;
 

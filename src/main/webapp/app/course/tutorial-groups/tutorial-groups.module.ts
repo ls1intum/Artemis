@@ -15,6 +15,9 @@ import { ScheduleManagementComponent } from './schedule-management/schedule-mana
 import { CalendarModule } from 'angular-calendar';
 import { ScheduleFormComponent } from './crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { TutorialGroupsConfigurationFormComponent } from './tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { CreateTutorialGroupsConfigurationComponent } from './tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
+import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule, OwlDateTimeModule],
@@ -28,6 +31,9 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
         SchedulePickerComponent,
         ScheduleManagementComponent,
         ScheduleFormComponent,
+        TutorialGroupsConfigurationFormComponent,
+        CreateTutorialGroupsConfigurationComponent,
+        EditTutorialGroupsConfigurationComponent,
     ],
 })
 export class ArtemisTutorialGroupsModule {}

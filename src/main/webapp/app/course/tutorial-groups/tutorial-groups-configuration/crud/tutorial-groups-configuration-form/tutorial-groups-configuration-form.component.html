@@ -1,0 +1,77 @@
+<div class="row">
+    <div class="col-12">
+        <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- timezone -->
+            <div class="col-auto">
+                <div *ngIf="timeZoneChanged" class="alert alert-danger" role="alert">
+                    {{ 'artemisApp.createConfiguration.timeZoneInput.changeWarning' | translate }}
+                </div>
+                <label class="form-label" for="timeZone">{{ 'artemisApp.createConfiguration.timeZoneInput.label' | artemisTranslate }}</label>
+                <input
+                    required
+                    id="timeZone"
+                    type="text"
+                    class="form-control"
+                    formControlName="timeZone"
+                    [placeholder]="'artemisApp.createConfiguration.timeZoneInput.placeholder' | artemisTranslate"
+                    [resultFormatter]="tzResultFormatter"
+                    [inputFormatter]="tzInputFormatter"
+                    [ngbTypeahead]="tzSearch"
+                    [editable]="false"
+                    #timeZoneInput="ngbTypeahead"
+                    (focus)="tzFocus$.next($any($event).target.value)"
+                    (click)="tzClick$.next($any($event).target.value)"
+                />
+                <div class="form-text">
+                    {{ 'artemisApp.createConfiguration.timeZoneInput.explanation' | artemisTranslate }}
+                </div>
+                <div *ngIf="timeZoneControl?.invalid && (timeZoneControl?.dirty || timeZoneControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="timeZoneControl?.errors?.required">
+                        {{ 'artemisApp.createConfiguration.timeZoneInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <!-- Period -->
+            <div class="col-auto">
+                <label class="form-label" for="period">{{ 'artemisApp.createConfiguration.periodInput.label' | artemisTranslate }}</label>
+                <div class="input-group">
+                    <input
+                        name="period"
+                        required
+                        id="period"
+                        formControlName="period"
+                        [owlDateTime]="period"
+                        placeholder="YYYY-MM-DD - YYYY-MM-DD"
+                        class="form-control"
+                        [selectMode]="'range'"
+                    />
+                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period">
+                        <fa-icon [icon]="faCalendarAlt"></fa-icon>
+                    </button>
+                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
+                </div>
+                <div class="form-text">
+                    {{ 'artemisApp.createConfiguration.periodInput.explanation' | artemisTranslate }}
+                </div>
+                <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
+                        {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="periodControl?.errors?.owlDateTimeParse">
+                        {{ 'artemisApp.createConfiguration.periodInput.parseError' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="periodControl?.errors?.owlDateTimeRange">
+                        {{ 'artemisApp.createConfiguration.periodInput.invalidRangeError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -19,6 +19,7 @@ import { CourseManagementDetailViewDto } from 'app/course/manage/course-manageme
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-configuration.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;
@@ -32,7 +33,13 @@ export class CourseManagementService {
     private coursesForNotifications: BehaviorSubject<Course[] | undefined> = new BehaviorSubject<Course[] | undefined>(undefined);
     private fetchingCoursesForNotifications = false;
 
-    constructor(private http: HttpClient, private lectureService: LectureService, private accountService: AccountService, private entityTitleService: EntityTitleService) {}
+    constructor(
+        private http: HttpClient,
+        private lectureService: LectureService,
+        private accountService: AccountService,
+        private entityTitleService: EntityTitleService,
+        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+    ) {}
 
     /**
      * creates a course using a POST request
@@ -408,6 +415,7 @@ export class CourseManagementService {
      * @private
      */
     private processCourseEntityResponseType(courseRes: EntityResponseType): EntityResponseType {
+        this.convertTutorialGroupConfigurationDateFromServer(courseRes);
         this.convertCourseResponseDateFromServer(courseRes);
         this.setLearningGoalsIfNone(courseRes);
         this.setAccessRightsCourseEntityResponseType(courseRes);
@@ -443,6 +451,13 @@ export class CourseManagementService {
             startDate: convertDateFromClient(course.startDate),
             endDate: convertDateFromClient(course.endDate),
         });
+    }
+
+    private convertTutorialGroupConfigurationDateFromServer(courseRes: EntityResponseType): EntityResponseType {
+        if (courseRes.body?.tutorialGroupsConfiguration) {
+            this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(courseRes.body.tutorialGroupsConfiguration);
+        }
+        return courseRes;
     }
 
     private convertCourseResponseDateFromServer(res: EntityResponseType): EntityResponseType {

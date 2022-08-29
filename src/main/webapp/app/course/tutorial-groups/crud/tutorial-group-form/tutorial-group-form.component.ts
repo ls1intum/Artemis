@@ -1,16 +1,15 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { CourseGroup, Language } from 'app/entities/course.model';
+import { Course, CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
-import { NgbDate, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
-import dayjs from 'dayjs/esm';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -47,7 +46,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
 
-    @Input() courseId: number;
+    @Input() course: Course;
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
 
@@ -168,9 +167,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     private getTeachingAssistantsInCourse() {
+        this.teachingAssistantsAreLoading = true;
         return concat(
             of([]), // default items
-            this.courseManagementService.getAllUsersInCourseGroup(this.courseId, CourseGroup.TUTORS).pipe(
+            this.courseManagementService.getAllUsersInCourseGroup(this.course.id!, CourseGroup.TUTORS).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);

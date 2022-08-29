@@ -31,9 +31,6 @@ public class TutorialGroupSchedule extends DomainObject {
     @Column(name = "end_time")
     private String endTime;
 
-    @Column(name = "time_zone")
-    private String timeZone;
-
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
 
@@ -50,8 +47,8 @@ public class TutorialGroupSchedule extends DomainObject {
 
     public boolean sameSchedule(TutorialGroupSchedule other) {
         return Objects.equals(this.dayOfWeek, other.dayOfWeek) && Objects.equals(this.startTime, other.startTime) && Objects.equals(this.endTime, other.endTime)
-                && Objects.equals(this.timeZone, other.timeZone) && Objects.equals(this.repetitionFrequency, other.repetitionFrequency)
-                && Objects.equals(this.validFromInclusive, other.validFromInclusive) && Objects.equals(this.validToInclusive, other.validToInclusive);
+                && Objects.equals(this.repetitionFrequency, other.repetitionFrequency) && Objects.equals(this.validFromInclusive, other.validFromInclusive)
+                && Objects.equals(this.validToInclusive, other.validToInclusive);
     }
 
     public List<TutorialGroupSession> getTutorialGroupSessions() {
@@ -95,14 +92,6 @@ public class TutorialGroupSchedule extends DomainObject {
 
     public void setEndTime(String endTime) {
         this.endTime = endTime;
-    }
-
-    public String getTimeZone() {
-        return timeZone;
-    }
-
-    public void setTimeZone(String timeZone) {
-        this.timeZone = timeZone;
     }
 
     public Integer getRepetitionFrequency() {

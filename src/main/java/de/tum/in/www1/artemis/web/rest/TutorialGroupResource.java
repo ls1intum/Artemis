@@ -167,6 +167,11 @@ public class TutorialGroupResource {
 
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (course.getTutorialGroupsConfiguration() == null) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+
         tutorialGroup.setCourse(course);
 
         trimStringFields(tutorialGroup);
@@ -177,7 +182,7 @@ public class TutorialGroupResource {
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
         if (tutorialGroupSchedule != null) {
-            tutorialGroupScheduleService.save(persistedTutorialGroup, tutorialGroupSchedule);
+            tutorialGroupScheduleService.save(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
         }
 
         return ResponseEntity.created(new URI("/api/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
@@ -234,11 +239,13 @@ public class TutorialGroupResource {
         }
         // create schedule
         else if (changedTutorialGroup.getTutorialGroupSchedule() != null && updatedTutorialGroup.getTutorialGroupSchedule() == null) {
-            tutorialGroupScheduleService.save(updatedTutorialGroup, changedTutorialGroup.getTutorialGroupSchedule());
+            tutorialGroupScheduleService.save(tutorialGroupFromDatabase.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup,
+                    changedTutorialGroup.getTutorialGroupSchedule());
         }
         else {
             if (!changedTutorialGroup.getTutorialGroupSchedule().sameSchedule(updatedTutorialGroup.getTutorialGroupSchedule())) {
-                tutorialGroupScheduleService.update(updatedTutorialGroup.getTutorialGroupSchedule(), changedTutorialGroup.getTutorialGroupSchedule());
+                tutorialGroupScheduleService.update(tutorialGroupFromDatabase.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup.getTutorialGroupSchedule(),
+                        changedTutorialGroup.getTutorialGroupSchedule());
             }
         }
 

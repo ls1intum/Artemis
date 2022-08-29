@@ -4,13 +4,14 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-form.component';
 import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
-import { finalize, switchMap, take } from 'rxjs/operators';
+import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupSchedule } from 'app/entities/tutorialGroupSchedule.model';
-import timezones from 'timezones-list';
+import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import dayjs from 'dayjs/esm';
+import { Course } from 'app/entities/course.model';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group',
@@ -21,9 +22,16 @@ export class EditTutorialGroupComponent implements OnInit {
     tutorialGroup: TutorialGroup;
     tutorialGroupSchedule: TutorialGroupSchedule;
     formData: TutorialGroupFormData;
-    courseId: number;
+    tutorialGroupId: number;
+    course: Course;
 
-    constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
+    constructor(
+        private activatedRoute: ActivatedRoute,
+        private courseManagementService: CourseManagementService,
+        private router: Router,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -31,9 +39,14 @@ export class EditTutorialGroupComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.courseId);
+                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
+                    const courseId = Number(parentParams.get('courseId'));
+                    return this.courseManagementService.find(courseId);
+                }),
+                map((res: HttpResponse<Course>) => res.body),
+                switchMap((course: Course) => {
+                    this.course = course;
+                    return this.tutorialGroupService.getOneOfCourse(this.tutorialGroupId, this.course.id!);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -53,7 +66,6 @@ export class EditTutorialGroupComponent implements OnInit {
                         if (this.tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = this.tutorialGroup.tutorialGroupSchedule;
                             this.formData.schedule = {
-                                timeZone: timezones.find((tz) => tz.tzCode === this.tutorialGroupSchedule.timeZone)!,
                                 period: [this.tutorialGroupSchedule.validFromInclusive!.toDate(), this.tutorialGroupSchedule.validToInclusive!.toDate()],
                                 repetitionFrequency: this.tutorialGroupSchedule.repetitionFrequency,
                                 startTime: this.tutorialGroupSchedule.startTime,
@@ -68,12 +80,6 @@ export class EditTutorialGroupComponent implements OnInit {
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
-        // required fields
-        // ToDo: Check all other required fields and check form vor validity errors
-        if (!formData?.title || !formData?.teachingAssistant) {
-            return;
-        }
-
         const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, schedule } = formData;
         this.tutorialGroup.title = title;
         this.tutorialGroup.teachingAssistant = teachingAssistant;
@@ -86,20 +92,20 @@ export class EditTutorialGroupComponent implements OnInit {
             if (!this.tutorialGroup.tutorialGroupSchedule) {
                 this.tutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
             }
-            if (schedule.period && schedule.period.length === 2) {
-                this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs(schedule.period[0]);
-                this.tutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs(schedule.period[1]);
+            const { endTime, startTime, dayOfWeek, repetitionFrequency, period } = schedule;
+            if (period && period.length === 2) {
+                this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs(period[0]);
+                this.tutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs(period[1]);
             }
-            this.tutorialGroup.tutorialGroupSchedule.dayOfWeek = schedule.dayOfWeek;
-            this.tutorialGroup.tutorialGroupSchedule.startTime = schedule.startTime;
-            this.tutorialGroup.tutorialGroupSchedule.endTime = schedule.endTime;
-            this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = schedule.repetitionFrequency;
-            this.tutorialGroup.tutorialGroupSchedule.timeZone = schedule.timeZone!.tzCode;
+            this.tutorialGroup.tutorialGroupSchedule.dayOfWeek = dayOfWeek;
+            this.tutorialGroup.tutorialGroupSchedule.startTime = startTime;
+            this.tutorialGroup.tutorialGroupSchedule.endTime = endTime;
+            this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = repetitionFrequency;
         }
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.tutorialGroup, this.courseId)
+            .update(this.tutorialGroup, this.course.id!)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

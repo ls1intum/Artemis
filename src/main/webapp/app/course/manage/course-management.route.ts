@@ -21,6 +21,8 @@ import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/crud/edit
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/registered-students/registered-students.component';
 import { ScheduleManagementComponent } from 'app/course/tutorial-groups/schedule-management/schedule-management.component';
+import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
+import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 
 export const courseManagementState: Routes = [
     {
@@ -181,6 +183,24 @@ export const courseManagementState: Routes = [
                     pageTitle: 'artemisApp.manageTutorialGroups.title',
                 },
                 children: [
+                    {
+                        path: 'configuration/create',
+                        component: CreateTutorialGroupsConfigurationComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.createTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'configuration/:tutorialGroupsConfigurationId/edit',
+                        component: EditTutorialGroupsConfigurationComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.createTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
                     {
                         path: 'create',
                         component: CreateTutorialGroupComponent,

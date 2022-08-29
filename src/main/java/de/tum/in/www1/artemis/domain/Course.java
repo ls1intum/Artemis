@@ -198,6 +198,10 @@ public class Course extends DomainObject {
     @JsonIgnoreProperties("consecutiveCourses")
     private Set<LearningGoal> prerequisites = new HashSet<>();
 
+    @OneToOne(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "course")
+    private TutorialGroupsConfiguration tutorialGroupsConfiguration;
+
     // NOTE: Helpers variable names must be different from Getter name, so that Jackson ignores the @Transient annotation, but Hibernate still respects it
     @Transient
     private Long numberOfInstructorsTransient;
@@ -769,5 +773,13 @@ public class Course extends DomainObject {
             case "editors" -> getEditorGroupName();
             default -> throw new IllegalArgumentException("The course group does not exist");
         };
+    }
+
+    public TutorialGroupsConfiguration getTutorialGroupsConfiguration() {
+        return tutorialGroupsConfiguration;
+    }
+
+    public void setTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+        this.tutorialGroupsConfiguration = tutorialGroupsConfiguration;
     }
 }

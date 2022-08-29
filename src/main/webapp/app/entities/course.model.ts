@@ -8,6 +8,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 export const enum Language {
     ENGLISH = 'ENGLISH',
@@ -47,6 +48,7 @@ export class Course implements BaseEntity {
     public maxRequestMoreFeedbackTimeDays?: number;
     public maxPoints?: number;
     public accuracyOfScores?: number;
+    public tutorialGroupsConfiguration?: TutorialGroupsConfiguration;
 
     // the following values are only used in course administration
     public numberOfStudents?: number;

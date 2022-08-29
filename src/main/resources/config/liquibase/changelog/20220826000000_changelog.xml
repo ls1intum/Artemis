@@ -8,13 +8,10 @@
             <column name="day_of_week" type="SMALLINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="start_time" type="VARCHAR(255)">
+            <column name="start_time" type="TIME">
                 <constraints nullable="false"/>
             </column>
             <column name="end_time" type="TIME">
-                <constraints nullable="false"/>
-            </column>
-            <column name="time_zone" type="TIME">
                 <constraints nullable="false"/>
             </column>
             <column name="repetition_frequency" type="SMALLINT">
@@ -59,6 +56,26 @@
         <addForeignKeyConstraint baseColumnNames="tutorial_group_schedule_id" baseTableName="tutorial_group_session"
                                  constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
+                                 validate="true"/>
+    </changeSet>
+    <changeSet id="20220826000000-3" author="stefanwaldhauser">
+        <createTable tableName="tutorial_groups_configuration">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="time_zone" type="VARCHAR(255)">
+            </column>
+            <column name="tutorial_period_start_inclusive" type="DATE">
+            </column>
+            <column name="tutorial_period_end_inclusive" type="DATE">
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutorial_groups_configuration"
+                                 constraintName="fk_tutorial_groups_configuration_course_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
                                  validate="true"/>
     </changeSet>
 </databaseChangeLog>

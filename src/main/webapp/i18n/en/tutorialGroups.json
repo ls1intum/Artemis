@@ -6,6 +6,28 @@
         "tutorialGroups": {
             "tutorialGroupsButton": "Tutorial Groups"
         },
+        "createConfiguration": {
+            "title": "Create Tutorial Groups Configuration",
+            "editButton": "Edit Tutorial Groups Configuration",
+            "explanation": "Before you can start creating tutorial groups, you must specify some properties that concern all tutorial groups. This can also be changed later.",
+            "timeZoneInput": {
+                "label": "Timezone",
+                "changeWarning": "You have changed the timezone. All tutorial groups session will be deleted as a consequence. Are you sure you want to do this?",
+                "placeholder": "Select a time zone",
+                "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
+                "requiredValidationError": "You need to select a time zone!"
+            },
+            "periodInput": {
+                "label": "Tutorial Group Period",
+                "explanation": "The period in which the tutorial groups occur in the semester. This will be used to create the individual sessions.",
+                "requiredValidationError": "You need to select a period!",
+                "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
+                "invalidRange": "Period must be a valid date range"
+            }
+        },
+        "editConfiguration": {
+            "title": "Edit Tutorial Groups Configuration"
+        },
         "manageTutorialGroups": {
             "title": "Tutorial Groups Management",
             "tableCaption": "Tutorial Groups defined for this course",
@@ -21,7 +43,12 @@
                 "offline": "Offline",
                 "location": "Location",
                 "language": "Language",
-                "additionalInfo": "Additional Information"
+                "additionalInfo": "Additional Information",
+                "schedule": {
+                    "weekDay": "Weekday",
+                    "time": "Time",
+                    "periodWarning": "Note: The period you selected differs from the period of the tutorial group configuration!"
+                }
             },
             "deleteButton": {
                 "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
@@ -97,15 +124,10 @@
                 "saturday": "Saturday",
                 "sunday": "Sunday"
             },
-            "timeZoneInput": {
-                "label": "Time Zone",
-                "placeholder": "Select a Time Zone",
-                "requiredValidationError": "A time zone needs to be selected!",
-                "tzHelp": "You can search for a time zone by typing into the field."
-            },
             "timeInput": {
                 "from": "Session starts at",
-                "to": "Session ends at"
+                "to": "Session ends at",
+                "invalidTimeRange": "Time range must be a valid time range!"
             },
             "periodInput": {
                 "label": "Period in which the tutorial group meets: "

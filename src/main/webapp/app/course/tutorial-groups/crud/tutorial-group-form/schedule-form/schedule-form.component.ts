@@ -1,25 +1,18 @@
-import { Component, Injectable, Input, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Component, Injectable, Input, OnInit } from '@angular/core';
+import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-import { NgbCalendar, NgbDate, NgbDateParserFormatter, NgbTimeAdapter, NgbTimeStruct, NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { merge, Observable, OperatorFunction, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import timezones from 'timezones-list';
+import { NgbDateParserFormatter, NgbTimeAdapter, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
+import { weekDays } from 'app/course/tutorial-groups/shared/weekdays';
+import { Course } from 'app/entities/course.model';
+import _ from 'lodash';
+import dayjs from 'dayjs/esm';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;
     startTime?: string;
     endTime?: string;
     repetitionFrequency?: number;
-    timeZone?: TimeZone;
     period?: Date[];
-}
-
-interface TimeZone {
-    label: string;
-    tzCode: string;
-    name: string;
-    utc: string;
 }
 
 @Injectable()
@@ -41,6 +34,25 @@ class NgbTimeStringAdapter extends NgbTimeAdapter<string> {
     }
 }
 
+const validTimeRange = (control: AbstractControl): ValidationErrors | null => {
+    if (!control.get('startTime')!.value || !control.get('endTime')!.value) {
+        return null;
+    }
+
+    const startTime = control.get('startTime')!.value;
+    const endTime = control.get('endTime')!.value;
+
+    const startComparison = dayjs('1970-01-01 ' + startTime, 'YYYY-MM-DD HH:mm:ss');
+    const endComparison = dayjs('1970-01-01 ' + endTime, 'YYYY-MM-DD HH:mm:ss');
+    if (startComparison.isAfter(endComparison)) {
+        return {
+            invalidTimeRange: true,
+        };
+    } else {
+        return null;
+    }
+};
+
 const pad = (i: number): string => (i < 10 ? `0${i}` : `${i}`);
 
 @Component({
@@ -50,94 +62,48 @@ const pad = (i: number): string => (i < 10 ? `0${i}` : `${i}`);
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
 })
 export class ScheduleFormComponent implements OnInit {
+    @Input() course: Course;
     @Input() parentFormGroup: FormGroup;
     formGroup: FormGroup;
 
-    @Input() hoveredDate: NgbDate | null;
-    @Input() fromDate: NgbDate | null;
-    @Input() toDate: NgbDate | null;
+    defaultPeriod?: Date[] = undefined;
 
-    @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
-    tzFocus$ = new Subject<string>();
-    tzClick$ = new Subject<string>();
-
-    weekDays = [
-        {
-            id: 'monday',
-            translationKey: 'monday',
-            value: 1,
-        },
-        {
-            id: 'tuesday',
-            translationKey: 'tuesday',
-            value: 2,
-        },
-        {
-            id: 'wednesday',
-            translationKey: 'wednesday',
-            value: 3,
-        },
-        {
-            id: 'thursday',
-            translationKey: 'thursday',
-            value: 4,
-        },
-        {
-            id: 'friday',
-            translationKey: 'friday',
-            value: 5,
-        },
-        {
-            id: 'saturday',
-            translationKey: 'saturday',
-            value: 6,
-        },
-        {
-            id: 'sunday',
-            translationKey: 'sunday',
-            value: 7,
-        },
-    ];
-
+    weekDays = weekDays;
     faCalendarAlt = faCalendarAlt;
-    tzResultFormatter = (timeZone: TimeZone) => timeZone.name;
-    tzInputFormatter = (timeZone: TimeZone) => timeZone.tzCode;
 
-    get timeZoneControl() {
-        return this.formGroup.get('timeZone');
+    get defaultPeriodChanged(): boolean {
+        return !_.isEqual(this.defaultPeriod, this.formGroup.get('period')!.value);
     }
 
-    tzSearch: OperatorFunction<string, readonly TimeZone[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
-        const inputFocus$ = this.tzFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : timezones.filter((tz) => tz.name.toLowerCase().indexOf(term.toLowerCase()) > -1))),
-        );
-    };
-    constructor(private fb: FormBuilder, private calendar: NgbCalendar, public formatter: NgbDateParserFormatter) {
-        this.fromDate = calendar.getToday();
-        this.toDate = calendar.getNext(calendar.getToday(), 'd', 10);
+    get periodControl() {
+        return this.formGroup.get('period');
     }
+
+    get startTimeControl() {
+        return this.formGroup.get('startTime');
+    }
+
+    get endTimeControl() {
+        return this.formGroup.get('endTime');
+    }
+    constructor(private fb: FormBuilder, public formatter: NgbDateParserFormatter) {}
 
     ngOnInit(): void {
-        this.formGroup = this.fb.group({
-            dayOfWeek: [1, Validators.required],
-            startTime: ['13:00:00', [Validators.required]],
-            endTime: ['14:00:00', [Validators.required]],
-            repetitionFrequency: [1, [Validators.required]],
-            period: [undefined, [Validators.required]],
-            timeZone: [
-                {
-                    label: 'Europe/Berlin (GMT+01:00)',
-                    tzCode: 'Europe/Berlin',
-                    name: '(GMT+01:00) Berlin, Hamburg, Munich, Köln, Frankfurt am Main',
-                    utc: '+01:00',
-                },
-                [Validators.required],
-            ],
-        });
+        if (this.course.tutorialGroupsConfiguration) {
+            const { tutorialPeriodStartInclusive, tutorialPeriodEndInclusive } = this.course.tutorialGroupsConfiguration;
+            this.defaultPeriod = [tutorialPeriodStartInclusive!.toDate(), tutorialPeriodEndInclusive!.toDate()];
+        }
+
+        this.formGroup = this.fb.group(
+            {
+                dayOfWeek: [1, Validators.required],
+                startTime: ['13:00:00', [Validators.required]],
+                endTime: ['14:00:00', [Validators.required]],
+                repetitionFrequency: [1, [Validators.required]],
+                period: [this.defaultPeriod, [Validators.required]],
+            },
+            { validators: validTimeRange },
+        );
 
         this.parentFormGroup.addControl('schedule', this.formGroup);
     }

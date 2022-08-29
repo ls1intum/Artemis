@@ -9,7 +9,7 @@ import { finalize, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSession } from 'app/entities/TutorialGroupSession.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 
 @Component({
     selector: 'jhi-schedule-management',

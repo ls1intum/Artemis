@@ -8,6 +8,14 @@
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.manageTutorialGroups.createButton' | artemisTranslate }}</span>
                     </a>
+                    <a
+                        *ngIf="course?.tutorialGroupsConfiguration"
+                        class="btn btn-secondary"
+                        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
+                    >
+                        <fa-icon [icon]="faPencil"></fa-icon>
+                        <span>{{ 'artemisApp.createConfiguration.editButton' | artemisTranslate }}</span>
+                    </a>
                 </div>
             </div>
 
@@ -26,6 +34,14 @@
                             </th>
                             <th jhiSortBy="title">
                                 <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.title' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.schedule.weekDay' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
+                            <th jhiSortBy="tutorialGroupSchedule.startTime">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.schedule.time' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="teachingAssistant.name">
@@ -52,7 +68,7 @@
                                 <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.language' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
-                            <th jhiSortBy="language">
+                            <th jhiSortBy="additionalInformation">
                                 {{ 'artemisApp.manageTutorialGroups.columns.additionalInfo' | artemisTranslate }}
                             </th>
                         </tr>
@@ -63,6 +79,8 @@
                             <td>
                                 <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
                             </td>
+                            <td>{{ getDayTranslationKey(tutorialGroup.tutorialGroupSchedule?.dayOfWeek) | artemisTranslate }}</td>
+                            <td>{{ tutorialGroup.tutorialGroupSchedule?.startTime + '-' + tutorialGroup.tutorialGroupSchedule?.endTime }}</td>
                             <td>{{ tutorialGroup.teachingAssistant?.name }}</td>
                             <td>{{ tutorialGroup.capacity }}</td>
                             <td>{{ tutorialGroup.registeredStudents?.length }}</td>
@@ -88,7 +106,7 @@
                                 <jhi-tutorial-group-row-buttons
                                     [courseId]="courseId"
                                     [tutorialGroup]="tutorialGroup"
-                                    (tutorialGroupDeleted)="loadTutorialGroups()"
+                                    (tutorialGroupDeleted)="loadAll()"
                                 ></jhi-tutorial-group-row-buttons>
                             </td>
                         </tr>

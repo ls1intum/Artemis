@@ -1,8 +1,8 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { Course, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
-import { TutorialGroupSchedule } from 'app/entities/tutorialGroupSchedule.model';
-import { TutorialGroupSession } from 'app/entities/TutorialGroupSession.model';
+import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 export class TutorialGroup implements BaseEntity {
     public id?: number;
     public title?: string;

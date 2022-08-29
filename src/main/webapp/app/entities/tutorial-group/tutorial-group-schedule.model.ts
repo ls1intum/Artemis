@@ -1,6 +1,6 @@
 import { BaseEntity } from 'app/shared/model/base-entity';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSession } from 'app/entities/TutorialGroupSession.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import dayjs from 'dayjs/esm';
 
 export class TutorialGroupSchedule implements BaseEntity {
@@ -9,7 +9,6 @@ export class TutorialGroupSchedule implements BaseEntity {
     public dayOfWeek?: number;
     public startTime?: string;
     public endTime?: string;
-    public timeZone: string;
     public repetitionFrequency?: number;
     public validFromInclusive?: dayjs.Dayjs;
     public validToInclusive?: dayjs.Dayjs;

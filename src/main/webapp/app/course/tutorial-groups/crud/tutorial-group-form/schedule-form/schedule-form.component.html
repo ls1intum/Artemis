@@ -7,37 +7,14 @@
             <!-- weekday -->
             <div>
                 <div>
-                    <label class="required"> {{ 'artemisApp.scheduleForm.weekDay.label' | artemisTranslate }}</label>
+                    <label> {{ 'artemisApp.scheduleForm.weekDay.label' | artemisTranslate }}</label>
                 </div>
                 <ng-container *ngFor="let weekDay of weekDays">
                     <input formControlName="dayOfWeek" type="radio" class="btn-check" name="dayOfWeek" id="{{ weekDay.id }}" autocomplete="off" [value]="weekDay.value" checked />
                     <label class="btn btn-outline-primary" for="{{ weekDay.id }}">{{ 'artemisApp.scheduleForm.weekDay.' + weekDay.translationKey | artemisTranslate }}</label>
                 </ng-container>
             </div>
-            <!-- timezone -->
-            <div class="form-group">
-                <label class="required" for="timeZone">{{ 'artemisApp.scheduleForm.timeZoneInput.label' | artemisTranslate }}</label>
-                <input
-                    id="timeZone"
-                    type="text"
-                    class="form-control"
-                    formControlName="timeZone"
-                    [placeholder]="'artemisApp.scheduleForm.timeZoneInput.placeholder' | artemisTranslate"
-                    [resultFormatter]="tzResultFormatter"
-                    [inputFormatter]="tzInputFormatter"
-                    [ngbTypeahead]="tzSearch"
-                    [editable]="false"
-                    #timeZoneInput="ngbTypeahead"
-                    (focus)="tzFocus$.next($any($event).target.value)"
-                    (click)="tzClick$.next($any($event).target.value)"
-                />
-                <small id="tzHelp" class="form-text text-muted">{{ 'artemisApp.scheduleForm.timeZoneInput.tzHelp' | artemisTranslate }}</small>
-                <div *ngIf="timeZoneControl?.invalid && (timeZoneControl?.dirty || timeZoneControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="timeZoneControl?.errors?.required">
-                        {{ 'artemisApp.scheduleForm.timeZoneInput.requiredValidationError' | artemisTranslate }}
-                    </div>
-                </div>
-            </div>
+            <!-- Time -->
             <div>
                 <div class="row">
                     <div class="col-auto my-auto">
@@ -53,15 +30,34 @@
                         <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
                     </div>
                 </div>
+                <div *ngIf="startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="startTimeControl?.errors?.required">
+                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                    </div>
+                </div>
+                <div *ngIf="endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="endTimeControl?.errors?.required">
+                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                    </div>
+                </div>
+                <div *ngIf="formGroup?.invalid && (formGroup?.dirty || formGroup?.touched)">
+                    <div *ngIf="formGroup?.errors?.invalidTimeRange" class="alert alert-danger">
+                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                    </div>
+                </div>
             </div>
         </div>
         <!-- Period -->
         <div>
+            <div *ngIf="defaultPeriodChanged" class="alert alert-warning" role="alert">
+                {{ 'artemisApp.manageTutorialGroups.columns.schedule.periodWarning' | artemisTranslate }}
+            </div>
             <label class="form-label" for="period">{{ 'artemisApp.scheduleForm.periodInput.label' | artemisTranslate }}</label>
             <div class="input-group">
                 <input
                     name="period"
                     id="period"
+                    required
                     formControlName="period"
                     [owlDateTime]="period"
                     placeholder="YYYY-MM-DD - YYYY-MM-DD"
@@ -70,6 +66,20 @@
                 />
                 <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="period"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
                 <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
+            </div>
+            <div class="form-text">
+                {{ 'artemisApp.createConfiguration.periodInput.explanation' | artemisTranslate }}
+            </div>
+            <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
+                <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
+                    {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
+                </div>
+                <div *ngIf="periodControl?.errors?.owlDateTimeParse">
+                    {{ 'artemisApp.createConfiguration.periodInput.parseError' | artemisTranslate }}
+                </div>
+                <div *ngIf="periodControl?.errors?.owlDateTimeRange">
+                    {{ 'artemisApp.createConfiguration.periodInput.invalidRangeError' | artemisTranslate }}
+                </div>
             </div>
         </div>
     </div>

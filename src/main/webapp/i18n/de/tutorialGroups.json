@@ -6,6 +6,28 @@
         "tutorialGroups": {
             "tutorialGroupsButton": "Übungsgruppe"
         },
+        "createConfiguration": {
+            "title": "Erstelle eine neue Übungsgruppen Konfiguration",
+            "editButton": "Bearbeite Übungsgruppen Konfiguration",
+            "explanation": "Bevor du mit der Erstellung von Übungsgruppen beginnen kannst, musst du einige Eigenschaften festlegen, die alle Lerngruppen betreffen. Diese können auch später noch geändert werden.",
+            "timeZoneInput": {
+                "label": "Zeitzone",
+                "changeWarning": "Wenn du die Zeitzone änderst, werden alle Lerngruppen gelöscht. Bist du sicher, dass du dies tun willst?",
+                "placeholder": "Wähle eine Zeitzone aus",
+                "explanation": "Die Zeitzone, in der die Übungsgruppen stattfinden. Anhand dieser Zeitzone werden die Anfangs- und Endzeiten der Übungsgruppen interpretiert. Du kannst in diesem Feld durch Tippen suchen.",
+                "requiredValidationError": "Du musst eine Zeitzone auswählen"
+            },
+            "periodInput": {
+                "label": "Übungsgruppen-Zeitraum",
+                "explanation": "Der Zeitraum, in dem die Übungsgruppen während des Semesters stattfinden. Dies wird für die Erstellung der einzelnen Sitzungen verwendet.",
+                "requiredValidationError": "Du musst einen Zeitraum auswählen",
+                "parseError": "Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
+                "invalidRange": "Der Zeitraum muss einen gültigen Bereich umfassen"
+            }
+        },
+        "editConfiguration": {
+            "title": "Edit Tutorial Groups Configuration"
+        },
         "manageTutorialGroups": {
             "title": "Übungsgruppenverwaltung",
             "tableCaption": "Übungsgruppen für diesen Kurs",
@@ -21,7 +43,12 @@
                 "offline": "Offline",
                 "location": "Ort",
                 "language": "Sprache",
-                "additionalInfo": "Zusätzliche Informationen"
+                "additionalInfo": "Zusätzliche Informationen",
+                "schedule": {
+                    "weekDay": "Wochentag",
+                    "time": "Zeit",
+                    "periodWarning": "Achtung: Der gewählte Zeitraum ist unterschiedlich mit dem Zeitraum der Konfiguration."
+                }
             },
             "deleteButton": {
                 "question": "Bist du sicher, dass du die Übungsgruppe mit dem Titel {{ title }} löschen möchtest?",
@@ -97,15 +124,10 @@
                 "saturday": "Samstag",
                 "sunday": "Sonntag"
             },
-            "timeZoneInput": {
-                "label": "Zeitzone",
-                "placeholder": "Wähle eine Zeitzone aus",
-                "requiredValidationError": "Eine Zeitzone muss ausgewählt werden!",
-                "tzHelp": "Du kannst nach einer Zeitzone suchen indem du in dieses Feld tippst"
-            },
             "timeInput": {
                 "from": "Übungsgruppe beginnt um",
-                "to": "Übungsgruppe endet um"
+                "to": "Übungsgruppe endet um",
+                "invalidTimeRange": "Der Zeitraum muss valide sein!"
             },
             "periodInput": {
                 "label": "Zeitraum in der Übungsgruppen stattfinden: "
