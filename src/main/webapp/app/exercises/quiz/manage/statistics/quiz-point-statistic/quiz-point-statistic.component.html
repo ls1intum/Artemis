@@ -3,23 +3,23 @@
         <h3>{{ quizExercise.title }}</h3>
 
         <button *jhiHasAnyAuthority="['ROLE_TA', 'ROLE_EDITOR', 'ROLE_INSTRUCTOR', 'ROLE_ADMIN']" class="btn btn-primary btn-sm float-end" (click)="recalculate()">
-            <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'showStatistic.recalculateStatistics' | artemisTranslate }}
+            <fa-icon [icon]="faSync" [fixedWidth]="true"></fa-icon>&nbsp;{{ 'artemisApp.showStatistic.recalculateStatistics' | artemisTranslate }}
         </button>
 
         <div #containerRef class="text-center">
             <p class="text-start" class="chart-title-text">
-                <span jhiTranslate="showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
+                <span jhiTranslate="artemisApp.showStatistic.quizPointStatistic.maxScore"></span><span>{{ maxScore }}</span>
             </p>
             <div class="row">
                 <div class="col-md-7 text-start">
                     <p class="chart-title-text">
-                        <span *ngIf="rated" jhiTranslate="showStatistic.quizPointStatistic.titleRated"></span>
-                        <span *ngIf="!rated" jhiTranslate="showStatistic.quizPointStatistic.titleUnrated"></span>
+                        <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleRated"></span>
+                        <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.quizPointStatistic.titleUnrated"></span>
                     </p>
                 </div>
                 <div class="col-md-5 text-end">
                     <p class="chart-title-text">
-                        <span>{{ participants }} </span><span jhiTranslate="showStatistic.participants"></span>
+                        <span>{{ participants }} </span><span jhiTranslate="artemisApp.showStatistic.participants"></span>
                     </p>
                 </div>
             </div>
@@ -44,8 +44,8 @@
             <div class="text-center button-row">
                 <button (click)="switchRated()" type="button" class="btn btn-primary">
                     <fa-icon [icon]="faSync"></fa-icon>&nbsp;
-                    <span *ngIf="rated" jhiTranslate="showStatistic.switchToUnrated"></span>
-                    <span *ngIf="!rated" jhiTranslate="showStatistic.switchToRated"></span>
+                    <span *ngIf="rated" jhiTranslate="artemisApp.showStatistic.switchToUnrated"></span>
+                    <span *ngIf="!rated" jhiTranslate="artemisApp.showStatistic.switchToRated"></span>
                 </button>
                 <p>&nbsp;</p>
             </div>

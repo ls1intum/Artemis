@@ -181,7 +181,7 @@ dependencies {
     implementation "org.imsglobal:basiclti-util:1.2.0"
     implementation "org.jasypt:jasypt:1.9.3"
     implementation "me.xdrop:fuzzywuzzy:1.4.0"
-    implementation "com.atlassian.bamboo:bamboo-specs:8.1.8"
+    implementation "com.atlassian.bamboo:bamboo-specs:8.2.5"
     implementation "com.thoughtworks.qdox:qdox:2.0.1"
     implementation "io.sentry:sentry-logback:6.3.1"
     implementation "io.sentry:sentry-spring-boot-starter:6.3.1"

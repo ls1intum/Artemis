@@ -87,8 +87,8 @@ export class MultipleChoiceQuestionStatisticComponent extends QuestionStatisticC
      */
     loadSolutionLayout() {
         // add correct-text to the label based on the language
-        const correctLabel = this.translateService.instant('showStatistic.questionStatistic.correct');
-        const incorrectLabel = this.translateService.instant('showStatistic.questionStatistic.incorrect');
+        const correctLabel = this.translateService.instant('artemisApp.showStatistic.questionStatistic.correct');
+        const incorrectLabel = this.translateService.instant('artemisApp.showStatistic.questionStatistic.incorrect');
         this.question.answerOptions!.forEach((answerOption, i) => {
             if (answerOption.isCorrect === true) {
                 // check if the answer is valid and if true: change solution-label and -color

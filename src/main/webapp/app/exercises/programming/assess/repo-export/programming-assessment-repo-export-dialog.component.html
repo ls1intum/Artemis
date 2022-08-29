@@ -11,7 +11,7 @@
     </div>
     <div class="modal-body">
         <div *ngIf="isRepoExportForMultipleExercises" class="table-responsive m-2 p-1">
-            <span style="font-weight: bold" jhiTranslate="instructorDashboard.exportRepos.currentlySelected"
+            <span style="font-weight: bold" jhiTranslate="artemisApp.instructorDashboard.exportRepos.currentlySelected"
                 >You are about to download all teams'/students' submissions of the following exercises:</span
             >
             <table class="table table-striped">
@@ -24,7 +24,7 @@
         </div>
         <p
             *ngIf="!singleParticipantMode && !isRepoExportForMultipleExercises"
-            [jhiTranslate]="'instructorDashboard.exportRepos.questions.' + (exercise.teamMode ? 'team' : 'individual')"
+            [jhiTranslate]="'artemisApp.instructorDashboard.exportRepos.questions.' + (exercise.teamMode ? 'team' : 'individual')"
             [translateValues]="{ exerciseTitle: exercise.title, courseTitle: exercise.course?.title }"
         >
             Confirm export
@@ -104,7 +104,7 @@
                 <strong jhiTranslate="artemisApp.programmingExercise.export.normalizeCodeStyle">Normalize code style (line endings, encoding)</strong>
             </label>
         </div>
-        <p *ngIf="!singleParticipantMode" jhiTranslate="instructorDashboard.exportRepos.timeWarning">
+        <p *ngIf="!singleParticipantMode" jhiTranslate="artemisApp.instructorDashboard.exportRepos.timeWarning">
             <b>Note:</b> This action can take several minutes depending on number and size of repositories.
         </p>
     </div>
