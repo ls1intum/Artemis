@@ -9,7 +9,7 @@ RUN echo "Installing needed build dependencies" \
 WORKDIR /opt/artemis
 # TODO: make this more secure/performant and don't copy everything
 # COPY src gradle gradlew  .
-COPY .. .
+COPY . .
 ENV NODE_OPTIONS "--max_old_space_size=6144"
 RUN ./gradlew -i --stacktrace --no-daemon -Pprod -Pwar clean bootWar
 RUN ls /opt/artemis/build/libs/*.war
