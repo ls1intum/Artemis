@@ -98,5 +98,6 @@ public abstract class Posting extends DomainObject {
 
     public abstract void removeReaction(Reaction reaction);
 
+    @Transient
     public abstract Course getCoursePostingBelongsTo();
 }
