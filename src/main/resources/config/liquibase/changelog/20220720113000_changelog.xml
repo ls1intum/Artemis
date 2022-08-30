@@ -18,9 +18,6 @@
             <column name="type" type="VARCHAR(31)">
                 <constraints nullable="false"/>
             </column>
-            <!--<column name="type" type="INT">
-                <constraints nullable="false"/>
-            </column>-->
         </createTable>
         <addForeignKeyConstraint constraintName="FKd84cd79d225d13687cfe9c1395fb1cc69e09f553"
                                  baseTableName="learning_goal_relation"
