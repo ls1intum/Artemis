@@ -21,7 +21,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
-    exerciseTitle: string | undefined;
 
     private paramSubscription: Subscription;
     readonly plagiarismVerdict = PlagiarismVerdict;
@@ -43,8 +42,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase = res.body!;
-                    this.exerciseTitle =
-                        this.plagiarismCase.exercise!.title!.length > 40 ? this.plagiarismCase.exercise?.title?.slice(0, 35) + '…' : this.plagiarismCase.exercise?.title;
 
                     this.metisService.setCourse(this.plagiarismCase.exercise!.course!);
                     this.metisService.setPageType(this.pageType);
