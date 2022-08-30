@@ -455,7 +455,7 @@ In a production setup, you have to at least change the user credentials (in the 
    In a production setup, you should use a random ``master.key``, then you have to follow the steps described in  `Gitlab to Jenkins push notification token <#gitlab-to-jenkins-push-notification-token>`__ to generate the token.
 
 4. The `application-local.yml` must be adapted with the values configured in ``jenkins-casc-config.yml``:
-   If you used the preset ``master.key`` and are running a development setup, the preset values for the secrets can be found in the `artemis configuration template posted at the beginning of this page <#artemis>`__.
+   If you used the preset ``master.key`` and are running a development setup, the secrets can be found in the `artemis configuration template posted at the beginning of this page <#artemis>`__.
 
 .. code:: yaml
 
