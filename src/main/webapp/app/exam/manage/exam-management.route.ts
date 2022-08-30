@@ -682,7 +682,7 @@ export const examManagementRoute: Routes = [
             component: ExerciseScoresComponent,
             data: {
                 authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-                pageTitle: 'instructorDashboard.exerciseDashboard',
+                pageTitle: 'artemisApp.instructorDashboard.exerciseDashboard',
             },
             canActivate: [UserRouteAccessService],
         };
