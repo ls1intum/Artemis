@@ -42,35 +42,53 @@ export class GradingKeyOverviewComponent implements OnInit {
     isBonus = false;
 
     ngOnInit(): void {
-        // Note: due to lazy loading and router outlet, we use parent 2x here
-        this.route.parent?.parent?.params.subscribe((params) => {
-            this.courseId = Number(params['courseId']);
-            if (params['examId']) {
-                this.examId = Number(params['examId']);
-                this.isExam = true;
-            }
-            this.gradingSystemService.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
-                if (gradeSteps) {
-                    this.title = gradeSteps.title;
-                    this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
-                    this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
-                    if (gradeSteps.maxPoints !== undefined) {
-                        if (!this.isExam) {
-                            // calculate course max points based on exercises
-                            const course = this.courseCalculationService.getCourse(this.courseId!);
-                            const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
-                            this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
-                        } else {
-                            // for exams the max points filed should equal the total max points (otherwise exams can't be started)
-                            this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
-                        }
+        // Note: This component is used in multiple routes, so it can be lazy loaded. Also, courseId and examId can be
+        // found on different levels of hierarchy tree (on the same level or a parent or a grandparent, etc.).
+        this.courseId = Number(this.findParamInRouteHierarchy('courseId'));
+        const examIdParam = this.findParamInRouteHierarchy('examId');
+        if (examIdParam) {
+            this.examId = Number(examIdParam);
+            this.isExam = true;
+        }
+        this.gradingSystemService.findGradeSteps(this.courseId, this.examId).subscribe((gradeSteps) => {
+            if (gradeSteps) {
+                this.title = gradeSteps.title;
+                this.isBonus = gradeSteps.gradeType === GradeType.BONUS;
+                this.gradeSteps = this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
+                if (gradeSteps.maxPoints !== undefined) {
+                    if (!this.isExam) {
+                        // calculate course max points based on exercises
+                        const course = this.courseCalculationService.getCourse(this.courseId!);
+                        const maxPoints = this.courseCalculationService.calculateTotalScores(course!.exercises!, course!).get(ScoreType.REACHABLE_POINTS);
+                        this.gradingSystemService.setGradePoints(this.gradeSteps, maxPoints!);
+                    } else {
+                        // for exams the max points filed should equal the total max points (otherwise exams can't be started)
+                        this.gradingSystemService.setGradePoints(this.gradeSteps, gradeSteps.maxPoints!);
                     }
                 }
-            });
+            }
         });
-        this.route.parent?.parent?.queryParams.subscribe((queryParams) => {
-            this.studentGrade = queryParams['grade'];
-        });
+
+        // Needed queryParam is available on this component so no need to traverse the hierarchy like params above.
+        this.studentGrade = this.route.snapshot.queryParams['grade'];
+    }
+
+    /**
+     * Checks router hierarchy to find a given paramKey, starting from the current ActivatedRouteSnapshot
+     * and traversing the parents.
+     * @param paramKey the desired key of route.snapshot.params
+     * @private
+     */
+    private findParamInRouteHierarchy(paramKey: string): string | undefined {
+        let currentRoute: ActivatedRoute | null = this.route;
+        while (currentRoute) {
+            const paramValue = currentRoute.snapshot.params[paramKey];
+            if (paramValue !== undefined) {
+                return paramValue;
+            }
+            currentRoute = currentRoute.parent;
+        }
+        return undefined;
     }
 
     /**
