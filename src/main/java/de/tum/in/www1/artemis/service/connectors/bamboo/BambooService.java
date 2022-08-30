@@ -134,16 +134,16 @@ public class BambooService extends AbstractContinuousIntegrationService {
         HttpEntity<List<String>> entity = new HttpEntity<>(permissionData, null);
 
         participant.getParticipants().forEach(user -> {
-            // Access to a single buildplan also needs access to the project
+            // Access to a single build plan also needs access to the project
             String url = serverUrl + "/rest/api/latest/permissions/project/" + projectKey + "/users/" + user.getLogin();
-            grantBuildPlanPermissionsRESTCall(url, entity, user, buildPlanId);
-            // Access to the buildplan itself
+            grantBuildPlanPermissions(url, entity, user, buildPlanId);
+            // Access to the build plan itself
             url = serverUrl + "/rest/api/latest/permissions/plan/" + buildPlanId + "/users/" + user.getLogin();
-            grantBuildPlanPermissionsRESTCall(url, entity, user, buildPlanId);
+            grantBuildPlanPermissions(url, entity, user, buildPlanId);
         });
     }
 
-    private void grantBuildPlanPermissionsRESTCall(String url, HttpEntity<List<String>> entity, User user, String buildPlanId) {
+    private void grantBuildPlanPermissions(String url, HttpEntity<List<String>> entity, User user, String buildPlanId) {
         ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.PUT, entity, String.class);
         if (response.getStatusCode() != HttpStatus.NO_CONTENT && response.getStatusCode() != HttpStatus.NOT_MODIFIED) {
             log.error("Cannot grant read permissions to student {} for build plan {}", user.getLogin(), buildPlanId);
@@ -160,7 +160,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
                 var repositoryUrl = participation.getVcsRepositoryUrl();
                 Repository repo = gitService.getOrCheckoutRepository(repositoryUrl, true);
                 // we set user to null to make sure the Artemis user is used to create the setup commit, this is important to filter this commit later in
-                // notifyPush in ProgrammingSubmissionService
+                // processNewProgrammingSubmission in ProgrammingSubmissionService
                 gitService.commitAndPush(repo, SETUP_COMMIT_MESSAGE, true, null);
 
                 if (exercise == null) {

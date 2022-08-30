@@ -82,7 +82,7 @@ public class ExerciseGroupResource {
             throws URISyntaxException {
         log.debug("REST request to create an exercise group : {}", exerciseGroup);
         if (exerciseGroup.getId() != null) {
-            throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new exerciseGroup cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         if (exerciseGroup.getExam() == null) {

@@ -29,6 +29,7 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     readonly TEXT = ExerciseType.TEXT;
     readonly FILE_UPLOAD = ExerciseType.FILE_UPLOAD;
     readonly IncludedInOverallScore = IncludedInOverallScore;
+    readonly dayjs = dayjs;
     @HostBinding('class') classes = 'exercise-row';
     @Input() exercise: Exercise;
     @Input() course: Course;
