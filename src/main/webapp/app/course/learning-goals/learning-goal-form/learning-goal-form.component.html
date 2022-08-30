@@ -40,8 +40,8 @@
             <div class="form-group">
                 <label for="taxonomy">{{ 'artemisApp.learningGoal.taxonomy' | artemisTranslate }}</label>
                 <select class="form-select mb-2" id="taxonomy" formControlName="taxonomy">
-                    <option [value]="undefined" selected></option>
-                    <option *ngFor="let taxonomy of learningGoalTaxonomy | keys" [value]="taxonomy">
+                    <option [ngValue]="undefined" selected></option>
+                    <option *ngFor="let taxonomy of learningGoalTaxonomy | keys" [ngValue]="taxonomy">
                         {{ 'artemisApp.learningGoal.taxonomies.' + learningGoalTaxonomy[taxonomy] | artemisTranslate }}
                     </option>
                 </select>

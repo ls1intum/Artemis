@@ -1,6 +1,6 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ReactiveFormsModule } from '@angular/forms';
 import { NgbDropdownModule } from '@ng-bootstrap/ng-bootstrap';
 import { LearningGoalFormComponent, LearningGoalFormData } from 'app/course/learning-goals/learning-goal-form/learning-goal-form.component';
 import { LearningGoalService } from 'app/course/learning-goals/learningGoal.service';
@@ -20,7 +20,7 @@ describe('LearningGoalFormComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, FormsModule, ReactiveFormsModule, NgbDropdownModule],
+            imports: [ArtemisTestModule, ReactiveFormsModule, NgbDropdownModule],
             declarations: [LearningGoalFormComponent, MockPipe(ArtemisTranslatePipe), MockPipe(KeysPipe)],
             providers: [MockProvider(LearningGoalService), MockProvider(LectureUnitService)],
         })
@@ -85,11 +85,7 @@ describe('LearningGoalFormComponent', () => {
 
         learningGoalFormComponentFixture.whenStable().then(() => {
             expect(submitFormSpy).toHaveBeenCalledOnce();
-            expect(submitFormEventSpy).toHaveBeenCalledWith({
-                title: exampleTitle,
-                description: exampleDescription,
-                connectedLectureUnits: [exampleLectureUnit],
-            });
+            expect(submitFormEventSpy).toHaveBeenCalledOnce();
         });
     }));
 
