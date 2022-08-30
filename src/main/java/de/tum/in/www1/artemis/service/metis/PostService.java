@@ -342,6 +342,7 @@ public class PostService extends PostingService {
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
@@ -353,6 +354,7 @@ public class PostService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+            plagiarismCasePosts.stream().forEach(post -> post.setCourse(course));
 
             return plagiarismCasePosts;
         }
