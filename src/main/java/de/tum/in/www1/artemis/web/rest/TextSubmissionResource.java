@@ -97,7 +97,7 @@ public class TextSubmissionResource extends AbstractSubmissionResource {
     public ResponseEntity<TextSubmission> createTextSubmission(@PathVariable Long exerciseId, @RequestBody TextSubmission textSubmission) {
         log.debug("REST request to save text submission : {}", textSubmission);
         if (textSubmission.getId() != null) {
-            throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new text submission cannot already have an ID", ENTITY_NAME, "idExists");
         }
         return handleTextSubmission(exerciseId, textSubmission);
     }
