@@ -128,7 +128,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
-            throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idExists");
         }
         if (modelingExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new modeling exercise needs a title", ENTITY_NAME, "missingtitle");

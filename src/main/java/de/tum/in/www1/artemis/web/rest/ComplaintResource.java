@@ -144,7 +144,7 @@ public class ComplaintResource {
 
     private void validateNewComplaint(Complaint complaint) {
         if (complaint.getId() != null) {
-            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new complaint cannot already have an id", COMPLAINT_ENTITY_NAME, "idExists");
         }
 
         if (complaint.getResult() == null || complaint.getResult().getId() == null) {
