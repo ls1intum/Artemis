@@ -395,7 +395,7 @@ public class DatabaseUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repoName));
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getProjectKey(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -872,6 +872,7 @@ public class DatabaseUtilService {
     private Post createBasicPost(PlagiarismCase plagiarismCase) {
         Post postToAdd = createBasicPost(0, "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
+        postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 
@@ -2231,7 +2232,7 @@ public class DatabaseUtilService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
-        programmingExercise.setPublishBuildPlanUrl(true);
+        programmingExercise.setPublishBuildPlanUrl(false);
         programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);

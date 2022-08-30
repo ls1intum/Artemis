@@ -6,7 +6,7 @@ export class GradingCriterionCommand extends DomainTagCommand {
     public static readonly identifier = '[criterion]';
     public static readonly text = ' Add criteria title (only visible for tutors)';
 
-    buttonTranslationString = 'assessmentInstructions.instructions.editor.addCriterion';
+    buttonTranslationString = 'artemisApp.assessmentInstructions.instructions.editor.addCriterion';
     displayCommandButton = true;
     gradingInstructionCommand = new GradingInstructionCommand();
 
