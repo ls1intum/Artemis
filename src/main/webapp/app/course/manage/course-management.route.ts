@@ -115,7 +115,7 @@ export const courseManagementState: Routes = [
                 component: CourseGroupComponent,
                 data: {
                     authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-                    pageTitle: 'userManagement.groups',
+                    pageTitle: 'artemisApp.userManagement.groups',
                 },
                 canActivate: [UserRouteAccessService],
             },

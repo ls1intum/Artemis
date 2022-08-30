@@ -218,9 +218,6 @@ public class Post extends Posting {
         else if (this.exercise != null) {
             return this.getExercise().getCourseViaExerciseGroupOrCourseMember();
         }
-        else if (this.plagiarismCase != null) {
-            return this.plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
-        }
 
         return null;
     }
