@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.tutorialGroups;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -15,6 +15,9 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.DomainObject;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 
 @Entity
@@ -59,18 +62,16 @@ public class TutorialGroup extends DomainObject {
     @NotNull
     private User teachingAssistant;
 
-    @ManyToMany
-    @JoinTable(name = "tutorial_group_registered_student", joinColumns = @JoinColumn(name = "tutorial_group_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "registered_student_id", referencedColumnName = "id"))
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("registeredTutorialGroups")
-    private Set<User> registeredStudents = new HashSet<>();
+    @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties("tutorialGroup")
+    private Set<TutorialGroupRegistration> registrations = new HashSet<>();
 
     public TutorialGroup() {
         // Empty constructor needed for Jackson.
     }
 
     public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String location, Language language, User teachingAssistant,
-            Set<User> registeredStudents) {
+            Set<TutorialGroupRegistration> registrations) {
         this.course = course;
         this.title = title;
         this.additionalInformation = additionalInformation;
@@ -79,15 +80,7 @@ public class TutorialGroup extends DomainObject {
         this.location = location;
         this.language = language;
         this.teachingAssistant = teachingAssistant;
-        this.registeredStudents = registeredStudents;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
+        this.registrations = registrations;
     }
 
     public Course getCourse() {
@@ -98,20 +91,12 @@ public class TutorialGroup extends DomainObject {
         this.course = course;
     }
 
-    public User getTeachingAssistant() {
-        return teachingAssistant;
+    public String getTitle() {
+        return title;
     }
 
-    public void setTeachingAssistant(User teachingAssistant) {
-        this.teachingAssistant = teachingAssistant;
-    }
-
-    public Set<User> getRegisteredStudents() {
-        return registeredStudents;
-    }
-
-    public void setRegisteredStudents(Set<User> registeredStudents) {
-        this.registeredStudents = registeredStudents;
+    public void setTitle(String title) {
+        this.title = title;
     }
 
     public String getAdditionalInformation() {
@@ -122,20 +107,20 @@ public class TutorialGroup extends DomainObject {
         this.additionalInformation = additionalInformation;
     }
 
-    public Language getLanguage() {
-        return language;
-    }
-
-    public void setLanguage(Language language) {
-        this.language = language;
-    }
-
     public Integer getCapacity() {
         return capacity;
     }
 
     public void setCapacity(Integer capacity) {
         this.capacity = capacity;
+    }
+
+    public Boolean getOnline() {
+        return isOnline;
+    }
+
+    public void setOnline(Boolean online) {
+        isOnline = online;
     }
 
     public String getLocation() {
@@ -146,11 +131,27 @@ public class TutorialGroup extends DomainObject {
         this.location = location;
     }
 
-    public Boolean getIsOnline() {
-        return isOnline;
+    public Language getLanguage() {
+        return language;
     }
 
-    public void setIsOnline(Boolean online) {
-        isOnline = online;
+    public void setLanguage(Language language) {
+        this.language = language;
+    }
+
+    public User getTeachingAssistant() {
+        return teachingAssistant;
+    }
+
+    public void setTeachingAssistant(User teachingAssistant) {
+        this.teachingAssistant = teachingAssistant;
+    }
+
+    public Set<TutorialGroupRegistration> getRegistrations() {
+        return registrations;
+    }
+
+    public void setRegistrations(Set<TutorialGroupRegistration> registrations) {
+        this.registrations = registrations;
     }
 }

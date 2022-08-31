@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
+import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroupRegistration;
 
 /**
  * A user.
@@ -145,9 +146,9 @@ public class User extends AbstractAuditingEntity implements Participant {
     @JsonIgnoreProperties("user")
     private Set<Organization> organizations = new HashSet<>();
 
-    @ManyToMany(mappedBy = "registeredStudents")
+    @OneToMany(mappedBy = "student", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    public Set<TutorialGroup> registeredTutorialGroups = new HashSet<>();
+    public Set<TutorialGroupRegistration> tutorialGroupRegistrations = new HashSet<>();
 
     @OneToMany(mappedBy = "user", fetch = FetchType.LAZY, cascade = CascadeType.REMOVE, orphanRemoval = true)
     private Set<LectureUnitCompletion> completedLectureUnits = new HashSet<>();
@@ -385,11 +386,11 @@ public class User extends AbstractAuditingEntity implements Participant {
         this.vcsAccessToken = vcsAccessToken;
     }
 
-    public Set<TutorialGroup> getRegisteredTutorialGroups() {
-        return registeredTutorialGroups;
+    public Set<TutorialGroupRegistration> getTutorialGroupRegistrations() {
+        return tutorialGroupRegistrations;
     }
 
-    public void setRegisteredTutorialGroups(Set<TutorialGroup> registeredTutorialGroups) {
-        this.registeredTutorialGroups = registeredTutorialGroups;
+    public void setTutorialGroupRegistrations(Set<TutorialGroupRegistration> tutorialGroupRegistrations) {
+        this.tutorialGroupRegistrations = tutorialGroupRegistrations;
     }
 }

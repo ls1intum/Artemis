@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.tutorialGroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,9 +18,10 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorialGroupService;
@@ -92,7 +93,7 @@ public class TutorialGroupResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, user);
 
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
-        var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegisteredStudents(courseId);
+        var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(courseId);
 
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
@@ -110,7 +111,7 @@ public class TutorialGroupResource {
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long tutorialGroupId, @PathVariable Long courseId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
 
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroup);
 
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
@@ -157,7 +158,7 @@ public class TutorialGroupResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> delete(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.info("REST request to delete a TutorialGroup : {}", tutorialGroupId);
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
@@ -179,7 +180,7 @@ public class TutorialGroupResource {
         if (tutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroup.getId());
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroup.getId());
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
@@ -206,7 +207,7 @@ public class TutorialGroupResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
@@ -231,7 +232,7 @@ public class TutorialGroupResource {
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Void> registerStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable String studentLogin) {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
@@ -262,7 +263,7 @@ public class TutorialGroupResource {
     public ResponseEntity<List<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
             @RequestBody List<StudentDTO> studentDtos) {
         log.debug("REST request to register {} to tutorial group {} of course {}", studentDtos, tutorialGroupId, courseId);
-        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
         List<StudentDTO> notFoundStudentsDtos = tutorialGroupService.registerMultipleStudents(courseId, tutorialGroupId, studentDtos);
@@ -296,7 +297,7 @@ public class TutorialGroupResource {
         originalTutorialGroup.setTeachingAssistant(sourceTutorialGroup.getTeachingAssistant());
         originalTutorialGroup.setAdditionalInformation(sourceTutorialGroup.getAdditionalInformation());
         originalTutorialGroup.setCapacity(sourceTutorialGroup.getCapacity());
-        originalTutorialGroup.setIsOnline(sourceTutorialGroup.getIsOnline());
+        originalTutorialGroup.setOnline(sourceTutorialGroup.getOnline());
         originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
         originalTutorialGroup.setLocation(sourceTutorialGroup.getLocation());
     }

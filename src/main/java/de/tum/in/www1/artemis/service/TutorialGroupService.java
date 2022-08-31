@@ -4,10 +4,13 @@ import java.util.*;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.TutorialGroup;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.tutorialGroups.TutorialGroupRegistrationType;
+import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;
@@ -17,12 +20,16 @@ public class TutorialGroupService {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
     private final CourseRepository courseRepository;
 
     private final UserService userService;
 
-    public TutorialGroupService(TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository, UserService userService) {
+    public TutorialGroupService(TutorialGroupRepository tutorialGroupRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
+            CourseRepository courseRepository, UserService userService) {
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.courseRepository = courseRepository;
         this.userService = userService;
     }
@@ -34,8 +41,12 @@ public class TutorialGroupService {
      * @param tutorialGroup The tutorial group to deregister from.
      */
     public void deregisterStudent(User student, TutorialGroup tutorialGroup) {
-        tutorialGroup.getRegisteredStudents().remove(student);
-        tutorialGroupRepository.save(tutorialGroup);
+        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudent(tutorialGroup,
+                student);
+        if (existingRegistration.isEmpty()) {
+            return; // No registration found, nothing to do.
+        }
+        tutorialGroupRegistrationRepository.delete(existingRegistration.get());
     }
 
     /**
@@ -45,8 +56,13 @@ public class TutorialGroupService {
      * @param tutorialGroup The tutorial group to register to.
      */
     public void registerStudent(User student, TutorialGroup tutorialGroup) {
-        tutorialGroup.getRegisteredStudents().add(student);
-        tutorialGroupRepository.save(tutorialGroup);
+        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudent(tutorialGroup,
+                student);
+        if (existingRegistration.isPresent()) {
+            return; // Registration already exists, nothing to do.
+        }
+        TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
+        tutorialGroupRegistrationRepository.save(newRegistration);
     }
 
     /**
@@ -59,7 +75,7 @@ public class TutorialGroupService {
      */
     public List<StudentDTO> registerMultipleStudents(Long courseId, Long tutorialGroupId, List<StudentDTO> studentDTOs) {
         var course = this.courseRepository.findByIdElseThrow(courseId);
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(tutorialGroupId);
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
 
         List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
         for (var studentDto : studentDTOs) {
@@ -70,11 +86,9 @@ public class TutorialGroupService {
                 notFoundStudentsDTOs.add(studentDto);
             }
             else {
-                tutorialGroup.getRegisteredStudents().add(optionalStudent.get());
+                registerStudent(optionalStudent.get(), tutorialGroup);
             }
         }
-        tutorialGroupRepository.save(tutorialGroup);
-
         return notFoundStudentsDTOs;
     }
 

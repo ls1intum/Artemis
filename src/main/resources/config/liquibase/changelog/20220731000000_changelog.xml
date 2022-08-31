@@ -19,12 +19,8 @@
             <column name="title" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="teaching_assistant_id" type="BIGINT">
-                <constraints nullable="false"/>
-            </column>
-            <column name="is_online" type="BOOLEAN" defaultValueBoolean="false">
-                <constraints nullable="false"/>
-            </column>
+            <column name="teaching_assistant_id" type="BIGINT"/>
+            <column name="is_online" type="BOOLEAN"/>
             <column name="course_id" type="BIGINT"/>
             <column name="additional_information" type="LONGTEXT"/>
             <column name="language" type="VARCHAR(255)"/>
@@ -32,12 +28,17 @@
             <column name="capacity" type="INT"/>
         </createTable>
 
-        <createTable tableName="tutorial_group_registered_student">
+        <createTable tableName="tutorial_group_registration">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_groupPK"/>
+            </column>
             <column name="tutorial_group_id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="registered_student_id" type="BIGINT">
+            <column name="student_id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="type" type="VARCHAR(255)">
             </column>
         </createTable>
         <!-- fks for tutorial_group table -->
@@ -50,13 +51,13 @@
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
                                  validate="true"/>
 
-        <!-- fks for tutorial_group_registered_student table -->
-        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_registered_student"
-                                 constraintName="fk_tutorial_group_registered_student_tutorial_group_id" deferrable="false"
+        <!-- fks for tutorial_group_registration table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_registration"
+                                 constraintName="fk_tutorial_group_registration_tutorial_group_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="tutorial_group" validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="registered_student_id" baseTableName="tutorial_group_registered_student"
-                                 constraintName="fk_tutorial_group_registered_student_registered_student_id" deferrable="false"
+        <addForeignKeyConstraint baseColumnNames="student_id" baseTableName="tutorial_group_registration"
+                                 constraintName="fk_tutorial_group_registration_student_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id"
                                  referencedTableName="jhi_user" validate="true"/>
     </changeSet>
