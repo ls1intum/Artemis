@@ -705,7 +705,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private convertToExportRow(studentResult: StudentResult, csvExportOptions?: CsvExportOptions): ExportRow {
         const rowData = this.newRowBuilder(csvExportOptions);
 
-        rowData.setUserInformation(studentResult.name, studentResult.login, studentResult.eMail, studentResult.registrationNumber);
+        rowData.setUserInformation(studentResult.name, studentResult.login, studentResult.email, studentResult.registrationNumber);
 
         this.exerciseGroups.forEach((exerciseGroup) => {
             const exerciseResult = studentResult.exerciseGroupIdToExerciseResult?.[exerciseGroup.id];

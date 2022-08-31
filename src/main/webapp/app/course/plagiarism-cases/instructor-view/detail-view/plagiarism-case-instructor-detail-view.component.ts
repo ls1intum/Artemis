@@ -2,34 +2,55 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { ActivatedRoute } from '@angular/router';
+import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { ExerciseType, getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
+import { ExerciseType, getExerciseUrlSegment, getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
 import { Post } from 'app/entities/metis/post.model';
 import { Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
+import { faCheck, faInfo, faPrint, faUser } from '@fortawesome/free-solid-svg-icons';
+import { ThemeService } from 'app/core/theme/theme.service';
+import { abbreviateString } from 'app/utils/text.utils';
 
 @Component({
     selector: 'jhi-plagiarism-case-instructor-detail-view',
     templateUrl: './plagiarism-case-instructor-detail-view.component.html',
+    styleUrls: ['./plagiarism-case-instructor-detail-view.component.scss'],
     providers: [MetisService],
 })
 export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDestroy {
     courseId: number;
     plagiarismCaseId: number;
     plagiarismCase: PlagiarismCase;
+
     verdictPointDeduction = 0;
     verdictMessage = '';
     createdPost: Post;
+
+    activeTab = 1;
+
+    getExerciseUrlSegment = getExerciseUrlSegment;
     getIcon = getIcon;
+    faUser = faUser;
+    faPrint = faPrint;
+    faInfo = faInfo;
+    faCheck = faCheck;
 
     readonly pageType = PageType.PLAGIARISM_CASE;
     private postsSubscription: Subscription;
     posts: Post[];
 
-    constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private route: ActivatedRoute, private alertService: AlertService) {}
+    constructor(
+        protected metisService: MetisService,
+        private plagiarismCasesService: PlagiarismCasesService,
+        private route: ActivatedRoute,
+        private alertService: AlertService,
+        private translateService: TranslateService,
+        private themeService: ThemeService,
+    ) {}
 
     ngOnInit(): void {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
@@ -37,6 +58,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.plagiarismCasesService.getPlagiarismCaseDetailForInstructor(this.courseId, this.plagiarismCaseId).subscribe({
             next: (res: HttpResponse<PlagiarismCase>) => {
                 this.plagiarismCase = res.body!;
+
                 this.verdictMessage = this.plagiarismCase.verdictMessage ?? '';
                 this.verdictPointDeduction = this.plagiarismCase.verdictPointDeduction ?? 0;
                 this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
@@ -154,43 +176,33 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     }
 
     /**
-     * invoke metis service to create an empty default post that is needed on initialization of a modal to create a post,
-     * this empty post has no course-wide context as well as the plagiarism case set as context
-     * it has an example text for the instructor and a default title containing the exercise title
+     * Creates a post for the student notification.
+     * This method invokes the metis service to create an empty default post (without course-wide context) that is needed for initialization of the modal.
+     * The plagiarism case is set as context and an example title and body for the instructor is generated.
      **/
     createEmptyPost(): void {
+        const studentName = abbreviateString(this.plagiarismCase.student?.name ?? '', 70);
+        const exerciseTitle = abbreviateString(this.plagiarismCase.exercise?.title ?? '', 70);
+        const courseTitle = abbreviateString(this.plagiarismCase.exercise?.course?.title ?? '', 70);
+
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
-        this.createdPost.content = `Dear ${this.plagiarismCase.student!.name},\nAfter a meticulous review of your final submission for the ${
-            this.plagiarismCase.exercise!.title
-        } in the ${
-            this.plagiarismCase.exercise!.exerciseGroup
-                ? `exam ${this.plagiarismCase.exercise!.exerciseGroup.exam!.title}`
-                : `course ${this.plagiarismCase.exercise!.course!.title}`
-        }, we have concluded that you have committed plagiarism.\nThis is not only a violation of principles of good student practice but also of the “Student Code of Conduct” of the faculty of computer science that you have agreed upon. You can check the Student conduct code [here](https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf) §22.1 of the “Allgemeine Studien- und Prüfungsordnung (APSO)” [“General Examination and Study Regulations”] regulates consequences for such cases. You can find the APSO [here](https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1).\nYou have one week to provide a statement about this situation.`;
-        this.createdPost.title = `Plagiarism Case ${this.plagiarismCase.exercise!.title}`;
+        // Note the limit of 1.000 characters for the post's content
+        this.createdPost.title = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.title', {
+            exercise: exerciseTitle,
+        });
+        this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
+            student: studentName,
+            exercise: exerciseTitle,
+            course: courseTitle,
+            cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
+            aspoLink: 'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1',
+        });
     }
 
     /**
-     * Get the url segment for different types of exercises.
-     * @param exerciseType type of exercise
+     * Prints the whole page using the theme service
      */
-    getExerciseUrlSegment(exerciseType?: ExerciseType) {
-        switch (exerciseType) {
-            case ExerciseType.TEXT:
-                return 'text-exercises';
-            case ExerciseType.MODELING:
-                return 'modeling-exercises';
-            case ExerciseType.PROGRAMMING:
-                return 'programming-exercises';
-            default:
-                throw Error('Unexpected exercise type ' + exerciseType);
-        }
-    }
-
-    /**
-     * exports the plagiarism case with all relevant information as PDF
-     */
-    exportPlagiarismCase(): void {
-        // TODO: export the plagiarism case as a PDF with all relevant information
+    printPlagiarismCase(): void {
+        this.themeService.print();
     }
 }

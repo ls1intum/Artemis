@@ -474,7 +474,8 @@ public class Result extends DomainObject {
     // jhipster-needle-entity-add-getters-setters - JHipster will add getters and setters here, do not remove
 
     /**
-     * Updates the attributes "score" and "successful" by evaluating its submission
+     * Updates the attributes "score" and "successful" by evaluating its submission.
+     * <b>Important</b>: the quizSubmission has to be loaded with eager submitted answers, otherwise this method will not work correctly
      */
     public void evaluateQuizSubmission() {
         if (submission instanceof QuizSubmission quizSubmission) {

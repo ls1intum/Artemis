@@ -21,6 +21,6 @@ export class ParticipantScoresAverageTableComponent {
 
     extractParticipantName = (participantScoreAverageDTO: BaseEntity) => {
         const castedDTO = participantScoreAverageDTO as ParticipantScoreAverageDTO;
-        return castedDTO.userName ? String(castedDTO.userName) : String(castedDTO.teamName);
+        return castedDTO.name!;
     };
 }

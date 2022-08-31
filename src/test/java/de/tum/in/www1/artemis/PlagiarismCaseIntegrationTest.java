@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.ArrayList;
@@ -228,28 +229,25 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testSavePlagiarismCaseVerdict_forbidden_student() throws Exception {
-        request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(), HttpStatus.FORBIDDEN);
+        request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testSavePlagiarismCaseVerdict_forbidden_tutor() throws Exception {
-        request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(), HttpStatus.FORBIDDEN);
+        request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testSavePlagiarismCaseVerdict_forbidden_editor() throws Exception {
-        request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(), HttpStatus.FORBIDDEN);
+        request.put("/api/courses/1/plagiarism-cases/1/verdict", new PlagiarismVerdictDTO(NO_PLAGIARISM, "", 0), HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_warning() throws Exception {
-        var plagiarismVerdictDTO = new PlagiarismVerdictDTO();
-        plagiarismVerdictDTO.setVerdict(PlagiarismVerdict.WARNING);
-        plagiarismVerdictDTO.setVerdictMessage("This is a warning!");
-
+        var plagiarismVerdictDTO = new PlagiarismVerdictDTO(WARNING, "This is a warning!", 0);
         request.put("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
         var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
         assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict warning").isEqualTo(PlagiarismVerdict.WARNING);
@@ -259,10 +257,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSavePlagiarismCaseVerdict_pointDeduction() throws Exception {
-        var plagiarismVerdictDTO = new PlagiarismVerdictDTO();
-        plagiarismVerdictDTO.setVerdict(PlagiarismVerdict.POINT_DEDUCTION);
-        plagiarismVerdictDTO.setVerdictPointDeduction(90);
-
+        var plagiarismVerdictDTO = new PlagiarismVerdictDTO(POINT_DEDUCTION, "", 90);
         request.put("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/verdict", plagiarismVerdictDTO, HttpStatus.OK);
         var updatedPlagiarismCase = plagiarismCaseRepository.findByIdWithPlagiarismSubmissionsElseThrow(plagiarismCase1.getId());
         assertThat(updatedPlagiarismCase.getVerdict()).as("should update plagiarism case verdict point deduction").isEqualTo(PlagiarismVerdict.POINT_DEDUCTION);
@@ -283,8 +278,8 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK,
                 PlagiarismCaseInfoDTO.class);
-        assertThat(plagiarismCaseInfo.getId()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
-        assertThat(plagiarismCaseInfo.getVerdict()).as("should get null verdict before it is set").isNull();
+        assertThat(plagiarismCaseInfo.id()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
+        assertThat(plagiarismCaseInfo.verdict()).as("should get null verdict before it is set").isNull();
     }
 
     private void addPost() {
@@ -309,8 +304,8 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK,
                 PlagiarismCaseInfoDTO.class);
-        assertThat(plagiarismCaseInfo.getId()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
-        assertThat(plagiarismCaseInfo.getVerdict()).as("should get the verdict after it is set").isEqualTo(verdict);
+        assertThat(plagiarismCaseInfo.id()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
+        assertThat(plagiarismCaseInfo.verdict()).as("should get the verdict after it is set").isEqualTo(verdict);
     }
 
     @Test

@@ -8,6 +8,7 @@ import { TextBlockType } from 'app/entities/text-block.model';
 import { tap, filter } from 'rxjs/operators';
 import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
+import { Location } from '@angular/common';
 
 /**
  * A service used to manage sending TextAssessmentEvent's to the server
@@ -24,7 +25,7 @@ export class TextAssessmentAnalytics {
     private route: ActivatedRoute;
     public analyticsEnabled = false;
 
-    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService) {
+    constructor(protected assessmentsService: TextAssessmentService, protected accountService: AccountService, private profileService: ProfileService, public location: Location) {
         // retrieve the analytics enabled status from the profile info and set to current property
         this.profileService
             .getProfileInfo()
@@ -56,7 +57,7 @@ export class TextAssessmentAnalytics {
      * @param textBlockType type of the text block to be sent. It is undefined by default to support simple events too.
      */
     sendAssessmentEvent(eventType: TextAssessmentEventType, feedbackType: FeedbackType | undefined = undefined, textBlockType: TextBlockType | undefined = undefined) {
-        if (this.analyticsEnabled) {
+        if (this.analyticsEnabled && !this.isExampleSubmissionRoute()) {
             this.eventToSend.setEventType(eventType);
             this.eventToSend.setFeedbackType(feedbackType);
             this.eventToSend.setSegmentType(textBlockType);
@@ -66,6 +67,9 @@ export class TextAssessmentAnalytics {
         }
     }
 
+    private isExampleSubmissionRoute() {
+        return !!this.location?.path().includes('example-submission');
+    }
     /**
      * Subscribes to the route parameters and updates the respective id's accordingly.
      * Avoids having to set the id on the component's side.
