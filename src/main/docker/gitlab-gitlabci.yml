@@ -1,7 +1,10 @@
+# Gitlab-GitlabCI Setup
 services:
     gitlab:
-        build: gitlab
-        container_name: gitlab
+        # TODO: check if the other settings can also be integrated into gitlab.yml
+        extends:
+            file: ./gitlab/gitlab.yml
+                service: gitlab
         volumes:
             - artemis-gitlab-data:/var/opt/gitlab
             - artemis-gitlab-logs:/var/log/gitlab
@@ -21,8 +24,6 @@ services:
             - '80:80'
             - '443:443'
         shm_size: '256m'
-        networks:
-            - artemis
     gitlab-runner:
         image: gitlab/gitlab-runner:latest
         container_name: gitlab-runner

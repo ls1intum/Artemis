@@ -1,0 +1,27 @@
+# Artemis base service
+services:
+    artemis-app:
+        platform: linux/x86_64
+        image: ghcr.io/ls1intum/artemis
+        build:
+            context: ../../../..
+            dockerfile: src/main/docker/artemis/Dockerfile
+        # maps application-local.yml to the container as this is the override file for all other configs
+        # (the default configs are packaged in the war file and don't need to be mapped here)
+        volumes:
+            - ../../resources/config/application-local.yml:/opt/artemis/application-local.yml:ro
+            - ../scripts/wait-for-it.sh:/usr/local/bin/wait-for-it.sh
+        # environments can also be used for custom overrides (alternative to application-local.yml volume)
+        # the following environments are necessary for docker images orchestrated by docker-compose
+        environment:
+            _JAVA_OPTIONS: -Xmx5120m -Xms2560m
+            SPRING_PROFILES_ACTIVE: dev,jenkins,gitlab,artemis,scheduling,athene,docker,local
+        command: /bin/bash -c '/usr/local/bin/wait-for-it.sh -t 0 artemis-mysql:3306 -- /run_artemis.sh'
+        ports:
+            - 8080:8080
+        networks:
+            - artemis
+
+networks:
+    artemis:
+        driver: "bridge"
