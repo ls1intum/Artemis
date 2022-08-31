@@ -205,7 +205,7 @@ describe('ExamParticipationCoverComponent', () => {
         component.startExam();
         tick();
         jest.advanceTimersByTime(UI_RELOAD_TIME + 1); // simulate setInterval time passing
-        expect(component.waitingForExamStart).toBe(true);
+        expect(component.waitingForExamStart).toBeTrue();
         const difference1 = Math.ceil(component.exam.startDate.diff(now1, 's') / 60);
         expect(component.timeUntilStart).toBe(difference1 + ' min');
 

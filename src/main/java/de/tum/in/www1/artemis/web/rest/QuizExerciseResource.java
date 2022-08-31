@@ -27,6 +27,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.exam.ExamDateService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -76,6 +77,8 @@ public class QuizExerciseResource {
 
     private final GroupNotificationService groupNotificationService;
 
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final QuizBatchService quizBatchService;
@@ -88,8 +91,8 @@ public class QuizExerciseResource {
             ExerciseDeletionService exerciseDeletionServiceService, QuizScheduleService quizScheduleService, QuizStatisticService quizStatisticService,
             QuizExerciseImportService quizExerciseImportService, AuthorizationCheckService authCheckService, CourseRepository courseRepository,
             GroupNotificationService groupNotificationService, ExerciseService exerciseService, ExamDateService examDateService, QuizMessagingService quizMessagingService,
-            StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService, QuizBatchRepository quizBatchRepository,
-            SubmissionRepository submissionRepository) {
+            GroupNotificationScheduleService groupNotificationScheduleService, StudentParticipationRepository studentParticipationRepository, QuizBatchService quizBatchService,
+            QuizBatchRepository quizBatchRepository, SubmissionRepository submissionRepository) {
         this.quizExerciseService = quizExerciseService;
         this.quizExerciseRepository = quizExerciseRepository;
         this.exerciseDeletionService = exerciseDeletionServiceService;
@@ -104,6 +107,7 @@ public class QuizExerciseResource {
         this.examDateService = examDateService;
         this.courseRepository = courseRepository;
         this.quizMessagingService = quizMessagingService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizBatchService = quizBatchService;
         this.quizBatchRepository = quizBatchRepository;
@@ -122,7 +126,7 @@ public class QuizExerciseResource {
     public ResponseEntity<QuizExercise> createQuizExercise(@RequestBody QuizExercise quizExercise) throws URISyntaxException {
         log.info("REST request to create QuizExercise : {}", quizExercise);
         if (quizExercise.getId() != null) {
-            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new quizExercise cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         // check if quiz is valid
@@ -197,6 +201,7 @@ public class QuizExerciseResource {
 
         quizExercise = quizExerciseService.save(quizExercise);
         exerciseService.logUpdate(quizExercise, quizExercise.getCourseViaExerciseGroupOrCourseMember(), user);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(originalQuiz, quizExercise, notificationText);
         return ResponseEntity.ok(quizExercise);
     }
 
@@ -344,7 +349,7 @@ public class QuizExerciseResource {
         }
 
         try {
-            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password);
+            var batch = quizBatchService.joinBatch(quizExercise, user, joinRequest.password());
             return ResponseEntity.ok(batch);
         }
         catch (QuizJoinException ex) {

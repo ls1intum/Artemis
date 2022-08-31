@@ -395,7 +395,7 @@ public class DatabaseUtilService {
             participation.setBuildPlanId(buildPlanId);
             participation.setProgrammingExercise(exercise);
             participation.setInitializationState(InitializationState.INITIALIZED);
-            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getCourseViaExerciseGroupOrCourseMember().getShortName(), repoName));
+            participation.setRepositoryUrl(String.format("http://some.test.url/%s/%s.git", exercise.getProjectKey(), repoName));
             programmingExerciseStudentParticipationRepo.save(participation);
             storedParticipation = programmingExerciseStudentParticipationRepo.findByExerciseIdAndStudentLogin(exercise.getId(), login);
             assertThat(storedParticipation).isPresent();
@@ -580,7 +580,8 @@ public class DatabaseUtilService {
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        // always use the lecture with the smallest ID, otherwise tests related to search might fail (in a flaky way)
+        Lecture lecture1 = course1.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
@@ -835,21 +836,10 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private List<Post> createBasicPosts(Lecture lectureContext) {
-        List<Post> posts = new ArrayList<>();
-        for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i);
-            postToAdd.setLecture(lectureContext);
-            postRepository.save(postToAdd);
-            posts.add(postToAdd);
-        }
-        return posts;
-    }
-
     private List<Post> createBasicPosts(Exercise exerciseContext) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 4; i++) {
-            Post postToAdd = createBasicPost(i);
+            Post postToAdd = createBasicPost(i, "student");
             postToAdd.setExercise(exerciseContext);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -857,16 +847,21 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private Post createBasicPost(PlagiarismCase plagiarismCase) {
-        Post postToAdd = createBasicPost(0);
-        postToAdd.setPlagiarismCase(plagiarismCase);
-        return postRepository.save(postToAdd);
+    private List<Post> createBasicPosts(Lecture lectureContext) {
+        List<Post> posts = new ArrayList<>();
+        for (int i = 0; i < 4; i++) {
+            Post postToAdd = createBasicPost(i, "tutor");
+            postToAdd.setLecture(lectureContext);
+            postRepository.save(postToAdd);
+            posts.add(postToAdd);
+        }
+        return posts;
     }
 
     private List<Post> createBasicPosts(Course courseContext, CourseWideContext[] courseWideContexts) {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < courseWideContexts.length; i++) {
-            Post postToAdd = createBasicPost(i);
+            Post postToAdd = createBasicPost(i, "editor");
             postToAdd.setCourse(courseContext);
             postToAdd.setCourseWideContext(courseWideContexts[i]);
             postRepository.save(postToAdd);
@@ -875,13 +870,20 @@ public class DatabaseUtilService {
         return posts;
     }
 
-    private Post createBasicPost(Integer i) {
+    private Post createBasicPost(PlagiarismCase plagiarismCase) {
+        Post postToAdd = createBasicPost(0, "instructor");
+        postToAdd.setPlagiarismCase(plagiarismCase);
+        postToAdd.getPlagiarismCase().setExercise(null);
+        return postRepository.save(postToAdd);
+    }
+
+    private Post createBasicPost(Integer i, String usernamePrefix) {
         Post post = new Post();
         post.setTitle(String.format("Title Post %s", (i + 1)));
         post.setContent(String.format("Content Post %s", (i + 1)));
         post.setVisibleForStudents(true);
         post.setDisplayPriority(DisplayPriority.NONE);
-        post.setAuthor(getUserByLoginWithoutAuthorities(String.format("student%s", (i + 1))));
+        post.setAuthor(getUserByLoginWithoutAuthorities(String.format("%s%s", usernamePrefix, (i + 1))));
         post.setCreationDate(ZonedDateTime.of(2015, 11, dayCount, 23, 45, 59, 1234, ZoneId.of("UTC")));
         String tag = String.format("Tag %s", (i + 1));
         Set<String> tags = new HashSet<>();
@@ -913,6 +915,15 @@ public class DatabaseUtilService {
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
+    }
+
+    public void createMultipleCoursesWithAllExercisesAndLectures(int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+        for (int i = 0; i < numberOfCoursesWithExercises; i++) {
+            createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+        }
+        for (int i = 0; i < numberOfCoursesWithLectures; i++) {
+            createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
+        }
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
@@ -2231,7 +2242,7 @@ public class DatabaseUtilService {
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
-        programmingExercise.setPublishBuildPlanUrl(true);
+        programmingExercise.setPublishBuildPlanUrl(false);
         programmingExercise.setMaxPoints(42.0);
         programmingExercise.setDifficulty(DifficultyLevel.EASY);
         programmingExercise.setMode(ExerciseMode.INDIVIDUAL);

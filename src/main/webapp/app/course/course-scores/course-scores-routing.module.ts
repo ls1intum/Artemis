@@ -14,7 +14,7 @@ const routes: Routes = [
         },
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR, Authority.EDITOR, Authority.TA],
-            pageTitle: 'instructorDashboard.title',
+            pageTitle: 'artemisApp.instructorDashboard.title',
         },
         canActivate: [UserRouteAccessService],
     },

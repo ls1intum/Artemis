@@ -127,7 +127,7 @@ public class ExamSubmissionService {
      * - If a submission exists, we will always overwrite this submission, even if the id of the received submission
      * deviates from the one we've got from the database.
      * - If no submission exists (on creation) we allow adding one (implicitly via repository.save()).
-     *
+     * <p>
      * TODO: we might want to move this to the SubmissionService
      *
      * @param exercise   the exercise for which the submission should be saved

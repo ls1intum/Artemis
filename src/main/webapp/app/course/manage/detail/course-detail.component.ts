@@ -49,7 +49,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
     ActionType = ActionType;
 
     courseDTO: CourseManagementDetailViewDto;
-    activeStudents: number[];
+    activeStudents?: number[];
     course: Course;
 
     private eventSubscriber: Subscription;

@@ -30,7 +30,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     List<StudentScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);
 
     @Query("""
-                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.user, AVG(s.lastScore), AVG(s.lastRatedScore), AVG(s.lastPoints), AVG(s.lastRatedPoints))
+                    SELECT new de.tum.in.www1.artemis.web.rest.dto.ParticipantScoreAverageDTO(s.user.login, AVG(s.lastScore), AVG(s.lastRatedScore), AVG(s.lastPoints), AVG(s.lastRatedPoints))
                     FROM StudentScore s
                     WHERE s.exercise IN :exercises
                     GROUP BY s.user

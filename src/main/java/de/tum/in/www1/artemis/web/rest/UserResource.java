@@ -131,7 +131,7 @@ public class UserResource {
         log.debug("REST request to save User : {}", managedUserVM);
 
         if (managedUserVM.getId() != null) {
-            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
+            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
             // Lowercase the user login before comparing with database
         }
         else if (userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {
@@ -149,7 +149,7 @@ public class UserResource {
             // NOTE: Mail service is NOT active at the moment
             // mailService.sendCreationEmail(newUser);
             return ResponseEntity.created(new URI("/api/users/" + newUser.getLogin()))
-                    .headers(HeaderUtil.createAlert(applicationName, "userManagement.created", newUser.getLogin())).body(newUser);
+                    .headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.created", newUser.getLogin())).body(newUser);
         }
     }
 
@@ -193,7 +193,7 @@ public class UserResource {
             userService.activateUser(updatedUser);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
     }
 
     /**
@@ -278,7 +278,7 @@ public class UserResource {
             throw new BadRequestAlertException("You cannot delete yourself", "userManagement", "cannotDeleteYourself");
         }
         userService.deleteUser(login);
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.deleted", login)).build();
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.deleted", login)).build();
     }
 
     /**
@@ -310,7 +310,8 @@ public class UserResource {
                 log.error(exception.getMessage(), exception);
             }
         }
-        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.batch.deleted", String.valueOf(deletedUsers.size()))).body(deletedUsers);
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.batch.deleted", String.valueOf(deletedUsers.size())))
+                .body(deletedUsers);
     }
 
     @PutMapping("users/notification-date")

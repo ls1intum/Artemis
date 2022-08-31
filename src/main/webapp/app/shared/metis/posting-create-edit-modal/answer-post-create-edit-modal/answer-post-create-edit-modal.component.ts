@@ -16,6 +16,7 @@ import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
 export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDirective<AnswerPost> {
     @Input() createEditAnswerPostContainerRef: ViewContainerRef;
     editorHeight = MarkdownEditorHeight.INLINE;
+    isInputOpen = false;
 
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
@@ -27,6 +28,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     open(): void {
         this.close();
         this.createEditAnswerPostContainerRef.createEmbeddedView(this.postingEditor);
+        this.isInputOpen = true;
     }
 
     /**
@@ -35,6 +37,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
     close(): void {
         this.createEditAnswerPostContainerRef.clear();
         this.resetFormGroup();
+        this.isInputOpen = false;
     }
 
     /**
@@ -75,6 +78,7 @@ export class AnswerPostCreateEditModalComponent extends PostingCreateEditModalDi
         this.metisService.updateAnswerPost(this.posting).subscribe({
             next: () => {
                 this.isLoading = false;
+                this.isInputOpen = false;
                 this.createEditAnswerPostContainerRef?.clear();
             },
             error: () => {
