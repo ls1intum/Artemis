@@ -392,7 +392,7 @@ pitest {
     ]
     outputFormats = ["XML", "HTML"]
     timestampedReports = false
-    junit5PluginVersion = "0.15"
+    junit5PluginVersion = "1.0.0"
     timeoutFactor = 1.5
     timeoutConstInMillis = 10000
     useClasspathFile = true
