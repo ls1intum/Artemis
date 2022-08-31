@@ -9,6 +9,7 @@ import { ArtemisTextSubmissionAssessmentModule } from 'app/exercises/text/assess
 import { ResizableInstructionsComponent } from 'app/exercises/text/manage/example-text-submission/resizable-instructions/resizable-instructions.component';
 import { AssessmentInstructionsModule } from 'app/assessment/assessment-instructions/assessment-instructions.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 const ENTITY_STATES = [...exampleTextSubmissionRoute];
 
@@ -21,6 +22,7 @@ const ENTITY_STATES = [...exampleTextSubmissionRoute];
         ArtemisAssessmentSharedModule,
         AssessmentInstructionsModule,
         ArtemisMarkdownModule,
+        ArtemisSharedComponentModule,
     ],
     declarations: [ExampleTextSubmissionComponent, ResizableInstructionsComponent],
 })

@@ -1,6 +1,8 @@
 
 package de.tum.in.www1.artemis.web.rest;
 
+import java.util.Optional;
+
 import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
@@ -10,13 +12,15 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.ExampleSubmission;
-import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.*;
+import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 import de.tum.in.www1.artemis.repository.ExampleSubmissionRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.ExampleSubmissionService;
+import de.tum.in.www1.artemis.service.TextBlockService;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -43,12 +47,19 @@ public class ExampleSubmissionResource {
 
     private final ExerciseRepository exerciseRepository;
 
+    private final TextSubmissionRepository textSubmissionRepository;
+
+    private final TextBlockService textBlockService;
+
     public ExampleSubmissionResource(ExampleSubmissionService exampleSubmissionService, ExampleSubmissionRepository exampleSubmissionRepository,
-            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository) {
+            AuthorizationCheckService authCheckService, ExerciseRepository exerciseRepository, TextSubmissionRepository textSubmissionRepository,
+            TextBlockService textBlockService) {
         this.exampleSubmissionService = exampleSubmissionService;
         this.exampleSubmissionRepository = exampleSubmissionRepository;
         this.authCheckService = authCheckService;
         this.exerciseRepository = exerciseRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
+        this.textBlockService = textBlockService;
     }
 
     /**
@@ -87,6 +98,39 @@ public class ExampleSubmissionResource {
         return handleExampleSubmission(exerciseId, exampleSubmission);
     }
 
+    /**
+     * Prepare an example submission for assessment.
+     * <p>
+     * Currently only used for  {@link TextExercise TextExercise} to create automatic text blocks.
+     *
+     * @param exerciseId          the id of the corresponding exercise
+     * @param exampleSubmissionId the id of the exampleSubmission to prepare
+     * @return ResponseEntity with status 200 (OK)
+     */
+    @PostMapping("/exercises/{exerciseId}/example-submissions/{exampleSubmissionId}/prepare-assessment")
+    @PreAuthorize("hasRole('EDITOR')")
+    public ResponseEntity<Void> prepareExampleAssessment(@PathVariable Long exerciseId, @PathVariable Long exampleSubmissionId) {
+        log.debug("REST request to prepare ExampleSubmission for assessment : {}", exampleSubmissionId);
+        ExampleSubmission exampleSubmission = exampleSubmissionRepository.findByIdWithEagerResultAndFeedbackElseThrow(exampleSubmissionId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
+        if (!exampleSubmission.getExercise().getId().equals(exerciseId)) {
+            throw new BadRequestAlertException("The exercise id in the path does not match the exercise id of the submission", ENTITY_NAME, "idsNotMatching");
+        }
+
+        // Prepare text blocks for fresh assessment
+        if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
+            Optional<TextSubmission> textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(exampleSubmission.getSubmission().getId());
+            if (textSubmission.isPresent() && textSubmission.get().getLatestResult() == null
+                    && (textSubmission.get().getBlocks() == null || textSubmission.get().getBlocks().isEmpty())) {
+                TextSubmission submission = textSubmission.get();
+                textBlockService.computeTextBlocksForSubmissionBasedOnSyntax(submission);
+                textBlockService.saveAll(submission.getBlocks());
+            }
+        }
+
+        return ResponseEntity.ok(null);
+    }
+
     @NotNull
     private ResponseEntity<ExampleSubmission> handleExampleSubmission(Long exerciseId, ExampleSubmission exampleSubmission) {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.EDITOR, exampleSubmission.getExercise(), null);
@@ -109,6 +153,13 @@ public class ExampleSubmissionResource {
         log.debug("REST request to get ExampleSubmission : {}", exampleSubmissionId);
         ExampleSubmission exampleSubmission = exampleSubmissionRepository.findWithSubmissionResultExerciseGradingCriteriaById(exampleSubmissionId)
                 .orElseThrow(() -> new EntityNotFoundException("ExampleSubmission", exampleSubmissionId));
+
+        // For TextExercise, we need to load the text blocks as well
+        if (exampleSubmission.getExercise().getExerciseType() == ExerciseType.TEXT && exampleSubmission.getSubmission() != null) {
+            Optional<TextSubmission> textSubmission = textSubmissionRepository.findWithEagerResultsAndFeedbackAndTextBlocksById(exampleSubmission.getSubmission().getId());
+            textSubmission.ifPresent(exampleSubmission::setSubmission);
+        }
+
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exampleSubmission.getExercise(), null);
         return ResponseEntity.ok(exampleSubmission);
     }

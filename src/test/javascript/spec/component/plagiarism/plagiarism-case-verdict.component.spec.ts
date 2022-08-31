@@ -5,6 +5,10 @@ import { MockTranslateService, TranslateTestingModule } from '../../helpers/mock
 import { TranslateService } from '@ngx-translate/core';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
+import { By } from '@angular/platform-browser';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
+import { MockDirective, MockPipe } from 'ng-mocks';
+import { NgbModule, NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 
 describe('Plagiarism Case Verdict Component', () => {
     let comp: PlagiarismCaseVerdictComponent;
@@ -12,34 +16,39 @@ describe('Plagiarism Case Verdict Component', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, TranslateTestingModule],
-            declarations: [PlagiarismCaseVerdictComponent],
-            providers: [{ provide: TranslateService, useClass: MockTranslateService }],
+            imports: [ArtemisTestModule, TranslateTestingModule, NgbModule],
+            declarations: [PlagiarismCaseVerdictComponent, MockPipe(ArtemisDatePipe)],
+            providers: [{ provide: TranslateService, useClass: MockTranslateService }, MockDirective(NgbTooltip)],
         }).compileComponents();
 
         fixture = TestBed.createComponent(PlagiarismCaseVerdictComponent);
         comp = fixture.componentInstance;
     });
 
-    it('should return correct translation string', () => {
-        comp.plagiarismCase = {} as PlagiarismCase;
-        expect(comp.verdictTranslationString).toBe('artemisApp.plagiarism.plagiarismCases.verdict.none');
-        comp.plagiarismCase = {
-            verdict: PlagiarismVerdict.PLAGIARISM,
-        } as PlagiarismCase;
-        expect(comp.verdictTranslationString).toBe('artemisApp.plagiarism.plagiarismCases.verdict.plagiarism');
-        comp.plagiarismCase.verdict = PlagiarismVerdict.POINT_DEDUCTION;
-        expect(comp.verdictTranslationString).toBe('artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction');
-        comp.plagiarismCase.verdict = PlagiarismVerdict.WARNING;
-        expect(comp.verdictTranslationString).toBe('artemisApp.plagiarism.plagiarismCases.verdict.warning');
+    it.each([
+        [undefined, 'artemisApp.plagiarism.plagiarismCases.verdict.none'],
+        [PlagiarismVerdict.PLAGIARISM, 'artemisApp.plagiarism.plagiarismCases.verdict.plagiarism'],
+        [PlagiarismVerdict.WARNING, 'artemisApp.plagiarism.plagiarismCases.verdict.warning'],
+        [PlagiarismVerdict.POINT_DEDUCTION, 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction'],
+        [PlagiarismVerdict.NO_PLAGIARISM, 'artemisApp.plagiarism.plagiarismCases.verdict.noPlagiarism'],
+    ])('should return correct translation string', (verdict: PlagiarismVerdict | undefined, message: string) => {
+        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        fixture.detectChanges();
+
+        expect(comp.verdictTranslationString).toBe(message);
     });
 
-    it('should return correct verdict badge class', () => {
-        comp.plagiarismCase = {} as PlagiarismCase;
-        expect(comp.verdictBadgeClass).toEqual(['bg-secondary']);
-        comp.plagiarismCase = {
-            verdict: PlagiarismVerdict.PLAGIARISM,
-        } as PlagiarismCase;
-        expect(comp.verdictBadgeClass).toEqual(['bg-primary']);
+    it.each([
+        [undefined, 'bg-secondary'],
+        [PlagiarismVerdict.PLAGIARISM, 'bg-danger'],
+        [PlagiarismVerdict.WARNING, 'bg-danger'],
+        [PlagiarismVerdict.POINT_DEDUCTION, 'bg-danger'],
+        [PlagiarismVerdict.NO_PLAGIARISM, 'bg-success'],
+    ])('should return correct verdict badge class', (verdict: PlagiarismVerdict | undefined, className: string) => {
+        comp.plagiarismCase = { verdict } as PlagiarismCase;
+        fixture.detectChanges();
+
+        const element = fixture.debugElement.query(By.css('.badge'));
+        expect(element.classes).toHaveProperty(className);
     });
 });
