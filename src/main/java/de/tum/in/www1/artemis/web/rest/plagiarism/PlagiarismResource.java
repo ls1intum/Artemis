@@ -75,7 +75,7 @@ public class PlagiarismResource {
     @PreAuthorize("hasRole('EDITOR')")
     public ResponseEntity<Void> updatePlagiarismComparisonStatus(@PathVariable("courseId") long courseId, @PathVariable("comparisonId") long comparisonId,
             @RequestBody PlagiarismComparisonStatusDTO statusDTO) {
-        log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
+        log.info("REST request to update the status {} of the plagiarism comparison with id: {}", statusDTO.status(), comparisonId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, course, null);
 
@@ -85,8 +85,8 @@ public class PlagiarismResource {
             throw new BadRequestAlertException("The courseId does not belong to the given comparisonId", "PlagiarismComparison", "idMismatch");
         }
 
-        plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.getStatus());
-        log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.getStatus(), comparisonId);
+        plagiarismService.updatePlagiarismComparisonStatus(comparisonId, statusDTO.status());
+        log.info("Finished updating the status {} of the plagiarism comparison with id: {}", statusDTO.status(), comparisonId);
         return ResponseEntity.ok().build();
     }
 

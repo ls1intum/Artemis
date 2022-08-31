@@ -51,12 +51,12 @@ public class PlagiarismCaseService {
      */
     public PlagiarismCase updatePlagiarismCaseVerdict(long plagiarismCaseId, PlagiarismVerdictDTO plagiarismVerdictDTO) {
         PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(plagiarismCaseId);
-        plagiarismCase.setVerdict(plagiarismVerdictDTO.getVerdict());
-        if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
-            plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.getVerdictPointDeduction());
+        plagiarismCase.setVerdict(plagiarismVerdictDTO.verdict());
+        if (plagiarismVerdictDTO.verdict().equals(PlagiarismVerdict.POINT_DEDUCTION)) {
+            plagiarismCase.setVerdictPointDeduction(plagiarismVerdictDTO.verdictPointDeduction());
         }
-        else if (plagiarismVerdictDTO.getVerdict().equals(PlagiarismVerdict.WARNING)) {
-            plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.getVerdictMessage());
+        else if (plagiarismVerdictDTO.verdict().equals(PlagiarismVerdict.WARNING)) {
+            plagiarismCase.setVerdictMessage(plagiarismVerdictDTO.verdictMessage());
         }
         plagiarismCase.setVerdictDate(ZonedDateTime.now());
         var user = userRepository.getUserWithGroupsAndAuthorities();
