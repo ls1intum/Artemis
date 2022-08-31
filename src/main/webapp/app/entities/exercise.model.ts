@@ -230,6 +230,28 @@ export function declareExerciseType(exerciseInfo: ExerciseInfo): ExerciseType | 
     return undefined;
 }
 
+/**
+ * Get the url segment for different types of exercises.
+ * @param exerciseType The type of the exercise
+ * @return The url segment for the exercise type
+ */
+export function getExerciseUrlSegment(exerciseType?: ExerciseType): string {
+    switch (exerciseType) {
+        case ExerciseType.TEXT:
+            return 'text-exercises';
+        case ExerciseType.MODELING:
+            return 'modeling-exercises';
+        case ExerciseType.PROGRAMMING:
+            return 'programming-exercises';
+        case ExerciseType.FILE_UPLOAD:
+            return 'file-upload-exercises';
+        case ExerciseType.QUIZ:
+            return 'quiz-exercises';
+        default:
+            throw Error('Unexpected exercise type: ' + exerciseType);
+    }
+}
+
 export function resetDates(exercise: Exercise) {
     exercise.releaseDate = undefined;
     exercise.dueDate = undefined;
