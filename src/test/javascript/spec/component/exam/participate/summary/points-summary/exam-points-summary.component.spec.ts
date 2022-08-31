@@ -133,7 +133,7 @@ describe('ExamPointsSummaryComponent', () => {
                         userId: 1,
                         name: 'user1',
                         login: 'user1',
-                        eMail: 'user1@tum.de',
+                        email: 'user1@tum.de',
                         registrationNumber: '111',
                         overallPointsAchieved: 35.33,
                         overallScoreAchieved: (35.33 / 40) * 100,

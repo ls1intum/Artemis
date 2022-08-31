@@ -149,7 +149,8 @@ public class TextAssessmentEventResource {
 
     /**
      * Checks if the data corresponding to the submission in the given TextAssessmentEvent corresponds to an actual
-     * submission that exists in the database. In case such a submission doesn't exist in the database it should be ignored.
+     * non-example submission that exists in the database. In case such a submission doesn't exist in the database it should be ignored.
+     *
      * @param event the event to be checked against the database
      * @return whether the event is valid or not
      */
@@ -159,6 +160,12 @@ public class TextAssessmentEventResource {
         if (textSubmission.isEmpty()) {
             return false;
         }
+        TextSubmission submission = textSubmission.get();
+        // Ignore events for example submissions
+        if (submission.isExampleSubmission() != null && submission.isExampleSubmission()) {
+            return false;
+        }
+
         // fetch all the relevant id's to be checked
         Long fetchedParticipationId = textSubmission.get().getParticipation().getId();
         Exercise fetchedExercise = textSubmission.get().getParticipation().getExercise();

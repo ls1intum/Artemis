@@ -24,19 +24,23 @@ public class TextExerciseImportService extends ExerciseImportService {
 
     private final TextBlockRepository textBlockRepository;
 
+    private final TextSubmissionRepository textSubmissionRepository;
+
     public TextExerciseImportService(TextExerciseRepository textExerciseRepository, ExampleSubmissionRepository exampleSubmissionRepository,
-            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository) {
+            SubmissionRepository submissionRepository, ResultRepository resultRepository, TextBlockRepository textBlockRepository, FeedbackRepository feedbackRepository,
+            TextSubmissionRepository textSubmissionRepository) {
         super(exampleSubmissionRepository, submissionRepository, resultRepository);
         this.textBlockRepository = textBlockRepository;
         this.textExerciseRepository = textExerciseRepository;
         this.feedbackRepository = feedbackRepository;
+        this.textSubmissionRepository = textSubmissionRepository;
     }
 
     /**
      * Imports a text exercise creating a new entity, copying all basic values and saving it in the database.
      * All basic include everything except Student-, Tutor participations, and student questions. <br>
      * This method calls {@link #copyTextExerciseBasis(TextExercise)} to set up the basis of the exercise
-     * {@link #copyExampleSubmission(Exercise, Exercise)} for a hard copy of the example submissions.
+     * {@link #copyExampleSubmission(Exercise, Exercise, Map)} for a hard copy of the example submissions.
      *
      * @param templateExercise The template exercise which should get imported
      * @param importedExercise The new exercise already containing values which should not get copied, i.e. overwritten
@@ -45,25 +49,28 @@ public class TextExerciseImportService extends ExerciseImportService {
     @NotNull
     public TextExercise importTextExercise(final TextExercise templateExercise, TextExercise importedExercise) {
         log.debug("Creating a new Exercise based on exercise {}", templateExercise);
-        TextExercise newExercise = copyTextExerciseBasis(importedExercise);
+        Map<Long, GradingInstruction> gradingInstructionCopyTracker = new HashMap<>();
+        TextExercise newExercise = copyTextExerciseBasis(importedExercise, gradingInstructionCopyTracker);
         newExercise.setKnowledge(templateExercise.getKnowledge());
         textExerciseRepository.save(newExercise);
-        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise));
+        newExercise.setExampleSubmissions(copyExampleSubmission(templateExercise, newExercise, gradingInstructionCopyTracker));
         return newExercise;
     }
 
-    /** This helper method copies all attributes of the {@code importedExercise} into the new exercise.
+    /**
+     * This helper method copies all attributes of the {@code importedExercise} into the new exercise.
      * Here we ignore all external entities as well as the start-, end-, and assessment due date.
      *
-     * @param importedExercise The exercise from which to copy the basis
+     * @param importedExercise              The exercise from which to copy the basis
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return the cloned TextExercise basis
      */
     @NotNull
-    private TextExercise copyTextExerciseBasis(TextExercise importedExercise) {
+    private TextExercise copyTextExerciseBasis(TextExercise importedExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the exercise basis from {}", importedExercise);
         TextExercise newExercise = new TextExercise();
 
-        super.copyExerciseBasis(newExercise, importedExercise, new HashMap<>());
+        super.copyExerciseBasis(newExercise, importedExercise, gradingInstructionCopyTracker);
         newExercise.setExampleSolution(importedExercise.getExampleSolution());
         return newExercise;
     }
@@ -86,25 +93,35 @@ public class TextExerciseImportService extends ExerciseImportService {
             newTextBlock.setSubmission(newSubmission);
             newTextBlock.setText(originalTextBlock.getText());
             newTextBlock.computeId();
+            if (originalTextBlock.getType() != null) {
+                if (originalTextBlock.getType() == TextBlockType.AUTOMATIC) {
+                    newTextBlock.automatic();
+                }
+                else {
+                    newTextBlock.manual();
+                }
+            }
             textBlockRepository.save(newTextBlock);
             newTextBlocks.add(newTextBlock);
         }
         return newTextBlocks;
     }
 
-    /** This functions does a hard copy of the example submissions contained in {@code templateExercise}.
-     * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission)}
+    /**
+     * This functions does a hard copy of the example submissions contained in {@code templateExercise}.
+     * To copy the corresponding Submission entity this function calls {@link #copySubmission(Submission, Map)}}
      *
-     * @param templateExercise {TextExercise} The original exercise from which to fetch the example submissions
-     * @param newExercise The new exercise in which we will insert the example submissions
+     * @param templateExercise              {TextExercise} The original exercise from which to fetch the example submissions
+     * @param newExercise                   The new exercise in which we will insert the example submissions
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
      * @return The cloned set of example submissions
      */
-    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise) {
+    Set<ExampleSubmission> copyExampleSubmission(Exercise templateExercise, Exercise newExercise, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         log.debug("Copying the ExampleSubmissions to new Exercise: {}", newExercise);
         Set<ExampleSubmission> newExampleSubmissions = new HashSet<>();
         for (ExampleSubmission originalExampleSubmission : templateExercise.getExampleSubmissions()) {
             TextSubmission originalSubmission = (TextSubmission) originalExampleSubmission.getSubmission();
-            TextSubmission newSubmission = copySubmission(originalSubmission);
+            TextSubmission newSubmission = copySubmission(originalSubmission, gradingInstructionCopyTracker);
 
             ExampleSubmission newExampleSubmission = new ExampleSubmission();
             newExampleSubmission.setExercise(newExercise);
@@ -117,14 +134,16 @@ public class TextExerciseImportService extends ExerciseImportService {
         return newExampleSubmissions;
     }
 
-    /** This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
+    /**
+     * This helper function does a hard copy of the {@code originalSubmission} and stores the values in {@code newSubmission}.
      * To copy the TextBlocks and the submission results this function calls {@link #copyTextBlocks(Set, TextSubmission)} and
      * {@link ExerciseImportService#copyExampleResult(Result, Submission, Map)} respectively.
      *
-     * @param originalSubmission The original submission to be copied.
+     * @param gradingInstructionCopyTracker The mapping from original GradingInstruction Ids to new GradingInstruction instances.
+     * @param originalSubmission            The original submission to be copied.
      * @return The cloned submission
      */
-    TextSubmission copySubmission(final Submission originalSubmission) {
+    TextSubmission copySubmission(final Submission originalSubmission, Map<Long, GradingInstruction> gradingInstructionCopyTracker) {
         TextSubmission newSubmission = new TextSubmission();
         if (originalSubmission != null) {
             log.debug("Copying the Submission to new ExampleSubmission: {}", newSubmission);
@@ -136,8 +155,10 @@ public class TextExerciseImportService extends ExerciseImportService {
             newSubmission.setText(((TextSubmission) originalSubmission).getText());
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
             newSubmission.setBlocks(copyTextBlocks(((TextSubmission) originalSubmission).getBlocks(), newSubmission));
-            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, new HashMap<>()));
+            newSubmission.addResult(copyExampleResult(originalSubmission.getLatestResult(), newSubmission, gradingInstructionCopyTracker));
             newSubmission = submissionRepository.saveAndFlush(newSubmission);
+            newSubmission = textSubmissionRepository.findByIdWithEagerResultsAndFeedbackAndTextBlocksElseThrow(newSubmission.getId());
+
             updateFeedbackReferencesWithNewTextBlockIds(((TextSubmission) originalSubmission).getBlocks(), newSubmission);
         }
         return newSubmission;
@@ -157,14 +178,25 @@ public class TextExerciseImportService extends ExerciseImportService {
         Set<TextBlock> newSubmissionTextBlocks = newSubmission.getBlocks();
 
         // first collect original text blocks as <startIndex, TextBlock> map, startIndex will help to match newly created text block with original text block
-        Map<Integer, TextBlock> originalTextBlockMap = originalTextBlocks.stream().collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+        Map<Integer, TextBlock> originalManualTextBlockMap = originalTextBlocks.stream().filter(textBlock -> textBlock.getType() == TextBlockType.MANUAL)
+                .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
+        Map<Integer, TextBlock> nonManualTextBlockMap = originalTextBlocks.stream().filter(textBlock -> textBlock.getType() != TextBlockType.MANUAL)
+                .collect(Collectors.toMap(TextBlock::getStartIndex, Function.identity()));
 
         Map<String, String> textBlockIdPair = new HashMap<>();
 
         // collect <original text block id, new text block id> pair, it will help to find the feedback which has old reference
         newSubmissionTextBlocks.forEach(newTextBlock -> {
-            TextBlock oldTextBlock = originalTextBlockMap.get(newTextBlock.getStartIndex());
-            textBlockIdPair.put(oldTextBlock.getId(), newTextBlock.getId());
+            TextBlock oldTextBlock;
+            if (newTextBlock.getType() == TextBlockType.MANUAL) {
+                oldTextBlock = originalManualTextBlockMap.get(newTextBlock.getStartIndex());
+            }
+            else {
+                oldTextBlock = nonManualTextBlockMap.get(newTextBlock.getStartIndex());
+            }
+            if (oldTextBlock != null) {
+                textBlockIdPair.put(oldTextBlock.getId(), newTextBlock.getId());
+            }
         });
 
         // for each feedback in result, update the reference with new text block id
