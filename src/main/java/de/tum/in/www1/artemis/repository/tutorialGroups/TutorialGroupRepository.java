@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
@@ -50,6 +51,8 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
     Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrations(@Param("tutorialGroupId") long tutorialGroupId);
 
     Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
+
+    void deleteAllByCourse(Course course);
 
     default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsElseThrow(long tutorialGroupId) {
         return this.findByIdWithTeachingAssistantAndRegistrations(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));

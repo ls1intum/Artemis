@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
+import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -101,12 +102,14 @@ public class CourseService {
 
     private final StudentParticipationRepository studentParticipationRepository;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     public CourseService(Environment env, ArtemisAuthenticationProvider artemisAuthenticationProvider, CourseRepository courseRepository, ExerciseService exerciseService,
             ExerciseDeletionService exerciseDeletionService, AuthorizationCheckService authCheckService, UserRepository userRepository, LectureService lectureService,
             GroupNotificationRepository groupNotificationRepository, ExerciseGroupRepository exerciseGroupRepository, AuditEventRepository auditEventRepository,
             UserService userService, LearningGoalRepository learningGoalRepository, GroupNotificationService groupNotificationService, ExamService examService,
             ExamRepository examRepository, CourseExamExportService courseExamExportService, LearningGoalService learningGoalService, GradingScaleRepository gradingScaleRepository,
-            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository) {
+            StatisticsRepository statisticsRepository, StudentParticipationRepository studentParticipationRepository, TutorialGroupRepository tutorialGroupRepository) {
         this.env = env;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.courseRepository = courseRepository;
@@ -128,6 +131,7 @@ public class CourseService {
         this.gradingScaleRepository = gradingScaleRepository;
         this.statisticsRepository = statisticsRepository;
         this.studentParticipationRepository = studentParticipationRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
     }
 
     /**
@@ -252,7 +256,12 @@ public class CourseService {
         deleteDefaultGroups(course);
         deleteExamsOfCourse(course);
         deleteGradingScaleOfCourse(course);
+        deleteTutorialGroupsOfCourse(course);
         courseRepository.deleteById(course.getId());
+    }
+
+    private void deleteTutorialGroupsOfCourse(Course course) {
+        this.tutorialGroupRepository.deleteAllByCourse(course);
     }
 
     private void deleteGradingScaleOfCourse(Course course) {
