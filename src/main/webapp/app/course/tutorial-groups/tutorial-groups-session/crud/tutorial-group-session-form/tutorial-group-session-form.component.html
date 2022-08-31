@@ -1,0 +1,63 @@
+<div class="row">
+    <div class="col-12">
+        <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
+            <!-- Date -->
+            <div>
+                <label class="form-label" for="date">{{ 'artemisApp.sessionForm.date' | artemisTranslate }}</label>
+                <div class="input-group">
+                    <input name="date" id="date" required formControlName="date" [owlDateTime]="date" placeholder="YYYY-MM-DD" class="form-control" />
+                    <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
+                    <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #date></owl-date-time>
+                </div>
+                <div *ngIf="dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="dateControl?.errors?.required">
+                        {{ 'artemisApp.sessionForm.requiredDateWarning' | artemisTranslate }}
+                    </div>
+                    <div *ngIf="dateControl?.errors?.owlDateTimeParse">
+                        {{ 'artemisApp.sessionForm.dateParseError' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Time -->
+            <div>
+                <div class="row">
+                    <div class="col-auto my-auto">
+                        <span>{{ 'artemisApp.scheduleForm.timeInput.from' | artemisTranslate }}</span>
+                    </div>
+                    <div class="col-auto">
+                        <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
+                    </div>
+                    <div class="col-auto my-auto">
+                        <span>{{ 'artemisApp.scheduleForm.timeInput.to' | artemisTranslate }}</span>
+                    </div>
+                    <div class="col-auto my-auto">
+                        <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
+                    </div>
+                </div>
+                <div *ngIf="startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="startTimeControl?.errors?.required">
+                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                    </div>
+                </div>
+                <div *ngIf="endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="endTimeControl?.errors?.required">
+                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                    </div>
+                </div>
+                <div *ngIf="form?.invalid && (form?.dirty || form?.touched)">
+                    <div *ngIf="form?.errors?.invalidTimeRange" class="alert alert-danger">
+                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-2">
+                <div class="col-12">
+                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
+                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

@@ -35,3 +35,11 @@ export const weekDays = [
         value: 7,
     },
 ];
+
+export function getDayTranslationKey(dayOfWeek?: number) {
+    if (!dayOfWeek) {
+        return '';
+    } else {
+        return `artemisApp.scheduleForm.weekDay.${weekDays[dayOfWeek - 1].translationKey}`;
+    }
+}

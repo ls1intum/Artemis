@@ -1,15 +1,17 @@
-import { ChangeDetectionStrategy, Component, OnInit, ViewEncapsulation } from '@angular/core';
-import { CalendarEvent, CalendarView, DAYS_OF_WEEK } from 'angular-calendar';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 import { combineLatest } from 'rxjs';
-import { finalize, switchMap, take } from 'rxjs/operators';
-import { HttpErrorResponse } from '@angular/common/http';
+import { finalize, map, switchMap, take } from 'rxjs/operators';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
+import { SortService } from 'app/shared/service/sort.service';
+import { getDayTranslationKey } from '../shared/weekdays';
 
 @Component({
     selector: 'jhi-schedule-management',
@@ -20,68 +22,73 @@ import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group
 })
 export class ScheduleManagementComponent implements OnInit {
     isLoading = false;
-    view: CalendarView = CalendarView.Month;
-
-    viewDate: Date = new Date();
-
-    get events(): CalendarEvent[] {
-        return this.tutorialGroupSession.map((session) => {
-            return {
-                start: session.start?.toDate()!,
-                end: session.end?.toDate()!,
-                title: session.tutorialGroup?.title!,
-                color: {
-                    primary: '#ad2121',
-                    secondary: '#FAE3E3',
-                },
-            };
-        });
-    }
-
-    // exclude weekends
-    excludeDays: number[] = [0, 6];
-
-    weekStartsOn = DAYS_OF_WEEK.SUNDAY;
-
-    CalendarView = CalendarView;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private tutorialGroupService: TutorialGroupsService,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
         private alertService: AlertService,
+        private sortService: SortService,
+        private changeDetectorRef: ChangeDetectorRef,
     ) {}
 
     courseId: number;
+    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroup: TutorialGroup;
-    tutorialGroupSession: TutorialGroupSession[] = [];
+    tutorialGroupSchedule: TutorialGroupSchedule;
+    tutorialGroupSessions: TutorialGroupSession[] = [];
+    sessionTrackByFn = (index: number, session: TutorialGroupSession): number => session.id!;
+
+    generateSessionLabel(tutorialGroupSession: TutorialGroupSession): string {
+        if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
+            return '';
+        } else {
+            return tutorialGroupSession.start.format('LLLL') + ' - ' + tutorialGroupSession.end.format('LT');
+        }
+    }
+
+    getDayTranslationKey = getDayTranslationKey;
 
     ngOnInit(): void {
-        this.isLoading = true;
+        // this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.courseId);
+                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.courseId).pipe(finalize(() => (this.isLoading = false)));
                 }),
-                switchMap((tutorialGroupResult) => {
-                    if (tutorialGroupResult.body) {
-                        this.tutorialGroup = tutorialGroupResult.body;
-                    }
-                    return this.tutorialGroupSessionService.getSessions(this.courseId, this.tutorialGroup.id!);
+                map((res: HttpResponse<TutorialGroup>) => {
+                    return res.body;
                 }),
-                finalize(() => (this.isLoading = false)),
             )
             .subscribe({
-                next: (tutorialGroupResult) => {
-                    if (tutorialGroupResult.body) {
-                        this.tutorialGroupSession = tutorialGroupResult.body;
+                next: (tutorialGroup) => {
+                    if (tutorialGroup) {
+                        this.tutorialGroup = tutorialGroup;
+                        if (tutorialGroup.tutorialGroupSessions) {
+                            this.tutorialGroupSessions.push(...this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', true));
+                        }
+                        if (tutorialGroup.tutorialGroupSchedule) {
+                            this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
+                        }
+                        if (tutorialGroup.course?.tutorialGroupsConfiguration) {
+                            this.tutorialGroupsConfiguration = tutorialGroup.course.tutorialGroupsConfiguration;
+                            // convert sessions to the configured timezone for easier management
+                            this.tutorialGroupSessions.forEach((session) => {
+                                session.start = session.start?.tz(this.tutorialGroupsConfiguration.timeZone);
+                                session.end = session.end?.tz(this.tutorialGroupsConfiguration.timeZone);
+                            });
+                        }
                     }
+                    this.isLoading = false;
+                    this.changeDetectorRef.detectChanges();
                 },
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => {
+                    this.isLoading = false;
+                    onError(this.alertService, res);
+                },
             });
     }
 }

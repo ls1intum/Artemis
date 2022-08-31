@@ -18,6 +18,8 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { TutorialGroupsConfigurationFormComponent } from './tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { CreateTutorialGroupsConfigurationComponent } from './tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
+import { TutorialGroupSessionFormComponent } from './tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
+import { CreateTutorialGroupSessionComponent } from './tutorial-groups-session/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule, OwlDateTimeModule],
@@ -34,6 +36,8 @@ import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-conf
         TutorialGroupsConfigurationFormComponent,
         CreateTutorialGroupsConfigurationComponent,
         EditTutorialGroupsConfigurationComponent,
+        TutorialGroupSessionFormComponent,
+        CreateTutorialGroupSessionComponent,
     ],
 })
 export class ArtemisTutorialGroupsModule {}

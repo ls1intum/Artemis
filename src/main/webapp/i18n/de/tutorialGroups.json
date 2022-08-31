@@ -65,7 +65,8 @@
             "title": "Registrierte Studenten"
         },
         "manageSchedule": {
-            "title": "Plan"
+            "title": "Plan",
+            "timeZoneInfo": "Zeitzone: {{ timeZone }}"
         },
         "tutorialGroupForm": {
             "titleInput": {

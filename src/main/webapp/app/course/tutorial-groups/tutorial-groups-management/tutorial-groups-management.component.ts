@@ -11,7 +11,7 @@ import { Course, Language } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { weekDays } from '../shared/weekdays';
+import { getDayTranslationKey, weekDays } from '../shared/weekdays';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',
@@ -28,7 +28,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
     faSort = faSort;
     faPlus = faPlus;
     faPencil = faPencil;
-    weekDays = weekDays;
+    getDayTranslationKey = getDayTranslationKey;
     sortingPredicate = 'title';
     ascending = true;
 
@@ -49,15 +49,6 @@ export class TutorialGroupsManagementComponent implements OnInit {
             }
         });
     }
-
-    getDayTranslationKey(dayOfWeek?: number) {
-        if (!dayOfWeek) {
-            return '';
-        } else {
-            return `artemisApp.scheduleForm.weekDay.${weekDays[dayOfWeek - 1].translationKey}`;
-        }
-    }
-
     public loadAll() {
         this.isLoading = true;
         this.courseManagementService

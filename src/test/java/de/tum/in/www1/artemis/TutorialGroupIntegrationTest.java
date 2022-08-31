@@ -92,7 +92,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.get("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN, TutorialGroup.class);
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", createNewTutorialGroup(), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups",
-                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.FORBIDDEN);
+                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.FORBIDDEN);
         request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.FORBIDDEN);
         request.postWithoutResponseBody(
                 "/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + userRepository.findOneByLogin("student6").get().getLogin(),
@@ -132,7 +132,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.get("/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.CONFLICT, TutorialGroup.class);
         request.delete("/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.CONFLICT);
         request.putWithResponseBody("/api/courses/" + 0 + "/tutorial-groups",
-                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.CONFLICT);
+                tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get(), TutorialGroup.class, HttpStatus.CONFLICT);
         request.postWithoutResponseBody(
                 "/api/courses/" + 0 + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + userRepository.findOneByLogin("student6").get().getLogin(),
                 HttpStatus.CONFLICT, new LinkedMultiValueMap<>());
@@ -197,7 +197,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void update_asInstructor_shouldUpdateTutorialGroup() throws Exception {
-        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get();
         existingTutorialGroup.setTitle("Updated");
 
         var updatedTutorialGroup = request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.OK);
@@ -208,7 +208,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void update_withTitleAlreadyExists_shouldReturnBadRequest() throws Exception {
-        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        var existingTutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get();
         existingTutorialGroup.setTitle("  ExampleTitle2  ");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", existingTutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
     }
@@ -225,7 +225,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var student6 = userRepository.findOneByLogin("student6").get();
         request.postWithoutResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.OK,
                 new LinkedMultiValueMap<>());
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegisteredStudents()).contains(student6);
     }
 
@@ -249,7 +249,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void deregisterStudent_asInstructor_shouldDeRegisterStudent() throws Exception {
         var student1 = userRepository.findOneByLogin("student1").get();
         request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.OK);
-        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegisteredStudents()).doesNotContain(student1);
     }
 
@@ -289,7 +289,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         List<StudentDTO> notFoundStudents = request.postListWithResponseBody(
                 "/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register-multiple", studentsToAdd, StudentDTO.class, HttpStatus.OK);
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudents(exampleOneTutorialGroupId).get();
+        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegisteredStudents()).contains(student6);
         assertThat(notFoundStudents).containsExactly(studentNotInCourse);
     }

@@ -5,6 +5,9 @@ import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-configuration.service';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
@@ -13,7 +16,11 @@ type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;
 export class TutorialGroupsService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(private httpClient: HttpClient) {}
+    constructor(
+        private httpClient: HttpClient,
+        private tutorialGroupSessionService: TutorialGroupSessionService,
+        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
+    ) {}
 
     getAllOfCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
@@ -71,6 +78,16 @@ export class TutorialGroupsService {
         if (res.body?.tutorialGroupSchedule) {
             res.body.tutorialGroupSchedule.validFromInclusive = convertDateFromServer(res.body.tutorialGroupSchedule.validFromInclusive);
             res.body.tutorialGroupSchedule.validToInclusive = convertDateFromServer(res.body.tutorialGroupSchedule.validToInclusive);
+        }
+        if (res.body?.tutorialGroupSessions) {
+            res.body.tutorialGroupSessions.map((tutorialGroupSession: TutorialGroupSession) =>
+                this.tutorialGroupSessionService.convertTutorialGroupSessionDatesFromServer(tutorialGroupSession),
+            );
+        }
+        if (res.body?.course?.tutorialGroupsConfiguration) {
+            res.body.course.tutorialGroupsConfiguration = this.tutorialGroupsConfigurationService.convertTutorialGroupsConfigurationDatesFromServer(
+                res.body?.course?.tutorialGroupsConfiguration,
+            );
         }
         return res;
     }

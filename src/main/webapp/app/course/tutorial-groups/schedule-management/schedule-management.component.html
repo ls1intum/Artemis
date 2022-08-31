@@ -1,28 +1,42 @@
-<div class="row text-center">
-    <div class="col-md-4">
-        <div class="btn-group">
-            <div class="btn btn-primary" mwlCalendarPreviousView [view]="view" [(viewDate)]="viewDate" [excludeDays]="excludeDays">Previous</div>
-            <div class="btn btn-outline-secondary" mwlCalendarToday [(viewDate)]="viewDate">Today</div>
-            <div class="btn btn-primary" mwlCalendarNextView [view]="view" [(viewDate)]="viewDate" [excludeDays]="excludeDays">Next</div>
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div class="row">
+        <div class="col-12">
+            <h1>{{ tutorialGroup.title }}</h1>
+            <!-- Schedule -->
+            <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions', 'create']" class="btn btn-primary btn-sm me-1">
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.createSession.createSessionButton">Create Session</span>
+            </a>
         </div>
     </div>
-    <div class="col-md-4">
-        <h3>
-            {{ viewDate | calendarDate: view + 'ViewTitle':'en':weekStartsOn:excludeDays }}
-        </h3>
-    </div>
-    <div class="col-md-4">
-        <div class="btn-group">
-            <div class="btn btn-primary" (click)="view = CalendarView.Month" [class.active]="view === 'month'">Month</div>
-            <div class="btn btn-primary" (click)="view = CalendarView.Week" [class.active]="view === 'week'">Week</div>
-            <div class="btn btn-primary" (click)="view = CalendarView.Day" [class.active]="view === 'day'">Day</div>
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-info" role="alert">
+                {{ 'artemisApp.manageSchedule.timeZoneInfo' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
+            </div>
         </div>
     </div>
-</div>
-<br />
-
-<div [ngSwitch]="view">
-    <mwl-calendar-month-view *ngSwitchCase="'month'" [viewDate]="viewDate" [events]="events" [excludeDays]="excludeDays"> </mwl-calendar-month-view>
-    <mwl-calendar-week-view *ngSwitchCase="'week'" [excludeDays]="excludeDays" [viewDate]="viewDate" [events]="events"> </mwl-calendar-week-view>
-    <mwl-calendar-day-view *ngSwitchCase="'day'" [viewDate]="viewDate" [events]="events"> </mwl-calendar-day-view>
-</div>
+    <div class="row">
+        <div class="col-12">
+            <h3>
+                {{
+                    'artemisApp.manageSchedule.schedule'
+                        | artemisTranslate
+                            : {
+                                  weekDay: (getDayTranslationKey(tutorialGroupSchedule.dayOfWeek) | artemisTranslate),
+                                  startTime: tutorialGroupSchedule.startTime,
+                                  endTime: tutorialGroupSchedule.endTime
+                              }
+                }}
+            </h3>
+        </div>
+    </div>
+    <div class="row">
+        <div class="col-12">
+            <ngb-accordion type="info" [closeOthers]="true" activeIds="acc-2">
+                <ngb-panel *ngFor="let acc of tutorialGroupSessions" id="acc-{{ acc.id }}" [title]="generateSessionLabel(acc)">
+                    <ng-template ngbPanelContent> ToDo: Tutorial Group Location and Stuff </ng-template>
+                </ngb-panel>
+            </ngb-accordion>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

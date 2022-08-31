@@ -1,11 +1,12 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
-import { convertDateFromServer } from 'app/utils/date.utils';
+import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 
 type EntityArrayResponseType = HttpResponse<TutorialGroupSession[]>;
+type EntityResponseType = HttpResponse<TutorialGroupSession>;
 
 @Injectable({ providedIn: 'root' })
 export class TutorialGroupSessionService {
@@ -13,16 +14,30 @@ export class TutorialGroupSessionService {
 
     constructor(private httpClient: HttpClient) {}
 
+    create(tutorialGroupSession: TutorialGroupSession, courseId: number, tutorialGroupId: number): Observable<EntityResponseType> {
+        const copy = this.convertTutorialGroupSessionDatesFromClient(tutorialGroupSession);
+        return this.httpClient
+            .post<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    }
+
     getSessions(courseId: number, tutorialGroupId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<TutorialGroupSession[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupSessionsResponseArrayDatesFromServer(res)));
     }
 
-    private convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {
+    convertTutorialGroupSessionDatesFromServer(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {
         tutorialGroupSession.start = convertDateFromServer(tutorialGroupSession.start);
         tutorialGroupSession.end = convertDateFromServer(tutorialGroupSession.end);
         return tutorialGroupSession;
+    }
+
+    private convertTutorialGroupSessionResponseDatesFromServer(res: HttpResponse<TutorialGroupSession>): HttpResponse<TutorialGroupSession> {
+        if (res.body) {
+            this.convertTutorialGroupSessionDatesFromServer(res.body);
+        }
+        return res;
     }
 
     private convertTutorialGroupSessionsResponseArrayDatesFromServer(res: HttpResponse<TutorialGroupSession[]>): HttpResponse<TutorialGroupSession[]> {
@@ -32,5 +47,16 @@ export class TutorialGroupSessionService {
             });
         }
         return res;
+    }
+
+    private convertTutorialGroupSessionDatesFromClient(tutorialGroupSession: TutorialGroupSession): TutorialGroupSession {
+        if (tutorialGroupSession) {
+            return Object.assign({}, tutorialGroupSession, {
+                start: convertDateFromClient(tutorialGroupSession.start),
+                end: convertDateFromClient(tutorialGroupSession.end),
+            });
+        } else {
+            return tutorialGroupSession;
+        }
     }
 }

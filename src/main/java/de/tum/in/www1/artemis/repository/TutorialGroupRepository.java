@@ -44,12 +44,14 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
             LEFT JOIN FETCH tutorialGroup.registeredStudents
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
+            LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
             """)
-    Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegisteredStudents(@Param("tutorialGroupId") long tutorialGroupId);
+    Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(@Param("tutorialGroupId") long tutorialGroupId);
 
     @Query("""
-            SELECT tutorialGroup
+                SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
@@ -60,7 +62,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
         return findByIdWithSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }
 
-    default TutorialGroup findByIdWithTeachingAssistantAndRegisteredStudentsElseThrow(long tutorialGroupId) {
-        return findByIdWithTeachingAssistantAndRegisteredStudents(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    default TutorialGroup findByIdWithTeachingAssistantAndRegisteredStudentsAndSessionsElseThrow(long tutorialGroupId) {
+        return findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }
 }

@@ -6,6 +6,10 @@
         "tutorialGroups": {
             "tutorialGroupsButton": "Tutorial Groups"
         },
+        "createSession": {
+            "createSessionButton": "Create Session",
+            "title": "Create Individual Session"
+        },
         "createConfiguration": {
             "title": "Create Tutorial Groups Configuration",
             "editButton": "Edit Tutorial Groups Configuration",
@@ -65,7 +69,14 @@
             "title": "Registered Students"
         },
         "manageSchedule": {
-            "title": "Schedule"
+            "title": "Schedule",
+            "timeZoneInfo": "Time Zone: {{ timeZone }}",
+            "schedule": "Every {{ weekDay }} from {{ startTime }} to {{ endTime }}"
+        },
+        "sessionForm": {
+            "date": "Date",
+            "requiredDateWarning": "You need to select a date!",
+            "dateParseError": "Date must be in the format 'YYYY-MM-DD'"
         },
         "tutorialGroupForm": {
             "titleInput": {
