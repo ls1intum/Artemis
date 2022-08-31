@@ -68,6 +68,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     private static final String REPLACE_TESTWISE_COVERAGE_SCRIPT = "#testwiseCoverageScript";
 
+    private static final String REPLACE_DEFAULT_BRANCH = "#defaultBranch";
+
     private String artemisNotificationUrl;
 
     @Value("${artemis.continuous-integration.secret-push-token}")
@@ -84,6 +86,9 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
 
     @Value("${artemis.continuous-integration.artemis-authentication-token-key}")
     private String ARTEMIS_AUTHENTICATION_TOKEN_KEY;
+
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultBranch;
 
     private final ProgrammingLanguageConfiguration programmingLanguageConfiguration;
 
@@ -120,6 +125,8 @@ public class JenkinsBuildPlanCreator implements JenkinsXmlConfigBuilder {
         replacements.put(REPLACE_NOTIFICATIONS_TOKEN, ARTEMIS_AUTHENTICATION_TOKEN_KEY);
         replacements.put(REPLACE_DOCKER_IMAGE_NAME, programmingLanguageConfiguration.getImage(programmingLanguage, projectType));
         replacements.put(REPLACE_JENKINS_TIMEOUT, buildTimeout);
+        replacements.put(REPLACE_DEFAULT_BRANCH, defaultBranch);
+
         // at the moment, only Java and Swift are supported
         if (isStaticCodeAnalysisEnabled) {
             String staticCodeAnalysisScript = createStaticCodeAnalysisScript(programmingLanguage, projectType);
