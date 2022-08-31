@@ -197,7 +197,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
             student: studentName,
             exercise: exerciseTitle,
-            inCourseOrExam: 'artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse'),
+            inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
             courseOrExam: courseOrExamTitle,
             cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
             aspoLink: 'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1',
