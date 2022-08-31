@@ -20,7 +20,6 @@ import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
@@ -357,22 +356,6 @@ public class TextExerciseResource {
         }
 
         return ResponseEntity.ok(participation);
-    }
-
-    /**
-     * POST /admin/text-exercises/{exerciseId}/trigger-automatic-assessment: trigger automatic assessment
-     * (clustering task) for given exercise id As the clustering can be performed on a different
-     * node, this will always return 200, despite an error could occur on the other node.
-     *
-     * @param exerciseId id of the exercised that for which the automatic assessment should be
-     *                   triggered
-     * @return the ResponseEntity with status 200 (OK)
-     */
-    @PostMapping("admin/text-exercises/{exerciseId}/trigger-automatic-assessment")
-    @EnforceAdmin
-    public ResponseEntity<Void> triggerAutomaticAssessment(@PathVariable Long exerciseId) {
-        instanceMessageSendService.sendTextExerciseInstantClustering(exerciseId);
-        return ResponseEntity.ok().build();
     }
 
     /**

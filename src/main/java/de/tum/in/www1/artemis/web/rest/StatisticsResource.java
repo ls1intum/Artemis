@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.domain.enumeration.StatisticsView;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.StatisticsService;
 import de.tum.in.www1.artemis.web.rest.dto.CourseManagementStatisticsDTO;
@@ -49,21 +48,6 @@ public class StatisticsResource {
         this.authorizationCheckService = authorizationCheckService;
         this.courseRepository = courseRepository;
         this.exerciseRepository = exerciseRepository;
-    }
-
-    /**
-     * GET admin/management/statistics/data : get the graph data in the last "span" days in the given period.
-     *
-     * @param span        the spanTime of which the amount should be calculated
-     * @param periodIndex an index indicating which time period, 0 is current week, -1 is one week in the past, -2 is two weeks in the past ...
-     * @param graphType   the type of graph the data should be fetched
-     * @return the ResponseEntity with status 200 (OK) and the data in body, or status 404 (Not Found)
-     */
-    @GetMapping("admin/management/statistics/data")
-    @EnforceAdmin
-    public ResponseEntity<List<Integer>> getChartData(@RequestParam SpanType span, @RequestParam Integer periodIndex, @RequestParam GraphType graphType) {
-        log.debug("REST request to get graph data");
-        return ResponseEntity.ok(this.service.getChartData(span, periodIndex, graphType, StatisticsView.ARTEMIS, null));
     }
 
     /**

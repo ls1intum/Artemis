@@ -35,7 +35,6 @@ import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.AssessmentDashboardService;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.SubmissionService;
@@ -600,24 +599,6 @@ public class ExamResource {
             var userGroups = new ArrayList<>(user.getGroups());
             return ResponseEntity.ok(examRepository.getExamsWithQuizExercisesForWhichUserHasInstructorAccess(userGroups));
         }
-    }
-
-    /**
-     * GET /admin/exams/upcoming : Find all current and upcoming exams.
-     *
-     * @return the ResponseEntity with status 200 (OK) and a list of exams.
-     */
-    @GetMapping("admin/courses/upcoming-exams")
-    @EnforceAdmin
-    public ResponseEntity<List<Exam>> getCurrentAndUpcomingExams() {
-        log.debug("REST request to get all upcoming exams");
-
-        if (!authCheckService.isAdmin()) {
-            throw new AccessForbiddenException("Only admins are allowed to access all exams!");
-        }
-
-        List<Exam> upcomingExams = examRepository.findAllCurrentAndUpcomingExams();
-        return ResponseEntity.ok(upcomingExams);
     }
 
     /**
