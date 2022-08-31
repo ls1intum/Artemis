@@ -28,9 +28,8 @@ import { ExampleSubmissionAssessCommand, FeedbackMarker } from 'app/exercises/sh
 import { getCourseFromExercise } from 'app/entities/exercise.model';
 import { faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import { faListAlt } from '@fortawesome/free-regular-svg-icons';
-import { firstValueFrom, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { flatMap } from 'lodash-es';
 
 type ExampleSubmissionResponseType = EntityResponseType;
 

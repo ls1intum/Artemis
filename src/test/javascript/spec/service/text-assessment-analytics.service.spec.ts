@@ -14,7 +14,6 @@ import { ActivatedRoute } from '@angular/router';
 import { TextAssessmentService } from 'app/exercises/text/assess/text-assessment.service';
 import { throwError } from 'rxjs';
 import { Location } from '@angular/common';
-import { MockProvider } from 'ng-mocks';
 
 describe('TextAssessmentAnalytics Service', () => {
     let service: TextAssessmentAnalytics;
