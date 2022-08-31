@@ -117,7 +117,8 @@ describe('Registered Students Component', () => {
             expect(comp.course).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
-            expect(getTutorialGroupSpy).toHaveBeenCalledTimes(1);
+            expect(getTutorialGroupSpy).toHaveBeenCalledOnce();
+            expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id);
             expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));
         });
     });

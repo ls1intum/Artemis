@@ -58,8 +58,8 @@ describe('TutorialGroupFormComponent', () => {
         submitButton.click();
 
         return tutorialGroupFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledTimes(0);
-            expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+            expect(submitFormSpy).not.toHaveBeenCalled();
+            expect(submitFormEventSpy).not.toHaveBeenCalled();
         });
     });
 
@@ -86,7 +86,7 @@ describe('TutorialGroupFormComponent', () => {
         submitButton.click();
 
         return tutorialGroupFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalled();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 title: 'example',
                 teachingAssistant: exampleTeachingAssistant,

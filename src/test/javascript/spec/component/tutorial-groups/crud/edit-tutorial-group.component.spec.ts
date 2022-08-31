@@ -121,6 +121,7 @@ describe('EditTutorialGroupComponent', () => {
 
         editTutorialGroupComponentFixture.detectChanges();
         expect(findByIdStub).toHaveBeenCalledWith(1, 1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupInDatabase);
 
         const changedTutorialGroup: TutorialGroup = {

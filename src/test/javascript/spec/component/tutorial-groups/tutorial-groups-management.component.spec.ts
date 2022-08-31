@@ -111,5 +111,6 @@ describe('TutorialGroupsManagementComponent', () => {
 
         tutorialGroupsManagementComponent.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([group1, group2], 'id', false);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 });
