@@ -45,6 +45,15 @@ export class ExampleSubmissionService {
     }
 
     /**
+     * Prepare an example submission for assessment
+     * @param exerciseId Id of the exercise to which it belongs
+     * @param exampleSubmissionId Id of the example submission to prepare
+     */
+    prepareForAssessment(exerciseId: number, exampleSubmissionId: number): Observable<HttpResponse<void>> {
+        return this.http.post<void>(`api/exercises/${exerciseId}/example-submissions/${exampleSubmissionId}/prepare-assessment`, {}, { observe: 'response' });
+    }
+
+    /**
      * Gets an example submission
      * @param exampleSubmissionId Id of example submission to get
      */
