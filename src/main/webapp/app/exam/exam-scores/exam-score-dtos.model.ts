@@ -38,7 +38,7 @@ export class StudentResult {
     public userId: number;
     public name: string;
     public login: string;
-    public eMail: string;
+    public email: string;
     public registrationNumber: string;
     public overallPointsAchieved?: number;
     public overallScoreAchieved?: number;

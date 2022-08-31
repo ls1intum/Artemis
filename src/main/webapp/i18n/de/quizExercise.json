@@ -13,6 +13,7 @@
             "created": "Quiz erstellt mit ID {{ param }}",
             "updated": "Quiz aktualisiert mit ID {{ param }}",
             "deleted": "Quiz gelöscht mit ID {{ param }}",
+            "resetSuccessful": "Das Zurücksetzen des Quizzes <strong>{{ title }}</strong> war erfolgreich",
             "delete": {
                 "question": "Soll das Quiz <strong>{{ title }}</strong> wirklich dauerhaft gelöscht werden? Diese Aktion kann NICHT rückgängig gemacht werden!"
             },
