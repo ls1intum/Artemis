@@ -6,6 +6,7 @@ import javax.validation.constraints.NotNull;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.DomainObject;
@@ -21,11 +22,13 @@ public class TutorialGroupRegistration extends DomainObject {
     @ManyToOne
     @JoinColumn(name = "student_id")
     @NotNull
+    @JsonIgnoreProperties("tutorialGroupRegistrations")
     private User student;
 
     @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
     @NotNull
+    @JsonIgnoreProperties("registrations")
     private TutorialGroup tutorialGroup;
 
     @Enumerated(EnumType.STRING)
