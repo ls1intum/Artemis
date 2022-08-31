@@ -2,8 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
-import { UserService } from 'app/core/user/user.service';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
 import { Observable, of } from 'rxjs';
@@ -14,7 +12,7 @@ import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-m
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/registered-students/registered-students.component';
 import { ArtemisTestModule } from '../../../test.module';
-import Spy = jasmine.Spy;
+import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -88,7 +86,18 @@ describe('Registered Students Component', () => {
                 tutorialGroup.title = 'Group';
                 tutorialGroup.id = 123;
                 tutorialGroup.course = course;
-                tutorialGroup.registeredStudents = [tutorialGroupUserOne, tutorialGroupUserTwo];
+
+                const registrationOne = new TutorialGroupRegistration();
+                registrationOne.student = tutorialGroupUserOne;
+                registrationOne.tutorialGroup = tutorialGroup;
+                registrationOne.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
+
+                const registrationTwo = new TutorialGroupRegistration();
+                registrationTwo.student = tutorialGroupUserTwo;
+                registrationTwo.tutorialGroup = tutorialGroup;
+                registrationTwo.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
+
+                tutorialGroup.registrations = [registrationOne, registrationTwo];
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
             });
     });
@@ -109,7 +118,7 @@ describe('Registered Students Component', () => {
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledTimes(1);
-            expect(comp.registeredStudents).toEqual(tutorialGroup.registeredStudents);
+            expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));
         });
     });
 

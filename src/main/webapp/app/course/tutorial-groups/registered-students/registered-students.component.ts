@@ -68,10 +68,10 @@ export class RegisteredStudentsComponent implements OnInit {
                     if (tutorialGroupResult.body) {
                         this.tutorialGroup = tutorialGroupResult.body;
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.tutorialGroup.registeredStudents) {
-                            this.tutorialGroup.registeredStudents = [];
+                        if (!this.tutorialGroup.registrations) {
+                            this.tutorialGroup.registrations = [];
                         }
-                        this.registeredStudents = this.tutorialGroup.registeredStudents;
+                        this.registeredStudents = this.tutorialGroup.registrations.map((registration) => registration.student!);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
