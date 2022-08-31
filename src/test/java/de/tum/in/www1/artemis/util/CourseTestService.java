@@ -159,12 +159,12 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
 
-        request.post("/api/courses", course, HttpStatus.CREATED);
+        request.post("/api/admin/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course got stored").hasSize(1);
 
         course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
         assertThat(courseRepo.findAll()).as("Course has not been stored").contains(repoContent.toArray(new Course[0]));
     }
 
@@ -177,12 +177,12 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course1.getDefaultInstructorGroupName());
 
-        request.post("/api/courses", course1, HttpStatus.CREATED);
+        request.post("/api/admin/courses", course1, HttpStatus.CREATED);
         assertThat(courseRepo.findAll()).as("Course got stored").hasSize(1);
 
         Course course2 = ModelFactory.generateCourse(null, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course2.setShortName("shortName");
-        request.post("/api/courses", course2, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course2, HttpStatus.BAD_REQUEST);
         assertThat(courseRepo.findAll()).as("Course has not been stored").hasSize(1);
     }
 
@@ -192,7 +192,7 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
@@ -244,21 +244,21 @@ public class CourseTestService {
         course.setMaxComplaints(1);
         course.setMaxTeamComplaints(0);
         course.setMaxRequestMoreFeedbackTimeDays(0);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration
         course.setMaxComplaintTimeDays(1);
         course.setMaxComplaints(0);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
         repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course has not been stored").isEmpty();
 
         // change configuration again
         course.setMaxComplaintTimeDays(0);
         course.setMaxRequestMoreFeedbackTimeDays(-1);
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
         repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course has not been stored").isEmpty();
     }
@@ -270,7 +270,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("TeachingAssistantGroupName");
         course.setEditorGroupName("EditorGroupName");
         course.setInstructorGroupName("InstructorGroupName");
-        request.post("/api/courses", course, HttpStatus.CREATED);
+        request.post("/api/admin/courses", course, HttpStatus.CREATED);
         List<Course> repoContent = courseRepo.findAll();
         assertThat(repoContent).as("Course got stored").hasSize(1);
     }
@@ -284,7 +284,7 @@ public class CourseTestService {
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
         mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        course = request.postWithResponseBody("/api/courses", course, Course.class, HttpStatus.CREATED);
+        course = request.postWithResponseBody("/api/admin/courses", course, Course.class, HttpStatus.CREATED);
         // Because the courseId is automatically generated we cannot use the findById method to retrieve the saved course.
         Course getFromRepo = courseRepo.findAll().get(0);
         assertThat(getFromRepo.getMaxComplaints()).as("Course has right maxComplaints Value").isEqualTo(5);
@@ -298,7 +298,7 @@ public class CourseTestService {
         course.setMaxComplaintTimeDays(7);
         course.setPostsEnabled(true);
         course.setMaxRequestMoreFeedbackTimeDays(7);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getMaxComplaints()).as("maxComplaints Value updated successfully").isEqualTo(course.getMaxComplaints());
         assertThat(updatedCourse.getMaxComplaintTimeDays()).as("maxComplaintTimeDays Value updated successfully").isEqualTo(course.getMaxComplaintTimeDays());
         assertThat(updatedCourse.getPostsEnabled()).as("postsEnabled Value updated successfully").isTrue();
@@ -354,7 +354,7 @@ public class CourseTestService {
             if (!course.getExercises().isEmpty()) {
                 groupNotificationService.notifyStudentAndEditorAndInstructorGroupAboutExerciseUpdate(course.getExercises().iterator().next(), "notify");
             }
-            request.delete("/api/courses/" + course.getId(), HttpStatus.OK);
+            request.delete("/api/admin/courses/" + course.getId(), HttpStatus.OK);
         }
         assertThat(courseRepo.findAll()).as("All courses deleted").isEmpty();
         assertThat(notificationRepo.findAll()).as("All notifications are deleted").isEmpty();
@@ -365,13 +365,13 @@ public class CourseTestService {
 
     // Test
     public void testDeleteNotExistingCourse() throws Exception {
-        request.delete("/api/courses/1", HttpStatus.NOT_FOUND);
+        request.delete("/api/admin/courses/1", HttpStatus.NOT_FOUND);
     }
 
     // Test
     public void testCreateCourseWithoutPermission() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        request.post("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.post("/api/admin/courses", course, HttpStatus.FORBIDDEN);
         assertThat(courseRepo.findAll()).as("Course got stored").isEmpty();
     }
 
@@ -379,7 +379,7 @@ public class CourseTestService {
     public void testCreateCourseWithWrongShortName() throws Exception {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setShortName("`badName~");
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
     }
 
     // Test
@@ -387,32 +387,13 @@ public class CourseTestService {
         Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
         course.setShortName("`badName~");
         courseRepo.save(course);
-        request.put("/api/courses", course, HttpStatus.BAD_REQUEST);
-    }
-
-    // Test
-    public void testUpdateCourseWithoutId() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultStudentGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultTeachingAssistantGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultEditorGroupName());
-        mockDelegate.mockCreateGroupInUserManagement(course.getDefaultInstructorGroupName());
-        request.put("/api/courses", course, HttpStatus.CREATED);
-        List<Course> repoContent = courseRepo.findAll();
-        assertThat(repoContent).as("Course got stored").hasSize(1);
-    }
-
-    // Test
-    public void testUpdateCourseWithoutIdAsInstructor() throws Exception {
-        Course course = ModelFactory.generateCourse(null, null, null, new HashSet<>());
-        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course.getId(), course, HttpStatus.BAD_REQUEST);
     }
 
     // Test
     public void testUpdateCourseIsEmpty() throws Exception {
         Course course = ModelFactory.generateCourse(1L, null, null, new HashSet<>());
-        request.put("/api/courses", course, HttpStatus.NOT_FOUND);
+        request.put("/api/courses/" + course.getId(), course, HttpStatus.NOT_FOUND);
     }
 
     // Test
@@ -423,7 +404,7 @@ public class CourseTestService {
         course.setTitle("Test Course");
         course.setStartDate(ZonedDateTime.now().minusDays(5));
         course.setEndDate(ZonedDateTime.now().plusDays(5));
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
         assertThat(updatedCourse.getShortName()).as("short name was changed correctly").isEqualTo(course.getShortName());
         assertThat(updatedCourse.getTitle()).as("title was changed correctly").isEqualTo(course.getTitle());
         assertThat(updatedCourse.getStartDate()).as("start date was changed correctly").isEqualTo(course.getStartDate());
@@ -447,7 +428,7 @@ public class CourseTestService {
         course.setPrerequisites(prerequisites);
         course = courseRepo.save(course);
 
-        request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
 
         Course updatedCourse = courseRepo.findByIdWithOrganizationsAndLearningGoalsElseThrow(course.getId());
         assertThat(updatedCourse.getOrganizations()).containsExactlyElementsOf(organizations);
@@ -477,7 +458,7 @@ public class CourseTestService {
         userRepo.save(user);
 
         mockDelegate.mockUpdateCoursePermissions(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.OK);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.OK);
 
         assertThat(updatedCourse.getInstructorGroupName()).isEqualTo("new-instructor-group");
         assertThat(updatedCourse.getEditorGroupName()).isEqualTo("new-editor-group");
@@ -496,7 +477,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, false, true);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
     }
@@ -513,7 +494,7 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         mockDelegate.mockFailUpdateCoursePermissionsInCi(course, oldInstructorGroup, oldEditorGroup, oldTeachingAssistantGroup, true, false);
-        Course updatedCourse = request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
+        Course updatedCourse = request.putWithResponseBody("/api/courses/" + course.getId(), course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
 
         assertThat(updatedCourse).isNull();
     }
@@ -1052,7 +1033,7 @@ public class CourseTestService {
         var course = ModelFactory.generateCourse(1L, null, null, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         course = courseRepo.save(course);
 
-        request.put("/api/courses", course, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + course.getId(), course, HttpStatus.FORBIDDEN);
     }
 
     // Test
@@ -2018,12 +1999,12 @@ public class CourseTestService {
     // Test
     public void testCreateCourseWithValidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().minusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        request.post("/api/courses", course, HttpStatus.CREATED);
+        request.post("/api/admin/courses", course, HttpStatus.CREATED);
     }
 
     // Test
     public void testCreateCourseWithInvalidStartAndEndDate() throws Exception {
         Course course = ModelFactory.generateCourse(null, ZonedDateTime.now().plusDays(1), ZonedDateTime.now(), new HashSet<>(), "student", "tutor", "editor", "instructor");
-        request.post("/api/courses", course, HttpStatus.BAD_REQUEST);
+        request.post("/api/admin/courses", course, HttpStatus.BAD_REQUEST);
     }
 }

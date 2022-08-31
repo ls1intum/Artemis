@@ -26,6 +26,7 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -75,7 +76,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     constructor(
         private eventManager: EventManager,
-        private courseService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private route: ActivatedRoute,
         private router: Router,
         private alertService: AlertService,
@@ -118,11 +120,11 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
             courseId = params['courseId'];
         });
         // Get course first for basic course information
-        this.courseService.find(courseId).subscribe((courseResponse) => {
+        this.courseManagementService.find(courseId).subscribe((courseResponse) => {
             this.course = courseResponse.body!;
         });
         // fetch statistics separately because it takes quite long for larger courses
-        this.courseService.getCourseStatisticsForDetailView(courseId).subscribe({
+        this.courseManagementService.getCourseStatisticsForDetailView(courseId).subscribe({
             next: (courseResponse: HttpResponse<CourseManagementDetailViewDto>) => {
                 this.courseDTO = courseResponse.body!;
                 this.activeStudents = courseResponse.body!.activeStudents;
@@ -136,7 +138,7 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
      * @param courseId id the course that will be deleted
      */
     deleteCourse(courseId: number) {
-        this.courseService.delete(courseId).subscribe({
+        this.courseAdminService.delete(courseId).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'courseListModification',

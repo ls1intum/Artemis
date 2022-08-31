@@ -29,6 +29,7 @@ import { FileUploaderService, FileUploadResponse } from 'app/shared/http/file-up
 import { ImageCropperModule } from 'app/shared/image-cropper/image-cropper.module';
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -40,7 +41,8 @@ class MarkdownEditorStubComponent {
 describe('Course Management Update Component', () => {
     let comp: CourseUpdateComponent;
     let fixture: ComponentFixture<CourseUpdateComponent>;
-    let service: CourseManagementService;
+    let courseManagementService: CourseManagementService;
+    let courseAdminService: CourseAdminService;
     let profileService: ProfileService;
     let organizationService: OrganizationManagementService;
     let course: Course;
@@ -106,7 +108,8 @@ describe('Course Management Update Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseUpdateComponent);
                 comp = fixture.componentInstance;
-                service = TestBed.inject(CourseManagementService);
+                courseManagementService = TestBed.inject(CourseManagementService);
+                courseAdminService = TestBed.inject(CourseAdminService);
                 profileService = TestBed.inject(ProfileService);
                 organizationService = TestBed.inject(OrganizationManagementService);
                 fileUploaderService = TestBed.inject(FileUploaderService);
@@ -174,7 +177,7 @@ describe('Course Management Update Component', () => {
             // GIVEN
             const entity = new Course();
             entity.id = 123;
-            const updateStub = jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const updateStub = jest.spyOn(courseManagementService, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 id: new FormControl(entity.id),
@@ -208,7 +211,7 @@ describe('Course Management Update Component', () => {
         it('Should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
-            const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
+            const createStub = jest.spyOn(courseAdminService, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));
             comp.course = entity;
             comp.courseForm = new FormGroup({
                 onlineCourse: new FormControl(entity.onlineCourse),

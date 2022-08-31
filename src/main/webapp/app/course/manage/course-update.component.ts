@@ -23,6 +23,7 @@ import { faBan, faExclamationTriangle, faQuestionCircle, faSave, faTimes } from 
 import { base64StringToBlob } from 'app/utils/blob-util';
 import { ImageCroppedEvent } from 'app/shared/image-cropper/interfaces/image-cropped-event.interface';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 @Component({
     selector: 'jhi-course-update',
@@ -65,7 +66,8 @@ export class CourseUpdateComponent implements OnInit {
     readonly COMPLAINT_TEXT_LIMIT = 65535;
 
     constructor(
-        private courseService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
+        private courseAdminService: CourseAdminService,
         private activatedRoute: ActivatedRoute,
         private fileUploaderService: FileUploaderService,
         private alertService: AlertService,
@@ -208,9 +210,9 @@ export class CourseUpdateComponent implements OnInit {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseManagementService.update(this.courseForm.getRawValue()));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseAdminService.create(this.courseForm.getRawValue()));
         }
     }
 

@@ -22,11 +22,13 @@ import { EventManager } from 'app/core/util/event-manager.service';
 import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { FullscreenComponent } from 'app/shared/fullscreen/fullscreen.component';
 import { Course } from 'app/entities/course.model';
+import { CourseAdminService } from 'app/course/manage/course-admin.service';
 
 describe('Course Management Detail Component', () => {
     let component: CourseDetailComponent;
     let fixture: ComponentFixture<CourseDetailComponent>;
-    let courseService: CourseManagementService;
+    let courseManagementService: CourseManagementService;
+    let courseAdminService: CourseAdminService;
     let eventManager: EventManager;
 
     const route = { params: of({ courseId: 1 }) };
@@ -83,14 +85,15 @@ describe('Course Management Detail Component', () => {
         }).compileComponents();
         fixture = TestBed.createComponent(CourseDetailComponent);
         component = fixture.componentInstance;
-        courseService = fixture.debugElement.injector.get(CourseManagementService);
+        courseManagementService = fixture.debugElement.injector.get(CourseManagementService);
+        courseAdminService = fixture.debugElement.injector.get(CourseAdminService);
         eventManager = fixture.debugElement.injector.get(EventManager);
     });
 
     beforeEach(fakeAsync(() => {
-        const statsStub = jest.spyOn(courseService, 'getCourseStatisticsForDetailView');
+        const statsStub = jest.spyOn(courseManagementService, 'getCourseStatisticsForDetailView');
         statsStub.mockReturnValue(of(new HttpResponse({ body: dtoMock })));
-        const infoStub = jest.spyOn(courseService, 'find');
+        const infoStub = jest.spyOn(courseManagementService, 'find');
         infoStub.mockReturnValue(of(new HttpResponse({ body: course })));
 
         component.ngOnInit();
@@ -119,7 +122,7 @@ describe('Course Management Detail Component', () => {
 
     it('should broadcast course modification on delete', () => {
         const broadcastSpy = jest.spyOn(eventManager, 'broadcast');
-        const deleteStub = jest.spyOn(courseService, 'delete');
+        const deleteStub = jest.spyOn(courseAdminService, 'delete');
         deleteStub.mockReturnValue(of(new HttpResponse<void>()));
 
         const courseId = 444;
