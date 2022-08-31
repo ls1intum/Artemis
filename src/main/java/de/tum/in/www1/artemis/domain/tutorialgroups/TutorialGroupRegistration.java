@@ -36,7 +36,7 @@ public class TutorialGroupRegistration extends DomainObject {
     private TutorialGroupRegistrationType type;
 
     public TutorialGroupRegistration() {
-        // Empty constructor
+        // Empty constructor needed for Jackson.
     }
 
     public TutorialGroupRegistration(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType type) {
