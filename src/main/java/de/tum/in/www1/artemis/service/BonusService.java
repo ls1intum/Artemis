@@ -3,10 +3,13 @@ package de.tum.in.www1.artemis.service;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Bonus;
+import de.tum.in.www1.artemis.domain.GradeType;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.domain.IBonusStrategy;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @Service
 public class BonusService {
@@ -27,21 +30,19 @@ public class BonusService {
      * @return the saved bonus source
      */
     public Bonus saveBonus(Bonus bonus) {
-        // if (bonusSource.getCourse() != null && bonusSource.getExam() != null) {
-        // throw new BadRequestAlertException("Bonus sources can't belong both to a course and an exam", "bonusSource", "bonusSourceBelongsToCourseAndExam");
-        // }
-        // Set<GradeStep> gradeSteps = bonusSource.getGradeSteps();
-        // checkGradeStepValidity(gradeSteps);
-        // for (GradeStep gradeStep : gradeSteps) {
-        // gradeStep.setBonusSource(bonusSource);
-        // }
-        // bonusSource.setGradeSteps(gradeSteps);
+        if (!bonus.getSourceGradingScale().getGradeType().equals(GradeType.BONUS)) {
+            throw new BadRequestAlertException("Source grade scale should have bonus type.", "bonus", "invalidSourceGradingScale");
+        }
+        if (!bonus.getBonusToGradingScale().getGradeType().equals(GradeType.GRADE)) {
+            throw new BadRequestAlertException("BonusTo grade scale should have grade type.", "bonus", "invalidBonusToGradingScale");
+        }
         return bonusRepository.save(bonus);
     }
 
-    public String calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale, Double sourcePoints,
-            double calculationSign) {
-        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, bonusToGradingScale, basePoints, sourceGradingScale, sourcePoints, calculationSign);
+    public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo, GradingScale sourceGradingScale,
+            Double achievedPointsOfSource, double calculationSign) {
+        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, bonusToGradingScale, achievedPointsOfBonusTo, sourceGradingScale, achievedPointsOfSource,
+                calculationSign);
     }
 
 }

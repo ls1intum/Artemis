@@ -153,10 +153,21 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return grade step corresponding to the given percentage
      */
     default GradeStep matchPercentageToGradeStep(double percentage, Long gradingScaleId) {
+        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
+        return this.matchPercentageToGradeStep(percentage, gradeSteps);
+    }
+
+    /**
+     * @see #matchPercentageToGradeStep(double, Long)
+     *
+     * @param percentage the grade percentage to be mapped
+     * @param gradeSteps the grade steps of a grading scale
+     * @return grade step corresponding to the given percentage
+     */
+    private GradeStep matchPercentageToGradeStep(double percentage, Set<GradeStep> gradeSteps) {
         if (percentage < 0) {
             throw new BadRequestAlertException("Grade percentages must be greater than 0", "gradeStep", "invalidGradePercentage");
         }
-        Set<GradeStep> gradeSteps = findById(gradingScaleId).orElseThrow().getGradeSteps();
         Optional<GradeStep> matchingGradeStep = gradeSteps.stream().filter(gradeStep -> gradeStep.matchingGradePercentage(percentage)).findFirst();
         if (matchingGradeStep.isPresent()) {
             return matchingGradeStep.get();
@@ -167,6 +178,23 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
             return highestGradeStep.orElseThrow(() -> new EntityNotFoundException("No grade steps available"));
         }
         throw new EntityNotFoundException("No grade step in selected grading scale matches given percentage");
+    }
+
+    /**
+     * Maps a grade point to a valid grade step within the grading scale or throws an exception if no match was found.
+     * The percentage is calculated by using the given points and the max points from the grading scale.
+     *
+     * @see #matchPercentageToGradeStep(double, Long)
+     *
+     * @param points the grade points to be mapped
+     * @param gradingScale the grading scale with the grade steps
+     * @return grade step corresponding to the given points
+     */
+    default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
+        double maxPoints = gradingScale.getMaxPoints();
+        double percentage = points / maxPoints * 100.0;
+
+        return this.matchPercentageToGradeStep(percentage, gradingScale.getGradeSteps());
     }
 
     /**

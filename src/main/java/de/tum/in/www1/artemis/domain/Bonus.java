@@ -10,6 +10,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 /**
  * A bonus source for an exam that maps bonus from another course or exam to the target exam
@@ -28,7 +29,7 @@ public class Bonus extends DomainObject {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "source_grading_scale_id", referencedColumnName = "id")
-    private GradingScale source;
+    private GradingScale sourceGradingScale;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "bonus_to_grading_scale_id", referencedColumnName = "id")
@@ -42,12 +43,12 @@ public class Bonus extends DomainObject {
     @JsonProperty
     private BonusStrategy bonusStrategy;
 
-    public GradingScale getSource() {
-        return source;
+    public GradingScale getSourceGradingScale() {
+        return sourceGradingScale;
     }
 
-    public void setSource(GradingScale sourceGradingScale) {
-        this.source = sourceGradingScale;
+    public void setSourceGradingScale(GradingScale sourceGradingScale) {
+        this.sourceGradingScale = sourceGradingScale;
     }
 
     public GradingScale getBonusToGradingScale() {
@@ -76,10 +77,11 @@ public class Bonus extends DomainObject {
         this.weight = Math.signum(weight);
     }
 
-    public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, BonusStrategy bonusStrategy, Double achievedPointsForBonus,
-            Double achievedPointsForTarget) {
-        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, gradingScaleRepository.findWithEagerBonusFromByBonusFromId(getId()).orElse(null),
-                achievedPointsForTarget, getSource(), achievedPointsForBonus, getWeight());
+    public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, BonusStrategy bonusStrategy, Double achievedPointsOfBonusTo,
+            Double achievedPointsOfSource) {
+        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository,
+                // gradingScaleRepository.findWithEagerBonusFromByBonusFromId(getId()).orElse(null), // TODO: Ata Remove if current version works
+                getBonusToGradingScale(), achievedPointsOfBonusTo, getSourceGradingScale(), achievedPointsOfSource, getWeight());
     }
 
     public BonusStrategy getBonusStrategy() {

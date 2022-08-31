@@ -8,6 +8,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -38,6 +39,10 @@ public class GradingScale extends DomainObject {
     @JoinColumn(name = "exam_id")
     private Exam exam;
 
+    /**
+     * Current implementation works with one Bonus instance as GradingScale.bonusFrom per Bonus.bonusTo instance (OneToOne) but
+     * the relation is defined as OneToMany in order to allow applying multiple bonuses.
+     */
     @OneToMany(mappedBy = "gradingScale", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "gradingScale", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -99,6 +104,24 @@ public class GradingScale extends DomainObject {
 
     public void addBonus(Bonus bonus) {
         this.bonusFrom.add(bonus);
+    }
+
+    @JsonIgnore
+    public int getMaxPoints() {
+        if (this.getCourse() != null) {
+            return this.getCourse().getMaxPoints();
+        }
+        else {
+            return this.getExam().getMaxPoints();
+        }
+    }
+
+    /**
+     * Returns the max grade from grade step set of the grading scale
+     * @return the max grade step
+     */
+    GradeStep maxGrade() {
+        return getGradeSteps().stream().filter(gradeStep -> gradeStep.isUpperBoundInclusive() && gradeStep.getUpperBoundPercentage() == 100.0).findAny().orElse(null);
     }
 
     /**

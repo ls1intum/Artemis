@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.BonusService;
+import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -117,7 +118,7 @@ public class BonusResource {
         return ResponseEntity.ok().body(bonus);
     }
 
-    private String calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double sourcePoints, GradingScale targetGradingScale,
+    private BonusExampleDTO calculateGradeWithBonus(BonusStrategy bonusStrategy, Double calculationSign, Double targetPoints, Double sourcePoints, GradingScale targetGradingScale,
             GradingScale sourceGradingScale) {
         checkIsAtLeastInstructorForGradingScaleCourse(targetGradingScale);
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScale);
@@ -127,14 +128,14 @@ public class BonusResource {
 
     @GetMapping("bonus/calculate-raw")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<String> calculateGradeWithBonus(@RequestParam BonusStrategy bonusStrategy, @RequestParam Double calculationSign, @RequestParam Long targetGradingScaleId,
-            @RequestParam Double targetPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
+    public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@RequestParam BonusStrategy bonusStrategy, @RequestParam Double calculationSign,
+            @RequestParam Long targetGradingScaleId, @RequestParam Double targetPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
         // TODO: Ata: Add auth and validation.
         var targetGradingScale = gradingScaleRepository.findById(targetGradingScaleId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
-        String gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, targetPoints, sourcePoints, targetGradingScale, sourceGradingScale);
+        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, targetPoints, sourcePoints, targetGradingScale, sourceGradingScale);
 
         return ResponseEntity.ok(gradeWithBonus);
     }
@@ -185,8 +186,8 @@ public class BonusResource {
         // Optional<Bonus> existingBonus = bonusRepository.findBySourceExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
-        bonus.setSource(sourceGradingScaleFromDb);
+        GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
+        bonus.setSourceGradingScale(sourceGradingScaleFromDb);
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScaleFromDb);
 
         // validateBonus(existingBonus, bonus);
@@ -215,9 +216,9 @@ public class BonusResource {
                 .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonus.getId()));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, bonusToGradingScale.getExam().getCourse(), null);
 
-        if (bonus.getSource() != null && !oldBonus.getSource().getId().equals(bonus.getSource().getId())) {
-            var sourceFromDb = gradingScaleRepository.findById(bonus.getSource().getId()).orElseThrow();
-            bonus.setSource(sourceFromDb);
+        if (bonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(bonus.getSourceGradingScale().getId())) {
+            var sourceFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
+            bonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
         }
 

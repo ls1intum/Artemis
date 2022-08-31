@@ -51,12 +51,15 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Exam targetExam = database.addExamWithExerciseGroup(course, true);
         Exam sourceExam = database.addExamWithExerciseGroup(course, true);
         bonusToExamGradingScale = new GradingScale();
+        bonusToExamGradingScale.setGradeType(GradeType.GRADE);
         bonusToExamGradingScale.setExam(targetExam);
 
         sourceExamGradingScale = new GradingScale();
+        sourceExamGradingScale.setGradeType(GradeType.BONUS);
         sourceExamGradingScale.setExam(sourceExam);
 
         courseGradingScale = new GradingScale();
+        courseGradingScale.setGradeType(GradeType.BONUS);
         courseGradingScale.setCourse(course);
 
         gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
@@ -89,10 +92,9 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(result).isNullOrEmpty();
     }
 
-    private void assertBonusSourcesAreEqualIgnoringId(Bonus actualBonus, Bonus expectedBonus) {
-        assertThat(actualBonus).usingRecursiveComparison().ignoringFields("id", "source", "bonusToGradingScale").isEqualTo(expectedBonus);
-        assertThat(actualBonus.getSource().getId()).isEqualTo(expectedBonus.getSource().getId());
-        // assertThat(actualBonusSource.getTarget().getId()).isEqualTo(expectedBonusSource.getTarget().getId());
+    private void assertBonusesAreEqualIgnoringId(Bonus actualBonus, Bonus expectedBonus) {
+        assertThat(actualBonus).usingRecursiveComparison().ignoringFields("id", "sourceGradingScale", "bonusToGradingScale").isEqualTo(expectedBonus);
+        assertThat(actualBonus.getSourceGradingScale().getId()).isEqualTo(expectedBonus.getSourceGradingScale().getId());
     }
 
     @Test
@@ -103,7 +105,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 HttpStatus.OK, Bonus.class);
 
         assertThat(foundBonus.getId()).isEqualTo(examBonus.getId());
-        assertBonusSourcesAreEqualIgnoringId(foundBonus, examBonus);
+        assertBonusesAreEqualIgnoringId(foundBonus, examBonus);
     }
 
     @Test
@@ -113,7 +115,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Bonus foundBonus = request.get("/api/bonus/" + courseBonus.getId(), HttpStatus.OK, Bonus.class);
 
         assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
-        assertBonusSourcesAreEqualIgnoringId(foundBonus, courseBonus);
+        assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
     }
 
     @Test
@@ -122,6 +124,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         Exam newExam = database.addExamWithExerciseGroup(course, true);
         var newExamGradingScale = new GradingScale();
+        newExamGradingScale.setGradeType(GradeType.BONUS);
         newExamGradingScale.setExam(newExam);
         gradingScaleRepository.save(newExamGradingScale);
 
@@ -132,7 +135,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
                 HttpStatus.CREATED);
 
         assertThat(savedBonus.getId()).isGreaterThan(0);
-        assertBonusSourcesAreEqualIgnoringId(savedBonus, newBonus);
+        assertBonusesAreEqualIgnoringId(savedBonus, newBonus);
     }
 
     @Test
@@ -142,9 +145,20 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Bonus foundBonus = request.get("/api/bonus/" + courseBonus.getId(), HttpStatus.OK, Bonus.class);
 
         assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
-        assertBonusSourcesAreEqualIgnoringId(foundBonus, courseBonus);
+        assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
     }
 
     // TODO: Ata: Add student tests that fail due to Unauthorized
+
+    // @Test
+    // @WithMockUser(username = "student1", roles = "USER")
+    // void deleteTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
+    // final Course course = database.addCourseWithOneReleasedTextExercise();
+    // TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
+    // course.setInstructorGroupName("test");
+    // courseRepository.save(course);
+    //
+    // request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
+    // }
 
 }

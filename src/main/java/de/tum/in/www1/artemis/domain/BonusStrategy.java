@@ -4,59 +4,73 @@ package de.tum.in.www1.artemis.domain;
 import org.apache.commons.lang.NotImplementedException;
 
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 public enum BonusStrategy implements IBonusStrategy {
 
     GRADES_DISCRETE {
 
         @Override
-        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
-                Double sourcePoints, double calculationSign) {
+        public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
+                GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
             throw new NotImplementedException("GRADES_DISCRETE bonus strategy not yet implemented");
         }
     },
     GRADES_CONTINUOUS {
 
         @Override
-        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
-                Double sourcePoints, double calculationSign) {
-            int sourceMaxPoints = getSourceGradingScaleMaxPoints(sourceGradingScale);
-            double sourcePercentage = sourcePoints / sourceMaxPoints * 100.0;
+        public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
+                GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
+            GradeStep bonusGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfSource, sourceGradingScale);
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);
+            GradeStep maxGradeStep = bonusToGradingScale.maxGrade();
 
-            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(sourcePercentage, sourceGradingScale.getId());
+            double bonusGrade = bonusGradeStep.getNumericValue();
+            double finalGrade = bonusToRawGradeStep.getNumericValue() + weight * bonusGrade;
 
-            int bonusToMaxPoints = bonusToGradingScale.getExam().getMaxPoints();
-            double bonusToPercentage = basePoints / bonusToMaxPoints * 100.0;
-            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPercentageToGradeStep(bonusToPercentage, bonusToGradingScale.getId());
+            double maxGrade = maxGradeStep.getNumericValue();
+            boolean exceedsMax = false;
+            if (doesBonusExceedMax(finalGrade, maxGrade, weight)) {
+                exceedsMax = true;
+                finalGrade = maxGrade;
+            }
 
-            return Double.toString(bonusToRawGradeStep.getNumericValue() + calculationSign * bonusGradeStep.getNumericValue());
+            return new BonusExampleDTO(achievedPointsOfBonusTo, achievedPointsOfSource, bonusToRawGradeStep.getGradeName(), bonusGrade, null, // Irrelevant for this bonus strategy.
+                    Double.toString(finalGrade), exceedsMax);
         }
     },
     POINTS {
 
         @Override
-        public String calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double basePoints, GradingScale sourceGradingScale,
-                Double sourcePoints, double calculationSign) {
-            int sourceMaxPoints = getSourceGradingScaleMaxPoints(sourceGradingScale);
-            double sourcePercentage = sourcePoints / sourceMaxPoints * 100.0;
+        public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
+                GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
+            GradeStep bonusGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfSource, sourceGradingScale);
 
-            GradeStep bonusGradeStep = gradingScaleRepository.matchPercentageToGradeStep(sourcePercentage, sourceGradingScale.getId());
+            double bonusGrade = bonusGradeStep.getNumericValue();
+            double finalPoints = achievedPointsOfBonusTo + weight * bonusGrade;
 
-            double bonusToPointsWithBonus = basePoints + calculationSign * bonusGradeStep.getNumericValue();
-            int bonusToMaxPoints = bonusToGradingScale.getExam().getMaxPoints();
+            boolean exceedsMax = false;
+            if (doesBonusExceedMax(finalPoints, bonusToGradingScale.getMaxPoints(), weight)) {
+                exceedsMax = true;
+                finalPoints = bonusToGradingScale.getMaxPoints();
+            }
+            GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);
+            GradeStep finalGradeStep = gradingScaleRepository.matchPointsToGradeStep(finalPoints, bonusToGradingScale);
 
-            double bonusToPercentage = bonusToPointsWithBonus / bonusToMaxPoints * 100.0;
-            return gradingScaleRepository.matchPercentageToGradeStep(bonusToPercentage, bonusToGradingScale.getId()).getGradeName();
+            return new BonusExampleDTO(achievedPointsOfBonusTo, achievedPointsOfSource, bonusToRawGradeStep.getGradeName(), bonusGrade, finalPoints, finalGradeStep.getGradeName(),
+                    exceedsMax);
         }
     };
 
-    private static int getSourceGradingScaleMaxPoints(GradingScale sourceGradingScale) {
-        if (sourceGradingScale.getCourse() != null) {
-            return sourceGradingScale.getCourse().getMaxPoints();
-        }
-        else {
-            return sourceGradingScale.getExam().getMaxPoints();
-        }
+    /**
+     * Returns true if valueWithBonus exceeds the maxValue in the direction given by weight.
+     *
+     * @param valueWithBonus achieved points or numeric grade with bonus applied
+     * @param maxValue       max points or max grade (numeric)
+     * @param weight         a negative or positive number to indicate decreasing or increasing direction, respectively
+     */
+    private static boolean doesBonusExceedMax(double valueWithBonus, double maxValue, double weight) {
+        return (valueWithBonus - maxValue) * weight > 0;
     }
 
 }

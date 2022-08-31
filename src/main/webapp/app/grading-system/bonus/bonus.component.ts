@@ -15,12 +15,12 @@ import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-imp
 import { GradeEditMode } from 'app/grading-system/base-grading-system/base-grading-system.component';
 import { AlertService } from 'app/core/util/alert.service';
 
-enum BonusStrategyOption {
+export enum BonusStrategyOption {
     GRADES,
     POINTS,
 }
 
-enum BonusStrategyDiscreteness {
+export enum BonusStrategyDiscreteness {
     DISCRETE,
     CONTINUOUS,
 }
@@ -43,7 +43,7 @@ export class BonusComponent implements OnInit {
 
     readonly ButtonSize = ButtonSize;
     readonly GradeEditMode = GradeEditMode;
-    readonly BonusStrategyOptions = BonusStrategyOption;
+    readonly BonusStrategyOption = BonusStrategyOption;
     readonly BonusStrategy = BonusStrategy;
     // readonly BonusStrategyDiscreteness = BonusStrategyDiscreteness;
 
@@ -248,13 +248,13 @@ export class BonusComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe(
-                (bonusResponse) => {
+            .subscribe({
+                next: (bonusResponse) => {
                     this.setBonus(bonusResponse.body || new Bonus());
                     this.dialogErrorSource.next('');
                 },
-                (error) => this.dialogErrorSource.next(error.message),
-            );
+                error: (error) => this.dialogErrorSource.next(error.message),
+            });
     }
 
     isFormValid() {
