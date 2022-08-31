@@ -32,6 +32,8 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
     private postsSubscription: Subscription;
     posts: Post[];
 
+    affectedExerciseRouterLink: (string | number)[];
+
     constructor(protected metisService: MetisService, private plagiarismCasesService: PlagiarismCasesService, private activatedRoute: ActivatedRoute) {}
 
     ngOnInit(): void {
@@ -47,6 +49,15 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
             this.plagiarismCasesService.getPlagiarismCaseDetailForStudent(this.courseId, this.plagiarismCaseId).subscribe({
                 next: (res: HttpResponse<PlagiarismCase>) => {
                     this.plagiarismCase = res.body!;
+
+                    const examId = this.plagiarismCase?.exercise?.exerciseGroup?.exam?.id;
+                    if (examId) {
+                        // Navigate to the exam result since individual exam exercises are not addressable.
+                        this.affectedExerciseRouterLink = ['/courses', this.courseId, 'exams', examId];
+                    } else {
+                        this.affectedExerciseRouterLink = ['/courses', this.courseId, 'exercises', this.plagiarismCase.exercise!.id!];
+                    }
+
                     this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
 
                     this.metisService.setPageType(this.pageType);
