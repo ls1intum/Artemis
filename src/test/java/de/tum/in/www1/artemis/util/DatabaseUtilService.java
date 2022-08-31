@@ -917,6 +917,15 @@ public class DatabaseUtilService {
         return answerPosts;
     }
 
+    public void createMultipleCoursesWithAllExercisesAndLectures(int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+        for (int i = 0; i < numberOfCoursesWithExercises; i++) {
+            createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+        }
+        for (int i = 0; i < numberOfCoursesWithLectures; i++) {
+            createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
+        }
+    }
+
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
         var assessmentTimestamp = hasAssessmentDueDatePassed ? ZonedDateTime.now().minusMinutes(10L) : ZonedDateTime.now().plusMinutes(10L);
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");

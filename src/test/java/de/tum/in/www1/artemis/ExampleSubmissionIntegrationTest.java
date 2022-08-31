@@ -12,6 +12,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
@@ -29,6 +30,12 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Autowired
     private ResultRepository resultRepo;
+
+    @Autowired
+    private SubmissionRepository submissionRepository;
+
+    @Autowired
+    private GradingCriterionRepository gradingCriterionRepo;
 
     @Autowired
     private ExampleSubmissionRepository exampleSubmissionRepo;
@@ -195,6 +202,22 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void prepareExampleTextSubmissionForAssessmentShouldCreateBlocks() throws Exception {
+        ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
+
+        ExampleSubmission unpreparedExampleSubmission = request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.OK, ExampleSubmission.class);
+        TextSubmission unpreparedTextSubmission = (TextSubmission) unpreparedExampleSubmission.getSubmission();
+        assertThat(unpreparedTextSubmission.getBlocks()).hasSize(0);
+
+        request.postWithoutResponseBody("/api/exercises/" + textExercise.getId() + "/example-submissions/" + storedExampleSubmission.getId() + "/prepare-assessment", HttpStatus.OK,
+                new LinkedMultiValueMap<>());
+        ExampleSubmission preparedExampleSubmission = request.get("/api/example-submissions/" + storedExampleSubmission.getId(), HttpStatus.OK, ExampleSubmission.class);
+        TextSubmission preparedTextSubmission = (TextSubmission) preparedExampleSubmission.getSubmission();
+        assertThat(preparedTextSubmission.getBlocks()).hasSize(2);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void createExampleTextAssessment() throws Exception {
         ExampleSubmission storedExampleSubmission = database.addExampleSubmission(database.generateExampleSubmission("Text. Submission.", textExercise, true));
         database.addResultToSubmission(storedExampleSubmission.getSubmission(), AssessmentType.MANUAL);
@@ -302,6 +325,30 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
         assertThat(exampleSubmission.getId()).isNotNull();
         assertThat(((ModelingSubmission) exampleSubmission.getSubmission()).getModel()).isEqualTo(((ModelingSubmission) submission).getModel());
         assertThat(exampleSubmission.getSubmission().getLatestResult().getScore()).isEqualTo(submission.getLatestResult().getScore());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void importExampleSubmissionForModelingExerciseCopiesGradingInstruction() throws Exception {
+        testGradingCriteriaAreImported(modelingExercise);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void importExampleSubmissionForTextExerciseCopiesGradingInstruction() throws Exception {
+        testGradingCriteriaAreImported(textExercise);
+    }
+
+    private void testGradingCriteriaAreImported(Exercise exercise) throws Exception {
+        List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(exercise);
+        gradingCriterionRepo.saveAll(gradingCriteria);
+        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, "instructor1");
+        Submission originalSubmission = submissionRepository.findAll().get(0);
+        Optional<Result> orginalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
+
+        ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);
+        assertThat(exampleSubmission.getSubmission().getResults().get(0).getFeedbacks().get(0).getGradingInstruction().getId())
+                .isEqualTo(orginalResult.get().getFeedbacks().get(0).getGradingInstruction().getId());
     }
 
     @Test
