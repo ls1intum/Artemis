@@ -152,7 +152,7 @@ public class CourseResource {
     public ResponseEntity<Course> createCourse(@RequestBody Course course) throws URISyntaxException {
         log.debug("REST request to save Course : {}", course);
         if (course.getId() != null) {
-            throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new course cannot already have an ID", Course.ENTITY_NAME, "idExists");
         }
 
         course.validateShortName();

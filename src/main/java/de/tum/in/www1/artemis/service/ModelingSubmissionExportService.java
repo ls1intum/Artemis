@@ -25,9 +25,9 @@ public class ModelingSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
-            writer.write(((ModelingSubmission) submission).getModel()); // TODO: save explanation text
-            writer.close();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+                writer.write(((ModelingSubmission) submission).getModel()); // TODO: save explanation text
+            }
         }
     }
 
