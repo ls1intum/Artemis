@@ -10,6 +10,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
+
 @Entity
 @Table(name = "tutorial_group_session")
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -21,6 +23,10 @@ public class TutorialGroupSession extends DomainObject {
 
     @Column(name = "end")
     private ZonedDateTime end;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private TutorialGroupSessionStatus status;
 
     @ManyToOne
     @JoinColumn(name = "tutorial_group_schedule_id")
@@ -64,5 +70,13 @@ public class TutorialGroupSession extends DomainObject {
 
     public void setTutorialGroup(TutorialGroup tutorialGroup) {
         this.tutorialGroup = tutorialGroup;
+    }
+
+    public TutorialGroupSessionStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(TutorialGroupSessionStatus tutorialGroupSessionStatus) {
+        this.status = tutorialGroupSessionStatus;
     }
 }

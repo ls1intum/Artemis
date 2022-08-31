@@ -33,8 +33,23 @@
     <div class="row">
         <div class="col-12">
             <ngb-accordion type="info" [closeOthers]="true" activeIds="acc-2">
-                <ngb-panel *ngFor="let acc of tutorialGroupSessions" id="acc-{{ acc.id }}" [title]="generateSessionLabel(acc)">
-                    <ng-template ngbPanelContent> ToDo: Tutorial Group Location and Stuff </ng-template>
+                <ngb-panel *ngFor="let acc of tutorialGroupSessions" id="acc-{{ acc.id }}">
+                    <ng-template ngbPanelHeader let-opened="opened">
+                        <div class="accordion-button custom-header justify-content-between" [class.collapsed]="!opened">
+                            <p class="m-0">{{ generateSessionLabel(acc) }}</p>
+                            <div>
+                                <button (click)="cancelOrActivate(acc)" class="btn btn-sm btn-outline-primary ms-2">
+                                    {{ acc.status == tutorialGroupSessionStatus.ACTIVE ? 'Cancel' : 'Activate' }}
+                                </button>
+                            </div>
+                        </div>
+                    </ng-template>
+                    <ng-template ngbPanelContent>
+                        Anim pariatur cliche reprehenderit, enim eiusmod high life accusamus terry richardson ad squid. 3 wolf moon officia aute, non cupidatat skateboard dolor
+                        brunch. Food truck quinoa nesciunt laborum eiusmod. Brunch 3 wolf moon tempor, sunt aliqua put a bird on it squid single-origin coffee nulla assumenda
+                        shoreditch et. Nihil anim keffiyeh helvetica, craft beer labore wes anderson cred nesciunt sapiente ea proident. Ad vegan excepteur butcher vice lomo.
+                        Leggings occaecat craft beer farm-to-table, raw denim aesthetic synth nesciunt you probably haven't heard of them accusamus labore sustainable VHS.
+                    </ng-template>
                 </ngb-panel>
             </ngb-accordion>
         </div>

@@ -10,6 +10,7 @@ import de.tum.in.www1.artemis.domain.TutorialGroup;
 import de.tum.in.www1.artemis.domain.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.TutorialGroupsConfiguration;
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
@@ -60,6 +61,7 @@ public class TutorialGroupScheduleService {
             session.setEnd(sessionEnd.withZoneSameInstant(ZoneId.of("UTC")));
             session.setTutorialGroupSchedule(tutorialGroupSchedule);
             session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
+            session.setStatus(TutorialGroupSessionStatus.ACTIVE);
             sessions.add(session);
 
             sessionStart = sessionStart.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());

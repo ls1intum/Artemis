@@ -8,6 +8,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.TutorialGroupSession;
+import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGroupSession, Long> {
@@ -17,5 +18,9 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
             FROM TutorialGroupSession tutorialGroupSession
             WHERE tutorialGroupSession.tutorialGroup.id = :#{#tutorialGroupId}""")
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
+
+    default TutorialGroupSession findByIdElseThrow(long tutorialGroupSessionId) {
+        return findById(tutorialGroupSessionId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSession", tutorialGroupSessionId));
+    }
 
 }

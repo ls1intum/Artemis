@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.TutorialGroup;
 import de.tum.in.www1.artemis.domain.TutorialGroupSession;
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
@@ -73,20 +74,62 @@ public class TutorialGroupSessionResource {
         }
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
+
         checkPathIdsAgainstDatabaseIds(courseId, tutorialGroup);
 
         if (tutorialGroup.getCourse().getTutorialGroupsConfiguration() == null) {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
         tutorialGroupSession.setTutorialGroup(tutorialGroup);
+        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
 
         tutorialGroupSessionRepository.save(tutorialGroupSession);
 
         return ResponseEntity.created(new URI("")).body(tutorialGroupSession);
     }
 
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
+        log.debug("REST request to cancel TutorialGroupSession: {} in tutorialGroup: {}", sessionId, tutorialGroupId);
+        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkPathIdsAgainstDatabaseIds(courseId, tutorialGroupId, tutorialGroupSession);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupSession.getTutorialGroup().getCourse(), null);
+
+        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+        tutorialGroupSessionRepository.save(tutorialGroupSession);
+
+        return ResponseEntity.ok().body(tutorialGroupSession);
+    }
+
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
+        log.debug("REST request to cancel TutorialGroupSession: {} in tutorialGroup: {}", sessionId, tutorialGroupId);
+        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkPathIdsAgainstDatabaseIds(courseId, tutorialGroupId, tutorialGroupSession);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupSession.getTutorialGroup().getCourse(), null);
+
+        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        tutorialGroupSessionRepository.save(tutorialGroupSession);
+
+        return ResponseEntity.ok().body(tutorialGroupSession);
+    }
+
     private void checkPathIdsAgainstDatabaseIds(Long courseIdFromPath, TutorialGroup tutorialGroupFromDatabase) {
         if (!tutorialGroupFromDatabase.getCourse().getId().equals(courseIdFromPath)) {
+            throw new ConflictException("The tutorial group does not belong to the correct course", "TutorialGroup", "tutorialGroupWrongCourse");
+        }
+    }
+
+    private void checkPathIdsAgainstDatabaseIds(Long courseIdFromPath, Long tutorialGroupIdFromPath, TutorialGroupSession tutorialGroupSession) {
+        if (!tutorialGroupSession.getTutorialGroup().getId().equals(tutorialGroupIdFromPath)) {
+            throw new ConflictException("The tutorial group session does not belong to the correct tutorial group", "TutorialGroupSession",
+                    "tutorialGroupSessionWrongTutorialGroup");
+        }
+        if (!tutorialGroupSession.getTutorialGroup().getCourse().getId().equals(courseIdFromPath)) {
             throw new ConflictException("The tutorial group does not belong to the correct course", "TutorialGroup", "tutorialGroupWrongCourse");
         }
     }

@@ -21,6 +21,26 @@ export class TutorialGroupSessionService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
+    cancel(courseId: number, tutorialGroupId: number, tutorialGroupSessionId: number): Observable<EntityResponseType> {
+        return this.httpClient
+            .post<TutorialGroupSession>(
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${tutorialGroupSessionId}/cancel`,
+                {},
+                { observe: 'response' },
+            )
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    }
+
+    activate(courseId: number, tutorialGroupId: number, tutorialGroupSessionId: number): Observable<EntityResponseType> {
+        return this.httpClient
+            .post<TutorialGroupSession>(
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${tutorialGroupSessionId}/activate`,
+                {},
+                { observe: 'response' },
+            )
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    }
+
     getSessions(courseId: number, tutorialGroupId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<TutorialGroupSession[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, { observe: 'response' })

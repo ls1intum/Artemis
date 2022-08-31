@@ -7,11 +7,12 @@ import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { getDayTranslationKey } from '../shared/weekdays';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 
 @Component({
     selector: 'jhi-schedule-management',
@@ -27,6 +28,7 @@ export class ScheduleManagementComponent implements OnInit {
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private tutorialGroupService: TutorialGroupsService,
+        private tutorialGroupSessionService: TutorialGroupSessionService,
         private alertService: AlertService,
         private sortService: SortService,
         private changeDetectorRef: ChangeDetectorRef,
@@ -37,6 +39,9 @@ export class ScheduleManagementComponent implements OnInit {
     tutorialGroup: TutorialGroup;
     tutorialGroupSchedule: TutorialGroupSchedule;
     tutorialGroupSessions: TutorialGroupSession[] = [];
+
+    tutorialGroupSessionStatus = TutorialGroupSessionStatus;
+
     sessionTrackByFn = (index: number, session: TutorialGroupSession): number => session.id!;
 
     generateSessionLabel(tutorialGroupSession: TutorialGroupSession): string {
@@ -48,9 +53,44 @@ export class ScheduleManagementComponent implements OnInit {
     }
 
     getDayTranslationKey = getDayTranslationKey;
+    cancelOrActivate(session: TutorialGroupSession): void {
+        if (session.status === TutorialGroupSessionStatus.ACTIVE) {
+            this.cancelSession(session);
+        } else {
+            this.activateSession(session);
+        }
+    }
+
+    cancelSession(session: TutorialGroupSession): void {
+        this.tutorialGroupSessionService.cancel(this.courseId!, this.tutorialGroup.id!, session.id!).subscribe({
+            next: () => {
+                this.loadAll();
+            },
+            error: (res: HttpErrorResponse) => {
+                this.isLoading = false;
+                onError(this.alertService, res);
+            },
+        });
+    }
+
+    activateSession(session: TutorialGroupSession): void {
+        this.tutorialGroupSessionService.activate(this.courseId!, this.tutorialGroup.id!, session.id!).subscribe({
+            next: () => {
+                this.loadAll();
+            },
+            error: (res: HttpErrorResponse) => {
+                this.isLoading = false;
+                onError(this.alertService, res);
+            },
+        });
+    }
 
     ngOnInit(): void {
-        // this.isLoading = true;
+        this.loadAll();
+    }
+
+    private loadAll() {
+        this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
                 take(1),
@@ -68,7 +108,7 @@ export class ScheduleManagementComponent implements OnInit {
                     if (tutorialGroup) {
                         this.tutorialGroup = tutorialGroup;
                         if (tutorialGroup.tutorialGroupSessions) {
-                            this.tutorialGroupSessions.push(...this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', true));
+                            this.tutorialGroupSessions = this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', true);
                         }
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
