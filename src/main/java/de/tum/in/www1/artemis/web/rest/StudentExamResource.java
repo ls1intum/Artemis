@@ -76,6 +76,8 @@ public class StudentExamResource {
 
     private final ExamRepository examRepository;
 
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     private final ExamService examService;
@@ -88,7 +90,8 @@ public class StudentExamResource {
     public StudentExamResource(ExamAccessService examAccessService, StudentExamService studentExamService, StudentExamAccessService studentExamAccessService,
             UserRepository userRepository, AuditEventRepository auditEventRepository, StudentExamRepository studentExamRepository, ExamDateService examDateService,
             ExamSessionService examSessionService, StudentParticipationRepository studentParticipationRepository, QuizExerciseRepository quizExerciseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authorizationCheckService, ExamService examService, InstanceMessageSendService instanceMessageSendService) {
+            ExamRepository examRepository, SubmittedAnswerRepository submittedAnswerRepository, AuthorizationCheckService authorizationCheckService, ExamService examService,
+            InstanceMessageSendService instanceMessageSendService) {
         this.examAccessService = examAccessService;
         this.studentExamService = studentExamService;
         this.studentExamAccessService = studentExamAccessService;
@@ -100,6 +103,7 @@ public class StudentExamResource {
         this.studentParticipationRepository = studentParticipationRepository;
         this.quizExerciseRepository = quizExerciseRepository;
         this.examRepository = examRepository;
+        this.submittedAnswerRepository = submittedAnswerRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.examService = examService;
         this.instanceMessageSendService = instanceMessageSendService;
@@ -129,6 +133,9 @@ public class StudentExamResource {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, true);
+
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         // connect the exercises and student participations correctly and make sure all relevant associations are available
         for (Exercise exercise : studentExam.getExercises()) {
@@ -435,9 +442,10 @@ public class StudentExamResource {
         fetchParticipationsSubmissionsAndResultsForRealExam(studentExam, targetUser);
 
         List<StudentParticipation> participations = studentExam.getExercises().stream().flatMap(exercise -> exercise.getStudentParticipations().stream()).toList();
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         StudentExamWithGradeDTO studentExamWithGradeDTO = examService.calculateStudentResultWithGradeAndPoints(studentExam, participations);
-        studentExamWithGradeDTO.studentExam = null;  // To save bandwidth.
 
         log.info("getStudentExamGradesForSummary done in {}ms for {} exercises for target user {} by caller user {}", System.currentTimeMillis() - start,
                 studentExam.getExercises().size(), targetUser.getLogin(), currentUser.getLogin());
@@ -689,6 +697,8 @@ public class StudentExamResource {
         // fetch participations, submissions and results for these exercises, note: exams only contain individual exercises for now
         // fetching all participations at once is more effective
         List<StudentParticipation> participations = studentParticipationRepository.findByStudentExamWithEagerSubmissionsResult(studentExam, false);
+        // fetch all submitted answers for quizzes
+        submittedAnswerRepository.loadQuizSubmissionsSubmittedAnswers(participations);
 
         boolean isAtLeastInstructor = authorizationCheckService.isAtLeastInstructorInCourse(studentExam.getExam().getCourse(), currentUser);
 
