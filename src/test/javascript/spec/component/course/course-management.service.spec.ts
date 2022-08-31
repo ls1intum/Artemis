@@ -144,15 +144,6 @@ describe('Course Management Service', () => {
         tick();
     }));
 
-    it('should find course with exercises and participations', fakeAsync(() => {
-        courseManagementService
-            .findWithExercisesAndParticipations(course.id!)
-            .pipe(take(1))
-            .subscribe((res) => expect(res.body).toEqual(course));
-        requestAndExpectDateConversion('GET', `${resourceUrl}/${course.id}/with-exercises-and-relevant-participations`, returnedFromService, course);
-        tick();
-    }));
-
     it('should find course with organizations', fakeAsync(() => {
         course.organizations = [new Organization()];
         returnedFromService = { ...course };

@@ -11,7 +11,6 @@ import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -30,8 +29,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
-import de.tum.in.www1.artemis.domain.enumeration.IncludedInOverallScore;
 import de.tum.in.www1.artemis.domain.participation.TutorParticipation;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.*;
@@ -47,7 +44,6 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
-import tech.jhipster.web.util.ResponseUtil;
 
 /**
  * REST controller for managing Course.
@@ -82,62 +78,32 @@ public class CourseResource {
 
     private final SubmissionService submissionService;
 
-    private final ComplaintService complaintService;
-
-    private final TutorLeaderboardService tutorLeaderboardService;
-
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     private final AssessmentDashboardService assessmentDashboardService;
 
     private final Optional<VcsUserManagementService> optionalVcsUserManagementService;
 
     private final Optional<CIUserManagementService> optionalCiUserManagementService;
 
-    private final ComplaintRepository complaintRepository;
-
-    private final ComplaintResponseRepository complaintResponseRepository;
-
     private final AuditEventRepository auditEventRepository;
 
     private final ExerciseRepository exerciseRepository;
 
-    private final SubmissionRepository submissionRepository;
-
-    private final ResultRepository resultRepository;
-
-    private final ParticipantScoreRepository participantScoreRepository;
-
-    private final RatingService ratingService;
-
     public CourseResource(UserRepository userRepository, CourseService courseService, CourseRepository courseRepository, ExerciseService exerciseService,
-            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, RatingService ratingService,
-            ComplaintRepository complaintRepository, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            SubmissionService submissionService, ComplaintService complaintService, TutorLeaderboardService tutorLeaderboardService, ResultRepository resultRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, AuditEventRepository auditEventRepository, ParticipantScoreRepository participantScoreRepository,
-            Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService, ExerciseRepository exerciseRepository,
-            Optional<CIUserManagementService> optionalCiUserManagementService) {
+            AuthorizationCheckService authCheckService, TutorParticipationRepository tutorParticipationRepository, SubmissionService submissionService,
+            AuditEventRepository auditEventRepository, Optional<VcsUserManagementService> optionalVcsUserManagementService, AssessmentDashboardService assessmentDashboardService,
+            ExerciseRepository exerciseRepository, Optional<CIUserManagementService> optionalCiUserManagementService) {
         this.courseService = courseService;
         this.courseRepository = courseRepository;
         this.exerciseService = exerciseService;
         this.authCheckService = authCheckService;
         this.tutorParticipationRepository = tutorParticipationRepository;
-        this.complaintRepository = complaintRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
         this.submissionService = submissionService;
-        this.complaintService = complaintService;
-        this.tutorLeaderboardService = tutorLeaderboardService;
-        this.programmingExerciseRepository = programmingExerciseRepository;
         this.optionalVcsUserManagementService = optionalVcsUserManagementService;
         this.optionalCiUserManagementService = optionalCiUserManagementService;
         this.auditEventRepository = auditEventRepository;
         this.assessmentDashboardService = assessmentDashboardService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.submissionRepository = submissionRepository;
-        this.resultRepository = resultRepository;
-        this.participantScoreRepository = participantScoreRepository;
-        this.ratingService = ratingService;
     }
 
     /**
@@ -397,7 +363,7 @@ public class CourseResource {
 
         List<Course> allRegisteredCourses = courseService.findAllActiveForUser(user);
         List<Course> allCoursesToRegister = courseRepository.findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites();
-        List<Course> registrableCourses = allCoursesToRegister.stream().filter(course -> {
+        return allCoursesToRegister.stream().filter(course -> {
             // further, check if the course has been assigned to any organization and if yes,
             // check if user is member of at least one of them
             if (course.getOrganizations() != null && !course.getOrganizations().isEmpty()) {
@@ -407,7 +373,6 @@ public class CourseResource {
                 return true;
             }
         }).filter(course -> !allRegisteredCourses.contains(course)).toList();
-        return registrableCourses;
     }
 
     /**
@@ -476,13 +441,13 @@ public class CourseResource {
         course.setExercises(interestingExercises);
         List<TutorParticipation> tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course_IdAndTutor_Id(course.getId(), user.getId());
         assessmentDashboardService.generateStatisticsForExercisesForAssessmentDashboard(course.getExercises(), tutorParticipations, false);
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+        return ResponseEntity.ok(course);
     }
 
     /**
      * GET /courses/:courseId/stats-for-assessment-dashboard A collection of useful statistics for the tutor course dashboard, including: - number of submissions to the course - number of
      * assessments - number of assessments assessed by the tutor - number of complaints
-     *
+     * <p>
      * all timestamps were measured when calling this method from the PGdP assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
@@ -492,39 +457,8 @@ public class CourseResource {
     @PreAuthorize("hasRole('TA')")
     public ResponseEntity<StatsForDashboardDTO> getStatsForAssessmentDashboard(@PathVariable long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
-        Set<Long> exerciseIdsOfCourse = exerciseRepository.findAllIdsByCourseId(courseId);
-
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        StatsForDashboardDTO stats = new StatsForDashboardDTO();
-
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse);
-        numberOfInTimeSubmissions += programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
-
-        final long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
-        DueDateStat totalNumberOfAssessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
-        stats.setTotalNumberOfAssessments(totalNumberOfAssessments);
-
-        // no examMode here, so it's the same as totalNumberOfAssessments
-        DueDateStat[] numberOfAssessmentsOfCorrectionRounds = { totalNumberOfAssessments };
-        stats.setNumberOfAssessmentsOfCorrectionRounds(numberOfAssessmentsOfCorrectionRounds);
-        stats.setNumberOfSubmissions(new DueDateStat(numberOfInTimeSubmissions, numberOfLateSubmissions));
-
-        final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByCourseId(courseId);
-        stats.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        final long numberOfMoreFeedbackComplaintResponses = complaintService.countMoreFeedbackRequestResponsesByCourseId(courseId);
-        stats.setNumberOfOpenMoreFeedbackRequests(numberOfMoreFeedbackRequests - numberOfMoreFeedbackComplaintResponses);
-        final long numberOfComplaints = complaintService.countComplaintsByCourseId(courseId);
-        stats.setNumberOfComplaints(numberOfComplaints);
-        final long numberOfComplaintResponses = complaintService.countComplaintResponsesByCourseId(courseId);
-        stats.setNumberOfOpenComplaints(numberOfComplaints - numberOfComplaintResponses);
-        final long numberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByUserIdAndCourseId(userRepository.getUserWithGroupsAndAuthorities().getId(), courseId);
-        stats.setNumberOfAssessmentLocks(numberOfAssessmentLocks);
-        final long totalNumberOfAssessmentLocks = submissionRepository.countLockedSubmissionsByCourseId(courseId);
-        stats.setTotalNumberOfAssessmentLocks(totalNumberOfAssessmentLocks);
-
-        List<TutorLeaderboardDTO> leaderboardEntries = tutorLeaderboardService.getCourseLeaderboard(course, exerciseIdsOfCourse);
-        stats.setTutorLeaderboardEntries(leaderboardEntries);
-        stats.setNumberOfRatings(ratingService.countRatingsByCourse(courseId));
+        StatsForDashboardDTO stats = courseService.getStatsForDashboardDTO(course);
         return ResponseEntity.ok(stats);
     }
 
@@ -547,7 +481,7 @@ public class CourseResource {
             course.setNumberOfEditors(userRepository.countUserInGroup(course.getEditorGroupName()));
             course.setNumberOfStudents(userRepository.countUserInGroup(course.getStudentGroupName()));
         }
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+        return ResponseEntity.ok(course);
     }
 
     /**
@@ -562,50 +496,7 @@ public class CourseResource {
         log.debug("REST request to get Course : {}", courseId);
         Course course = courseRepository.findWithEagerExercisesById(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
-    }
-
-    /**
-     * GET /courses/:courseId/with-exercises-and-relevant-participations Get the "id" course, with text and modelling exercises and their participations It can be used only by
-     * instructors for the instructor dashboard
-     *
-     * @param courseId the id of the course to retrieve
-     * @return the ResponseEntity with status 200 (OK) and with body the course, or with status 404 (Not Found)
-     */
-    @GetMapping("/courses/{courseId}/with-exercises-and-relevant-participations")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Course> getCourseWithExercisesAndRelevantParticipations(@PathVariable Long courseId) {
-        log.debug("REST request to get Course with exercises and relevant participations : {}", courseId);
-        Course course = courseRepository.findWithEagerExercisesById(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
-        Set<Exercise> interestingExercises = courseRepository.getInterestingExercisesForAssessmentDashboards(course.getExercises());
-        course.setExercises(interestingExercises);
-
-        for (Exercise exercise : interestingExercises) {
-
-            DueDateStat numberOfSubmissions;
-            DueDateStat totalNumberOfAssessments;
-
-            if (exercise instanceof ProgrammingExercise) {
-                numberOfSubmissions = new DueDateStat(programmingExerciseRepository.countLegalSubmissionsByExerciseIdSubmitted(exercise.getId(), false), 0L);
-                totalNumberOfAssessments = new DueDateStat(programmingExerciseRepository.countAssessmentsByExerciseIdSubmitted(exercise.getId(), false), 0L);
-            }
-            else {
-                numberOfSubmissions = submissionRepository.countSubmissionsForExercise(exercise.getId(), false);
-                totalNumberOfAssessments = resultRepository.countNumberOfFinishedAssessmentsForExercise(exercise.getId(), false);
-            }
-
-            exercise.setNumberOfSubmissions(numberOfSubmissions);
-            exercise.setTotalNumberOfAssessments(totalNumberOfAssessments);
-
-            final long numberOfMoreFeedbackRequests = complaintService.countMoreFeedbackRequestsByExerciseId(exercise.getId());
-            final long numberOfComplaints = complaintService.countComplaintsByExerciseId(exercise.getId());
-
-            exercise.setNumberOfComplaints(numberOfComplaints);
-            exercise.setNumberOfMoreFeedbackRequests(numberOfMoreFeedbackRequests);
-        }
-        return ResponseUtil.wrapOrNotFound(Optional.of(course));
+        return ResponseEntity.ok(course);
     }
 
     /**
@@ -619,7 +510,7 @@ public class CourseResource {
         log.debug("REST request to get a course with its organizations : {}", courseId);
         Course course = courseRepository.findWithEagerOrganizationsElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-        return ResponseUtil.wrapOrNotFound(Optional.ofNullable(course));
+        return ResponseEntity.ok(course);
     }
 
     /**
@@ -646,7 +537,7 @@ public class CourseResource {
 
     /**
      * GET /courses/exercises-for-management-overview
-     *
+     * <p>
      * gets the courses with exercises for the user
      *
      * @param onlyActive if true, only active courses will be considered in the result
@@ -665,7 +556,7 @@ public class CourseResource {
 
     /**
      * GET /courses/stats-for-management-overview
-     *
+     * <p>
      * gets the statistics for the courses of the user
      * statistics for exercises with an assessment due date (or due date if there is no assessment due date)
      * in the past are limited to the five most recent
@@ -687,8 +578,8 @@ public class CourseResource {
             courseDTO.setExerciseDTOS(exerciseService.getStatisticsForCourseManagementOverview(courseId, amountOfStudentsInCourse));
 
             var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-            var endDate = this.courseService.determineEndDateForActiveStudents(course);
-            var timeSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
+            var endDate = courseService.determineEndDateForActiveStudents(course);
+            var timeSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, endDate, 4);
             courseDTO.setActiveStudents(courseService.getActiveStudents(exerciseIds, 0, timeSpanSize, endDate));
             courseDTOs.add(courseDTO);
         }
@@ -1060,70 +951,8 @@ public class CourseResource {
     public ResponseEntity<CourseManagementDetailViewDTO> getCourseDTOForDetailView(@PathVariable Long courseId) {
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
-
-        Set<Exercise> exercises = exerciseRepository.findAllExercisesByCourseId(courseId);
-        // For the average score we need to only consider scores which are included completely or as bonus
-        Set<Exercise> includedExercises = exercises.stream().filter(Exercise::isCourseExercise)
-                .filter(exercise -> !exercise.getIncludedInOverallScore().equals(IncludedInOverallScore.NOT_INCLUDED)).collect(Collectors.toSet());
-        Double averageScoreForCourse = participantScoreRepository.findAvgScore(includedExercises);
-        averageScoreForCourse = averageScoreForCourse != null ? averageScoreForCourse : 0.0;
-        double reachablePoints = includedExercises.stream().map(Exercise::getMaxPoints).mapToDouble(Double::doubleValue).sum();
-
-        Set<Long> exerciseIdsOfCourse = exercises.stream().map(Exercise::getId).collect(Collectors.toSet());
-        CourseManagementDetailViewDTO dto = courseService.getStatsForDetailView(courseId, exerciseIdsOfCourse);
-
-        setAssessments(dto, exerciseIdsOfCourse);
-        setComplaints(dto, courseId);
-        setMoreFeedbackRequests(dto, courseId);
-        dto.setAverageScore(reachablePoints, averageScoreForCourse, course);
-
-        return ResponseEntity.ok(dto);
-    }
-
-    /**
-     *  Helper method for setting the assessments in the CourseManagementDetailViewDTO
-     *  Only counting assessments and submissions which are handed in time
-     */
-    private void setAssessments(CourseManagementDetailViewDTO dto, Set<Long> exerciseIdsOfCourse) {
-        DueDateStat assessments = resultRepository.countNumberOfAssessments(exerciseIdsOfCourse);
-        long numberOfAssessments = assessments.inTime() + assessments.late();
-        dto.setCurrentAbsoluteAssessments(numberOfAssessments);
-
-        long numberOfInTimeSubmissions = submissionRepository.countAllByExerciseIdsSubmittedBeforeDueDate(exerciseIdsOfCourse)
-                + programmingExerciseRepository.countAllSubmissionsByExerciseIdsSubmitted(exerciseIdsOfCourse);
-        long numberOfLateSubmissions = submissionRepository.countAllByExerciseIdsSubmittedAfterDueDate(exerciseIdsOfCourse);
-
-        long numberOfSubmissions = numberOfInTimeSubmissions + numberOfLateSubmissions;
-        dto.setCurrentMaxAssessments(numberOfSubmissions);
-        dto.setCurrentPercentageAssessments(calculatePercentage(numberOfAssessments, numberOfSubmissions));
-    }
-
-    /**
-     *  Helper method for setting the complaints in the CourseManagementDetailViewDTO
-     */
-    private void setComplaints(CourseManagementDetailViewDTO dto, Long courseId) {
-        long numberOfAnsweredComplaints = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.COMPLAINT);
-        dto.setCurrentAbsoluteComplaints(numberOfAnsweredComplaints);
-        long numberOfComplaints = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.COMPLAINT);
-        dto.setCurrentMaxComplaints(numberOfComplaints);
-        dto.setCurrentPercentageComplaints(calculatePercentage(numberOfAnsweredComplaints, numberOfComplaints));
-    }
-
-    /**
-     *  Helper method for setting the more feedback requests in the CourseManagementDetailViewDTO
-     */
-    private void setMoreFeedbackRequests(CourseManagementDetailViewDTO dto, Long courseId) {
-        long numberOfAnsweredFeedbackRequests = complaintResponseRepository
-                .countByComplaint_Result_Participation_Exercise_Course_Id_AndComplaint_ComplaintType_AndSubmittedTimeIsNotNull(courseId, ComplaintType.MORE_FEEDBACK);
-        dto.setCurrentAbsoluteMoreFeedbacks(numberOfAnsweredFeedbackRequests);
-        long numberOfMoreFeedbackRequests = complaintRepository.countByResult_Participation_Exercise_Course_IdAndComplaintType(courseId, ComplaintType.MORE_FEEDBACK);
-        dto.setCurrentMaxMoreFeedbacks(numberOfMoreFeedbackRequests);
-        dto.setCurrentPercentageMoreFeedbacks(calculatePercentage(numberOfAnsweredFeedbackRequests, numberOfMoreFeedbackRequests));
-    }
-
-    private double calculatePercentage(double positive, double total) {
-        return total > 0.0 ? Math.round(positive * 1000.0 / total) / 10.0 : 0.0;
+        CourseManagementDetailViewDTO managementDetailViewDTO = courseService.getStatsForDetailView(course);
+        return ResponseEntity.ok(managementDetailViewDTO);
     }
 
     /**
@@ -1139,9 +968,9 @@ public class CourseResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, course, null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
-        var chartEndDate = this.courseService.determineEndDateForActiveStudents(course);
+        var chartEndDate = courseService.determineEndDateForActiveStudents(course);
         var spanEndDate = chartEndDate.plusWeeks(17 * periodIndex);
-        var returnedSpanSize = this.courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
+        var returnedSpanSize = courseService.determineTimeSpanSizeForActiveStudents(course, spanEndDate, 17);
         var activeStudents = courseService.getActiveStudents(exerciseIds, periodIndex, 17, chartEndDate);
         // We omit data concerning the time before the start date
         return ResponseEntity.ok(activeStudents.subList(activeStudents.size() - returnedSpanSize, activeStudents.size()));
@@ -1155,15 +984,15 @@ public class CourseResource {
      */
     @GetMapping("courses/{courseId}/statistics-lifetime-overview")
     @PreAuthorize("hasRole('TA')")
-    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLivetime(@PathVariable Long courseId) {
+    public ResponseEntity<List<Integer>> getActiveStudentsForCourseLiveTime(@PathVariable Long courseId) {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.TEACHING_ASSISTANT, courseRepository.findByIdElseThrow(courseId), null);
         var exerciseIds = exerciseRepository.findAllIdsByCourseId(courseId);
         var course = courseRepository.findByIdElseThrow(courseId);
         if (course.getStartDate() == null) {
             throw new IllegalArgumentException("Course does not contain start date");
         }
-        var endDate = this.courseService.determineEndDateForActiveStudents(course);
-        var returnedSpanSize = this.courseService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
+        var endDate = courseService.determineEndDateForActiveStudents(course);
+        var returnedSpanSize = courseService.calculateWeeksBetweenDates(course.getStartDate(), endDate);
         var activeStudents = courseService.getActiveStudents(exerciseIds, 0, Math.toIntExact(returnedSpanSize), endDate);
         return ResponseEntity.ok(activeStudents);
     }
@@ -1172,7 +1001,7 @@ public class CourseResource {
      * POST /courses/:courseId/:courseGroup : Add multiple users to the user group of the course so that they can access the course
      * The passed list of UserDTOs must include the registration number (the other entries are currently ignored and can be left out)
      * Note: registration based on other user attributes (e.g. email, name, login) is currently NOT supported
-     *
+     * <p>
      * This method first tries to find the student in the internal Artemis user database (because the user is most probably already using Artemis).
      * In case the user cannot be found, we additionally search the (TUM) LDAP in case it is configured properly.
      *
