@@ -14,7 +14,7 @@
             ></jhi-user-import-button>
             <button *ngIf="course?.isAtLeastInstructor && allGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
                 <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
-                <span jhiTranslate="instructorDashboard.exportCSV">&nbsp;Export Users</span>
+                <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
             </button>
         </div>
     </div>

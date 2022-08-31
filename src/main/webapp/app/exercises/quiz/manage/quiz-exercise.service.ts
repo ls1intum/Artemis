@@ -186,14 +186,6 @@ export class QuizExerciseService {
         return this.http.delete(`${this.resourceUrl}/${quizExerciseId}`, { observe: 'response' });
     }
 
-    /**
-     * Reset a quiz exercise
-     * @param quizExerciseId the id of the quiz exercise that should be reset
-     */
-    reset(quizExerciseId: number): Observable<HttpResponse<{}>> {
-        return this.http.delete(`${SERVER_API_URL + 'api/exercises'}/${quizExerciseId}/reset`, { observe: 'response' });
-    }
-
     join(quizExerciseId: number, password: string): Observable<HttpResponse<QuizBatch>> {
         return this.http.post<QuizExercise>(`${this.resourceUrl}/${quizExerciseId}/join`, { password }, { observe: 'response' });
     }

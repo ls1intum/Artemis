@@ -308,7 +308,7 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
     public saveExampleAssessment(): void {
         this.checkScoreBoundaries();
         if (!this.assessmentsAreValid) {
-            this.alertService.error('modelingAssessment.invalidAssessments');
+            this.alertService.error('artemisApp.modelingAssessment.invalidAssessments');
             return;
         }
         if (this.assessmentExplanation !== this.exampleSubmission.assessmentExplanation && this.assessments) {
@@ -334,10 +334,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
             .subscribe({
                 next: (result: Result) => {
                     this.updateAssessment(result);
-                    this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                    this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
                 },
                 error: () => {
-                    this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
+                    this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
                 },
             });
     }
@@ -357,10 +357,10 @@ export class ExampleModelingSubmissionComponent implements OnInit, FeedbackMarke
         this.modelingAssessmentService.saveExampleAssessment(this.assessments, this.exampleSubmissionId).subscribe({
             next: (result: Result) => {
                 this.updateAssessment(result);
-                this.alertService.success('modelingAssessmentEditor.messages.saveSuccessful');
+                this.alertService.success('artemisApp.modelingAssessmentEditor.messages.saveSuccessful');
             },
             error: () => {
-                this.alertService.error('modelingAssessmentEditor.messages.saveFailed');
+                this.alertService.error('artemisApp.modelingAssessmentEditor.messages.saveFailed');
             },
         });
     }

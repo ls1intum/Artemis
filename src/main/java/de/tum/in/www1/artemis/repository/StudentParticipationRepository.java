@@ -26,6 +26,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseMode;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 /**
@@ -74,12 +75,26 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.student.login = :#{#username}
+            """)
+    Optional<StudentParticipation> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
             LEFT JOIN FETCH p.submissions s
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.student.login = :#{#username}
                 AND (s.type <> 'ILLEGAL' OR s.type IS NULL)
             """)
     Optional<StudentParticipation> findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
+
+    @Query("""
+            SELECT DISTINCT p FROM StudentParticipation p
+            where p.exercise.id = :#{#exerciseId}
+                AND p.team.id = :#{#teamId}
+            """)
+    Optional<StudentParticipation> findOneByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -306,7 +321,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             FROM StudentParticipation p
                 WHERE p.exercise.id = :#{#exerciseId} AND p.team.id = :#{#teamId}
             """)
-    List<StudentParticipation> findByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+    List<StudentParticipation> findAllByExerciseIdAndTeamId(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @Query("""
             select distinct p from StudentParticipation p
@@ -959,4 +974,21 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             exercise.setTestRunParticipationsExist(Boolean.TRUE);
         }
     }
+
+    @Query("""
+            SELECT
+            new de.tum.in.www1.artemis.domain.quiz.QuizSubmittedAnswerCount(
+                count(a.id),
+                s.id,
+                p.id
+            )
+            FROM
+                SubmittedAnswer a
+                LEFT JOIN a.submission s
+                LEFT JOIN s.participation p
+            WHERE
+                p.exercise.exerciseGroup.exam.id = :examId
+            GROUP BY s.id
+            """)
+    List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 }

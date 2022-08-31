@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis;
 
+import static de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -944,16 +945,15 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(comparison.getStatus()).isEqualTo(PlagiarismStatus.NONE);
         assertThat(comparison.getMatches()).hasSize(1);
 
-        var plagiarismStatusDto = new PlagiarismComparisonStatusDTO();
-        plagiarismStatusDto.setStatus(PlagiarismStatus.CONFIRMED);
+        var plagiarismStatusDto = new PlagiarismComparisonStatusDTO(CONFIRMED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
         assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.CONFIRMED);
 
-        plagiarismStatusDto.setStatus(PlagiarismStatus.DENIED);
+        plagiarismStatusDto = new PlagiarismComparisonStatusDTO(DENIED);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
-        assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.DENIED);
+        assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(DENIED);
 
-        plagiarismStatusDto.setStatus(PlagiarismStatus.NONE);
+        plagiarismStatusDto = new PlagiarismComparisonStatusDTO(NONE);
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + comparison.getId() + "/status", plagiarismStatusDto, HttpStatus.OK);
         assertThat(plagiarismComparisonRepository.findByIdWithSubmissionsStudentsElseThrow(comparison.getId()).getStatus()).isEqualTo(PlagiarismStatus.NONE);
     }
