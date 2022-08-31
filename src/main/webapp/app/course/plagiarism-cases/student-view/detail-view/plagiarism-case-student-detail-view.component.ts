@@ -49,7 +49,6 @@ export class PlagiarismCaseStudentDetailViewComponent implements OnInit, OnDestr
                     this.plagiarismCase = res.body!;
                     this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
 
-                    this.metisService.setCourse(this.plagiarismCase.exercise!.course!);
                     this.metisService.setPageType(this.pageType);
                     this.metisService.getFilteredPosts({
                         plagiarismCaseId: this.plagiarismCase!.id,
