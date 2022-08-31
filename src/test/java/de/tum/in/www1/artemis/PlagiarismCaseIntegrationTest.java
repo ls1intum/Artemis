@@ -297,7 +297,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPlagiarismCaseInfoWithVerdictForExerciseForStudent() throws Exception {
-        var verdict = PlagiarismVerdict.NO_PLAGIARISM;
+        var verdict = NO_PLAGIARISM;
         plagiarismCase1.setVerdict(verdict);
 
         addPost();
@@ -327,7 +327,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
                 Long.class, PlagiarismCaseInfoDTO.class);
 
         assertThat(plagiarismCaseInfosResponse).hasSize(1);
-        assertThat(plagiarismCaseInfosResponse.get(courseTextExercise.getId()).getId()).as("should only return plagiarism cases with post").isEqualTo(plagiarismCase1.getId());
+        assertThat(plagiarismCaseInfosResponse.get(courseTextExercise.getId()).id()).as("should only return plagiarism cases with post").isEqualTo(plagiarismCase1.getId());
 
     }
 

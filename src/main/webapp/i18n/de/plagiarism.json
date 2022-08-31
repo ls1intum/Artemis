@@ -60,7 +60,9 @@
                 "resolvedPlagiarismCase": "Gelöster Plagiatsfall",
                 "notification": {
                     "title": "Plagiatsfall: {{ exercise }}",
-                    "body": "Hallo {{ student }}, nach einer sorgfältigen Durchsicht Deiner finalen Abgabe zur Übung “{{ exercise }}“ im Kurs “{{ course }}“ sind wir zu dem Schluss gekommen, dass Du ein Plagiat begangen hast. Dies ist ein Verstoß gegen die [Grundsätze guter studentischer Praxis]({{ cocLink }}) der Fakultät für Informatik, denen Du zugestimmt hast. Die *[Allgemeine Studien- und Prüfungsordnung]({{ aspoLink }})* regelt in §22.1 die Konsequenzen für solche Fälle. **Du hast eine Woche Zeit, um eine Erklärung abzugeben.**"
+                    "body": "Hallo {{ student }}, nach einer sorgfältigen Durchsicht Deiner finalen Abgabe zur Übung “{{ exercise }}“ {{ inCourseOrExam }} “{{ courseOrExam }}“ sind wir zu dem Schluss gekommen, dass Du ein Plagiat begangen hast. Dies ist ein Verstoß gegen die [Grundsätze guter studentischer Praxis]({{ cocLink }}) der Fakultät für Informatik, denen Du zugestimmt hast. Die *[Allgemeine Studien- und Prüfungsordnung]({{ aspoLink }})* regelt in §22.1 die Konsequenzen für solche Fälle. **Du hast eine Woche Zeit, um eine Erklärung abzugeben.**",
+                    "inCourse": "im Kurs",
+                    "inExam": "in der Prüfung"
                 },
                 "verdict": {
                     "verdict": "Urteil",
