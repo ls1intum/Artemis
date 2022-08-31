@@ -59,7 +59,6 @@ public class TutorialGroup extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "teaching_assistant_id")
-    @NotNull
     private User teachingAssistant;
 
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)

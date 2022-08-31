@@ -13,4 +13,7 @@ import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroupRegistration;
 public interface TutorialGroupRegistrationRepository extends JpaRepository<TutorialGroupRegistration, Long> {
 
     Optional<TutorialGroupRegistration> findTutorialGroupRegistrationByTutorialGroupAndStudent(TutorialGroup tutorialGroup, User student);
+
+    void deleteAllByStudent(User student);
+
 }
