@@ -5,7 +5,7 @@
                 <div class="d-inline-block" ngbDropdown placement="top-right">
                     <button class="btn btn-primary btn-sm" ngbDropdownToggle>
                         <fa-icon [icon]="farListAlt"></fa-icon>
-                        <span class="hidden-xs hidden-sm" jhiTranslate="showStatistic.chooseStatistic"></span>
+                        <span class="hidden-xs hidden-sm" jhiTranslate="artemisApp.showStatistic.chooseStatistic"></span>
                         <span class="caret"></span>
                     </button>
                     <div ngbDropdownMenu *ngIf="quizExercise">
@@ -13,7 +13,7 @@
                             *ngIf="!quizExercise.exerciseGroup"
                             class="dropdown-item"
                             routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
-                            jhiTranslate="showStatistic.quizPointStatisticTitle"
+                            jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
                         ></button>
                         <button
                             *ngIf="quizExercise.exerciseGroup"
@@ -21,13 +21,13 @@
                             routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{ quizExercise.exerciseGroup.exam!.id }}/exercise-groups/{{
                                 quizExercise.exerciseGroup.id
                             }}/quiz-exercises/{{ quizExercise.id }}/quiz-point-statistic"
-                            jhiTranslate="showStatistic.quizPointStatisticTitle"
+                            jhiTranslate="artemisApp.showStatistic.quizPointStatisticTitle"
                         ></button>
                         <button
                             *ngIf="!quizExercise.exerciseGroup"
                             class="dropdown-item"
                             routerLink="/course-management/{{ quizExercise.course!.id }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
-                            jhiTranslate="showStatistic.quizStatisticTitle"
+                            jhiTranslate="artemisApp.showStatistic.quizStatisticTitle"
                         ></button>
                         <button
                             *ngIf="quizExercise.exerciseGroup"
@@ -35,7 +35,7 @@
                             routerLink="/course-management/{{ quizExercise.exerciseGroup.exam!.course!.id }}/exams/{{ quizExercise.exerciseGroup.exam!.id }}/exercise-groups/{{
                                 quizExercise.exerciseGroup.id
                             }}/quiz-exercises/{{ quizExercise.id }}/quiz-statistic"
-                            jhiTranslate="showStatistic.quizStatisticTitle"
+                            jhiTranslate="artemisApp.showStatistic.quizStatisticTitle"
                         ></button>
                         <div *ngIf="quizExercise.quizQuestions">
                             <div *ngFor="let question of quizExercise.quizQuestions; let i = index">
@@ -112,8 +112,8 @@
             </div>
             <div class="form-group col-sm">
                 <div *ngIf="quizExercise" class="btn-group flex-btn-group-container">
-                    <button (click)="previousStatistic()" jhiTranslate="showStatistic.previousStatistic" class="btn btn-default"></button>
-                    <button (click)="nextStatistic()" jhiTranslate="showStatistic.nextStatistic" class="btn btn-default"></button>
+                    <button (click)="previousStatistic()" jhiTranslate="artemisApp.showStatistic.previousStatistic" class="btn btn-default"></button>
+                    <button (click)="nextStatistic()" jhiTranslate="artemisApp.showStatistic.nextStatistic" class="btn btn-default"></button>
                 </div>
             </div>
         </div>

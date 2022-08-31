@@ -367,7 +367,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         StudentParticipation studentParticipation;
         SecurityUtils.setAuthorizationObject();
         if (isTeamTest) {
-            studentParticipation = studentParticipationRepository.findByExerciseIdAndTeamId(idOfTeamTextExercise, idOfTeam1).get(0);
+            studentParticipation = studentParticipationRepository.findAllByExerciseIdAndTeamId(idOfTeamTextExercise, idOfTeam1).get(0);
         }
         else {
             studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentId(idOfIndividualTextExercise, idOfStudent1).get(0);

@@ -131,7 +131,7 @@ export class UserManagementUpdateComponent implements OnInit {
                     if (this.isJenkins && this.user.login !== this.oldLogin && !this.user.password) {
                         this.alertService.addAlert({
                             type: AlertType.WARNING,
-                            message: 'userManagement.jenkinsChange',
+                            message: 'artemisApp.userManagement.jenkinsChange',
                             timeout: 0,
                             translationParams: { oldLogin: this.oldLogin, newLogin: this.user.login },
                         });

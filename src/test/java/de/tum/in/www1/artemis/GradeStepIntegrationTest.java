@@ -104,10 +104,10 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
 
-        assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.GRADE);
-        assertThat(gradeStepsDTO.title).isEqualTo(course.getTitle());
+        assertThat(gradeStepsDTO.gradeType()).isEqualTo(GradeType.GRADE);
+        assertThat(gradeStepsDTO.title()).isEqualTo(course.getTitle());
 
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
+        assertThat(gradeStepsDTO.gradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
     private void createGradeScale() {
@@ -181,10 +181,10 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         GradeStepsDTO gradeStepsDTO = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/grade-steps", HttpStatus.OK, GradeStepsDTO.class);
 
-        assertThat(gradeStepsDTO.gradeType).isEqualTo(GradeType.BONUS);
-        assertThat(gradeStepsDTO.title).isEqualTo(exam.getTitle());
+        assertThat(gradeStepsDTO.gradeType()).isEqualTo(GradeType.BONUS);
+        assertThat(gradeStepsDTO.title()).isEqualTo(exam.getTitle());
 
-        assertThat(gradeStepsDTO.gradeSteps).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
+        assertThat(gradeStepsDTO.gradeSteps()).usingRecursiveComparison().ignoringFields("gradingScale", "id").ignoringCollectionOrder().isEqualTo(gradeSteps);
     }
 
     /**
@@ -288,9 +288,9 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
 
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/grading-scale/match-grade-step?gradePercentage=70", HttpStatus.OK, GradeDTO.class);
 
-        assertThat(foundGrade.gradeName).isEqualTo("Name");
-        assertThat(foundGrade.gradeType).isEqualTo(GradeType.GRADE);
-        assertThat(foundGrade.isPassingGrade).isTrue();
+        assertThat(foundGrade.gradeName()).isEqualTo("Name");
+        assertThat(foundGrade.gradeType()).isEqualTo(GradeType.GRADE);
+        assertThat(foundGrade.isPassingGrade()).isTrue();
     }
 
     /**
@@ -342,9 +342,9 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         GradeDTO foundGrade = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/grading-scale/match-grade-step?gradePercentage=35", HttpStatus.OK,
                 GradeDTO.class);
 
-        assertThat(foundGrade.gradeName).isEqualTo("Test grade");
-        assertThat(foundGrade.gradeType).isEqualTo(GradeType.BONUS);
-        assertThat(foundGrade.isPassingGrade).isFalse();
+        assertThat(foundGrade.gradeName()).isEqualTo("Test grade");
+        assertThat(foundGrade.gradeType()).isEqualTo(GradeType.BONUS);
+        assertThat(foundGrade.isPassingGrade()).isFalse();
     }
 
 }
