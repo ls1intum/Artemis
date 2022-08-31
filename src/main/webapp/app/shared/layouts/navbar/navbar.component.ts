@@ -179,10 +179,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
             if (profileInfo) {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
-                this.gitCommitId = profileInfo.git.commit.id.abbrev;
-                if (!this.inProduction) {
-                    this.version = `${this.version} - ${this.gitCommitId}`;
-                }
+                this.gitCommitId = `Git commit ID: ${profileInfo.git.commit.id.abbrev}`;
             }
         });
 
