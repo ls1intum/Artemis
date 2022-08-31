@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest.tutorialGroups;
+package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -18,10 +18,10 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.TutorialGroupService;

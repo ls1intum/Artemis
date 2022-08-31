@@ -64,7 +64,7 @@ describe('Registered Students Component', () => {
                             get: (key: string) => {
                                 switch (key) {
                                     case 'tutorialGroupId':
-                                        return 1;
+                                        return 123;
                                 }
                             },
                         }),
@@ -118,7 +118,7 @@ describe('Registered Students Component', () => {
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();
-            expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id);
+            expect(getTutorialGroupSpy).toHaveBeenCalledWith(tutorialGroup.id, course.id);
             expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));
         });
     });

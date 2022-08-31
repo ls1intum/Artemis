@@ -40,7 +40,7 @@ import de.tum.in.www1.artemis.domain.statistics.StatisticsEntry;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.exception.GroupAlreadyExistsException;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;

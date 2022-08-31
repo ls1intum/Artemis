@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.tutorialGroups;
+package de.tum.in.www1.artemis.tutorialgroups;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -20,13 +20,13 @@ import com.google.common.collect.ImmutableSet;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.tutorialGroups.TutorialGroupRegistrationType;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 

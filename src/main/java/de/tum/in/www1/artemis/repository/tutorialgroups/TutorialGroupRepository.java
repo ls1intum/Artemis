@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository.tutorialGroups;
+package de.tum.in.www1.artemis.repository.tutorialgroups;
 
 import java.util.Optional;
 import java.util.Set;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Repository;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository

@@ -5,12 +5,12 @@ import java.util.*;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.enumeration.tutorialGroups.TutorialGroupRegistrationType;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialGroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.user.UserService;

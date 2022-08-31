@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain.tutorialGroups;
+package de.tum.in.www1.artemis.domain.tutorialgroups;
 
 import java.util.HashSet;
 import java.util.Set;

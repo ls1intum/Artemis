@@ -22,7 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;

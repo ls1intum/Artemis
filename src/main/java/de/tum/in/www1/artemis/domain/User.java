@@ -30,7 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.domain.participation.Participant;
-import de.tum.in.www1.artemis.domain.tutorialGroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 
 /**
  * A user.
