@@ -33,7 +33,7 @@ public class QuizUtilService {
             }
             case INDIVIDUAL -> {
                 SecurityContextHolder.getContext().setAuthentication(student);
-                request.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(), HttpStatus.OK, null);
+                request.postWithoutLocation("/api/quiz-exercises/" + quizExercise.getId() + "/join", new QuizBatchJoinDTO(null), HttpStatus.OK, null);
             }
         }
         SecurityContextHolder.getContext().setAuthentication(authentication);
