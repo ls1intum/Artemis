@@ -10,7 +10,8 @@ public record TestSuiteDTO(String name, double time, int errors, int skipped, in
 
     // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
     @JsonCreator
-    public TestSuiteDTO(String name, double time, int errors, int skipped, int failures, int tests, @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDTO> testCases) {
+    public TestSuiteDTO(String name, double time, int errors, int skipped, int failures, int tests,
+            @JsonProperty("testCases") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestCaseDTO> testCases) {
         this.name = name;
         this.time = time;
         this.errors = errors;

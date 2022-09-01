@@ -999,17 +999,19 @@ public class ModelFactory {
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
      * @param repoName                    name of the repository
-     * @param successfulTestNames         names of successful tests
-     * @param failedTestNames             names of failed tests
+     * @param buildRunDate                the date of the build run, can be null
      * @param programmingLanguage         programming language to use
      * @param enableStaticAnalysisReports should the notification include static analysis reports
+     * @param successfulTestNames         names of successful tests
+     * @param failedTestNames             names of failed tests
      * @param logs                        the logs produced by the test result
-     * @param buildRunDate                the date of the build run, can be null
      * @param commits                     the involved commits, can be null or empty
+     * @param testSuiteDto                the test suite
      * @return TestResultDTO with dummy data
      */
-    public static TestResultsDTO generateTestResultDTO(String fullName, String repoName, List<String> successfulTestNames, List<String> failedTestNames,
-            ProgrammingLanguage programmingLanguage, boolean enableStaticAnalysisReports, List<String> logs, ZonedDateTime buildRunDate, List<CommitDTO> commits) {
+    public static TestResultsDTO generateTestResultDTO(String fullName, String repoName, ZonedDateTime buildRunDate, ProgrammingLanguage programmingLanguage,
+            boolean enableStaticAnalysisReports, List<String> successfulTestNames, List<String> failedTestNames, List<String> logs, List<CommitDTO> commits,
+            TestSuiteDTO testSuiteDto) {
 
         final var testSuite = new TestSuiteDTO("TestSuiteName1", now().toEpochSecond(), 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(),
                 new ArrayList<>());
@@ -1021,12 +1023,12 @@ public class ModelFactory {
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
         return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && commits.size() > 0 ? commits : List.of(commitDTO),
-                List.of(testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
+                List.of(testSuiteDto != null ? testSuiteDto : testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
     }
 
     /**
      * Creates a dummy DTO with custom feedbacks used by Jenkins, which notifies about new programming exercise results.
-     * Uses {@link #generateTestResultDTO(String, String, List, List, ProgrammingLanguage, boolean, List, ZonedDateTime, List)} as basis.
+     * Uses {@link #generateTestResultDTO(String, String, ZonedDateTime, ProgrammingLanguage, boolean, List, List, List, List, TestSuiteDTO)} as basis.
      * Then adds a new {@link TestSuiteDTO} with name "CustomFeedbacks" to it.
      * This Testsuite has four {@link TestCaseDTO}s:
      * <ul>
@@ -1044,9 +1046,6 @@ public class ModelFactory {
      */
     public static TestResultsDTO generateTestResultsDTOWithCustomFeedback(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
             ProgrammingLanguage programmingLanguage, boolean enableStaticAnalysisReports) {
-
-        var notification = generateTestResultDTO(null, repoName, successfulTestNames, failedTestNames, programmingLanguage, enableStaticAnalysisReports, new ArrayList<>(), null,
-                new ArrayList<>());
 
         final List<TestCaseDTO> testCases = new ArrayList<>();
 
@@ -1078,8 +1077,8 @@ public class ModelFactory {
             testCases.add(testCase);
         }
         var testSuite = new TestSuiteDTO("customFeedbacks", 0d, 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(), testCases);
-        notification.getResults().add(testSuite);
-        return notification;
+        return generateTestResultDTO(null, repoName, null, programmingLanguage, enableStaticAnalysisReports, successfulTestNames, failedTestNames, new ArrayList<>(),
+                new ArrayList<>(), testSuite);
     }
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,

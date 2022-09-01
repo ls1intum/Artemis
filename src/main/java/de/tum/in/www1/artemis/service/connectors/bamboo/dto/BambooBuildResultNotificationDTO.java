@@ -124,7 +124,8 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
         public BambooBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, BambooTestSummaryDTO testSummary,
-                @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooVCSDTO> vcs, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooJobDTO> jobs) {
+                @JsonProperty("vcs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooVCSDTO> vcs,
+                @JsonProperty("jobs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooJobDTO> jobs) {
             this.artifact = artifact;
             this.number = number;
             this.reason = reason;
@@ -150,7 +151,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
-        public BambooVCSDTO(String id, String repositoryName, String branchName, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooCommitDTO> commits) {
+        public BambooVCSDTO(String id, String repositoryName, String branchName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooCommitDTO> commits) {
             this.id = id;
             this.repositoryName = repositoryName;
             this.branchName = branchName;
@@ -170,10 +171,11 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
-        public BambooJobDTO(int id, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> failedTests,
-                @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> successfulTests,
-                @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-                @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildLogDTO> logs) {
+        public BambooJobDTO(int id, @JsonProperty("failedTests") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> failedTests,
+                @JsonProperty("successfulTests") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> successfulTests,
+                @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
+                @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
+                @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildLogDTO> logs) {
             this.id = id;
             this.failedTests = failedTests;
             this.successfulTests = successfulTests;
@@ -189,7 +191,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
-        public BambooTestJobDTO(String name, String methodName, String className, @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors) {
+        public BambooTestJobDTO(String name, String methodName, String className, @JsonProperty("errors") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors) {
             this.name = name;
             this.methodName = methodName;
             this.className = className;

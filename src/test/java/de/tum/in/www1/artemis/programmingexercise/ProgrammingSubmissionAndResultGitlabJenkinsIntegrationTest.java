@@ -317,7 +317,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        return ModelFactory.generateTestResultDTO(fullName, repoName, successfulTests, List.of(), programmingLanguage, false, logs, buildRunDate, commits);
+        return ModelFactory.generateTestResultDTO(fullName, repoName, buildRunDate, programmingLanguage, false, successfulTests, List.of(), logs, commits, null);
     }
 
 }
