@@ -145,6 +145,14 @@ public class GradeStep extends DomainObject {
         return getId() == null && !gradeName.isBlank() && lowerBoundPercentage >= 0 && validOrder;
     }
 
+    /**
+     * Parses the {@link #gradeName} as a number in order to use it in grade and bonus calculations.
+     * Accepts both "," and "." as decimal separators.
+     *
+     * Does not throw exception, returns null on failure.
+     *
+     * @return {@link Double} value corresponding to the {@link #gradeName} or null if it is not parseable or null.
+     */
     public Double getNumericValue() {
         try {
             String normalizedGradeName = gradeName.replace(',', '.');

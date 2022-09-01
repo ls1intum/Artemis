@@ -1365,7 +1365,7 @@ public class ModelFactory {
 
     public static Bonus generateBonusSource(BonusStrategy bonusStrategy, Double weight, GradingScale sourceGradingScale, GradingScale bonusToGradingScale) {
         Bonus bonus = new Bonus();
-        // bonus.setBonusStrategy(bonusStrategy); // TODO: Ata
+        bonus.setBonusStrategy(bonusStrategy);
         bonus.setWeight(weight);
         bonus.setSourceGradingScale(sourceGradingScale);
         bonus.setBonusToGradingScale(bonusToGradingScale);

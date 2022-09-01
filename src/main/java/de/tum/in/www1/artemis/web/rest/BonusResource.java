@@ -64,8 +64,7 @@ public class BonusResource {
     }
 
     /**
-     * TODO: Ata
-     * GET /courses/{courseId}/bonus : Find bonus source for course
+     * GET /courses/{courseId}/bonus : Find bonus model which has the given course as source.
      *
      * @param courseId the course to which the bonus source belongs
      * @return ResponseEntity with status 200 (Ok) with body the bonus source if it exists and 404 (Not found) otherwise
@@ -81,11 +80,11 @@ public class BonusResource {
     }
 
     /**
-     * TODO: Ata
-     * GET /courses/{courseId}/exams/{examId}/bonus : Find bonus source for exam
+     * GET /courses/{courseId}/exams/{examId}/bonus : Find bonus model for exam (where Bonus.bonusToGradingScale corresponds to the exam)
+     * Sets Bonus.bonusStrategy from the bonus strategy set on the exam's grading scale.
      *
      * @param courseId the course to which the exam belongs
-     * @param examId   the exam to which the bonus source belongs
+     * @param examId   the exam to which the bonus belongs
      * @return ResponseEntity with status 200 (Ok) with body the bonus source if it exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/bonus")
@@ -103,6 +102,7 @@ public class BonusResource {
 
     /**
      * GET bonus/:bonusId : get the bonus with id.
+     * Sets Bonus.bonusStrategy from the bonus strategy set on the exam's grading scale.
      *
      * @param bonusId the id of the bonus to retrieve
      * @return the ResponseEntity with status 200 (OK) and with body the bonus, or with status 404 (Not Found)
@@ -238,31 +238,6 @@ public class BonusResource {
         Course sourceCourse = gradingScale.getExam() != null ? gradingScale.getExam().getCourse() : gradingScale.getCourse();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, sourceCourse, null);
     }
-    // /**
-    // * PUT /courses/{courseId}/exams/{examId}/bonus : Update bonus source for exam
-    // *
-    // * @param courseId the course to which the exam belongs
-    // * @param examId the exam to which the bonus source belongs
-    // * @param bonus the bonus source which will be updated
-    // * @return ResponseEntity with status 200 (Ok) with body the newly updated bonus source if it is correctly formatted and 400 (Bad request) otherwise
-    // */
-    // @PutMapping("/courses/{courseId}/exams/{examId}/bonus")
-    // @PreAuthorize("hasRole('INSTRUCTOR')")
-    // public ResponseEntity<Bonus> updateBonusForExam(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) {
-    // log.debug("REST request to update a bonus source for exam: {}", examId);
-    // Course course = courseRepository.findByIdElseThrow(courseId);
-    // Exam exam = examRepository.findByIdElseThrow(examId);
-    // Bonus oldBonus = bonusRepository.findByExamIdOrElseThrow(examId);
-    // authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-    // bonus.setId(oldBonus.getId());
-    // if (bonus.getExam().getMaxPoints() != exam.getMaxPoints()) {
-    // exam.setMaxPoints(bonus.getExam().getMaxPoints());
-    // examRepository.save(exam);
-    // }
-    // bonus.setExam(exam);
-    // Bonus savedBonus = bonusService.saveBonus(bonus);
-    // return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
-    // }
 
     /**
      * DELETE /courses/{courseId}/bonus : Delete bonus source for course

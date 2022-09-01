@@ -302,24 +302,31 @@ export class GradingSystemService {
     }
 
     /**
-     * TODO: Ata
-     * @param gradingScale
+     * Gets the title of the course or exam related to the given grading scale.
+     *
+     * @param gradingScale a grading scale belonging to a course or an exam
      */
     getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
         return gradingScale?.exam?.title ?? gradingScale?.course?.title;
     }
 
     /**
-     * TODO: Ata
-     * @param gradingScale
+     * Gets the max points of the given grading scale from the related course or exam.
+     *
+     * @param gradingScale a grading scale belonging to a course or an exam
      */
     getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
         return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
     }
 
     /**
-     * TODO: Ata
-     * @param gradeName
+     * Parses the {@link gradeName} as a number in order to use it in grade and bonus calculations.
+     * Accepts both "," and "." as decimal separators.
+     *
+     * Returns undefined on error.
+     *
+     * @param gradeName grade name of a grade step
+     * @return number value corresponding to the {@link gradeName} or undefined if it is not parseable.
      */
     getNumericValueForGradeName(gradeName: string | undefined): number | undefined {
         if (gradeName == undefined) {

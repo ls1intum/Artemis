@@ -67,6 +67,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         courseBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale, bonusToExamGradingScale);
         examBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale, bonusToExamGradingScale);
         bonusRepository.saveAll(List.of(examBonus, courseBonus));
+        bonusToExamGradingScale.setBonusStrategy(BonusStrategy.GRADES_CONTINUOUS);
         gradingScaleRepository.save(bonusToExamGradingScale);
     }
 
@@ -75,11 +76,6 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         database.resetDatabase();
     }
 
-    /**
-     * Test get request for bonus source
-     *
-     * @throws Exception
-     */
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetBonusSourcesForTargetExamNotFound() throws Exception {
