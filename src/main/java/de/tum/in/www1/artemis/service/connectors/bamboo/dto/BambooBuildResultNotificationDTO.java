@@ -9,9 +9,7 @@ import java.util.Optional;
 
 import org.apache.commons.lang.StringEscapeUtils;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -23,19 +21,17 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 // Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
 public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
-    @JsonProperty("secret")
     private final String secret;
 
-    @JsonProperty("notificationType")
     private final String notificationType;
 
-    @JsonProperty("plan")
     private final BambooBuildPlanDTO plan;
 
-    @JsonProperty("build")
     private final BambooBuildDTO build;
 
-    public BambooBuildResultNotificationDTO(String secret, String notificationType, BambooBuildPlanDTO plan, BambooBuildDTO build) {
+    @JsonCreator
+    public BambooBuildResultNotificationDTO(@JsonProperty("secret") String secret, @JsonProperty("notificationType") String notificationType,
+            @JsonProperty("plan") BambooBuildPlanDTO plan, @JsonProperty("build") BambooBuildDTO build) {
         this.secret = secret;
         this.notificationType = notificationType;
         this.plan = plan;
@@ -124,6 +120,20 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, BambooTestSummaryDTO testSummary,
             List<BambooVCSDTO> vcs, List<BambooJobDTO> jobs) {
+
+        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
+        @JsonCreator
+        public BambooBuildDTO(boolean artifact, int number, String reason, ZonedDateTime buildCompletedDate, boolean successful, BambooTestSummaryDTO testSummary,
+                @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooVCSDTO> vcs, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooJobDTO> jobs) {
+            this.artifact = artifact;
+            this.number = number;
+            this.reason = reason;
+            this.buildCompletedDate = buildCompletedDate;
+            this.successful = successful;
+            this.testSummary = testSummary;
+            this.vcs = vcs;
+            this.jobs = jobs;
+        }
     }
 
     /**
@@ -137,6 +147,15 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooVCSDTO(String id, String repositoryName, String branchName, List<BambooCommitDTO> commits) {
+
+        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
+        @JsonCreator
+        public BambooVCSDTO(String id, String repositoryName, String branchName, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooCommitDTO> commits) {
+            this.id = id;
+            this.repositoryName = repositoryName;
+            this.branchName = branchName;
+            this.commits = commits;
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -144,16 +163,37 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     public record BambooCommitDTO(String comment, String id) {
     }
 
-    /**
-     * @param testwiseCoverageReport  For an unknown reason, the deserialization only works with this annotation */
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooJobDTO(int id, List<BambooTestJobDTO> failedTests, List<BambooTestJobDTO> successfulTests, List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
-            @JsonProperty("testwiseCoverageReport") List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<BambooBuildLogDTO> logs) {
+            List<TestwiseCoverageReportDTO> testwiseCoverageReport, List<BambooBuildLogDTO> logs) {
+
+        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
+        @JsonCreator
+        public BambooJobDTO(int id, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> failedTests,
+                @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooTestJobDTO> successfulTests,
+                @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
+                @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport, @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildLogDTO> logs) {
+            this.id = id;
+            this.failedTests = failedTests;
+            this.successfulTests = successfulTests;
+            this.staticCodeAnalysisReports = staticCodeAnalysisReports;
+            this.testwiseCoverageReport = testwiseCoverageReport;
+            this.logs = logs;
+        }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooTestJobDTO(String name, String methodName, String className, List<String> errors) {
+
+        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
+        @JsonCreator
+        public BambooTestJobDTO(String name, String methodName, String className, @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> errors) {
+            this.name = name;
+            this.methodName = methodName;
+            this.className = className;
+            this.errors = errors;
+        }
     }
 }

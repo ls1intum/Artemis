@@ -5,9 +5,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
@@ -24,46 +22,39 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 // Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
 public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
-    @JsonProperty("successful")
     private final int successful;
 
-    @JsonProperty("skipped")
     private final int skipped;
 
-    @JsonProperty("errors")
     private final int errors;
 
-    @JsonProperty("failures")
     private final int failures;
 
-    @JsonProperty("fullName")
     private final String fullName;
 
-    @JsonProperty("commits")
     private final List<CommitDTO> commits;
 
-    @JsonProperty("results")
     private final List<TestSuiteDTO> results;
 
-    @JsonProperty("staticCodeAnalysisReports")
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     // For an unknown reason, the deserialization only works with this annotation
-    @JsonProperty("testwiseCoverageReport")
     private final List<TestwiseCoverageReportDTO> testwiseCoverageReport;
 
-    @JsonProperty("runDate")
     private final ZonedDateTime runDate;
 
-    @JsonProperty("isBuildSuccessful")
     private final boolean isBuildSuccessful;
 
-    @JsonProperty("logs")
     private final List<String> logs;
 
-    public TestResultsDTO(int successful, int skipped, int errors, int failures, String fullName, List<CommitDTO> commits, List<TestSuiteDTO> results,
-            List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports, List<TestwiseCoverageReportDTO> testwiseCoverageReport, ZonedDateTime runDate, boolean isBuildSuccessful,
-            List<String> logs) {
+    @JsonCreator
+    public TestResultsDTO(@JsonProperty("successful") int successful, @JsonProperty("skipped") int skipped, @JsonProperty("errors") int errors,
+            @JsonProperty("failures") int failures, @JsonProperty("fullName") String fullName, @JsonProperty("commits") @JsonSetter(nulls = Nulls.AS_EMPTY) List<CommitDTO> commits,
+            @JsonProperty("results") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestSuiteDTO> results,
+            @JsonProperty("staticCodeAnalysisReports") @JsonSetter(nulls = Nulls.AS_EMPTY) List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports,
+            @JsonProperty("testwiseCoverageReport") @JsonSetter(nulls = Nulls.AS_EMPTY) List<TestwiseCoverageReportDTO> testwiseCoverageReport,
+            @JsonProperty("runDate") ZonedDateTime runDate, @JsonProperty("isBuildSuccessful") boolean isBuildSuccessful,
+            @JsonProperty("logs") @JsonSetter(nulls = Nulls.AS_EMPTY) List<String> logs) {
         this.successful = successful;
         this.skipped = skipped;
         this.errors = errors;
