@@ -209,6 +209,7 @@ public class FileService implements DisposableBean {
         String newFilename = filename;
         do {
             if (!keepFileName) {
+                // append a timestamp and some randomness to the filename to avoid conflicts
                 newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
                         + fileExtension;
             }
