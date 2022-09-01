@@ -195,7 +195,7 @@ public class BonusResource {
         bonusToGradingScale.addBonusFrom(bonus);
         bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
 
-        Bonus savedBonus = bonusService.saveBonus(bonus);
+        Bonus savedBonus = bonusService.saveBonus(bonus, true);
         gradingScaleRepository.save(bonusToGradingScale);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
@@ -216,15 +216,17 @@ public class BonusResource {
                 .orElseThrow(() -> new EntityNotFoundException("Grading Scale From Bonus", bonus.getId()));
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, bonusToGradingScale.getExam().getCourse(), null);
 
+        boolean isSourceGradeScaleUpdated = false;
         if (bonus.getSourceGradingScale() != null && !oldBonus.getSourceGradingScale().getId().equals(bonus.getSourceGradingScale().getId())) {
             var sourceFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
             bonus.setSourceGradingScale(sourceFromDb);
             checkIsAtLeastInstructorForGradingScaleCourse(sourceFromDb);
+            isSourceGradeScaleUpdated = true;
         }
 
         bonusToGradingScale.addBonusFrom(bonus);
         bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
-        Bonus savedBonus = bonusService.saveBonus(bonus);
+        Bonus savedBonus = bonusService.saveBonus(bonus, isSourceGradeScaleUpdated);
         gradingScaleRepository.save(bonusToGradingScale);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
@@ -254,23 +256,5 @@ public class BonusResource {
         bonusRepository.delete(bonus);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
     }
-
-    // /**
-    // * DELETE /courses/{courseId}/exams/{examId}/bonus : Delete bonus source for course
-    // *
-    // * @param courseId the course to which the exam belongs
-    // * @param examId the exam to which the bonus source belongs
-    // * @return ResponseEntity with status 200 (Ok) if the bonus source is successfully deleted and 400 (Bad request) otherwise
-    // */
-    // @DeleteMapping("/courses/{courseId}/exams/{examId}/bonus")
-    // @PreAuthorize("hasRole('INSTRUCTOR')")
-    // public ResponseEntity<Void> deleteBonusForExam(@PathVariable Long courseId, @PathVariable Long examId) {
-    // log.debug("REST request to delete the bonus source for exam: {}", examId);
-    // Course course = courseRepository.findByIdElseThrow(courseId);
-    // Bonus bonus = bonusRepository.findByExamIdOrElseThrow(examId);
-    // authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-    // bonusRepository.delete(bonus);
-    // return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, "")).build();
-    // }
 
 }

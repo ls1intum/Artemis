@@ -2,10 +2,7 @@ package de.tum.in.www1.artemis.service;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.Bonus;
-import de.tum.in.www1.artemis.domain.GradeType;
-import de.tum.in.www1.artemis.domain.GradingScale;
-import de.tum.in.www1.artemis.domain.IBonusStrategy;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
@@ -29,8 +26,8 @@ public class BonusService {
      * @param bonus the bonus source to be saved
      * @return the saved bonus source
      */
-    public Bonus saveBonus(Bonus bonus) {
-        if (!bonus.getSourceGradingScale().getGradeType().equals(GradeType.BONUS)) {
+    public Bonus saveBonus(Bonus bonus, boolean isSourceGradeScaleUpdated) {
+        if (isSourceGradeScaleUpdated && !bonus.getSourceGradingScale().getGradeType().equals(GradeType.BONUS)) {
             throw new BadRequestAlertException("Source grade scale should have bonus type.", "bonus", "invalidSourceGradingScale");
         }
         if (!bonus.getBonusToGradingScale().getGradeType().equals(GradeType.GRADE)) {
@@ -41,7 +38,13 @@ public class BonusService {
 
     public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo, GradingScale sourceGradingScale,
             Double achievedPointsOfSource, double calculationSign) {
-        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository, bonusToGradingScale, achievedPointsOfBonusTo, sourceGradingScale, achievedPointsOfSource,
+        GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);
+
+        if (!bonusToRawGradeStep.getIsPassingGrade() || sourceGradingScale == null) {
+            return new BonusExampleDTO(achievedPointsOfBonusTo, achievedPointsOfSource, bonusToRawGradeStep.getGradeName(), 0.0, achievedPointsOfBonusTo,
+                    bonusToRawGradeStep.getGradeName(), false);
+        }
+        return bonusStrategy.calculateBonusForStrategy(gradingScaleRepository, bonusToGradingScale, achievedPointsOfBonusTo, sourceGradingScale, achievedPointsOfSource,
                 calculationSign);
     }
 

@@ -160,18 +160,18 @@ export class BonusComponent implements OnInit {
     }
 
     private setSourceGradingScale() {
-        if (this.bonus.source) {
-            const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.source!.id);
+        if (this.bonus.sourceGradingScale) {
+            const sourceGradingScale = this.sourceGradingScales.find((gradingScale) => gradingScale.id === this.bonus.sourceGradingScale!.id);
             if (!sourceGradingScale) {
-                throw new Error(`sourceGradingScale not found for id: ${this.bonus.source.id}`);
+                throw new Error(`sourceGradingScale not found for id: ${this.bonus.sourceGradingScale.id}`);
             }
-            this.bonus.source = sourceGradingScale;
+            this.bonus.sourceGradingScale = sourceGradingScale;
             this.onBonusSourceChange(sourceGradingScale);
         }
     }
 
     generateExamples() {
-        if (this.bonus.source && this.bonus.bonusStrategy) {
+        if (this.bonus.sourceGradingScale && this.bonus.bonusStrategy) {
             this.examples = this.bonusService.generateBonusExamples(this.bonus, this.examGradeStepsDTO);
         } else {
             this.examples = [];
@@ -286,7 +286,7 @@ export class BonusComponent implements OnInit {
      * @see GradingSystemService.hasPointsSet
      */
     hasPointsSet(): boolean {
-        return !!this.bonus.source?.gradeSteps && this.gradingSystemService.hasPointsSet(this.bonus.source.gradeSteps);
+        return !!this.bonus.sourceGradingScale?.gradeSteps && this.gradingSystemService.hasPointsSet(this.bonus.sourceGradingScale.gradeSteps);
     }
 
     /**

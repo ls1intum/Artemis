@@ -1,6 +1,8 @@
 
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
+
 import org.apache.commons.lang.NotImplementedException;
 
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
@@ -11,7 +13,7 @@ public enum BonusStrategy implements IBonusStrategy {
     GRADES_DISCRETE {
 
         @Override
-        public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
+        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
                 GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
             throw new NotImplementedException("GRADES_DISCRETE bonus strategy not yet implemented");
         }
@@ -19,14 +21,14 @@ public enum BonusStrategy implements IBonusStrategy {
     GRADES_CONTINUOUS {
 
         @Override
-        public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
+        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
                 GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
             GradeStep bonusGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfSource, sourceGradingScale);
             GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);
             GradeStep maxGradeStep = bonusToGradingScale.maxGrade();
 
             double bonusGrade = bonusGradeStep.getNumericValue();
-            double finalGrade = bonusToRawGradeStep.getNumericValue() + weight * bonusGrade;
+            double finalGrade = roundScoreSpecifiedByCourseSettings(bonusToRawGradeStep.getNumericValue() + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
             double maxGrade = maxGradeStep.getNumericValue();
             boolean exceedsMax = false;
@@ -42,12 +44,12 @@ public enum BonusStrategy implements IBonusStrategy {
     POINTS {
 
         @Override
-        public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
+        public BonusExampleDTO calculateBonusForStrategy(GradingScaleRepository gradingScaleRepository, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo,
                 GradingScale sourceGradingScale, Double achievedPointsOfSource, double weight) {
             GradeStep bonusGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfSource, sourceGradingScale);
 
             double bonusGrade = bonusGradeStep.getNumericValue();
-            double finalPoints = achievedPointsOfBonusTo + weight * bonusGrade;
+            double finalPoints = roundScoreSpecifiedByCourseSettings(achievedPointsOfBonusTo + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
             boolean exceedsMax = false;
             if (doesBonusExceedMax(finalPoints, bonusToGradingScale.getMaxPoints(), weight)) {

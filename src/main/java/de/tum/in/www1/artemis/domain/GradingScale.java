@@ -106,6 +106,11 @@ public class GradingScale extends DomainObject {
         this.bonusFrom.add(bonus);
     }
 
+    /**
+     * Gets the max points of the given grading scale from the related course or exam
+     *
+     * @return max points defined in the exam or course related to this grading scale
+     */
     @JsonIgnore
     public int getMaxPoints() {
         if (this.getCourse() != null) {
@@ -114,6 +119,14 @@ public class GradingScale extends DomainObject {
         else {
             return this.getExam().getMaxPoints();
         }
+    }
+
+    /**
+     * Gets the course of the grading scale either via the exam or directly.
+     */
+    @JsonIgnore
+    public Course getCourseViaExamOrDirectly() {
+        return this.getExam() != null ? this.getExam().getCourse() : this.getCourse();
     }
 
     /**

@@ -6,6 +6,7 @@ import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.mode
 import { map } from 'rxjs/operators';
 import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
 import { captureException } from '@sentry/angular';
+import { Course } from 'app/entities/course.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
 export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
@@ -299,6 +300,15 @@ export class GradingSystemService {
             }
         }
         return gradeSteps.length !== 0;
+    }
+
+    /**
+     * Gets the course of the given grading scale either via the exam or directly.
+     *
+     * @param gradingScale a grading scale belonging to a course or an exam
+     */
+    getGradingScaleCourse(gradingScale?: GradingScale): Course {
+        return (gradingScale?.exam?.course ?? gradingScale?.course)!;
     }
 
     /**

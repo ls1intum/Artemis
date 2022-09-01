@@ -5,7 +5,8 @@ export class Bonus implements BaseEntity {
     public id?: number;
     public bonusStrategy?: BonusStrategy;
     public weight?: number;
-    public source?: GradingScale;
+    public sourceGradingScale?: GradingScale;
+    public bonusToGradingScale?: GradingScale;
 
     constructor() {}
 }

@@ -30,7 +30,7 @@ describe('BonusComponent', () => {
     const bonus: Bonus = {
         id: 7,
         weight: 1,
-        source: {
+        sourceGradingScale: {
             id: 7,
             gradeType: GradeType.BONUS,
             exam: {

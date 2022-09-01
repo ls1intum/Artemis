@@ -22,13 +22,18 @@
 <div *ngIf="bonus.id || bonus.weight !== undefined" class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.title">Select bonus source</span>
     <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.bonusSource.helpText' }"></ng-container>
-    <select class="form-select" [(ngModel)]="bonus.source" (ngModelChange)="onBonusSourceChange($event)" [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate">
+    <select
+        class="form-select"
+        [(ngModel)]="bonus.sourceGradingScale"
+        (ngModelChange)="onBonusSourceChange($event)"
+        [title]="'artemisApp.bonus.bonusSource.title' | artemisTranslate"
+    >
         <option *ngFor="let sourceGradingScale of sourceGradingScales" [ngValue]="sourceGradingScale">{{ getGradingScaleTitle(sourceGradingScale) }}</option>
     </select>
 </div>
-<ng-container *ngIf="bonus.source?.gradeSteps">
+<ng-container *ngIf="bonus.sourceGradingScale?.gradeSteps">
     <h5 class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.selectedBonusSource">Selected Bonus Source Grading Key</h5>
-    <div class="mt-4 fs-5 no-flex-shrink">{{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }} : {{ getGradingScaleMaxPoints(bonus.source) }}</div>
+    <div class="mt-4 fs-5 no-flex-shrink">{{ 'artemisApp.gradingSystem.maxPoints' | artemisTranslate }} : {{ getGradingScaleMaxPoints(bonus.sourceGradingScale) }}</div>
     <div class="fs-5">
         <table class="table table-striped">
             <thead>
@@ -39,7 +44,7 @@
                 </tr>
             </thead>
             <tbody>
-                <tr *ngFor="let gradeStep of bonus.source?.gradeSteps; let i = index; let last = last">
+                <tr *ngFor="let gradeStep of bonus.sourceGradingScale?.gradeSteps; let i = index; let last = last">
                     <td>{{ gradeStep.gradeName }}</td>
                     <td>
                         <span [innerHTML]="gradeStep | gradeStepBounds: GradeEditMode.PERCENTAGE:last | safeHtml"></span>
@@ -52,7 +57,7 @@
         </table>
     </div>
 </ng-container>
-<ng-container *ngIf="bonus.bonusStrategy && bonus.source && bonus.weight">
+<ng-container *ngIf="bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight">
     <h5>{{ 'artemisApp.bonus.formula.title' | artemisTranslate }}</h5>
     <div *ngIf="bonus.bonusStrategy && bonus.weight && examGradeStepsDTO" class="fs-3 pb-5">
         <div class="d-flex py-2 align-items-center">

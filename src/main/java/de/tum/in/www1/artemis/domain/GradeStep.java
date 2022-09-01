@@ -23,7 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class GradeStep extends DomainObject {
 
-    private static final Pattern NUMERIC_VALUE_PATTERN = Pattern.compile("\\d+\\.?\\d+");
+    private static final Pattern NUMERIC_VALUE_PATTERN = Pattern.compile("\\d*\\.?\\d+");
 
     private static final Logger log = LoggerFactory.getLogger(GradeStep.class);
 

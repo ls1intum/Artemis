@@ -5,12 +5,8 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import de.tum.in.www1.artemis.repository.GradingScaleRepository;
-import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 /**
  * A bonus source for an exam that maps bonus from another course or exam to the target exam
@@ -33,7 +29,7 @@ public class Bonus extends DomainObject {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "bonus_to_grading_scale_id", referencedColumnName = "id")
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private GradingScale bonusToGradingScale;
 
     /**
@@ -60,7 +56,7 @@ public class Bonus extends DomainObject {
     }
 
     /**
-     * {@see setWeight}
+     * @see #setWeight
      * @return -1 or 1
      */
     public double getWeight() {
@@ -75,13 +71,6 @@ public class Bonus extends DomainObject {
      */
     public void setWeight(double weight) {
         this.weight = Math.signum(weight);
-    }
-
-    public BonusExampleDTO calculateGradeWithBonus(GradingScaleRepository gradingScaleRepository, BonusStrategy bonusStrategy, Double achievedPointsOfBonusTo,
-            Double achievedPointsOfSource) {
-        return bonusStrategy.calculateGradeWithBonus(gradingScaleRepository,
-                // gradingScaleRepository.findWithEagerBonusFromByBonusFromId(getId()).orElse(null), // TODO: Ata Remove if current version works
-                getBonusToGradingScale(), achievedPointsOfBonusTo, getSourceGradingScale(), achievedPointsOfSource, getWeight());
     }
 
     public BonusStrategy getBonusStrategy() {

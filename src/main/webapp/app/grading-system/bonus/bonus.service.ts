@@ -5,6 +5,7 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradingScale } from 'app/entities/grading-scale.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { roundValueSpecifiedByCourseSettings } from 'app/shared/util/utils';
 
 export type EntityResponseType = HttpResponse<Bonus>;
 
@@ -57,20 +58,20 @@ export class BonusService {
      * Generates calculation examples to give users an idea how the bonus will contribute to the final grade.
      * The generated values includes max, min grades and some intermediate grade step boundaries.
      *
-     * @param bonus bonus.source.gradeSteps are assumed to be sorted
+     * @param bonus bonus.sourceGradingScale.gradeSteps are assumed to be sorted
      * @param bonusTo gradeSteps are assumed to be sorted
      */
     generateBonusExamples(bonus: Bonus, bonusTo: GradeStepsDTO): BonusExample[] {
-        if (!bonus.source) {
-            throw new Error(`Bonus.source is empty: ${bonus.source}`);
+        if (!bonus.sourceGradingScale) {
+            throw new Error(`Bonus.sourceGradingScale is empty: ${bonus.sourceGradingScale}`);
         }
-        const bonusExamples = this.generateExampleExamAndBonusPoints(bonusTo, bonus.source);
+        const bonusExamples = this.generateExampleExamAndBonusPoints(bonusTo, bonus.sourceGradingScale);
         bonusExamples.forEach((bonusExample) => this.calculateFinalGrade(bonusExample, bonus, bonusTo));
         return bonusExamples;
     }
 
     private filterBonusForRequest(bonus: Bonus) {
-        return { ...bonus, source: bonus.source ? { id: bonus.source.id } : undefined };
+        return { ...bonus, sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined };
     }
 
     /**
@@ -128,7 +129,7 @@ export class BonusService {
     }
 
     /**
-     * Applies bonus from bonus.source to bonusTo grade steps with student points from bonusExample.
+     * Applies bonus from bonus.sourceGradingScale to bonusToGradingScale grade steps with student points from bonusExample.
      *
      * @param bonusExample Modified by this method. studentPointsOfBonusSource and studentPointsOfBonusSource fields are read, others are (over)written
      * @param bonus Contains calculation instructions and source grading scale
@@ -138,7 +139,7 @@ export class BonusService {
         const examGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.studentPointsOfBonusTo, bonusTo.maxPoints!);
         bonusExample.examGrade = examGradeStep?.gradeName;
 
-        if (!examGradeStep?.isPassingGrade || !bonus.source) {
+        if (!examGradeStep?.isPassingGrade || !bonus.sourceGradingScale) {
             bonusExample.bonusGrade = 0;
             bonusExample.finalPoints = bonusExample.studentPointsOfBonusTo;
             bonusExample.finalGrade = bonusExample.examGrade;
@@ -146,9 +147,9 @@ export class BonusService {
         }
 
         const bonusGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(
-            bonus.source.gradeSteps,
+            bonus.sourceGradingScale.gradeSteps,
             bonusExample.studentPointsOfBonusSource ?? 0,
-            this.gradingSystemService.getGradingScaleMaxPoints(bonus.source),
+            this.gradingSystemService.getGradingScaleMaxPoints(bonus.sourceGradingScale),
         );
         bonusExample.bonusGrade = this.gradingSystemService.getNumericValueForGradeName(bonusGradeStep?.gradeName);
 
@@ -162,9 +163,10 @@ export class BonusService {
      * @param bonusTo Grading scale that will have its grades improved by bonus
      */
     private calculateBonusForStrategy(bonusExample: BonusExample, bonus: Bonus, bonusTo: GradeStepsDTO) {
+        const course = this.gradingSystemService.getGradingScaleCourse(bonus.bonusToGradingScale);
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS: {
-                bonusExample.finalPoints = bonusExample.studentPointsOfBonusTo + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
+                bonusExample.finalPoints = roundValueSpecifiedByCourseSettings(bonusExample.studentPointsOfBonusTo + (bonus.weight ?? 1) * bonusExample.bonusGrade!, course);
                 if (this.doesBonusExceedMax(bonusExample.finalPoints, bonusTo.maxPoints!, bonus.weight!)) {
                     bonusExample.exceedsMax = true;
                     bonusExample.finalPoints = bonusTo.maxPoints ?? 0;
@@ -175,7 +177,7 @@ export class BonusService {
             }
             case BonusStrategy.GRADES_CONTINUOUS: {
                 const examGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(bonusExample.examGrade as string)!;
-                bonusExample.finalGrade = examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!;
+                bonusExample.finalGrade = roundValueSpecifiedByCourseSettings(examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!, course);
                 const maxGrade = this.gradingSystemService.maxGrade(bonusTo.gradeSteps);
                 const maxGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(maxGrade)!;
                 if (this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!)) {
