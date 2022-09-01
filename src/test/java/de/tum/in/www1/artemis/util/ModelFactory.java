@@ -1019,7 +1019,7 @@ public class ModelFactory {
         testSuite.testCases().addAll(failedTestNames.stream()
                 .map(name -> new TestCaseDTO(name, "Class", 0d, new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
 
-        final var commitDTO = new CommitDTO(repoName, TestConstants.COMMIT_HASH_STRING, defaultBranch);
+        final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, defaultBranch);
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
         return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && commits.size() > 0 ? commits : List.of(commitDTO),
