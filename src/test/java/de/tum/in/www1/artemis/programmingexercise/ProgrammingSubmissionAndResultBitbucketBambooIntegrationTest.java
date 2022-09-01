@@ -583,13 +583,13 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
-        var firstVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(firstCommit.id(), ASSIGNMENT_REPO_NAME, List.of(firstCommit));
+        var firstVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(firstCommit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(firstCommit));
         var notificationDTOFirstCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of(), firstBuildCompleteDate, List.of(firstVcsDTO));
         postResult(testService.participation.getBuildPlanId(), notificationDTOFirstCommit, HttpStatus.OK, false);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
-        var secondVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(secondCommit.id(), ASSIGNMENT_REPO_NAME, List.of(firstCommit, secondCommit));
+        var secondVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(secondCommit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(firstCommit, secondCommit));
         var notificationDTOSecondCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of(), secondBuildCompleteDate,
                 List.of(secondVcsDTO));
         postResult(testService.participation.getBuildPlanId(), notificationDTOSecondCommit, HttpStatus.OK, false);
@@ -609,10 +609,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which includes build log entries
-        var buildLog = new BambooBuildLogDTO();
-        buildLog.setLog("[ERROR] COMPILATION ERROR missing something");
-        buildLog.setDate(ZonedDateTime.now().minusMinutes(1));
-        buildLog.setUnstyledLog("[ERROR] COMPILATION ERROR missing something");
+        final var buildLog = new BambooBuildLogDTO(ZonedDateTime.now().minusMinutes(1), "[ERROR] COMPILATION ERROR missing something",
+                "[ERROR] COMPILATION ERROR missing something");
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false);
 
         var result = assertBuildError(participation.getId(), userLogin, programmingLanguage);

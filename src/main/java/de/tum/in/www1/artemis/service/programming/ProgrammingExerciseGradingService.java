@@ -52,8 +52,6 @@ public class ProgrammingExerciseGradingService {
 
     private final ProgrammingExerciseTestCaseService testCaseService;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
-
     private final ProgrammingTriggerService programmingTriggerService;
 
     private final SimpMessageSendingOperations messagingTemplate;
@@ -89,16 +87,15 @@ public class ProgrammingExerciseGradingService {
     @Value("${artemis.version-control.default-branch:main}")
     private String defaultGitBranch;
 
-    public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
-            StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
-            Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate,
-            StaticCodeAnalysisService staticCodeAnalysisService, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, StudentParticipationRepository studentParticipationRepository,
+            ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate, StaticCodeAnalysisService staticCodeAnalysisService,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
             AuditEventRepository auditEventRepository, GroupNotificationService groupNotificationService, ResultService resultService, ExerciseDateService exerciseDateService,
             SubmissionPolicyService submissionPolicyService, ProgrammingExerciseRepository programmingExerciseRepository, BuildLogEntryService buildLogService,
             TestwiseCoverageService testwiseCoverageService) {
         this.testCaseService = testCaseService;
-        this.programmingSubmissionService = programmingSubmissionService;
         this.studentParticipationRepository = studentParticipationRepository;
         this.continuousIntegrationService = continuousIntegrationService;
         this.resultRepository = resultRepository;
@@ -287,7 +284,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Updates an existing semi-automatic result with automatic feedback from another result.
-     *
+     * <p>
      * Note: for the second correction it is important that we do not create additional semi-automatic results
      *
      * @param lastSemiAutomaticResultId The latest manual result for the same submission (which must exist in the database)
@@ -295,7 +292,7 @@ public class ProgrammingExerciseGradingService {
      * @return The updated semi-automatic result
      */
     private Result updateLatestSemiAutomaticResultWithNewAutomaticFeedback(long lastSemiAutomaticResultId, Result newAutomaticResult) {
-        // Note: refetch the semi-automatic result with feedback and assessor
+        // Note: fetch the semi-automatic result with feedback and assessor again from the database
         var latestSemiAutomaticResult = resultRepository.findByIdWithEagerFeedbacksAndAssessor(lastSemiAutomaticResultId).get();
         // this makes it the most recent result, but optionally keeps the draft state of an unfinished manual result
         latestSemiAutomaticResult.setCompletionDate(latestSemiAutomaticResult.getCompletionDate() != null ? newAutomaticResult.getCompletionDate() : null);
@@ -313,7 +310,7 @@ public class ProgrammingExerciseGradingService {
     /**
      * Trigger the build of the template repository, if the submission of the provided result is of type TEST.
      * Will use the commitHash of the submission for triggering the template build.
-     *
+     * <p>
      * If the submission of the provided result is not of type TEST, the method will return without triggering the build.
      *
      * @param programmingExerciseId ProgrammingExercise id that belongs to the result.
@@ -357,7 +354,7 @@ public class ProgrammingExerciseGradingService {
      * - Checking which test cases were not executed as this is not part of the bamboo build (not all test cases are executed in an exercise with sequential test runs)
      * - Checking the due date and the visibility.
      * - Recalculating the score based on the successful test cases weight vs the total weight of all test cases.
-     *
+     * <p>
      * If there are no test cases stored in the database for the given exercise (i.e. we have a legacy exercise) or the weight has not been changed, then the result will not change
      *
      * @param result   to modify with new score and added feedbacks (not executed tests)
@@ -634,7 +631,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Only keeps automatic feedbacks that also are associated with a test case.
-     *
+     * <p>
      * Does not remove static code analysis feedback.
      *
      * @param result of the build run.
@@ -768,10 +765,10 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates the total points that should be given for the successful test cases.
-     *
+     * <p>
      * Additionally, updates the feedback in the result for each passed test case with the points
      * received for that specific test case.
-     *
+     * <p>
      * Does not apply any penalties to the score yet.
      *
      * @param programmingExercise which the result belongs to.
@@ -796,7 +793,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Caps the points at the maximum achievable number.
-     *
+     * <p>
      * The cap should be applied before the static code analysis penalty is subtracted as otherwise the penalty won't have any effect in some cases.
      * For example with maxPoints=20, points=30 and penalty=10, a student would still receive the full 20 points, if the points are not
      * capped before the penalty is subtracted. With the implemented order in place points will be capped to 20 points first, then the penalty is subtracted
@@ -865,7 +862,7 @@ public class ProgrammingExerciseGradingService {
 
     /**
      * Calculates a total penalty that should be applied to the score.
-     *
+     * <p>
      * This includes the penalties from static code analysis and of submission policies.
      *
      * @param programmingExercise the participation belongs to.

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import static java.time.ZonedDateTime.now;
 import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
@@ -41,6 +42,8 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 public class ModelFactory {
 
     public static final String USER_PASSWORD = "00000000";
+
+    public static final String defaultBranch = "main";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
@@ -438,7 +441,7 @@ public class ModelFactory {
         textSubmission.setLanguage(language);
         textSubmission.setSubmitted(submitted);
         if (submitted) {
-            textSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            textSubmission.setSubmissionDate(now().minusDays(1));
         }
         return textSubmission;
     }
@@ -448,7 +451,7 @@ public class ModelFactory {
         textSubmission.text(text);
         textSubmission.setLanguage(language);
         textSubmission.setSubmitted(true);
-        textSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
+        textSubmission.setSubmissionDate(now().plusDays(1));
         return textSubmission;
     }
 
@@ -456,7 +459,7 @@ public class ModelFactory {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
         if (submitted) {
-            programmingSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            programmingSubmission.setSubmissionDate(now().minusDays(1));
         }
         programmingSubmission.setCommitHash(commitHash);
         programmingSubmission.setType(type);
@@ -467,7 +470,7 @@ public class ModelFactory {
         ProgrammingSubmission programmingSubmission = new ProgrammingSubmission();
         programmingSubmission.setSubmitted(submitted);
         if (submitted) {
-            programmingSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            programmingSubmission.setSubmissionDate(now().minusDays(1));
         }
         return programmingSubmission;
     }
@@ -476,7 +479,7 @@ public class ModelFactory {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(submitted);
         if (submitted) {
-            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            fileUploadSubmission.setSubmissionDate(now().minusDays(1));
         }
         return fileUploadSubmission;
     }
@@ -485,7 +488,7 @@ public class ModelFactory {
         FileUploadSubmission fileUploadSubmission = generateFileUploadSubmission(submitted);
         fileUploadSubmission.setFilePath(filePath);
         if (submitted) {
-            fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            fileUploadSubmission.setSubmissionDate(now().minusDays(1));
         }
         return fileUploadSubmission;
     }
@@ -493,7 +496,7 @@ public class ModelFactory {
     public static FileUploadSubmission generateLateFileUploadSubmission() {
         FileUploadSubmission fileUploadSubmission = new FileUploadSubmission();
         fileUploadSubmission.setSubmitted(true);
-        fileUploadSubmission.setSubmissionDate(ZonedDateTime.now().plusDays(1));
+        fileUploadSubmission.setSubmissionDate(now().plusDays(1));
         return fileUploadSubmission;
     }
 
@@ -502,7 +505,7 @@ public class ModelFactory {
         submission.setModel(model);
         submission.setSubmitted(submitted);
         if (submitted) {
-            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            submission.setSubmissionDate(now().minusDays(1));
         }
         return submission;
     }
@@ -511,7 +514,7 @@ public class ModelFactory {
         QuizSubmission submission = new QuizSubmission();
         submission.setSubmitted(submitted);
         if (submitted) {
-            submission.setSubmissionDate(ZonedDateTime.now().minusDays(1));
+            submission.setSubmissionDate(now().minusDays(1));
         }
         return submission;
     }
@@ -630,7 +633,7 @@ public class ModelFactory {
      */
     public static Exam generateExamWithStudentReviewDates(Course course) {
         Exam exam = generateExamHelper(course, false);
-        ZonedDateTime currentTime = ZonedDateTime.now();
+        ZonedDateTime currentTime = now();
         exam.setNumberOfExercisesInExam(1);
         exam.setRandomizeExerciseOrder(false);
         exam.setExamStudentReviewStart(currentTime);
@@ -666,7 +669,7 @@ public class ModelFactory {
      * @return the created Exam
      */
     private static Exam generateExamHelper(Course course, boolean testExam) {
-        ZonedDateTime currentTime = ZonedDateTime.now();
+        ZonedDateTime currentTime = now();
         Exam exam = new Exam();
         exam.setTitle((testExam ? "Test " : "Real ") + "exam 1");
         exam.setTestExam(testExam);
@@ -845,7 +848,7 @@ public class ModelFactory {
     public static FeedbackConflict generateFeedbackConflictBetweenFeedbacks(Feedback firstFeedback, Feedback secondFeedback) {
         FeedbackConflict feedbackConflict = new FeedbackConflict();
         feedbackConflict.setConflict(true);
-        feedbackConflict.setCreatedAt(ZonedDateTime.now());
+        feedbackConflict.setCreatedAt(now());
         feedbackConflict.setFirstFeedback(firstFeedback);
         feedbackConflict.setSecondFeedback(secondFeedback);
         feedbackConflict.setType(FeedbackConflictType.INCONSISTENT_SCORE);
@@ -905,7 +908,7 @@ public class ModelFactory {
     public static StudentParticipation generateStudentParticipation(InitializationState initializationState, Exercise exercise, User user) {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setInitializationState(initializationState);
-        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setInitializationDate(now().minusDays(5));
         studentParticipation.setExercise(exercise);
         studentParticipation.setParticipant(user);
         return studentParticipation;
@@ -921,7 +924,7 @@ public class ModelFactory {
     public static StudentParticipation generateStudentParticipationWithoutUser(InitializationState initializationState, Exercise exercise) {
         StudentParticipation studentParticipation = new StudentParticipation();
         studentParticipation.setInitializationState(initializationState);
-        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setInitializationDate(now().minusDays(5));
         studentParticipation.setExercise(exercise);
         return studentParticipation;
     }
@@ -930,7 +933,7 @@ public class ModelFactory {
             User user) {
         ProgrammingExerciseStudentParticipation studentParticipation = new ProgrammingExerciseStudentParticipation();
         studentParticipation.setInitializationState(initializationState);
-        studentParticipation.setInitializationDate(ZonedDateTime.now().minusDays(5));
+        studentParticipation.setInitializationDate(now().minusDays(5));
         studentParticipation.setExercise(exercise);
         studentParticipation.setParticipant(user);
         return studentParticipation;
@@ -1008,17 +1011,17 @@ public class ModelFactory {
     public static TestResultsDTO generateTestResultDTO(String fullName, String repoName, List<String> successfulTestNames, List<String> failedTestNames,
             ProgrammingLanguage programmingLanguage, boolean enableStaticAnalysisReports, List<String> logs, ZonedDateTime buildRunDate, List<CommitDTO> commits) {
 
-        final var testSuite = new TestSuiteDTO("TestSuiteName1", ZonedDateTime.now().toEpochSecond(), 0, 0, failedTestNames.size(),
-                successfulTestNames.size() + failedTestNames.size(), new ArrayList<>());
+        final var testSuite = new TestSuiteDTO("TestSuiteName1", now().toEpochSecond(), 0, 0, failedTestNames.size(), successfulTestNames.size() + failedTestNames.size(),
+                new ArrayList<>());
         testSuite.testCases().addAll(successfulTestNames.stream().map(name -> new TestCaseDTO(name, "Class", 0d)).toList());
         testSuite.testCases().addAll(failedTestNames.stream()
                 .map(name -> new TestCaseDTO(name, "Class", 0d, new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
 
-        final var commitDTO = new CommitDTO(repoName, TestConstants.COMMIT_HASH_STRING);
+        final var commitDTO = new CommitDTO(repoName, TestConstants.COMMIT_HASH_STRING, defaultBranch);
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
         return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && commits.size() > 0 ? commits : List.of(commitDTO),
-                List.of(testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : ZonedDateTime.now(), false, logs);
+                List.of(testSuite), staticCodeAnalysisReports, List.of(), buildRunDate != null ? buildRunDate : now(), false, logs);
     }
 
     /**
@@ -1088,12 +1091,11 @@ public class ModelFactory {
         final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).toList();
         final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
         final var job = new BambooBuildResultNotificationDTO.BambooJobDTO(42, failedTests, successfulTests, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, new ArrayList<>());
+        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, defaultBranch, new ArrayList<>());
         final var plan = new BambooBuildPlanDTO("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
-        final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar",
-                buildCompletionDate != null ? buildCompletionDate : ZonedDateTime.now().minusSeconds(5), failedTestNames.isEmpty(), summary,
-                vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
+        final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
+                failedTestNames.isEmpty(), summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
 
         return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
     }
@@ -1114,45 +1116,16 @@ public class ModelFactory {
 
         String logWith254Chars = "a".repeat(254);
 
-        var buildLogDTO254Chars = new BambooBuildLogDTO();
-        buildLogDTO254Chars.setDate(ZonedDateTime.now());
-        buildLogDTO254Chars.setLog(logWith254Chars);
-
-        var buildLogDTO255Chars = new BambooBuildLogDTO();
-        buildLogDTO255Chars.setDate(ZonedDateTime.now());
-        buildLogDTO255Chars.setLog(logWith254Chars + "a");
-
-        var buildLogDTO256Chars = new BambooBuildLogDTO();
-        buildLogDTO256Chars.setDate(ZonedDateTime.now());
-        buildLogDTO256Chars.setLog(logWith254Chars + "aa");
-
-        var largeBuildLogDTO = new BambooBuildLogDTO();
-        largeBuildLogDTO.setDate(ZonedDateTime.now());
-        largeBuildLogDTO.setLog(logWith254Chars + logWith254Chars);
-
-        var logTypicalErrorLog = new BambooBuildLogDTO();
-        logTypicalErrorLog.setDate(ZonedDateTime.now());
-        logTypicalErrorLog.setLog("error: the java class ABC does not exist");
-
-        var logTypicalDuplicatedErrorLog = new BambooBuildLogDTO();
-        logTypicalDuplicatedErrorLog.setDate(ZonedDateTime.now());
-        logTypicalDuplicatedErrorLog.setLog("error: the java class ABC does not exist");
-
-        var logCompilationError = new BambooBuildLogDTO();
-        logCompilationError.setDate(ZonedDateTime.now());
-        logCompilationError.setLog("COMPILATION ERROR");
-
-        var logBuildError = new BambooBuildLogDTO();
-        logBuildError.setDate(ZonedDateTime.now());
-        logBuildError.setLog("BUILD FAILURE");
-
-        var logWarning = new BambooBuildLogDTO();
-        logWarning.setDate(ZonedDateTime.now());
-        logWarning.setLog("[WARNING]");
-
-        var logWarningIllegalReflectiveAccess = new BambooBuildLogDTO();
-        logWarningIllegalReflectiveAccess.setDate(ZonedDateTime.now());
-        logWarningIllegalReflectiveAccess.setLog("WARNING: Illegal reflective access by");
+        var buildLogDTO254Chars = new BambooBuildLogDTO(now(), logWith254Chars, null);
+        var buildLogDTO255Chars = new BambooBuildLogDTO(now(), logWith254Chars + "a", null);
+        var buildLogDTO256Chars = new BambooBuildLogDTO(now(), logWith254Chars + "aa", null);
+        var largeBuildLogDTO = new BambooBuildLogDTO(now(), logWith254Chars + logWith254Chars, null);
+        var logTypicalErrorLog = new BambooBuildLogDTO(now(), "error: the java class ABC does not exist", null);
+        var logTypicalDuplicatedErrorLog = new BambooBuildLogDTO(now(), "error: the java class ABC does not exist", null);
+        var logCompilationError = new BambooBuildLogDTO(now(), "COMPILATION ERROR", null);
+        var logBuildError = new BambooBuildLogDTO(now(), "BUILD FAILURE", null);
+        var logWarning = new BambooBuildLogDTO(now(), "[WARNING]", null);
+        var logWarningIllegalReflectiveAccess = new BambooBuildLogDTO(now(), "WARNING: Illegal reflective access by", null);
 
         notification.getBuild().jobs().get(0).logs().addAll(List.of(buildLogDTO254Chars, buildLogDTO255Chars, buildLogDTO256Chars, largeBuildLogDTO, logTypicalErrorLog,
                 logTypicalDuplicatedErrorLog, logWarning, logWarningIllegalReflectiveAccess, logCompilationError, logBuildError));

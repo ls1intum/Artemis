@@ -70,6 +70,12 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
+    public Optional<String> getBranchNameFromAssignmentRepo() {
+        var repo = getBuild().vcs().stream().filter(vcs -> vcs.repositoryName().equalsIgnoreCase(ASSIGNMENT_REPO_NAME)).findFirst();
+        return repo.map(BambooVCSDTO::branchName);
+    }
+
+    @Override
     public boolean isBuildSuccessful() {
         return getBuild().successful();
     }
@@ -98,7 +104,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
         for (var job : getBuild().jobs()) {
             for (var bambooLog : job.logs()) {
                 // We have to unescape the HTML as otherwise symbols like '<' are not displayed correctly
-                buildLogEntries.add(new BuildLogEntry(bambooLog.getDate(), StringEscapeUtils.unescapeHtml(bambooLog.getLog())));
+                buildLogEntries.add(new BuildLogEntry(bambooLog.date(), StringEscapeUtils.unescapeHtml(bambooLog.log())));
             }
         }
 
@@ -126,7 +132,7 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record BambooVCSDTO(String id, String repositoryName, List<BambooCommitDTO> commits) {
+    public record BambooVCSDTO(String id, String repositoryName, String branchName, List<BambooCommitDTO> commits) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
