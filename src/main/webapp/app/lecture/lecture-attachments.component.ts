@@ -8,7 +8,8 @@ import { Subject } from 'rxjs';
 import { FileService } from 'app/shared/http/file.service';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
 import { AttachmentService } from 'app/lecture/attachment.service';
-import { faPaperclip, faPencilAlt, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPaperclip, faPencilAlt, faQuestionCircle, faSpinner, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { FILE_EXTENSIONS } from 'app/shared/constants/file-extensions.constants';
 
 @Component({
     selector: 'jhi-lecture-attachments',
@@ -28,6 +29,11 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     erroredFile?: Blob;
     errorMessage?: string;
 
+    // A human-readable list of allowed file extensions
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    // The list of file extensions for the "accept" attribute of the file input field
+    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
 
@@ -36,6 +42,7 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
     faTimes = faTimes;
     faPencilAlt = faPencilAlt;
     faPaperclip = faPaperclip;
+    faQuestionCircle = faQuestionCircle;
 
     constructor(
         protected activatedRoute: ActivatedRoute,
@@ -57,6 +64,10 @@ export class LectureAttachmentsComponent implements OnInit, OnDestroy {
 
     ngOnDestroy(): void {
         this.dialogErrorSource.unsubscribe();
+    }
+
+    get isSubmitPossible() {
+        return this.attachmentToBeCreated?.name && (this.attachmentFile || this.attachmentToBeCreated?.link);
     }
 
     addAttachment() {

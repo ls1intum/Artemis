@@ -54,8 +54,20 @@ public class FileService implements DisposableBean {
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
 
-    // NOTE: this list has to be the same as in file-uploader.service.ts
-    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip"));
+    /**
+     * The list of file extensions that are allowed to be uploaded in a Markdown editor.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private final Set<String> allowedMarkdownFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf");
+
+    /**
+     * The global list of file extensions that are allowed to be uploaded.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
+            "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
     public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
 
@@ -144,11 +156,16 @@ public class FileService implements DisposableBean {
         if (filename == null) {
             throw new IllegalArgumentException("Filename cannot be null");
         }
-        // sanitize the filename and replace all invalid characters with "_"
+
+        // sanitize the filename and replace all invalid characters with with an underscore
         filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
-        String fileExtension = FilenameUtils.getExtension(filename);
-        if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions), "file", null, true);
+
+        // Check the allowed file extensions
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        final Set<String> allowedExtensions = markdown ? allowedMarkdownFileExtensions : allowedFileExtensions;
+
+        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions), "file", null, true);
         }
 
         final String filePath = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();

@@ -35,10 +35,12 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     @Input()
     isEditMode = false;
 
-    farQuestionCircle = faQuestionCircle;
-    fileSizeLimitation?: string;
-    fileLimitations?: string;
-    fileNamePlaceholder?: string;
+    // A human-readable list of allowed file extensions
+    readonly allowedFileExtensions = FILE_EXTENSIONS.join(', ');
+    // The list of file extensions for the "accept" attribute of the file input field
+    readonly acceptedFileExtensionsFileBrowser = FILE_EXTENSIONS.map((ext) => '.' + ext).join(',');
+
+    faQuestionCircle = faQuestionCircle;
 
     @Output()
     formSubmitted: EventEmitter<AttachmentUnitFormData> = new EventEmitter<AttachmentUnitFormData>();
@@ -51,9 +53,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     fileName?: string;
     fileInputTouched = false;
 
-    constructor(private translateService: TranslateService, private fb: FormBuilder) {
-        this.setTranslationStrings();
-    }
+    constructor(private translateService: TranslateService, private fb: FormBuilder) {}
 
     ngOnChanges(): void {
         this.initializeForm();
@@ -64,10 +64,6 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.initializeForm();
-
-        this.translateService.onLangChange?.subscribe(() => {
-            this.setTranslationStrings();
-        });
     }
 
     private initializeForm() {
@@ -112,7 +108,7 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !(this.form.invalid || this.fileName === this.fileNamePlaceholder);
+        return !(this.form.invalid || !this.fileName);
     }
 
     submitForm() {
@@ -139,15 +135,5 @@ export class AttachmentUnitFormComponent implements OnInit, OnChanges {
         if (formData?.fileProperties?.fileName) {
             this.fileName = formData?.fileProperties?.fileName;
         }
-    }
-
-    /**
-     * Update the translation strings after the application language is changed
-     */
-    private setTranslationStrings() {
-        this.fileSizeLimitation = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation');
-        this.fileLimitations = `${FILE_EXTENSIONS.join(', ')}. ${this.fileSizeLimitation}`;
-        this.fileNamePlaceholder = this.translateService.instant('artemisApp.attachmentUnit.createAttachmentUnit.chooseFile');
-        this.fileName = this.fileNamePlaceholder;
     }
 }
