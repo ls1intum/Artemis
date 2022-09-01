@@ -118,6 +118,13 @@ public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
         return firstCommit.map(CommitDTO::hash);
     }
 
+    @Override
+    public Optional<String> getBranchNameFromAssignmentRepo() {
+        final var testRepoNameSuffix = RepositoryType.TESTS.getName();
+        final var firstCommit = getCommits().stream().filter(commit -> !commit.getRepositorySlug().endsWith(testRepoNameSuffix)).findFirst();
+        return firstCommit.map(CommitDTO::getBranchName);
+    }
+
     private int getSum() {
         return getSkipped() + getFailures() + getErrors() + getSuccessful();
     }

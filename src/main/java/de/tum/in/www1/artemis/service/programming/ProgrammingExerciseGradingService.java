@@ -14,6 +14,7 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -85,6 +86,9 @@ public class ProgrammingExerciseGradingService {
 
     private final TestwiseCoverageService testwiseCoverageService;
 
+    @Value("${artemis.version-control.default-branch:main}")
+    private String defaultGitBranch;
+
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, ProgrammingSubmissionService programmingSubmissionService,
             StudentParticipationRepository studentParticipationRepository, ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService,
             Optional<VersionControlService> versionControlService, ProgrammingTriggerService programmingTriggerService, SimpMessageSendingOperations messagingTemplate,
@@ -130,6 +134,12 @@ public class ProgrammingExerciseGradingService {
         Result newResult = null;
         try {
             var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
+            var optionalBranchNameFromAssignmentRepo = buildResult.getBranchNameFromAssignmentRepo();
+
+            // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
+            if (optionalBranchNameFromAssignmentRepo.isPresent() && !optionalBranchNameFromAssignmentRepo.get().equals(defaultGitBranch)) {
+                throw new IllegalArgumentException("Result was produced for a different branch then the default branch");
+            }
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
