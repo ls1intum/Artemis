@@ -1369,7 +1369,7 @@ public class ModelFactory {
         bonus.setWeight(weight);
         bonus.setSourceGradingScale(sourceGradingScale);
         bonus.setBonusToGradingScale(bonusToGradingScale);
-        bonusToGradingScale.addBonus(bonus);
+        bonusToGradingScale.addBonusFrom(bonus);
         return bonus;
 
     }

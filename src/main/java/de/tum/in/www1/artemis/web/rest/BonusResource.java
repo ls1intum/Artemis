@@ -97,6 +97,7 @@ public class BonusResource {
         if (bonus != null) {
             bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
         }
+        filterBonusForResponse(bonus);
         return ResponseEntity.ok(bonus);
     }
 
@@ -115,6 +116,8 @@ public class BonusResource {
         GradingScale bonusToGradingScale = bonus.getBonusToGradingScale();
         checkIsAtLeastInstructorForGradingScaleCourse(bonusToGradingScale);
         bonus.setBonusStrategy(bonusToGradingScale.getBonusStrategy());
+
+        filterBonusForResponse(bonus);
         return ResponseEntity.ok().body(bonus);
     }
 
@@ -136,7 +139,6 @@ public class BonusResource {
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
         BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, targetPoints, sourcePoints, targetGradingScale, sourceGradingScale);
-
         return ResponseEntity.ok(gradeWithBonus);
     }
 
@@ -197,8 +199,35 @@ public class BonusResource {
 
         Bonus savedBonus = bonusService.saveBonus(bonus, true);
         gradingScaleRepository.save(bonusToGradingScale);
+
+        filterBonusForResponse(savedBonus);
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + savedBonus.getId()))
                 .headers(HeaderUtil.createEntityCreationAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
+    }
+
+    /**
+     * Sets redundant fields to null to save bandwidth and prevent circular dependencies.
+     * <p>
+     * Warning: Modifies the input argument.
+     *
+     * @param bonus that will be modified
+     */
+    private void filterBonusForResponse(Bonus bonus) {
+        if (bonus == null) {
+            return;
+        }
+
+        GradingScale bonusTo = bonus.getBonusToGradingScale();
+        if (bonusTo != null) {
+            // This line breaks the circular dependency between savedBonus and bonusToGradingScale
+            bonusTo.setBonusFrom(null);
+            bonusTo.setGradeSteps(null);
+        }
+
+        GradingScale source = bonus.getSourceGradingScale();
+        if (source != null) {
+            source.setGradeSteps(null);
+        }
     }
 
     /**
@@ -226,8 +255,10 @@ public class BonusResource {
 
         bonusToGradingScale.addBonusFrom(bonus);
         bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
-        Bonus savedBonus = bonusService.saveBonus(bonus, isSourceGradeScaleUpdated);
         gradingScaleRepository.save(bonusToGradingScale);
+        Bonus savedBonus = bonusService.saveBonus(bonus, isSourceGradeScaleUpdated);
+
+        filterBonusForResponse(savedBonus);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, "")).body(savedBonus);
     }
 
