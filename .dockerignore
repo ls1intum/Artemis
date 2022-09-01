@@ -21,8 +21,6 @@ node_modules
 build/*
 # except files for docker
 !build/docker
-#exclude data directory from ancient docker-compose in root directory
-data
 
 # files inside of the root directory not needed
 CITATION.cff

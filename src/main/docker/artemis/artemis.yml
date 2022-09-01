@@ -9,7 +9,7 @@ services:
         # maps application-local.yml to the container as this is the override file for all other configs
         # (the default configs are packaged in the war file and don't need to be mapped here)
         volumes:
-            - ../../resources/config/application-local.yml:/opt/artemis/application-local.yml:ro
+            - ../../resources/config/application-local.yml:/opt/artemis/config/application-local.yml:ro
             - ../scripts/wait-for-it.sh:/usr/local/bin/wait-for-it.sh
         # environments can also be used for custom overrides (alternative to application-local.yml volume)
         # the following environments are necessary for docker images orchestrated by docker-compose

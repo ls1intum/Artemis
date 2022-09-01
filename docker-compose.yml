@@ -1,53 +1,19 @@
-version: '3'
-
-# NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers. This setup is aimed for development.
-# If you want to start the whole Artemis application (server and client) in the same container, you need to specify a different service and
-# you have to execute the command './gradlew -Pprod -Pwar clean bootWar && java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira'
-
+# Artemis-Dev-DB Setup (mirrored to the project root for a convenience start of docker-compose)
+# sync this file with src/main/docker/artemis-dev-db.yml
 services:
-  artemis-server:
-    command: sh -c "(apt update && apt install -y fontconfig ttf-dejavu graphviz || true) && ./gradlew buildJarForDocker && java -jar --add-exports java.naming/com.sun.jndi.ldap=ALL-UNNAMED build/libs/Artemis-*.jar"
-    depends_on:
-      - artemis-mysql
-    image: openjdk:17-jdk-buster
-    environment:
-      - SPRING_DATASOURCE_URL=jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
-      - SPRING_PROFILES_ACTIVE=dev,bamboo,bitbucket,jira,artemis,scheduling
-    networks:
-      - artemis
-    ports:
-      - 8080:8080
-    volumes:
-      - ./:/server/
-    working_dir: /server
-
-  artemis-client:
-    command: sh -c "npm install && npm run start-docker"
-    depends_on:
-      - artemis-server
-    image: node:14.17.6-alpine
-    networks:
-      - artemis
-    ports:
-      - 9000:9000
-    volumes:
-      - ./:/client/
-    working_dir: /client
-
-  artemis-mysql:
-    command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
-    environment:
-      - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=
-      - MYSQL_DATABASE=Artemis
-    image: mysql:8.0.27
-    networks:
-      - artemis
-    ports:
-      - 3306:3306
-    volumes:
-      - ./data/.db:/var/lib/mysql
+    artemis-app:
+        extends:
+            file: ./src/main/docker/artemis/artemis.yml
+            service: artemis-app
+        depends_on:
+            - artemis-mysql
+    artemis-mysql:
+        extends:
+            file: ./src/main/docker/mysql.yml
+            service: artemis-mysql
 
 networks:
-  artemis:
-    driver: bridge
+    artemis:
+        driver: "bridge"
+volumes:
+    artemis-mysql-data:
