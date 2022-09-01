@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -49,16 +50,17 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var loginName = "student1";
         var exercise = programmingExerciseResultTestService.getProgrammingExercise();
         var repoName = (exercise.getProjectKey() + "-" + loginName).toUpperCase();
-        var notification = ModelFactory.generateTestResultDTO(repoName, List.of("test1"), List.of(), exercise.getProgrammingLanguage(), false);
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
-        notification.setFullName(exercise.getProjectKey() + " » " + repoName + " #3");
+        var notification = ModelFactory.generateTestResultDTO(exercise.getProjectKey() + " » " + repoName + " #3", repoName, List.of("test1"), List.of(),
+                exercise.getProgrammingLanguage(), false, new ArrayList<>(), null, new ArrayList<>());
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws GitLabApiException {
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true,
+                new ArrayList<>(), null, new ArrayList<>());
         gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, false);
     }
@@ -66,7 +68,8 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTests() throws GitLabApiException {
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), ProgrammingLanguage.JAVA, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), ProgrammingLanguage.JAVA,
+                true, new ArrayList<>(), null, new ArrayList<>());
         gitlabRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getSolutionParticipation(), Map.of(TestConstants.COMMIT_HASH_STRING, ZonedDateTime.now()));
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, true);
     }
@@ -76,7 +79,8 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @WithMockUser(username = "student1", roles = "USER")
     void shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(ProgrammingLanguage programmingLanguage) {
         programmingExerciseResultTestService.setupForProgrammingLanguage(programmingLanguage);
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), programmingLanguage, true, new ArrayList<>(), null,
+                new ArrayList<>());
         programmingExerciseResultTestService.shouldStoreFeedbackForResultWithStaticCodeAnalysisReport(notification, programmingLanguage);
     }
 
@@ -92,7 +96,8 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldGenerateNewManualResultIfManualAssessmentExists() {
-        var notification = ModelFactory.generateTestResultDTO(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), ProgrammingLanguage.JAVA, true,
+                new ArrayList<>(), null, new ArrayList<>());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
 }

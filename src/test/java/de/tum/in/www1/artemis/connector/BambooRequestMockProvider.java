@@ -268,9 +268,9 @@ public class BambooRequestMockProvider {
         parameters.add("save", "Save repository");
         parameters.add("bamboo.successReturnMode", "json");
         parameters.add("repository.stash.branch", defaultBranch);
-        parameters.add("repository.stash.repositoryId", bitbucketRepository.getId());
-        parameters.add("repository.stash.repositorySlug", bitbucketRepository.getSlug());
-        parameters.add("repository.stash.projectKey", bitbucketRepository.getProject().getKey());
+        parameters.add("repository.stash.repositoryId", bitbucketRepository.id());
+        parameters.add("repository.stash.repositorySlug", bitbucketRepository.slug());
+        parameters.add("repository.stash.projectKey", bitbucketRepository.project().key());
         parameters.add("repository.stash.repositoryUrl", bitbucketRepository.getCloneSshUrl());
         parameters.add("repository.stash.server", applicationLink.getId());
 

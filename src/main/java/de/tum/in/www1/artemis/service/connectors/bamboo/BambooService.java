@@ -290,6 +290,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParams(parameters);
         // TODO: in order to do error handling, we have to read the return value of this REST call
         var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.POST, null, String.class);
+        log.debug("Response when deleting the build plan {}", response);
     }
 
     /**
@@ -568,7 +569,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
      * @return true if build is the first build.
      */
     private boolean isFirstBuildForThisPlan(BambooBuildResultNotificationDTO buildResult) {
-        final var reason = buildResult.getBuild().getReason();
+        final var reason = buildResult.getBuild().reason();
         return reason != null && reason.contains("First build for this plan");
     }
 
@@ -577,27 +578,27 @@ public class BambooService extends AbstractContinuousIntegrationService {
     // AbstractBuildResultNotificationDTO. An alternative would be to first convert the two different build results (Jenkins/Bamboo) into an intermediate common representation and
     // then apply the logic
     protected void addFeedbackToResult(Result result, AbstractBuildResultNotificationDTO buildResult) {
-        final var jobs = ((BambooBuildResultNotificationDTO) buildResult).getBuild().getJobs();
+        final var jobs = ((BambooBuildResultNotificationDTO) buildResult).getBuild().jobs();
         final var programmingExercise = (ProgrammingExercise) result.getParticipation().getExercise();
         final var programmingLanguage = programmingExercise.getProgrammingLanguage();
         final var projectType = programmingExercise.getProjectType();
 
         for (final var job : jobs) {
             // 1) add feedback for failed test cases
-            for (final var failedTest : job.getFailedTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.getName(), failedTest.getErrors(), false, programmingLanguage, projectType));
+            for (final var failedTest : job.failedTests()) {
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(failedTest.name(), failedTest.errors(), false, programmingLanguage, projectType));
             }
-            result.setTestCaseCount(result.getTestCaseCount() + job.getFailedTests().size());
+            result.setTestCaseCount(result.getTestCaseCount() + job.failedTests().size());
 
             // 2) add feedback for passed test cases
-            for (final var successfulTest : job.getSuccessfulTests()) {
-                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.getName(), successfulTest.getErrors(), true, programmingLanguage, projectType));
+            for (final var successfulTest : job.successfulTests()) {
+                result.addFeedback(feedbackRepository.createFeedbackFromTestCase(successfulTest.name(), successfulTest.errors(), true, programmingLanguage, projectType));
             }
-            result.setTestCaseCount(result.getTestCaseCount() + job.getSuccessfulTests().size());
-            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.getSuccessfulTests().size());
+            result.setTestCaseCount(result.getTestCaseCount() + job.successfulTests().size());
+            result.setPassedTestCaseCount(result.getPassedTestCaseCount() + job.successfulTests().size());
 
             // 3) process static code analysis feedback
-            final var staticCodeAnalysisReports = job.getStaticCodeAnalysisReports();
+            final var staticCodeAnalysisReports = job.staticCodeAnalysisReports();
             if (Boolean.TRUE.equals(programmingExercise.isStaticCodeAnalysisEnabled()) && staticCodeAnalysisReports != null && !staticCodeAnalysisReports.isEmpty()) {
                 var scaFeedbackList = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(staticCodeAnalysisReports);
                 result.addFeedbacks(scaFeedbackList);
@@ -606,7 +607,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
             // 4) process testwise coverage analysis report
             if (Boolean.TRUE.equals(programmingExercise.isTestwiseCoverageEnabled())) {
-                var report = job.getTestwiseCoverageReports();
+                var report = job.testwiseCoverageReport();
                 if (report != null) {
                     // since the test cases are not saved to the database yet, the test case is null for the entries
                     var coverageFileReportsWithoutTestsByTestCaseName = testwiseCoverageService.createTestwiseCoverageFileReportsWithoutTestsByTestCaseName(report);

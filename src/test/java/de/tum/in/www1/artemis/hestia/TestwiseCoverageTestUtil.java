@@ -50,7 +50,7 @@ public class TestwiseCoverageTestUtil {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithCoverage() {
         var successfulTestNames = List.of("test1()", "test2()");
-        var bambooNotification = ModelFactory.generateBambooBuildResult("SOLUTION", successfulTestNames, Collections.emptyList());
+        var bambooNotification = ModelFactory.generateBambooBuildResult("SOLUTION", successfulTestNames, Collections.emptyList(), null, null, new ArrayList<>());
 
         // generate the coverage dto
         var linesByFileName1 = Map.ofEntries(Map.entry("BubbleSort.java", "15-17,23"));
@@ -62,7 +62,7 @@ public class TestwiseCoverageTestUtil {
         var pathDTOs2 = generatePathDTOs(Map.ofEntries(Map.entry("de/tum/in/ase", fileDTOs2)));
         var testReportDTO2 = generateTestReport("de/tum/in/ase/SortingExampleBehaviorTest/test2()", "", 0.022, pathDTOs2);
 
-        bambooNotification.getBuild().getJobs().stream().findFirst().get().setTestwiseCoverageReports(List.of(testReportDTO1, testReportDTO2));
+        bambooNotification.getBuild().jobs().get(0).testwiseCoverageReport().addAll(List.of(testReportDTO1, testReportDTO2));
         return bambooNotification;
     }
 
