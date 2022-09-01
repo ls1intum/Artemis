@@ -28,13 +28,4 @@ export const gradingSystemState: Routes = [
         },
         canActivate: [UserRouteAccessService],
     },
-    // {
-    //     path: 'bonus',
-    //     component: BonusComponent,
-    //     data: {
-    //         authorities: [Authority.INSTRUCTOR, Authority.ADMIN],
-    //         pageTitle: 'artemisApp.gradingSystem.TODO: Ata',
-    //     },
-    //     canActivate: [UserRouteAccessService],
-    // },
 ];
