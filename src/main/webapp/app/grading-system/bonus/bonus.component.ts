@@ -233,7 +233,7 @@ export class BonusComponent implements OnInit {
                     this.isLoading = false;
                 }),
             )
-            .subscribe();
+            .subscribe((bonusResponse) => (this.bonus.id = bonusResponse.body?.id));
     }
 
     delete() {

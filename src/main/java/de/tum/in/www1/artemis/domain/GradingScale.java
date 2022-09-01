@@ -97,13 +97,13 @@ public class GradingScale extends DomainObject {
         return bonusFrom;
     }
 
+    public void setBonusFrom(Set<Bonus> bonusFrom) {
+        this.bonusFrom = bonusFrom;
+    }
+
     public void addBonusFrom(Bonus bonusFrom) {
         this.bonusFrom.add(bonusFrom);
         bonusFrom.setBonusToGradingScale(this);
-    }
-
-    public void addBonus(Bonus bonus) {
-        this.bonusFrom.add(bonus);
     }
 
     /**
