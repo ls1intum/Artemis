@@ -23,12 +23,16 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 // Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
 public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotificationDTO {
 
+    @JsonProperty("secret")
     private final String secret;
 
+    @JsonProperty("notificationType")
     private final String notificationType;
 
+    @JsonProperty("plan")
     private final BambooBuildPlanDTO plan;
 
+    @JsonProperty("build")
     private final BambooBuildDTO build;
 
     public BambooBuildResultNotificationDTO(String secret, String notificationType, BambooBuildPlanDTO plan, BambooBuildDTO build) {

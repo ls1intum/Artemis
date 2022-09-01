@@ -49,17 +49,17 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void shouldUpdateFeedbackInSemiAutomaticResult() throws Exception {
-        var notification = ModelFactory.generateBambooBuildResult("assignment", List.of("test1"), List.of(), null, null, new ArrayList<>());
         var loginName = "student1";
         var planKey = (programmingExerciseResultTestService.getProgrammingExercise().getProjectKey() + "-" + loginName).toUpperCase();
-        notification.getPlan().setKey(planKey);
+        var notification = ModelFactory.generateBambooBuildResult("assignment", planKey, null, null, List.of("test1"), List.of(), new ArrayList<>());
         programmingExerciseResultTestService.shouldUpdateFeedbackInSemiAutomaticResult(notification, loginName);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult() throws JsonProcessingException {
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), null, null, new ArrayList<>());
+        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of(),
+                new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResult(notification, false);
@@ -68,7 +68,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldUpdateTestCasesAndResultScoreFromSolutionParticipationResultWithFailedTest() throws JsonProcessingException {
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of("test3"), null, null,
+        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of("test3"),
                 new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
@@ -103,7 +103,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldStoreBuildLogsForSubmission() throws JsonProcessingException {
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null, new ArrayList<>());
+        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null, new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldStoreBuildLogsForSubmission(resultNotification);
@@ -112,7 +112,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldSaveBuildLogsForSuccessfulBuildInBuildLogRepository() throws JsonProcessingException {
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null, new ArrayList<>());
+        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(), null, new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldSaveBuildLogsInBuildLogRepository(resultNotification);
@@ -121,7 +121,7 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldSaveBuildLogsForFailedBuildInBuildLogRepository() throws JsonProcessingException {
-        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"), null, new ArrayList<>());
+        var resultNotification = ModelFactory.generateBambooBuildResultWithLogs(null, Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of("test2"), null, new ArrayList<>());
         bitbucketRequestMockProvider.mockGetPushDate(programmingExerciseResultTestService.getProgrammingExercise().getProjectKey(), TestConstants.COMMIT_HASH_STRING,
                 ZonedDateTime.now());
         programmingExerciseResultTestService.shouldSaveBuildLogsInBuildLogRepository(resultNotification);
@@ -130,7 +130,8 @@ class ProgrammingExerciseResultBambooIntegrationTest extends AbstractSpringInteg
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void shouldGenerateNewManualResultIfManualAssessmentExists() {
-        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, List.of("test1", "test2", "test4"), List.of(), null, null, new ArrayList<>());
+        var notification = ModelFactory.generateBambooBuildResult(Constants.ASSIGNMENT_REPO_NAME, null, null, null, List.of("test1", "test2", "test4"), List.of(),
+                new ArrayList<>());
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
 

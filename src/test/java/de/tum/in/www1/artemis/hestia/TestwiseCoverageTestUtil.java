@@ -50,7 +50,7 @@ public class TestwiseCoverageTestUtil {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithCoverage() {
         var successfulTestNames = List.of("test1()", "test2()");
-        var bambooNotification = ModelFactory.generateBambooBuildResult("SOLUTION", successfulTestNames, Collections.emptyList(), null, null, new ArrayList<>());
+        var bambooNotification = ModelFactory.generateBambooBuildResult("SOLUTION", null, null, null, successfulTestNames, Collections.emptyList(), new ArrayList<>());
 
         // generate the coverage dto
         var linesByFileName1 = Map.ofEntries(Map.entry("BubbleSort.java", "15-17,23"));

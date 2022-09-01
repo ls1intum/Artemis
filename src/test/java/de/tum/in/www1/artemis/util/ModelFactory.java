@@ -1082,8 +1082,8 @@ public class ModelFactory {
         return notification;
     }
 
-    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
-            String testSummaryDescription, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
+    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
+            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
 
         final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO(42, 0, failedTestNames.size(), failedTestNames.size(), 0, successfulTestNames.size(),
                 testSummaryDescription, 0, 0, successfulTestNames.size() + failedTestNames.size(), failedTestNames.size());
@@ -1092,7 +1092,7 @@ public class ModelFactory {
         final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
         final var job = new BambooBuildResultNotificationDTO.BambooJobDTO(42, failedTests, successfulTests, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
         final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, defaultBranch, new ArrayList<>());
-        final var plan = new BambooBuildPlanDTO("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
+        final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
                 failedTestNames.isEmpty(), summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
@@ -1103,6 +1103,7 @@ public class ModelFactory {
     /**
      * Generate a Bamboo notification with build logs of various sizes
      *
+     * @param buildPlanKey        the key of the build plan
      * @param repoName            repository name
      * @param successfulTestNames names of successful tests
      * @param failedTestNames     names of failed tests
@@ -1110,9 +1111,9 @@ public class ModelFactory {
      * @param vcsDtos             the vcs objects containing commit information
      * @return notification with build logs
      */
-    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String repoName, List<String> successfulTestNames, List<String> failedTestNames,
-            ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames, "No tests found", buildCompletionDate, vcsDtos);
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
+        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos);
 
         String logWith254Chars = "a".repeat(254);
 
@@ -1140,7 +1141,7 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
-        var notification = generateBambooBuildResult(repoName, successfulTestNames, failedTestNames, null, null, new ArrayList<>());
+        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>());
         var reports = generateStaticCodeAnalysisReports(programmingLanguage);
         notification.getBuild().jobs().get(0).staticCodeAnalysisReports().addAll(reports);
         return notification;

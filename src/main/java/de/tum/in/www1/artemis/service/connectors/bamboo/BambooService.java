@@ -234,8 +234,8 @@ public class BambooService extends AbstractContinuousIntegrationService {
             UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(requestUrl).queryParam("expand", "plans").queryParam("max-results", 5000);
             var response = restTemplate.exchange(builder.build().toUri(), HttpMethod.GET, null, BambooProjectDTO.class);
 
-            if (response.getBody() != null && response.getBody().getPlans() != null) {
-                return response.getBody().getPlans().getPlan();
+            if (response.getBody() != null && response.getBody().plans() != null) {
+                return response.getBody().plans().plan();
             }
         }
         catch (HttpClientErrorException ex) {
@@ -269,7 +269,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
         final var buildPlans = getBuildPlans(projectKey);
         for (var buildPlan : buildPlans) {
             try {
-                deleteBuildPlan(projectKey, buildPlan.getKey());
+                deleteBuildPlan(projectKey, buildPlan.key());
             }
             catch (Exception ex) {
                 log.error(ex.getMessage());
@@ -311,10 +311,10 @@ public class BambooService extends AbstractContinuousIntegrationService {
         if (buildPlan == null) {
             return BuildStatus.INACTIVE;
         }
-        if (buildPlan.getIsActive() && !buildPlan.getIsBuilding()) {
+        if (buildPlan.isActive() && !buildPlan.isBuilding()) {
             return BuildStatus.QUEUED;
         }
-        else if (buildPlan.getIsActive() && buildPlan.getIsBuilding()) {
+        else if (buildPlan.isActive() && buildPlan.isBuilding()) {
             return BuildStatus.BUILDING;
         }
         else {
@@ -520,7 +520,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public String getPlanKey(Object requestBody) throws BambooException {
         try {
             final var buildResult = mapper.convertValue(requestBody, BambooBuildResultNotificationDTO.class);
-            return buildResult.getPlan().getKey();
+            return buildResult.getPlan().key();
         }
         catch (Exception e) {
             // TODO: Not sure when this is triggered, the method would return null if the planMap does not have a 'key'.

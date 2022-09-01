@@ -508,8 +508,7 @@ public class BambooRequestMockProvider {
 
     public void mockDeleteBambooBuildProject(String projectKey) throws URISyntaxException, JsonProcessingException {
 
-        var projectResponse = new BambooProjectDTO(projectKey, projectKey, projectKey);
-        projectResponse.setPlans(new BambooProjectDTO.BambooBuildPlansDTO(List.of()));
+        var projectResponse = new BambooProjectDTO(projectKey, projectKey, projectKey, new BambooProjectDTO.BambooBuildPlansDTO(List.of()));
 
         // 1) get all plans
         var uri = UriComponentsBuilder.fromUri(bambooServerUrl.toURI()).path("/rest/api/latest/project/" + projectKey).queryParam("expand", "plans").queryParam("max-results", 5000)

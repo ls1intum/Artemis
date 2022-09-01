@@ -584,15 +584,16 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
         var firstVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(firstCommit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(firstCommit));
-        var notificationDTOFirstCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of(), firstBuildCompleteDate, List.of(firstVcsDTO));
-        postResult(testService.participation.getBuildPlanId(), notificationDTOFirstCommit, HttpStatus.OK, false);
+        var notificationFirstCommit = ModelFactory.generateBambooBuildResultWithLogs(testService.participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(),
+                List.of(), firstBuildCompleteDate, List.of(firstVcsDTO));
+        postResult(notificationFirstCommit, HttpStatus.OK, false);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
         var secondVcsDTO = new BambooBuildResultNotificationDTO.BambooVCSDTO(secondCommit.id(), ASSIGNMENT_REPO_NAME, defaultBranch, List.of(firstCommit, secondCommit));
-        var notificationDTOSecondCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of(), secondBuildCompleteDate,
-                List.of(secondVcsDTO));
-        postResult(testService.participation.getBuildPlanId(), notificationDTOSecondCommit, HttpStatus.OK, false);
+        var notificationSecondCommit = ModelFactory.generateBambooBuildResultWithLogs(testService.participation.getBuildPlanId().toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(),
+                List.of(), secondBuildCompleteDate, List.of(secondVcsDTO));
+        postResult(notificationSecondCommit, HttpStatus.OK, false);
 
         testService.shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived(firstCommitHash, firstCommitDate, secondCommitHash, secondCommitDate);
     }
@@ -848,34 +849,36 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     }
 
     private void postResultWithBuildLogs(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        var bambooBuildResult = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of(), null, new ArrayList<>());
-        postResult(participationId, bambooBuildResult, expectedStatus, additionalCommit);
+        var bambooBuildResultNotification = ModelFactory.generateBambooBuildResultWithLogs(participationId.toUpperCase(), ASSIGNMENT_REPO_NAME, List.of(), List.of(), null,
+                new ArrayList<>());
+        postResult(bambooBuildResultNotification, expectedStatus, additionalCommit);
     }
 
     private void postResult(String participationId, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        final var requestBodyMap = createBambooBuildResultNotificationDTO();
-        postResult(participationId, requestBodyMap, expectedStatus, additionalCommit);
+        final var bambooBuildResultNotification = createBambooBuildResultNotificationDTO(participationId.toUpperCase());
+        postResult(bambooBuildResultNotification, expectedStatus, additionalCommit);
     }
 
-    private void postResult(String participationId, BambooBuildResultNotificationDTO requestBodyMap, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
-        requestBodyMap.getPlan().setKey(participationId.toUpperCase());
+    private void postResult(BambooBuildResultNotificationDTO buildResultNotification, HttpStatus expectedStatus, boolean additionalCommit) throws Exception {
         if (additionalCommit) {
             var newCommit = new BambooBuildResultNotificationDTO.BambooCommitDTO("Some commit that occurred before", "90b6af5650c30d35a0836fd58c677f8980e1df27");
-            requestBodyMap.getBuild().vcs().get(0).commits().add(newCommit);
+            buildResultNotification.getBuild().vcs().get(0).commits().add(newCommit);
         }
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
-        final var alteredObj = mapper.convertValue(requestBodyMap, Object.class);
+        final var alteredObj = mapper.convertValue(buildResultNotification, Object.class);
 
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.add("Authorization", ARTEMIS_AUTHENTICATION_TOKEN_VALUE);
         request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, expectedStatus, httpHeaders);
     }
 
-    private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO() throws Exception {
+    private BambooBuildResultNotificationDTO createBambooBuildResultNotificationDTO(String buildPlanKey) throws Exception {
         JSONParser jsonParser = new JSONParser();
-        Object obj = jsonParser.parse(BAMBOO_BUILD_RESULT_REQUEST);
+        // replace plan.key in BAMBOO_BUILD_RESULT_REQUEST with buildPlanKey
+        var buildResult = BAMBOO_BUILD_RESULT_REQUEST.replace("TEST201904BPROGRAMMINGEXERCISE6-STUDENT1", buildPlanKey);
+        Object obj = jsonParser.parse(buildResult);
 
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());

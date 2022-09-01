@@ -394,7 +394,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student1";
-        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, List.of("test1"), List.of("test2", "test3"), null, null, new ArrayList<>());
+        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1"), List.of("test2", "test3"), new ArrayList<>());
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }
@@ -423,7 +423,7 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
         }
         ProgrammingExerciseStudentParticipation participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         String repositoryName = programmingExercise.getProjectKey().toLowerCase() + "-student1";
-        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, List.of("test1", "test2", "test3"), List.of(), null, null, new ArrayList<>());
+        var resultNotification = ModelFactory.generateBambooBuildResult(repositoryName, null, null, null, List.of("test1", "test2", "test3"), List.of(), new ArrayList<>());
         if (type == EnforcePolicyTestType.POLICY_ACTIVE) {
             mockBitbucketRequests(participation);
         }

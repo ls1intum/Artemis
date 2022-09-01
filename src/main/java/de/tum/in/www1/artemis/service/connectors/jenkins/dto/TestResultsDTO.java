@@ -24,30 +24,41 @@ import de.tum.in.www1.artemis.service.dto.StaticCodeAnalysisReportDTO;
 // Note: due to limitations with inheritance, we cannot declare this as record, but we can use it in a similar way with final fields
 public class TestResultsDTO extends AbstractBuildResultNotificationDTO {
 
+    @JsonProperty("successful")
     private final int successful;
 
+    @JsonProperty("skipped")
     private final int skipped;
 
+    @JsonProperty("errors")
     private final int errors;
 
+    @JsonProperty("failures")
     private final int failures;
 
+    @JsonProperty("fullName")
     private final String fullName;
 
+    @JsonProperty("commits")
     private final List<CommitDTO> commits;
 
+    @JsonProperty("results")
     private final List<TestSuiteDTO> results;
 
+    @JsonProperty("staticCodeAnalysisReports")
     private final List<StaticCodeAnalysisReportDTO> staticCodeAnalysisReports;
 
     // For an unknown reason, the deserialization only works with this annotation
     @JsonProperty("testwiseCoverageReport")
     private final List<TestwiseCoverageReportDTO> testwiseCoverageReport;
 
+    @JsonProperty("runDate")
     private final ZonedDateTime runDate;
 
+    @JsonProperty("isBuildSuccessful")
     private final boolean isBuildSuccessful;
 
+    @JsonProperty("logs")
     private final List<String> logs;
 
     public TestResultsDTO(int successful, int skipped, int errors, int failures, String fullName, List<CommitDTO> commits, List<TestSuiteDTO> results,
