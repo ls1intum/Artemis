@@ -9,6 +9,8 @@ public class CommitDTO {
 
     private String repositorySlug;
 
+    private String branchName;
+
     public String getHash() {
         return hash;
     }
@@ -23,5 +25,13 @@ public class CommitDTO {
 
     public void setRepositorySlug(String repositorySlug) {
         this.repositorySlug = repositorySlug;
+    }
+
+    public String getBranchName() {
+        return branchName;
+    }
+
+    public void setBranchName(String branchName) {
+        this.branchName = branchName;
     }
 }

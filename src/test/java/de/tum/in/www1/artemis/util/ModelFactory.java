@@ -44,6 +44,8 @@ public class ModelFactory {
 
     public static final String USER_PASSWORD = "00000000";
 
+    public static final String defaultBranch = "main";
+
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
         lecture.setStartDate(startDate);
@@ -1034,6 +1036,7 @@ public class ModelFactory {
         var commitDTO = new CommitDTO();
         commitDTO.setHash(TestConstants.COMMIT_HASH_STRING);
         commitDTO.setRepositorySlug(repoName);
+        commitDTO.setBranchName(defaultBranch);
 
         if (enableStaticAnalysisReports) {
             var reports = generateStaticCodeAnalysisReports(programmingLanguage);
@@ -1139,6 +1142,7 @@ public class ModelFactory {
 
         vcs.setRepositoryName(repoName);
         vcs.setId(TestConstants.COMMIT_HASH_STRING);
+        vcs.setBranchName(defaultBranch);
 
         job.setId(42);
         job.setFailedTests(failedTests);

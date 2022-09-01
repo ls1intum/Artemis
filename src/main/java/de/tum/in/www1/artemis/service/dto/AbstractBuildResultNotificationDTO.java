@@ -19,6 +19,8 @@ public abstract class AbstractBuildResultNotificationDTO {
 
     public abstract Optional<String> getCommitHashFromTestsRepo();
 
+    public abstract Optional<String> getBranchNameFromAssignmentRepo();
+
     public abstract boolean isBuildSuccessful();
 
     public abstract Double getBuildScore();

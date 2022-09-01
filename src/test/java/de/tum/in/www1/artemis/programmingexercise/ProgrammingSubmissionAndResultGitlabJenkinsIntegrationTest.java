@@ -186,6 +186,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var firstVcsDTO = new CommitDTO();
         firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
         firstVcsDTO.setHash(firstCommitHash);
+        firstVcsDTO.setBranchName(defaultBranch);
         var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
         notificationDTOFirstCommit.setRunDate(firstBuildCompleteDate);
         notificationDTOFirstCommit.setCommits(List.of(firstVcsDTO));
@@ -197,6 +198,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var secondVcsDTO = new CommitDTO();
         secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
         secondVcsDTO.setHash(secondCommitHash);
+        secondVcsDTO.setBranchName(defaultBranch);
         var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
         notificationDTOSecondCommit.setRunDate(secondBuildCompleteDate);
         notificationDTOSecondCommit.setCommits(List.of(secondVcsDTO));

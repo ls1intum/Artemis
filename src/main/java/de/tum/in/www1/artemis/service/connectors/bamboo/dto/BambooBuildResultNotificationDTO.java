@@ -78,6 +78,12 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
     }
 
     @Override
+    public Optional<String> getBranchNameFromAssignmentRepo() {
+        var repo = getBuild().getVcs().stream().filter(vcs -> vcs.getRepositoryName().equalsIgnoreCase(ASSIGNMENT_REPO_NAME)).findFirst();
+        return repo.map(BambooVCSDTO::getBranchName);
+    }
+
+    @Override
     public boolean isBuildSuccessful() {
         return getBuild().isSuccessful();
     }
@@ -336,6 +342,8 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         private String repositoryName;
 
+        private String branchName;
+
         private List<BambooCommitDTO> commits = new ArrayList<>();
 
         public String getId() {
@@ -352,6 +360,14 @@ public class BambooBuildResultNotificationDTO extends AbstractBuildResultNotific
 
         public void setRepositoryName(String repositoryName) {
             this.repositoryName = repositoryName;
+        }
+
+        public String getBranchName() {
+            return branchName;
+        }
+
+        public void setBranchName(String branchName) {
+            this.branchName = branchName;
         }
 
         public List<BambooCommitDTO> getCommits() {

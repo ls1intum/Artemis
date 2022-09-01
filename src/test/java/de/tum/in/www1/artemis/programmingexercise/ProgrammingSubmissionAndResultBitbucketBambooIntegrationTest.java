@@ -592,6 +592,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         firstVcsDTO.setId(firstCommit.getId());
         firstVcsDTO.setRepositoryName(ASSIGNMENT_REPO_NAME);
         firstVcsDTO.setCommits(List.of(firstCommit));
+        firstVcsDTO.setBranchName(defaultBranch);
         var notificationDTOFirstCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
         notificationDTOFirstCommit.getBuild().setBuildCompletedDate(firstBuildCompleteDate);
         notificationDTOFirstCommit.getBuild().setVcs(List.of(firstVcsDTO));
@@ -604,6 +605,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         secondVcsDTO.setId(secondCommit.getId());
         secondVcsDTO.setRepositoryName(ASSIGNMENT_REPO_NAME);
         secondVcsDTO.setCommits(List.of(firstCommit, secondCommit));
+        secondVcsDTO.setBranchName(defaultBranch);
         var notificationDTOSecondCommit = ModelFactory.generateBambooBuildResultWithLogs(ASSIGNMENT_REPO_NAME, List.of(), List.of());
         notificationDTOSecondCommit.getBuild().setBuildCompletedDate(secondBuildCompleteDate);
         notificationDTOSecondCommit.getBuild().setVcs(List.of(secondVcsDTO));
