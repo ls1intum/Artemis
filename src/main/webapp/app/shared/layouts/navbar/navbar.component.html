@@ -76,7 +76,10 @@
         <a class="navbar-brand" routerLink="/" (click)="collapseNavbar()">
             <img [src]="SERVER_API_URL + 'public/images/logo.png'" />
             <div jhiTranslate="global.title" class="navbar-title">Artemis</div>
-            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitCommitId">{{ version }}</div>
+            <div class="navbar-version" placement="bottom" [ngbTooltip]="gitCommitId" [disableTooltip]="inProduction">
+                {{ version }}
+                <span class="d-none d-md-block" *ngIf="!inProduction">{{ gitBranchName }}</span>
+            </div>
         </a>
         <div class="indicators">
             <jhi-connection-warning class="align-self-center"></jhi-connection-warning>

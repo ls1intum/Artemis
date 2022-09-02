@@ -67,6 +67,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
     isNavbarCollapsed: boolean;
     isTourAvailable: boolean;
     gitCommitId: string;
+    gitBranchName: string;
     languages = LANGUAGES;
     openApiEnabled?: boolean;
     modalRef: NgbModalRef;
@@ -180,6 +181,7 @@ export class NavbarComponent implements OnInit, OnDestroy {
                 this.inProduction = profileInfo.inProduction;
                 this.openApiEnabled = profileInfo.openApiEnabled;
                 this.gitCommitId = `Git commit ID: ${profileInfo.git.commit.id.abbrev}`;
+                this.gitBranchName = `Branch: ${profileInfo.git.branch}`;
             }
         });
 

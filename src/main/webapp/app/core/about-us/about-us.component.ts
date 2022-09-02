@@ -21,6 +21,8 @@ export class AboutUsComponent implements OnInit {
 
     email: string;
     data: AboutUsModel;
+    gitCommitId: string;
+    gitBranchName: string;
 
     // Array of tuple containing translation keys and translation values
     readonly sections: [string, { [key: string]: string }][] = [
@@ -71,7 +73,12 @@ export class AboutUsComponent implements OnInit {
                     this.contact = info.contact;
                 }),
             )
-            .subscribe();
+            .subscribe((profileInfo) => {
+                if (profileInfo) {
+                    this.gitCommitId = profileInfo.git.commit.id.abbrev;
+                    this.gitBranchName = profileInfo.git.branch;
+                }
+            });
     }
 
     /**
