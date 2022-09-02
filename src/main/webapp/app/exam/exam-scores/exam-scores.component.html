@@ -401,7 +401,7 @@
                             <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
-                        <th jhiSortBy="eMail">
+                        <th jhiSortBy="email">
                             <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
@@ -438,7 +438,7 @@
                         <td>{{ i + 1 }}</td>
                         <td>{{ studentResult.name }}</td>
                         <td>{{ studentResult.login }}</td>
-                        <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
+                        <td>{{ studentResult.email ? studentResult.email : '-' }}</td>
                         <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                             <td *ngIf="studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">
