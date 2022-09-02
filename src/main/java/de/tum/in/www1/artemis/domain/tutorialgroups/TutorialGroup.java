@@ -5,7 +5,6 @@ import java.util.Set;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 
@@ -31,8 +30,8 @@ public class TutorialGroup extends DomainObject {
     private Course course;
 
     @Column(name = "title")
-    @Size(max = 256)
-    @NotBlank()
+    @Size(min = 1, max = 256)
+    @NotNull
     private String title;
 
     @Column(name = "additional_information")
