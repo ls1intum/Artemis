@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.service;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
@@ -9,11 +10,10 @@ import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupReg
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
-import de.tum.in.www1.artemis.service.user.UserService;
 
 @Service
 public class TutorialGroupService {
@@ -24,14 +24,14 @@ public class TutorialGroupService {
 
     private final CourseRepository courseRepository;
 
-    private final UserService userService;
+    private final UserRepository userRepository;
 
     public TutorialGroupService(TutorialGroupRepository tutorialGroupRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            CourseRepository courseRepository, UserService userService) {
+            CourseRepository courseRepository, UserRepository userRepository) {
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
         this.courseRepository = courseRepository;
-        this.userService = userService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -65,6 +65,15 @@ public class TutorialGroupService {
         tutorialGroupRegistrationRepository.save(newRegistration);
     }
 
+    private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup) {
+        Set<User> registeredStudents = tutorialGroupRegistrationRepository.findAllByTutorialGroup(tutorialGroup).stream().map(TutorialGroupRegistration::getStudent)
+                .collect(Collectors.toSet());
+        Set<User> studentsToRegister = students.stream().filter(student -> !registeredStudents.contains(student)).collect(Collectors.toSet());
+        Set<TutorialGroupRegistration> newRegistrations = studentsToRegister.stream()
+                .map(student -> new TutorialGroupRegistration(student, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).collect(Collectors.toSet());
+        tutorialGroupRegistrationRepository.saveAll(newRegistrations);
+    }
+
     /**
      * Register multiple students to a tutorial group.
      *
@@ -73,23 +82,46 @@ public class TutorialGroupService {
      * @param studentDTOs     The students to register.
      * @return The students that could not be found and thus not registered.
      */
-    public List<StudentDTO> registerMultipleStudents(Long courseId, Long tutorialGroupId, List<StudentDTO> studentDTOs) {
+    public Set<StudentDTO> registerMultipleStudents(Long courseId, Long tutorialGroupId, Set<StudentDTO> studentDTOs) {
         var course = this.courseRepository.findByIdElseThrow(courseId);
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
 
-        List<StudentDTO> notFoundStudentsDTOs = new ArrayList<>();
+        Set<User> foundStudents = new HashSet();
+        Set<StudentDTO> notFoundStudentsDTOs = new HashSet<>();
         for (var studentDto : studentDTOs) {
-            var registrationNumber = studentDto.getRegistrationNumber();
-            var login = studentDto.getLogin();
-            Optional<User> optionalStudent = userService.findUserAndAddToCourse(registrationNumber, course.getStudentGroupName(), Role.STUDENT, login);
-            if (optionalStudent.isEmpty()) {
+            var studentOptional = findStudent(studentDto, course.getStudentGroupName());
+            if (studentOptional.isEmpty()) {
                 notFoundStudentsDTOs.add(studentDto);
             }
             else {
-                registerStudent(optionalStudent.get(), tutorialGroup);
+                foundStudents.add(studentOptional.get());
             }
         }
+        registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup);
         return notFoundStudentsDTOs;
+    }
+
+    private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
+        var registrationNumber = studentDto.getRegistrationNumber();
+        var login = studentDto.getLogin();
+
+        // try to find the user by login
+        var studentByRegistrationNumber = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+        if (studentByRegistrationNumber.isPresent()) {
+            var student = studentByRegistrationNumber.get();
+            if (student.getGroups().contains(studentCourseGroupName)) {
+                return studentByRegistrationNumber;
+            }
+        }
+        // try to find the student by login
+        var studentByLogin = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
+        if (studentByLogin.isPresent()) {
+            var student = studentByLogin.get();
+            if (student.getGroups().contains(studentCourseGroupName)) {
+                return studentByLogin;
+            }
+        }
+        return Optional.empty();
     }
 
 }

@@ -5,6 +5,7 @@ import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
@@ -260,13 +261,13 @@ public class TutorialGroupResource {
     @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/register-multiple")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<List<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody List<StudentDTO> studentDtos) {
+    public ResponseEntity<Set<StudentDTO>> registerMultipleStudentsToTutorialGroup(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody Set<StudentDTO> studentDtos) {
         log.debug("REST request to register {} to tutorial group {} of course {}", studentDtos, tutorialGroupId, courseId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
-        List<StudentDTO> notFoundStudentsDtos = tutorialGroupService.registerMultipleStudents(courseId, tutorialGroupId, studentDtos);
+        Set<StudentDTO> notFoundStudentsDtos = tutorialGroupService.registerMultipleStudents(courseId, tutorialGroupId, studentDtos);
         return ResponseEntity.ok().body(notFoundStudentsDtos);
     }
 
