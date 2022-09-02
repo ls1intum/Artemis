@@ -9,28 +9,19 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 
 @Service
 public class TutorialGroupService {
 
-    private final TutorialGroupRepository tutorialGroupRepository;
-
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
-
-    private final CourseRepository courseRepository;
 
     private final UserRepository userRepository;
 
-    public TutorialGroupService(TutorialGroupRepository tutorialGroupRepository, TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository,
-            CourseRepository courseRepository, UserRepository userRepository) {
-        this.tutorialGroupRepository = tutorialGroupRepository;
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, UserRepository userRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
-        this.courseRepository = courseRepository;
         this.userRepository = userRepository;
     }
 

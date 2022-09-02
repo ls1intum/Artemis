@@ -12,7 +12,6 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -35,9 +34,6 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RestController
 @RequestMapping("/api")
 public class TutorialGroupResource {
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private static final String ENTITY_NAME = "tutorialGroup";
 

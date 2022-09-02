@@ -730,7 +730,7 @@ public class CourseResource {
      * @param loginOrName the login or name by which to search users
      * @return the ResponseEntity with status 200 (OK) and with body all users
      */
-    @GetMapping(value = "/courses/{courseId}/students/search")
+    @GetMapping("/courses/{courseId}/students/search")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<List<UserDTO>> searchStudentsInCourse(@PathVariable Long courseId, @RequestParam("loginOrName") String loginOrName) {
         log.debug("REST request to search for students in course : {} with login or name : {}", courseId, loginOrName);
