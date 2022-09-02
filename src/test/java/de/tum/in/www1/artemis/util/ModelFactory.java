@@ -1363,7 +1363,16 @@ public class ModelFactory {
         return organization;
     }
 
-    public static Bonus generateBonusSource(BonusStrategy bonusStrategy, Double weight, GradingScale sourceGradingScale, GradingScale bonusToGradingScale) {
+    /**
+     * Generates a Bonus instance with given arguments.
+     *
+     * @param bonusStrategy       of bonus
+     * @param weight              of bonus
+     * @param sourceGradingScale  of bonus
+     * @param bonusToGradingScale of bonus
+     * @return a new Bonus instance associated with bonusToGradingScale and bonusToGradingScale.
+     */
+    public static Bonus generateBonus(BonusStrategy bonusStrategy, Double weight, GradingScale sourceGradingScale, GradingScale bonusToGradingScale) {
         Bonus bonus = new Bonus();
         bonus.setBonusStrategy(bonusStrategy);
         bonus.setWeight(weight);

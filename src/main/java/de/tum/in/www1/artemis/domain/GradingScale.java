@@ -123,6 +123,8 @@ public class GradingScale extends DomainObject {
 
     /**
      * Gets the course of the grading scale either via the exam or directly.
+     *
+     * @return a Course related to this grading scale
      */
     @JsonIgnore
     public Course getCourseViaExamOrDirectly() {

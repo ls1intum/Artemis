@@ -24,6 +24,7 @@ public class BonusService {
      * Saves a bonus source to the database if it is valid
      *
      * @param bonus the bonus source to be saved
+     * @param isSourceGradeScaleUpdated used to skip source grading scale validation if it is not updated
      * @return the saved bonus source
      */
     public Bonus saveBonus(Bonus bonus, boolean isSourceGradeScaleUpdated) {
@@ -36,6 +37,18 @@ public class BonusService {
         return bonusRepository.save(bonus);
     }
 
+    /**
+     * Applies bonus from sourceGradingScale to bonusToGradingScale so that the student's final grade in bonusToGradingScale is improved.
+     *
+     *
+     * @param bonusStrategy bonus strategy (together with the weight) determines the formula for bonus calculation
+     * @param bonusToGradingScale the grading scale that the bonus will be applied to (e.g. a final exam)
+     * @param achievedPointsOfBonusTo points received by the student from bonusTo exam before bonus calculations
+     * @param sourceGradingScale the grading scale that will determine how much bonus will be added (e.g. a course with exercises)
+     * @param achievedPointsOfSource points received by the student from source exam/course
+     * @param calculationSign weight of the bonus, currently can be either -1.0 or 1.0
+     * @return a record containing the final grade and points along
+     */
     public BonusExampleDTO calculateGradeWithBonus(IBonusStrategy bonusStrategy, GradingScale bonusToGradingScale, Double achievedPointsOfBonusTo, GradingScale sourceGradingScale,
             Double achievedPointsOfSource, double calculationSign) {
         GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);

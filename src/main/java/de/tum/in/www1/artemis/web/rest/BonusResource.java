@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.GradingScale;
 import de.tum.in.www1.artemis.repository.BonusRepository;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
@@ -47,18 +46,15 @@ public class BonusResource {
 
     private final CourseRepository courseRepository;
 
-    private final ExamRepository examRepository;
-
     private final GradingScaleRepository gradingScaleRepository;
 
     private final AuthorizationCheckService authCheckService;
 
-    public BonusResource(BonusService bonusService, BonusRepository bonusRepository, CourseRepository courseRepository, ExamRepository examRepository,
-            GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService) {
+    public BonusResource(BonusService bonusService, BonusRepository bonusRepository, CourseRepository courseRepository, GradingScaleRepository gradingScaleRepository,
+            AuthorizationCheckService authCheckService) {
         this.bonusService = bonusService;
         this.bonusRepository = bonusRepository;
         this.courseRepository = courseRepository;
-        this.examRepository = examRepository;
         this.gradingScaleRepository = gradingScaleRepository;
         this.authCheckService = authCheckService;
     }
@@ -141,31 +137,6 @@ public class BonusResource {
         BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, targetPoints, sourcePoints, targetGradingScale, sourceGradingScale);
         return ResponseEntity.ok(gradeWithBonus);
     }
-
-    // @GetMapping("bonus/{bonusId}/calculate-grade/{studentId}")
-    // @PreAuthorize("hasRole('USER')")
-    // public ResponseEntity<String> calculateGradeWithBonus(@PathVariable Long bonusId, @PathVariable Long studentId) {
-    // log.debug("REST request to get Bonus : {} for Student Id: {}", bonusId, studentId);
-    // Bonus bonus = bonusRepository.findById(bonusId).orElseThrow();
-    // var targetGradingScale = gradingScaleRepository.findByBonusFromId(bonusId).orElseThrow();
-    // var sourceGradingScale = bonus.getSource();
-    //
-    // String gradeWithBonus = calculateGradeWithBonus(bonus.getBonusStrategy(), bonus.getCalculationSign(), targetPoints, sourcePoints, targetGradingScale, sourceGradingScale);
-    //
-    // return ResponseEntity.ok(gradeWithBonus);
-    // }
-
-    // private void validateBonus(Optional<Bonus> existingBonus, Bonus bonus) {
-    // if (existingBonus.isPresent()) {
-    // throw new BadRequestAlertException("A bonus source already exists", ENTITY_NAME, "bonusAlreadyExists");
-    // }
-    // else if (bonus.getGradeSteps() == null || bonus.getGradeSteps().isEmpty()) {
-    // throw new BadRequestAlertException("A bonus source must contain grade steps", ENTITY_NAME, "emptyGradeSteps");
-    // }
-    // else if (bonus.getId() != null) {
-    // throw new BadRequestAlertException("A bonus source can't contain a predefined id", ENTITY_NAME, "bonusHasId");
-    // }
-    // }
 
     /**
      * POST /courses/{courseId}/exams/{examId}/bonus : Create bonus source for exam
@@ -263,12 +234,12 @@ public class BonusResource {
     }
 
     private void checkIsAtLeastInstructorForGradingScaleCourse(GradingScale gradingScale) {
-        Course sourceCourse = gradingScale.getExam() != null ? gradingScale.getExam().getCourse() : gradingScale.getCourse();
+        Course sourceCourse = gradingScale.getCourseViaExamOrDirectly();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sourceCourse, null);
     }
 
     private void checkIsAtLeastStudentForGradingScaleCourse(GradingScale gradingScale) {
-        Course sourceCourse = gradingScale.getExam() != null ? gradingScale.getExam().getCourse() : gradingScale.getCourse();
+        Course sourceCourse = gradingScale.getCourseViaExamOrDirectly();
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, sourceCourse, null);
     }
 

@@ -45,7 +45,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
      * Initialize variables
      */
     @BeforeEach
-    public void init() {
+    void init() {
         database.addUsers(0, 0, 0, 1);
         course = database.addEmptyCourse();
         Exam targetExam = database.addExamWithExerciseGroup(course, true);
@@ -64,21 +64,21 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
 
-        courseBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale, bonusToExamGradingScale);
-        examBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale, bonusToExamGradingScale);
+        courseBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale, bonusToExamGradingScale);
+        examBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale, bonusToExamGradingScale);
         bonusRepository.saveAll(List.of(examBonus, courseBonus));
         bonusToExamGradingScale.setBonusStrategy(BonusStrategy.GRADES_CONTINUOUS);
         gradingScaleRepository.save(bonusToExamGradingScale);
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetBonusSourcesForTargetExamNotFound() throws Exception {
+    void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
         bonusRepository.delete(examBonus);
 
@@ -95,7 +95,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetBonusForTargetExam() throws Exception {
+    void testGetBonusForTargetExam() throws Exception {
 
         Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
                 HttpStatus.OK, Bonus.class);
@@ -106,7 +106,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetBonusSource() throws Exception {
+    void testGetBonusSource() throws Exception {
 
         Bonus foundBonus = request.get("/api/bonus/" + courseBonus.getId(), HttpStatus.OK, Bonus.class);
 
@@ -116,7 +116,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testSaveBonusSourceForTargetExam() throws Exception {
+    void testSaveBonusSourceForTargetExam() throws Exception {
 
         Exam newExam = database.addExamWithExerciseGroup(course, true);
         var newExamGradingScale = new GradingScale();
@@ -124,7 +124,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         newExamGradingScale.setExam(newExam);
         gradingScaleRepository.save(newExamGradingScale);
 
-        Bonus newBonus = ModelFactory.generateBonusSource(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale, bonusToExamGradingScale);
+        Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale, bonusToExamGradingScale);
 
         Bonus savedBonus = request.postWithResponseBody(
                 "/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus", newBonus, Bonus.class,
@@ -136,7 +136,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void testGetBonusSources() throws Exception {
+    void testGetBonusSources() throws Exception {
 
         Bonus foundBonus = request.get("/api/bonus/" + courseBonus.getId(), HttpStatus.OK, Bonus.class);
 
