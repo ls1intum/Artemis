@@ -428,6 +428,7 @@ However, we should consider carefully before adding such assertions to a test as
 An example on how to track how many database calls are performed during a REST call is shown below. It uses the ``HibernateQueryInterceptor`` which counts the number of queries.
 For ease of use, a custom assert ``assertThatDb`` was added that allows to do the check in one line. It also returns the original result of the REST call and so allows you to
 add any other assertions to the test, as shown below.
+
 .. code-block:: java
 
     public class TestClass {
