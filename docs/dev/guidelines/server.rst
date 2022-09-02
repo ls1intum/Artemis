@@ -431,11 +431,11 @@ add any other assertions to the test, as shown below.
 
 .. code-block:: java
 
-    public class TestClass {
+    class TestClass {
 
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        public void testQueryCount() throws Exception {
+        void testQueryCount() throws Exception {
             Course course = assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
             assertThat(course).isNotNull();
         }
