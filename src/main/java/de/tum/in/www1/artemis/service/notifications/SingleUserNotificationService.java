@@ -56,8 +56,7 @@ public class SingleUserNotificationService {
      * @param typeSpecificInformation is based on the current use case (e.g. POST -> course, Exercise -> user)
      */
     private void notifyRecipientWithNotificationType(Object notificationSubject, NotificationType notificationType, Object typeSpecificInformation, User author) {
-        SingleUserNotification resultingGroupNotification;
-        resultingGroupNotification = switch (notificationType) {
+        var singleUserNotification = switch (notificationType) {
             // Post Types
             case NEW_REPLY_FOR_EXERCISE_POST, NEW_REPLY_FOR_LECTURE_POST, NEW_REPLY_FOR_COURSE_POST -> createNotification((Post) notificationSubject, notificationType,
                     (Course) typeSpecificInformation);
@@ -69,7 +68,7 @@ public class SingleUserNotificationService {
 
             default -> throw new UnsupportedOperationException("Can not create notification for type : " + notificationType);
         };
-        saveAndSend(resultingGroupNotification, notificationSubject);
+        saveAndSend(singleUserNotification, notificationSubject);
     }
 
     /**

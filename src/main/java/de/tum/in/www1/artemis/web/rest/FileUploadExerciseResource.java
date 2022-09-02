@@ -91,7 +91,7 @@ public class FileUploadExerciseResource {
     public ResponseEntity<FileUploadExercise> createFileUploadExercise(@RequestBody FileUploadExercise fileUploadExercise) throws URISyntaxException {
         log.debug("REST request to save FileUploadExercise : {}", fileUploadExercise);
         if (fileUploadExercise.getId() != null) {
-            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idexists")).body(null);
+            return ResponseEntity.badRequest().headers(HeaderUtil.createAlert(applicationName, "A new fileUploadExercise cannot already have an ID", "idExists")).body(null);
         }
         // validates general settings: points, dates
         fileUploadExercise.validateGeneralSettings();

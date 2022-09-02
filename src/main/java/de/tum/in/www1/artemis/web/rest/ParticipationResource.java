@@ -104,6 +104,8 @@ public class ParticipationResource {
 
     private final QuizScheduleService quizScheduleService;
 
+    private final SubmittedAnswerRepository submittedAnswerRepository;
+
     public ParticipationResource(ParticipationService participationService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
             CourseRepository courseRepository, QuizExerciseRepository quizExerciseRepository, ExerciseRepository exerciseRepository,
             ProgrammingExerciseRepository programmingExerciseRepository, AuthorizationCheckService authCheckService,
@@ -111,7 +113,7 @@ public class ParticipationResource {
             AuditEventRepository auditEventRepository, GuidedTourConfiguration guidedTourConfiguration, TeamRepository teamRepository, FeatureToggleService featureToggleService,
             ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, SubmissionRepository submissionRepository,
             ResultRepository resultRepository, ExerciseDateService exerciseDateService, InstanceMessageSendService instanceMessageSendService, QuizBatchService quizBatchService,
-            QuizScheduleService quizScheduleService) {
+            QuizScheduleService quizScheduleService, SubmittedAnswerRepository submittedAnswerRepository) {
         this.participationService = participationService;
         this.programmingExerciseParticipationService = programmingExerciseParticipationService;
         this.quizExerciseRepository = quizExerciseRepository;
@@ -133,6 +135,7 @@ public class ParticipationResource {
         this.instanceMessageSendService = instanceMessageSendService;
         this.quizBatchService = quizBatchService;
         this.quizScheduleService = quizScheduleService;
+        this.submittedAnswerRepository = submittedAnswerRepository;
     }
 
     /**
@@ -521,7 +524,9 @@ public class ParticipationResource {
         }
     }
 
-    private @Nullable MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
+    @Nullable
+    private MappingJacksonValue participationForQuizExercise(QuizExercise quizExercise, User user) {
+        // 1st case the quiz has already ended
         if (quizExercise.isQuizEnded()) {
             // When the quiz has ended, students reload the page (or navigate again into it), but the participation (+ submission + result) has not yet been stored in the database
             // (because for 1500 students this can take up to 60s), we would get a lot of errors here -> wait until all submissions are process and available in the DB
@@ -720,6 +725,8 @@ public class ParticipationResource {
      * @param username     the username of the user that the participation belongs to
      * @return the found or created participation with a result
      */
+    // TODO: we should move this method (and others related to quizzes) into a QuizParticipationService (or similar) to make this resource independent of specific quiz exercise
+    // functionality
     private StudentParticipation participationForQuizWithResult(QuizExercise quizExercise, String username) {
         if (quizExercise.isQuizEnded()) {
             // try getting participation from database
@@ -733,11 +740,15 @@ public class ParticipationResource {
             StudentParticipation participation = optionalParticipation.get();
             // add exercise
             participation.setExercise(quizExercise);
+            participation.setResults(new HashSet<>());
 
             // add the appropriate result
             Result result = resultRepository.findFirstByParticipationIdAndRatedOrderByCompletionDateDesc(participation.getId(), true).orElse(null);
-            participation.setResults(new HashSet<>());
             if (result != null) {
+                // find the submitted answers (they are NOT loaded eagerly any more)
+                var quizSubmission = (QuizSubmission) result.getSubmission();
+                var submittedAnswers = submittedAnswerRepository.findBySubmission(quizSubmission);
+                quizSubmission.setSubmittedAnswers(submittedAnswers);
                 participation.addResult(result);
             }
             return participation;

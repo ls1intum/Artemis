@@ -1,29 +1,56 @@
 <ng-container *ngIf="plagiarismCase">
-    <h1 class="mt-2">{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}: {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})</h1>
-    <div class="mt-3">
-        <div class="row justify-content-evenly">
-            <div class="col-4">
-                <div class="card p-2 h-100">
-                    <span class="ml-2">{{ 'artemisApp.plagiarism.plagiarismCases.exercise' | artemisTranslate }}:</span>
-                    <h5 class="text-center">
+    <div class="plagiarism-case">
+        <div class="case-header">
+            <div class="row">
+                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
+                    <h1 class="h2">{{ 'artemisApp.plagiarism.plagiarismCases.plagiarismCase' | artemisTranslate }}</h1>
+                </div>
+                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center">
+                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase" class="my-2"></jhi-plagiarism-case-verdict>
+                </div>
+                <div class="col-12 col-lg-6 col-xl-3 d-flex flex-column">
+                    <p class="mb-1 text-truncate">
+                        <fa-icon [icon]="faUser"></fa-icon>
+                        {{ plagiarismCase.student!.name }} ({{ plagiarismCase.student!.login }})
+                    </p>
+                    <p class="mb-0 text-truncate" *ngIf="plagiarismCase?.exercise">
                         <fa-icon *ngIf="plagiarismCase.exercise!.type!" [icon]="getIcon(plagiarismCase.exercise!.type!)"></fa-icon>
-                        {{ plagiarismCase.exercise!.title }}
-                    </h5>
+                        {{ plagiarismCase.exercise!.title! }}
+                    </p>
                 </div>
-            </div>
-            <div class="col-4">
-                <div class="card">
-                    <jhi-plagiarism-case-verdict [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-verdict>
+                <div class="col-12 col-lg-6 col-xl-3 d-flex align-items-center justify-content-xl-end">
+                    <a class="btn btn-secondary" [routerLink]="['/courses', courseId, 'exercises', plagiarismCase.exercise!.id]">
+                        <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.exercise">Affected exercise</span>
+                    </a>
                 </div>
             </div>
         </div>
-        <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h2>
-        <div class="row">
-            <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
-        </div>
-        <h2 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h2>
-        <div class="row">
-            <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase"></jhi-plagiarism-case-review>
+
+        <div class="case-body">
+            <section *ngIf="plagiarismCase.verdict">
+                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.POINT_DEDUCTION" class="alert alert-danger">
+                    <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.pointDeduction' | artemisTranslate }}</h5>
+                    <p class="mb-0">{{ plagiarismCase.verdictPointDeduction }}&nbsp;&percnt;</p>
+                </div>
+                <div *ngIf="plagiarismCase.verdict === plagiarismVerdict.WARNING" class="alert alert-danger">
+                    <h5>{{ 'artemisApp.plagiarism.plagiarismCases.verdict.warning' | artemisTranslate }}</h5>
+                    <p class="mb-0">{{ plagiarismCase.verdictMessage }}</p>
+                </div>
+            </section>
+
+            <section>
+                <h3>{{ 'artemisApp.plagiarism.plagiarismCases.conversation' | artemisTranslate }}</h3>
+                <div class="row">
+                    <jhi-posting-thread *ngIf="posts && posts.length > 0" [post]="posts[0]" [showAnswers]="true"></jhi-posting-thread>
+                </div>
+            </section>
+
+            <section>
+                <h3 class="mt-5">{{ 'artemisApp.plagiarism.plagiarismCases.comparisons' | artemisTranslate }}</h3>
+                <div class="container-fluid">
+                    <jhi-plagiarism-case-review [plagiarismCase]="plagiarismCase" [forStudent]="false"></jhi-plagiarism-case-review>
+                </div>
+            </section>
         </div>
     </div>
 </ng-container>
