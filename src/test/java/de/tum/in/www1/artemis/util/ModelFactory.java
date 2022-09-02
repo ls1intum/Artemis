@@ -1368,17 +1368,24 @@ public class ModelFactory {
      *
      * @param bonusStrategy       of bonus
      * @param weight              of bonus
-     * @param sourceGradingScale  of bonus
-     * @param bonusToGradingScale of bonus
-     * @return a new Bonus instance associated with bonusToGradingScale and bonusToGradingScale.
+     * @param sourceGradingScaleId  of sourceGradingScale of bonus
+     * @param bonusToGradingScaleId of bonusToGradingScale bonus
+     * @return a new Bonus instance associated with the gradins scales corresonding to ids bonusToGradingScaleId and bonusToGradingScaleId.
      */
-    public static Bonus generateBonus(BonusStrategy bonusStrategy, Double weight, GradingScale sourceGradingScale, GradingScale bonusToGradingScale) {
+    public static Bonus generateBonus(BonusStrategy bonusStrategy, Double weight, long sourceGradingScaleId, long bonusToGradingScaleId) {
         Bonus bonus = new Bonus();
         bonus.setBonusStrategy(bonusStrategy);
         bonus.setWeight(weight);
+        // New object is created to avoid circular dependency on json serialization.
+        var sourceGradingScale = new GradingScale();
+        sourceGradingScale.setId(sourceGradingScaleId);
         bonus.setSourceGradingScale(sourceGradingScale);
+
+        // New object is created to avoid circular dependency on json serialization.
+        var bonusToGradingScale = new GradingScale();
+        bonusToGradingScale.setId(bonusToGradingScaleId);
         bonus.setBonusToGradingScale(bonusToGradingScale);
-        bonusToGradingScale.addBonusFrom(bonus);
+
         return bonus;
 
     }

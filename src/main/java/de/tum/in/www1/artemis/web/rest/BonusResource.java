@@ -89,10 +89,8 @@ public class BonusResource {
         log.debug("REST request to get bonus sources for exam: {}", examId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        var bonus = bonusRepository.findAllByTargetExamId(examId).stream().findAny().orElse(null);
-        if (bonus != null) {
-            bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
-        }
+        var bonus = bonusRepository.findAllByBonusToExamId(examId).stream().findAny().orElseThrow(() -> new EntityNotFoundException("BonusToGradingScale exam", examId));
+        bonus.setBonusStrategy(bonus.getBonusToGradingScale().getBonusStrategy());
         filterBonusForResponse(bonus);
         return ResponseEntity.ok(bonus);
     }
@@ -156,15 +154,18 @@ public class BonusResource {
         }
 
         Course course = courseRepository.findByIdElseThrow(courseId);
-        // Optional<Bonus> existingBonus = bonusRepository.findBySourceExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
         GradingScale sourceGradingScaleFromDb = gradingScaleRepository.findById(bonus.getSourceGradingScale().getId()).orElseThrow();
         bonus.setSourceGradingScale(sourceGradingScaleFromDb);
         checkIsAtLeastInstructorForGradingScaleCourse(sourceGradingScaleFromDb);
 
-        // validateBonus(existingBonus, bonus);
         GradingScale bonusToGradingScale = gradingScaleRepository.findWithEagerBonusFromByExamId(examId).orElseThrow();
+        if (bonusRepository.existsByBonusToGradingScaleId(bonusToGradingScale.getId())) {
+            // In the future, when multiple bonuses per bonusToGradingScale is supported this check should be removed.
+            throw new BadRequestAlertException("A bonus is already created for this bonusToGradingScale", ENTITY_NAME, "idexists");
+        }
+
         bonusToGradingScale.addBonusFrom(bonus);
         bonusToGradingScale.setBonusStrategy(bonus.getBonusStrategy());
 

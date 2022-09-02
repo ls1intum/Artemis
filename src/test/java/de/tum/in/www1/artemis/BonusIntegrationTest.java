@@ -14,20 +14,16 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.BonusRepository;
-import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
-public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private BonusRepository bonusRepository;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
-
-    @Autowired
-    private ExamRepository examRepository;
 
     private Bonus courseBonus;
 
@@ -64,9 +60,11 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         gradingScaleRepository.saveAll(List.of(bonusToExamGradingScale, sourceExamGradingScale, courseGradingScale));
 
-        courseBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale, bonusToExamGradingScale);
-        examBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale, bonusToExamGradingScale);
-        bonusRepository.saveAll(List.of(examBonus, courseBonus));
+        courseBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, courseGradingScale.getId(), bonusToExamGradingScale.getId());
+        bonusRepository.save(courseBonus);
+
+        examBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, 1.0, sourceExamGradingScale.getId(), bonusToExamGradingScale.getId());
+
         bonusToExamGradingScale.setBonusStrategy(BonusStrategy.GRADES_CONTINUOUS);
         gradingScaleRepository.save(bonusToExamGradingScale);
     }
@@ -80,12 +78,10 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
-        bonusRepository.delete(examBonus);
 
-        var result = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, String.class);
+        request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.NOT_FOUND, Bonus.class);
 
-        assertThat(result).isNullOrEmpty();
     }
 
     private void assertBonusesAreEqualIgnoringId(Bonus actualBonus, Bonus expectedBonus) {
@@ -100,8 +96,8 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
                 HttpStatus.OK, Bonus.class);
 
-        assertThat(foundBonus.getId()).isEqualTo(examBonus.getId());
-        assertBonusesAreEqualIgnoringId(foundBonus, examBonus);
+        assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
+        assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
     }
 
     @Test
@@ -117,6 +113,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusSourceForTargetExam() throws Exception {
+        bonusRepository.delete(courseBonus);
 
         Exam newExam = database.addExamWithExerciseGroup(course, true);
         var newExamGradingScale = new GradingScale();
@@ -124,7 +121,7 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         newExamGradingScale.setExam(newExam);
         gradingScaleRepository.save(newExamGradingScale);
 
-        Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale, bonusToExamGradingScale);
+        Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());
 
         Bonus savedBonus = request.postWithResponseBody(
                 "/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus", newBonus, Bonus.class,
@@ -132,6 +129,16 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(savedBonus.getId()).isGreaterThan(0);
         assertBonusesAreEqualIgnoringId(savedBonus, newBonus);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testSaveBonusSourceForTargetExamDuplicateError() throws Exception {
+
+        Bonus savedBonus = request.postWithResponseBody(
+                "/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus", examBonus, Bonus.class,
+                HttpStatus.BAD_REQUEST);
+
     }
 
     @Test
@@ -156,5 +163,62 @@ public class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     //
     // request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
     // }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBonusWithoutChangingSourceGradingScale() throws Exception {
+
+        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.OK, Bonus.class);
+
+        BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
+        foundBonus.setBonusStrategy(newBonusStrategy);
+        double newWeight = -foundBonus.getWeight();
+        foundBonus.setWeight(newWeight);
+
+        request.put("/api/bonus/", foundBonus, HttpStatus.OK);
+        Bonus updatedBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.OK, Bonus.class);
+        assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
+        assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
+        assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
+
+        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.OK, Bonus.class);
+
+        BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
+        foundBonus.setBonusStrategy(newBonusStrategy);
+        double newWeight = -foundBonus.getWeight();
+        foundBonus.setWeight(newWeight);
+
+        assertThat(foundBonus.getSourceGradingScale().getId()).isNotEqualTo(sourceExamGradingScale.getId());
+        foundBonus.setSourceGradingScale(sourceExamGradingScale);
+
+        request.put("/api/bonus/", foundBonus, HttpStatus.OK);
+        Bonus updatedBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.OK, Bonus.class);
+        assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
+        assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
+        assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
+
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testDeleteBonus() throws Exception {
+
+        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.OK, Bonus.class);
+
+        request.delete("/api/bonus/" + foundBonus.getId(), HttpStatus.OK);
+        request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                HttpStatus.NOT_FOUND, Bonus.class);
+
+    }
 
 }

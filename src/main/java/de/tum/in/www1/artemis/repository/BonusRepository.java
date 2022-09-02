@@ -44,9 +44,9 @@ public interface BonusRepository extends JpaRepository<Bonus, Long> {
      * @return an Optional with the bonus source if such scale exists and an empty Optional otherwise
      */
     @Query("""
-            SELECT bonus
-            FROM Bonus bonus
-            WHERE bonus.sourceGradingScale.exam.id = :#{#examId}
+                SELECT bonus
+                FROM Bonus bonus
+                WHERE bonus.sourceGradingScale.exam.id = :#{#examId}
             """)
     Optional<Bonus> findBySourceExamId(@Param("examId") Long examId);
 
@@ -55,6 +55,8 @@ public interface BonusRepository extends JpaRepository<Bonus, Long> {
             FROM GradingScale gs
             WHERE gs.exam.id = :#{#examId}
             """)
-    Set<Bonus> findAllByTargetExamId(@Param("examId") Long examId);
+    Set<Bonus> findAllByBonusToExamId(@Param("examId") Long examId);
+
+    boolean existsByBonusToGradingScaleId(@Param("bonusToGradingScaleId") Long bonusToGradingScaleId);
 
 }

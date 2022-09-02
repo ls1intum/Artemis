@@ -2,7 +2,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus.service';
@@ -10,11 +10,15 @@ import { GradingSystemService } from 'app/grading-system/grading-system.service'
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
 import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
 import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
-import { of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
-import { GradeType } from 'app/entities/grading-scale.model';
+import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { GradeStepsDTO } from 'app/entities/grade-step.model';
+import { HttpResponse } from '@angular/common/http';
+import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
+import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
+import { NgModel } from '@angular/forms';
 
 describe('BonusComponent', () => {
     let component: BonusComponent;
@@ -326,7 +330,16 @@ describe('BonusComponent', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [ArtemisTestModule],
-            declarations: [BonusComponent, MockPipe(ArtemisTranslatePipe), MockPipe(SafeHtmlPipe), MockComponent(ModePickerComponent), MockPipe(GradeStepBoundsPipe)],
+            declarations: [
+                BonusComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockPipe(SafeHtmlPipe),
+                MockComponent(ModePickerComponent),
+                MockPipe(GradeStepBoundsPipe),
+                MockDirective(NgbTooltip),
+                MockComponent(DeleteDialogComponent),
+                MockDirective(NgModel),
+            ],
             providers: [{ provide: ActivatedRoute, useValue: route }],
         }).compileComponents();
     });
@@ -399,8 +412,7 @@ describe('BonusComponent', () => {
         const [bonusStrategy, bonusStrategyOption, bonusStrategyDiscreteness] = bonusStrategyToOptionAndDiscretenessMappings[0];
         component.currentBonusStrategyOption = bonusStrategyOption as BonusStrategyOption;
         component.currentBonusStrategyDiscreteness = bonusStrategyDiscreteness as BonusStrategyDiscreteness;
-        const savedBonus = { ...bonus };
-        component.bonus = savedBonus;
+        component.bonus = { ...bonus };
         component.examGradeStepsDTO = examGradeSteps;
 
         const bonusSpy = jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
@@ -422,5 +434,130 @@ describe('BonusComponent', () => {
         component.onBonusStrategyInputChange();
 
         expect(component.examples).toHaveLength(0);
+    });
+
+    it('should create bonus', fakeAsync(() => {
+        const bonusSpy = jest.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+
+        fixture.detectChanges();
+
+        const newBonus = { ...bonus, id: undefined };
+        component.bonus = newBonus;
+        component.save();
+
+        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, newBonus);
+
+        tick();
+
+        expect(component.bonus.id).toBe(bonus.id);
+        expect(component.isLoading).toBeFalse();
+    }));
+
+    it('should update bonus', fakeAsync(() => {
+        const bonusSpy = jest.spyOn(bonusService, 'updateBonus').mockReturnValue(of({ body: bonus } as EntityResponseType));
+
+        component.bonus = bonus;
+        component.save();
+
+        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledWith(bonus);
+
+        tick();
+
+        expect(component.bonus.id).toBe(bonus.id);
+        expect(component.isLoading).toBeFalse();
+    }));
+
+    it('should delete bonus', fakeAsync(() => {
+        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus').mockReturnValue(of({ body: undefined } as HttpResponse<any>));
+
+        let dialogError: string | undefined = undefined;
+        component.dialogError$.subscribe((err) => (dialogError = err));
+
+        component.bonus = bonus;
+        component.delete();
+
+        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledWith(bonus.id);
+
+        tick();
+
+        expect(component.bonus.id).toBeUndefined();
+        expect(component.bonus.bonusStrategy).toBeUndefined();
+        expect(component.bonus.weight).toBeUndefined();
+        expect(component.bonus.bonusToGradingScale).toBeUndefined();
+        expect(component.bonus.sourceGradingScale).toBeUndefined();
+        expect(dialogError).toBe('');
+
+        expect(component.isLoading).toBeFalse();
+    }));
+
+    it('should show error on delete', fakeAsync(() => {
+        const errorMessage = 'Error message';
+        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus').mockReturnValue(throwError(() => new Error(errorMessage)));
+
+        let dialogError: string | undefined = undefined;
+        component.dialogError$.subscribe((err) => (dialogError = err));
+
+        component.bonus = bonus;
+        component.delete();
+
+        expect(bonusSpy).toHaveBeenCalledOnce();
+        expect(bonusSpy).toHaveBeenCalledWith(bonus.id);
+
+        tick();
+
+        expect(component.bonus).toEqual(bonus);
+        expect(dialogError).toBe(errorMessage);
+
+        expect(component.isLoading).toBeFalse();
+    }));
+
+    it('should not delete if id is empty', () => {
+        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus');
+
+        const unsavedBonus = { ...bonus, id: undefined };
+        component.bonus = unsavedBonus;
+        component.delete();
+
+        expect(bonusSpy).not.toHaveBeenCalled();
+
+        expect(component.bonus).toEqual(unsavedBonus);
+        expect(component.isLoading).toBeFalse();
+    });
+
+    it('should forward grading scale title call to service', () => {
+        const gradingSystemSpy = jest.spyOn(gradingSystemService, 'getGradingScaleTitle');
+
+        component.getGradingScaleTitle(bonus.sourceGradingScale!);
+
+        expect(gradingSystemSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale);
+    });
+
+    it('should forward grading scale max points call to service', () => {
+        const gradingSystemSpy = jest.spyOn(gradingSystemService, 'getGradingScaleMaxPoints');
+
+        component.getGradingScaleMaxPoints(bonus.sourceGradingScale!);
+
+        expect(gradingSystemSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale);
+    });
+
+    it('should forward has points set call to service', () => {
+        const gradingSystemSpy = jest.spyOn(gradingSystemService, 'hasPointsSet');
+
+        component.bonus = { ...bonus, sourceGradingScale: {} as GradingScale };
+        component.hasPointsSet();
+
+        // Should not call if sourceGradingScale has no gradeSteps.
+        expect(gradingSystemSpy).not.toHaveBeenCalled();
+
+        component.bonus = bonus;
+        component.hasPointsSet();
+
+        expect(gradingSystemSpy).toHaveBeenCalledOnce();
+        expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale!.gradeSteps!);
     });
 });
