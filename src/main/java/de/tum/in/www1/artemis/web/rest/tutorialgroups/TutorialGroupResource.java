@@ -251,8 +251,8 @@ public class TutorialGroupResource {
         log.debug("REST request to register {} to tutorial group {}", studentDtos, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
-        Set<StudentDTO> notFoundStudentsDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos);
-        return ResponseEntity.ok().body(notFoundStudentsDtos);
+        Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos);
+        return ResponseEntity.ok().body(notFoundStudentDtos);
     }
 
     private void trimStringFields(TutorialGroup tutorialGroup) {
