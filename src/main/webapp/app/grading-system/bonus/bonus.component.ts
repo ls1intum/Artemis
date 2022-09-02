@@ -5,8 +5,8 @@ import { GradingScale } from 'app/entities/grading-scale.model';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { catchError, finalize, tap } from 'rxjs/operators';
-import { faExclamationTriangle, faPlus, faSave, faTimes, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
-import { GradeStepsDTO } from 'app/entities/grade-step.model';
+import { faExclamationTriangle, faPlus, faQuestionCircle, faSave, faTimes } from '@fortawesome/free-solid-svg-icons';
+import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { forkJoin, Subject } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
@@ -74,7 +74,7 @@ export class BonusComponent implements OnInit {
 
     sourceGradingScales: GradingScale[] = [];
 
-    examGradeStepsDTO: GradeStepsDTO;
+    bonusToGradeStepsDTO: GradeStepsDTO;
 
     isLoading = false;
     private courseId: number;
@@ -91,6 +91,7 @@ export class BonusComponent implements OnInit {
 
     bonus = new Bonus();
     invalidBonusMessage?: string;
+    hasBonusStrategyWeightMismatch = false;
 
     private state: PageableSearch = {
         page: 1,
@@ -131,7 +132,7 @@ export class BonusComponent implements OnInit {
             this.gradingSystemService.findGradeSteps(this.courseId, this.examId).pipe(
                 tap((gradeSteps) => {
                     if (gradeSteps) {
-                        this.examGradeStepsDTO = gradeSteps;
+                        this.bonusToGradeStepsDTO = gradeSteps;
                         this.gradingSystemService.sortGradeSteps(gradeSteps.gradeSteps);
                         this.gradingSystemService.setGradePoints(gradeSteps.gradeSteps, gradeSteps.maxPoints!);
                     } else {
@@ -172,9 +173,34 @@ export class BonusComponent implements OnInit {
 
     generateExamples() {
         if (this.bonus.sourceGradingScale && this.bonus.bonusStrategy) {
-            this.examples = this.bonusService.generateBonusExamples(this.bonus, this.examGradeStepsDTO);
+            this.hasBonusStrategyWeightMismatch = this.checkBonusStrategyWeightMismatch(this.bonus.bonusStrategy, this.bonus.weight!, this.bonusToGradeStepsDTO.gradeSteps);
+            this.examples = !this.hasBonusStrategyWeightMismatch ? this.bonusService.generateBonusExamples(this.bonus, this.bonusToGradeStepsDTO) : [];
         } else {
+            this.hasBonusStrategyWeightMismatch = false;
             this.examples = [];
+        }
+    }
+
+    /**
+     * Checks if given bonus strategy and weight combination would result in a worse grade for student, which is counter-intuitive for a bonus.
+     * Warning: Assumes bonusToGradeSteps are sorted.
+     *
+     * @param bonusStrategy current bonus strategy
+     * @param weight current weight
+     * @param bonusToGradeSteps grade steps belonging to bonusTo grading scale, assumed to be sorted.
+     * @private
+     */
+    private checkBonusStrategyWeightMismatch(bonusStrategy: BonusStrategy, weight: number, bonusToGradeSteps: GradeStep[]) {
+        switch (bonusStrategy) {
+            case BonusStrategy.POINTS:
+                return weight < 0;
+            case BonusStrategy.GRADES_CONTINUOUS:
+            case BonusStrategy.GRADES_DISCRETE:
+                const maxGradeValue = this.gradingSystemService.getNumericValueForGradeName(this.gradingSystemService.maxGrade(bonusToGradeSteps));
+                const firstGradeValue = this.gradingSystemService.getNumericValueForGradeName(bonusToGradeSteps[0]?.gradeName);
+                return this.bonusService.doesBonusExceedMax(firstGradeValue!, maxGradeValue!, weight);
+            default:
+                return false;
         }
     }
 
@@ -302,7 +328,7 @@ export class BonusComponent implements OnInit {
     }
 
     calculateDynamicExample() {
-        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.examGradeStepsDTO);
+        this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO);
     }
 
     onBonusSourceChange(gradingScale: GradingScale) {
@@ -319,6 +345,6 @@ export class BonusComponent implements OnInit {
     }
 
     maxPossibleGrade() {
-        return this.gradingSystemService.maxGrade(this.examGradeStepsDTO.gradeSteps);
+        return this.gradingSystemService.maxGrade(this.bonusToGradeStepsDTO.gradeSteps);
     }
 }

@@ -197,9 +197,8 @@ export class BonusService {
      * @param valueWithBonus achieved points or numeric grade with bonus applied
      * @param maxValue max points or max grade (numeric)
      * @param calculationSign a negative or positive number to indicate decreasing or increasing direction, respectively
-     * @private
      */
-    private doesBonusExceedMax(valueWithBonus: number, maxValue: number, calculationSign: number) {
+    doesBonusExceedMax(valueWithBonus: number, maxValue: number, calculationSign: number) {
         return (valueWithBonus - maxValue) * calculationSign! > 0;
     }
 

@@ -59,7 +59,7 @@
 </ng-container>
 <ng-container *ngIf="bonus.bonusStrategy && bonus.sourceGradingScale && bonus.weight">
     <h5>{{ 'artemisApp.bonus.formula.title' | artemisTranslate }}</h5>
-    <div *ngIf="bonus.bonusStrategy && bonus.weight && examGradeStepsDTO" class="fs-3 pb-5">
+    <div *ngIf="bonus.bonusStrategy && bonus.weight && bonusToGradeStepsDTO" class="fs-3 pb-5">
         <div class="d-flex py-2 align-items-center">
             <div class="p-2">
                 <strong [innerHTML]="'artemisApp.bonus.formula.' + (bonus.bonusStrategy === BonusStrategy.POINTS ? 'examPoints' : 'examGrade') | artemisTranslate | safeHtml"
@@ -84,6 +84,7 @@
             {{ 'artemisApp.bonus.formula.finalGradeLimit' | artemisTranslate: { maxPossibleGrade: maxPossibleGrade() } }}
         </div>
     </div>
+    <div *ngIf="hasBonusStrategyWeightMismatch" class="alert alert-warning" jhiTranslate="artemisApp.bonus.warnStrategyWeightMismatch">sadsgd gfhfgh</div>
     <div *ngIf="examples.length" class="fs-5">
         <h5>
             {{ 'artemisApp.bonus.examples.title' | artemisTranslate }}

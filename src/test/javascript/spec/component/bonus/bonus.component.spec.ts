@@ -413,7 +413,7 @@ describe('BonusComponent', () => {
         component.currentBonusStrategyOption = bonusStrategyOption as BonusStrategyOption;
         component.currentBonusStrategyDiscreteness = bonusStrategyDiscreteness as BonusStrategyDiscreteness;
         component.bonus = { ...bonus };
-        component.examGradeStepsDTO = examGradeSteps;
+        component.bonusToGradeStepsDTO = examGradeSteps;
 
         const bonusSpy = jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
 

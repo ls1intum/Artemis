@@ -49,7 +49,8 @@
             "deleteQuestion": "Do you really want to delete the bonus?",
             "updated": "Bonus updated.",
             "created": "Bonus created.",
-            "deleted": "Bonus deleted."
+            "deleted": "Bonus deleted.",
+            "warnStrategyWeightMismatch": "The bonus strategy and weight combination you have chosen would result in a worse grade for the student. Please reconsider your selections above."
         }
     }
 }
