@@ -87,18 +87,18 @@ public class TutorialGroupService {
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
 
         Set<User> foundStudents = new HashSet();
-        Set<StudentDTO> notFoundStudentsDTOs = new HashSet<>();
+        Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
         for (var studentDto : studentDTOs) {
             var studentOptional = findStudent(studentDto, course.getStudentGroupName());
             if (studentOptional.isEmpty()) {
-                notFoundStudentsDTOs.add(studentDto);
+                notFoundStudentDTOs.add(studentDto);
             }
             else {
                 foundStudents.add(studentOptional.get());
             }
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup);
-        return notFoundStudentsDTOs;
+        return notFoundStudentDTOs;
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
