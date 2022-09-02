@@ -189,7 +189,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void delete_asInstructor_shouldDeleteTutorialGroup() throws Exception {
-        request.delete("/api/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.OK);
+        request.delete("/api/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.NO_CONTENT);
         request.get("/api/tutorial-groups/" + exampleOneTutorialGroupId, HttpStatus.NOT_FOUND, TutorialGroup.class);
     }
 

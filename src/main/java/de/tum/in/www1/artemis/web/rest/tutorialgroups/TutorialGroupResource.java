@@ -31,7 +31,6 @@ import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
-import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
 @RequestMapping("/api")
@@ -147,7 +146,7 @@ public class TutorialGroupResource {
      * DELETE tutorial-groups/:tutorialGroupId : delete a tutorial group.
      *
      * @param tutorialGroupId the id of the tutorial group to delete
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -157,7 +156,7 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, tutorialGroupFromDatabase.getTitle())).build();
+        return ResponseEntity.noContent().build();
     }
 
     /**
