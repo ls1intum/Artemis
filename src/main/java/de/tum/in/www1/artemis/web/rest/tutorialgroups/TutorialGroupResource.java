@@ -192,7 +192,7 @@ public class TutorialGroupResource {
      *
      * @param tutorialGroupId the id of the tutorial group
      * @param studentLogin    the login of the student to deregister
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @DeleteMapping("/tutorial-groups/{tutorialGroupId}/deregister/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -215,7 +215,7 @@ public class TutorialGroupResource {
      *
      * @param tutorialGroupId the id of the tutorial group
      * @param studentLogin    the login of the student to register
-     * @return the ResponseEntity with status 200 (OK)
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
      */
     @PostMapping("/tutorial-groups/{tutorialGroupId}/register/{studentLogin:" + Constants.LOGIN_REGEX + "}")
     @PreAuthorize("hasRole('INSTRUCTOR')")

@@ -236,9 +236,9 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void registerStudent_studentRegistered_shouldReturnOk() throws Exception {
+    void registerStudent_studentRegistered_shouldReturnNoContent() throws Exception {
         var student1 = userRepository.findOneByLogin("student1").get();
-        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT,
+        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student1.getLogin(), HttpStatus.NO_CONTENT,
                 new LinkedMultiValueMap<>());
     }
 
@@ -253,10 +253,9 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void deregisterStudent_studentNotRegistered_shouldReturnOk() throws Exception {
+    void deregisterStudent_studentNotRegistered_shouldReturnNoContent() throws Exception {
         var student6 = userRepository.findOneByLogin("student6").get();
-        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student6.getLogin(), HttpStatus.NO_CONTENT,
-                new LinkedMultiValueMap<>());
+        request.delete("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student6.getLogin(), HttpStatus.NO_CONTENT, new LinkedMultiValueMap<>());
     }
 
     @Test
