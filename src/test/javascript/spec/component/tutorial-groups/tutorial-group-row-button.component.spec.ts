@@ -38,7 +38,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
         fixture.detectChanges();
         component.deleteTutorialGroup();
-        expect(deleteSpy).toHaveBeenCalledWith(courseId, tutorialGroup.id);
+        expect(deleteSpy).toHaveBeenCalledWith(tutorialGroup.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 });

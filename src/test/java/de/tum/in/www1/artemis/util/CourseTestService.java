@@ -1301,8 +1301,8 @@ public class CourseTestService {
         MultiValueMap<String, String> params2 = new LinkedMultiValueMap<>();
         params2.add("loginOrName", "tutor");
         // should be empty as we only search for students
-        List<UserDTO> tutors = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params1);
-        assertThat(students).isEmpty();
+        List<UserDTO> tutors = request.getList("/api/courses/" + course.getId() + "/students/search", HttpStatus.OK, UserDTO.class, params2);
+        assertThat(tutors).isEmpty();
     }
 
     // Test
