@@ -444,7 +444,7 @@ public class UserService {
         // 9) Delete the submissionVersion / remove the user from the submissionVersion
         // 10) Delete the tutor participation
         // 11) All tutorial group registrations of the student
-        // 12) All tutorial groups taught by the user
+        // 12) Set teaching assistant to null for all tutorial groups taught by the user
 
         studentScoreRepository.deleteAllByUser(user);
         exerciseHintActivationRepository.deleteAllByUser(user);
