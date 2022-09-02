@@ -10,6 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-registered-students',
@@ -30,6 +31,7 @@ export class RegisteredStudentsComponent implements OnInit {
         private tutorialGroupService: TutorialGroupsService,
         private alertService: AlertService,
         private accountService: AccountService,
+        private courseService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
@@ -41,6 +43,8 @@ export class RegisteredStudentsComponent implements OnInit {
     addToGroup = (login: string) => this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login);
 
     removeFromGroup = (login: string) => this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login);
+
+    userSearch = (loginOrName: string) => this.courseService.searchStudents(this.course.id!, loginOrName);
 
     get exportFilename(): string {
         if (this.course && this.tutorialGroup) {

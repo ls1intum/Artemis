@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnDestroy, Output, ViewChild, ViewEncapsulation } from '@angular/core';
 import { Observable, of, Subject } from 'rxjs';
-import { HttpErrorResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
@@ -47,6 +47,9 @@ export class CourseGroupComponent implements OnDestroy {
     courseGroup: CourseGroup;
     @Input()
     exportFileName: string;
+
+    @Input()
+    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
     @Input()
     addUserToGroup: (login: string) => Observable<any> = () => of({});
     @Input()
@@ -72,7 +75,7 @@ export class CourseGroupComponent implements OnDestroy {
     faDownload = faDownload;
     faUserSlash = faUserSlash;
 
-    constructor(private alertService: AlertService, private userService: UserService) {}
+    constructor(private alertService: AlertService) {}
 
     /**
      * Unsubscribe dialog error source on component destruction.
@@ -99,8 +102,7 @@ export class CourseGroupComponent implements OnDestroy {
                     return of([]);
                 }
                 this.isSearching = true;
-                return this.userService
-                    .search(loginOrName)
+                return this.userSearch(loginOrName)
                     .pipe(map((usersResponse) => usersResponse.body!))
                     .pipe(
                         tap((users) => {

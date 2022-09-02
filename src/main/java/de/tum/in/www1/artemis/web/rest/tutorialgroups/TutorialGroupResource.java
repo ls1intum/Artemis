@@ -29,6 +29,7 @@ import de.tum.in.www1.artemis.service.TutorialGroupService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
@@ -237,11 +238,16 @@ public class TutorialGroupResource {
         checkTutorialCourseIdMatchesPathId(courseId, tutorialGroupFromDatabase);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
-        Optional<User> studentToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        if (studentToRegister.isEmpty()) {
+        Optional<User> userToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
+        if (userToRegister.isEmpty()) {
             throw new EntityNotFoundException("User", studentLogin);
         }
-        tutorialGroupService.registerStudent(studentToRegister.get(), tutorialGroupFromDatabase);
+        var student = userToRegister.get();
+        if (!student.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
+            throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
+        }
+
+        tutorialGroupService.registerStudent(userToRegister.get(), tutorialGroupFromDatabase);
         return ResponseEntity.ok().body(null);
     }
 

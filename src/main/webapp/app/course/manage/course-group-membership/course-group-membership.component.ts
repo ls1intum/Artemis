@@ -39,6 +39,8 @@ export class CourseGroupMembershipComponent implements OnInit {
         this.loadAll();
     }
 
+    userSearch = (loginOrName: string) => this.userService.search(loginOrName);
+
     addToGroup = (login: string) => this.courseService.addUserToCourseGroup(this.course.id!, this.courseGroup, login);
 
     removeFromGroup = (login: string) => this.courseService.removeUserFromCourseGroup(this.course.id!, this.courseGroup, login);

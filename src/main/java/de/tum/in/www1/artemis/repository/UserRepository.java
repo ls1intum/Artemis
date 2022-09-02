@@ -117,6 +117,19 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     List<User> searchByLoginOrNameInGroup(@Param("groupName") String groupName, @Param("loginOrName") String loginOrName);
 
     /**
+     * Searches for users in a group by their login or full name.
+     *
+     * @param page        the pagination information
+     * @param groupName   Name of group in which to search for users
+     * @param loginOrName Either a login (e.g. ga12abc) or name (e.g. Max Mustermann) by which to search
+     * @return list of found users that match the search criteria
+     */
+    @EntityGraph(type = LOAD, attributePaths = { "groups" })
+    @Query("select user from User user where :#{#groupName} member of user.groups and "
+            + "(user.login like :#{#loginOrName}% or concat_ws(' ', user.firstName, user.lastName) like %:#{#loginOrName}%)")
+    Page<User> searchAllByLoginOrNameInGroup(Pageable page, @Param("loginOrName") String loginOrName, @Param("groupName") String groupName);
+
+    /**
      * Gets users in a group by their registration number.
      *
      * @param groupName           Name of group in which to search for users
@@ -243,6 +256,19 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
      */
     default Page<UserDTO> searchAllUsersByLoginOrName(Pageable pageable, String loginOrName) {
         Page<User> users = searchAllByLoginOrName(pageable, loginOrName);
+        return users.map(UserDTO::new);
+    }
+
+    /**
+     * Search for all users by login or name in a group
+     *
+     * @param pageable    Pageable configuring paginated access (e.g. to limit the number of records returned)
+     * @param loginOrName Search query that will be searched for in login and name field
+     * @param groupName   Group name to search in
+     * @return all users matching search criteria in the group
+     */
+    default Page<UserDTO> searchAllUsersByLoginOrNameInGroup(Pageable pageable, String loginOrName, String groupName) {
+        Page<User> users = searchAllByLoginOrNameInGroup(pageable, loginOrName, groupName);
         return users.map(UserDTO::new);
     }
 
