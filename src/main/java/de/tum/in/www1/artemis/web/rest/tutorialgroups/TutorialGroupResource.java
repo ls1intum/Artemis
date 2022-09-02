@@ -293,8 +293,7 @@ public class TutorialGroupResource {
     }
 
     private void checkTitleIsUnique(TutorialGroup tutorialGroup) {
-        if (tutorialGroupRepository.findAllByCourseId(tutorialGroup.getCourse().getId()).stream().map(TutorialGroup::getTitle)
-                .anyMatch(title -> title.equals(tutorialGroup.getTitle()))) {
+        if (tutorialGroupRepository.findByTitle(tutorialGroup.getTitle()).isPresent()) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
     }
