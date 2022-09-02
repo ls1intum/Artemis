@@ -61,7 +61,7 @@ public class TutorialGroup extends DomainObject {
     private User teachingAssistant;
 
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true)
-    @JsonIgnoreProperties("tutorialGroup")
+    @JsonIgnoreProperties(value = "tutorialGroup", allowSetters = true)
     private Set<TutorialGroupRegistration> registrations = new HashSet<>();
 
     public TutorialGroup() {
