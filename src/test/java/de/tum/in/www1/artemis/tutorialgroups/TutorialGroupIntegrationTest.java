@@ -112,7 +112,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + userRepository.findOneByLogin("student6").get().getLogin(),
                 HttpStatus.FORBIDDEN, new LinkedMultiValueMap<>());
         request.delete("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + userRepository.findOneByLogin("student1").get().getLogin(), HttpStatus.FORBIDDEN);
-        request.postListWithResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(), StudentDTO.class, HttpStatus.OK);
+        request.postListWithResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(), StudentDTO.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -222,7 +222,8 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerStudent_asInstructor_shouldRegisterStudent() throws Exception {
         var student6 = userRepository.findOneByLogin("student6").get();
-        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/register/" + student6.getLogin(), HttpStatus.NO_CONTENT,
+                new LinkedMultiValueMap<>());
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrations(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student6);
     }
@@ -237,14 +238,15 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void registerStudent_studentRegistered_shouldReturnOk() throws Exception {
         var student1 = userRepository.findOneByLogin("student1").get();
-        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT,
+                new LinkedMultiValueMap<>());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_asInstructor_shouldDeRegisterStudent() throws Exception {
         var student1 = userRepository.findOneByLogin("student1").get();
-        request.delete("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.OK);
+        request.delete("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student1.getLogin(), HttpStatus.NO_CONTENT);
         TutorialGroup tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrations(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).doesNotContain(student1);
     }
@@ -253,7 +255,8 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deregisterStudent_studentNotRegistered_shouldReturnOk() throws Exception {
         var student6 = userRepository.findOneByLogin("student6").get();
-        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student6.getLogin(), HttpStatus.OK, new LinkedMultiValueMap<>());
+        request.postWithoutResponseBody("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/deregister/" + student6.getLogin(), HttpStatus.NO_CONTENT,
+                new LinkedMultiValueMap<>());
     }
 
     @Test

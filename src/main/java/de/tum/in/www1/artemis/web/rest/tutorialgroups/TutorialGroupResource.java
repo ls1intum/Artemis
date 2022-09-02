@@ -207,7 +207,7 @@ public class TutorialGroupResource {
             throw new EntityNotFoundException("User", studentLogin);
         }
         tutorialGroupService.deregisterStudent(studentToDeregister.get(), tutorialGroupFromDatabase);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -235,7 +235,7 @@ public class TutorialGroupResource {
         }
 
         tutorialGroupService.registerStudent(userToRegister.get(), tutorialGroupFromDatabase);
-        return ResponseEntity.ok().body(null);
+        return ResponseEntity.noContent().build();
     }
 
     /**
