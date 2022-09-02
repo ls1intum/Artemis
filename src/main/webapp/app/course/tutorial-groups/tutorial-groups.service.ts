@@ -17,33 +17,33 @@ export class TutorialGroupsService {
         return this.httpClient.get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' });
     }
 
-    getOneOfCourse(tutorialGroupId: number, courseId: number) {
-        return this.httpClient.get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
+    getOne(tutorialGroupId: number) {
+        return this.httpClient.get<TutorialGroup>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
     }
 
     create(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {
         return this.httpClient.post<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, tutorialGroup, { observe: 'response' });
     }
 
-    update(tutorialGroup: TutorialGroup, courseId: number): Observable<EntityResponseType> {
-        return this.httpClient.put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, tutorialGroup, { observe: 'response' });
+    update(tutorialGroup: TutorialGroup): Observable<EntityResponseType> {
+        return this.httpClient.put<TutorialGroup>(`${this.resourceURL}/tutorial-groups`, tutorialGroup, { observe: 'response' });
     }
 
-    deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
+    deregisterStudent(tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
     }
 
-    registerStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register/${login}`, {}, { observe: 'response' });
+    registerStudent(tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/register/${login}`, {}, { observe: 'response' });
     }
 
-    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.httpClient.post<StudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
+    registerMultipleStudents(tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
+        return this.httpClient.post<StudentDTO[]>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
             observe: 'response',
         });
     }
 
-    delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
+    delete(tutorialGroupId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
     }
 }

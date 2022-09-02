@@ -29,7 +29,7 @@ export class EditTutorialGroupComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.courseId);
+                    return this.tutorialGroupService.getOne(tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -69,7 +69,7 @@ export class EditTutorialGroupComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.tutorialGroup, this.courseId)
+            .update(this.tutorialGroup)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

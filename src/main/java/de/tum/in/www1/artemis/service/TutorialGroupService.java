@@ -77,19 +77,15 @@ public class TutorialGroupService {
     /**
      * Register multiple students to a tutorial group.
      *
-     * @param courseId        The id of the course the tutorial group belongs to.
-     * @param tutorialGroupId The id of the tutorial group to register to.
-     * @param studentDTOs     The students to register.
+     * @param tutorialGroup the tutorial group to register the students for
+     * @param studentDTOs   The students to register.
      * @return The students that could not be found and thus not registered.
      */
-    public Set<StudentDTO> registerMultipleStudents(Long courseId, Long tutorialGroupId, Set<StudentDTO> studentDTOs) {
-        var course = this.courseRepository.findByIdElseThrow(courseId);
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-
+    public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs) {
         Set<User> foundStudents = new HashSet();
         Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
         for (var studentDto : studentDTOs) {
-            var studentOptional = findStudent(studentDto, course.getStudentGroupName());
+            var studentOptional = findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName());
             if (studentOptional.isEmpty()) {
                 notFoundStudentDTOs.add(studentDto);
             }
