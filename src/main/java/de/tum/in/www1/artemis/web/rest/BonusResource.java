@@ -251,11 +251,6 @@ public class BonusResource {
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sourceCourse, null);
     }
 
-    private void checkIsAtLeastStudentForGradingScaleCourse(GradingScale gradingScale) {
-        Course sourceCourse = gradingScale.getCourseViaExamOrDirectly();
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, sourceCourse, null);
-    }
-
     /**
      * DELETE /courses/{courseId}/bonus : Delete bonus source for course
      *

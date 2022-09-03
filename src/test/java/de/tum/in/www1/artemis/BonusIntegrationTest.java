@@ -135,9 +135,8 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusSourceForTargetExamDuplicateError() throws Exception {
 
-        Bonus savedBonus = request.postWithResponseBody(
-                "/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus", examBonus, Bonus.class,
-                HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
 
     }
 
