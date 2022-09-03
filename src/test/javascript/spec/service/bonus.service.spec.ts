@@ -7,6 +7,7 @@ import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { BonusService } from 'app/grading-system/bonus/bonus.service';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
+import { cloneDeep } from 'lodash-es';
 
 describe('Bonus Service', () => {
     type GradeStepBuilder = {
@@ -228,9 +229,9 @@ describe('Bonus Service', () => {
 
         const bonus: Bonus = {
             id: 77,
+            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
             weight: -1,
             sourceGradingScale,
-            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
         };
 
         service.calculateFinalGrade(bonusExample, bonus, bonusToGradeStepsDTO);
@@ -345,9 +346,9 @@ describe('Bonus Service', () => {
 
         const bonus: Bonus = {
             id: 77,
+            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
             weight: -1,
             sourceGradingScale,
-            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
         };
 
         const gradingSystemService = TestBed.inject(GradingSystemService);
@@ -355,7 +356,6 @@ describe('Bonus Service', () => {
         gradingSystemService.setGradePoints(bonusToGradeStepsDTO.gradeSteps, bonusToGradeStepsDTO.maxPoints!);
 
         const bonusExamples = service.generateBonusExamples(bonus, bonusToGradeStepsDTO);
-
         expect(bonusExamples).toEqual(expectedBonusExamples);
     });
 
@@ -367,5 +367,83 @@ describe('Bonus Service', () => {
         };
 
         expect(() => service.generateBonusExamples(bonus, bonusToGradeStepsDTO)).toThrow(Error);
+    });
+
+    it('should generate examples with default bound points if no boundary points are included', () => {
+        const expectedBonusExamples = [
+            {
+                studentPointsOfBonusTo: 0,
+                exceedsMax: false,
+                bonusGrade: 0,
+                finalPoints: 0,
+            },
+            {
+                studentPointsOfBonusTo: 100,
+                studentPointsOfBonusSource: 200,
+                exceedsMax: false,
+                examGrade: '4.0',
+                bonusGrade: 0.2,
+                finalGrade: 3.8,
+            },
+            {
+                studentPointsOfBonusTo: 135,
+                studentPointsOfBonusSource: 60,
+                exceedsMax: false,
+                examGrade: '3.0',
+                bonusGrade: 0.1,
+                finalGrade: 2.9,
+            },
+            {
+                studentPointsOfBonusTo: 165,
+                studentPointsOfBonusSource: 0,
+                exceedsMax: false,
+                examGrade: '2.0',
+                bonusGrade: 0,
+                finalGrade: 2,
+            },
+            {
+                studentPointsOfBonusTo: 300,
+                studentPointsOfBonusSource: 200,
+                exceedsMax: false,
+                examGrade: '1.0+',
+                bonusGrade: 0.2,
+                finalGrade: 0.8,
+            },
+        ];
+        const bonus: Bonus = {
+            id: 77,
+            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
+            weight: -1,
+            sourceGradingScale,
+        };
+
+        const bonusToGradeStepsDTOWithoutIncludedBounds = cloneDeep(bonusToGradeStepsDTO);
+        bonusToGradeStepsDTOWithoutIncludedBounds.gradeSteps.forEach((gradeStep) => {
+            gradeStep.lowerBoundInclusive = false;
+            gradeStep.upperBoundInclusive = false;
+        });
+
+        const gradingSystemService = TestBed.inject(GradingSystemService);
+        gradingSystemService.setGradePoints(sourceGradingScale.gradeSteps, sourceGradingScale.course.maxPoints);
+        gradingSystemService.setGradePoints(bonusToGradeStepsDTOWithoutIncludedBounds.gradeSteps, bonusToGradeStepsDTOWithoutIncludedBounds.maxPoints!);
+
+        const bonusExamples = service.generateBonusExamples(bonus, bonusToGradeStepsDTOWithoutIncludedBounds);
+        expect(bonusExamples).toEqual(expectedBonusExamples);
+    });
+
+    it('should not generate examples if there are no passing grades in bonusToGradingScale', () => {
+        const bonus: Bonus = {
+            id: 77,
+            bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
+            weight: -1,
+            sourceGradingScale,
+        };
+
+        const bonusToGradeStepsDTOWithoutPassingGrade = {
+            ...bonusToGradeStepsDTO,
+            gradeSteps: generateGradeSteps([{ interval: 40, gradeName: '5.0' }], true),
+        };
+
+        expect(() => service.generateBonusExamples(bonus, bonusToGradeStepsDTOWithoutPassingGrade)).toThrow(Error);
     });
 });

@@ -107,10 +107,10 @@ export class BonusService {
 
         for (let i = 0; i < 3; i++) {
             const bonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
-            const studentPointsOfBonusTo = this.getIncludedBoundaryPoints(bonusToGradeStep, bonusTo.maxPoints!) ?? bonusToGradeStep.lowerBoundPoints;
+            const studentPointsOfBonusTo = this.getIncludedBoundaryPoints(bonusToGradeStep, bonusTo.maxPoints!) ?? this.findMiddlePoint(bonusToGradeStep);
 
             const sourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
-            const studentPointsOfBonusSource = this.getIncludedBoundaryPoints(sourceGradeStep, sourceMaxPoints) ?? sourceGradeStep.lowerBoundPoints;
+            const studentPointsOfBonusSource = this.getIncludedBoundaryPoints(sourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(sourceGradeStep);
 
             examples.push(new BonusExample(studentPointsOfBonusTo!, studentPointsOfBonusSource!));
 
@@ -129,18 +129,22 @@ export class BonusService {
 
         bonusToGradeStepIndex = bonusTo.gradeSteps.length - 1;
         const lastBonusToGradeStep = bonusTo.gradeSteps[bonusToGradeStepIndex];
-        const lastStudentPointsOfBonusTo = this.getIncludedBoundaryPoints(lastBonusToGradeStep, bonusTo.maxPoints!) ?? lastBonusToGradeStep.lowerBoundPoints;
+        const lastStudentPointsOfBonusTo = this.getIncludedBoundaryPoints(lastBonusToGradeStep, bonusTo.maxPoints!) ?? this.findMiddlePoint(lastBonusToGradeStep);
 
         let lastSourceGradeStep = source.gradeSteps[sourceGradeStepIndex];
         if (this.gradingSystemService.getNumericValueForGradeName(lastSourceGradeStep.gradeName) === 0) {
             // A non-zero bonus serves better as an example.
             lastSourceGradeStep = source.gradeSteps[source.gradeSteps.length - 1];
         }
-        const lastStudentPointsOfBonusSource = this.getIncludedBoundaryPoints(lastSourceGradeStep, sourceMaxPoints) ?? lastSourceGradeStep.lowerBoundPoints;
+        const lastStudentPointsOfBonusSource = this.getIncludedBoundaryPoints(lastSourceGradeStep, sourceMaxPoints) ?? this.findMiddlePoint(lastSourceGradeStep);
 
         examples.push(new BonusExample(lastStudentPointsOfBonusTo!, lastStudentPointsOfBonusSource!));
 
         return examples;
+    }
+
+    private findMiddlePoint(gradeStep: GradeStep) {
+        return ((gradeStep.lowerBoundPoints ?? 0) + (gradeStep.upperBoundPoints ?? 0)) / 2;
     }
 
     /**

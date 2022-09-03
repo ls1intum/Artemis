@@ -14,7 +14,7 @@ import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
 import { GradeType, GradingScale } from 'app/entities/grading-scale.model';
 import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
-import { GradeStepsDTO } from 'app/entities/grade-step.model';
+import { GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { HttpResponse } from '@angular/common/http';
 import { NgbTooltip } from '@ng-bootstrap/ng-bootstrap';
 import { DeleteDialogComponent } from 'app/shared/delete-dialog/delete-dialog.component';
@@ -179,9 +179,9 @@ describe('BonusComponent', () => {
     };
     const bonus: Bonus = {
         id: 7,
+        bonusStrategy: BonusStrategy.POINTS,
         weight: 1,
         sourceGradingScale,
-        bonusStrategy: BonusStrategy.POINTS,
     };
 
     const examGradeSteps: GradeStepsDTO = {
@@ -376,6 +376,7 @@ describe('BonusComponent', () => {
         [BonusStrategy.GRADES_DISCRETE, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.DISCRETE],
         [BonusStrategy.POINTS, BonusStrategyOption.POINTS, undefined],
         [undefined, undefined, undefined],
+        [undefined, BonusStrategyOption.GRADES, undefined],
     ];
 
     beforeEach(async () => {
@@ -494,7 +495,7 @@ describe('BonusComponent', () => {
 
         const bonusSpy = jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
 
-        expect(component.examples).toHaveLength(0);
+        expect(component.examples).toBeEmpty();
 
         component.onBonusStrategyInputChange();
 
@@ -504,13 +505,26 @@ describe('BonusComponent', () => {
         expect(component.examples).toHaveLength(bonusExamples.length);
     });
 
+    it('should check bonus strategy and weight mismatch', () => {
+        jest.spyOn(gradingSystemService, 'getNumericValueForGradeName').mockImplementation((gradeName) => parseFloat(gradeName!));
+        jest.spyOn(bonusService, 'doesBonusExceedMax').mockReturnValue(true);
+
+        component.bonus = { ...bonus, bonusStrategy: BonusStrategy.GRADES_CONTINUOUS, weight: 1 };
+        component.bonusToGradeStepsDTO = { gradeSteps: [] as GradeStep[] } as GradeStepsDTO;
+
+        component.generateExamples();
+
+        expect(component.examples).toBeEmpty();
+        expect(component.hasBonusStrategyWeightMismatch).toBeTrue();
+    });
+
     it('should remove examples when all required fields are not set', () => {
         component.bonus = { ...bonus, bonusStrategy: undefined };
         component.examples = bonusExamples;
 
         component.onBonusStrategyInputChange();
 
-        expect(component.examples).toHaveLength(0);
+        expect(component.examples).toBeEmpty();
     });
 
     it('should create bonus', fakeAsync(() => {
@@ -607,6 +621,34 @@ describe('BonusComponent', () => {
         expect(component.bonus).toEqual(unsavedBonus);
         expect(component.isLoading).toBeFalse();
     });
+
+    it('should handle find bonus response with error', fakeAsync(() => {
+        const findBonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(throwError(() => ({ status: 500 })));
+
+        component.ngOnInit();
+
+        expect(findBonusSpy).toHaveBeenCalledOnce();
+        expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
+
+        expect(() => tick()).toThrow();
+
+        expect(component.bonus).toStrictEqual(new Bonus());
+        expect(component.isLoading).toBeFalse();
+    }));
+
+    it('should handle empty find bonus response', fakeAsync(() => {
+        const findBonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: undefined } as any as EntityResponseType));
+
+        component.ngOnInit();
+
+        expect(findBonusSpy).toHaveBeenCalledOnce();
+        expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
+
+        tick();
+
+        expect(component.bonus).toStrictEqual(new Bonus());
+        expect(component.isLoading).toBeFalse();
+    }));
 
     it('should forward grading scale title call to service', () => {
         const gradingSystemSpy = jest.spyOn(gradingSystemService, 'getGradingScaleTitle');
