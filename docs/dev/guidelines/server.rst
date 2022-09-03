@@ -418,7 +418,7 @@ https://www.baeldung.com/spring-tests
 
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
-23. Counting database query calls within tests
+24. Counting database query calls within tests
 ==============================================
 
 It's possible to write tests that check how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
@@ -441,7 +441,7 @@ add any other assertions to the test, as shown below.
         }
     }
 
-24. Avoid using @MockBean
+25. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.
