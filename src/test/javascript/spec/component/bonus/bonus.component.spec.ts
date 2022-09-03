@@ -2,13 +2,13 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { BonusComponent, BonusStrategyDiscreteness, BonusStrategyOption } from 'app/grading-system/bonus/bonus.component';
 import { ArtemisTestModule } from '../../test.module';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
-import { MockComponent, MockDirective, MockPipe } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { ActivatedRoute, convertToParamMap } from '@angular/router';
 import { SafeHtmlPipe } from 'app/shared/pipes/safe-html.pipe';
 import { BonusService, EntityResponseType } from 'app/grading-system/bonus/bonus.service';
 import { GradingSystemService } from 'app/grading-system/grading-system.service';
 import { ModePickerComponent } from 'app/exercises/shared/mode-picker/mode-picker.component';
-import { PageableSearch, SortingOrder } from 'app/shared/table/pageable-table';
+import { PageableSearch, SearchResult, SortingOrder } from 'app/shared/table/pageable-table';
 import { TableColumn } from 'app/exercises/modeling/manage/modeling-exercise-import.component';
 import { of, throwError } from 'rxjs';
 import { Bonus, BonusExample, BonusStrategy } from 'app/entities/bonus.model';
@@ -31,155 +31,156 @@ describe('BonusComponent', () => {
     const examId = 2;
     const route = { snapshot: { paramMap: convertToParamMap({ courseId, examId }) } } as any as ActivatedRoute;
 
+    const sourceGradingScale = {
+        id: 7,
+        gradeType: GradeType.BONUS,
+        exam: {
+            id: 3,
+            title: 'Grade Exam',
+            maxPoints: 150,
+            course: {
+                id: courseId,
+                title: 'Ata Test 1',
+                maxPoints: 200,
+            },
+        },
+        gradeSteps: [
+            {
+                id: 354,
+                lowerBoundPercentage: 0,
+                lowerBoundInclusive: true,
+                upperBoundPercentage: 10,
+                upperBoundInclusive: true,
+                gradeName: '0',
+                isPassingGrade: false,
+            },
+            {
+                id: 355,
+                lowerBoundPercentage: 10,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 15,
+                upperBoundInclusive: true,
+                gradeName: '1',
+                isPassingGrade: false,
+            },
+            {
+                id: 356,
+                lowerBoundPercentage: 15,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 20,
+                upperBoundInclusive: true,
+                gradeName: '2',
+                isPassingGrade: false,
+            },
+            {
+                id: 357,
+                lowerBoundPercentage: 20,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 25,
+                upperBoundInclusive: true,
+                gradeName: '3',
+                isPassingGrade: false,
+            },
+            {
+                id: 358,
+                lowerBoundPercentage: 25,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 30,
+                upperBoundInclusive: true,
+                gradeName: '4',
+                isPassingGrade: false,
+            },
+            {
+                id: 359,
+                lowerBoundPercentage: 65,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 70,
+                upperBoundInclusive: true,
+                gradeName: '12',
+                isPassingGrade: false,
+                numericValue: 12,
+            },
+            {
+                id: 360,
+                lowerBoundPercentage: 30,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 35,
+                upperBoundInclusive: true,
+                gradeName: '5',
+                isPassingGrade: false,
+            },
+            {
+                id: 361,
+                lowerBoundPercentage: 35,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 40,
+                upperBoundInclusive: true,
+                gradeName: '6',
+                isPassingGrade: false,
+            },
+            {
+                id: 362,
+                lowerBoundPercentage: 40,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 45,
+                upperBoundInclusive: true,
+                gradeName: '7',
+                isPassingGrade: false,
+            },
+            {
+                id: 363,
+                lowerBoundPercentage: 45,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 50,
+                upperBoundInclusive: true,
+                gradeName: '8',
+                isPassingGrade: false,
+            },
+            {
+                id: 364,
+                lowerBoundPercentage: 70,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 170,
+                upperBoundInclusive: true,
+                gradeName: '13',
+                isPassingGrade: false,
+                numericValue: 13,
+            },
+            {
+                id: 365,
+                lowerBoundPercentage: 50,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 55,
+                upperBoundInclusive: true,
+                gradeName: '9',
+                isPassingGrade: false,
+            },
+            {
+                id: 366,
+                lowerBoundPercentage: 60,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 65,
+                upperBoundInclusive: true,
+                gradeName: '11',
+                isPassingGrade: false,
+                numericValue: 11,
+            },
+            {
+                id: 367,
+                lowerBoundPercentage: 55,
+                lowerBoundInclusive: false,
+                upperBoundPercentage: 60,
+                upperBoundInclusive: true,
+                gradeName: '10',
+                isPassingGrade: false,
+                numericValue: 10,
+            },
+        ],
+    };
     const bonus: Bonus = {
         id: 7,
         weight: 1,
-        sourceGradingScale: {
-            id: 7,
-            gradeType: GradeType.BONUS,
-            exam: {
-                id: 3,
-                title: 'Grade Exam',
-                maxPoints: 150,
-                course: {
-                    id: courseId,
-                    title: 'Ata Test 1',
-                    maxPoints: 200,
-                },
-            },
-            gradeSteps: [
-                {
-                    id: 354,
-                    lowerBoundPercentage: 0,
-                    lowerBoundInclusive: true,
-                    upperBoundPercentage: 10,
-                    upperBoundInclusive: true,
-                    gradeName: '0',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 355,
-                    lowerBoundPercentage: 10,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 15,
-                    upperBoundInclusive: true,
-                    gradeName: '1',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 356,
-                    lowerBoundPercentage: 15,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 20,
-                    upperBoundInclusive: true,
-                    gradeName: '2',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 357,
-                    lowerBoundPercentage: 20,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 25,
-                    upperBoundInclusive: true,
-                    gradeName: '3',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 358,
-                    lowerBoundPercentage: 25,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 30,
-                    upperBoundInclusive: true,
-                    gradeName: '4',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 359,
-                    lowerBoundPercentage: 65,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 70,
-                    upperBoundInclusive: true,
-                    gradeName: '12',
-                    isPassingGrade: false,
-                    numericValue: 12,
-                },
-                {
-                    id: 360,
-                    lowerBoundPercentage: 30,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 35,
-                    upperBoundInclusive: true,
-                    gradeName: '5',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 361,
-                    lowerBoundPercentage: 35,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 40,
-                    upperBoundInclusive: true,
-                    gradeName: '6',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 362,
-                    lowerBoundPercentage: 40,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 45,
-                    upperBoundInclusive: true,
-                    gradeName: '7',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 363,
-                    lowerBoundPercentage: 45,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 50,
-                    upperBoundInclusive: true,
-                    gradeName: '8',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 364,
-                    lowerBoundPercentage: 70,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 170,
-                    upperBoundInclusive: true,
-                    gradeName: '13',
-                    isPassingGrade: false,
-                    numericValue: 13,
-                },
-                {
-                    id: 365,
-                    lowerBoundPercentage: 50,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 55,
-                    upperBoundInclusive: true,
-                    gradeName: '9',
-                    isPassingGrade: false,
-                },
-                {
-                    id: 366,
-                    lowerBoundPercentage: 60,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 65,
-                    upperBoundInclusive: true,
-                    gradeName: '11',
-                    isPassingGrade: false,
-                    numericValue: 11,
-                },
-                {
-                    id: 367,
-                    lowerBoundPercentage: 55,
-                    lowerBoundInclusive: false,
-                    upperBoundPercentage: 60,
-                    upperBoundInclusive: true,
-                    gradeName: '10',
-                    isPassingGrade: false,
-                    numericValue: 10,
-                },
-            ],
-        },
+        sourceGradingScale,
         bonusStrategy: BonusStrategy.POINTS,
     };
 
@@ -317,8 +318,58 @@ describe('BonusComponent', () => {
         ],
     };
 
-    // TODO: Ata Fill examples array
-    const bonusExamples: BonusExample[] = [];
+    const searchResult: SearchResult<GradingScale> = {
+        resultsOnPage: [sourceGradingScale],
+        numberOfPages: 1,
+    };
+
+    const bonusExamples: BonusExample[] = [
+        {
+            studentPointsOfBonusTo: 0,
+            studentPointsOfBonusSource: undefined,
+            exceedsMax: false,
+            examGrade: '5.0',
+            bonusGrade: 0,
+            finalPoints: 0,
+            finalGrade: '5.0',
+        },
+        {
+            studentPointsOfBonusTo: 50,
+            studentPointsOfBonusSource: 150,
+            exceedsMax: false,
+            examGrade: '4.0',
+            bonusGrade: 13,
+            finalPoints: 63,
+            finalGrade: '3.3',
+        },
+        {
+            studentPointsOfBonusTo: 55,
+            studentPointsOfBonusSource: 105,
+            exceedsMax: false,
+            examGrade: '3.7',
+            bonusGrade: 12,
+            finalPoints: 67,
+            finalGrade: '3.0',
+        },
+        {
+            studentPointsOfBonusTo: 60,
+            studentPointsOfBonusSource: 97.5,
+            exceedsMax: false,
+            examGrade: '3.3',
+            bonusGrade: 11,
+            finalPoints: 71,
+            finalGrade: '2.7',
+        },
+        {
+            studentPointsOfBonusTo: 100,
+            studentPointsOfBonusSource: 90,
+            exceedsMax: true,
+            examGrade: '1.0',
+            bonusGrade: 10,
+            finalPoints: 100,
+            finalGrade: '1.0',
+        },
+    ];
 
     const bonusStrategyToOptionAndDiscretenessMappings = [
         [BonusStrategy.GRADES_CONTINUOUS, BonusStrategyOption.GRADES, BonusStrategyDiscreteness.CONTINUOUS],
@@ -340,7 +391,14 @@ describe('BonusComponent', () => {
                 MockComponent(DeleteDialogComponent),
                 MockDirective(NgModel),
             ],
-            providers: [{ provide: ActivatedRoute, useValue: route }],
+            providers: [
+                {
+                    provide: ActivatedRoute,
+                    useValue: route,
+                },
+                MockProvider(GradingSystemService),
+                MockProvider(BonusService),
+            ],
         }).compileComponents();
     });
 
@@ -349,6 +407,10 @@ describe('BonusComponent', () => {
         component = fixture.componentInstance;
         bonusService = fixture.debugElement.injector.get(BonusService);
         gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
+
+        jest.spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor').mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
+        jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
+        jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
     });
 
     afterEach(() => {
@@ -356,8 +418,13 @@ describe('BonusComponent', () => {
     });
 
     it('should initialize', fakeAsync(() => {
+        const sortGradeStepsSpy = jest.spyOn(gradingSystemService, 'sortGradeSteps');
+        const setGradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints');
+
         const bonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+
         const gradingScaleSpy = jest.spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor');
+
         const gradeStepsSpy = jest.spyOn(gradingSystemService, 'findGradeSteps');
 
         const state: PageableSearch = {
@@ -370,8 +437,6 @@ describe('BonusComponent', () => {
 
         fixture.detectChanges();
 
-        expect(component.isLoading).toBeTrue();
-
         expect(bonusSpy).toHaveBeenCalledOnce();
         expect(bonusSpy).toHaveBeenCalledWith(courseId, examId);
 
@@ -382,6 +447,18 @@ describe('BonusComponent', () => {
         expect(gradeStepsSpy).toHaveBeenCalledWith(courseId, examId);
 
         tick();
+
+        expect(component.isLoading).toBeFalse();
+        expect(component.bonus.sourceGradingScale).toEqual(sourceGradingScale);
+        expect(component.sourceGradingScales).toEqual(searchResult.resultsOnPage);
+
+        expect(sortGradeStepsSpy).toHaveBeenCalledTimes(2);
+        expect(sortGradeStepsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps);
+        expect(sortGradeStepsSpy).toHaveBeenCalledWith(sourceGradingScale.gradeSteps);
+
+        expect(setGradePointsSpy).toHaveBeenCalledTimes(2);
+        expect(setGradePointsSpy).toHaveBeenCalledWith(examGradeSteps.gradeSteps, examGradeSteps.maxPoints);
+        expect(setGradePointsSpy).toHaveBeenCalledWith(sourceGradingScale.gradeSteps, undefined);
     }));
 
     it('should get calculation sign', () => {
@@ -437,7 +514,8 @@ describe('BonusComponent', () => {
     });
 
     it('should create bonus', fakeAsync(() => {
-        const bonusSpy = jest.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        const createBonusSpy = jest.spyOn(bonusService, 'createBonusForExam').mockReturnValue(of({ body: bonus } as EntityResponseType));
+        const findBonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(throwError(() => ({ status: 404 })));
 
         fixture.detectChanges();
 
@@ -445,8 +523,11 @@ describe('BonusComponent', () => {
         component.bonus = newBonus;
         component.save();
 
-        expect(bonusSpy).toHaveBeenCalledOnce();
-        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, newBonus);
+        expect(createBonusSpy).toHaveBeenCalledOnce();
+        expect(createBonusSpy).toHaveBeenCalledWith(courseId, examId, newBonus);
+
+        expect(findBonusSpy).toHaveBeenCalledOnce();
+        expect(findBonusSpy).toHaveBeenCalledWith(courseId, examId);
 
         tick();
 
@@ -559,5 +640,20 @@ describe('BonusComponent', () => {
 
         expect(gradingSystemSpy).toHaveBeenCalledOnce();
         expect(gradingSystemSpy).toHaveBeenCalledWith(bonus.sourceGradingScale!.gradeSteps!);
+    });
+
+    it('should forward calculate dynamic example call to service', () => {
+        const bonusFinalGradeSpy = jest.spyOn(bonusService, 'calculateFinalGrade');
+
+        const dynamicExample = new BonusExample(10, 50);
+
+        component.bonus = bonus;
+        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.dynamicExample = dynamicExample;
+
+        component.calculateDynamicExample();
+
+        expect(bonusFinalGradeSpy).toHaveBeenCalledOnce();
+        expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
     });
 });
