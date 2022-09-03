@@ -36,11 +36,11 @@ describe('BonusComponent', () => {
         gradeType: GradeType.BONUS,
         exam: {
             id: 3,
-            title: 'Grade Exam',
+            title: 'Grade Test Exam',
             maxPoints: 150,
             course: {
                 id: courseId,
-                title: 'Ata Test 1',
+                title: 'Test Course',
                 maxPoints: 200,
             },
         },

@@ -195,7 +195,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
-        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this operation.
+        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
         if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
             course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
             courseRepository.save(course);
@@ -222,7 +222,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
-        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this operation.
+        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
         if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
             exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
             examRepository.save(exam);

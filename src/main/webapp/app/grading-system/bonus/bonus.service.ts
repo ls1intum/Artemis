@@ -70,8 +70,19 @@ export class BonusService {
         return bonusExamples;
     }
 
+    /**
+     * Creates a filtered bonus to send in the request body to reduce payload size and make tracking the changes easier for
+     * diagnosis purposes by filtering out irrelevant parts.
+     *
+     * @param bonus to be sent to the server
+     * @private
+     */
     private filterBonusForRequest(bonus: Bonus) {
-        return { ...bonus, sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined };
+        return {
+            ...bonus,
+            sourceGradingScale: bonus.sourceGradingScale ? { id: bonus.sourceGradingScale.id } : undefined,
+            bonusToGradingScale: undefined,
+        };
     }
 
     /**
@@ -86,6 +97,10 @@ export class BonusService {
         examples.push(new BonusExample(0, undefined));
 
         let bonusToGradeStepIndex = bonusTo.gradeSteps.findIndex((gs) => gs.isPassingGrade);
+        if (bonusToGradeStepIndex < 0) {
+            throw Error('No passing grade was found for bonusTo grading scale');
+        }
+
         let sourceGradeStepIndex = source.gradeSteps.length - 1;
 
         const sourceMaxPoints = this.gradingSystemService.getGradingScaleMaxPoints(source);
@@ -203,7 +218,7 @@ export class BonusService {
     }
 
     /**
-     *
+     * Get the included points
      * @param gradeStep
      * @param maxPoints
      */
