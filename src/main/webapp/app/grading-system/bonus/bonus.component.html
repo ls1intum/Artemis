@@ -165,7 +165,7 @@
         </table>
     </div>
     <div>
-        <button (click)="save()" [disabled]="isLoading || !isFormValid()" class="btn btn-primary mr-1 mb-1" type="button">
+        <button (click)="save()" [disabled]="isLoading" class="btn btn-primary mr-1 mb-1" type="button">
             <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
         </button>
         <button
@@ -181,11 +181,5 @@
         >
             <fa-icon [icon]="faTimes"><span jhiTranslate="entity.action.delete">Delete</span></fa-icon>
         </button>
-        <div *ngIf="invalidBonusMessage" class="alert alert-warning mt-3">
-            <fa-icon [icon]="faExclamationTriangle"></fa-icon>
-            <span>
-                {{ invalidBonusMessage }}
-            </span>
-        </div>
     </div>
 </ng-container>

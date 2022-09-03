@@ -139,8 +139,10 @@ export class GradingSystemService {
     }
 
     /**
-     * TODO: Ata
+     * Finds grading scales eligible to be used as a bonus source. Grading Scales should have BONUS Grade Type and should belong to a
+     * course or exam where the current user is an instructor to be eligible. Supports search, sort and pagination.
      *
+     * @param pageable search, sort and pagination parameters
      */
     findWithBonusGradeTypeForInstructor(pageable: PageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
         const params = new HttpParams()

@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 /**
- * REST controller for managing bonus source
+ * REST controller for managing bonus
  */
 @RestController
 @RequestMapping("/api")
@@ -123,16 +123,28 @@ public class BonusResource {
         return bonusService.calculateGradeWithBonus(bonusStrategy, targetGradingScale, targetPoints, sourceGradingScale, sourcePoints, calculationSign);
     }
 
+    /**
+     * GET /bonus/calculate-raw: Endpoint to test different bonus strategies with user-defined points.
+     * Applies bonus from sourceGradingScale to bonusToGradingScale grade steps.
+     *
+     * @param bonusStrategy bonus strategy
+     * @param calculationSign weight of bonus, -1 or +1
+     * @param bonusToGradingScaleId id of the grading scale that will have its grades improved by bonus
+     * @param bonusToPoints points achieved by the student at the bonusTo grading scale's exam
+     * @param sourceGradingScaleId id of the grading scale that will help improve the grade of bonusTo
+     * @param sourcePoints points achieved by the student at the source grading scale's course or exam
+     * @return final grade and points with bonus
+     */
     @GetMapping("bonus/calculate-raw")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@RequestParam BonusStrategy bonusStrategy, @RequestParam Double calculationSign,
-            @RequestParam Long targetGradingScaleId, @RequestParam Double targetPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
+            @RequestParam Long bonusToGradingScaleId, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
-        // TODO: Ata: Add auth and validation.
-        var targetGradingScale = gradingScaleRepository.findById(targetGradingScaleId).orElseThrow();
+        // TODO: Ata: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
+        var targetGradingScale = gradingScaleRepository.findById(bonusToGradingScaleId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 
-        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, targetPoints, sourcePoints, targetGradingScale, sourceGradingScale);
+        BonusExampleDTO gradeWithBonus = calculateGradeWithBonus(bonusStrategy, calculationSign, bonusToPoints, sourcePoints, targetGradingScale, sourceGradingScale);
         return ResponseEntity.ok(gradeWithBonus);
     }
 

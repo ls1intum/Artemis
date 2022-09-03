@@ -45,7 +45,6 @@ export class BonusComponent implements OnInit {
     readonly GradeEditMode = GradeEditMode;
     readonly BonusStrategyOption = BonusStrategyOption;
     readonly BonusStrategy = BonusStrategy;
-    // readonly BonusStrategyDiscreteness = BonusStrategyDiscreteness;
 
     readonly bonusStrategyOptions = [BonusStrategyOption.GRADES, BonusStrategyOption.POINTS].map((bonusStrategyOption) => ({
         value: bonusStrategyOption,
@@ -90,7 +89,6 @@ export class BonusComponent implements OnInit {
     dynamicExample = new BonusExample(0, 0);
 
     bonus = new Bonus();
-    invalidBonusMessage?: string;
     hasBonusStrategyWeightMismatch = false;
 
     private state: PageableSearch = {
@@ -111,7 +109,6 @@ export class BonusComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        window['comp'] = this; // TODO: Ata Delete this.
         this.isLoading = true;
 
         const paramMap = this.route.snapshot.paramMap;
@@ -287,15 +284,6 @@ export class BonusComponent implements OnInit {
                 },
                 error: (error) => this.dialogErrorSource.next(error.message),
             });
-    }
-
-    isFormValid() {
-        // TODO: Ata
-        if (!this.bonus) {
-            this.invalidBonusMessage = this.translateService.instant('artemisApp.gradingSystem.error.empty');
-            return false;
-        }
-        return true;
     }
 
     /**
