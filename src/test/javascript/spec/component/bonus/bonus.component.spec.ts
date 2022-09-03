@@ -330,8 +330,8 @@ describe('BonusComponent', () => {
         expect(component.getCalculationSign(-1)).toBe('−');
     });
 
-    it.each(bonusStrategyToOptionAndDiscretenessMappings)(
-        'should set bonus strategy and discreteness for %p',
+    it.each(bonusStrategyToOptionAndDiscretenessMappings.slice(0, -1))(
+        'should set bonus strategy and discreteness for [%p, %p, %p]',
         fakeAsync((bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
             const bonusSpy = jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(of({ body: { bonusStrategy } } as EntityResponseType));
             component.ngOnInit();
@@ -342,7 +342,7 @@ describe('BonusComponent', () => {
     );
 
     it.each(bonusStrategyToOptionAndDiscretenessMappings)(
-        'should convert from inputs to BonusStrategy for %p',
+        'should convert from inputs to BonusStrategy for [%p, %p, %p]',
         (bonusStrategy: BonusStrategy, bonusStrategyOption: BonusStrategyOption, bonusStrategyDiscreteness: BonusStrategyDiscreteness) => {
             const actualBonusStrategy = component.convertFromInputsToBonusStrategy(bonusStrategyOption, bonusStrategyDiscreteness);
             expect(actualBonusStrategy).toBe(bonusStrategy);
