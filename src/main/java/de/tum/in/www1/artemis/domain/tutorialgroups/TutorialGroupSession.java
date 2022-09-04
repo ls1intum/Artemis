@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.domain;
+package de.tum.in.www1.artemis.domain.tutorialgroups;
 
 import java.time.ZonedDateTime;
 
@@ -11,8 +11,8 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 @Entity
 @Table(name = "tutorial_group_session")

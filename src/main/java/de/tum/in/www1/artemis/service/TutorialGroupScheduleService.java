@@ -6,11 +6,11 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
-import de.tum.in.www1.artemis.domain.TutorialGroupSchedule;
-import de.tum.in.www1.artemis.domain.TutorialGroupSession;
-import de.tum.in.www1.artemis.domain.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;

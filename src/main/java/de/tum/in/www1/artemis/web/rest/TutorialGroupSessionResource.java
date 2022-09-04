@@ -13,8 +13,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import de.tum.in.www1.artemis.domain.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
