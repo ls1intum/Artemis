@@ -186,7 +186,7 @@ export class UsersImportDialogComponent implements OnDestroy {
     importUsers() {
         this.isImporting = true;
         if (this.tutorialGroup) {
-            this.tutorialGroupService.registerMultipleStudents(this.courseId, this.tutorialGroup.id!, this.usersToImport).subscribe({
+            this.tutorialGroupService.registerMultipleStudents(this.tutorialGroup.id!, this.usersToImport).subscribe({
                 next: (res) => this.onSaveSuccess(res),
                 error: () => this.onSaveError(),
             });

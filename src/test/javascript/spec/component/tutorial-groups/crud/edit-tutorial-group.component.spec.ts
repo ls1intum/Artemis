@@ -89,14 +89,15 @@ describe('EditTutorialGroupComponent', () => {
             status: 200,
         });
 
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOne').mockReturnValue(of(response));
         const tutorialGroupFormStubComponent: TutorialGroupFormStubComponent = editTutorialGroupComponentFixture.debugElement.query(
             By.directive(TutorialGroupFormStubComponent),
         ).componentInstance;
 
         editTutorialGroupComponentFixture.detectChanges();
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupOfResponse);
-        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
+        expect(findByIdStub).toHaveBeenCalledWith(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editTutorialGroupComponent.formData.title).toEqual(tutorialGroupOfResponse.title);
         expect(tutorialGroupFormStubComponent.formData).toEqual(editTutorialGroupComponent.formData);
     });
@@ -116,10 +117,11 @@ describe('EditTutorialGroupComponent', () => {
             body: tutorialGroupInDatabase,
             status: 200,
         });
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(findByIdResponse));
+        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOne').mockReturnValue(of(findByIdResponse));
 
         editTutorialGroupComponentFixture.detectChanges();
-        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
+        expect(findByIdStub).toHaveBeenCalledWith(1);
+        expect(findByIdStub).toHaveBeenCalledOnce();
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupInDatabase);
 
         const changedTutorialGroup: TutorialGroup = {

@@ -92,6 +92,7 @@ describe('TutorialGroupsManagementComponent', () => {
 
         tutorialGroupsManagementComponentFixture.detectChanges();
         expect(tutorialGroupsManagementComponent.tutorialGroups).toEqual([exampleTutorialGroup]);
+        expect(getAllForCourseSpy).toHaveBeenCalledOnce();
         expect(getAllForCourseSpy).toHaveBeenCalledWith(1);
     });
 
@@ -110,5 +111,6 @@ describe('TutorialGroupsManagementComponent', () => {
 
         tutorialGroupsManagementComponent.sortRows();
         expect(sortServiceSpy).toHaveBeenCalledWith([group1, group2], 'id', false);
+        expect(sortServiceSpy).toHaveBeenCalledOnce();
     });
 });

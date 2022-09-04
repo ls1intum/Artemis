@@ -66,8 +66,8 @@ export class TutorialGroupsManagementComponent implements OnInit {
             .subscribe({
                 next: (tutorialGroups: TutorialGroup[]) => {
                     this.tutorialGroups = tutorialGroups.map((tutorialGroup) => {
-                        if (!tutorialGroup.registeredStudents) {
-                            tutorialGroup.registeredStudents = [];
+                        if (!tutorialGroup.registrations) {
+                            tutorialGroup.registrations = [];
                         }
                         return tutorialGroup;
                     });

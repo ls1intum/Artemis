@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.repository;
+package de.tum.in.www1.artemis.repository.tutorialgroups;
 
 import java.util.Optional;
 import java.util.Set;
@@ -9,16 +9,18 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import de.tum.in.www1.artemis.domain.TutorialGroup;
+import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
 public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Long> {
 
     @Query("""
-            SELECT tutorialGroup.title
-            FROM TutorialGroup tutorialGroup
-            WHERE tutorialGroup.id = :tutorialGroupId
+                SELECT tutorialGroup.title
+                FROM TutorialGroup tutorialGroup
+                WHERE tutorialGroup.id = :tutorialGroupId
             """)
     @Cacheable(cacheNames = "tutorialGroupTitle", key = "#tutorialGroupId", unless = "#result == null")
     String getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
@@ -30,28 +32,34 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
+    Optional<TutorialGroup> findByTitle(String title);
+
     @Query("""
             SELECT tutorialGroup
                 FROM TutorialGroup tutorialGroup
                 LEFT JOIN FETCH tutorialGroup.teachingAssistant
-                LEFT JOIN FETCH tutorialGroup.registeredStudents
+                LEFT JOIN FETCH tutorialGroup.registrations
                 WHERE tutorialGroup.course.id = :#{#courseId}
                 ORDER BY tutorialGroup.title""")
-    Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegisteredStudents(@Param("courseId") Long courseId);
+    Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrations(@Param("courseId") Long courseId);
 
     @Query("""
-            SELECT tutorialGroup
+                SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
-            LEFT JOIN FETCH tutorialGroup.registeredStudents
+            LEFT JOIN FETCH tutorialGroup.registrations
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSchedule
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
             """)
-    Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(@Param("tutorialGroupId") long tutorialGroupId);
+    Optional<TutorialGroup> findByIdWithTeachingAssistantAndRegistrationsAndSessions(@Param("tutorialGroupId") long tutorialGroupId);
+
+    Set<TutorialGroup> findAllByTeachingAssistant(User teachingAssistant);
+
+    void deleteAllByCourse(Course course);
 
     @Query("""
-                SELECT tutorialGroup
+            SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.tutorialGroupSessions
             WHERE tutorialGroup.id = :#{#tutorialGroupId}
@@ -62,7 +70,11 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
         return findByIdWithSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }
 
-    default TutorialGroup findByIdWithTeachingAssistantAndRegisteredStudentsAndSessionsElseThrow(long tutorialGroupId) {
-        return findByIdWithTeachingAssistantAndRegisteredStudentsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    default TutorialGroup findByIdElseThrow(long tutorialGroupId) {
+        return this.findById(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
+    }
+
+    default TutorialGroup findByIdWithTeachingAssistantAndRegistrationsElseThrow(long tutorialGroupId) {
+        return this.findByIdWithTeachingAssistantAndRegistrationsAndSessions(tutorialGroupId).orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }
 }

@@ -81,9 +81,9 @@
         "tutorialGroupForm": {
             "titleInput": {
                 "label": "Title",
-                "placeholder": "Group 1: Monday 12:00 - 13:00",
+                "placeholder": "Group 1: Monday {{ from }} - {{ to }}",
                 "requiredValidationError": "Title is required!",
-                "maxLengthValidationError": "Title can be max 255 characters long!"
+                "maxLengthValidationError": "Title can be max {{ max }} characters long!"
             },
             "teachingAssistantInput": {
                 "label": "Teaching Assistant",
@@ -96,14 +96,14 @@
             "additionalInformationInput": {
                 "label": "Additional Information",
                 "placeholder": "Additional information about the tutorial group.",
-                "maxLengthValidationError": "Additional information is limited to 2000 characters!"
+                "maxLengthValidationError": "Additional information is limited to {{ max }} characters!"
             },
             "locationInput": {
                 "labelOnline": "Meeting Link",
                 "labelOffline": "Meeting Place",
                 "placeholderOnline": "How can the students join the online meeting?",
                 "placeholderOffline": "How can the students find the room?",
-                "maxLengthValidationError": "Location is limited to 2000 characters!"
+                "maxLengthValidationError": "Location is limited to {{ max }} characters!"
             },
             "capacityInput": {
                 "label": "Capacity",

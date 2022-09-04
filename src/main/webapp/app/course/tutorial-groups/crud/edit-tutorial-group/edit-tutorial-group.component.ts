@@ -46,7 +46,7 @@ export class EditTutorialGroupComponent implements OnInit {
                 map((res: HttpResponse<Course>) => res.body),
                 switchMap((course: Course) => {
                     this.course = course;
-                    return this.tutorialGroupService.getOneOfCourse(this.tutorialGroupId, this.course.id!);
+                    return this.tutorialGroupService.getOne(this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -105,7 +105,7 @@ export class EditTutorialGroupComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.tutorialGroup, this.course.id!)
+            .update(this.tutorialGroup)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

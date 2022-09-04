@@ -40,7 +40,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     const courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, courseId);
+                    return this.tutorialGroupService.getOne(tutorialGroupId);
                 }),
                 map((res: HttpResponse<TutorialGroup>) => res.body),
                 finalize(() => (this.isLoading = false)),

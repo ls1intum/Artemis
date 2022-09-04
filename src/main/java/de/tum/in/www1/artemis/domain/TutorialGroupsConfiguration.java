@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.domain;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -19,7 +18,6 @@ public class TutorialGroupsConfiguration extends DomainObject {
     @OneToOne
     @JoinColumn(name = "course_id")
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration")
-    @NotNull
     private Course course;
 
     @Column(name = "time_zone")

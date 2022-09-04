@@ -46,22 +46,6 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <!-- fks for tutorial_group_schedule table -->
-        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_schedule"
-                                 constraintName="fk_tutorial_group_schedule_tutorial_group_id" deferrable="false"
-                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
-                                 validate="true"/>
-        <!-- fks for tutorial_group_session table -->
-        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_session"
-                                 constraintName="fk_tutorial_group_session_tutorial_group_id" deferrable="false"
-                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
-                                 validate="true"/>
-        <addForeignKeyConstraint baseColumnNames="tutorial_group_schedule_id" baseTableName="tutorial_group_session"
-                                 constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false"
-                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
-                                 validate="true"/>
-    </changeSet>
-    <changeSet id="20220826000000-3" author="stefanwaldhauser">
         <createTable tableName="tutorial_groups_configuration">
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_schedule_PK"/>
@@ -76,6 +60,21 @@
             <column name="tutorial_period_end_inclusive" type="DATE">
             </column>
         </createTable>
+        <!-- fks for tutorial_group_schedule table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_schedule"
+                                 constraintName="fk_tutorial_group_schedule_tutorial_group_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
+                                 validate="true"/>
+        <!-- fks for tutorial_group_session table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group"
+                                 validate="true"/>
+        <addForeignKeyConstraint baseColumnNames="tutorial_group_schedule_id" baseTableName="tutorial_group_session"
+                                 constraintName="fk_tutorial_group_session_tutorial_group_schedule_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_group_schedule"
+                                 validate="true"/>
+        <!-- fks for tutorial_groups_configuration table -->
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutorial_groups_configuration"
                                  constraintName="fk_tutorial_groups_configuration_course_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"

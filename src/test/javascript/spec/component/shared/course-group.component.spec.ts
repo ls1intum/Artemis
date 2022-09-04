@@ -80,6 +80,7 @@ describe('Course Group Component', () => {
                 comp = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 userService = TestBed.inject(UserService);
+                comp.userSearch = (searchTerm: string) => userService.search(searchTerm);
             });
     });
 

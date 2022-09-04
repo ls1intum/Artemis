@@ -97,7 +97,7 @@ export class ScheduleManagementComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.courseId).pipe(finalize(() => (this.isLoading = false)));
+                    return this.tutorialGroupService.getOne(tutorialGroupId).pipe(finalize(() => (this.isLoading = false)));
                 }),
                 map((res: HttpResponse<TutorialGroup>) => {
                     return res.body;

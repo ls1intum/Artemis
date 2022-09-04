@@ -10,6 +10,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { AccountService } from 'app/core/auth/account.service';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({
     selector: 'jhi-registered-students',
@@ -30,6 +31,7 @@ export class RegisteredStudentsComponent implements OnInit {
         private tutorialGroupService: TutorialGroupsService,
         private alertService: AlertService,
         private accountService: AccountService,
+        private courseService: CourseManagementService,
     ) {}
 
     ngOnInit(): void {
@@ -38,9 +40,11 @@ export class RegisteredStudentsComponent implements OnInit {
 
     handleUsersSizeChange = (filteredUsersSize: number) => (this.filteredUsersSize = filteredUsersSize);
 
-    addToGroup = (login: string) => this.tutorialGroupService.registerStudent(this.course.id!, this.tutorialGroup.id!, login);
+    addToGroup = (login: string) => this.tutorialGroupService.registerStudent(this.tutorialGroup.id!, login);
 
-    removeFromGroup = (login: string) => this.tutorialGroupService.deregisterStudent(this.course.id!, this.tutorialGroup.id!, login);
+    removeFromGroup = (login: string) => this.tutorialGroupService.deregisterStudent(this.tutorialGroup.id!, login);
+
+    userSearch = (loginOrName: string) => this.courseService.searchStudents(this.course.id!, loginOrName);
 
     get exportFilename(): string {
         if (this.course && this.tutorialGroup) {
@@ -59,7 +63,7 @@ export class RegisteredStudentsComponent implements OnInit {
                 switchMap(([params, data]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.course = data.course;
-                    return this.tutorialGroupService.getOneOfCourse(tutorialGroupId, this.course.id!);
+                    return this.tutorialGroupService.getOne(tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -68,10 +72,10 @@ export class RegisteredStudentsComponent implements OnInit {
                     if (tutorialGroupResult.body) {
                         this.tutorialGroup = tutorialGroupResult.body;
                         // server will send undefined instead of empty array, therefore we set it here as it is easier to handle
-                        if (!this.tutorialGroup.registeredStudents) {
-                            this.tutorialGroup.registeredStudents = [];
+                        if (!this.tutorialGroup.registrations) {
+                            this.tutorialGroup.registrations = [];
                         }
-                        this.registeredStudents = this.tutorialGroup.registeredStudents;
+                        this.registeredStudents = this.tutorialGroup.registrations.map((registration) => registration.student!);
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),

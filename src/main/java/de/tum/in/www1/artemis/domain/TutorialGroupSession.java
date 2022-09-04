@@ -11,6 +11,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 @Entity
 @Table(name = "tutorial_group_session")
