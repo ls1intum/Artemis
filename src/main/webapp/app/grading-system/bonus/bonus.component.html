@@ -17,7 +17,7 @@
 <div *ngIf="bonus.id || currentBonusStrategyOption === BonusStrategyOption.POINTS || currentBonusStrategyDiscreteness !== undefined" class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.calculation.title">Select calculation</span>
     <ng-container [ngTemplateOutlet]="helpTextTemplate" [ngTemplateOutletContext]="{ translationKey: 'artemisApp.bonus.calculation.helpText' }"></ng-container>
-    <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="generateExamples()"></jhi-mode-picker>
+    <jhi-mode-picker [options]="calculationSigns" [(value)]="bonus.weight" (valueChange)="onWeightChange()"></jhi-mode-picker>
 </div>
 <div *ngIf="bonus.id || bonus.weight !== undefined" class="form-group">
     <span class="colon-suffix no-flex-shrink" jhiTranslate="artemisApp.bonus.bonusSource.title">Select bonus source</span>

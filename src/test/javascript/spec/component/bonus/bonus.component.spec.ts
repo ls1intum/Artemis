@@ -561,4 +561,25 @@ describe('BonusComponent', () => {
         expect(bonusFinalGradeSpy).toHaveBeenCalledOnce();
         expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
     });
+
+    it('should refresh dynamic example on weight change only if previously calculated', () => {
+        const bonusFinalGradeSpy = jest.spyOn(bonusService, 'calculateFinalGrade');
+
+        const dynamicExample = new BonusExample(10, 50);
+
+        component.bonus = bonus;
+        component.bonusToGradeStepsDTO = examGradeSteps;
+        component.dynamicExample = dynamicExample;
+
+        component.onWeightChange();
+
+        expect(bonusFinalGradeSpy).not.toHaveBeenCalled();
+
+        component.dynamicExample.finalGrade = '1.0';
+
+        component.onWeightChange();
+
+        expect(bonusFinalGradeSpy).toHaveBeenCalledOnce();
+        expect(bonusFinalGradeSpy).toHaveBeenCalledWith(dynamicExample, bonus, examGradeSteps);
+    });
 });

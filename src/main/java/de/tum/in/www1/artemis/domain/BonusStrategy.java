@@ -31,9 +31,8 @@ public enum BonusStrategy implements IBonusStrategy {
             double finalGrade = roundScoreSpecifiedByCourseSettings(bonusToRawGradeStep.getNumericValue() + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
             double maxGrade = maxGradeStep.getNumericValue();
-            boolean exceedsMax = false;
-            if (doesBonusExceedMax(finalGrade, maxGrade, weight)) {
-                exceedsMax = true;
+            boolean exceedsMax = doesBonusExceedMax(finalGrade, maxGrade, weight);
+            if (exceedsMax) {
                 finalGrade = maxGrade;
             }
 
@@ -51,9 +50,8 @@ public enum BonusStrategy implements IBonusStrategy {
             double bonusGrade = bonusGradeStep.getNumericValue();
             double finalPoints = roundScoreSpecifiedByCourseSettings(achievedPointsOfBonusTo + weight * bonusGrade, bonusToGradingScale.getCourseViaExamOrDirectly());
 
-            boolean exceedsMax = false;
-            if (doesBonusExceedMax(finalPoints, bonusToGradingScale.getMaxPoints(), weight)) {
-                exceedsMax = true;
+            boolean exceedsMax = doesBonusExceedMax(finalPoints, bonusToGradingScale.getMaxPoints(), weight);
+            if (exceedsMax) {
                 finalPoints = bonusToGradingScale.getMaxPoints();
             }
             GradeStep bonusToRawGradeStep = gradingScaleRepository.matchPointsToGradeStep(achievedPointsOfBonusTo, bonusToGradingScale);

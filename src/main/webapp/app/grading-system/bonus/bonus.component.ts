@@ -231,6 +231,12 @@ export class BonusComponent implements OnInit {
     onBonusStrategyInputChange() {
         this.bonus.bonusStrategy = this.convertFromInputsToBonusStrategy(this.currentBonusStrategyOption, this.currentBonusStrategyDiscreteness);
         this.generateExamples();
+        this.refreshDynamicExample();
+    }
+
+    onWeightChange() {
+        this.generateExamples();
+        this.refreshDynamicExample();
     }
 
     convertFromInputsToBonusStrategy(
@@ -325,9 +331,18 @@ export class BonusComponent implements OnInit {
         this.bonusService.calculateFinalGrade(this.dynamicExample, this.bonus, this.bonusToGradeStepsDTO);
     }
 
+    private refreshDynamicExample() {
+        if (this.dynamicExample.finalGrade == undefined) {
+            // Do not recalculate if it has not been calculated already.
+            return;
+        }
+        this.calculateDynamicExample();
+    }
+
     onBonusSourceChange(gradingScale: GradingScale) {
         this.setBonusSourcePoints(gradingScale);
         this.generateExamples();
+        this.refreshDynamicExample();
     }
 
     /**

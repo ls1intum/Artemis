@@ -186,8 +186,9 @@ export class BonusService {
         switch (bonus.bonusStrategy) {
             case BonusStrategy.POINTS: {
                 bonusExample.finalPoints = roundValueSpecifiedByCourseSettings(bonusExample.studentPointsOfBonusTo + (bonus.weight ?? 1) * bonusExample.bonusGrade!, course);
-                if (this.doesBonusExceedMax(bonusExample.finalPoints, bonusTo.maxPoints!, bonus.weight!)) {
-                    bonusExample.exceedsMax = true;
+
+                bonusExample.exceedsMax = this.doesBonusExceedMax(bonusExample.finalPoints, bonusTo.maxPoints!, bonus.weight!);
+                if (bonusExample.exceedsMax) {
                     bonusExample.finalPoints = bonusTo.maxPoints ?? 0;
                 }
                 const finalGradeStep = this.gradingSystemService.findMatchingGradeStepByPoints(bonusTo.gradeSteps, bonusExample.finalPoints, bonusTo.maxPoints!);
@@ -199,8 +200,9 @@ export class BonusService {
                 bonusExample.finalGrade = roundValueSpecifiedByCourseSettings(examGradeNumericValue + (bonus.weight ?? 1) * bonusExample.bonusGrade!, course);
                 const maxGrade = this.gradingSystemService.maxGrade(bonusTo.gradeSteps);
                 const maxGradeNumericValue = this.gradingSystemService.getNumericValueForGradeName(maxGrade)!;
-                if (this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!)) {
-                    bonusExample.exceedsMax = true;
+
+                bonusExample.exceedsMax = this.doesBonusExceedMax(bonusExample.finalGrade, maxGradeNumericValue, bonus.weight!);
+                if (bonusExample.exceedsMax) {
                     bonusExample.finalGrade = maxGrade;
                 }
                 break;
