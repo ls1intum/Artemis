@@ -260,7 +260,7 @@
                                     [entityTitle]="quizExercise.title || ''"
                                     [actionType]="ActionType.Reset"
                                     deleteConfirmationText="artemisApp.exercise.delete.typeNameToConfirm"
-                                    (delete)="resetQuizExercise(quizExercise.id!)"
+                                    (delete)="resetQuizExercise(quizExercise)"
                                     [dialogError]="dialogError$"
                                     deleteQuestion="artemisApp.quizExercise.reset.question"
                                     class="mb-1"

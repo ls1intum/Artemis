@@ -62,7 +62,7 @@ public class FileUploadSubmissionService extends SubmissionService {
     public FileUploadSubmission handleFileUploadSubmission(FileUploadSubmission fileUploadSubmission, MultipartFile file, FileUploadExercise exercise, User user)
             throws IOException, EmptyFileException {
         // Don't allow submissions after the due date (except if the exercise was started after the due date)
-        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginAnyState(exercise, user.getLogin());
+        final var optionalParticipation = participationService.findOneByExerciseAndStudentLoginWithEagerSubmissionsAnyState(exercise, user.getLogin());
         if (optionalParticipation.isEmpty()) {
             throw new ResponseStatusException(HttpStatus.FAILED_DEPENDENCY, "No participation found for " + user.getLogin() + " in exercise " + exercise.getId());
         }

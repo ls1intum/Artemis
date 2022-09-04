@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 // Custom object for sql query
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
+// Note: this POJO is used in a JPA query in ResultRepository and therefore cannot easily be converted into a record
 public class TutorLeaderboardAssessments {
 
     private final long userId;
@@ -43,24 +44,15 @@ public class TutorLeaderboardAssessments {
     }
 
     public TutorLeaderboardAssessments(Long userId, Long assessments, Double points, Double averageScore, Double averageRating, Long numberOfRatings) {
-        this.userId = userId;
-        this.assessments = assessments;
-        this.points = points;
+        this.userId = userId == null ? 0 : userId;
+        this.assessments = assessments == null ? 0 : assessments;
+        this.points = points == null ? 0 : points;
         this.averageScore = averageScore == null ? 0 : averageScore;
         this.averageRating = averageRating == null ? 0 : averageRating;
         this.numberOfRatings = numberOfRatings == null ? 0 : numberOfRatings;
     }
 
     public TutorLeaderboardAssessments() {
-        this.userId = 0L;
-        this.assessments = 0L;
-        this.points = 0.0;
-        this.averageScore = 0.0;
-        this.averageRating = 0.0;
-        this.numberOfRatings = 0L;
-    }
-
-    public Long getKey() {
-        return userId;
+        this(0L, 0L, 0.0, 0.0, 0.0, 0L);
     }
 }
