@@ -140,7 +140,7 @@ public class BonusResource {
     public ResponseEntity<BonusExampleDTO> calculateGradeWithBonus(@RequestParam BonusStrategy bonusStrategy, @RequestParam Double calculationSign,
             @RequestParam Long bonusToGradingScaleId, @RequestParam Double bonusToPoints, @RequestParam Long sourceGradingScaleId, @RequestParam Double sourcePoints) {
 
-        // TODO: Ata: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
+        // TODO: Add auth and validation and authorize to USER role. Currently enabled only to ADMINs for testing.
         var targetGradingScale = gradingScaleRepository.findById(bonusToGradingScaleId).orElseThrow();
         var sourceGradingScale = gradingScaleRepository.findById(sourceGradingScaleId).orElseThrow();
 

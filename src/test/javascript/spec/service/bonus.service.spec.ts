@@ -225,8 +225,9 @@ describe('Bonus Service', () => {
             exceedsMax: true,
         },
     ] as BonusExample[])('should check final grade is calculated correctly with BonusStrategy.GRADES_CONTINUOUS %j', (expectedBonusExample: BonusExample) => {
-        const bonusExample = new BonusExample(expectedBonusExample.studentPointsOfBonusTo, expectedBonusExample.studentPointsOfBonusSource);
+        // Calculation results should be consistent with BonusIntegrationTest.java
 
+        const bonusExample = new BonusExample(expectedBonusExample.studentPointsOfBonusTo, expectedBonusExample.studentPointsOfBonusSource);
         const bonus: Bonus = {
             id: 77,
             bonusStrategy: BonusStrategy.GRADES_CONTINUOUS,
@@ -268,8 +269,9 @@ describe('Bonus Service', () => {
             exceedsMax: true,
         },
     ] as BonusExample[])('should check final grade is calculated correctly with BonusStrategy.POINTS %j', (expectedBonusExample: BonusExample) => {
-        const bonusExample = new BonusExample(expectedBonusExample.studentPointsOfBonusTo, expectedBonusExample.studentPointsOfBonusSource);
+        // Calculation results should be consistent with BonusIntegrationTest.java
 
+        const bonusExample = new BonusExample(expectedBonusExample.studentPointsOfBonusTo, expectedBonusExample.studentPointsOfBonusSource);
         const sourceGradingScaleForPoints = {
             id: 7,
             gradeType: GradeType.BONUS,

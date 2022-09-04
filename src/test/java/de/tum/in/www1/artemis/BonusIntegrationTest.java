@@ -3,7 +3,9 @@ package de.tum.in.www1.artemis;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.util.List;
+import java.util.Optional;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,13 +16,22 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.BonusRepository;
+import de.tum.in.www1.artemis.repository.CourseRepository;
+import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
+import de.tum.in.www1.artemis.web.rest.dto.BonusExampleDTO;
 
 class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private BonusRepository bonusRepository;
+
+    @Autowired
+    private CourseRepository courseRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     @Autowired
     private GradingScaleRepository gradingScaleRepository;
@@ -44,7 +55,13 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     void init() {
         database.addUsers(0, 0, 0, 1);
         course = database.addEmptyCourse();
+        course.setMaxPoints(200);
+        courseRepository.save(course);
+
         Exam targetExam = database.addExamWithExerciseGroup(course, true);
+        targetExam.setMaxPoints(200);
+        examRepository.save(targetExam);
+
         Exam sourceExam = database.addExamWithExerciseGroup(course, true);
         bonusToExamGradingScale = new GradingScale();
         bonusToExamGradingScale.setGradeType(GradeType.GRADE);
@@ -112,7 +129,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testSaveBonusSourceForTargetExam() throws Exception {
+    void testSaveBonusForTargetExam() throws Exception {
         bonusRepository.delete(courseBonus);
 
         Exam newExam = database.addExamWithExerciseGroup(course, true);
@@ -133,7 +150,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testSaveBonusSourceForTargetExamDuplicateError() throws Exception {
+    void testSaveBonusForTargetExamDuplicateError() throws Exception {
 
         request.postWithResponseBody("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
                 examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
@@ -150,18 +167,24 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
     }
 
-    // TODO: Ata: Add student tests that fail due to Unauthorized
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testCreateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
+        request.postWithResponseBody("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
+                examBonus, Bonus.class, HttpStatus.FORBIDDEN);
+    }
 
-    // @Test
-    // @WithMockUser(username = "student1", roles = "USER")
-    // void deleteTextExercise_isNotAtLeastInstructorInCourse_forbidden() throws Exception {
-    // final Course course = database.addCourseWithOneReleasedTextExercise();
-    // TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-    // course.setInstructorGroupName("test");
-    // courseRepository.save(course);
-    //
-    // request.delete("/api/text-exercises/" + textExercise.getId(), HttpStatus.FORBIDDEN);
-    // }
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
+        request.delete("/api/bonus/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testDeleteBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
+        request.put("/api/bonus/", courseBonus, HttpStatus.FORBIDDEN);
+    }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
@@ -217,6 +240,154 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         request.delete("/api/bonus/" + foundBonus.getId(), HttpStatus.OK);
         request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
                 HttpStatus.NOT_FOUND, Bonus.class);
+
+    }
+
+    @NotNull
+    private GradingScale createBonusToGradingScale(Exam bonusToExam) {
+        GradingScale bonusToGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 40, 20, 15, 15, 10, 100 },
+                Optional.of(new String[] { "5.0", "4.0", "3.0", "2.0", "1.0", "1.0+" }), true, 1);
+
+        bonusToGradingScale.setGradeType(GradeType.GRADE);
+        bonusToGradingScale.setExam(bonusToExam);
+        return bonusToGradingScale;
+    }
+
+    @NotNull
+    private GradingScale createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(Course sourceCourse) {
+        GradingScale sourceGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "0.1", "0.2" }), true, 1);
+
+        sourceGradingScale.setGradeType(GradeType.BONUS);
+        sourceGradingScale.setCourse(sourceCourse);
+        return sourceGradingScale;
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCalculateRawBonusWithGradesContinuousBonusStrategy() throws Exception {
+        // Calculation results should be consistent with bonus.service.spec.ts
+
+        BonusStrategy bonusStrategy = BonusStrategy.GRADES_CONTINUOUS;
+        double weight = -1;
+
+        Exam bonusToExam = bonusToExamGradingScale.getExam();
+        Course sourceCourse = courseGradingScale.getCourse();
+
+        gradingScaleRepository.deleteAll();
+
+        GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForGradesBonusStrategy(sourceCourse);
+        GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
+        gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
+
+        double bonusToPoints = 50;
+        double sourcePoints = 100;
+        String expectedExamGrade = "5.0";
+        double expectedBonusGrade = 0.0;
+        Double expectedFinalPoints = 50.0;
+        String expectedFinalGrade = "5.0";
+        boolean expectedExceedsMax = false;
+
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+
+        bonusToPoints = 120;
+        sourcePoints = 75;
+        expectedExamGrade = "3.0";
+        expectedBonusGrade = 0.1;
+        expectedFinalPoints = null;
+        expectedFinalGrade = "2.9";
+        expectedExceedsMax = false;
+
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+
+        bonusToPoints = 200;
+        sourcePoints = 200;
+        expectedExamGrade = "1.0";
+        expectedBonusGrade = 0.2;
+        expectedFinalPoints = null;
+        expectedFinalGrade = "1.0";
+        expectedExceedsMax = true;
+
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+
+    }
+
+    @NotNull
+    private BonusExampleDTO calculateFinalGradeAtServer(BonusStrategy bonusStrategy, double weight, double bonusToPoints, double sourcePoints, String expectedExamGrade,
+            double expectedBonusGrade, Double expectedFinalPoints, String expectedFinalGrade, boolean expectedExceedsMax, long bonusToGradingScaleId, long sourceGradingScaleId)
+            throws Exception {
+        BonusExampleDTO bonusExample = request.get(
+                "/api/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight + "&bonusToGradingScaleId=" + bonusToGradingScaleId
+                        + "&sourceGradingScaleId=" + sourceGradingScaleId + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints,
+                HttpStatus.OK, BonusExampleDTO.class);
+        assertThat(bonusExample.examGrade()).isEqualTo(expectedExamGrade);
+        assertThat(bonusExample.bonusGrade()).isEqualTo(expectedBonusGrade);
+        assertThat(bonusExample.finalPoints()).isEqualTo(expectedFinalPoints);
+        assertThat(bonusExample.finalGrade()).isEqualTo(expectedFinalGrade);
+        assertThat(bonusExample.exceedsMax()).isEqualTo(expectedExceedsMax);
+        return bonusExample;
+    }
+
+    @NotNull
+    private GradingScale createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(Course sourceCourse) {
+        GradingScale sourceGradingScale = database.generateGradingScaleWithStickyStep(new double[] { 30, 40, 70 }, Optional.of(new String[] { "0", "10", "20" }), true, 1);
+
+        sourceGradingScale.setGradeType(GradeType.BONUS);
+        sourceGradingScale.setCourse(sourceCourse);
+        return sourceGradingScale;
+    }
+
+    @Test
+    @WithMockUser(username = "admin", roles = "ADMIN")
+    void testCalculateRawBonusWithPointsBonusStrategy() throws Exception {
+        // Calculation results should be consistent with bonus.service.spec.ts
+
+        BonusStrategy bonusStrategy = BonusStrategy.POINTS;
+        double weight = 1;
+
+        Exam bonusToExam = bonusToExamGradingScale.getExam();
+        Course sourceCourse = courseGradingScale.getCourse();
+
+        gradingScaleRepository.deleteAll();
+
+        GradingScale sourceGradingScale = createSourceGradingScaleWithGradeStepsForPointsBonusStrategy(sourceCourse);
+        GradingScale bonusToGradingScale = createBonusToGradingScale(bonusToExam);
+        gradingScaleRepository.saveAll(List.of(bonusToGradingScale, sourceGradingScale));
+
+        double bonusToPoints = 50;
+        double sourcePoints = 100;
+        String expectedExamGrade = "5.0";
+        double expectedBonusGrade = 0.0;
+        double expectedFinalPoints = 50.0;
+        String expectedFinalGrade = "5.0";
+        boolean expectedExceedsMax = false;
+
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+
+        bonusToPoints = 120;
+        sourcePoints = 75;
+        expectedExamGrade = "3.0";
+        expectedBonusGrade = 10.0;
+        expectedFinalPoints = 130.0;
+        expectedFinalGrade = "3.0";
+        expectedExceedsMax = false;
+
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+
+        bonusToPoints = 200;
+        sourcePoints = 200;
+        expectedExamGrade = "1.0";
+        expectedBonusGrade = 20.0;
+        expectedFinalPoints = 200.0;
+        expectedFinalGrade = "1.0";
+        expectedExceedsMax = true;
+
+        calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
+                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
 
     }
 

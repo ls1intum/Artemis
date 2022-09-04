@@ -3950,6 +3950,45 @@ public class DatabaseUtilService {
         return gradingScale;
     }
 
+    public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
+        // This method has a different signature from the one above to define intervals from sizes to be consistent with
+        // the instructor UI at interval-grading-system.component.ts and client tests at bonus.service.spec.ts.
+
+        int gradeStepCount = intervalSizes.length;
+        if (firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
+            fail("Invalid grading scale parameters");
+        }
+        GradingScale gradingScale = new GradingScale();
+        Set<GradeStep> gradeSteps = new LinkedHashSet<>();
+        double currentLowerBoundPercentage = 0.0;
+        for (int i = 0; i < gradeStepCount; i++) {
+            GradeStep gradeStep = new GradeStep();
+            gradeStep.setLowerBoundPercentage(currentLowerBoundPercentage);
+            currentLowerBoundPercentage += intervalSizes[i];
+            gradeStep.setUpperBoundPercentage(currentLowerBoundPercentage);
+            gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
+            gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+
+            // Ensure 100 percent is not a part of the sticky grade step.
+            if (i == gradeStepCount - 2) {
+                gradeStep.setUpperBoundInclusive(true);
+
+            }
+            else if (i == gradeStepCount - 1) {
+                gradeStep.setLowerBoundInclusive(false);
+                gradeStep.setUpperBoundInclusive(true);
+            }
+
+            gradeStep.setIsPassingGrade(i >= firstPassingIndex);
+            gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
+            gradeStep.setGradingScale(gradingScale);
+            gradeSteps.add(gradeStep);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setGradeType(GradeType.GRADE);
+        return gradingScale;
+    }
+
     public List<String[]> loadPercentagesAndGrades(String path) throws Exception {
         try (CSVReader reader = new CSVReader(new FileReader(ResourceUtils.getFile("classpath:" + path), StandardCharsets.UTF_8))) {
             List<String[]> rows = reader.readAll();
