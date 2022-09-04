@@ -15,7 +15,6 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
@@ -24,7 +23,6 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 @RestController
 @RequestMapping("/api")
@@ -57,29 +55,26 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group.
+     * POST /tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group.
      *
-     * @param courseId             the id of the course to which the tutorial group should be added
      * @param tutorialGroupSession the tutorial group that should be created
      * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group
      */
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
+    @PostMapping("/tutorial-groups/{tutorialGroupId}/tutorial-group-sessions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
-            @RequestBody @Valid TutorialGroupSession tutorialGroupSession) throws URISyntaxException {
-        log.debug("REST request to create TutorialGroupSession: {} in course: {}", tutorialGroupSession, courseId);
+    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long tutorialGroupId, @RequestBody @Valid TutorialGroupSession tutorialGroupSession)
+            throws URISyntaxException {
+        log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSession);
         if (tutorialGroupSession.getId() != null) {
             throw new BadRequestException("A new tutorial group session cannot already have an ID");
         }
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
-
-        checkPathIdsAgainstDatabaseIds(courseId, tutorialGroup);
-
         if (tutorialGroup.getCourse().getTutorialGroupsConfiguration() == null) {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
+        // ToDo: Check for overlapping sessions
         tutorialGroupSession.setTutorialGroup(tutorialGroup);
         tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
 
@@ -88,50 +83,42 @@ public class TutorialGroupSessionResource {
         return ResponseEntity.created(new URI("")).body(tutorialGroupSession);
     }
 
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
+    @PostMapping("/tutorial-group-sessions/{tutorialGroupSessionId}/cancel")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
-        log.debug("REST request to cancel TutorialGroupSession: {} in tutorialGroup: {}", sessionId, tutorialGroupId);
-        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkPathIdsAgainstDatabaseIds(courseId, tutorialGroupId, tutorialGroupSession);
+    public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long tutorialGroupSessionId, @RequestBody StatusDTO statusDTO) throws URISyntaxException {
+
+        log.debug("REST request to cancel TutorialGroupSession: {}", tutorialGroupSessionId);
+        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(tutorialGroupSessionId);
+
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupSession.getTutorialGroup().getCourse(), null);
 
         tutorialGroupSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+        if (statusDTO != null && statusDTO.status_explanation() != null && statusDTO.status_explanation().trim().length() > 0) {
+            tutorialGroupSession.setStatusExplanation(statusDTO.status_explanation().trim());
+        }
         tutorialGroupSessionRepository.save(tutorialGroupSession);
 
         return ResponseEntity.ok().body(tutorialGroupSession);
     }
 
-    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
+    @PostMapping("/tutorial-group-sessions/{tutorialGroupSessionId}/activate")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
-        log.debug("REST request to cancel TutorialGroupSession: {} in tutorialGroup: {}", sessionId, tutorialGroupId);
-        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkPathIdsAgainstDatabaseIds(courseId, tutorialGroupId, tutorialGroupSession);
+    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long tutorialGroupSessionId) throws URISyntaxException {
+        log.debug("REST request to cancel TutorialGroupSession: {}", tutorialGroupSessionId);
+        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(tutorialGroupSessionId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupSession.getTutorialGroup().getCourse(), null);
 
         tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        tutorialGroupSession.setStatusExplanation(null);
+
         tutorialGroupSessionRepository.save(tutorialGroupSession);
 
         return ResponseEntity.ok().body(tutorialGroupSession);
     }
 
-    private void checkPathIdsAgainstDatabaseIds(Long courseIdFromPath, TutorialGroup tutorialGroupFromDatabase) {
-        if (!tutorialGroupFromDatabase.getCourse().getId().equals(courseIdFromPath)) {
-            throw new ConflictException("The tutorial group does not belong to the correct course", "TutorialGroup", "tutorialGroupWrongCourse");
-        }
-    }
-
-    private void checkPathIdsAgainstDatabaseIds(Long courseIdFromPath, Long tutorialGroupIdFromPath, TutorialGroupSession tutorialGroupSession) {
-        if (!tutorialGroupSession.getTutorialGroup().getId().equals(tutorialGroupIdFromPath)) {
-            throw new ConflictException("The tutorial group session does not belong to the correct tutorial group", "TutorialGroupSession",
-                    "tutorialGroupSessionWrongTutorialGroup");
-        }
-        if (!tutorialGroupSession.getTutorialGroup().getCourse().getId().equals(courseIdFromPath)) {
-            throw new ConflictException("The tutorial group does not belong to the correct course", "TutorialGroup", "tutorialGroupWrongCourse");
-        }
+    public record StatusDTO(String status_explanation) {
     }
 
 }

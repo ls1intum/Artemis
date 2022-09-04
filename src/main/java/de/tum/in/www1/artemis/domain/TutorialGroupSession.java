@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import java.time.ZonedDateTime;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -29,13 +30,17 @@ public class TutorialGroupSession extends DomainObject {
     @Column(name = "status")
     private TutorialGroupSessionStatus status;
 
+    @Column(name = "status_explanation")
+    @Size(min = 1, max = 256)
+    private String statusExplanation;
+
     @ManyToOne
     @JoinColumn(name = "tutorial_group_schedule_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("tutorialGroupSessions, tutorialGroup")
     private TutorialGroupSchedule tutorialGroupSchedule;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "tutorial_group_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     @JsonIgnoreProperties("tutorialGroupSessions")
@@ -79,5 +84,13 @@ public class TutorialGroupSession extends DomainObject {
 
     public void setStatus(TutorialGroupSessionStatus tutorialGroupSessionStatus) {
         this.status = tutorialGroupSessionStatus;
+    }
+
+    public String getStatusExplanation() {
+        return statusExplanation;
+    }
+
+    public void setStatusExplanation(String statusExplanation) {
+        this.statusExplanation = statusExplanation;
     }
 }

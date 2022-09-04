@@ -14,30 +14,26 @@ export class TutorialGroupSessionService {
 
     constructor(private httpClient: HttpClient) {}
 
-    create(tutorialGroupSession: TutorialGroupSession, courseId: number, tutorialGroupId: number): Observable<EntityResponseType> {
+    create(tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupSessionDatesFromClient(tutorialGroupSession);
         return this.httpClient
-            .post<TutorialGroupSession>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, copy, { observe: 'response' })
+            .post<TutorialGroupSession>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/tutorial-group-sessions`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    cancel(courseId: number, tutorialGroupId: number, tutorialGroupSessionId: number): Observable<EntityResponseType> {
+    cancel(tutorialGroupSessionId: number, explanation: string): Observable<EntityResponseType> {
         return this.httpClient
             .post<TutorialGroupSession>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${tutorialGroupSessionId}/cancel`,
-                {},
+                `${this.resourceURL}/tutorial-group-sessions/${tutorialGroupSessionId}/cancel`,
+                { status_explanation: explanation },
                 { observe: 'response' },
             )
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    activate(courseId: number, tutorialGroupId: number, tutorialGroupSessionId: number): Observable<EntityResponseType> {
+    activate(tutorialGroupSessionId: number): Observable<EntityResponseType> {
         return this.httpClient
-            .post<TutorialGroupSession>(
-                `${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${tutorialGroupSessionId}/activate`,
-                {},
-                { observe: 'response' },
-            )
+            .post<TutorialGroupSession>(`${this.resourceURL}/tutorial-group-sessions/${tutorialGroupSessionId}/activate`, {}, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 

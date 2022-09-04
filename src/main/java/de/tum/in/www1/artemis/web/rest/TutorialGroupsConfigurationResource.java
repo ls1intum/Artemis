@@ -85,11 +85,13 @@ public class TutorialGroupsConfigurationResource {
         if (tutorialGroupsConfiguration.getId() != null) {
             throw new BadRequestException("A new tutorial group configuration cannot already have an ID");
         }
-
         var course = courseRepository.findByIdElseThrow(courseId);
-        if (course.getTutorialGroupsConfiguration() != null) {
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        if (tutorialGroupsConfigurationRepository.findByCourse(course).isPresent()) {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
+
         isValidTutorialGroupConfiguration(tutorialGroupsConfiguration);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         tutorialGroupsConfiguration.setCourse(course);

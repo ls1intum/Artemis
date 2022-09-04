@@ -40,6 +40,8 @@
             <column name="status" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
+            <column name="status_explanation" type="VARCHAR(255)">
+            </column>
             <column name="tutorial_group_schedule_id" type="BIGINT">
             </column>
             <column name="tutorial_group_id" type="BIGINT">

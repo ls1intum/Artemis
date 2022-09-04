@@ -1,0 +1,29 @@
+<div class="modal-header">
+    <h4 class="modal-title">
+        {{ (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE ? 'artemisApp.cancelSession.title' : 'artemisApp.activateSession.title') | artemisTranslate }}
+    </h4>
+    <button type="button" class="btn-close" (click)="activeModal.dismiss()"></button>
+</div>
+<div class="modal-body">
+    <p>
+        {{
+            (tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE ? 'artemisApp.cancelSession.question' : 'artemisApp.activateSession.question')
+                | artemisTranslate: { label: generateSessionLabel(tutorialGroupSession) }
+        }}
+    </p>
+    <form *ngIf="tutorialGroupSession.status === tutorialGroupSessionStatus.ACTIVE" [formGroup]="form">
+        <div class="form-group">
+            <label for="reason">{{ 'artemisApp.cancelSession.explanation' | artemisTranslate }}</label>
+            <textarea class="form-control" id="reason" rows="2" formControlName="reason"></textarea>
+            <div *ngIf="reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)" class="alert alert-danger">
+                <div *ngIf="reasonControl?.errors?.maxlength">
+                    {{ 'artemisApp.cancelSession.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+<div class="modal-footer">
+    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">{{ 'global.form.cancel' | artemisTranslate }}</button>
+    <button type="button" class="btn btn-success" (click)="cancelOrActivate()" [disabled]="!isSubmitPossible">{{ 'global.form.confirm' | artemisTranslate }}</button>
+</div>

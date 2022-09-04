@@ -20,6 +20,7 @@ import { CreateTutorialGroupsConfigurationComponent } from './tutorial-groups-co
 import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { TutorialGroupSessionFormComponent } from './tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { CreateTutorialGroupSessionComponent } from './tutorial-groups-session/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { CancellationModalComponent } from './schedule-management/cancellation-modal/cancellation-modal.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule, OwlDateTimeModule],
@@ -38,6 +39,7 @@ import { CreateTutorialGroupSessionComponent } from './tutorial-groups-session/c
         EditTutorialGroupsConfigurationComponent,
         TutorialGroupSessionFormComponent,
         CreateTutorialGroupSessionComponent,
+        CancellationModalComponent,
     ],
 })
 export class ArtemisTutorialGroupsModule {}

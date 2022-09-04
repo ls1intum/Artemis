@@ -13,6 +13,9 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { SortService } from 'app/shared/service/sort.service';
 import { getDayTranslationKey } from '../shared/weekdays';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
+import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
+import { CancellationModalComponent } from 'app/course/tutorial-groups/schedule-management/cancellation-modal/cancellation-modal.component';
+import { addParticipationToResult } from 'app/exercises/shared/result/result.utils';
 
 @Component({
     selector: 'jhi-schedule-management',
@@ -32,6 +35,7 @@ export class ScheduleManagementComponent implements OnInit {
         private alertService: AlertService,
         private sortService: SortService,
         private changeDetectorRef: ChangeDetectorRef,
+        private modalService: NgbModal,
     ) {}
 
     courseId: number;
@@ -53,35 +57,13 @@ export class ScheduleManagementComponent implements OnInit {
     }
 
     getDayTranslationKey = getDayTranslationKey;
-    cancelOrActivate(session: TutorialGroupSession): void {
-        if (session.status === TutorialGroupSessionStatus.ACTIVE) {
-            this.cancelSession(session);
-        } else {
-            this.activateSession(session);
-        }
-    }
-
-    cancelSession(session: TutorialGroupSession): void {
-        this.tutorialGroupSessionService.cancel(this.courseId!, this.tutorialGroup.id!, session.id!).subscribe({
-            next: () => {
+    openCancellationModal(session: TutorialGroupSession): void {
+        const modalRef = this.modalService.open(CancellationModalComponent);
+        modalRef.componentInstance.tutorialGroupSession = session;
+        modalRef.result.then((result) => {
+            if (result === 'confirmed') {
                 this.loadAll();
-            },
-            error: (res: HttpErrorResponse) => {
-                this.isLoading = false;
-                onError(this.alertService, res);
-            },
-        });
-    }
-
-    activateSession(session: TutorialGroupSession): void {
-        this.tutorialGroupSessionService.activate(this.courseId!, this.tutorialGroup.id!, session.id!).subscribe({
-            next: () => {
-                this.loadAll();
-            },
-            error: (res: HttpErrorResponse) => {
-                this.isLoading = false;
-                onError(this.alertService, res);
-            },
+            }
         });
     }
 

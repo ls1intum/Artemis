@@ -10,6 +10,16 @@
             "createSessionButton": "Create Session",
             "title": "Create Individual Session"
         },
+        "cancelSession": {
+            "title": "Cancel Session",
+            "question": "Do you really want to cancel the session {{label}}?",
+            "explanation": "Give a reason for cancelling the session:",
+            "maxLengthValidationError": "Reason can be max {{ max }} characters long!"
+        },
+        "activateSession": {
+            "title": "Activate cancelled session",
+            "question": "Do you really want to activate the cancelled session {{label}}?"
+        },
         "createConfiguration": {
             "title": "Create Tutorial Groups Configuration",
             "editButton": "Edit Tutorial Groups Configuration",

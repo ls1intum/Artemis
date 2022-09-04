@@ -53,7 +53,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../', '../'], { relativeTo: this.activatedRoute });
+                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

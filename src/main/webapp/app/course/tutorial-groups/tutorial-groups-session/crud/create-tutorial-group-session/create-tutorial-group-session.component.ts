@@ -63,7 +63,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
         this.tutorialGroupSessionToCreate.end = this.createUTC(date!, endTime!);
         this.isLoading = true;
         this.tutorialGroupSessionService
-            .create(this.tutorialGroupSessionToCreate, this.tutorialGroup.course!.id!, this.tutorialGroup.id!)
+            .create(this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
