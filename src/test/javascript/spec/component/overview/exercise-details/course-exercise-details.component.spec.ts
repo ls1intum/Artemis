@@ -157,8 +157,6 @@ describe('CourseExerciseDetailsComponent', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseExerciseDetailsComponent);
                 comp = fixture.componentInstance;
-                console.log('Component is: ');
-                console.log(comp);
 
                 // mock profileService
                 profileService = fixture.debugElement.injector.get(ProfileService);
