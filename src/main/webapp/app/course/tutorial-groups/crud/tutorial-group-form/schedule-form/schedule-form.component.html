@@ -82,5 +82,9 @@
                 </div>
             </div>
         </div>
+        <div *ngIf="createdSessions.length > 0">
+            <span>{{ 'artemisApp.scheduleForm.sessionCreationInfo' | artemisTranslate }} </span>
+            <span class="font-weight-bold" *ngFor="let freeDay of createdSessions">{{ freeDay | artemisDate: 'short-date' }} | </span>
+        </div>
     </div>
 </ng-container>

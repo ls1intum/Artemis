@@ -86,6 +86,30 @@ export class ScheduleFormComponent implements OnInit {
     get endTimeControl() {
         return this.formGroup.get('endTime');
     }
+
+    get createdSessions() {
+        const sessions: dayjs.Dayjs[] = [];
+
+        if (this.formGroup.valid) {
+            const { dayOfWeek, repetitionFrequency, period } = this.formGroup.value;
+            let start = dayjs(period[0]);
+            const end = dayjs(period[1]);
+
+            // find the first day of the week
+            while (start.day() + 1 !== dayOfWeek) {
+                start = start.add(1, 'day');
+            }
+
+            // add sessions
+            while (start.isBefore(end)) {
+                sessions.push(start);
+                start = start.add(repetitionFrequency, 'week');
+            }
+        }
+
+        return sessions;
+    }
+
     constructor(private fb: FormBuilder, public formatter: NgbDateParserFormatter) {}
 
     ngOnInit(): void {
