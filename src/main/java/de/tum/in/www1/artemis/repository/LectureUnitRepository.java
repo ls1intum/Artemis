@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -20,16 +21,27 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             SELECT lectureUnit
             FROM LectureUnit lectureUnit
             LEFT JOIN FETCH lectureUnit.learningGoals
-            WHERE lectureUnit.id = :#{#lectureUnitId}
+            WHERE lectureUnit.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithLearningGoals(@Param("lectureUnitId") Long lectureUnitId);
 
     @Query("""
             SELECT lectureUnit
             FROM LectureUnit lectureUnit
+            LEFT JOIN FETCH lectureUnit.learningGoals lg1
+            LEFT JOIN FETCH lectureUnit.exercise e
+            LEFT JOIN FETCH e.learningGoals lg2
+            WHERE lg1.id = :learningGoalId
+            OR lg2.id = :learningGoalId
+            """)
+    List<LectureUnit> findAllByLearningGoal(@Param("learningGoalId") Long learningGoalId);
+
+    @Query("""
+            SELECT lectureUnit
+            FROM LectureUnit lectureUnit
             LEFT JOIN FETCH lectureUnit.learningGoals lg
             LEFT JOIN FETCH lg.lectureUnits
-            WHERE lectureUnit.id = :#{#lectureUnitId}
+            WHERE lectureUnit.id = :lectureUnitId
             """)
     Optional<LectureUnit> findByIdWithLearningGoalsBidirectional(@Param("lectureUnitId") long lectureUnitId);
 
