@@ -110,25 +110,37 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     List<GradingScale> findAllByExamId(@Param("examId") Long examId);
 
     /**
-     * Query which fetches all the modeling exercises for which the user is instructor in the course and matching the search criteria.
-     * As JPQL doesn't support unions, the distinction for course exercises and exam exercises is made with sub queries.
+     * Query which fetches all the grading scales with BONUS grade type for which the user is instructor in the course and matching the search criteria.
      *
-     * @param partialTitle exercise title search term
+     * @param partialTitle course or exam title search term
      * @param groups user groups
      * @param pageable Pageable
      * @return Page with search results
      */
     @Query("""
-            SELECT gs
-            FROM GradingScale gs
-            LEFT JOIN gs.course
-            LEFT JOIN gs.exam
-            WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
-                OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
+                SELECT gs
+                FROM GradingScale gs
+                LEFT JOIN gs.course
+                LEFT JOIN gs.exam
+                LEFT JOIN gs.exam.course
+                WHERE gs.gradeType = 'BONUS' AND ((gs.course.instructorGroupName IN :groups AND gs.course.title LIKE %:partialTitle%)
+                    OR (gs.exam.course.instructorGroupName IN :groups AND gs.exam.title LIKE %:partialTitle%))
             """)
+    // Note: Removing "LEFT JOIN gs.exam.course" part from the query above would cause the query to exclude GradingScales for Courses and just return the
+    // GradingScales for Exams. (It will do so by generating a CROSS JOIN and a WHERE clause which checks for exam.course_id = course.id)
     Page<GradingScale> findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(@Param("partialTitle") String partialTitle, @Param("groups") Set<String> groups,
             Pageable pageable);
 
+    /**
+     * Same as the linked method except instructor group check is skipped for ADMINs to allow them access to all eligible
+     * grading scales.
+     *
+     * @see #findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(String, Set, Pageable)
+     *
+     * @param partialTitle course or exam title search term
+     * @param pageable Pageable
+     * @return Page with search results
+     */
     @Query("""
             SELECT gs
             FROM GradingScale gs

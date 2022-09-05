@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,22 +56,6 @@ public class BonusResource {
         this.courseRepository = courseRepository;
         this.gradingScaleRepository = gradingScaleRepository;
         this.authCheckService = authCheckService;
-    }
-
-    /**
-     * GET /courses/{courseId}/bonus : Find bonus model which has the given course as source.
-     *
-     * @param courseId the course to which the bonus source belongs
-     * @return ResponseEntity with status 200 (Ok) with body the bonus source if it exists and 404 (Not found) otherwise
-     */
-    @GetMapping("/courses/{courseId}/bonus")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> getBonusWithSourceCourse(@PathVariable Long courseId) {
-        log.debug("REST request to get bonus source for course: {}", courseId);
-        Course course = courseRepository.findByIdElseThrow(courseId);
-        Optional<Bonus> bonus = bonusRepository.findBySourceCourseId(courseId);
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-        return bonus.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
     }
 
     /**
