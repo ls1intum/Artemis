@@ -46,7 +46,10 @@
                 "editAttachment": "Anhang bearbeiten",
                 "notificationText": "Mitteilungstext",
                 "notificationPlaceholder": "Optional: Mitteilung über die Änderung",
-                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB"
+                "chooseFile": "Datei auswählen",
+                "error": "Die Datei {{ fileName }} ist zu groß. Die maximale Dateigröße beträgt 10MB.",
+                "fileLimitation": "Max. Dateigröße 10 MB",
+                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
             "import": {
                 "table": {
