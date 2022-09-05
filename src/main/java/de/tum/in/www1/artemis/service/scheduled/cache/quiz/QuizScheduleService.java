@@ -204,7 +204,7 @@ public class QuizScheduleService {
      * @param quizExercise should include questions and statistics without Hibernate proxies!
      */
     public void updateQuizExercise(@NotNull QuizExercise quizExercise) {
-        log.info("updateQuizExercise invoked for {}", quizExercise.getId());
+        log.debug("updateQuizExercise invoked for {}", quizExercise.getId());
         quizCache.updateQuizExercise(quizExercise);
     }
 
@@ -406,7 +406,7 @@ public class QuizScheduleService {
      * 4. Send out new Statistics to instructors (WEBSOCKET SEND)
      */
     public void processCachedQuizSubmissions() {
-        log.info("Process cached quiz submissions");
+        log.debug("Process cached quiz submissions");
         // global try-catch for error logging
         try {
             for (Cache cache : quizCache.getAllCaches()) {
@@ -417,7 +417,7 @@ public class QuizScheduleService {
                 QuizExercise quizExercise = quizExerciseRepository.findOne(quizExerciseId);
                 // check if quiz has been deleted
                 if (quizExercise == null) {
-                    log.info("Remove quiz {} from resultHashMap", quizExerciseId);
+                    log.debug("Remove quiz {} from resultHashMap", quizExerciseId);
                     quizCache.removeAndClear(quizExerciseId);
                     continue;
                 }
