@@ -87,6 +87,10 @@ export class ScheduleFormComponent implements OnInit {
         return this.formGroup.get('endTime');
     }
 
+    get repetitionFrequencyControl() {
+        return this.formGroup.get('repetitionFrequency');
+    }
+
     get createdSessions() {
         const sessions: dayjs.Dayjs[] = [];
 
@@ -123,7 +127,7 @@ export class ScheduleFormComponent implements OnInit {
                 dayOfWeek: [1, Validators.required],
                 startTime: ['13:00:00', [Validators.required]],
                 endTime: ['14:00:00', [Validators.required]],
-                repetitionFrequency: [1, [Validators.required]],
+                repetitionFrequency: [1, [Validators.required, Validators.min(1), Validators.max(7)]],
                 period: [this.defaultPeriod, [Validators.required]],
             },
             { validators: validTimeRange },

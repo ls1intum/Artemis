@@ -4,6 +4,23 @@
             <h3>{{ 'artemisApp.scheduleForm.title' | artemisTranslate }}</h3>
         </div>
         <div>
+            <!-- repetition frequency -->
+            <label for="repetitionFrequency">{{ 'artemisApp.scheduleForm.repetitionFrequency.label' | artemisTranslate }}</label>
+            <div class="input-group">
+                <input id="repetitionFrequency" type="number" class="form-control" formControlName="repetitionFrequency" />
+                <div class="input-group-text">{{ 'artemisApp.scheduleForm.repetitionFrequency.weeks' | artemisTranslate }}</div>
+            </div>
+            <div *ngIf="repetitionFrequencyControl?.invalid && (repetitionFrequencyControl?.dirty || repetitionFrequencyControl?.touched)" class="alert alert-danger">
+                <div *ngIf="repetitionFrequencyControl?.errors?.min">
+                    {{ 'artemisApp.scheduleForm.repetitionFrequency.minValidationError' | artemisTranslate: { min: 1 } }}
+                </div>
+                <div *ngIf="repetitionFrequencyControl?.errors?.max">
+                    {{ 'artemisApp.scheduleForm.repetitionFrequency.maxValidationError' | artemisTranslate: { min: 7 } }}
+                </div>
+                <div *ngIf="repetitionFrequencyControl?.errors?.required">
+                    {{ 'artemisApp.scheduleForm.repetitionFrequency.requiredValidationError' | artemisTranslate: { min: 7 } }}
+                </div>
+            </div>
             <!-- weekday -->
             <div>
                 <div>

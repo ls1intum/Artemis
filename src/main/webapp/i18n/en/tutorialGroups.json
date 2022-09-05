@@ -158,6 +158,13 @@
             "scheduleChangeWarning": "You changed the schedule. All sessions belonging to the old schedule will be deleted as a consequence. Are you sure you want to do this?",
             "sessionCreationInfo": "The schedule contains the following sessions:",
             "title": "Schedule",
+            "repetitionFrequency": {
+                "label": "Session repeats every: ",
+                "weeks": "Weeks",
+                "requiredValidationError": "You need to select a repetition frequency!",
+                "minValidationError": "Repetition frequency must be at least {{min}}!",
+                "maxValidationError": "Repetition frequency must be at most {{max}}!"
+            },
             "weekDay": {
                 "label": "Weekday on which the tutorial group meets",
                 "monday": "Monday",
