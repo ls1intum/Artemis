@@ -1,4 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
     <h3>{{ 'artemisApp.createSession.title' | artemisTranslate }}</h3>
-    <jhi-tutorial-group-session-form [isEditMode]="false" [course]="tutorialGroup!.course!" (formSubmitted)="createTutorialGroupSession($event)"> </jhi-tutorial-group-session-form>
+    <jhi-tutorial-group-session-form *ngIf="tutorialGroup" [isEditMode]="false" [course]="tutorialGroup!.course!" (formSubmitted)="createTutorialGroupSession($event)">
+    </jhi-tutorial-group-session-form>
 </jhi-loading-indicator-container>

@@ -98,10 +98,28 @@
         "registeredStudents": {
             "title": "Registered Students"
         },
-        "manageSchedule": {
-            "title": "Schedule",
-            "timeZoneInfo": "Time Zone: {{ timeZone }}",
-            "schedule": "Every {{ weekDay }} from {{ startTime }} to {{ endTime }}"
+        "manageSessions": {
+            "title": "Manage Sessions",
+            "tableCaption": "Sessions of the tutorial group {{ title }}",
+            "createButton": "Create Additional Session",
+            "cancelButton": "Cancel Session",
+            "activateButton": "Activate Session",
+            "columns": {
+                "id": "ID",
+                "date": "Date",
+                "followsSchedule": "Follows Schedule",
+                "isCancelled": "Cancelled",
+                "actions": "Actions"
+            },
+            "legend": {
+                "legend": "Legend",
+                "cancelled": "Cancelled Session",
+                "individual": "Individual Session"
+            },
+            "deleteButton": {
+                "question": "Are you sure to delete the session with title {{ title }}?",
+                "typeNameToConfirm": "Please enter the title of the session to confirm."
+            }
         },
         "sessionForm": {
             "date": "Date",

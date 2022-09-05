@@ -11,7 +11,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { SchedulePickerComponent } from './crud/schedule-picker/schedule-picker/schedule-picker.component';
-import { ScheduleManagementComponent } from './schedule-management/schedule-management.component';
+import { SessionManagementComponent } from './schedule-management/session-management.component';
 import { CalendarModule } from 'angular-calendar';
 import { ScheduleFormComponent } from './crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -35,7 +35,7 @@ import { CreateTutorialGroupFreeDayComponent } from './tutorial-free-days/crud/c
         TutorialGroupRowButtonsComponent,
         RegisteredStudentsComponent,
         SchedulePickerComponent,
-        ScheduleManagementComponent,
+        SessionManagementComponent,
         ScheduleFormComponent,
         TutorialGroupsConfigurationFormComponent,
         CreateTutorialGroupsConfigurationComponent,

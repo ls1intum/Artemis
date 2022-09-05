@@ -11,20 +11,19 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { getDayTranslationKey } from '../shared/weekdays';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/schedule-management/cancellation-modal/cancellation-modal.component';
-import { addParticipationToResult } from 'app/exercises/shared/result/result.utils';
+import { faPlus } from '@fortawesome/free-solid-svg-icons';
 
 @Component({
-    selector: 'jhi-schedule-management',
-    templateUrl: './schedule-management.component.html',
-    styleUrls: ['./schedule-management.component.scss'],
+    selector: 'jhi-session-management',
+    templateUrl: './session-management.component.html',
+    styleUrls: ['./session-management.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     encapsulation: ViewEncapsulation.None,
 })
-export class ScheduleManagementComponent implements OnInit {
+export class SessionManagementComponent implements OnInit {
     isLoading = false;
 
     constructor(
@@ -38,6 +37,8 @@ export class ScheduleManagementComponent implements OnInit {
         private modalService: NgbModal,
     ) {}
 
+    faPlus = faPlus;
+
     courseId: number;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroup: TutorialGroup;
@@ -46,17 +47,6 @@ export class ScheduleManagementComponent implements OnInit {
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
 
-    sessionTrackByFn = (index: number, session: TutorialGroupSession): number => session.id!;
-
-    generateSessionLabel(tutorialGroupSession: TutorialGroupSession): string {
-        if (!tutorialGroupSession?.start || !tutorialGroupSession?.end) {
-            return '';
-        } else {
-            return tutorialGroupSession.start.format('LLLL') + ' - ' + tutorialGroupSession.end.format('LT');
-        }
-    }
-
-    getDayTranslationKey = getDayTranslationKey;
     openCancellationModal(session: TutorialGroupSession): void {
         const modalRef = this.modalService.open(CancellationModalComponent);
         modalRef.componentInstance.tutorialGroupSession = session;
@@ -65,6 +55,16 @@ export class ScheduleManagementComponent implements OnInit {
                 this.loadAll();
             }
         });
+    }
+
+    determineRowClass(session: TutorialGroupSession): string {
+        if (session.status === TutorialGroupSessionStatus.CANCELLED) {
+            return 'table-danger';
+        }
+        if (!session.tutorialGroupSchedule) {
+            return 'table-warning';
+        }
+        return '';
     }
 
     ngOnInit(): void {

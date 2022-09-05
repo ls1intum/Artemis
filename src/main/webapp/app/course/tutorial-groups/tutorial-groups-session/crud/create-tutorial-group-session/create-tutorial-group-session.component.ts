@@ -12,7 +12,6 @@ import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutoria
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 import dayjs from 'dayjs/esm';
 import { combineLatest } from 'rxjs';
-import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
