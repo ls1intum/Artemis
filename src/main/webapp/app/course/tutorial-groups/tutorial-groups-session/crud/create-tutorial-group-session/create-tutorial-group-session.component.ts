@@ -12,6 +12,7 @@ import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutoria
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 import dayjs from 'dayjs/esm';
 import { combineLatest } from 'rxjs';
+import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
@@ -39,7 +40,6 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
                 take(1),
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    const courseId = Number(parentParams.get('courseId'));
                     return this.tutorialGroupService.getOne(tutorialGroupId);
                 }),
                 map((res: HttpResponse<TutorialGroup>) => res.body),

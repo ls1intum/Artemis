@@ -20,6 +20,26 @@
             "title": "Activate cancelled session",
             "question": "Do you really want to activate the cancelled session {{label}}?"
         },
+        "tutorialFreeDays": {
+            "title": "Add Tutorial Free Days",
+            "noReason": "No reason given",
+            "form": {
+                "dateLabel": "Date",
+                "requiredDateWarning": "Date is required!",
+                "dateValidationError": "Date is not valid!",
+                "reasonLabel": "Reason",
+                "reasonPlaceholder": "Reason why no tutorial group is  happening on that day",
+                "maxLengthValidationError": "Reason can be max {{ max }} characters long!"
+            },
+            "create": {
+                "title": "Add Tutorial Free Day",
+                "button": "Add Tutorial Free Day"
+            },
+            "deleteButton": {
+                "question": "Are you sure that you want to delete the Tutorial Group Free Day on {{ title }}?",
+                "typeNameToConfirm": "Please enter the date of the tutorial group free day to confirm."
+            }
+        },
         "createConfiguration": {
             "title": "Create Tutorial Groups Configuration",
             "editButton": "Edit Tutorial Groups Configuration",

@@ -62,6 +62,19 @@
             <column name="tutorial_period_end_inclusive" type="DATE">
             </column>
         </createTable>
+        <createTable tableName="tutorial_group_free_day">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_free_day_PK"/>
+            </column>
+            <column name="tutorial_groups_configuration_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="date" type="DATE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="reason" type="VARCHAR(255)">
+            </column>
+        </createTable>
         <!-- fks for tutorial_group_schedule table -->
         <addForeignKeyConstraint baseColumnNames="tutorial_group_id" baseTableName="tutorial_group_schedule"
                                  constraintName="fk_tutorial_group_schedule_tutorial_group_id" deferrable="false"
@@ -80,6 +93,11 @@
         <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="tutorial_groups_configuration"
                                  constraintName="fk_tutorial_groups_configuration_course_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
+                                 validate="true"/>
+        <!-- fks for tutorial_group_free_day table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="tutorial_group_free_day"
+                                 constraintName="fk_tutorial_group_free_day_tutorial_group_configuration_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_groups_configuration"
                                  validate="true"/>
     </changeSet>
 </databaseChangeLog>

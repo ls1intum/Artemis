@@ -24,6 +24,8 @@ import { ScheduleManagementComponent } from 'app/course/tutorial-groups/schedule
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-session/crud/create-tutorial-group-session/create-tutorial-group-session.component';
+import { TutorialFreeDaysComponent } from 'app/course/tutorial-groups/tutorial-free-days/tutorial-free-days.component';
+import { CreateTutorialGroupFreeDayComponent } from 'app/course/tutorial-groups/tutorial-free-days/crud/create-tutorial-group-free-day/create-tutorial-group-free-day.component';
 
 export const courseManagementState: Routes = [
     {
@@ -196,6 +198,24 @@ export const courseManagementState: Routes = [
                     {
                         path: 'configuration/:tutorialGroupsConfigurationId/edit',
                         component: EditTutorialGroupsConfigurationComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.createTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'configuration/:tutorialGroupsConfigurationId/tutorial-free-days',
+                        component: TutorialFreeDaysComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.createTutorialGroup.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: 'configuration/:tutorialGroupsConfigurationId/tutorial-free-days/create',
+                        component: CreateTutorialGroupFreeDayComponent,
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
                             pageTitle: 'artemisApp.createTutorialGroup.title',

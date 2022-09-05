@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import java.util.*;
 import java.util.stream.Collectors;

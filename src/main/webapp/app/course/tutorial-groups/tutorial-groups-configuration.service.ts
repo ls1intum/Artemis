@@ -1,6 +1,5 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { Observable } from 'rxjs';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
@@ -14,9 +13,9 @@ export class TutorialGroupsConfigurationService {
 
     constructor(private httpClient: HttpClient) {}
 
-    getOfCourse(tutorialGroupsConfigurationId: number, courseId: number) {
+    getOne(tutorialGroupsConfigurationId: number) {
         return this.httpClient
-            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}`, { observe: 'response' })
+            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
     create(tutorialGroupsConfiguration: TutorialGroupsConfiguration, courseId: number): Observable<EntityResponseType> {
@@ -26,10 +25,10 @@ export class TutorialGroupsConfigurationService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
 
-    update(tutorialGroupsConfiguration: TutorialGroupsConfiguration, courseId: number): Observable<EntityResponseType> {
+    update(tutorialGroupsConfiguration: TutorialGroupsConfiguration): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfiguration);
         return this.httpClient
-            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfiguration.id}`, copy, { observe: 'response' })
+            .put<TutorialGroupsConfiguration>(`${this.resourceURL}/tutorial-groups-configurations/${tutorialGroupsConfiguration.id}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
 
@@ -42,6 +41,12 @@ export class TutorialGroupsConfigurationService {
     private convertTutorialGroupsConfigurationResponseDatesFromServer(res: HttpResponse<TutorialGroupsConfiguration>): HttpResponse<TutorialGroupsConfiguration> {
         res.body!.tutorialPeriodStartInclusive = convertDateFromServer(res.body!.tutorialPeriodStartInclusive);
         res.body!.tutorialPeriodEndInclusive = convertDateFromServer(res.body!.tutorialPeriodEndInclusive);
+        if (res.body!.tutorialGroupFreeDays) {
+            res.body!.tutorialGroupFreeDays.forEach((tutorialGroupFreeDay) => {
+                tutorialGroupFreeDay.date = convertDateFromServer(tutorialGroupFreeDay.date);
+            });
+        }
+
         return res;
     }
 

@@ -5,7 +5,7 @@ import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-group
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { map, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
-import { faPencil, faPlus, faSort } from '@fortawesome/free-solid-svg-icons';
+import { faPencil, faPlus, faSort, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { Course, Language } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -28,6 +28,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
     faSort = faSort;
     faPlus = faPlus;
     faPencil = faPencil;
+    faUmbrellaBeach = faUmbrellaBeach;
     getDayTranslationKey = getDayTranslationKey;
     sortingPredicate = 'title';
     ascending = true;

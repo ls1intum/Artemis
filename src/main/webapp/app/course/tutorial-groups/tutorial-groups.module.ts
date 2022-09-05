@@ -21,6 +21,9 @@ import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-conf
 import { TutorialGroupSessionFormComponent } from './tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { CreateTutorialGroupSessionComponent } from './tutorial-groups-session/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { CancellationModalComponent } from './schedule-management/cancellation-modal/cancellation-modal.component';
+import { TutorialFreeDaysComponent } from './tutorial-free-days/tutorial-free-days.component';
+import { TutorialFreeDayFormComponent } from './tutorial-free-days/crud/tutorial-free-day-form/tutorial-free-day-form.component';
+import { CreateTutorialGroupFreeDayComponent } from './tutorial-free-days/crud/create-tutorial-group-free-day/create-tutorial-group-free-day.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule, OwlDateTimeModule],
@@ -40,6 +43,9 @@ import { CancellationModalComponent } from './schedule-management/cancellation-m
         TutorialGroupSessionFormComponent,
         CreateTutorialGroupSessionComponent,
         CancellationModalComponent,
+        TutorialFreeDaysComponent,
+        TutorialFreeDayFormComponent,
+        CreateTutorialGroupFreeDayComponent,
     ],
 })
 export class ArtemisTutorialGroupsModule {}

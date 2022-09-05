@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.web.rest;
+package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -19,7 +19,7 @@ import org.springframework.web.bind.annotation.*;
 
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.TutorialGroupsConfigurationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
@@ -51,22 +51,24 @@ public class TutorialGroupsConfigurationResource {
     }
 
     /**
-     * GET /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId : gets the tutorial groups configuration with the specified id.
+     * GET /tutorial-groups-configuration/:tutorialGroupsConfigurationId : gets the tutorial groups configuration with the specified id.
      *
      * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to retrieve
-     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
-    @GetMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
+    @GetMapping("/tutorial-groups-configurations/{tutorialGroupsConfigurationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long tutorialGroupsConfigurationId, @PathVariable Long courseId) {
-        log.debug("REST request to get tutorial groups configuration: {} of course: {}", tutorialGroupsConfigurationId, courseId);
+    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long tutorialGroupsConfigurationId) {
+        log.debug("REST request to get tutorial groups configuration: {}", tutorialGroupsConfigurationId);
 
-        var configuration = tutorialGroupsConfigurationRepository.findByIdWithElseThrow(tutorialGroupsConfigurationId);
-        checkConfigurationCourseIdMatchesPathCourseId(courseId, configuration);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
-        return ResponseEntity.ok().body(configuration);
+        var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreeDays(tutorialGroupsConfigurationId);
+
+        if (configuration.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.get().getCourse(), null);
+        return ResponseEntity.ok().body(configuration.get());
     }
 
     /**
@@ -100,18 +102,17 @@ public class TutorialGroupsConfigurationResource {
     }
 
     /**
-     * PUT /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId : Updates an existing tutorial groups configuration.
+     * PUT /tutorial-groups-configurations/:tutorialGroupsConfigurationId : Updates an existing tutorial groups configuration.
      *
-     * @param courseId                          the id of the course to which the tutorial group configuration belongs
      * @param updatedTutorialGroupConfiguration the configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
      */
-    @PutMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
+    @PutMapping("/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+    public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
-        log.debug("REST request to update TutorialGroupsConfiguration: {} for course: {}", updatedTutorialGroupConfiguration, courseId);
+        log.debug("REST request to update TutorialGroupsConfiguration: {}", updatedTutorialGroupConfiguration);
         if (updatedTutorialGroupConfiguration.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
@@ -142,13 +143,6 @@ public class TutorialGroupsConfigurationResource {
         }
         if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
             throw new BadRequestException("The start date must be before the end date");
-        }
-    }
-
-    private void checkConfigurationCourseIdMatchesPathCourseId(Long pathCourseId, TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        if (!tutorialGroupsConfiguration.getCourse().getId().equals(pathCourseId)) {
-            throw new ConflictException("The tutorial group configuration does not belong to the correct course", "TutorialGroupsConfiguration",
-                    "tutorialGroupsConfigurationWrongCourse");
         }
     }
 

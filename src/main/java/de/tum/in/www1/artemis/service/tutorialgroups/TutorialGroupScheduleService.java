@@ -1,4 +1,4 @@
-package de.tum.in.www1.artemis.service;
+package de.tum.in.www1.artemis.service.tutorialgroups;
 
 import java.time.*;
 import java.util.ArrayList;
@@ -11,9 +11,9 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.in.www1.artemis.repository.TutorialGroupScheduleRepository;
-import de.tum.in.www1.artemis.repository.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 
 @Service
 public class TutorialGroupScheduleService {

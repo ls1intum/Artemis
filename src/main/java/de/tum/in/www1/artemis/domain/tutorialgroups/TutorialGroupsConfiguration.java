@@ -1,5 +1,8 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import java.util.HashSet;
+import java.util.Set;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
 
@@ -35,6 +38,10 @@ public class TutorialGroupsConfiguration extends DomainObject {
     @NotEmpty
     private String tutorialPeriodEndInclusive;
 
+    @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
+    private Set<TutorialGroupFreeDay> tutorialGroupFreeDays = new HashSet<>();
+
     public Course getCourse() {
         return course;
     }
@@ -65,5 +72,25 @@ public class TutorialGroupsConfiguration extends DomainObject {
 
     public void setTutorialPeriodEndInclusive(String tutorialPeriodEndInclusive) {
         this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
+    }
+
+    public TutorialGroupsConfiguration() {
+    }
+
+    public TutorialGroupsConfiguration(Course course, String timeZone, String tutorialPeriodStartInclusive, String tutorialPeriodEndInclusive,
+            Set<TutorialGroupFreeDay> tutorialGroupFreeDays) {
+        this.course = course;
+        this.timeZone = timeZone;
+        this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
+        this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
+        this.tutorialGroupFreeDays = tutorialGroupFreeDays;
+    }
+
+    public Set<TutorialGroupFreeDay> getTutorialGroupFreeDays() {
+        return tutorialGroupFreeDays;
+    }
+
+    public void setTutorialGroupFreeDays(Set<TutorialGroupFreeDay> tutorialGroupFreeDays) {
+        this.tutorialGroupFreeDays = tutorialGroupFreeDays;
     }
 }

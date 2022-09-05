@@ -37,7 +37,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupsConfigurationService.getOfCourse(tutorialGroupConfigurationId, this.courseId);
+                    return this.tutorialGroupsConfigurationService.getOne(tutorialGroupConfigurationId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -68,7 +68,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
-            .update(this.tutorialGroupsConfiguration, this.courseId)
+            .update(this.tutorialGroupsConfiguration)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

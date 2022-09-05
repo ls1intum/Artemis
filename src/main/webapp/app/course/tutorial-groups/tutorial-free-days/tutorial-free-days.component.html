@@ -1,0 +1,43 @@
+<jhi-loading-indicator-container [isLoading]="isLoading">
+    <div *ngIf="tutorialGroupsConfiguration">
+        <div class="row">
+            <div class="col-12">
+                <!-- Create Tutorial Group Free Day -->
+                <a
+                    [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
+                    class="btn btn-primary btn-sm me-1"
+                >
+                    <span class="d-none d-md-inline">{{ 'artemisApp.tutorialFreeDays.create.button' | artemisTranslate }}</span>
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12">
+                <ngb-accordion type="info" [closeOthers]="true">
+                    <ngb-panel cardClass="my-2" *ngFor="let freeDay of tutorialGroupFreeDays" id="day-{{ freeDay.id }}">
+                        <ng-template ngbPanelHeader let-opened="opened">
+                            <div class="accordion-button custom-header justify-content-between" [class.collapsed]="!opened">
+                                <button ngbPanelToggle class="p-0 btn btn-link container-fluid text-start ps-0">{{ freeDay.date | artemisDate: 'long-date' }}</button>
+                                <div>
+                                    <button
+                                        jhiDeleteButton
+                                        [entityTitle]="freeDay.date | artemisDate: 'long-date'"
+                                        deleteQuestion="artemisApp.tutorialFreeDays.deleteButton.question"
+                                        deleteConfirmationText="artemisApp.tutorialFreeDays.deleteButton.typeNameToConfirm"
+                                        (delete)="deleteTutorialFreeDay(freeDay)"
+                                        [dialogError]="dialogError$"
+                                    >
+                                        <fa-icon [icon]="faTimes"></fa-icon>
+                                    </button>
+                                </div>
+                            </div>
+                        </ng-template>
+                        <ng-template ngbPanelContent>
+                            {{ freeDay.reason ? freeDay.reason : ('artemisApp.tutorialFreeDays.noReason' | artemisTranslate) }}
+                        </ng-template>
+                    </ngb-panel>
+                </ngb-accordion>
+            </div>
+        </div>
+    </div>
+</jhi-loading-indicator-container>

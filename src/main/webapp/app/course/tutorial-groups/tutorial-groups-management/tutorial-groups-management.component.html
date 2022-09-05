@@ -4,6 +4,21 @@
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.manageTutorialGroups.title' | artemisTranslate }}</h4>
                 <div>
+                    <a
+                        class="btn btn-primary"
+                        *ngIf="course?.tutorialGroupsConfiguration"
+                        [routerLink]="[
+                            '/course-management',
+                            courseId,
+                            'tutorial-groups-management',
+                            'configuration',
+                            course!.tutorialGroupsConfiguration!.id,
+                            'tutorial-free-days'
+                        ]"
+                    >
+                        <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
+                        <span>{{ 'artemisApp.tutorialFreeDays.title' | artemisTranslate }}</span>
+                    </a>
                     <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'create']">
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.manageTutorialGroups.createButton' | artemisTranslate }}</span>
