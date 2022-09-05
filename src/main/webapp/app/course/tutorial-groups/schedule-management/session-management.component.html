@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row" *ngIf="tutorialGroup && tutorialGroupSessions">
+    <div class="row" *ngIf="tutorialGroup && upcomingSessions">
         <div class="col-12">
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.manageSessions.title' | artemisTranslate }}</h4>
@@ -16,7 +16,7 @@
             <span class="badge bg-danger">{{ 'artemisApp.manageSessions.legend.cancelled' | artemisTranslate }}</span>
             <span class="badge bg-warning">{{ 'artemisApp.manageSessions.legend.individual' | artemisTranslate }}</span>
         </div>
-        <div class="table-responsive" *ngIf="tutorialGroupSessions && tutorialGroupSessions.length > 0">
+        <div class="table-responsive" *ngIf="upcomingSessions && upcomingSessions.length > 0">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -27,7 +27,28 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let session of tutorialGroupSessions" [class]="determineRowClass(session)">
+                    <tr *ngFor="let session of pastSessions" [class]="determineRowClass(session)">
+                        <td>{{ session.start | artemisDate: 'short-date' }} {{ session.start | artemisDate: 'time' }} - {{ session.end | artemisDate: 'time' }}</td>
+                        <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                        <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+                        <td>
+                            <div class="btn-group">
+                                <!-- Cancel/Activate -->
+                                <button type="button" class="btn btn-secondary" (click)="openCancellationModal(session)">
+                                    {{
+                                        (session.status === tutorialGroupSessionStatus.CANCELLED
+                                            ? 'artemisApp.manageSessions.activateButton'
+                                            : 'artemisApp.manageSessions.cancelButton'
+                                        ) | artemisTranslate
+                                    }}
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    <tr class="table-dark text-center">
+                        <td colspan="4">UPCOMING ↑ PAST ↓</td>
+                    </tr>
+                    <tr *ngFor="let session of upcomingSessions" [class]="determineRowClass(session)">
                         <td>{{ session.start | artemisDate: 'short-date' }} {{ session.start | artemisDate: 'time' }} - {{ session.end | artemisDate: 'time' }}</td>
                         <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>

@@ -15,6 +15,7 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/schedule-management/cancellation-modal/cancellation-modal.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-session-management',
@@ -43,7 +44,8 @@ export class SessionManagementComponent implements OnInit {
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     tutorialGroup: TutorialGroup;
     tutorialGroupSchedule: TutorialGroupSchedule;
-    tutorialGroupSessions: TutorialGroupSession[] = [];
+    upcomingSessions: TutorialGroupSession[] = [];
+    pastSessions: TutorialGroupSession[] = [];
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
 
@@ -90,7 +92,7 @@ export class SessionManagementComponent implements OnInit {
                     if (tutorialGroup) {
                         this.tutorialGroup = tutorialGroup;
                         if (tutorialGroup.tutorialGroupSessions) {
-                            this.tutorialGroupSessions = this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', true);
+                            this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', true));
                         }
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
@@ -98,7 +100,7 @@ export class SessionManagementComponent implements OnInit {
                         if (tutorialGroup.course?.tutorialGroupsConfiguration) {
                             this.tutorialGroupsConfiguration = tutorialGroup.course.tutorialGroupsConfiguration;
                             // convert sessions to the configured timezone for easier management
-                            this.tutorialGroupSessions.forEach((session) => {
+                            this.upcomingSessions.forEach((session) => {
                                 session.start = session.start?.tz(this.tutorialGroupsConfiguration.timeZone);
                                 session.end = session.end?.tz(this.tutorialGroupsConfiguration.timeZone);
                             });
@@ -112,5 +114,19 @@ export class SessionManagementComponent implements OnInit {
                     onError(this.alertService, res);
                 },
             });
+    }
+
+    private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSession[]) {
+        const upcoming: TutorialGroupSession[] = [];
+        const past: TutorialGroupSession[] = [];
+        for (const session of sessions) {
+            if (session.end?.isBefore(dayjs())) {
+                upcoming.push(session);
+            } else {
+                past.push(session);
+            }
+        }
+        this.upcomingSessions = upcoming;
+        this.pastSessions = past;
     }
 }
