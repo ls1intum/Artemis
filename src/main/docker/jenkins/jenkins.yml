@@ -22,5 +22,7 @@ services:
 networks:
     artemis:
         driver: "bridge"
+        name: artemis
 volumes:
     artemis-jenkins-data:
+        name: artemis-jenkins-data

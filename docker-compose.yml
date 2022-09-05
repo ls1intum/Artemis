@@ -1,5 +1,5 @@
-# Artemis-Dev-DB Setup (mirrored to the project root for a convenience start of docker-compose)
-# sync this file with src/main/docker/artemis-dev-db.yml
+# Artemis-Dev-MySQL Setup (mirrored to the project root for a convenience start of docker-compose)
+# sync this file with src/main/docker/artemis-dev-mysql.yml
 services:
     artemis-app:
         extends:
@@ -12,8 +12,13 @@ services:
             file: ./src/main/docker/mysql.yml
             service: artemis-mysql
 
+# keep the networks and volumes section in sync with the combined values from the used base service files
 networks:
     artemis:
         driver: "bridge"
+        name: artemis
 volumes:
     artemis-mysql-data:
+        name: artemis-mysql-data
+    artemis-data:
+        name: artemis-data

@@ -1,4 +1,4 @@
-# Gitlab-Jenkins Setup
+# GitLab-Jenkins Setup
 services:
     gitlab:
         extends:
@@ -12,8 +12,13 @@ services:
 networks:
     artemis:
         driver: "bridge"
+        name: artemis
 volumes:
     artemis-gitlab-data:
+        name: artemis-gitlab-data
     artemis-gitlab-logs:
+        name: artemis-gitlab-logs
     artemis-gitlab-config:
+        name: artemis-gitlab-config
     artemis-jenkins-data:
+        name: artemis-jenkins-data

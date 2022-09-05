@@ -1,6 +1,9 @@
-# NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers. This setup is aimed for development.
-# If you want to start the whole Artemis application (server and client) in the same container, you need to specify a different service and
-# you have to execute the command './gradlew -Pprod -Pwar clean bootWar && java -jar build/libs/*.war --spring.profiles.active=dev,artemis,bamboo,bitbucket,jira'
+# Artemis-Server-Client-MySQL Setup
+
+# NOTE: this docker compose file starts the artemis-server (as jar file) and the artemis-client in separate containers.
+# This setup is aimed for development.
+# If you want to start the whole Artemis application (server and client) in the same container, you need to use
+# the Artemis-Dev-MySQL Setup contained in artemis-dev-db.yml
 
 services:
   artemis-server:
@@ -43,5 +46,6 @@ services:
 networks:
   artemis:
     driver: "bridge"
+    name: artemis
 volumes:
   artemis-mysql-data:

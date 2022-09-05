@@ -1,4 +1,4 @@
-# Gitlab-GitlabCI Setup
+# GitLab-GitLabCI Setup
 services:
     gitlab:
         # TODO: check if the other settings can also be integrated into gitlab.yml
@@ -36,11 +36,16 @@ services:
             - artemis
 
 networks:
-  artemis:
-      driver: "bridge"
+    artemis:
+        driver: "bridge"
+        name: artemis
 
 volumes:
     artemis-gitlab-data:
+        name: artemis-gitlab-data
     artemis-gitlab-logs:
+        name: artemis-gitlab-logs
     artemis-gitlab-config:
+        name: artemis-gitlab-config
     artemis-gitlabci-runner-config:
+        name: artemis-gitlabci-runner-config

@@ -2,3 +2,10 @@
 spring:
     datasource:
         url: jdbc:mysql://artemis-mysql:3306/Artemis?createDatabaseIfNotExist=true&allowPublicKeyRetrieval=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC
+
+artemis:
+    course-archives-path: /opt/artemis/data/courses
+    repo-clone-path: /opt/artemis/data/repos
+    repo-download-clone-path: /opt/artemis/data/repos-download
+    file-upload-path: /opt/artemis/data/uploads
+    submission-export-path: /opt/artemis/data/exports

@@ -1,51 +1,45 @@
+# Atlassian Setup
 services:
     jira:
-        container_name: artemis_jira
+        container_name: jira
         image: ghcr.io/ls1intum/artemis-jira:8.20.6
         volumes:
-          - artemis-jira:/var/atlassian/application-data/jira
+          - artemis-jira-data:/var/atlassian/application-data/jira
         ports:
             - "8081:8080"
-        hostname: jira
         networks:
-            artemis:
-                ipv4_address: 172.20.0.2
+            - artemis
     bitbucket:
-        container_name: artemis_bitbucket
+        container_name: bitbucket
         image: ghcr.io/ls1intum/artemis-bitbucket:7.21.0
         volumes:
-            - artemis-bitbucket:/var/atlassian/application-data/bitbucket
+            - artemis-bitbucket-data:/var/atlassian/application-data/bitbucket
         environment:
             - SPRING_APPLICATION_JSON={"plugin":{"ssh":{"baseurl":"ssh://bitbucket:7999"}}}
         ports:
             - "7990:7990"
             - "7999:7999"
-        hostname: bitbucket
         networks:
-            artemis:
-                ipv4_address: 172.20.0.3
+            - artemis
     bamboo:
-        container_name: artemis_bamboo
+        container_name: bamboo
         image: ghcr.io/ls1intum/artemis-bamboo:8.1.3
         volumes:
-            - artemis-bamboo:/var/atlassian/application-data/bamboo
+            - artemis-bamboo-data:/var/atlassian/application-data/bamboo
         ports:
             - "54663:54663"
             - "8085:8085"
-        hostname: bamboo
         networks:
-            artemis:
-                ipv4_address: 172.20.0.4
+            - artemis
 
 networks:
-  artemis:
-      driver: "bridge"
-      ipam:
-        driver: default
-        config:
-            - subnet: 172.20.0.0/24
-
+    artemis:
+        driver: "bridge"
+        name: artemis
 volumes:
-    artemis-jira:
+    artemis-jira-data:
+        name: artemis-jira-data
     artemis-bitbucket:
+        name: artemis-bitbucket-data
     artemis-bamboo:
+        name: artemis-bamboo-data

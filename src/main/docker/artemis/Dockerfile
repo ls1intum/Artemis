@@ -43,7 +43,7 @@ ENV LANGUAGE en_US.UTF-8
 RUN mkdir -p /opt/artemis/config /opt/artemis/data /opt/artemis/public/content
 
 RUN useradd -Ums /bin/bash artemis \
-  && chown -R artemis:artemis /opt/artemis/config /opt/artemis/data /opt/artemis/public
+  && chown -R artemis:artemis /opt/artemis
 USER artemis:artemis
 
 # Prepare Entrypoint boostrap.sh
