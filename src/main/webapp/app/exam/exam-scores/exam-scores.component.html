@@ -300,9 +300,9 @@
             <h4 class="mt-3">
                 <span jhiTranslate="artemisApp.examScores.ExerciseGroupsTitle">Exercise groups statistics</span>
             </h4>
-            <div class="col mb-3">
+            <div class="col mb-3" *ngIf="course">
                 <div *ngFor="let exerciseGroup of aggregatedExerciseGroupResults">
-                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup"></jhi-exam-scores-average-scores-graph>
+                    <jhi-exam-scores-average-scores-graph [averageScores]="exerciseGroup" [course]="course"></jhi-exam-scores-average-scores-graph>
                 </div>
             </div>
 
@@ -401,7 +401,7 @@
                             <span jhiTranslate="artemisApp.examScores.loginColumn">Login</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
-                        <th jhiSortBy="eMail">
+                        <th jhiSortBy="email">
                             <span jhiTranslate="artemisApp.examScores.eMailColumn">E-Mail</span>
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
@@ -438,7 +438,7 @@
                         <td>{{ i + 1 }}</td>
                         <td>{{ studentResult.name }}</td>
                         <td>{{ studentResult.login }}</td>
-                        <td>{{ studentResult.eMail ? studentResult.eMail : '-' }}</td>
+                        <td>{{ studentResult.email ? studentResult.email : '-' }}</td>
                         <td>{{ studentResult.registrationNumber ? studentResult.registrationNumber : '-' }}</td>
                         <ng-container *ngFor="let exerciseGroup of examScoreDTO.exerciseGroups">
                             <td *ngIf="studentResult.exerciseGroupIdToExerciseResult && studentResult.exerciseGroupIdToExerciseResult[exerciseGroup.id]; else empty">

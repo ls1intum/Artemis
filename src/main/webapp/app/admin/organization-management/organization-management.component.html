@@ -1,8 +1,8 @@
 <div>
     <h2>
-        <span id="organization-management-page-heading" jhiTranslate="organizationManagement.title">Organization management</span>
+        <span id="organization-management-page-heading" jhiTranslate="artemisApp.organizationManagement.title">Organization management</span>
         <button class="btn btn-primary float-end jh-create-entity" [routerLink]="['./new']">
-            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="organizationManagement.addLabel">Add organization</span>
+            <fa-icon [icon]="faPlus"></fa-icon> <span jhiTranslate="artemisApp.organizationManagement.addLabel">Add organization</span>
         </button>
     </h2>
     <div class="table-responsive">
@@ -10,13 +10,13 @@
             <thead>
                 <tr>
                     <th><span jhiTranslate="global.field.id">ID</span></th>
-                    <th><span jhiTranslate="organizationManagement.name">Name</span></th>
-                    <th><span jhiTranslate="organizationManagement.shortName">Short Name</span></th>
-                    <th><span jhiTranslate="organizationManagement.url">Url</span></th>
-                    <th><span jhiTranslate="organizationManagement.description">Description</span></th>
-                    <th><span jhiTranslate="organizationManagement.users">Users</span></th>
-                    <th><span jhiTranslate="organizationManagement.courses">Courses</span></th>
-                    <th><span jhiTranslate="organizationManagement.emailPattern">Email Pattern</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.name">Name</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.shortName">Short Name</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.url">Url</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.description">Description</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.users">Users</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.courses">Courses</span></th>
+                    <th><span jhiTranslate="artemisApp.organizationManagement.emailPattern">Email Pattern</span></th>
                 </tr>
             </thead>
             <tbody>
@@ -48,7 +48,7 @@
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="organization.name!"
-                                deleteQuestion="organizationManagement.delete.question"
+                                deleteQuestion="artemisApp.organizationManagement.delete.question"
                                 (delete)="deleteOrganization(organization.id!)"
                                 [dialogError]="dialogError$"
                             >

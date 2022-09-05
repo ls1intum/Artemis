@@ -68,9 +68,6 @@ public class CourseTestService {
     private LectureRepository lectureRepo;
 
     @Autowired
-    private LearningGoalRepository learningGoalRepo;
-
-    @Autowired
     private ResultRepository resultRepo;
 
     @Autowired
@@ -534,12 +531,6 @@ public class CourseTestService {
     }
 
     // Test
-    public void testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions() throws Exception {
-        var courses = database.createCoursesWithExercisesAndLectures(true);
-        request.get("/api/courses/" + courses.get(0).getId() + "/with-exercises-and-relevant-participations", HttpStatus.FORBIDDEN, Course.class);
-    }
-
-    // Test
     public void testGetCoursesWithPermission() throws Exception {
         database.createCoursesWithExercisesAndLectures(true);
         List<Course> courses = request.getList("/api/courses", HttpStatus.OK, Course.class);
@@ -959,8 +950,6 @@ public class CourseTestService {
     public void testGetCourse() throws Exception {
         List<Course> testCourses = database.createCoursesWithExercisesAndLectures(true);
         for (Course testCourse : testCourses) {
-            Course courseWithExercisesAndRelevantParticipations = request.get("/api/courses/" + testCourse.getId() + "/with-exercises-and-relevant-participations", HttpStatus.OK,
-                    Course.class);
             Course courseWithExercises = request.get("/api/courses/" + testCourse.getId() + "/with-exercises", HttpStatus.OK, Course.class);
             Course courseOnly = request.get("/api/courses/" + testCourse.getId(), HttpStatus.OK, Course.class);
 
@@ -982,17 +971,13 @@ public class CourseTestService {
             String[] ignoringFields = { "exercises", "tutorGroups", "lectures", "exams", "fileService", "numberOfInstructorsTransient", "numberOfStudentsTransient",
                     "numberOfTeachingAssistantsTransient", "numberOfEditorsTransient" };
             assertThat(courseWithExercises).as("courseWithExercises same as courseOnly").usingRecursiveComparison().ignoringFields(ignoringFields).isEqualTo(courseOnly);
-            assertThat(courseWithExercisesAndRelevantParticipations).as("courseWithExercisesAndRelevantParticipations same as courseOnly").usingRecursiveComparison()
-                    .ignoringFields(ignoringFields).isEqualTo(courseOnly);
 
             // Verify presence of exercises in mock courses
             // - Course 1 has 5 exercises in total, 4 exercises with relevant participations
             // - Course 2 has 0 exercises in total, 0 exercises with relevant participations
             boolean isFirstCourse = courseOnly.getId().equals(testCourses.get(0).getId());
             int numberOfExercises = isFirstCourse ? 5 : 0;
-            int numberOfInterestingExercises = isFirstCourse ? 4 : 0;
             assertThat(courseWithExercises.getExercises()).as("Course contains correct number of exercises").hasSize(numberOfExercises);
-            assertThat(courseWithExercisesAndRelevantParticipations.getExercises()).as("Course contains correct number of exercises").hasSize(numberOfInterestingExercises);
         }
     }
 
@@ -1801,12 +1786,12 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents()).hasSize(0);
+        assertThat(courseDTO.activeStudents()).isNullOrEmpty();
 
         // number of users in course
-        assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
-        assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
-        assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(2);
+        assertThat(courseDTO.numberOfStudentsInCourse()).isEqualTo(8);
+        assertThat(courseDTO.numberOfTeachingAssistantsInCourse()).isEqualTo(5);
+        assertThat(courseDTO.numberOfInstructorsInCourse()).isEqualTo(2);
     }
 
     // Test
@@ -1948,33 +1933,33 @@ public class CourseTestService {
         // Check results
         assertThat(courseDTO).isNotNull();
 
-        assertThat(courseDTO.getActiveStudents()).hasSize(3);
+        assertThat(courseDTO.activeStudents()).hasSize(3);
 
         // number of users in course
-        assertThat(courseDTO.getNumberOfStudentsInCourse()).isEqualTo(8);
-        assertThat(courseDTO.getNumberOfTeachingAssistantsInCourse()).isEqualTo(5);
-        assertThat(courseDTO.getNumberOfInstructorsInCourse()).isEqualTo(1);
+        assertThat(courseDTO.numberOfStudentsInCourse()).isEqualTo(8);
+        assertThat(courseDTO.numberOfTeachingAssistantsInCourse()).isEqualTo(5);
+        assertThat(courseDTO.numberOfInstructorsInCourse()).isEqualTo(1);
 
         // Assessments - 133 because each we have only 2 submissions which have assessments, but as they have complaints which got accepted
         // they now have 2 results each.
-        assertThat(courseDTO.getCurrentPercentageAssessments()).isEqualTo(133.3);
-        assertThat(courseDTO.getCurrentAbsoluteAssessments()).isEqualTo(4);
-        assertThat(courseDTO.getCurrentMaxAssessments()).isEqualTo(3);
+        assertThat(courseDTO.currentPercentageAssessments()).isEqualTo(133.3);
+        assertThat(courseDTO.currentAbsoluteAssessments()).isEqualTo(4);
+        assertThat(courseDTO.currentMaxAssessments()).isEqualTo(3);
 
         // Complaints
-        assertThat(courseDTO.getCurrentPercentageComplaints()).isEqualTo(100);
-        assertThat(courseDTO.getCurrentAbsoluteComplaints()).isEqualTo(1);
-        assertThat(courseDTO.getCurrentMaxComplaints()).isEqualTo(1);
+        assertThat(courseDTO.currentPercentageComplaints()).isEqualTo(100);
+        assertThat(courseDTO.currentAbsoluteComplaints()).isEqualTo(1);
+        assertThat(courseDTO.currentMaxComplaints()).isEqualTo(1);
 
         // More feedback requests
-        assertThat(courseDTO.getCurrentPercentageMoreFeedbacks()).isEqualTo(100);
-        assertThat(courseDTO.getCurrentAbsoluteMoreFeedbacks()).isEqualTo(1);
-        assertThat(courseDTO.getCurrentMaxMoreFeedbacks()).isEqualTo(1);
+        assertThat(courseDTO.currentPercentageMoreFeedbacks()).isEqualTo(100);
+        assertThat(courseDTO.currentAbsoluteMoreFeedbacks()).isEqualTo(1);
+        assertThat(courseDTO.currentMaxMoreFeedbacks()).isEqualTo(1);
 
         // Average Score
-        assertThat(courseDTO.getCurrentPercentageAverageScore()).isEqualTo(60);
-        assertThat(courseDTO.getCurrentAbsoluteAverageScore()).isEqualTo(18);
-        assertThat(courseDTO.getCurrentMaxAverageScore()).isEqualTo(30);
+        assertThat(courseDTO.currentPercentageAverageScore()).isEqualTo(60);
+        assertThat(courseDTO.currentAbsoluteAverageScore()).isEqualTo(18);
+        assertThat(courseDTO.currentMaxAverageScore()).isEqualTo(30);
 
         course2.setStartDate(now.minusWeeks(20));
         course2.setEndDate(null);
@@ -2004,7 +1989,7 @@ public class CourseTestService {
         courseDTO = request.get("/api/courses/" + course2.getId() + "/management-detail", HttpStatus.OK, CourseManagementDetailViewDTO.class);
 
         var expectedActiveStudentDistribution = List.of(1, 0);
-        assertThat(courseDTO.getActiveStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
+        assertThat(courseDTO.activeStudents()).as("submission today should not be included").isEqualTo(expectedActiveStudentDistribution);
 
         // Active Users
         int periodIndex = 0;

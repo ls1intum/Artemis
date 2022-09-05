@@ -1,3 +1,5 @@
+.. _setup_distributed:
+
 Setup of Artemis with multiple instances
 ========================================
 

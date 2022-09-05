@@ -2,7 +2,7 @@
     <div class="col-12">
         <form [formGroup]="form" (ngSubmit)="submitForm()">
             <div class="form-group">
-                <label for="name">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.name' | artemisTranslate }}*</label>
+                <label for="name">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.name' | artemisTranslate }} *</label>
                 <input
                     type="text"
                     class="form-control"
@@ -36,7 +36,11 @@
             </div>
             <div class="form-group">
                 <label>{{ 'artemisApp.attachmentUnit.createAttachmentUnit.file' | artemisTranslate }}*</label>
-                <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitations' | artemisTranslate }}</small>
+                <small id="fileHelp" class="form-text text-muted">{{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitation' | artemisTranslate }} </small>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    [ngbTooltip]="'artemisApp.attachmentUnit.createAttachmentUnit.fileLimitationTooltip' | artemisTranslate: { extensions: allowedFileExtensions }"
+                ></fa-icon>
                 <div class="input-group background-file">
                     <div class="custom-file overflow-ellipsis">
                         <input
@@ -44,9 +48,10 @@
                             id="fileInput"
                             type="file"
                             class="custom-file-input"
+                            [accept]="acceptedFileExtensionsFileBrowser"
                             (change)="onFileChange($event)"
                             aria-describedby="fileHelp"
-                            placeholder="fileNamePlaceholder"
+                            [placeholder]="'artemisApp.attachmentUnit.createAttachmentUnit.chooseFile' | artemisTranslate"
                             (click)="fileInputTouched = true"
                         />
                     </div>
@@ -56,7 +61,7 @@
                         {{ fileUploadErrorMessage }}
                     </div>
                 </ng-container>
-                <div *ngIf="fileName === fileNamePlaceholder && fileInputTouched && !this.fileUploadErrorMessage" class="alert alert-danger">
+                <div *ngIf="!fileName && fileInputTouched && !this.fileUploadErrorMessage" class="alert alert-danger">
                     {{ 'artemisApp.attachmentUnit.createAttachmentUnit.fileRequiredValidationError' | artemisTranslate }}
                 </div>
             </div>

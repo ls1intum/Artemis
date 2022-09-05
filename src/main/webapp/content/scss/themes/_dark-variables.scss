@@ -255,6 +255,9 @@ $reaction-button-emoji-count-color: $gray-200;
 $metis-post-tag-selector-tag-option-background: $neutral-dark;
 $metis-post-tag-selector-tag-option-hover-background: $neutral-dark-l-5;
 
+// Component: plagiarism-case-instructor-detail-view.component.scss
+$plagiarism-verdict-disabled-overlay-color: rgba(0, 0, 0, 0.9);
+
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
 
@@ -394,6 +397,7 @@ $lecture-unit-card-body-background: $neutral-dark;
 $lecture-unit-card-header-background: $neutral-dark-l-5;
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
+$lecture-unit-create-row-hover-background: $neutral-dark-l-10;
 
 // Lecture Attachments
 $lecture-attachment-edit-overlay-color: rgba(0, 0, 0, 0.9);

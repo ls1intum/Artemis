@@ -10,6 +10,8 @@ import { ExamAction } from 'app/entities/exam-user-activity.model';
 import { ExamActionService } from './exam-action.service';
 import { onError } from 'app/shared/util/global.utils';
 import { AlertService } from 'app/core/util/alert.service';
+import { FeatureToggle, FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.service';
+import { tap } from 'rxjs/operators';
 
 export class TableContent {
     translateValue: string;
@@ -42,6 +44,10 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
     exam: Exam;
 
+    readonly FeatureToggle = FeatureToggle;
+
+    examMonitoringGloballyEnabled: boolean;
+
     constructor(
         private route: ActivatedRoute,
         private examManagementService: ExamManagementService,
@@ -49,6 +55,7 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
         private examActionService: ExamActionService,
         private artemisDataPipe: ArtemisDatePipe,
         private alertService: AlertService,
+        private featureToggleService: FeatureToggleService,
     ) {}
 
     ngOnInit() {
@@ -69,6 +76,16 @@ export class ExamMonitoringComponent implements OnInit, OnDestroy {
 
             this.initTable();
         });
+
+        // Receive whether the exam monitoring is globally enabled or not
+        this.featureToggleService
+            .getFeatureToggleActive(FeatureToggle.ExamLiveStatistics)
+            .pipe(
+                tap((active) => {
+                    this.examMonitoringGloballyEnabled = active;
+                }),
+            )
+            .subscribe();
     }
 
     /**

@@ -1,36 +1,38 @@
 {
-    "modelingAssessmentEditor": {
-        "conflicts": "Konflikt",
-        "ownAssessmentTitle": "Deine aktuelle Bewertung",
-        "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewertet von",
-        "button": {
-            "applyChanges": "Änderungen übernehmen",
-            "keepYours": "Beibehalten",
-            "acceptTheirs": "Übernehmen"
-        },
-        "messages": {
-            "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
-            "noModel": "Diese Abgabe enthält kein Modell.",
-            "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
-            "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
-            "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
-            "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
-            "submitFailed": "Absenden deiner Bewertung ist fehlgeschlagen!",
-            "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
-            "resultDismissed": "Deine Bewertung wurde nicht übernommen, da es bereits eine Bewertung von Tutor:innen gibt.",
-            "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
-            "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
-            "confirmSubmission": "Du hast nicht alle Modellelemente bewertet. Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern.",
-            "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
-            "noConflicts": "Konflikte konnten nicht geladen werden",
-            "conflictsResolved": "Es wurden alle Konflikte bearbeitet.",
-            "feedbackTextTooLong": "Bewertung konnte nicht gespeichert werden. Feedback-Text darf nicht länger als 500 Zeichen sein."
-        },
-        "automaticAssessmentAvailable": "Herzlichen Glückwunsch! Um dir etwas Zeit zu sparen, wurden Teile dieses Modells bereits automatisch bewertet. Bitte überprüfe die automatische Bewertung und bewerte anschließend den Rest des Modells. Mit der Abgabe der Bewertung bestätigst du auch die automatische Bewertung. Bitte beachte, dass du für die gesamte Bewertung verantwortlich bist.",
-        "highlightingColors": {
-            "title": "Hervorhebungsfarbe(n)",
-            "automaticAssessment": "automatische Bewertung",
-            "missingAssessment": "fehlende Bewertung"
+    "artemisApp": {
+        "modelingAssessmentEditor": {
+            "conflicts": "Konflikt",
+            "ownAssessmentTitle": "Deine aktuelle Bewertung",
+            "conflictingAssessmentTitle": "1. von {{count}} widersprüchlichen Bewertungen. Bewertet von",
+            "button": {
+                "applyChanges": "Änderungen übernehmen",
+                "keepYours": "Beibehalten",
+                "acceptTheirs": "Übernehmen"
+            },
+            "messages": {
+                "lock": "Dieses Modell kann jetzt exklusiv nur noch von dir bearbeitet werden. Bitte bewerte dieses Modell bevor du ein neues öffnest.",
+                "noModel": "Diese Abgabe enthält kein Modell.",
+                "loadSubmissionFailed": "Laden der angefragten Abgabe ist fehlgeschlagen.",
+                "saveSuccessful": "Deine Bewertung wurde erfolgreich gespeichert!",
+                "saveFailed": "Das Speichern deiner Bewertung ist fehlgeschlagen!",
+                "submitSuccessful": "Deine Bewertung wurde erfolgreich abgesendet!",
+                "submitFailed": "Absenden deiner Bewertung ist fehlgeschlagen!",
+                "submitFailedWithConflict": "Abgabe der Bewertung fehlgeschlagen! Konflikt mit bestehender Bewertung wurde erkannt",
+                "resultDismissed": "Deine Bewertung wurde nicht übernommen, da es bereits eine Bewertung von Tutor:innen gibt.",
+                "updateAfterComplaintSuccessful": "Die Bewertung wurde erfolgreich aktualisiert.",
+                "updateAfterComplaintFailed": "Das Aktualisieren der Bewertung ist fehlgeschlagen.",
+                "confirmSubmission": "Du hast nicht alle Modellelemente bewertet. Bist du sicher, dass du diese Bewertung einreichen möchtest? Du kannst es nachträglich nicht mehr ändern.",
+                "confirmCancel": "Bist du sicher, dass du die Bewertung abbrechen möchtest? Dein aktueller Bewertungsfortschritt wird gelöscht und die Abgabe steht anderen Tutor:innen wieder zur Verfügung.",
+                "noConflicts": "Konflikte konnten nicht geladen werden",
+                "conflictsResolved": "Es wurden alle Konflikte bearbeitet.",
+                "feedbackTextTooLong": "Bewertung konnte nicht gespeichert werden. Feedback-Text darf nicht länger als 500 Zeichen sein."
+            },
+            "automaticAssessmentAvailable": "Herzlichen Glückwunsch! Um dir etwas Zeit zu sparen, wurden Teile dieses Modells bereits automatisch bewertet. Bitte überprüfe die automatische Bewertung und bewerte anschließend den Rest des Modells. Mit der Abgabe der Bewertung bestätigst du auch die automatische Bewertung. Bitte beachte, dass du für die gesamte Bewertung verantwortlich bist.",
+            "highlightingColors": {
+                "title": "Hervorhebungsfarbe(n)",
+                "automaticAssessment": "automatische Bewertung",
+                "missingAssessment": "fehlende Bewertung"
+            }
         }
     }
 }

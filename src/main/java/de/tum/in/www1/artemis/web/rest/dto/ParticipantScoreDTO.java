@@ -7,54 +7,8 @@ import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class ParticipantScoreDTO {
-
-    public Long id;
-
-    public Long userId;
-
-    public String userName;
-
-    public Long teamId;
-
-    public String teamName;
-
-    public Long exerciseId;
-
-    public String exerciseTitle;
-
-    public Long lastResultId;
-
-    public Double lastResultScore;
-
-    public Double lastPoints;
-
-    public Long lastRatedResultId;
-
-    public Double lastRatedResultScore;
-
-    public Double lastRatedPoints;
-
-    public ParticipantScoreDTO(Long id, Long userId, String userName, Long teamId, String teamName, Long exerciseId, String exerciseTitle, Long lastResultId,
-            Double lastResultScore, Long lastRatedResultId, Double lastRatedResultScore, Double lastPoints, Double lastRatedPoints) {
-        this.id = id;
-        this.userId = userId;
-        this.userName = userName;
-        this.teamId = teamId;
-        this.teamName = teamName;
-        this.exerciseId = exerciseId;
-        this.exerciseTitle = exerciseTitle;
-        this.lastResultId = lastResultId;
-        this.lastResultScore = lastResultScore;
-        this.lastRatedResultId = lastRatedResultId;
-        this.lastRatedResultScore = lastRatedResultScore;
-        this.lastPoints = lastPoints;
-        this.lastRatedPoints = lastRatedPoints;
-    }
-
-    public ParticipantScoreDTO() {
-        // for jackson
-    }
+public record ParticipantScoreDTO(Long id, Long userId, String userName, Long teamId, String teamName, Long exerciseId, String exerciseTitle, Long lastResultId,
+        Double lastResultScore, Long lastRatedResultId, Double lastRatedResultScore, Double lastPoints, Double lastRatedPoints) {
 
     /**
      * Generates a {@link ParticipantScoreDTO} from a {@link ParticipantScore}

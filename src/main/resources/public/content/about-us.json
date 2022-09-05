@@ -4,13 +4,13 @@
             "fullName": "Prof. Dr. Stephan Krusche",
             "photoDirectory": "public/images/about/Stephan_Krusche.jpg",
             "role": "projectManager",
-            "website": "https://ase.in.tum.de/lehrstuhl_1/people/362-stephan-krusche"
+            "website": "https://ase.in.tum.de/krusche"
         },
         {
             "fullName": "Jan Philip Bernius",
             "photoDirectory": "public/images/about/Jan_Philip_Bernius.jpg",
             "role": "projectManager",
-            "website": "https://ase.in.tum.de/lehrstuhl_1/people/1013-jan-philip-bernius"
+            "website": "https://ase.in.tum.de/bernius"
         }
     ],
     "contributors": [

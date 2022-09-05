@@ -27,7 +27,7 @@ import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
-import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
+import de.tum.in.www1.artemis.service.notifications.GroupNotificationScheduleService;
 import de.tum.in.www1.artemis.service.plagiarism.ModelingPlagiarismDetectionService;
 import de.tum.in.www1.artemis.service.util.TimeLogUtil;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -74,7 +74,7 @@ public class ModelingExerciseResource {
 
     private final SubmissionExportService modelingSubmissionExportService;
 
-    private final GroupNotificationService groupNotificationService;
+    private final GroupNotificationScheduleService groupNotificationScheduleService;
 
     private final GradingCriterionRepository gradingCriterionRepository;
 
@@ -89,9 +89,10 @@ public class ModelingExerciseResource {
     public ModelingExerciseResource(ModelingExerciseRepository modelingExerciseRepository, UserRepository userRepository, CourseService courseService,
             AuthorizationCheckService authCheckService, CourseRepository courseRepository, ParticipationRepository participationRepository,
             ModelingExerciseService modelingExerciseService, ExerciseDeletionService exerciseDeletionService, PlagiarismResultRepository plagiarismResultRepository,
-            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, GroupNotificationService groupNotificationService,
-            ExerciseService exerciseService, GradingCriterionRepository gradingCriterionRepository, ModelingPlagiarismDetectionService modelingPlagiarismDetectionService,
-            InstanceMessageSendService instanceMessageSendService, ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
+            ModelingExerciseImportService modelingExerciseImportService, SubmissionExportService modelingSubmissionExportService, ExerciseService exerciseService,
+            GroupNotificationScheduleService groupNotificationScheduleService, GradingCriterionRepository gradingCriterionRepository,
+            ModelingPlagiarismDetectionService modelingPlagiarismDetectionService, InstanceMessageSendService instanceMessageSendService,
+            ModelClusterRepository modelClusterRepository, ModelAssessmentKnowledgeService modelAssessmentKnowledgeService) {
         this.modelingExerciseRepository = modelingExerciseRepository;
         this.courseService = courseService;
         this.modelingExerciseService = modelingExerciseService;
@@ -103,7 +104,7 @@ public class ModelingExerciseResource {
         this.courseRepository = courseRepository;
         this.participationRepository = participationRepository;
         this.authCheckService = authCheckService;
-        this.groupNotificationService = groupNotificationService;
+        this.groupNotificationScheduleService = groupNotificationScheduleService;
         this.exerciseService = exerciseService;
         this.gradingCriterionRepository = gradingCriterionRepository;
         this.modelingPlagiarismDetectionService = modelingPlagiarismDetectionService;
@@ -127,7 +128,7 @@ public class ModelingExerciseResource {
     public ResponseEntity<ModelingExercise> createModelingExercise(@RequestBody ModelingExercise modelingExercise) throws URISyntaxException {
         log.debug("REST request to save ModelingExercise : {}", modelingExercise);
         if (modelingExercise.getId() != null) {
-            throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new modeling exercise cannot already have an ID", ENTITY_NAME, "idExists");
         }
         if (modelingExercise.getTitle() == null) {
             throw new BadRequestAlertException("A new modeling exercise needs a title", ENTITY_NAME, "missingtitle");
@@ -146,23 +147,26 @@ public class ModelingExerciseResource {
         modelingExercise.setKnowledge(modelAssessmentKnowledgeService.createNewKnowledge());
         ModelingExercise result = modelingExerciseRepository.save(modelingExercise);
         modelingExerciseService.scheduleOperations(result.getId());
-        groupNotificationService.checkNotificationsForNewExercise(modelingExercise, instanceMessageSendService);
+        groupNotificationScheduleService.checkNotificationsForNewExercise(modelingExercise);
 
         return ResponseEntity.created(new URI("/api/modeling-exercises/" + result.getId())).body(result);
     }
 
     /**
-     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
+     * Search for all modeling exercises by id, title and course title. The result is pageable since there might be hundreds
      * of exercises in the DB.
      *
-     * @param search The pageable search containing the page size, page number and query string
+     * @param search         The pageable search containing the page size, page number and query string
+     * @param isCourseFilter Whether to search in the courses for exercises
+     * @param isExamFilter   Whether to search in the groups for exercises
      * @return The desired page, sorted and matching the given query
      */
     @GetMapping("modeling-exercises")
     @PreAuthorize("hasRole('EDITOR')")
-    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search) {
+    public ResponseEntity<SearchResultPageDTO<ModelingExercise>> getAllExercisesOnPage(PageableSearchDTO<String> search,
+            @RequestParam(defaultValue = "true") Boolean isCourseFilter, @RequestParam(defaultValue = "true") Boolean isExamFilter) {
         final var user = userRepository.getUserWithGroupsAndAuthorities();
-        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, user));
+        return ResponseEntity.ok(modelingExerciseService.getAllOnPageWithSize(search, isCourseFilter, isExamFilter, user));
     }
 
     /**
@@ -209,8 +213,7 @@ public class ModelingExerciseResource {
         modelingExerciseService.scheduleOperations(updatedModelingExercise.getId());
         exerciseService.checkExampleSubmissions(updatedModelingExercise);
 
-        groupNotificationService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText,
-                instanceMessageSendService);
+        groupNotificationScheduleService.checkAndCreateAppropriateNotificationsWhenUpdatingExercise(modelingExerciseBeforeUpdate, updatedModelingExercise, notificationText);
 
         return ResponseEntity.ok(updatedModelingExercise);
     }
@@ -331,7 +334,7 @@ public class ModelingExerciseResource {
 
     /**
      * POST modeling-exercises/import: Imports an existing modeling exercise into an existing course
-     *
+     * <p>
      * This will import the whole exercise except for the participations and Dates.
      * Referenced entities will get cloned and assigned a new id.
      * Uses {@link ModelingExerciseImportService}.

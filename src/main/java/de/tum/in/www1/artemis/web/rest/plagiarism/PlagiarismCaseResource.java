@@ -16,6 +16,7 @@ import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
+import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 
@@ -123,7 +124,7 @@ public class PlagiarismCaseResource {
      */
     @GetMapping("courses/{courseId}/exercises/{exerciseId}/plagiarism-case")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<Long> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
+    public ResponseEntity<PlagiarismCaseInfoDTO> getPlagiarismCaseForExerciseForStudent(@PathVariable long courseId, @PathVariable long exerciseId) {
         log.debug("REST request to all plagiarism cases for student and exercise with id: {}", exerciseId);
         Course course = courseRepository.findByIdElseThrow(courseId);
         var user = userRepository.getUserWithGroupsAndAuthorities();
@@ -135,13 +136,15 @@ public class PlagiarismCaseResource {
             var plagiarismCase = plagiarismCaseOptional.get();
             // the following line is already checked in the SQL statement, but we want to ensure it 100%
             if (plagiarismCase.getPost() != null) {
-                // Note: we only return the ID to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the detail page
+                // Note: we only return the ID and verdict to tell the client there is a confirmed plagiarism case with student notification (post) and to support navigating to the
+                // detail page
                 // all other information might be irrelevant or sensitive and could lead to longer loading times
-                return ResponseEntity.ok(plagiarismCase.getId());
+                var plagiarismCaseInfoDTO = new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict());
+                return ResponseEntity.ok(plagiarismCaseInfoDTO);
             }
         }
         // in all other cases the response is empty
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok(null);
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {

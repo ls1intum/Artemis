@@ -118,14 +118,12 @@
     </ng-template>
     <ng-template #editorBottom>
         <div class="row mt-3">
-            <div class="col-md-6">
-                <jhi-unreferenced-feedback
-                    [(feedbacks)]="unreferencedFeedback"
-                    (feedbacksChange)="validateFeedback()"
-                    [readOnly]="readOnly()"
-                    [highlightDifferences]="highlightDifferences"
-                ></jhi-unreferenced-feedback>
-            </div>
+            <jhi-unreferenced-feedback
+                [(feedbacks)]="unreferencedFeedback"
+                (feedbacksChange)="validateFeedback()"
+                [readOnly]="readOnly()"
+                [highlightDifferences]="highlightDifferences"
+            ></jhi-unreferenced-feedback>
         </div>
     </ng-template>
 </ng-template>

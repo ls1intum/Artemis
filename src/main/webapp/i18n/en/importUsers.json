@@ -1,25 +1,27 @@
 {
-    "importUsers": {
-        "buttonLabel": "Import Users",
-        "dialogTitle": "Import Users",
-        "introText": "This dialog can be used to import users.",
-        "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
-        "csvFile": {
-            "label": "Select .csv file",
-            "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN' or 'REGISTRATION_NUMBER' column values must be present per entry. Use the following format: login, matriculation number, firstname, lastname. You need to use the header in the top row"
-        },
-        "usersForImport": {
-            "label": "Users to import",
-            "tooltip": "These students will be imported when clicking on the \"Import\" button.",
-            "importFailed": "Please repair the file, it could not be read  due to the following error:",
-            "failedRows": "The following rows are invalid and must contain a value in either login or matriculation number:"
-        },
-        "numberOfUsers": "Number of users:",
-        "numberOfUsersImported": "Imported:",
-        "numberOfUsersNotImported": "Not found:",
-        "genericErrorMessage": "Import of users failed!",
-        "firstName": "First name",
-        "lastName": "Last name",
-        "registrationNumber": "registration number"
+    "artemisApp": {
+        "importUsers": {
+            "buttonLabel": "Import Users",
+            "dialogTitle": "Import Users",
+            "introText": "This dialog can be used to import users.",
+            "dialogText": "Each entry in the input file must contain a value for either matriculation number or login.<br>Values for last and first name are optional.",
+            "csvFile": {
+                "label": "Select .csv file",
+                "tooltip": "Please select the .csv file containing the students for the import. Either 'LOGIN' or 'REGISTRATION_NUMBER' column values must be present per entry. Use the following format: login, matriculation number, firstname, lastname. You need to use the header in the top row"
+            },
+            "usersForImport": {
+                "label": "Users to import",
+                "tooltip": "These students will be imported when clicking on the \"Import\" button.",
+                "importFailed": "Please repair the file, it could not be read  due to the following error:",
+                "failedRows": "The following rows are invalid and must contain a value in either login or matriculation number:"
+            },
+            "numberOfUsers": "Number of users:",
+            "numberOfUsersImported": "Imported:",
+            "numberOfUsersNotImported": "Not found:",
+            "genericErrorMessage": "Import of users failed!",
+            "firstName": "First name",
+            "lastName": "Last name",
+            "registrationNumber": "registration number"
+        }
     }
 }

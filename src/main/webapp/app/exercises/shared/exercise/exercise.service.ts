@@ -156,8 +156,8 @@ export class ExerciseService {
     }
 
     /**
-     * Resets an Exercise with exerciseId by deleting all its participations.
-     * @param { number } exerciseId - Id of exercise that should be resetted
+     * Resets an exercise with exerciseId by deleting all its participations.
+     * @param { number } exerciseId - Id of exercise that should be reset
      */
     reset(exerciseId: number): Observable<HttpResponse<void>> {
         return this.http.delete<void>(`${this.resourceUrl}/${exerciseId}/reset`, { observe: 'response' });

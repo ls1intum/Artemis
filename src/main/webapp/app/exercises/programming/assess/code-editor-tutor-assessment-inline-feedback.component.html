@@ -1,6 +1,6 @@
 <div
     id="inline-feedback"
-    class="border rounded"
+    class="alert p-1 border rounded"
     [style.max-width]="'780px'"
     [class.alert-success]="feedback.credits! > 0 && feedback.isSubsequent === undefined"
     [class.alert-danger]="feedback.credits! < 0 && feedback.isSubsequent === undefined"
@@ -68,8 +68,8 @@
 </div>
 <ng-template #readOnlyFeedback>
     <div class="container">
-        <div class="row align-items-center m-0">
-            <div class="col ps-0 pt-1">
+        <div class="row align-items-top m-1">
+            <div class="col-auto ps-0">
                 <h5 class="d-inline">
                     <span
                         class="badge"
@@ -80,9 +80,12 @@
                         >{{ roundScoreSpecifiedByCourseSettings(feedback.credits, course) + 'P' }}</span
                     >
                 </h5>
-                <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>
             </div>
-            <div *ngIf="!readOnly" class="col d-flex justify-content-end pe-0 pt-1">
+            <div class="col ps-0 pt-1">
+                <h6 class="d-inline" jhiTranslate="artemisApp.assessment.detail.tutorComment">Tutor Comment:</h6>
+                <p [innerHTML]="buildFeedbackTextForCodeEditor(feedback)" class="mt-2"></p>
+            </div>
+            <div *ngIf="!readOnly" class="col d-flex justify-content-end align-items-start pe-0">
                 <button type="submit" (click)="editFeedback(codeLine)" class="btn btn-primary btn-sm">
                     <fa-icon [icon]="faPencilAlt"></fa-icon> <span jhiTranslate="entity.action.edit">Edit</span>
                 </button>
@@ -91,6 +94,5 @@
                 <fa-icon class="float-end" [icon]="faExclamationTriangle" [ngbTooltip]="'artemisApp.assessment.subsequentFeedback' | artemisTranslate"></fa-icon>
             </div>
         </div>
-        <div class="row ms-4 mt-2 pb-1"><span [innerHTML]="buildFeedbackTextForCodeEditor(feedback)"></span></div>
     </div>
 </ng-template>

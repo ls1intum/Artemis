@@ -36,7 +36,7 @@
             <tbody>
                 <tr *ngFor="let exam of content.resultsOnPage; trackBy: trackId" class="flex-row">
                     <td class="col-1">
-                        <span>{{ exam.id }}</span>
+                        <span [class.ngb-highlight]="'' + exam.id === searchTerm"> {{ exam.id }}</span>
                     </td>
                     <td class="text-break col-4">
                         <ngb-highlight [result]="exam.title" [term]="searchTerm"></ngb-highlight>
