@@ -154,6 +154,9 @@
             }
         },
         "scheduleForm": {
+            "configureRecurringSchedule": "Configure recurring session schedule?",
+            "scheduleChangeWarning": "You changed the schedule. All sessions belonging to the old schedule will be deleted as a consequence. Are you sure you want to do this?",
+            "sessionCreationInfo": "The following sessions will be created:",
             "title": "Schedule",
             "weekDay": {
                 "label": "Weekday on which the tutorial group meets",

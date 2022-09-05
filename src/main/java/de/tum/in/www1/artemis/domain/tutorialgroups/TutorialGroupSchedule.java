@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -28,19 +30,19 @@ public class TutorialGroupSchedule extends DomainObject {
     private Integer dayOfWeek;
 
     @Column(name = "start_time")
-    private String startTime;
+    private LocalTime startTime;
 
     @Column(name = "end_time")
-    private String endTime;
+    private LocalTime endTime;
 
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
 
     @Column(name = "valid_from_inclusive")
-    private String validFromInclusive;
+    private LocalDate validFromInclusive;
 
     @Column(name = "valid_to_inclusive")
-    private String validToInclusive;
+    private LocalDate validToInclusive;
 
     @OneToMany(mappedBy = "tutorialGroupSchedule", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("tutorialGroupSchedule")
@@ -80,19 +82,19 @@ public class TutorialGroupSchedule extends DomainObject {
         this.dayOfWeek = dayOfWeek;
     }
 
-    public String getStartTime() {
+    public LocalTime getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(String startTime) {
+    public void setStartTime(LocalTime startTime) {
         this.startTime = startTime;
     }
 
-    public String getEndTime() {
+    public LocalTime getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(String endTime) {
+    public void setEndTime(LocalTime endTime) {
         this.endTime = endTime;
     }
 
@@ -104,19 +106,19 @@ public class TutorialGroupSchedule extends DomainObject {
         this.repetitionFrequency = repetitionFrequency;
     }
 
-    public String getValidFromInclusive() {
+    public LocalDate getValidFromInclusive() {
         return validFromInclusive;
     }
 
-    public void setValidFromInclusive(String validFromInclusive) {
+    public void setValidFromInclusive(LocalDate validFromInclusive) {
         this.validFromInclusive = validFromInclusive;
     }
 
-    public String getValidToInclusive() {
+    public LocalDate getValidToInclusive() {
         return validToInclusive;
     }
 
-    public void setValidToInclusive(String validToInclusive) {
+    public void setValidToInclusive(LocalDate validToInclusive) {
         this.validToInclusive = validToInclusive;
     }
 }

@@ -70,7 +70,7 @@ public class TutorialGroupFreeDayResource {
         tutorialGroupFreeDay.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
         var persistedTutorialGroupFreeDay = tutorialGroupFreeDayRepository.save(tutorialGroupFreeDay);
 
-        tutorialGroupFreeDayService.cancelActiveOverlappingSessions(persistedTutorialGroupFreeDay);
+        tutorialGroupFreeDayService.cancelActiveOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreeDay);
 
         return ResponseEntity.created(new URI("/api/tutorial-free-days/" + tutorialGroupFreeDay.getId())).body(persistedTutorialGroupFreeDay);
     }
@@ -90,7 +90,7 @@ public class TutorialGroupFreeDayResource {
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreeDay.getTutorialGroupsConfiguration().getCourse(), null);
         tutorialGroupFreeDayRepository.delete(tutorialGroupFreeDay);
 
-        tutorialGroupFreeDayService.activateCancelledOverlappingSessions(tutorialGroupFreeDay);
+        tutorialGroupFreeDayService.activateCancelledOverlappingSessions(tutorialGroupFreeDay.getTutorialGroupsConfiguration().getCourse(), tutorialGroupFreeDay);
 
         return ResponseEntity.noContent().build();
     }

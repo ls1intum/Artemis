@@ -1,6 +1,5 @@
 package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
@@ -155,7 +154,7 @@ public class TutorialGroupResource {
      *
      * @param courseId      the id of the course to which the tutorial group should be added
      * @param tutorialGroup the tutorial group that should be created
-     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group
+     * @return ResponseEntity with status 204 (NO_CONTENT)
      */
     @PostMapping("/courses/{courseId}/tutorial-groups")
     @PreAuthorize("hasRole('INSTRUCTOR')")
@@ -186,7 +185,7 @@ public class TutorialGroupResource {
             tutorialGroupScheduleService.save(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
         }
 
-        return ResponseEntity.created(new URI("/api/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
+        return ResponseEntity.noContent().build();
     }
 
     /**
@@ -230,23 +229,22 @@ public class TutorialGroupResource {
         overrideValues(changedTutorialGroup, tutorialGroupFromDatabase);
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
 
-        // delete schedule
-        if (changedTutorialGroup.getTutorialGroupSchedule() == null && updatedTutorialGroup.getTutorialGroupSchedule() != null) {
+        var currentlyHasSchedule = updatedTutorialGroup.getTutorialGroupSchedule() != null;
+        var shouldHaveSchedule = changedTutorialGroup.getTutorialGroupSchedule() != null;
+
+        if (currentlyHasSchedule && !shouldHaveSchedule) {
             tutorialGroupScheduleService.delete(updatedTutorialGroup.getTutorialGroupSchedule());
         }
-        // create schedule
-        else if (changedTutorialGroup.getTutorialGroupSchedule() != null && updatedTutorialGroup.getTutorialGroupSchedule() == null) {
-            tutorialGroupScheduleService.save(tutorialGroupFromDatabase.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup,
+        else if (!currentlyHasSchedule && shouldHaveSchedule) {
+            tutorialGroupScheduleService.save(updatedTutorialGroup.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup,
                     changedTutorialGroup.getTutorialGroupSchedule());
         }
-        else {
-            if (!changedTutorialGroup.getTutorialGroupSchedule().sameSchedule(updatedTutorialGroup.getTutorialGroupSchedule())) {
-                tutorialGroupScheduleService.update(tutorialGroupFromDatabase.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup.getTutorialGroupSchedule(),
-                        changedTutorialGroup.getTutorialGroupSchedule());
-            }
+        else if (currentlyHasSchedule && shouldHaveSchedule && !updatedTutorialGroup.getTutorialGroupSchedule().sameSchedule(changedTutorialGroup.getTutorialGroupSchedule())) {
+            tutorialGroupScheduleService.update(updatedTutorialGroup.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup.getTutorialGroupSchedule(),
+                    changedTutorialGroup.getTutorialGroupSchedule());
         }
 
-        return ResponseEntity.ok(updatedTutorialGroup);
+        return ResponseEntity.noContent().build();
     }
 
     /**

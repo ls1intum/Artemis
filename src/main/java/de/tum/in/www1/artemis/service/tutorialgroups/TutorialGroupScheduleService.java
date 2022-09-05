@@ -22,20 +22,21 @@ public class TutorialGroupScheduleService {
 
     private final TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
 
-    private final TutorialGroupRepository tutorialGroupRepository;
+    private final TutorialGroupFreeDayService tutorialGroupFreeDayService;
 
     public TutorialGroupScheduleService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
-            TutorialGroupRepository tutorialGroupRepository) {
+            TutorialGroupRepository tutorialGroupRepository, TutorialGroupFreeDayService tutorialGroupFreeDayService) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
-        this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupFreeDayService = tutorialGroupFreeDayService;
     }
 
     public void save(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
         TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
         var individualSessions = generateSessions(tutorialGroupsConfiguration, savedSchedule);
-        tutorialGroupSessionRepository.saveAll(individualSessions);
+        tutorialGroupSessionRepository.saveAllAndFlush(individualSessions);
+
     }
 
     public void delete(TutorialGroupSchedule tutorialGroupSchedule) {
@@ -44,15 +45,15 @@ public class TutorialGroupScheduleService {
 
     public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
         ZoneId creationTimeZone = ZoneId.of(tutorialGroupsConfiguration.getTimeZone());
-        LocalDate periodStart = LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive());
-        LocalDate periodEnd = LocalDate.parse(tutorialGroupSchedule.getValidToInclusive());
+        LocalDate periodStart = tutorialGroupSchedule.getValidFromInclusive();
+        LocalDate periodEnd = tutorialGroupSchedule.getValidToInclusive();
+        LocalTime startTime = tutorialGroupSchedule.getStartTime();
+        LocalTime endTime = tutorialGroupSchedule.getEndTime();
 
         List<TutorialGroupSession> sessions = new ArrayList<>();
 
-        ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(periodStart, tutorialGroupSchedule.getDayOfWeek()),
-                LocalTime.parse(tutorialGroupSchedule.getStartTime()), creationTimeZone);
-        ZonedDateTime sessionEnd = ZonedDateTime.of(getFirstDateOfWeekDay(periodStart, tutorialGroupSchedule.getDayOfWeek()), LocalTime.parse(tutorialGroupSchedule.getEndTime()),
-                creationTimeZone);
+        ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(periodStart, tutorialGroupSchedule.getDayOfWeek()), startTime, creationTimeZone);
+        ZonedDateTime sessionEnd = ZonedDateTime.of(getFirstDateOfWeekDay(periodStart, tutorialGroupSchedule.getDayOfWeek()), endTime, creationTimeZone);
 
         while (sessionStart.toLocalDate().isBefore(periodEnd) || sessionStart.toLocalDate().isEqual(periodEnd)) {
             TutorialGroupSession session = new TutorialGroupSession();
@@ -61,7 +62,15 @@ public class TutorialGroupScheduleService {
             session.setEnd(sessionEnd.withZoneSameInstant(ZoneId.of("UTC")));
             session.setTutorialGroupSchedule(tutorialGroupSchedule);
             session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
-            session.setStatus(TutorialGroupSessionStatus.ACTIVE);
+
+            if (!tutorialGroupFreeDayService.findOverlappingFreeDays(tutorialGroupsConfiguration.getCourse(), session).isEmpty()) {
+                session.setStatus(TutorialGroupSessionStatus.CANCELLED);
+                // Todo: Set Status reason
+            }
+            else {
+                session.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            }
+
             sessions.add(session);
 
             sessionStart = sessionStart.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());

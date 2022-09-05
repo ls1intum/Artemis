@@ -69,7 +69,7 @@ public class TutorialGroup extends DomainObject {
     private TutorialGroupSchedule tutorialGroupSchedule;
 
     @OneToMany(mappedBy = "tutorialGroup", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonIgnoreProperties("tutorialGroup")
+    @JsonIgnoreProperties("tutorialGroup, tutorialGroupSchedule")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<TutorialGroupSession> tutorialGroupSessions = new ArrayList<>();
 

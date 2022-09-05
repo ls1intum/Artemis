@@ -10,6 +10,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import _ from 'lodash';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -57,8 +58,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     taFocus$ = new Subject<string>();
     taClick$ = new Subject<string>();
 
-    /** Passed as inputs to the schedule form*/
+    configureSchedule = true;
     @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
+    existingScheduleFormDate: ScheduleFormData | undefined;
 
     constructor(private fb: FormBuilder, private courseManagementService: CourseManagementService, private alertService: AlertService) {}
 
@@ -94,6 +96,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         return !this.form.invalid;
     }
 
+    get scheduleChanged() {
+        return this.isEditMode && (!_.isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate) || this.configureSchedule !== !!this.existingScheduleFormDate);
+    }
+
     ngOnInit(): void {
         this.getTeachingAssistantsInCourse();
         this.initializeForm();
@@ -108,6 +114,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
+        if (!this.configureSchedule) {
+            tutorialGroupFormData.schedule = undefined;
+        }
         this.formSubmitted.emit(tutorialGroupFormData);
     }
 
@@ -145,6 +154,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         if (formData.teachingAssistant) {
             formData.teachingAssistant = this.createUserWithLabel(formData.teachingAssistant);
         }
+        this.configureSchedule = !!formData.schedule;
+        this.existingScheduleFormDate = formData.schedule;
         this.form.patchValue(formData);
     }
 

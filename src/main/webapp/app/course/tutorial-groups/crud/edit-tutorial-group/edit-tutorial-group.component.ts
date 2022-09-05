@@ -101,6 +101,8 @@ export class EditTutorialGroupComponent implements OnInit {
             this.tutorialGroup.tutorialGroupSchedule.startTime = startTime;
             this.tutorialGroup.tutorialGroupSchedule.endTime = endTime;
             this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = repetitionFrequency;
+        } else {
+            this.tutorialGroup.tutorialGroupSchedule = undefined;
         }
 
         this.isLoading = true;

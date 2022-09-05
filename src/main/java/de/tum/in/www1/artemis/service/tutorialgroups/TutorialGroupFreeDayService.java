@@ -3,12 +3,16 @@ package de.tum.in.www1.artemis.service.tutorialgroups;
 import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
+import java.util.Set;
 
 import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreeDay;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreeDayRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 
 @Service
@@ -16,13 +20,20 @@ public class TutorialGroupFreeDayService {
 
     private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
-    public TutorialGroupFreeDayService(TutorialGroupSessionRepository tutorialGroupSessionRepository) {
+    private final TutorialGroupFreeDayRepository tutorialGroupFreeDayRepository;
+
+    public TutorialGroupFreeDayService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupFreeDayRepository tutorialGroupFreeDayRepository) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
+        this.tutorialGroupFreeDayRepository = tutorialGroupFreeDayRepository;
     }
 
-    public void cancelActiveOverlappingSessions(TutorialGroupFreeDay tutorialGroupFreeDay) {
+    public Set<TutorialGroupFreeDay> findOverlappingFreeDays(Course course, TutorialGroupSession tutorialGroupSession) {
+        return tutorialGroupFreeDayRepository.onDate(course, tutorialGroupSession.getStart().toLocalDate());
+    }
+
+    public void cancelActiveOverlappingSessions(Course course, TutorialGroupFreeDay tutorialGroupFreeDay) {
         var startAndEnd = getStartAndEndOfFreeDay(tutorialGroupFreeDay);
-        var overlappingSessions = tutorialGroupSessionRepository.findAllActiveBetween(startAndEnd.getFirst(), startAndEnd.getSecond());
+        var overlappingSessions = tutorialGroupSessionRepository.findAllActiveBetween(course, startAndEnd.getFirst(), startAndEnd.getSecond());
         overlappingSessions.forEach(session -> {
             session.setStatus(TutorialGroupSessionStatus.CANCELLED);
             if (tutorialGroupFreeDay.getReason() != null) {
@@ -32,9 +43,9 @@ public class TutorialGroupFreeDayService {
         tutorialGroupSessionRepository.saveAll(overlappingSessions);
     }
 
-    public void activateCancelledOverlappingSessions(TutorialGroupFreeDay tutorialGroupFreeDay) {
+    public void activateCancelledOverlappingSessions(Course course, TutorialGroupFreeDay tutorialGroupFreeDay) {
         var startAndEnd = getStartAndEndOfFreeDay(tutorialGroupFreeDay);
-        var overlappingSessions = tutorialGroupSessionRepository.findAllCancelledBetween(startAndEnd.getFirst(), startAndEnd.getSecond());
+        var overlappingSessions = tutorialGroupSessionRepository.findAllCancelledBetween(course, startAndEnd.getFirst(), startAndEnd.getSecond());
         overlappingSessions.forEach(session -> {
             session.setStatus(TutorialGroupSessionStatus.ACTIVE);
             session.setStatusExplanation(null);

@@ -115,7 +115,17 @@
                 </div>
             </div>
             <hr />
-            <jhi-schedule-form #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" [(ngModel)]="configureSchedule" id="configureSchedule" [ngModelOptions]="{ standalone: true }" />
+                <label class="form-check-label" for="configureSchedule">
+                    {{ 'artemisApp.scheduleForm.configureRecurringSchedule' | artemisTranslate }}
+                </label>
+            </div>
+            <div *ngIf="scheduleChanged" class="alert alert-danger" role="alert">
+                {{ 'artemisApp.scheduleForm.scheduleChangeWarning' | artemisTranslate }}
+            </div>
+            <hr />
+            <jhi-schedule-form *ngIf="configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
             <div class="row mt-2">
                 <div class="col-12">
                     <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
