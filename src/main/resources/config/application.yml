@@ -24,6 +24,7 @@ logging:
     logback:
         rollingpolicy:
             max-history: 90
+            total-size-cap: "10GB"
 
 artemis:
     version: #project.version#
