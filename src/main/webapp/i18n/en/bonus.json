@@ -9,7 +9,7 @@
             },
             "discreteness": {
                 "title": "Select discreteness",
-                "helpText": "DISCRETE: Bumps the student's grade to a better grade step. Final grade will be one of the grade steps in the target exam (e.g. from 1.3 to 1.0 or from B to A). <br>CONTINUOUS: Applies bonus arithmetically to the student's grade. Final grade can be any numeric value between the best and the worst grade step values (e.g. from 1.3 to 1.2).",
+                "helpText": "DISCRETE: (Not available yet) Bumps the student's grade to a better grade step. Final grade will be one of the grade steps in the target exam (e.g. from 1.3 to 1.0 or from B to A). <br>CONTINUOUS: Applies bonus arithmetically to the student's grade. Final grade can be any numeric value between the best and the worst grade step values (e.g. from 1.3 to 1.2).",
                 "discrete": "DISCRETE",
                 "continuous": "CONTINUOUS"
             },

@@ -9,7 +9,7 @@
             },
             "discreteness": {
                 "title": "Wähle Diskretion",
-                "helpText": "DISKRET: Erhöht die Note des Schülers auf eine bessere Klassenstufe. Die Endnote entspricht einer der Notenstufen der Zielprüfung (z. B. von 1,3 auf 1,0 oder von B auf A). <br>KONTINUIERLICH: Der Bonus wird rechnerisch auf die Note des Schülers angewandt. Die Endnote kann ein beliebiger numerischer Wert zwischen dem besten und dem schlechtesten Notenstufenwert sein (z. B. von 1,3 bis 1,2).",
+                "helpText": "DISKRET: (Noch nicht verfügbar) Erhöht die Note des Schülers auf eine bessere Klassenstufe. Die Endnote entspricht einer der Notenstufen der Zielprüfung (z. B. von 1,3 auf 1,0 oder von B auf A). <br>KONTINUIERLICH: Der Bonus wird rechnerisch auf die Note des Schülers angewandt. Die Endnote kann ein beliebiger numerischer Wert zwischen dem besten und dem schlechtesten Notenstufenwert sein (z. B. von 1,3 bis 1,2).",
                 "discrete": "DISKRET",
                 "continuous": "KONTINUIERLICH"
             },
@@ -29,7 +29,7 @@
                 "examGrade": "Prüfungsnote",
                 "bonusSourceStudentPoints": "Bonusquelle Studentenpunkte",
                 "bonusGrade": "Bonus",
-                "finalPoints": "Letzte<br/>Punkte",
+                "finalPoints": "Letzte Punkte",
                 "finalGrade": "Endnote",
                 "any": "(Any)",
                 "exceedsMax": "Der Endwert übersteigt den bestmöglichen Wert, also wird er dort gekappt. Wenn das nicht gewollt ist, überprüfe die −/+ Auswahl noch einmal."
