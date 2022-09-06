@@ -127,11 +127,13 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
     }));
 
-    it('should create empty post', () => {
+    it('should create student notification', () => {
         component.plagiarismCase = plagiarismCase;
+        component.ngOnInit();
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
-        expect(component.createdPost.title).toBe('Plagiarism Case Test Exercise');
+        expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
+        expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
     });
 
     it('should notify student', () => {

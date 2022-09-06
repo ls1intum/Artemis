@@ -20,8 +20,7 @@ export class ParticipantScoreDTO {
 
 export class ParticipantScoreAverageDTO {
     public id?: number;
-    public userName?: string;
-    public teamName?: string;
+    public name?: string;
     public averageScore?: number;
     public averageRatedScore?: number;
     public averagePoints?: number;

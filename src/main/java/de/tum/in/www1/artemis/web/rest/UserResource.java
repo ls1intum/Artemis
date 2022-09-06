@@ -138,7 +138,7 @@ public class UserResource {
         log.debug("REST request to save User : {}", managedUserVM);
 
         if (managedUserVM.getId() != null) {
-            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idexists");
+            throw new BadRequestAlertException("A new user cannot already have an ID", "userManagement", "idExists");
             // Lowercase the user login before comparing with database
         }
         else if (userRepository.findOneByLogin(managedUserVM.getLogin().toLowerCase()).isPresent()) {

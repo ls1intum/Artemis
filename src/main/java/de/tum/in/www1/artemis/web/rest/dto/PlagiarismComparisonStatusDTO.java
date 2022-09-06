@@ -1,16 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismStatus;
 
-public class PlagiarismComparisonStatusDTO {
-
-    private PlagiarismStatus status;
-
-    public PlagiarismStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(PlagiarismStatus status) {
-        this.status = status;
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record PlagiarismComparisonStatusDTO(PlagiarismStatus status) {
 }
