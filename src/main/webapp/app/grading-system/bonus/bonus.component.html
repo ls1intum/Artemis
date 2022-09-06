@@ -136,20 +136,21 @@
                     <td>{{ dynamicExample.examGrade }}</td>
                     <td><input [(ngModel)]="dynamicExample.studentPointsOfBonusSource" (change)="calculateDynamicExample()" type="number" step="0.5" min="0" /></td>
                     <td>{{ dynamicExample.bonusGrade }}</td>
-                    <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS && dynamicExample.finalPoints">
-                        {{ dynamicExample.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} = {{ dynamicExample.finalPoints }}
-                        <fa-icon
-                            *ngIf="dynamicExample.exceedsMax"
-                            [icon]="faExclamationTriangle"
-                            class="text-warning"
-                            placement="top"
-                            [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
-                        ></fa-icon>
+                    <td *ngIf="bonus.bonusStrategy === BonusStrategy.POINTS">
+                        <ng-container *ngIf="dynamicExample.finalPoints != undefined">
+                            {{ dynamicExample.studentPointsOfBonusTo }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} = {{ dynamicExample.finalPoints }}
+                            <fa-icon
+                                *ngIf="dynamicExample.exceedsMax"
+                                [icon]="faExclamationTriangle"
+                                class="text-warning"
+                                placement="top"
+                                [ngbTooltip]="'artemisApp.bonus.examples.exceedsMax' | artemisTranslate"
+                            ></fa-icon>
+                        </ng-container>
                     </td>
                     <td>
                         <ng-container *ngIf="bonus.bonusStrategy === BonusStrategy.GRADES_CONTINUOUS && dynamicExample.finalGrade"
-                            >{{ dynamicExample.examGrade }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }}
-                            =
+                            >{{ dynamicExample.examGrade }} {{ getCalculationSign(bonus.weight!) }} {{ dynamicExample.bonusGrade }} =
                         </ng-container>
                         {{ dynamicExample.finalGrade }}
                         <fa-icon
