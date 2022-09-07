@@ -51,12 +51,15 @@ public class GradingScaleService {
     }
 
     /**
-     * Search for all modeling exercises fitting a {@link PageableSearchDTO search query}. The result is paged,
-     * meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
-     * have to send hundreds/thousands of exercises if there are that many in Artemis.
+     * Search for all grading scales fitting a {@link PageableSearchDTO search query} among the grading scales having grade type BONUS.
+     * If the user does not have ADMIN role, they can only access the grading scales if they are an instructor in the course related to it.
+     * The result is paged, meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send too many results.
+     *
+     * The search term is the title of the course or exam that is directly associated with that grading scale.
      *
      * @param search The search query defining the search term and the size of the returned page
-     * @param user   The user for whom to fetch all available exercises
+     * @param user   The user for whom to fetch all available grading scales
      * @return A wrapper object containing a list of all found exercises and the total number of pages
      */
     public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {

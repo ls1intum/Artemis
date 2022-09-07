@@ -3,7 +3,7 @@
         "bonus": {
             "bonusStrategy": {
                 "title": "Wähle eine Bonusstrategie",
-                "helpText": "NOTEN: Berechnet zunächst die Prüfungsnote anhand des Notenschlüssel. Dann wird der Bonus auf diese Note angewandt, um die Endnote zu erhalten. PUNKTE: Wendet zunächst den Bonus auf die Punkte des Studierenden an. Danach wird die Endnote berechnet, indem die resultierenden Punkte mit dem Notenschlüssel für die Prüfung umgerechnet werden.",
+                "helpText": "NOTEN: Berechnet zunächst die Prüfungsnote anhand des Notenschlüssel. Dann wird der Bonus auf diese Note angewandt, um die Endnote zu erhalten.<br>PUNKTE: Wendet zunächst den Bonus auf die Punkte des Studierenden an. Danach wird die Endnote berechnet, indem die resultierenden Punkte mit dem Notenschlüssel für die Prüfung umgerechnet werden.",
                 "grades": "NOTEN",
                 "points": "PUNKTE"
             },
