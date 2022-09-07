@@ -73,16 +73,10 @@ public class TutorialGroupService {
      * @return The students that could not be found and thus not registered.
      */
     public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs) {
-        Set<User> foundStudents = new HashSet();
+        Set<User> foundStudents = new HashSet<>();
         Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
         for (var studentDto : studentDTOs) {
-            var studentOptional = findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName());
-            if (studentOptional.isEmpty()) {
-                notFoundStudentDTOs.add(studentDto);
-            }
-            else {
-                foundStudents.add(studentOptional.get());
-            }
+            findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup);
         return notFoundStudentDTOs;
