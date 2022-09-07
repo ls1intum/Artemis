@@ -272,6 +272,7 @@ describe('BonusComponent', () => {
         bonusService = fixture.debugElement.injector.get(BonusService);
         gradingSystemService = fixture.debugElement.injector.get(GradingSystemService);
 
+        jest.spyOn(bonusService, 'findBonusForExam').mockReturnValue(throwError(() => ({ status: 404 })));
         jest.spyOn(gradingSystemService, 'findWithBonusGradeTypeForInstructor').mockReturnValue(of({ body: searchResult } as HttpResponse<SearchResult<GradingScale>>));
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(examGradeSteps));
         jest.spyOn(bonusService, 'generateBonusExamples').mockReturnValue(bonusExamples);
@@ -416,10 +417,12 @@ describe('BonusComponent', () => {
         const bonusSpy = jest.spyOn(bonusService, 'updateBonus').mockReturnValue(of({ body: bonus } as EntityResponseType));
 
         component.bonus = bonus;
+        component.ngOnInit();
+
         component.save();
 
         expect(bonusSpy).toHaveBeenCalledOnce();
-        expect(bonusSpy).toHaveBeenCalledWith(bonus);
+        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus);
 
         tick();
 
@@ -428,16 +431,18 @@ describe('BonusComponent', () => {
     }));
 
     it('should delete bonus', fakeAsync(() => {
-        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus').mockReturnValue(of({ body: undefined } as HttpResponse<any>));
+        const bonusSpy = jest.spyOn(bonusService, 'deleteBonus').mockReturnValue(of({} as HttpResponse<void>));
 
         let dialogError: string | undefined = undefined;
         component.dialogError$.subscribe((err) => (dialogError = err));
 
         component.bonus = bonus;
+        component.ngOnInit();
+
         component.delete();
 
         expect(bonusSpy).toHaveBeenCalledOnce();
-        expect(bonusSpy).toHaveBeenCalledWith(bonus.id);
+        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus.id);
 
         tick();
 
@@ -459,10 +464,12 @@ describe('BonusComponent', () => {
         component.dialogError$.subscribe((err) => (dialogError = err));
 
         component.bonus = bonus;
+        component.ngOnInit();
+
         component.delete();
 
         expect(bonusSpy).toHaveBeenCalledOnce();
-        expect(bonusSpy).toHaveBeenCalledWith(bonus.id);
+        expect(bonusSpy).toHaveBeenCalledWith(courseId, examId, bonus.id);
 
         tick();
 

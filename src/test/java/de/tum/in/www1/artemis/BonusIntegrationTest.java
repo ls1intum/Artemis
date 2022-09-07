@@ -48,6 +48,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
     private GradingScale courseGradingScale;
 
+    private long courseId;
+
+    private long examId;
+
     /**
      * Initialize variables
      */
@@ -84,6 +88,9 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         bonusToExamGradingScale.setBonusStrategy(BonusStrategy.GRADES_CONTINUOUS);
         gradingScaleRepository.save(bonusToExamGradingScale);
+
+        courseId = bonusToExamGradingScale.getExam().getCourse().getId();
+        examId = bonusToExamGradingScale.getExam().getId();
     }
 
     @AfterEach
@@ -96,8 +103,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     void testGetBonusSourcesForTargetExamNotFound() throws Exception {
         bonusRepository.delete(courseBonus);
 
-        request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.NOT_FOUND, Bonus.class);
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.NOT_FOUND, Bonus.class);
 
     }
 
@@ -110,18 +116,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetBonusForTargetExam() throws Exception {
 
-        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, Bonus.class);
-
-        assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
-        assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetBonusSource() throws Exception {
-
-        Bonus foundBonus = request.get("/api/bonus/" + courseBonus.getId(), HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
 
         assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
         assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
@@ -140,9 +135,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
 
         Bonus newBonus = ModelFactory.generateBonus(BonusStrategy.GRADES_CONTINUOUS, -1.0, newExamGradingScale.getId(), bonusToExamGradingScale.getId());
 
-        Bonus savedBonus = request.postWithResponseBody(
-                "/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus", newBonus, Bonus.class,
-                HttpStatus.CREATED);
+        Bonus savedBonus = request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", newBonus, Bonus.class, HttpStatus.CREATED);
 
         assertThat(savedBonus.getId()).isGreaterThan(0);
         assertBonusesAreEqualIgnoringId(savedBonus, newBonus);
@@ -152,55 +145,41 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testSaveBonusForTargetExamDuplicateError() throws Exception {
 
-        request.postWithResponseBody("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
+        request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.BAD_REQUEST);
 
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testGetBonusSources() throws Exception {
-
-        Bonus foundBonus = request.get("/api/bonus/" + courseBonus.getId(), HttpStatus.OK, Bonus.class);
-
-        assertThat(foundBonus.getId()).isEqualTo(courseBonus.getId());
-        assertBonusesAreEqualIgnoringId(foundBonus, courseBonus);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testCreateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.postWithResponseBody("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                examBonus, Bonus.class, HttpStatus.FORBIDDEN);
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.delete("/api/bonus/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
+        request.postWithResponseBody("/api/courses/" + courseId + "/exams/" + examId + "/bonus", examBonus, Bonus.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testDeleteBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.put("/api/bonus/", courseBonus, HttpStatus.FORBIDDEN);
+        request.delete("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId(), HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/", courseBonus, HttpStatus.FORBIDDEN);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithoutChangingSourceGradingScale() throws Exception {
 
-        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
 
         BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
         foundBonus.setBonusStrategy(newBonusStrategy);
         double newWeight = -foundBonus.getWeight();
         foundBonus.setWeight(newWeight);
 
-        request.put("/api/bonus/", foundBonus, HttpStatus.OK);
-        Bonus updatedBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, Bonus.class);
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/", foundBonus, HttpStatus.OK);
+        Bonus updatedBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
         assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
         assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
         assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
@@ -210,8 +189,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testUpdateBonusWithChangingSourceGradingScale() throws Exception {
 
-        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
 
         BonusStrategy newBonusStrategy = BonusStrategy.POINTS;
         foundBonus.setBonusStrategy(newBonusStrategy);
@@ -221,9 +199,8 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         assertThat(foundBonus.getSourceGradingScale().getId()).isNotEqualTo(sourceExamGradingScale.getId());
         foundBonus.setSourceGradingScale(sourceExamGradingScale);
 
-        request.put("/api/bonus/", foundBonus, HttpStatus.OK);
-        Bonus updatedBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, Bonus.class);
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/", foundBonus, HttpStatus.OK);
+        Bonus updatedBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
         assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
         assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
         assertThat(updatedBonus.getSourceGradingScale().getId()).isEqualTo(foundBonus.getSourceGradingScale().getId());
@@ -234,12 +211,10 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDeleteBonus() throws Exception {
 
-        Bonus foundBonus = request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.OK, Bonus.class);
+        Bonus foundBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
 
-        request.delete("/api/bonus/" + foundBonus.getId(), HttpStatus.OK);
-        request.get("/api/courses/" + bonusToExamGradingScale.getExam().getCourse().getId() + "/exams/" + bonusToExamGradingScale.getExam().getId() + "/bonus",
-                HttpStatus.NOT_FOUND, Bonus.class);
+        request.delete("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), HttpStatus.OK);
+        request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.NOT_FOUND, Bonus.class);
 
     }
 
@@ -288,7 +263,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         boolean expectedExceedsMax = false;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+                expectedExceedsMax, sourceGradingScale.getId());
 
         bonusToPoints = 120;
         sourcePoints = 75;
@@ -299,7 +274,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         expectedExceedsMax = false;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+                expectedExceedsMax, sourceGradingScale.getId());
 
         bonusToPoints = 200;
         sourcePoints = 200;
@@ -310,18 +285,16 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         expectedExceedsMax = true;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+                expectedExceedsMax, sourceGradingScale.getId());
 
     }
 
     @NotNull
     private BonusExampleDTO calculateFinalGradeAtServer(BonusStrategy bonusStrategy, double weight, double bonusToPoints, double sourcePoints, String expectedExamGrade,
-            double expectedBonusGrade, Double expectedFinalPoints, String expectedFinalGrade, boolean expectedExceedsMax, long bonusToGradingScaleId, long sourceGradingScaleId)
-            throws Exception {
-        BonusExampleDTO bonusExample = request.get(
-                "/api/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign=" + weight + "&bonusToGradingScaleId=" + bonusToGradingScaleId
-                        + "&sourceGradingScaleId=" + sourceGradingScaleId + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints,
-                HttpStatus.OK, BonusExampleDTO.class);
+            double expectedBonusGrade, Double expectedFinalPoints, String expectedFinalGrade, boolean expectedExceedsMax, long sourceGradingScaleId) throws Exception {
+        BonusExampleDTO bonusExample = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus/calculate-raw?bonusStrategy=" + bonusStrategy + "&calculationSign="
+                + weight + "&sourceGradingScaleId=" + sourceGradingScaleId + "&bonusToPoints=" + bonusToPoints + "&sourcePoints=" + sourcePoints, HttpStatus.OK,
+                BonusExampleDTO.class);
         assertThat(bonusExample.examGrade()).isEqualTo(expectedExamGrade);
         assertThat(bonusExample.bonusGrade()).isEqualTo(expectedBonusGrade);
         assertThat(bonusExample.finalPoints()).isEqualTo(expectedFinalPoints);
@@ -365,7 +338,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         boolean expectedExceedsMax = false;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+                expectedExceedsMax, sourceGradingScale.getId());
 
         bonusToPoints = 120;
         sourcePoints = 75;
@@ -376,7 +349,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         expectedExceedsMax = false;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+                expectedExceedsMax, sourceGradingScale.getId());
 
         bonusToPoints = 200;
         sourcePoints = 200;
@@ -387,7 +360,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         expectedExceedsMax = true;
 
         calculateFinalGradeAtServer(bonusStrategy, weight, bonusToPoints, sourcePoints, expectedExamGrade, expectedBonusGrade, expectedFinalPoints, expectedFinalGrade,
-                expectedExceedsMax, bonusToGradingScale.getId(), sourceGradingScale.getId());
+                expectedExceedsMax, sourceGradingScale.getId());
 
     }
 

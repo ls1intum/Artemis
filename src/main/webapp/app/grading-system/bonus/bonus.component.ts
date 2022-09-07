@@ -260,7 +260,9 @@ export class BonusComponent implements OnInit {
 
     save(): void {
         this.isLoading = true;
-        const saveObservable = this.bonus.id ? this.bonusService.updateBonus(this.bonus) : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
+        const saveObservable = this.bonus.id
+            ? this.bonusService.updateBonus(this.courseId, this.examId, this.bonus)
+            : this.bonusService.createBonusForExam(this.courseId, this.examId, this.bonus);
 
         saveObservable
             .pipe(
@@ -277,7 +279,7 @@ export class BonusComponent implements OnInit {
         }
         this.isLoading = true;
         this.bonusService
-            .deleteBonus(this.bonus.id)
+            .deleteBonus(this.courseId, this.examId, this.bonus.id)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

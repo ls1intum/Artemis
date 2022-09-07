@@ -117,7 +117,7 @@ describe('Bonus Service', () => {
             } as GradingScale,
             bonusToGradingScale: { id: 6 } as GradingScale,
         };
-        service.updateBonus(bonusToSend).pipe(take(1)).subscribe();
+        service.updateBonus(1, 6, bonusToSend).pipe(take(1)).subscribe();
 
         const httpRequest = httpMock.expectOne({ method: 'PUT' });
         expect(httpRequest.request.body).toEqual(filteredBonus);

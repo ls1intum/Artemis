@@ -16,20 +16,22 @@ export class BonusService {
     constructor(private http: HttpClient, private gradingSystemService: GradingSystemService) {}
 
     /**
-     * Deletes the bonus
+     * Deletes the bonus.
      *
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the bonus will be deleted
      * @param bonusId the id of the bonus which will be deleted
      */
-    deleteBonus(bonusId: number): Observable<HttpResponse<any>> {
-        return this.http.delete<any>(`${this.resourceUrl}/bonus/${bonusId}`, { observe: 'response' });
+    deleteBonus(courseId: number, examId: number, bonusId: number): Observable<HttpResponse<void>> {
+        return this.http.delete<void>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus/${bonusId}`, { observe: 'response' });
     }
 
     /**
      * Store a new bonus for exam on the server
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the bonus source will be created
-     * @param bonus the bonus source to be created
+     * @param examId the exam for which the bonus will be created
+     * @param bonus the bonus to be created
      */
     createBonusForExam(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
         return this.http.post<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
@@ -38,17 +40,19 @@ export class BonusService {
     /**
      * Update a bonus on the server
      *
-     * @param bonus the bonus source to be updated
+     * @param courseId the course to which the exam belongs
+     * @param examId the exam for which the bonus will be updated
+     * @param bonus the bonus to be updated
      */
-    updateBonus(bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.put<Bonus>(`${this.resourceUrl}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
+    updateBonus(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
+        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
     }
 
     /**
      * Retrieves the bonus for exam
      *
      * @param courseId the course to which the exam belongs
-     * @param examId the exam for which the bonus source will be retrieved
+     * @param examId the exam for which the bonus will be retrieved
      */
     findBonusForExam(courseId: number, examId: number): Observable<EntityResponseType> {
         return this.http.get<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, { observe: 'response' });

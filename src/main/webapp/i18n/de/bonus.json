@@ -29,9 +29,9 @@
                 "examGrade": "Prüfungsnote",
                 "bonusSourceStudentPoints": "Studierenden-Punkte der Bonusquelle",
                 "bonusGrade": "Bonus",
-                "finalPoints": "Letzte Punkte",
+                "finalPoints": "Finale Punktzahl",
                 "finalGrade": "Endnote",
-                "any": "(Any)",
+                "any": "(Alle)",
                 "exceedsMax": "Der Wert übersteigt das bestmögliche Ergebnis, also wird er dort gedeckelt. Wenn das nicht gewollt ist, überprüfe die −/+ Auswahl noch einmal."
             },
             "formula": {
