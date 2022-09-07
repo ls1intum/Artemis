@@ -92,23 +92,17 @@ public class TutorialGroupService {
         var registrationNumber = studentDto.getRegistrationNumber();
         var login = studentDto.getLogin();
 
-        // try to find the user by registration number
-        var studentByRegistrationNumber = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
-        if (studentByRegistrationNumber.isPresent()) {
-            var student = studentByRegistrationNumber.get();
-            if (student.getGroups().contains(studentCourseGroupName)) {
-                return studentByRegistrationNumber;
-            }
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
+        if (userOptional.isEmpty()) {
+            userOptional = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
         }
-        // try to find the student by login
-        var studentByLogin = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-        if (studentByLogin.isPresent()) {
-            var student = studentByLogin.get();
-            if (student.getGroups().contains(studentCourseGroupName)) {
-                return studentByLogin;
-            }
+
+        if (userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName)) {
+            return userOptional;
         }
-        return Optional.empty();
+        else {
+            return Optional.empty();
+        }
     }
 
 }
