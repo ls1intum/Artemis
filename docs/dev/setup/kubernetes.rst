@@ -1,7 +1,7 @@
 Setup Kubernetes and Kubernetes Deployment
 ------------------------------------------
 
-This page describes how to set up an environment deployed in Kubernetes.
+This section describes how to set up an environment deployed in Kubernetes.
 
 **Prerequisites:**
 
@@ -30,7 +30,7 @@ Follow the links to install the tools which will be needed to proceed with the K
    Helm is the package manager for Kubernetes. We will use it to install cert-manager and Rancher
 
 
-.. contents:: Content of this document
+.. contents:: Content of this section
     :local:
     :depth: 1
 

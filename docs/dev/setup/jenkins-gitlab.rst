@@ -1,7 +1,7 @@
 Jenkins and GitLab Setup
 ------------------------
 
-This page describes how to set up a programming exercise environment
+This section describes how to set up a programming exercise environment
 based on Jenkins and GitLab. Optional commands are in curly brackets ``{}``.
 
 The following assumes that all instances run on separate servers. If you
@@ -20,7 +20,7 @@ GitLab,** ``8082`` **for Jenkins,** ``8080`` **for Artemis)**
 
  Make sure that docker has enough memory (~ 6GB). To adapt it, go to ``Preferences -> Resources`` and restart Docker.
 
-.. contents:: Content of this document
+.. contents:: Content of this section
     :local:
     :depth: 3
 

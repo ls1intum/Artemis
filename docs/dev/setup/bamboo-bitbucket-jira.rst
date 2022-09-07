@@ -1,7 +1,7 @@
 Bamboo, Bitbucket and Jira Setup
 --------------------------------
 
-This page describes how to set up a programming exercise environment
+This section describes how to set up a programming exercise environment
 based on Bamboo, Bitbucket and Jira.
 
 | Please note that this setup will create a deployment that is very
@@ -25,7 +25,7 @@ setup is present.
 * `Docker-Compose <https://docs.docker.com/compose/install/>`__
 
 
-.. contents:: Content of this document
+.. contents:: Content of this section
     :local:
     :depth: 1
 
