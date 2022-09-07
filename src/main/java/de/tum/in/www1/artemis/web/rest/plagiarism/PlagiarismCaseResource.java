@@ -195,6 +195,13 @@ public class PlagiarismCaseResource {
         authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
 
         List<PlagiarismCase> plagiarismCasePerExerciseList = plagiarismCaseRepository.findByStudentIdAndExerciseIdsWithPost(user.getId(), exerciseIds);
+        for (PlagiarismCase plagiarismCase : plagiarismCasePerExerciseList) {
+            var plagiarismCaseCourse = plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+            if (!plagiarismCaseCourse.getId().equals(courseId)) {
+                throw new ConflictException("Plagiarism case with id " + plagiarismCase.getId() + " is not related to the given course id " + courseId, ENTITY_NAME,
+                        "courseMismatch");
+            }
+        }
         Map<Long, PlagiarismCaseInfoDTO> plagiarismCaseInfoDTOs = plagiarismCasePerExerciseList.stream()
                 // the following line is already checked in the SQL statement, but we want to ensure it 100%
                 .filter(plagiarismCase -> plagiarismCase.getPost() != null).collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),

@@ -332,6 +332,23 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetMultiplePlagiarismCaseInfosForStudent_conflict() throws Exception {
+        long wrongCourseId = course.getId() + 1;
+        var emptyPlagiarismCaseInfosResponse = request.get(
+                "/api/courses/" + wrongCourseId + "/plagiarism-case?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK,
+                String.class);
+
+        assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
+
+        addPost();
+
+        request.getMap("/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(),
+                HttpStatus.CONFLICT, Long.class, PlagiarismCaseInfoDTO.class);
+
+    }
+
+    @Test
     @WithMockUser(username = "student2", roles = "USER")
     void testGetPlagiarismCaseForStudent_forbidden() throws Exception {
         request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.FORBIDDEN, PlagiarismCase.class);
