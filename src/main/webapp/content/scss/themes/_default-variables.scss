@@ -135,8 +135,10 @@ $mat-form-field-outline: #ccc;
 
 // Feature Overview
 $fo-wrapper-background: white;
-$fo-container-box-icon-background: #f2f2f2;
+$fo-header-font-color: white;
+$fo-container-box-icon-background: $gray-200;
 $fo-blue-font-color: #3070b3;
+$fo-box-overlay-background: $gray-100;
 
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
