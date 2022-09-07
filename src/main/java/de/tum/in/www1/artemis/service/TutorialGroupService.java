@@ -89,11 +89,8 @@ public class TutorialGroupService {
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
-        var registrationNumber = studentDto.getRegistrationNumber();
-        var login = studentDto.getLogin();
-
-        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber)
-                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(login));
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.getRegistrationNumber())
+                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.getLogin()));
         return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
