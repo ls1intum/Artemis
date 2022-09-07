@@ -5,7 +5,9 @@ To get started with RST, check out the [Quickstart] or this [cheatsheet].
 
 ## Documentation Hosting
 
-[Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` (latest) branch, as well as for git tags. The latest tag is always the _stable_ version.
+[Read the Docs] (RtD) hosts the [Artemis documentation] for the `develop` branch, as well as for git tags and branches
+like the branches for PRs.
+The latest tag is always the last _stable_ release.
 RtD will build and deploy changes automatically.
 
 ## Installing Sphinx Locally
@@ -46,6 +48,18 @@ make livehtml
 
 # Windows
 make.bat livehtml
+```
+
+## Running Sphinx Locally with Docker
+
+To  generate the documentation as HTML file, use the provided docker command from the project root:
+```bash
+docker run --rm -v $PWD/docs:/docs $(docker build -q -t sphinx -f docs/Dockerfile ./docs) make html
+```
+
+To  auto-generate the documentation as HTML file, use the provided docker command from the project root:
+```bash
+docker run --rm -v $PWD/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
 ```
 
 ## Tool support
