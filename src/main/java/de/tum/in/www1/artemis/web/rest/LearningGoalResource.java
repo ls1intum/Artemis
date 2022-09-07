@@ -251,7 +251,7 @@ public class LearningGoalResource {
         learningGoalToCreate.setDescription(learningGoalFromClient.getDescription());
         learningGoalToCreate.setCourse(course);
         LearningGoal persistedLearningGoal = learningGoalRepository.save(learningGoalToCreate);
-        persistedLearningGoal = this.learningGoalRepository.findById(persistedLearningGoal.getId()).orElseThrow();
+        persistedLearningGoal = this.learningGoalRepository.findByIdWithLectureUnitsAndCompletions(persistedLearningGoal.getId()).orElseThrow();
 
         for (LectureUnit lectureUnit : lectureUnitsToConnectWithLearningGoal) {
             persistedLearningGoal.addLectureUnit(lectureUnit);

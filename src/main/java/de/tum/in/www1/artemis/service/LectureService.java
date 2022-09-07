@@ -9,8 +9,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
+import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -22,16 +22,12 @@ public class LectureService {
 
     private final AuthorizationCheckService authCheckService;
 
-    private final LectureUnitRepository lectureUnitRepository;
+    private final LearningGoalRepository learningGoalRepository;
 
-    private final LectureUnitService lectureUnitService;
-
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LectureUnitRepository lectureUnitRepository,
-            LectureUnitService lectureUnitService) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
-        this.lectureUnitRepository = lectureUnitRepository;
-        this.lectureUnitService = lectureUnitService;
+        this.learningGoalRepository = learningGoalRepository;
     }
 
     /**
@@ -104,14 +100,11 @@ public class LectureService {
         List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
         // update associated learning goals
         for (LectureUnit lectureUnit : lectureUnits) {
-            Optional<LectureUnit> lectureUnitFromDbOptional = lectureUnitRepository.findByIdWithLearningGoalsBidirectional(lectureUnit.getId());
-            if (lectureUnitFromDbOptional.isPresent()) {
-                LectureUnit lectureUnitFromDb = lectureUnitFromDbOptional.get();
-                Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnitFromDb.getLearningGoals());
-                for (LearningGoal learningGoal : associatedLearningGoals) {
-                    lectureUnitService.disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal);
-                }
-            }
+            Set<LearningGoal> learningGoals = lectureUnit.getLearningGoals();
+            learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
+                learningGoal.getLectureUnits().remove(lectureUnit);
+                return learningGoal;
+            }).toList());
         }
         lectureRepository.deleteById(lectureToDelete.getId());
     }

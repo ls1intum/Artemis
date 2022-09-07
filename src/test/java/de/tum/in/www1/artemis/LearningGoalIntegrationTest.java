@@ -582,7 +582,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void updateLearningGoal_asInstructor_shouldUpdateLearningGoal() throws Exception {
-        LearningGoal existingLearningGoal = learningGoalRepository.findById(idOfLearningGoal).orElseThrow();
+        LearningGoal existingLearningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletions(idOfLearningGoal).orElseThrow();
         LectureUnit textLectureUnit = lectureUnitRepository.findByIdWithLearningGoalsBidirectionalElseThrow(idOfTextUnitOfLectureOne);
         existingLearningGoal.setTitle("Updated");
         existingLearningGoal.removeLectureUnit(textLectureUnit);

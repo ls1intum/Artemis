@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.domain.lecture;
 
 import java.time.ZonedDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 
@@ -59,7 +61,7 @@ public class ExerciseUnit extends LectureUnit {
 
     @Override
     public Set<LearningGoal> getLearningGoals() {
-        return exercise == null ? null : exercise.getLearningGoals();
+        return exercise == null || !Hibernate.isPropertyInitialized(exercise, "learningGoals") ? new HashSet<>() : exercise.getLearningGoals();
     }
 
     @Override

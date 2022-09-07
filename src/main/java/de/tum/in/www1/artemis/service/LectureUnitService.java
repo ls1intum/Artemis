@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
@@ -80,10 +81,12 @@ public class LectureUnitService {
             return;
         }
         // update associated learning goals
-        /*
-         * Set<LearningGoal> associatedLearningGoals = new HashSet<>(lectureUnit.getLearningGoals()); for (LearningGoal learningGoal : associatedLearningGoals) {
-         * disconnectLectureUnitAndLearningGoal(lectureUnit, learningGoal); }
-         */
+        Set<LearningGoal> learningGoals = lectureUnit.getLearningGoals();
+        learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
+            learningGoal.getLectureUnits().remove(lectureUnit);
+            return learningGoal;
+        }).toList());
+
         Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnit.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
