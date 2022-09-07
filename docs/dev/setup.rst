@@ -39,9 +39,9 @@ following dependencies/tools on your machine:
    but it's necessary for production setups as otherwise errors will show up during runtime. )
 6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
    There are multiple stacks available for the integration with Artemis:
-    * GitLab and Jenkins
+    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
     * GitLab and GitLab CI
-    * Bamboo, Bitbucket and Jira )
+    * `Bamboo, Bitbucket and Jira  <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
 
