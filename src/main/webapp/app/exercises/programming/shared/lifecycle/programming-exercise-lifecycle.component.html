@@ -69,6 +69,34 @@
                         }}
                     </div>
                 </div>
+                <div class="test-schedule-date me-2">
+                    <!-- TODO: add conditional rendering *ngIf="exercise.assessmentType === assessmentType.MANUAL && !isExamMode"-->
+                    <div class="mb-2">
+                        <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
+                        <jhi-help-icon
+                            placement="top"
+                            [text]="
+                                'artemisApp.programmingExercise.timeline.' +
+                                (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabledTooltip' : 'feedbackRequestsDisabledTooltip')
+                            "
+                        >
+                        </jhi-help-icon>
+                    </div>
+                    <div
+                        class="btn btn-light scheduled-test scheduled-test--can-toggle btn-lifecycle calendar-event-toggle"
+                        [class.btn-lifecycle--disabled]="readOnly"
+                        (click)="!readOnly && toggleManualFeedbackRequests()"
+                    >
+                        <!-- TODO: change icons-->
+                        <fa-icon [icon]="exercise.allowManualFeedbackRequests ? faUserCheck : faUserSlash" size="lg"></fa-icon>
+                    </div>
+                    <div>
+                        {{
+                            'artemisApp.programmingExercise.timeline.' + (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabled' : 'feedbackRequestsDisabled')
+                                | artemisTranslate
+                        }}
+                    </div>
+                </div>
                 <jhi-programming-exercise-test-schedule-date-picker
                     *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode"
                     class="test-schedule-date"
