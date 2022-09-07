@@ -25,8 +25,17 @@ export class PlagiarismCasesService {
      * Get all plagiarism cases for the instructor of the course with the given id
      * @param { number } courseId id of the course
      */
-    public getPlagiarismCasesForInstructor(courseId: number): Observable<EntityArrayResponseType> {
+    public getCoursePlagiarismCasesForInstructor(courseId: number): Observable<EntityArrayResponseType> {
         return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases/for-instructor`, { observe: 'response' });
+    }
+
+    /**
+     * Get all plagiarism cases for the instructor of the exam with the given id
+     * @param { number } courseId id of the course
+     * @param { number } examId id of the exam
+     */
+    public getExamPlagiarismCasesForInstructor(courseId: number, examId: number): Observable<EntityArrayResponseType> {
+        return this.http.get<PlagiarismCase[]>(`${this.resourceUrl}/${courseId}/exams/${examId}/plagiarism-cases/for-instructor`, { observe: 'response' });
     }
 
     /**
@@ -61,6 +70,19 @@ export class PlagiarismCasesService {
      */
     public getPlagiarismCaseInfoForStudent(courseId: number, exerciseId: number): Observable<HttpResponse<PlagiarismCaseInfo>> {
         return this.http.get<PlagiarismCaseInfo>(`${this.resourceUrl}/${courseId}/exercises/${exerciseId}/plagiarism-case`, { observe: 'response' });
+    }
+
+    /**
+     * Get the plagiarism case infos for the student for the given course and exercise id list for the exercises that the student is allowed to access.
+     * @param { number } courseId id of the course
+     * @param { number[] } exerciseIds ids of the exercises
+     */
+    public getPlagiarismCaseInfosForStudent(courseId: number, exerciseIds: number[]): Observable<HttpResponse<{ [exerciseId: number]: PlagiarismCaseInfo }>> {
+        let params = new HttpParams();
+        for (const exerciseId of exerciseIds) {
+            params = params.append('exerciseId', exerciseId);
+        }
+        return this.http.get<PlagiarismCaseInfo[]>(`${this.resourceUrl}/${courseId}/plagiarism-cases`, { params, observe: 'response' });
     }
 
     /**

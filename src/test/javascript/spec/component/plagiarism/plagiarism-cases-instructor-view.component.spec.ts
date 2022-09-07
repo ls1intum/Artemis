@@ -3,7 +3,7 @@ import { PlagiarismCasesInstructorViewComponent } from 'app/course/plagiarism-ca
 import { ArtemisTestModule } from '../../test.module';
 import { MockTranslateService, TranslateTestingModule } from '../../helpers/mocks/service/mock-translate.service';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
-import { ActivatedRoute, convertToParamMap } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, convertToParamMap } from '@angular/router';
 import { Observable, of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
@@ -17,12 +17,12 @@ jest.mock('app/shared/util/download.util', () => ({
     downloadFile: jest.fn(),
 }));
 
-describe('Plagiarism Cases Student View Component', () => {
+describe('Plagiarism Cases Instructor View Component', () => {
     let component: PlagiarismCasesInstructorViewComponent;
     let fixture: ComponentFixture<PlagiarismCasesInstructorViewComponent>;
     let plagiarismCasesService: PlagiarismCasesService;
 
-    const route = { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } } as any as ActivatedRoute;
+    let route: ActivatedRoute;
 
     const date = dayjs();
 
@@ -80,6 +80,8 @@ describe('Plagiarism Cases Student View Component', () => {
     } as PlagiarismCase;
 
     beforeEach(() => {
+        route = { snapshot: { paramMap: convertToParamMap({ courseId: 1 }) } } as any as ActivatedRoute;
+
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateTestingModule],
             declarations: [PlagiarismCasesInstructorViewComponent],
@@ -92,7 +94,7 @@ describe('Plagiarism Cases Student View Component', () => {
         fixture = TestBed.createComponent(PlagiarismCasesInstructorViewComponent);
         component = fixture.componentInstance;
         plagiarismCasesService = fixture.debugElement.injector.get(PlagiarismCasesService);
-        jest.spyOn(plagiarismCasesService, 'getPlagiarismCasesForInstructor').mockReturnValue(
+        jest.spyOn(plagiarismCasesService, 'getCoursePlagiarismCasesForInstructor').mockReturnValue(
             of({ body: [plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4] }) as Observable<HttpResponse<PlagiarismCase[]>>,
         );
     });
@@ -105,9 +107,37 @@ describe('Plagiarism Cases Student View Component', () => {
         component.ngOnInit();
         tick();
         expect(component.courseId).toBe(1);
+        expect(component.examId).toBe(0);
         expect(component.plagiarismCases).toEqual([plagiarismCase1, plagiarismCase2, plagiarismCase3, plagiarismCase4]);
         expect(component.exercisesWithPlagiarismCases).toEqual([exercise1, exercise2]);
         expect(component.groupedPlagiarismCases).toEqual({ 1: [plagiarismCase1, plagiarismCase2], 2: [plagiarismCase3, plagiarismCase4] });
+    }));
+
+    it('should get plagiarism cases for course when exam id is not set', fakeAsync(() => {
+        jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
+        component.ngOnInit();
+        tick();
+
+        expect(component.courseId).toBe(1);
+        expect(component.examId).toBe(0);
+        expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).toHaveBeenCalledOnce();
+        expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).not.toHaveBeenCalled();
+    }));
+
+    it('should get plagiarism cases for exam when exam id is set', fakeAsync(() => {
+        jest.spyOn(plagiarismCasesService, 'getExamPlagiarismCasesForInstructor');
+
+        const newSnapshot = { paramMap: convertToParamMap({ courseId: 1, examId: 1 }) } as ActivatedRouteSnapshot;
+        const activatedRoute: ActivatedRoute = fixture.debugElement.injector.get(ActivatedRoute);
+        activatedRoute.snapshot = newSnapshot;
+
+        component.ngOnInit();
+        tick();
+
+        expect(component.courseId).toBe(1);
+        expect(component.examId).toBe(1);
+        expect(plagiarismCasesService.getCoursePlagiarismCasesForInstructor).not.toHaveBeenCalled();
+        expect(plagiarismCasesService.getExamPlagiarismCasesForInstructor).toHaveBeenCalledOnce();
     }));
 
     it('should calculate number of plagiarism cases', () => {

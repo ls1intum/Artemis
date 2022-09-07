@@ -44,6 +44,10 @@
                     <fa-icon [icon]="faTable"></fa-icon>
                     <span class="d-none d-md-inline" [innerHTML]="'artemisApp.participantScores.pageTitle' | artemisTranslate"></span>
                 </a>
+                <a [routerLink]="getExamRoutesByIdentifier('plagiarism-cases')" class="tab-item btn btn-info btn-md mt-1">
+                    <fa-icon [icon]="faHeartBroken"></fa-icon>
+                    <span jhiTranslate="artemisApp.plagiarism.cases.plagiarismCases">Plagiarism Cases</span>
+                </a>
                 <a id="editButton" [routerLink]="getExamRoutesByIdentifier('edit')" class="btn btn-warning mt-1">
                     <fa-icon [icon]="faWrench"></fa-icon>&nbsp;<span jhiTranslate="entity.action.edit"> Edit</span>
                 </a>

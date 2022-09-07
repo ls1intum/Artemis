@@ -158,13 +158,21 @@ export class SubmissionService {
         return res.clone({ body });
     }
 
-    public convertArrayResponse<T>(res: HttpResponse<T[]>): HttpResponse<T[]> {
+    public convertArrayResponse<T extends Submission>(res: HttpResponse<T[]>): HttpResponse<T[]> {
         const jsonResponse: T[] = res.body!;
         const body: T[] = [];
         for (let i = 0; i < jsonResponse.length; i++) {
             body.push(this.convertSubmissionFromServer(jsonResponse[i]));
         }
         return res.clone({ body });
+    }
+
+    public convertSubmissionResponseFromServer<T extends Submission>(response: HttpResponse<T>): HttpResponse<T> {
+        const submission = response.body!;
+        setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+        this.setSubmissionAccessRights(submission);
+        SubmissionService.convertConnectedParticipationFromServer(submission);
+        return response;
     }
 
     /**
@@ -174,7 +182,7 @@ export class SubmissionService {
      * @return convertedSubmission with set result and access rights
      * @private
      */
-    public convertSubmissionFromServer<T>(submission: T): T {
+    public convertSubmissionFromServer<T extends Submission>(submission: T): T {
         const convertedSubmission = this.convert(submission);
         setLatestSubmissionResult(convertedSubmission, getLatestSubmissionResult(convertedSubmission));
         this.setSubmissionAccessRights(convertedSubmission);
@@ -185,7 +193,7 @@ export class SubmissionService {
     /**
      * Convert a Submission to a JSON which can be sent to the server.
      */
-    public convert<T>(submission: T): T {
+    public convert<T extends Submission>(submission: T): T {
         return Object.assign({}, submission);
     }
 
