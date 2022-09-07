@@ -520,57 +520,6 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/common-problems.rst
-
-------------------------------------------------------------------------------------------------------------------------
-
-.. TODO: ask Simon or someone if structure is alright
-.. include:: setup/distributed.rst
-
-------------------------------------------------------------------------------------------------------------------------
-
-Alternative: Docker-Compose Setup
----------------------------------
-
-A full functioning development environment can also be set up using
-docker-compose:
-
-1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
-2. Configure the credentials in ``application-artemis.yml`` in the folder ``src/main/resources/config`` as described above
-3. Run ``docker-compose up``
-4. Go to http://localhost:9000
-
-The client and the server will run in different containers. As Npm is
-used with its live reload mode to build and run the client, any change
-in the client’s codebase will trigger a rebuild automatically. In case
-of changes in the codebase of the server one has to restart the
-``artemis-server`` container via
-``docker-compose restart artemis-server``.
-
-(Native) Running and Debugging from IDEs is currently not supported.
-
-Get a shell into the containers
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
--  app container:
-   ``docker exec -it $(docker-compose ps -q artemis-app) sh``
--  mysql container:
-   ``docker exec -it $(docker-compose ps -q artemis-mysql) mysql``
-
-Other useful commands
-^^^^^^^^^^^^^^^^^^^^^
-
--  Stop the server: ``docker-compose stop artemis-server`` (restart via
-   ``docker-compose start artemis-server``)
--  Stop the client: ``docker-compose stop artemis-client`` (restart via
-   ``docker-compose start artemis-client``)
-
-------------------------------------------------------------------------------------------------------------------------
-
-.. include:: setup/kubernetes.rst
-
-------------------------------------------------------------------------------------------------------------------------
-
 Athene Service
 --------------
 
@@ -631,3 +580,54 @@ HTTP. We need to extend the configuration in the file
 
 
 .. _Apollon Converter: https://github.com/ls1intum/Apollon_converter
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/common-problems.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. TODO: ask Simon or someone if structure is alright
+.. include:: setup/distributed.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+Alternative: Docker-Compose Setup
+---------------------------------
+
+A full functioning development environment can also be set up using
+docker-compose:
+
+1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
+2. Configure the credentials in ``application-artemis.yml`` in the folder ``src/main/resources/config`` as described above
+3. Run ``docker-compose up``
+4. Go to http://localhost:9000
+
+The client and the server will run in different containers. As Npm is
+used with its live reload mode to build and run the client, any change
+in the client’s codebase will trigger a rebuild automatically. In case
+of changes in the codebase of the server one has to restart the
+``artemis-server`` container via
+``docker-compose restart artemis-server``.
+
+(Native) Running and Debugging from IDEs is currently not supported.
+
+Get a shell into the containers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+-  app container:
+   ``docker exec -it $(docker-compose ps -q artemis-app) sh``
+-  mysql container:
+   ``docker exec -it $(docker-compose ps -q artemis-mysql) mysql``
+
+Other useful commands
+^^^^^^^^^^^^^^^^^^^^^
+
+-  Stop the server: ``docker-compose stop artemis-server`` (restart via
+   ``docker-compose start artemis-server``)
+-  Stop the client: ``docker-compose stop artemis-client`` (restart via
+   ``docker-compose start artemis-client``)
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/kubernetes.rst
