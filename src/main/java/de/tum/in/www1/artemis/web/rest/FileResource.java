@@ -81,17 +81,20 @@ public class FileResource {
 
     private static final int FILE_ACCESS_TOKEN_VALIDITY = 30;
 
-    // NOTE: this list has to be the same as in file-uploader.service.ts
-    private final List<String> allowedFileExtensions = new ArrayList<>(Arrays.asList("png", "jpg", "jpeg", "svg", "pdf", "zip", "doc", "docx", "csv", "xls", "xlsx", "ppt", "pptx",
-            "pages", "rtf", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odf"));
+    /**
+     * The list of file extensions that are allowed to be uploaded in a Markdown editor.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private final Set<String> allowedMarkdownFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf");
 
-    public void addAllowedFileExtension(String fileExtension) {
-        this.allowedFileExtensions.add(fileExtension);
-    }
-
-    public void addRemoveFileExtension(String fileExtension) {
-        this.allowedFileExtensions.remove(fileExtension);
-    }
+    /**
+     * The global list of file extensions that are allowed to be uploaded.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
+            "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
@@ -557,26 +560,36 @@ public class FileResource {
      */
     @NotNull
     private ResponseEntity<String> handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) throws URISyntaxException {
-        // NOTE: Maximum file size is set in resources/config/application.yml
-        // Currently set to 10 MB
+        // NOTE: Maximum file size is set in resources/config/application.yml (currently set to 10 MB)
 
-        // check for file type
         String filename = file.getOriginalFilename();
         if (filename == null) {
-            throw new IllegalArgumentException("Filename cannot be null");
-        }
-        // sanitize the filename and replace all invalid characters with "_"
-        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
-        String fileExtension = FilenameUtils.getExtension(filename);
-        if (this.allowedFileExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
-            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", this.allowedFileExtensions));
+            throw new IllegalArgumentException("File name can not be null!");
         }
 
+        // Sanitize the filename and replace all invalid characters with an underscore
+        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
+
+        // Check the allowed file extensions
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        final Set<String> allowedExtensions;
+
+        if (markdown) {
+            allowedExtensions = allowedMarkdownFileExtensions;
+        }
+        else {
+            allowedExtensions = allowedFileExtensions;
+        }
+
+        if (!allowedExtensions.contains(fileExtension.toLowerCase())) {
+            return ResponseEntity.badRequest().body("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions));
+        }
+
+        // Set the appropriate values depending on the use case (markdown editor or other file upload)
         final String filePath;
         final String fileNameAddition;
         final StringBuilder responsePath = new StringBuilder();
 
-        // set the appropriate values depending on the use case
         if (markdown) {
             filePath = FilePathService.getMarkdownFilePath();
             fileNameAddition = "Markdown_";

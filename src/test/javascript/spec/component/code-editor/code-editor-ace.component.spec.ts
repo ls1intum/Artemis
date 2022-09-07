@@ -209,8 +209,8 @@ describe('CodeEditorAceComponent', () => {
         const observerDomSpy = jest.spyOn(comp, 'observerDom');
         comp.onFileTextChanged('newFileContent');
 
-        expect(setupLineIconsSpy).toHaveBeenCalledTimes(1);
-        expect(observerDomSpy).toHaveBeenCalledTimes(1);
+        expect(setupLineIconsSpy).toHaveBeenCalledOnce();
+        expect(observerDomSpy).toHaveBeenCalledOnce();
     });
 
     it('should only allow tab sizes between 1 and the maximum size', () => {
