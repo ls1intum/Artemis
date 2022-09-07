@@ -39,6 +39,9 @@ export class QuizExerciseImportComponent implements OnInit {
     faSort = faSort;
     faCheck = faCheck;
 
+    isCourseFilter = true;
+    isExamFilter = true;
+
     constructor(private pagingService: QuizExercisePagingService, private sortService: SortService, private activeModal: NgbActiveModal) {}
 
     ngOnInit(): void {
@@ -58,7 +61,7 @@ export class QuizExerciseImportComponent implements OnInit {
             .pipe(
                 debounceTime(debounce),
                 tap(() => (this.loading = true)),
-                switchMap(() => this.pagingService.searchForExercises(this.state)),
+                switchMap(() => this.pagingService.searchForExercises(this.state, this.isCourseFilter, this.isExamFilter)),
             )
             .subscribe((resp) => {
                 this.content = resp;
@@ -123,6 +126,16 @@ export class QuizExerciseImportComponent implements OnInit {
 
     get searchTerm(): string {
         return this.state.searchTerm;
+    }
+
+    onCourseFilterChange() {
+        this.isCourseFilter = !this.isCourseFilter;
+        this.search.next();
+    }
+
+    onExamFilterChange() {
+        this.isExamFilter = !this.isExamFilter;
+        this.search.next();
     }
 
     /**

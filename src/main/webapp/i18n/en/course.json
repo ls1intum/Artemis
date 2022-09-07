@@ -34,15 +34,15 @@
             },
             "maxComplaintTextLimit": {
                 "title": "Maximum number of characters per complaint",
-                "description": "This number indicates the maximum number of characters a student may use per complaint."
+                "description": "This value indicates the maximum number of characters a student may use per complaint."
             },
             "maxComplaintResponseTextLimit": {
                 "title": "Maximum number of characters per complaint response",
-                "description": "This number indicates the maximum number of characters that may be used for the response per complaint."
+                "description": "This value indicates the maximum number of characters that may be used for the response per complaint."
             },
             "postsEnabled": {
                 "title": "Enable communication features",
-                "description": "Enable communication section on lecture and exercise pages."
+                "description": "Enable course communication overview and communication section on lecture and exercise pages."
             },
             "complaintsEnabled": {
                 "title": "Enable complaints",

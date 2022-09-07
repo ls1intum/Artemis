@@ -58,7 +58,7 @@ export class ExerciseGroupChartComponent extends ChartComponent implements OnIni
             group.exercises?.forEach((exercise) => {
                 amount += exerciseAmountMap.get(exercise.id!) ?? 0;
             });
-            this.ngxData.push({ name: group.title ?? '', value: amount });
+            this.ngxData.push({ name: `${group.title} (${group.id})`, value: amount });
             this.ngxColor.domain.push(getColor(index));
         });
         // Re-trigger change detection

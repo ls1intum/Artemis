@@ -22,16 +22,18 @@ export abstract class DomainDependentEndpointService extends DomainDependentServ
      */
     setDomain(domain: DomainChange) {
         super.setDomain(domain);
-        const [domainType, domainValue] = this.domain;
+        this.restResourceUrl = this.calculateRestResourceURL(domain);
+    }
+
+    calculateRestResourceURL(domain: DomainChange): string | null {
+        const [domainType, domainValue] = domain;
         switch (domainType) {
             case DomainType.PARTICIPATION:
-                this.restResourceUrl = `${this.restResourceUrlBase}/repository/${domainValue.id}`;
-                break;
+                return `${this.restResourceUrlBase}/repository/${domainValue.id}`;
             case DomainType.TEST_REPOSITORY:
-                this.restResourceUrl = `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
-                break;
+                return `${this.restResourceUrlBase}/test-repository/${domainValue.id}`;
             default:
-                this.restResourceUrl = null;
+                return null;
         }
     }
 }
