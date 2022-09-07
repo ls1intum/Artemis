@@ -10,6 +10,7 @@ import { CourseGroup } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 
 describe('TutorialGroupFormComponent', () => {
     let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;
@@ -22,6 +23,11 @@ describe('TutorialGroupFormComponent', () => {
             providers: [
                 MockProvider(CourseManagementService, {
                     getAllUsersInCourseGroup: (courseId: number, courseGroup: CourseGroup) => {
+                        return of(new HttpResponse({ body: [] }));
+                    },
+                }),
+                MockProvider(TutorialGroupsService, {
+                    getUniqueCampusValues: (courseId: number) => {
                         return of(new HttpResponse({ body: [] }));
                     },
                 }),
@@ -70,11 +76,11 @@ describe('TutorialGroupFormComponent', () => {
 
         tutorialGroupFormComponent.titleControl!.setValue('example');
         tutorialGroupFormComponent.capacityControl!.setValue(1);
-        tutorialGroupFormComponent.additionalInformationControl!.setValue('example');
         tutorialGroupFormComponent.isOnlineControl?.setValue(true);
         tutorialGroupFormComponent.teachingAssistantControl!.setValue(exampleTeachingAssistant);
         tutorialGroupFormComponent.languageControl!.setValue('GERMAN');
         tutorialGroupFormComponent.locationControl!.setValue('example');
+        tutorialGroupFormComponent.campusControl!.setValue('Garching');
 
         tutorialGroupFormComponentFixture.detectChanges();
         expect(tutorialGroupFormComponent.form.valid).toBeTrue();
@@ -90,11 +96,11 @@ describe('TutorialGroupFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 title: 'example',
                 teachingAssistant: exampleTeachingAssistant,
-                additionalInformation: 'example',
                 capacity: 1,
                 isOnline: true,
                 language: 'GERMAN',
                 location: 'example',
+                campus: 'Garching',
             });
 
             submitFormSpy.mockRestore();
