@@ -148,7 +148,7 @@ describe('ResultService', () => {
 
         it('should return correct string for non programming exercise', () => {
             expect(resultService.getResultString(modelingResult, modelingExercise)).toBe('artemisApp.result.resultStringNonProgramming');
-            expect(translateServiceSpy).toHaveBeenCalledTimes(1);
+            expect(translateServiceSpy).toHaveBeenCalledOnce();
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.result.resultStringNonProgramming', { relativeScore: 42, points: 21, maxPoints: 50 });
         });
 

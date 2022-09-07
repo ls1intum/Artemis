@@ -164,7 +164,7 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(jhiErrorSpy).toHaveBeenCalledOnce();
         expect(comp.submissionFile).toBeUndefined();
         expect(comp.submission!.filePath).toBeUndefined();
 
@@ -191,7 +191,7 @@ describe('FileUploadSubmissionComponent', () => {
         fixture.detectChanges();
 
         // check that properties are set properly
-        expect(jhiErrorSpy).toHaveBeenCalledTimes(1);
+        expect(jhiErrorSpy).toHaveBeenCalledOnce();
         expect(comp.submissionFile).toBeUndefined();
         expect(comp.submission!.filePath).toBeUndefined();
 
