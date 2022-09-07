@@ -128,8 +128,6 @@ jobs:
   client-style:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    env:
-        NODE_OPTIONS: '--max-old-space-size=3072'
     steps:
     - uses: actions/checkout@v3
     - name: Setup Node.js
