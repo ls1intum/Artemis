@@ -15,7 +15,6 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
     exercise: Exercise;
     ltiConfiguration: LtiConfiguration;
-    customerInstanceName = '';
     requireExistingUser = true;
     lookupUserByEmail = true;
 
@@ -52,6 +51,6 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
      * Gets the formatted custom parameters
      */
     getFormattedCustomParameters(): string {
-        return `consumer_instance_name=${this.customerInstanceName}\n` + `require_existing_user=${this.requireExistingUser}\n` + `lookup_user_by_email=${this.lookupUserByEmail}`;
+        return `require_existing_user=${this.requireExistingUser}\n` + `lookup_user_by_email=${this.lookupUserByEmail}`;
     }
 }
