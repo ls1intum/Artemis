@@ -67,12 +67,9 @@ public class TutorialGroupResource {
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<String> getTitle(@PathVariable Long tutorialGroupId) {
-        tutorialGroupRepository.getTutorialGroupTitle(tutorialGroupId).ifPresentOrElse(title -> {
-            log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
-            ResponseEntity.ok(title);
-        }, () -> {
-            throw new EntityNotFoundException("TutorialGroup", tutorialGroupId);
-        });
+        log.debug("REST request to get title of TutorialGroup : {}", tutorialGroupId);
+        return tutorialGroupRepository.getTutorialGroupTitle(tutorialGroupId).map(ResponseEntity::ok)
+                .orElseThrow(() -> new EntityNotFoundException("TutorialGroup", tutorialGroupId));
     }
 
     /**
