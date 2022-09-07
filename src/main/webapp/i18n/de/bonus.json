@@ -3,36 +3,36 @@
         "bonus": {
             "bonusStrategy": {
                 "title": "Wähle eine Bonusstrategie",
-                "helpText": "NOTEN: Berechnet zunächst die angestrebte Prüfungsnote. Dann gilt der Bonus für diese.<br>PUNKTE: Erstens wird ein Bonus auf die Punkte des Schülers angewandt. Berechnet dann die Endnote, indem er die resultierenden Punkte mit dem Bewertungsschlüssel der Zielprüfung abgleicht.",
+                "helpText": "NOTEN: Berechnet zunächst die Prüfungsnote anhand des Notenschlüssel. Dann wird der Bonus auf diese Note angewandt, um die Endnote zu erhalten. PUNKTE: Wendet zunächst den Bonus auf die Punkte des Studierenden an. Danach wird die Endnote berechnet, indem die resultierenden Punkte mit dem Notenschlüssel für die Prüfung umgerechnet werden.",
                 "grades": "NOTEN",
                 "points": "PUNKTE"
             },
             "discreteness": {
-                "title": "Wähle Diskretion",
-                "helpText": "DISKRET: (Noch nicht verfügbar) Erhöht die Note des Schülers auf eine bessere Klassenstufe. Die Endnote entspricht einer der Notenstufen der Zielprüfung (z. B. von 1,3 auf 1,0 oder von B auf A). <br>KONTINUIERLICH: Der Bonus wird rechnerisch auf die Note des Schülers angewandt. Die Endnote kann ein beliebiger numerischer Wert zwischen dem besten und dem schlechtesten Notenstufenwert sein (z. B. von 1,3 bis 1,2).",
+                "title": "Wähle die Stetigkeit",
+                "helpText": "DISKRET: (Noch nicht verfügbar) Erhöht die Note der Studierenden anhand des Notenschlüssels. Die Endnote entspricht dabei einer der Notenstufen der Prüfung (z. B. von 1,3 auf 1,0 oder von B auf A). <br>STETIG: Der Bonus wird einfach rechnerisch auf die Note der Studierenden angewandt. Die Endnote kann ein beliebiger numerischer Wert zwischen der besten und schlechtesten Notenstufe sein (z. B. von 1,3 bis 1,2).",
                 "discrete": "DISKRET",
                 "continuous": "KONTINUIERLICH"
             },
             "calculation": {
-                "title": "Wähle Berechnung",
-                "helpText": "− (Standardoption für NOTEN): Zieht den Bonus von den Noten/Punkten der Zielprüfung ab. Bevorzuge dies, wenn niedriger besser bedeutet.<br>+ (Standardoption für PUNKTE): Fügt einen Bonus zu den Noten/Punkten der Zielprüfung hinzu. Bevorzuge dies, wenn höher besser bedeutet."
+                "title": "Wähle die Berechnungsart",
+                "helpText": "− (Standardoption für NOTEN): Zieht den Bonus von der Note/Punktzahl der Prüfung ab. Bevorzugt, wenn ein niedrigerer Wert ein besseres Ergebnis bedeutet.<br>+ (Standardoption für PUNKTE): Addiert einen Bonus zu der Note/Punktzahl der Prüfung hinzu. Bevorzugt, wenn ein höherer Wert ein besses Ergebnis bedeutet."
             },
             "bonusSource": {
-                "title": "Wähle Bonusquelle",
-                "helpText": "Prüfungen und Kurse mit \"Bonus\"-Benotungsschlüsseln sind unten aufgeführt. Die Note des Schülers für den gewählten Kurs oder die Prüfung bestimmt die Höhe des Bonus.",
-                "selectedBonusSource": "Ausgewählte Bonusquelle Bewertungsschlüssel"
+                "title": "Wähle die Quelle für den Bonus",
+                "helpText": "Prüfungen und Kurse mit einem \"Bonus\"-Notenschlüssel sind unten aufgeführt. Die Punktzahl oder Note der Studierenden für den gewählten Kurs/Prüfung bestimmen die Höhe des Bonuses.",
+                "selectedBonusSource": "Notenschlüssel für die ausgewälte Bonusquelle"
             },
             "examples": {
                 "title": "Beispiele",
-                "helpText": "(Du kannst eigene Szenarien ausprobieren, indem du die letzte Zeile bearbeitest Beispiele)",
+                "helpText": "(Du kannst eigene Szenarien ausprobieren, indem du die letzte Zeile bearbeitest)",
                 "examPoints": "Prüfungspunkte",
                 "examGrade": "Prüfungsnote",
-                "bonusSourceStudentPoints": "Bonusquelle Studentenpunkte",
+                "bonusSourceStudentPoints": "Studierenden-Punkte der Bonusquelle",
                 "bonusGrade": "Bonus",
                 "finalPoints": "Letzte Punkte",
                 "finalGrade": "Endnote",
                 "any": "(Any)",
-                "exceedsMax": "Der Endwert übersteigt den bestmöglichen Wert, also wird er dort gekappt. Wenn das nicht gewollt ist, überprüfe die −/+ Auswahl noch einmal."
+                "exceedsMax": "Der Wert übersteigt das bestmögliche Ergebnis, also wird er dort gedeckelt. Wenn das nicht gewollt ist, überprüfe die −/+ Auswahl noch einmal."
             },
             "formula": {
                 "title": "Formel",
@@ -42,8 +42,8 @@
                 "bonusGrade": "Bonus",
                 "finalPoints": "Letzte<br/>Punkte",
                 "finalGrade": "Endnote",
-                "finalGradeLimit": "(Du kannst keine bessere Abschlussnote als {{maxPossibleGrade}} bekommen)",
-                "finalGradeFromPoints": "Die Endpunkte bestimmen die Endnote, indem sie mit der nicht-bonusbasierten Notenskala abgeglichen werden."
+                "finalGradeLimit": "(Du kannst keine bessere Endnote als {{maxPossibleGrade}} bekommen)",
+                "finalGradeFromPoints": "Die finale Punktzahl bestimmen die Endnote, indem sie mit dem normalen Notenschlüssel umgerechnet werden."
             },
             "title": "Bonus",
             "deleteQuestion": "Willst du den Bonus wirklich löschen?",
