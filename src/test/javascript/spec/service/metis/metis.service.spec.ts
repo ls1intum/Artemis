@@ -162,11 +162,11 @@ describe('Metis Service', () => {
         it('should get posts for lecture filter', () => {
             const postServiceSpy = jest.spyOn(postService, 'getPosts');
             metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // don't change filter
             metisService.getFilteredPosts({ lectureId: metisLecture.id }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // change filter
             metisService.getFilteredPosts({ lectureId: undefined, exerciseId: metisExercise.id }, false);
@@ -191,7 +191,7 @@ describe('Metis Service', () => {
 
             // don't change filter
             metisService.getFilteredPosts({ exerciseId: metisExercise.id }, false);
-            expect(postServiceSpy).toHaveBeenCalledTimes(1);
+            expect(postServiceSpy).toHaveBeenCalledOnce();
 
             // change filter
             metisService.getFilteredPosts({ lectureId: metisLecture.id, exerciseId: undefined }, false);
