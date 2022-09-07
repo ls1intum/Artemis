@@ -69,8 +69,7 @@
                         }}
                     </div>
                 </div>
-                <div class="test-schedule-date me-2">
-                    <!-- TODO: add conditional rendering *ngIf="exercise.assessmentType === assessmentType.MANUAL && !isExamMode"-->
+                <div *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode" class="test-schedule-date me-2">
                     <div class="mb-2">
                         <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
                         <jhi-help-icon
@@ -98,7 +97,7 @@
                     </div>
                 </div>
                 <jhi-programming-exercise-test-schedule-date-picker
-                    *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode"
+                    *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests"
                     class="test-schedule-date"
                     [(ngModel)]="exercise.assessmentDueDate"
                     [startAt]="exercise.dueDate"
