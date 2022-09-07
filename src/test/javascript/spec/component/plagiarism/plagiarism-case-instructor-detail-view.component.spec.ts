@@ -141,7 +141,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
-        expect(translateServiceSpy).toBeCalledTimes(6);
+        expect(translateServiceSpy).toHaveBeenCalledTimes(6);
         expect(translateServiceSpy).toHaveBeenCalledWith(
             'artemisApp.plagiarism.plagiarismCases.notification.body',
             expect.objectContaining({
@@ -168,7 +168,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
-        expect(translateServiceSpy).toBeCalledTimes(3);
+        expect(translateServiceSpy).toHaveBeenCalledTimes(3);
         expect(translateServiceSpy).toHaveBeenCalledWith(
             'artemisApp.plagiarism.plagiarismCases.notification.body',
             expect.objectContaining({
@@ -195,7 +195,7 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
 
-        expect(translateServiceSpy).toBeCalledTimes(3);
+        expect(translateServiceSpy).toHaveBeenCalledTimes(3);
         expect(translateServiceSpy).toHaveBeenCalledWith(
             'artemisApp.plagiarism.plagiarismCases.notification.body',
             expect.objectContaining({
