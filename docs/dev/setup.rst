@@ -521,26 +521,19 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
-In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other scripts from ``package.json``,
-you can add a `memory limit parameter <https://nodejs.org/docs/latest-v16.x/api/cli.html#--max-old-space-sizesize-in-megabytes>`__
-(``--max-old-space-size=5120``) in the script.
-You can do it by changing the **start** script in ``package.json`` from:
+.. HINT::
+   In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or
+   any other scripts from ``package.json``, you can adjust a
+   `memory limit parameter <https://nodejs.org/docs/latest-v16.x/api/cli.html#--max-old-space-sizesize-in-megabytes>`__
+   (``node-options=--max-old-space-size=6144``) which is set by default in the project-wide `.npmrc` file.
 
-::
+   If you still face the issue, you can try to set a lower/higher value than 6144 MB.
+   Recommended values are 3072 (3GB), 4096 (4GB), 5120 (5GB) , 6144 (6GB), 7168 (7GB), and 8192 (8GB).
 
-   "start": "ng serve --hmr",
+   You can override the project-wide `.npmrc` file by
+   `using a per-user config file (~/.npmrc) <https://docs.npmjs.com/cli/v8/configuring-npm/npmrc>`__.
 
-to
-
-::
-
-   "start": "node --max-old-space-size=5120 ./node_modules/@angular/cli/bin/ng serve --hmr",
-
-If you still face the issue, you can try to set a higher value than 5120 MB. Recommended values are 6144 (6GB), 7168 (7GB), and 8192 (8GB).
-
-The same change could be applied to each **ng** command as in the example above.
-
-Make sure to **not commit this change** in ``package.json``.
+   Make sure to **not commit changes** in the project-wide ``.npmrc`` unless the Github build also needs these settings.
 
 
 For more information, review `Working with
