@@ -12,7 +12,13 @@
                     "confirm": "Bestätigen"
                 }
             },
-            "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!"
+            "startExercise": "<strong>Herzlich Willkommen bei Artemis!</strong> Klicke auf den Button <i>Aufgabe starten</i>!",
+            "launchTarget": "Das empfohlene 'Launch Target' ist 'New Window', um eine optimale Benutzererfahrung zu gewährleisten",
+            "requestUserEmail": "Die E-Mail des Benutzers muss gesendet werden, da sie von Artemis benötigt wird, um den Benutzer zu erstellen oder zu finden",
+            "requireExistingUser": "Wenn wahr, erfordert das Starten der Übung einen bestehenden Benutzer auf Artemis. Wenn falsch, kann ein Benutzer beim ersten Start erstellt werden, wenn er noch nicht existiert",
+            "lookupUserByEmail": "Wenn wahr, versucht Artemis, einen vorhandenen Benutzer mit der angegebenen E-Mail zu finden",
+            "consumerInstanceName": "Dies muss ein Name sein, der Ihr Lernmanagementsystem einzigartig identifiziert",
+            "consumerInstanceNamePlaceholder": "Geben Sie hier den einzigartigen Namen ein"
         }
     }
 }

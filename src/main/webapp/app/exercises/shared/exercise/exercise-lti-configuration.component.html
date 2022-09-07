@@ -9,55 +9,89 @@
             LTI Configuration for exercise {{ exercise?.title }}
         </h4>
     </div>
+    <hr />
 
     <div class="modal-body">
-        <div class="form-group" *ngIf="ltiConfiguration">
-            <label>LTI ID</label>
-            <input type="text" class="form-control" [(ngModel)]="ltiConfiguration.ltiId" name="ltiId" readonly />
-        </div>
+        <dt><span>LTI ID</span></dt>
+        <dd>
+            <span>{{ ltiConfiguration?.ltiId }}</span>
+        </dd>
 
-        <div class="form-group" *ngIf="ltiConfiguration">
-            <label>LTI Passport</label>
-            <input type="text" class="form-control" [(ngModel)]="ltiConfiguration.ltiPassport" name="ltiPassport" readonly />
-        </div>
+        <dt><span>LTI Key</span></dt>
+        <dd>
+            <span>{{ ltiConfiguration?.ltiKey }}</span>
+        </dd>
 
-        <div class="form-group" *ngIf="ltiConfiguration">
-            <label>LTI URL</label>
-            <input type="text" class="form-control" [(ngModel)]="ltiConfiguration.launchUrl" name="launchUrl" readonly />
-        </div>
+        <dt><span>LTI Secret</span></dt>
+        <dd>
+            <span>{{ ltiConfiguration?.ltiSecret }}</span>
+        </dd>
+
+        <dt><span>LTI Launch URL</span></dt>
+        <dd>
+            <span>{{ ltiConfiguration?.launchUrl }}</span>
+        </dd>
+
+        <dt>
+            <span>LTI Launch Target</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.launchTarget' | artemisTranslate }}"></fa-icon>
+        </dt>
+        <dd>
+            <span>New Window</span>
+        </dd>
+
+        <dt><span>Scored</span></dt>
+        <dd>
+            <span>True</span>
+        </dd>
+
+        <dt><span>Request user's username</span></dt>
+        <dd>
+            <span>True</span>
+        </dd>
+
+        <dt>
+            <span>Request user's email</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.requestUserEmail' | artemisTranslate }}"></fa-icon>
+        </dt>
+        <dd>
+            <span>True</span>
+        </dd>
 
         <div class="form-group">
-            <label>LTI Launch Target</label>
-            <input type="text" class="form-control" value="New Window" readonly />
-        </div>
+            <h4>Custom Parameters</h4>
 
-        <div class="form-group">
-            <label>Custom Parameters</label>
-            <input type="text" class="form-control" value='["require_existing_user=true", "lookup_user_by_email=true"]' readonly />
+            <dt>
+                <span>Consumer Instance Name</span>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.consumerInstanceName' | artemisTranslate }}"></fa-icon>
+            </dt>
+            <dd>
+                <input
+                    type="text"
+                    class="form-control"
+                    name="customerInstanceName"
+                    placeholder="{{ 'artemisApp.lti.consumerInstanceNamePlaceholder' | artemisTranslate }}"
+                    [(ngModel)]="customerInstanceName"
+                />
+            </dd>
 
-            <p>
-                <code>require_existing_user</code>: If <code>true</code>, launching the exercise requires an existing user on Artemis (or the external user management used by
-                Artemis). If <code>false</code>, a user will be created on first launch (in case the user does not exist yet).
+            <dt>
+                <span>Require existing user</span>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}"></fa-icon>
+            </dt>
+            <dd>
+                <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
+            </dd>
 
-                <br />
-                <code>lookup_user_by_email</code>: If <code>true</code>, Artemis will try to find a matching user by the provided email address in the LTI request, if the user was
-                not found based on the provided <code>user_id</code> in the LTI request.
-            </p>
-        </div>
+            <dt>
+                <span>Lookup user by email</span>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.lookupUserByEmail' | artemisTranslate }}"></fa-icon>
+            </dt>
+            <dd>
+                <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
+            </dd>
 
-        <div class="form-group">
-            <label>Scored</label>
-            <input type="text" class="form-control" value="Yes" readonly />
-        </div>
-
-        <div class="form-group">
-            <label>Request user's username</label>
-            <input type="text" class="form-control" value="True" readonly />
-        </div>
-
-        <div class="form-group">
-            <label>Request user's email</label>
-            <input type="text" class="form-control" value="True" readonly />
+            <textarea class="form-control" rows="3" [value]="getFormattedCustomParameters()" readonly></textarea>
         </div>
     </div>
 </form>

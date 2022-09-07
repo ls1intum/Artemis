@@ -12,15 +12,15 @@ public class ExerciseLtiConfigurationDTO {
 
     private String ltiId;
 
-    private String ltiPassport;
+    private String ltiKey;
 
-    public ExerciseLtiConfigurationDTO() {
-    }
+    private String ltiSecret;
 
-    public ExerciseLtiConfigurationDTO(String launchUrl, String ltiId, String ltiPassport) {
+    public ExerciseLtiConfigurationDTO(String launchUrl, String ltiId, String ltiKey, String ltiSecret) {
         this.launchUrl = launchUrl;
         this.ltiId = ltiId;
-        this.ltiPassport = ltiPassport;
+        this.ltiKey = ltiKey;
+        this.ltiSecret = ltiSecret;
     }
 
     public String getLaunchUrl() {
@@ -39,11 +39,19 @@ public class ExerciseLtiConfigurationDTO {
         this.ltiId = ltiId;
     }
 
-    public String getLtiPassport() {
-        return ltiPassport;
+    public String getLtiKey() {
+        return ltiKey;
     }
 
-    public void setLtiPassport(String ltiPassport) {
-        this.ltiPassport = ltiPassport;
+    public void setLtiKey(String ltiKey) {
+        this.ltiKey = ltiKey;
+    }
+
+    public String getLtiSecret() {
+        return ltiSecret;
+    }
+
+    public void setLtiSecret(String ltiSecret) {
+        this.ltiSecret = ltiSecret;
     }
 }

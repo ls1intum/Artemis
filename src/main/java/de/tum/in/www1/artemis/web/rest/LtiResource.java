@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.io.IOException;
 import java.util.Optional;
-
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -30,7 +29,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * Created by Josias Montag on 22.09.16.
@@ -183,9 +182,8 @@ public class LtiResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
         if (LTI_ID.isEmpty() || LTI_OAUTH_KEY.isEmpty() || LTI_OAUTH_SECRET.isEmpty()) {
-            log.warn("LTI configuration is not supported on this Artemis instance, no artemis.lti.id, artemis.lti.oauth-key or artemis.lti.oauth-secret were specified in the yml "
-                    + "configuration");
-            throw new AccessForbiddenException("LTI configuration is not supported on this Artemis instance");
+            log.warn("LTI is not supported on this Artemis instance, no artemis.lti.id, artemis.lti.oauth-key or artemis.lti.oauth-secret were configured");
+            throw new BadRequestAlertException("LTI is not supported on this Artemis instance", "LTI", "ltiNotSupported");
         }
 
         String launchUrl = request.getScheme() + // "https"
@@ -193,8 +191,6 @@ public class LtiResource {
                 request.getServerName() +              // "myhost" // ":"
                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
 
-        String ltiId = LTI_ID.get();
-        String ltiPassport = ltiId + ":" + LTI_OAUTH_KEY.get() + ":" + LTI_OAUTH_SECRET.get();
-        return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
+        return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, LTI_ID.get(), LTI_OAUTH_KEY.get(), LTI_OAUTH_SECRET.get()), HttpStatus.OK);
     }
 }

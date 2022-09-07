@@ -1,10 +1,10 @@
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { Exercise } from 'app/entities/exercise.model';
 import { ActivatedRoute } from '@angular/router';
-
 import { Subscription } from 'rxjs';
 import { LtiConfiguration } from 'app/entities/lti-configuration.model';
 import { ExerciseLtiConfigurationService, ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { HttpResponse } from '@angular/common/http';
 
 @Component({
@@ -15,7 +15,13 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
     routeSub: Subscription;
     exercise: Exercise;
     ltiConfiguration: LtiConfiguration;
+    customerInstanceName = '';
+    requireExistingUser = true;
+    lookupUserByEmail = true;
 
+    // Icons
+
+    faQuestionCircle = faQuestionCircle;
     constructor(private route: ActivatedRoute, private exerciseService: ExerciseService, private exerciseLtiConfigurationService: ExerciseLtiConfigurationService) {}
 
     /**
@@ -26,10 +32,10 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
             const exerciseId = params['exerciseId'];
             if (exerciseId) {
                 this.exerciseService.find(exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
-                    this.exerciseLtiConfigurationService.find(exerciseId).subscribe((ltiConfigurationResponse: HttpResponse<any>) => {
-                        this.exercise = exerciseResponse.body!;
-                        this.ltiConfiguration = ltiConfigurationResponse.body!;
-                    });
+                    this.exercise = exerciseResponse.body!;
+                });
+                this.exerciseLtiConfigurationService.find(exerciseId).subscribe((ltiConfigurationResponse: HttpResponse<any>) => {
+                    this.ltiConfiguration = ltiConfigurationResponse.body!;
                 });
             }
         });
@@ -40,5 +46,12 @@ export class ExerciseLtiConfigurationComponent implements OnInit, OnDestroy {
      */
     ngOnDestroy() {
         this.routeSub.unsubscribe();
+    }
+
+    /**
+     * Gets the formatted custom parameters
+     */
+    getFormattedCustomParameters(): string {
+        return `consumer_instance_name=${this.customerInstanceName}\n` + `require_existing_user=${this.requireExistingUser}\n` + `lookup_user_by_email=${this.lookupUserByEmail}`;
     }
 }
