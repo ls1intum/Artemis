@@ -43,7 +43,7 @@ public class ModelFactory {
 
     public static final String USER_PASSWORD = "00000000";
 
-    public static final String defaultBranch = "main";
+    public static final String DEFAULT_BRANCH = "main";
 
     public static Lecture generateLecture(ZonedDateTime startDate, ZonedDateTime endDate, Course course) {
         Lecture lecture = new Lecture();
@@ -998,6 +998,7 @@ public class ModelFactory {
     /**
      * Creates a dummy DTO used by Jenkins, which notifies about new programming exercise results.
      *
+     * @param fullName                    full name of the build (includes Folder, Job and Build number)
      * @param repoName                    name of the repository
      * @param buildRunDate                the date of the build run, can be null
      * @param programmingLanguage         programming language to use
@@ -1019,7 +1020,7 @@ public class ModelFactory {
         testSuite.testCases().addAll(failedTestNames.stream()
                 .map(name -> new TestCaseDTO(name, "Class", 0d, new ArrayList<>(), List.of(new TestCaseDetailMessageDTO(name + " error message")), new ArrayList<>())).toList());
 
-        final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, defaultBranch);
+        final var commitDTO = new CommitDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH);
         final var staticCodeAnalysisReports = enableStaticAnalysisReports ? generateStaticCodeAnalysisReports(programmingLanguage) : new ArrayList<StaticCodeAnalysisReportDTO>();
 
         return new TestResultsDTO(successfulTestNames.size(), 0, 0, failedTestNames.size(), fullName, commits != null && commits.size() > 0 ? commits : List.of(commitDTO),
@@ -1090,7 +1091,7 @@ public class ModelFactory {
         final var successfulTests = successfulTestNames.stream().map(name -> generateBambooTestJob(name, true)).toList();
         final var failedTests = failedTestNames.stream().map(name -> generateBambooTestJob(name, false)).toList();
         final var job = new BambooBuildResultNotificationDTO.BambooJobDTO(42, failedTests, successfulTests, new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
-        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, defaultBranch, new ArrayList<>());
+        final var vcs = new BambooBuildResultNotificationDTO.BambooVCSDTO(TestConstants.COMMIT_HASH_STRING, repoName, DEFAULT_BRANCH, new ArrayList<>());
         final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
