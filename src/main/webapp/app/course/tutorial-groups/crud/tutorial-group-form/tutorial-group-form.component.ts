@@ -1,14 +1,15 @@
-import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject, Subscription } from 'rxjs';
+import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -18,6 +19,7 @@ export interface TutorialGroupFormData {
     isOnline?: boolean;
     location?: string;
     language?: Language;
+    campus?: string;
 }
 
 export class UserWithLabel extends User {
@@ -40,6 +42,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         isOnline: undefined,
         location: undefined,
         language: undefined,
+        campus: undefined,
     };
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
@@ -54,11 +57,22 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     teachingAssistantsAreLoading = false;
     teachingAssistants: UserWithLabel[];
-    @ViewChild('teachingAssistantInput') taTypeAhead: NgbTypeahead;
+    @ViewChild('teachingAssistantInput', { static: true }) taTypeAhead: NgbTypeahead;
     taFocus$ = new Subject<string>();
     taClick$ = new Subject<string>();
 
-    constructor(private fb: FormBuilder, private courseManagementService: CourseManagementService, private alertService: AlertService) {}
+    campusAreLoading = false;
+    campus: string[];
+    @ViewChild('campusInput', { static: true }) campusTypeAhead: NgbTypeahead;
+    campusFocus$ = new Subject<string>();
+    campusClick$ = new Subject<string>();
+
+    constructor(
+        private fb: FormBuilder,
+        private courseManagementService: CourseManagementService,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+    ) {}
 
     get titleControl() {
         return this.form.get('title');
@@ -70,6 +84,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     get additionalInformationControl() {
         return this.form.get('additionalInformation');
+    }
+
+    get campusControl() {
+        return this.form.get('campus');
     }
 
     get capacityControl() {
@@ -94,6 +112,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.getTeachingAssistantsInCourse();
+        this.getUniqueCampusValuesOfCourse();
         this.initializeForm();
     }
 
@@ -117,14 +136,24 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     taFormatter = (user: UserWithLabel) => user.label;
 
     taSearch: OperatorFunction<string, readonly UserWithLabel[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.taClick$.pipe(filter(() => !this.taTypeAhead.isPopupOpen()));
-        const inputFocus$ = this.taFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+        return this.mergeSearch$(text$, this.taFocus$, this.taClick$, this.taTypeAhead).pipe(
             map((term) => (term === '' ? this.teachingAssistants : this.teachingAssistants.filter((ta) => ta.label.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
+
+    campusFormatter = (campus: string) => campus;
+
+    campusSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        return this.mergeSearch$(text$, this.campusFocus$, this.campusClick$, this.campusTypeAhead).pipe(
+            map((term) => (term === '' ? this.campus : this.campus.filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+        );
+    };
+
+    private mergeSearch$(text$: Observable<string>, focus$: Subject<string>, click$: Subject<string>, typeahead: NgbTypeahead) {
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = click$.pipe(filter(() => typeahead && !typeahead.isPopupOpen()));
+        return merge(debouncedText$, focus$, clicksWithClosedPopup$);
+    }
 
     private initializeForm() {
         if (this.form) {
@@ -138,6 +167,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             isOnline: [false],
             location: [undefined, [Validators.maxLength(2000)]],
             language: [this.GERMAN],
+            campus: [undefined, Validators.maxLength(255)],
         });
     }
 
@@ -185,6 +215,24 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             ),
         ).subscribe((users: UserWithLabel[]) => {
             this.teachingAssistants = users;
+        });
+    }
+
+    private getUniqueCampusValuesOfCourse() {
+        return concat(
+            of([]), // default items
+            this.tutorialGroupService.getUniqueCampusValues(this.courseId).pipe(
+                catchError((res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    return of([]);
+                }),
+                map((res: HttpResponse<string[]>) => res.body!),
+                finalize(() => {
+                    this.campusAreLoading = false;
+                }),
+            ),
+        ).subscribe((campus: string[]) => {
+            this.campus = campus;
         });
     }
 }

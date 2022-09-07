@@ -21,7 +21,7 @@
                 "offline": "Offline",
                 "location": "Ort",
                 "language": "Sprache",
-                "additionalInfo": "Zusätzliche Informationen"
+                "campus": "Campus"
             },
             "deleteButton": {
                 "question": "Bist du sicher, dass du die Übungsgruppe mit dem Titel {{ title }} löschen möchtest?",
@@ -51,6 +51,14 @@
                 "notFoundText": "Keine Tutoren gefunden in diesem Kurs",
                 "requiredValidationError": "Ein Tutor muss für diese Gruppe ausgewählt werden!",
                 "taHelp": "Du kannst suchen indem du in dieses Feld tippst"
+            },
+            "campusInput": {
+                "label": "Campus",
+                "placeholder": "Wähle einen Campus aus, auf dem diese Gruppe stattfindet",
+                "loadingText": "Lade Campusse...",
+                "notFoundText": "Keine Campusse gefunden",
+                "campusHelp": "Du kannst nach Campusse suchen indem du in dieses Feld tippst",
+                "maxLengthValidationError": "Campus ist beschränkt auf {{ max }} Zeichen!"
             },
             "additionalInformationInput": {
                 "label": "Zusätzliche Informationen",

@@ -73,6 +73,23 @@ public class TutorialGroupResource {
     }
 
     /**
+     * GET courses/:courseId/tutorial-groups/campus-values : gets the campus values used for the tutorial groups of the course with the given id
+     * Note: Used for autocomplete in the client tutorial form
+     *
+     * @param courseId the id of the course to which the tutorial groups belong to
+     * @return ResponseEntity with status 200 (OK) and with body containing the unique campus values of the tutorial groups of the course
+     */
+    @GetMapping("/courses/{courseId}/tutorial-groups/campus-values")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<Set<String>> getUniqueCampusValues(@PathVariable Long courseId) {
+        log.debug("REST request to get unique campus values used for tutorial groups in course : {}", courseId);
+        var course = courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+        return ResponseEntity.ok(tutorialGroupRepository.findAllUniqueCampusValuesInCourse(courseId));
+    }
+
+    /**
      * GET courses/:courseId/tutorial-groups: gets the tutorial groups of the specified course.
      *
      * @param courseId the id of the course to which the tutorial groups belong to
@@ -251,6 +268,9 @@ public class TutorialGroupResource {
         if (tutorialGroup.getAdditionalInformation() != null) {
             tutorialGroup.setAdditionalInformation(tutorialGroup.getAdditionalInformation().trim());
         }
+        if (tutorialGroup.getCampus() != null) {
+            tutorialGroup.setCampus(tutorialGroup.getCampus().trim());
+        }
     }
 
     private void checkTitleIsUnique(TutorialGroup tutorialGroup) {
@@ -267,6 +287,7 @@ public class TutorialGroupResource {
         originalTutorialGroup.setOnline(sourceTutorialGroup.getOnline());
         originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
         originalTutorialGroup.setLocation(sourceTutorialGroup.getLocation());
+        originalTutorialGroup.setCampus(sourceTutorialGroup.getCampus());
     }
 
 }

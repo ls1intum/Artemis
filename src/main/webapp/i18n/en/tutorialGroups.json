@@ -21,7 +21,7 @@
                 "offline": "Offline",
                 "location": "Location",
                 "language": "Language",
-                "additionalInfo": "Additional Information"
+                "campus": "Campus"
             },
             "deleteButton": {
                 "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
@@ -48,9 +48,17 @@
                 "label": "Tutor",
                 "placeholder": "Select a tutor that will be responsible for this group.",
                 "loadingText": "Loading tutors...",
-                "notFoundText": "No tutors found in this course.",
+                "notFoundText": "No tutors found.",
                 "requiredValidationError": "A tutorial groups needs a tutor assigned!",
                 "taHelp": "You can search by typing into the field."
+            },
+            "campusInput": {
+                "label": "Campus",
+                "placeholder": "Select a campus where this group meets.",
+                "loadingText": "Loading campus...",
+                "notFoundText": "No campus found.",
+                "campusHelp": "You can search for a campus used in other tutorial groups by typing into the field.",
+                "maxLengthValidationError": "Campus is limited to {{ max }} characters!"
             },
             "additionalInformationInput": {
                 "label": "Additional Information",

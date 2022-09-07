@@ -52,8 +52,9 @@
                                 <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.language' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
-                            <th jhiSortBy="language">
-                                {{ 'artemisApp.manageTutorialGroups.columns.additionalInfo' | artemisTranslate }}
+                            <th jhiSortBy="campus">
+                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.campus' | artemisTranslate }}</a>
+                                <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                         </tr>
                     </thead>
@@ -82,7 +83,7 @@
                                 }}
                             </td>
                             <td>
-                                <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.additionalInformation }} </span>
+                                <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>
                             </td>
                             <td>
                                 <jhi-tutorial-group-row-buttons
