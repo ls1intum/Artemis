@@ -105,7 +105,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.ngOnDestroy();
         tick(500);
         expect(div.children).toHaveLength(0);
-        expect(clearInterval).toHaveBeenCalledTimes(1);
+        expect(clearInterval).toHaveBeenCalledOnce();
         expect(clearInterval).toHaveBeenCalledWith(fixture.componentInstance.autoSaveInterval);
     }));
 

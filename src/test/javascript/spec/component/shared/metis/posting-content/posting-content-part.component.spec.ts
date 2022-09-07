@@ -167,7 +167,7 @@ describe('PostingContentPartComponent', () => {
 
             // on click should open referenced attachment within new tab
             referenceLink.click();
-            expect(openAttachmentSpy).toHaveBeenCalledTimes(1);
+            expect(openAttachmentSpy).toHaveBeenCalledOnce();
             expect(openAttachmentSpy).toHaveBeenCalledWith(attachmentURL);
         });
     });

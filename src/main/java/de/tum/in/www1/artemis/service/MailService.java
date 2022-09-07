@@ -31,6 +31,7 @@ import de.tum.in.www1.artemis.domain.notification.GroupNotification;
 import de.tum.in.www1.artemis.domain.notification.Notification;
 import de.tum.in.www1.artemis.domain.notification.NotificationTitleTypeConstants;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
+import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismCase;
 import de.tum.in.www1.artemis.exception.ArtemisMailException;
 import tech.jhipster.config.JHipsterProperties;
 
@@ -70,6 +71,8 @@ public class MailService {
     private static final String NOTIFICATION_URL = "notificationUrl";
 
     private static final String EXERCISE_TYPE = "exerciseType";
+
+    private static final String PLAGIARISM_VERDICT = "plagiarismVerdict";
 
     private static final String ASSESSED_SCORE = "assessedScore";
 
@@ -168,9 +171,6 @@ public class MailService {
      * @return the modified subject of the email
      */
     private String setPostContextAndSubject(Context context, Object notificationSubject, Locale locale) {
-        // posts use a different mechanism for the url
-        context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
-
         // For Announcement Posts
         String newAnnouncementString = locale.toString().equals("en") ? newAnnouncementEN : newAnnouncementDE;
         String postTitle = ((Post) notificationSubject).getTitle();
@@ -199,14 +199,17 @@ public class MailService {
         context.setVariable(TIME_SERVICE, this.timeService);
         String subject = notification.getTitle();
 
-        if (notificationSubject instanceof Exercise) {
-            context.setVariable(EXERCISE_TYPE, ((Exercise) notificationSubject).getExerciseType());
-            context = checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, (Exercise) notificationSubject, user);
+        if (notificationSubject instanceof Exercise exercise) {
+            context.setVariable(EXERCISE_TYPE, exercise.getExerciseType());
+            checkAndPrepareExerciseSubmissionAssessedCase(notificationType, context, exercise, user);
+        }
+        if (notificationSubject instanceof PlagiarismCase plagiarismCase) {
+            context.setVariable(PLAGIARISM_VERDICT, plagiarismCase.getVerdict());
         }
 
-        if (notificationSubject instanceof Post) {
+        if (notificationSubject instanceof Post post) {
             // posts use a different mechanism for the url
-            context.setVariable(NOTIFICATION_URL, extractNotificationUrl((Post) notificationSubject, artemisServerUrl.toString()));
+            context.setVariable(NOTIFICATION_URL, extractNotificationUrl(post, artemisServerUrl.toString()));
             subject = setPostContextAndSubject(context, notificationSubject, locale);
         }
         else {
@@ -234,6 +237,8 @@ public class MailService {
             case FILE_SUBMISSION_SUCCESSFUL -> templateEngine.process("mail/notification/fileSubmissionSuccessfulEmail", context);
             case EXERCISE_SUBMISSION_ASSESSED -> templateEngine.process("mail/notification/exerciseSubmissionAssessedEmail", context);
             case DUPLICATE_TEST_CASE -> templateEngine.process("mail/notification/duplicateTestCasesEmail", context);
+            case NEW_PLAGIARISM_CASE_STUDENT -> templateEngine.process("mail/notification/plagiarismCaseEmail", context);
+            case PLAGIARISM_CASE_VERDICT_STUDENT -> templateEngine.process("mail/notification/plagiarismVerdictEmail", context);
             default -> throw new UnsupportedOperationException("Unsupported NotificationType: " + notificationType);
         };
     }
@@ -247,7 +252,7 @@ public class MailService {
      * @param recipientStudent who will receive the email
      * @return the updated context
      */
-    private Context checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
+    private void checkAndPrepareExerciseSubmissionAssessedCase(NotificationType notificationType, Context context, Exercise exercise, User recipientStudent) {
         if (notificationType.equals(EXERCISE_SUBMISSION_ASSESSED)) {
             StudentParticipation studentParticipation = exercise.getStudentParticipations().stream()
                     .filter(participation -> participation.getStudent().orElseThrow().equals(recipientStudent)).findFirst().orElseThrow();
@@ -255,7 +260,6 @@ public class MailService {
             context.setVariable(ASSESSED_SCORE, score);
             context.setVariable(RELATIVE_SCORE, exercise.getMaxPoints() / score);
         }
-        return context;
     }
 
     @Async

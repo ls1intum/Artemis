@@ -21,6 +21,7 @@
     border-radius: 3px 3px 0 0;
     background-color: var(--overview-light-background-color);
     cursor: pointer;
+    flex-wrap: nowrap !important;
 
     > div:first-child {
         padding-left: 0.5rem;

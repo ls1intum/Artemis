@@ -307,7 +307,7 @@ describe('QuizExercise Management Detail Component', () => {
                 alertServiceStub = jest.spyOn(alertService, 'warning');
                 comp.ngOnInit();
 
-                expect(alertServiceStub).toHaveBeenCalledTimes(1);
+                expect(alertServiceStub).toHaveBeenCalledOnce();
             });
 
             afterEach(() => {

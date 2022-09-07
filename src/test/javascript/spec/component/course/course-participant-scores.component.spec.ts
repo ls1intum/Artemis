@@ -91,7 +91,7 @@ describe('CourseParticipantScores', () => {
         const findAllOfCourseSpy = jest.spyOn(participantScoreService, 'findAllOfCourse').mockReturnValue(of(findAllOfCourseResponse));
         // Spy find average of course
         const participantScoreAverageDTO = new ParticipantScoreAverageDTO();
-        participantScoreAverageDTO.userName = 'test';
+        participantScoreAverageDTO.name = 'test';
         participantScoreAverageDTO.averageScore = 10;
         const findAverageOfCoursePerParticipantResponse: HttpResponse<ParticipantScoreAverageDTO[]> = new HttpResponse({
             body: [participantScoreAverageDTO],

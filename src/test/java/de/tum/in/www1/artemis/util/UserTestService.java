@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.util;
 
+import static de.tum.in.www1.artemis.repository.UserRepository.FILTER_WITHOUT_REG_NO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -549,6 +550,7 @@ public class UserTestService {
         params.add("sortedColumn", "id");
         params.add("authorities", "");
         params.add("origins", "");
+        params.add("registrationNumbers", "");
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
@@ -587,6 +589,7 @@ public class UserTestService {
         params.add("authorities", "USER");
         params.add("origins", "");
         params.add("status", "");
+        params.add("registrationNumbers", "");
         params.add("courseIds", "");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
@@ -758,11 +761,12 @@ public class UserTestService {
      * Helper method to create the params.
      * @param authorities authorities of the users
      * @param origins of the users
+     * @param registrationNumbers of the users
      * @param status of the users
      * @param courseIds which the users are part
      * @return params for request
      */
-    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String status, String courseIds) {
+    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumber, String status, String courseIds) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -771,6 +775,7 @@ public class UserTestService {
         params.add("sortedColumn", "id");
         params.add("authorities", authorities);
         params.add("origins", origins);
+        params.add("registrationNumbers", registrationNumber);
         params.add("status", status);
         params.add("courseIds", courseIds);
         return params;
@@ -778,7 +783,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithoutGroups() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "", "-1");
+        final var params = createParamsForPagingRequest("USER", "", "", "", "-1");
 
         List<User> result;
         List<User> users;
@@ -803,7 +808,7 @@ public class UserTestService {
         Course course = database.addEmptyCourse();
         courseRepository.save(course);
 
-        final var params = createParamsForPagingRequest("USER", "", "", Long.toString(course.getId()));
+        final var params = createParamsForPagingRequest("USER", "", FILTER_WITHOUT_REG_NO, "", Long.toString(course.getId()));
 
         List<User> result;
         List<User> users;
@@ -823,7 +828,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithActivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "ACTIVATED", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "ACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -843,7 +848,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithDeactivatedStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "", "DEACTIVATED", "");
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "DEACTIVATED", "");
 
         List<User> result;
         List<User> users;
@@ -865,7 +870,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithInternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -887,7 +892,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithExternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "", "");
+        final var params = createParamsForPagingRequest("USER", "EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -909,7 +914,7 @@ public class UserTestService {
 
     // Test
     public void testUserWithExternalAndInternalStatus() throws Exception {
-        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "", "");
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITHOUT_REG_NO", "", "");
 
         List<User> result;
         List<User> users;
@@ -925,6 +930,56 @@ public class UserTestService {
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
+        }
+    }
+
+    /**
+     * Test for the user search with the following parameters:
+     * @Param registrationNumbers
+     * @throws Exception if the user is not the same as the expected user
+     */
+    public void testUserWithRegistrationNumber() throws Exception {
+        final var params = createParamsForPagingRequest("USER", "INTERNAL,EXTERNAL", "WITH_REG_NO", "", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            users.get(0).setRegistrationNumber("");
+            users.get(1).setRegistrationNumber("");
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result).isEqualTo(Collections.emptyList());
+        }
+    }
+
+    /**
+     * Test for the user search with the following parameters:
+     * @Param registrationNumbers
+     * @throws Exception if the user is not the same as the expected user
+     */
+    public void testUserWithoutRegistrationNumber() throws Exception {
+        final var params = createParamsForPagingRequest("USER", "", "WITHOUT_REG_NO", "", "");
+
+        List<User> result;
+        List<User> users;
+
+        database.addEmptyCourse();
+
+        int[][] numbers = { { 2, 0, 0, 0 }, { 0, 2, 0, 0 }, { 0, 0, 2, 0 }, { 0, 0, 0, 2 } };
+        for (int[] number : numbers) {
+            userRepository.deleteAll();
+            users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
+            users.get(0).setRegistrationNumber("5461351");
+            users.get(1).setRegistrationNumber("");
+            userRepository.saveAll(users);
+            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            assertThat(result.get(0)).isEqualTo(users.get(2));
         }
     }
 }

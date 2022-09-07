@@ -83,6 +83,7 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     /**
      * Get the id of the quiz exercise
+     * @param index the index of the quiz (not used at the moment)
      * @param item the quiz exercise of which the id should be returned
      */
     trackId(index: number, item: QuizExercise) {
@@ -280,16 +281,17 @@ export class QuizExerciseComponent extends ExerciseComponent {
 
     /**
      * Resets quiz exercise
-     * @param quizExerciseId id of the quiz exercise that will be deleted
+     * @param quizExercise the quiz exercise that will be deleted
      */
-    resetQuizExercise(quizExerciseId: number) {
-        this.quizExerciseService.reset(quizExerciseId).subscribe({
+    resetQuizExercise(quizExercise: QuizExercise) {
+        this.exerciseService.reset(quizExercise.id!).subscribe({
             next: () => {
                 this.eventManager.broadcast({
                     name: 'quizExerciseListModification',
                     content: 'Reset an quizExercise',
                 });
                 this.dialogErrorSource.next('');
+                this.alertService.success('artemisApp.quizExercise.resetSuccessful', { title: quizExercise.title });
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
         });
