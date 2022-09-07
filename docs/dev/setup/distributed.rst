@@ -1,14 +1,13 @@
 .. _setup_distributed:
 
 Setup of Artemis with multiple instances
-========================================
-
+----------------------------------------
 
 Setup with one instance
 ^^^^^^^^^^^^^^^^^^^^^^^
 Artemis usually runs with one instance of the application server:
 
-   .. figure:: distributed/deployment_before.drawio.png
+   .. figure:: setup/distributed/deployment_before.drawio.png
       :align: center
 
 
@@ -22,7 +21,7 @@ Artemis also supports this setup (which is also used at the Chair for Applied So
 
 Multiple instances of the application server are used to distribute the load:
 
-   .. figure:: distributed/deployment_after_simple.drawio.png
+   .. figure:: setup/distributed/deployment_after_simple.drawio.png
       :align: center
 
 A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests to the different instances.
@@ -50,7 +49,7 @@ All instances of Artemis form a so-called cluster that allows them to synchroniz
 You can use the configuration argument ``spring.hazelcast.interface`` to configure the interface on which Hazelcast will listen.
 
 
-   .. figure:: distributed/deployment_hazelcast.drawio.png
+   .. figure:: setup/distributed/deployment_hazelcast.drawio.png
       :align: center
 
 
@@ -83,17 +82,22 @@ Eureka can be configured like this within Artemis:
         file:
             name: '/opt/artemis/artemis.log'
 
-``{{ artemis_eureka_urls }}`` must be the URL where Eureka is reachable, ``{{ artemis_ip_address }}`` must be the IP under which this instance is reachable and ``{{ artemis_eureka_instance_id }}`` must be a unique identifier for this instance.
+``{{ artemis_eureka_urls }}`` must be the URL where Eureka is reachable,
+``{{ artemis_ip_address }}`` must be the IP under which this instance is reachable and
+``{{ artemis_eureka_instance_id }}`` must be a unique identifier for this instance.
 You also have to setup the value ``jhipster.registry.password`` to the password of the registry (which you will set later).
 
-Note that Hazelcast (which requires Eureka) is by default binding to `127.0.0.1` to prevent other instances to form a cluster without manual intervention.
-If you set up the cluster on multiple machines (which you should do for a production setup), you have to set the value ``spring.hazelcast.interface`` to the ip-address of the machine.
-Hazelcast will then bind on this interface rather than `127.0.0.1`, which allows other instances to establish connections to the instance.
+Note that Hazelcast (which requires Eureka) is by default binding to `127.0.0.1` to prevent other instances
+to form a cluster without manual intervention.
+If you set up the cluster on multiple machines (which you should do for a production setup),
+you have to set the value ``spring.hazelcast.interface`` to the ip-address of the machine.
+Hazelcast will then bind on this interface rather than `127.0.0.1`,
+which allows other instances to establish connections to the instance.
 This setting must be set for every instance, but you have to make sure to adjust the ip-address correspondingly.
 
 
 Setup
------
+^^^^^
 **Installing**
 
 1. Create the directory
@@ -272,14 +276,15 @@ This will apply the config changes and the registry will be reachable.
 WebSockets
 ^^^^^^^^^^
 
-WebSockets should also be synchronized (so that a user connected to one instance can perform an action which causes an update to users on different instances, without having to reload the page - such as quiz starts).
+WebSockets should also be synchronized (so that a user connected to one instance can perform an action
+which causes an update to users on different instances, without having to reload the page - such as quiz starts).
 We use a so-called broker for this (named `Apache ActiveMQ Artemis
 <https://activemq.apache.org/components/artemis/>`_).
 
 
 It relays message between instances:
 
-   .. figure:: distributed/deployment_broker.drawio.png
+   .. figure:: setup/distributed/deployment_broker.drawio.png
       :align: center
 
 **Setup**
@@ -443,7 +448,8 @@ You then have to set the following values in the application config:
 Where ``{{ artemis_repo_basepath }}`` is the path to the shared folder
 
 
-The file system stores (as its names suggests) files, these are e.g. submissions to file upload exercises, repositories that are checked out for the online editor, course icons, etc.
+The file system stores (as its names suggests) files, these are e.g. submissions to file upload exercises,
+repositories that are checked out for the online editor, course icons, etc.
 
 
 Scheduling
@@ -456,7 +462,8 @@ Artemis uses to approaches for this:
 
 2. Tasks for other exercises are only scheduled on one instance:
 
-You must add the ``Scheduling`` profile to **exactly one** instance of your cluster. This instance will then perform scheduled tasks whereas the other instances will not.
+You must add the ``Scheduling`` profile to **exactly one** instance of your cluster.
+This instance will then perform scheduled tasks whereas the other instances will not.
 
 
 nginx configuration
@@ -485,5 +492,5 @@ You can see the state of all connected instances within the registry:
 
 It relays message between instances:
 
-   .. figure:: distributed/registry.png
+   .. figure:: setup/distributed/registry.png
       :align: center

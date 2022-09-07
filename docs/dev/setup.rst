@@ -26,26 +26,33 @@ following dependencies/tools on your machine:
    Boot <http://projects.spring.io/spring-boot>`__.
 2. `MySQL Database Server 8 <https://dev.mysql.com/downloads/mysql>`__:
    Artemis uses Hibernate to store entities in a MySQL database.
-   Download and install the MySQL Community Server (8.0.x) and configure
-   the ‘root’ user with an empty password.
-   (In case you want to use a different password, make sure to change the value in
-   ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle`` *(within the 'liquibaseCommand' as argument password)*).
-   The required Artemis scheme will be created / updated automatically at startup time of the
-   server application.
-   Alternatively, you can run the MySQL Database Server inside a Docker container using e.g. ``docker-compose -f src/main/docker/mysql.yml up``
-   In case you are using a computer with an arm64 processor you might want to change the used image
-   in the mysql.yml file. Using e.g. ``ubuntu/mysql:8.0-21.10_beta`` will let the MySQL database
-   run natively on arm64 processors.
+   Download and install the MySQL Community Server (8.0.x) and configure it according to section
+   `MySQL Setup <#mysql-setup>`__.
 3. `Node.js <https://nodejs.org/en/download>`__: We use Node LTS (>=16.13.0 < 17) to compile
    and run the client Angular application. Depending on your system, you
    can install Node either from source or as a pre-packaged bundle.
 4. `Npm <https://nodejs.org/en/download>`__: We use Npm (>=8.1.0) to
    manage client side dependencies. Npm is typically bundled with Node.js,
    but can also be installed separately.
+5. ( `Graphviz <https://www.graphviz.org/download/>`__: We use Graphviz to generate graphs.
+   It's not necessary for a successful build,
+   but it's necessary for production setups as otherwise errors will show up during runtime. )
+6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
+   There are multiple stacks available for the integration with Artemis:
+    * GitLab and Jenkins
+    * GitLab and GitLab CI
+    * Bamboo, Bitbucket and Jira )
 
+------------------------------------------------------------------------------------------------------------------------
 
 MySQL Setup
 ------------
+
+The required Artemis scheme will be created / updated automatically at startup time of the
+server application.
+
+As an alternative to a native MySQL setup, you can run the MySQL Database Server inside a Docker container
+using e.g. ``docker-compose -f src/main/docker/mysql.yml up``.
 
 If you run your own MySQL server, make sure to specify the default ``character-set``
 as ``utf8mb4`` and the default ``collation`` as ``utf8mb4_unicode_ci``.
@@ -66,15 +73,37 @@ You can achieve this e.g. by using a ``my.cnf`` file in the location ``/etc``.
 Make sure the configuration file is used by MySQL when you start the server.
 You can find more information on `<https://dev.mysql.com/doc/refman/8.0/en/option-files.html>`__
 
+MySQL 8 Docker Container for ARM64 processors
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. TODO: check if this is still needed or if the other images already run with ARM64 processors
+
+In case you are using a computer with an arm64 processor you might want to change the used image
+in the ``src/main/docker/mysql.yml`` file. Using e.g. ``ubuntu/mysql:8.0-21.10_beta`` will let the MySQL database
+run natively on arm64 processors.
+
+Users for MySQL
+^^^^^^^^^^^^^^^
+| For the development environment the default MySQL user is ‘root’ with an empty password.
+| (In case you want to use a different password, make sure to change the value in
+  ``application-local.yml`` *(spring > datasource > password)* and in ``liquibase.gradle``
+  *(within the 'liquibaseCommand' as argument password)*).
+
 Set empty root password for MySQL 8
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-If you have problems connecting to the MySQL 8 database using an empty root password, you can try the following command to reset the root password to an empty password:
+"""""""""""""""""""""""""""""""""""
+If you have problems connecting to the MySQL 8 database using an empty root password, you can try the following command
+to reset the root password to an empty password:
 
 .. code::
 
     mysql -u root --execute "ALTER USER 'root'@'localhost' IDENTIFIED WITH caching_sha2_password BY ''";
 
-Note: this should only be used in a development environment. The root password for a production environment should never be empty.
+.. warning::
+    Empty root passwords should only be used in a development environment.
+    The root password for a production environment must never be empty.
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. _Server Setup:
 
 Server Setup
 ------------
@@ -175,18 +204,6 @@ Bitbucket and Bamboo instances. It’s not necessary to fill all the
 fields, most of them can be left blank. Note that there is additional
 information about the setup for programming exercises provided:
 
-
-.. toctree::
-   :maxdepth: 1
-
-   Bamboo, Bitbucket and Jira <setup/bamboo-bitbucket-jira>
-   Jenkins and Gitlab <setup/jenkins-gitlab>
-   Common setup problems <setup/common-problems>
-   Multiple instances <setup/distributed>
-   Programming Exercise adjustments <setup/programming-exercises>
-   Kubernetes <setup/kubernetes>
-
-
 .. note::
    Be careful that you do not commit changes to ``application-artemis.yml``.
    To avoid this, follow the best practice when configuring your local development environment:
@@ -208,8 +225,10 @@ If you use a password, you need to adapt it in
 Run the server via a service configuration
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting of Artemis after the VM running Artemis has been restarted.
-As alternative you could take a look at the section below about `deploying artemis as docker container <#run-the-server-via-docker>`__.
+This setup is recommended for production instances as it registers Artemis as a service and e.g. enables auto-restarting
+of Artemis after the VM running Artemis has been restarted.
+As alternative you could take a look at the section below about
+`deploying artemis as docker container <#run-the-server-via-docker>`__.
 For development setups, see the other guides below.
 
 This is a service file that works on Debian/Ubuntu (using systemd):
@@ -249,10 +268,12 @@ This is a service file that works on Debian/Ubuntu (using systemd):
 The following parts might also be useful for other (production) setups, even if this service file is not used:
 
 - ``-Djava.security.egd=file:/dev/./urandom``: This is required if repositories are cloned via SSH from the VCS.
-   The default (pseudo-)random-generator ``/dev/random`` is blocking which results in very bad performance when using SSH due to lack of entropy.
+   The default (pseudo-)random-generator ``/dev/random`` is blocking which results in very bad performance when using
+   SSH due to lack of entropy.
 
 
-The file should be placed at ``/etc/systemd/system/artemis.service`` and after running ``sudo systemctl daemon-reload``, you can start the service using ``sudo service artemis start``.
+The file should be placed at ``/etc/systemd/system/artemis.service`` and after running ``sudo systemctl daemon-reload``,
+you can start the service using ``sudo service artemis start``.
 
 You can stop the service using ``sudo service artemis stop`` and restart it using ``sudo service artemis restart``.
 
@@ -261,122 +282,39 @@ Logs can be fetched using ``sudo journalctl -u artemis -f -n 200``.
 Run the server via Docker
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Artemis provides a Docker image named ``ghcr.io/ls1intum/artemis:<VERSION>``.
-The current develop branch will be deployed as ``latest`` version.
-Releases like ``5.7.1`` are deployed as ``ghcr.io/ls1intum/artemis:5.7.1``.
-The easiest way to configure a local deployment via Docker is a deployment with a docker-compose file.
-You could use a compose file similar to this (as an example this deployment uses the Gitlab+Jenkins configuration of Artemis:
-
-.. code:: yaml
-
-    version: '3'
-
-    services:
-      gitlab:
-        image: gitlab/gitlab-ce
-        restart: unless-stopped
-        volumes:
-          - ./data/gitlab/config:/etc/gitlab
-          - ./data/gitlab/logs:/var/log/gitlab
-          # - $BACKUP_DIR/gitlab:/var/opt/gitlab/backups # Optional but useful
-          - ./data/gitlab/data:/var/opt/gitlab
-        environment:
-          - GITLAB_OMNIBUS_CONFIG: |
-              external_url "https://${GIT_SERVER_NAME}"
-              nginx['listen_port'] = 80
-              nginx['listen_https'] = false
-              nginx['hsts_max_age'] = 0
-              prometheus_monitoring['enable'] = false
-              gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
-              gitlab_rails['gitlab_username_changing_enabled'] = false
-              gitlab_rails['gitlab_default_can_create_group'] = false
-              gitlab_rails['gitlab_default_projects_features_issues'] = false
-              gitlab_rails['gitlab_default_projects_features_merge_requests'] = false
-              gitlab_rails['gitlab_default_projects_features_wiki'] = false
-              gitlab_rails['gitlab_default_projects_features_snippets'] = false
-              gitlab_rails['gitlab_default_projects_features_builds'] = false
-              gitlab_rails['gitlab_default_projects_features_container_registry'] = false
-              gitlab_rails['backup_keep_time'] = 604800
-        ports:
-          - "${GITLAB_SSH_PORT}:22"
-          - "${GITLAB_HTTP_PORT}:80"
-        networks:
-          - artemis-net
-
-      jenkins:
-        image: jenkins/jenkins:lts
-        restart: unless-stopped
-        user: root
-        volumes:
-          # - $BACKUP_DIR/jenkins:/var/jenkins_backup # Optional but useful
-          - ./data/jenkins/home:/var/jenkins_home
-          - /var/run/docker.sock:/var/run/docker.sock
-          - /usr/bin/docker:/usr/bin/docker:ro
-        ports:
-          - "${JENKINS_HTTP_PORT}:8080"
-          - "50000:50000"
-        networks:
-          - artemis-net
-
-      artemis:
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_VERSION:-latest}
-        restart: unless-stopped
-        depends_on:
-          - artemis-db
-          - gitlab
-          - jenkins
-        volumes:
-          - ./data/artemis/config:/opt/artemis/config
-          - ./data/artemis/data:/opt/artemis/data
-          - ./branding:/opt/artemis/public/content:ro
-        environment:
-          - spring.profiles.active=prod,jenkins,gitlab,artemis,scheduling
-        ports:
-          - "${ARTEMIS_HTTP_PORT:-8080}:8080"
-        networks:
-          - artemis-net
-
-      artemis-db:
-        image: mysql:8.0.23
-        restart: unless-stopped
-        volumes:
-          - ./data/artemis-db:/var/lib/mysql
-        environment:
-          - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-          - MYSQL_DATABASE=Artemis
-        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
-        networks:
-          - artemis-net
-        cap_add:
-          - SYS_NICE
-
-    networks:
-      artemis-net:
-        ipam:
-          driver: default
-          config:
-            - subnet: 10.1.0.0/16 # Arbitrary, but set this to the IPs your department defines for local docker networks
+| Artemis provides a Docker image named ``ghcr.io/ls1intum/artemis:<TAG/VERSION>``.
+| The current develop branch is provided by the tag ``develop``.
+| The latest release is provided by the tag ``latest``.
+| Specific releases like ``5.7.1`` can be retrieved as ``ghcr.io/ls1intum/artemis:5.7.1``.
+| Branches tied to a pull request can be obtained by using the tag ``PR-<PR NUMBER>``.
 
 
-You can find the latest Dockerfile with additional information `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__.
+Dockerfile
+""""""""""
 
+You can find the latest Artemis Dockerfile at ``src/main/docker/Dockerfile``.
 
 * The Dockerfile defines three Docker volumes
 
     * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory is empty, the default configuration of Artemis will be copied upon container start.
-    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories). Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change some properties in configuration files (i.e., ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``, ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``). Otherwise you'll get permission failures.
-    * ``/opt/artemis/public/content``: This directory will be used for branding. You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
+    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories).
+      Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change
+      some properties in configuration files (i.e., ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``,
+      ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``).
+      Otherwise you'll get permission failures.
+    * ``/opt/artemis/public/content``: This directory will be used for branding.
+      You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
 
 * The Dockerfile sets the correct permissions to the folders that are mounted to the volumes on startup (not recursive).
 
 * The startup script is located `here <https://github.com/ls1intum/Artemis/blob/develop/bootstrap.sh>`__.
 
-* The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
+* The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
+  (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
 
     * LC_ALL ``en_US.UTF-8``
     * LANG ``en_US.UTF-8``
     * LANGUAGE ``en_US.UTF-8``
-
 
 Run the server via a run configuration in IntelliJ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -384,17 +322,22 @@ Run the server via a run configuration in IntelliJ
 The project comes with some pre-configured run / debug configurations that are stored in the ``.idea`` directory.
 When you import the project into IntelliJ the run configurations will also be imported.
 
-The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot module replacement in the client.
+The recommended way is to run the server and the client separated. This provides fast rebuilds of the server and hot
+module replacement in the client.
 
 * **Artemis (Server):** The server will be started separated from the client. The startup time decreases significantly.
-* **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
+* **Artemis (Client):** Will execute ``npm install`` and ``npm run serve``. The client will be available at
+  `http://localhost:9000/ <http://localhost:9000/>`__ with hot module replacement enabled (also see `Client Setup <#client-setup>`__).
 
 Other run / debug configurations
 """"""""""""""""""""""""""""""""
 
-* **Artemis (Server & Client):** Will start the server and the client. The client will be available at `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
-* **Artemis (Server, Jenkins & Gitlab):** The server will be started separated from the client with the profiles ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
-* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled (see `Athene Service <#athene-service>`__).
+* **Artemis (Server & Client):** Will start the server and the client. The client will be available at
+  `http://localhost:8080/ <http://localhost:8080/>`__ with hot module replacement disabled.
+* **Artemis (Server, Jenkins & GitLab):** The server will be started separated from the client with the profiles
+  ``dev,jenkins,gitlab,artemis`` instead of ``dev,bamboo,bitbucket,jira,artemis``.
+* **Artemis (Server, Athene):** The server will be started separated from the client with ``athene`` profile enabled
+  (see `Athene Service <#athene-service>`__).
 
 Run the server with Spring Boot and Spring profiles
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -442,17 +385,18 @@ sure to pass the active profiles to the ``gradlew`` command like this:
 
    ./gradlew bootRun --args='--spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling'
 
-As an alternative, you might want to use Jenkins and Gitlab with an
+As an alternative, you might want to use Jenkins and GitLab with an
 internal user management in Artemis, then you would use the profiles:
 
 ::
 
    dev,jenkins,gitlab,artemis,scheduling
 
-Configure Text Assessment Analytics Service:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Configure Text Assessment Analytics Service
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text assessment process. Certain assessment events are tracked:
+Text Assessment Analytics is an internal analytics service used to gather data regarding the features of the text
+assessment process. Certain assessment events are tracked:
 
 1. Adding new feedback on a manually selected block
 2. Adding new feedback on an automatically selected block
@@ -474,8 +418,7 @@ This feature is disabled by default. We can enable it by modifying the configura
    info:
       text-assessment-analytics-enabled: true
 
-
-..
+------------------------------------------------------------------------------------------------------------------------
 
 Client Setup
 ------------
@@ -521,7 +464,8 @@ above in Server Setup) and if you have configured
 ``application-artemis.yml`` correctly, then you should be able to login
 with your TUM Online account.
 
-In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other scripts from ``package.json``,
+In case you encounter any problems regarding JavaScript heap memory leaks when executing ``npm run serve`` or any other
+scripts from ``package.json``,
 you can add a memory limit parameter (``--max_old_space_size=5120``) in the script.
 You can do it by changing the **start** script in ``package.json`` from:
 
@@ -548,6 +492,8 @@ For further instructions on how to develop with JHipster, have a look at
 `Using JHipster in
 development <http://www.jhipster.tech/development>`__.
 
+------------------------------------------------------------------------------------------------------------------------
+
 Customize your Artemis instance
 -------------------------------
 
@@ -560,7 +506,9 @@ instead of the TUM defaults:
 * The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
-Alternative: Using docker-compose
+------------------------------------------------------------------------------------------------------------------------
+
+Alternative: Docker-Compose Setup
 ---------------------------------
 
 A full functioning development environment can also be set up using
@@ -580,21 +528,49 @@ of changes in the codebase of the server one has to restart the
 
 (Native) Running and Debugging from IDEs is currently not supported.
 
-Get a shell into the containers:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Get a shell into the containers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  app container:
    ``docker exec -it $(docker-compose ps -q artemis-app) sh``
 -  mysql container:
    ``docker exec -it $(docker-compose ps -q artemis-mysql) mysql``
 
-Other useful commands:
-^^^^^^^^^^^^^^^^^^^^^^
+Other useful commands
+^^^^^^^^^^^^^^^^^^^^^
 
 -  Stop the server: ``docker-compose stop artemis-server`` (restart via
    ``docker-compose start artemis-server``)
 -  Stop the client: ``docker-compose stop artemis-client`` (restart via
    ``docker-compose start artemis-client``)
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. Includes of the external setup guides
+.. include:: setup/bamboo-bitbucket-jira.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/jenkins-gitlab.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/common-problems.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. TODO: ask Simon or someone if structure is alright
+.. include:: setup/distributed.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/programming-exercises.rst
+
+------------------------------------------------------------------------------------------------------------------------
+
+.. include:: setup/kubernetes.rst
+
+------------------------------------------------------------------------------------------------------------------------
 
 Athene Service
 --------------
@@ -626,6 +602,8 @@ HTTP. We need to extend the configuration in the file
        token-validity-in-seconds: 10800
 
 .. _Athene: https://github.com/ls1intum/Athene
+
+------------------------------------------------------------------------------------------------------------------------
 
 Apollon Service
 ---------------

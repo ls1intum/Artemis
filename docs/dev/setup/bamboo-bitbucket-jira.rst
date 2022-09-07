@@ -1,5 +1,5 @@
-Setup for Programming Exercises with Bamboo, Bitbucket and Jira
-===============================================================
+Bamboo, Bitbucket and Jira Setup
+--------------------------------
 
 This page describes how to set up a programming exercise environment
 based on Bamboo, Bitbucket and Jira.
@@ -30,14 +30,14 @@ setup is present.
     :depth: 1
 
 Docker-Compose
---------------
+^^^^^^^^^^^^^^
 
 Before you start the docker-compose, check if the bamboo version in the
 ``build.gradle`` (search for ``com.atlassian.bamboo:bamboo-specs``) is
 equal to the bamboo version number in the docker compose in
 ``src/main/docker/atlassian.yml``
-If the version number is not equal, adjust the version number. Further details about the docker-compose setup can be found in
-``src/main/docker``
+If the version number is not equal, adjust the version number.
+Further details about the docker-compose setup can be found in ``src/main/docker``
 
 Execute the docker-compose file e.g. with
 ``docker-compose -f src/main/docker/atlassian.yml up -d``.
@@ -55,7 +55,7 @@ In case you want to enable Swift or C programming exercises, refer to the readme
 
 
 Configure Bamboo, Bitbucket and Jira
-------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 By default, the Jira instance is reachable under ``localhost:8081``, the
 Bamboo instance under ``localhost:8085`` and the Bitbucket instance
@@ -84,13 +84,15 @@ under ``localhost:7990``.
 
 #. Make sure that Jira, Bitbucket and Bamboo have finished starting up.
 
-    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__ is installed before running the following script.
+    (Only Linux & Windows) Make sure that `xdg-utils <https://www.howtoinstall.me/ubuntu/18-04/xdg-utils/>`__
+    is installed before running the following script.
 
     .. raw:: html
 
        <details>
        <summary>xdg-utils for Windows users</summary>
-       An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem, which should be activated anyways when running Docker on Windows.
+       An easy way to use the xdg-utils on Windows would be to install them on the linux-subsystem,
+       which should be activated anyways when running Docker on Windows.
        For the installation on the subsystem the above linked explanation can be used.
        <br>
        Make sure to execute the script from the subsystem.
@@ -98,7 +100,7 @@ under ``localhost:7990``.
 
 
    Execute the shell script ``atlassian-setup.sh`` in the
-   ``src/main/docker`` directory (e.g. with
+   ``src/main/docker/atlassian`` directory (e.g. with
    ``src/main/docker/./atlassian-setup.sh``). This script creates
    groups, users and assigns the user to their respective group.
    In addition, it configures disabled application links between the 3 applications.
@@ -119,12 +121,12 @@ under ``localhost:7990``.
 
         **Bamboo:**
 
-        .. figure:: bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
+        .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
            :align: center
 
            Bamboo → Bitbucket
 
-        .. figure:: bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
+        .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
            :align: center
 
            Bamboo → Jira
@@ -132,24 +134,24 @@ under ``localhost:7990``.
 
         **Bitbucket:**
 
-        .. figure:: bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
+        .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
            :align: center
 
            Bitbucket → Bamboo
 
-        .. figure:: bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
+        .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
            :align: center
 
            Bitbucket → Jira
 
         **Jira:**
 
-        .. figure:: bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
+        .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
            :align: center
 
            Jira → Bamboo
 
-        .. figure:: bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
+        .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
            :align: center
 
            Jira → Bitbucket
@@ -172,9 +174,9 @@ under ``localhost:7990``.
 
     .. list-table::
 
-        * - .. figure:: bamboo-bitbucket-jira/jira_add_application_bitbucket.png
+        * - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bitbucket.png
 
-          - .. figure:: bamboo-bitbucket-jira/jira_add_application_bamboo.png
+          - .. figure:: setup/bamboo-bitbucket-jira/jira_add_application_bamboo.png
 
    -  Go to Bitbucket and Bamboo → User Directories → Add Directories →
       Atlassian Crowd → use the URL ``http://jira:8080`` as Server URL →
@@ -185,11 +187,11 @@ under ``localhost:7990``.
 
     .. list-table::
 
-        * - .. figure:: bamboo-bitbucket-jira/user_directories_bitbucket.png
+        * - .. figure:: setup/bamboo-bitbucket-jira/user_directories_bitbucket.png
 
                 Adding Crowd Server in **Bitbucket**
 
-          - .. figure:: bamboo-bitbucket-jira/user_directories_bamboo.png
+          - .. figure:: setup/bamboo-bitbucket-jira/user_directories_bamboo.png
 
                 Adding Crowd Server in **Bamboo**
 
@@ -227,7 +229,7 @@ under ``localhost:7990``.
 
       - Log in as the admin user and go to Bamboo -> Profile (top right corner) -> Personal access tokens -> Create token
 
-          .. figure:: bamboo-bitbucket-jira/bamboo-create-token.png
+          .. figure:: setup/bamboo-bitbucket-jira/bamboo-create-token.png
              :align: center
 
       - Insert the generated token into the file ``application-artemis.yml`` in the section ``continuous-integration``:
@@ -244,7 +246,7 @@ under ``localhost:7990``.
 
       - Log in as the admin user and go to Bitbucket -> View Profile (top right corner) -> Manage account -> Personal access tokens -> Create token
 
-          .. figure:: bamboo-bitbucket-jira/bitbucket-create-token.png
+          .. figure:: setup/bamboo-bitbucket-jira/bitbucket-create-token.png
              :align: center
 
       - Insert the generated token into the file ``application-artemis.yml`` in the section ``version-control``:
@@ -260,28 +262,37 @@ under ``localhost:7990``.
 #. Add a SSH key for the admin user
 
     Artemis can clone/push the repositories during setup and for the online code editor using SSH.
-    If the SSH key is not present, the username + token will be used as fallback (and all git operations will use HTTP(S) instead of SSH).
+    If the SSH key is not present, the username + token will be used as fallback
+    (and all git operations will use HTTP(S) instead of SSH).
     If the token is also not present, the username + password will be used as fallback (again, using HTTP(S)).
 
-    You first have to create a SSH key (locally), e.g. using ``ssh-keygen`` (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__ or at `atlassian.com <https://confluence.atlassian.com/bitbucketserver076/creating-ssh-keys-1026534841.html>`__).
+    You first have to create a SSH key (locally), e.g. using ``ssh-keygen``
+    (more information on how to create a SSH key can be found e.g. at `ssh.com <https://www.ssh.com/ssh/keygen/>`__
+    or at `atlassian.com <https://confluence.atlassian.com/bitbucketserver076/creating-ssh-keys-1026534841.html>`__).
 
     The list of supported ciphers can be found at `Apache Mina <https://github.com/apache/mina-sshd>`__.
 
     It is recommended to use a password to secure the private key, but it is not mandatory.
 
-    Please note that the private key file **must** be named ``id_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``, depending on the ciphers used.
+    Please note that the private key file **must** be named ``id_rsa``, ``id_dsa``, ``id_ecdsa`` or ``id_ed25519``,
+    depending on the ciphers used.
 
     You now have to extract the public key and add it to Bitbucket.
-    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content (you can also use ``cat id_rsa.pub`` to show the public key).
+    Open the public key file (usually called ``id_rsa.pub`` (when using RSA)) and copy it's content
+    (you can also use ``cat id_rsa.pub`` to show the public key).
 
     Navigate to ``BITBUCKET-URL/plugins/servlet/ssh/account/keys`` and add the SSH key by pasting the content of the public key.
 
-    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename). It will be used in the configuration of Artemis to specify where Artemis should look for the key and store the ``known_hosts`` file.
+    ``<ssh-key-path>`` is the path to the folder containing the ``id_rsa`` file (but without the filename).
+    It will be used in the configuration of Artemis to specify where Artemis should look for the key and
+    store the ``known_hosts`` file.
 
-    ``<ssh-private-key-password>`` is the password used to secure the private key. It is also needed for the configuration of Artemis, but can be omitted if no password was set (e.g. for development environments).
+    ``<ssh-private-key-password>`` is the password used to secure the private key.
+    It is also needed for the configuration of Artemis, but can be omitted if no password was set
+    (e.g. for development environments).
 
 Configure Artemis
------------------
+^^^^^^^^^^^^^^^^^
 
 #. Modify ``src/main/resources/config/application-artemis.yml``
 
@@ -336,32 +347,32 @@ e.g.:
 
    --spring.profiles.active=dev,bamboo,bitbucket,jira,artemis,scheduling
 
-Please read :doc:`../setup` for more details.
+Please read :ref:`Server Setup` for more details.
 
 How to verify the connection works?
------------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 Artemis → Jira
-^^^^^^^^^^^^^^^
+""""""""""""""
 
 You can login to Artemis with the admin user you created in Jira
 
 Artemis → Bitbucket
-^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""
 You can create a programming exercise
 
 Artemis → Bamboo
-^^^^^^^^^^^^^^^^^
+""""""""""""""""
 You can create a programming exercise
 
 Bitbucket → Bamboo
-^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 The build of the students repository gets started after pushing to it
 
 Bitbucket → Artemis
-^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""
 When using the code editor, after clicking on *Submit*, the text *Building and testing...* should appear.
 
 Bamboo → Artemis
-^^^^^^^^^^^^^^^^^
+""""""""""""""""
 The build result is displayed in the code editor.
