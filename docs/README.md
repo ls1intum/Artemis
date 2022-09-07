@@ -57,7 +57,7 @@ To  generate the documentation as HTML file, use the provided docker command fro
 docker run --rm -v $PWD/docs:/docs $(docker build -q -t sphinx -f docs/Dockerfile ./docs) make html
 ```
 
-To  auto-generate the documentation as HTML file, use the provided docker command from the project root:
+To auto-generate the documentation as HTML file, use the provided docker command from the project root:
 ```bash
 docker run --rm -v $PWD/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
 ```
