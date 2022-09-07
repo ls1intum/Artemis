@@ -12,6 +12,7 @@ import { StudentParticipation } from 'app/entities/participation/student-partici
 import { Exercise } from 'app/entities/exercise.model';
 import { Authority } from 'app/shared/constants/authority.constants';
 import { TranslateService } from '@ngx-translate/core';
+import { ProfileToggle, ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 export interface IAccountService {
     save: (account: any) => Observable<HttpResponse<any>>;
@@ -43,6 +44,7 @@ export class AccountService implements IAccountService {
         private http: HttpClient,
         private websocketService: JhiWebsocketService,
         private featureToggleService: FeatureToggleService,
+        private profileToggleService: ProfileToggleService,
     ) {}
 
     get userIdentity() {
@@ -59,9 +61,11 @@ export class AccountService implements IAccountService {
         if (user) {
             this.websocketService.enableReconnect();
             this.featureToggleService.subscribeFeatureToggleUpdates();
+            this.profileToggleService.subscribeProfileToggleUpdates();
         } else {
             this.websocketService.disableReconnect();
             this.featureToggleService.unsubscribeFeatureToggleUpdates();
+            this.profileToggleService.unsubscribeProfileToggleUpdates();
         }
     }
 

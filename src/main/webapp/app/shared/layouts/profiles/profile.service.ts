@@ -9,13 +9,19 @@ import { FeatureToggleService } from 'app/shared/feature-toggle/feature-toggle.s
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
 import { extend, reduce } from 'lodash-es';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { ProfileToggleService } from 'app/shared/profile-toggle/profile-toggle.service';
 
 @Injectable({ providedIn: 'root' })
 export class ProfileService {
     private infoUrl = SERVER_API_URL + 'management/info';
     private profileInfo: BehaviorSubject<ProfileInfo | undefined>;
 
-    constructor(private http: HttpClient, private featureToggleService: FeatureToggleService, private browserFingerprintService: BrowserFingerprintService) {}
+    constructor(
+        private http: HttpClient,
+        private featureToggleService: FeatureToggleService,
+        private profileToggleService: ProfileToggleService,
+        private browserFingerprintService: BrowserFingerprintService,
+    ) {}
 
     getProfileInfo(): Observable<ProfileInfo> {
         if (!this.profileInfo) {
@@ -79,6 +85,7 @@ export class ProfileService {
                 .subscribe((profileInfo: ProfileInfo) => {
                     this.profileInfo.next(profileInfo);
                     this.featureToggleService.initializeFeatureToggles(profileInfo.features);
+                    this.profileToggleService.initializeProfileToggles(profileInfo.combinedProfiles);
                     this.browserFingerprintService.initialize(profileInfo.studentExamStoreSessionData);
                 });
         }

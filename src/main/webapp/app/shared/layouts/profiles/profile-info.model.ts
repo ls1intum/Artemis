@@ -2,6 +2,7 @@ import { ActiveFeatureToggles } from 'app/shared/feature-toggle/feature-toggle.s
 import { GuidedTourMapping } from 'app/guided-tour/guided-tour-setting.model';
 import { ProgrammingLanguageFeature } from 'app/exercises/programming/shared/service/programming-language-feature/programming-language-feature.service';
 import { Saml2Config } from 'app/home/saml2-login/saml2.config';
+import { ActiveProfileToggles } from 'app/shared/profile-toggle/profile-toggle.service';
 
 export class ProfileInfo {
     public activeProfiles: string[];
@@ -10,6 +11,7 @@ export class ProfileInfo {
     public openApiEnabled?: boolean;
     public sentry?: { dsn: string };
     public features: ActiveFeatureToggles;
+    public combinedProfiles: ActiveProfileToggles;
     public guidedTourMapping?: GuidedTourMapping;
     public buildPlanURLTemplate: string;
     public commitHashURLTemplate: string;

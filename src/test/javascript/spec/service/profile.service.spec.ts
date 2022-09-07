@@ -9,6 +9,7 @@ import { ProfileInfo } from 'app/shared/layouts/profiles/profile-info.model';
 import { FeatureToggle } from 'app/shared/feature-toggle/feature-toggle.service';
 import { ProgrammingLanguage, ProjectType } from 'app/entities/programming-exercise.model';
 import { BrowserFingerprintService } from 'app/shared/fingerprint/browser-fingerprint.service';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 describe('Profile Service', () => {
     let service: ProfileService;
@@ -153,6 +154,7 @@ describe('Profile Service', () => {
         openApiEnabled: true,
         sentry: { dsn: 'https://ceeb3e72ec094684aefbb132f87231f2@sentry.ase.in.tum.de/2' },
         features: [FeatureToggle.ProgrammingExercises, FeatureToggle.PlagiarismChecks],
+        combinedProfiles: [ProfileToggle.Scheduling],
         buildPlanURLTemplate: 'https://artemistest2jenkins.ase.in.tum.de/job/{projectKey}/job/{buildPlanId}',
         commitHashURLTemplate: 'https://artemistest2gitlab.ase.in.tum.de/{projectKey}/{repoSlug}/-/commit/{commitHash}',
         sshCloneURLTemplate: 'ssh://git@artemistest2gitlab.ase.in.tum.de:2222/',
