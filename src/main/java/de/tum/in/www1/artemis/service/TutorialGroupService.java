@@ -92,7 +92,7 @@ public class TutorialGroupService {
         var registrationNumber = studentDto.getRegistrationNumber();
         var login = studentDto.getLogin();
 
-        // try to find the user by login
+        // try to find the user by registration number
         var studentByRegistrationNumber = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
         if (studentByRegistrationNumber.isPresent()) {
             var student = studentByRegistrationNumber.get();
