@@ -97,8 +97,9 @@ public class GradingScaleResource {
     }
 
     /**
-     * Search for all modeling exercises by title and course title. The result is pageable since there might be hundreds
-     * of exercises in the DB.
+     * Search for all grading scales among the grading scales having grade type BONUS. The search will be done by the
+     * title of the course or exam that is directly associated with that grading scale. If the user does not have ADMIN role,
+     * they can only access the grading scales if they are an instructor in the course related to it. The result is pageable.
      *
      * @param search The pageable search containing the page size, page number and query string
      * @return The desired page, sorted and matching the given query
