@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 
 import javax.validation.Valid;
@@ -201,11 +200,8 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
-        Optional<User> studentToDeregister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        if (studentToDeregister.isEmpty()) {
-            throw new EntityNotFoundException("User", studentLogin);
-        }
-        tutorialGroupService.deregisterStudent(studentToDeregister.get(), tutorialGroupFromDatabase);
+        User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
+        tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase);
         return ResponseEntity.noContent().build();
     }
 
@@ -224,16 +220,12 @@ public class TutorialGroupResource {
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
-        Optional<User> userToRegister = userRepository.findOneWithGroupsAndAuthoritiesByLogin(studentLogin);
-        if (userToRegister.isEmpty()) {
-            throw new EntityNotFoundException("User", studentLogin);
-        }
-        var student = userToRegister.get();
-        if (!student.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
+        User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
+        if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
         }
 
-        tutorialGroupService.registerStudent(userToRegister.get(), tutorialGroupFromDatabase);
+        tutorialGroupService.registerStudent(userToRegister, tutorialGroupFromDatabase);
         return ResponseEntity.noContent().build();
     }
 
