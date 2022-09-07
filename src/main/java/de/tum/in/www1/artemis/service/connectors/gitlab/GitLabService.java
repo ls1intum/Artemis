@@ -266,7 +266,7 @@ public class GitLabService extends AbstractVersionControlService {
     protected void addAuthenticatedWebHook(VcsRepositoryUrl repositoryUrl, String notificationUrl, String webHookName, String secretToken) {
         final var repositoryPath = urlService.getRepositoryPathFromRepositoryUrl(repositoryUrl);
         final var hook = new ProjectHook().withPushEvents(true).withIssuesEvents(false).withMergeRequestsEvents(false).withWikiPageEvents(false)
-                // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushed to other branches)
+                // Note: Trigger hook on push events for matching branches only (this avoids unnecessary Jenkins builds for pushes to other branches)
                 .withPushEventsBranchFilter(defaultBranch);
 
         try {

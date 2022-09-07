@@ -135,7 +135,7 @@ public class ProgrammingExerciseGradingService {
 
             // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
             if (optionalBranchNameFromAssignmentRepo.isPresent() && !optionalBranchNameFromAssignmentRepo.get().equals(defaultGitBranch)) {
-                throw new IllegalArgumentException("Result was produced for a different branch then the default branch");
+                throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
