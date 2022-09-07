@@ -1,5 +1,5 @@
-Setup Kubernetes and Kubernetes Deployment
-------------------------------------------
+Alternative: Kubernetes Setup
+-----------------------------
 
 This section describes how to set up an environment deployed in Kubernetes.
 
