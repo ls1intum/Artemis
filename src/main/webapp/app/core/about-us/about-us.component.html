@@ -57,7 +57,10 @@
         </div>
     </div>
     <div class="mt-5 ms-2 me-2">
-        <h3 class="font-weight-bold">Git Information</h3>
-        <div>Git Branch: {{ gitBranchName }}<br />Git Commit ID: {{ gitCommitId }}</div>
+        <h3 class="font-weight-bold">{{ 'artemisApp.aboutUsOverview.git.title' | artemisTranslate }}</h3>
+        <div>
+            {{ 'artemisApp.aboutUsOverview.git.branch' | artemisTranslate }}: {{ gitBranchName }}<br />{{ 'artemisApp.aboutUsOverview.git.commit' | artemisTranslate }}:
+            {{ gitCommitId }}
+        </div>
     </div>
 </div>

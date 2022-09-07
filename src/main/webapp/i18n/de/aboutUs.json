@@ -23,6 +23,11 @@
             "exam": {
                 "text": "<a href={{ examModeUrl }}>Prüfungsmodus:</a> <a href={{ instructorFeatureUrl }}>Lehrende</a> können Online-Prüfungen mit Aufgabenvarianten, integrierter Plagiatsprüfung, Testläufen und Studierendenbewertungen erstellen. <a href={{ studentFeatureUrl }}>Studierende</a> nehmen problemlos teil."
             },
+            "git": {
+                "title": "Git Information",
+                "branch": "Git Branch",
+                "commit": "Git Commit ID"
+            },
             "grading": {
                 "text": "<a href={{ gradingUrl }}>Benotung:</a> Berechnen/Anzeigen von Noten mit konfigurierbaren Notenschlüsseln für Kurse/Prüfungen. Export als csv-Dateien zu Hochschulsysteme (z.B. CAMPUSonline)."
             },

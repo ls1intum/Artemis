@@ -23,6 +23,11 @@
             "exam": {
                 "text": "<a href={{ examModeUrl }}>Exam mode:</a> <a href={{ instructorFeatureUrl }}>Instructors</a> create exams with variants, integrated plagiarism checks, test runs and student reviews. <a href={{ studentFeatureUrl }}>Students</a> participate with ease."
             },
+            "git": {
+                "title": "Git Information",
+                "branch": "Git Branch",
+                "commit": "Git Commit ID"
+            },
             "grading": {
                 "text": "<a href={{ gradingUrl }}>Grading:</a> Calculate and display grades using configurable grade keys for courses and exams. Export as csv files to university systems (e.g. CAMPUSonline)."
             },
