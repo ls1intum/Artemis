@@ -1,11 +1,11 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, ViewChild } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
+import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject, Subscription } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
@@ -49,6 +49,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
 
     form: FormGroup;
+    // not included in reactive form
+    additionalInformation: string | undefined;
+
     teachingAssistantsAreLoading = false;
     teachingAssistants: UserWithLabel[];
     @ViewChild('teachingAssistantInput') taTypeAhead: NgbTypeahead;
@@ -103,6 +106,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
+        tutorialGroupFormData.additionalInformation = this.additionalInformation;
         this.formSubmitted.emit(tutorialGroupFormData);
     }
 
@@ -130,7 +134,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.form = this.fb.group({
             title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
             teachingAssistant: [undefined, [Validators.required]],
-            additionalInformation: [undefined, [Validators.maxLength(2000)]],
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false],
             location: [undefined, [Validators.maxLength(2000)]],
@@ -143,6 +146,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             formData.teachingAssistant = this.createUserWithLabel(formData.teachingAssistant);
         }
         this.form.patchValue(formData);
+        this.additionalInformation = formData.additionalInformation;
     }
 
     private createUserWithLabel(user: User): UserWithLabel {

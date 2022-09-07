@@ -35,7 +35,6 @@ public class TutorialGroup extends DomainObject {
     private String title;
 
     @Column(name = "additional_information")
-    @Size(max = 2000)
     @Lob
     private String additionalInformation;
 

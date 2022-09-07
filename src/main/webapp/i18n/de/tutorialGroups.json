@@ -75,11 +75,8 @@
                 "english": "Englisch",
                 "german": "Deutsch"
             },
-            "additionalSettings": {
-                "title": "Zusätzliche Einstellungen",
-                "isOnlineInput": {
-                    "label": "Trifft sich diese Gruppe online? (Online-Übungsgruppe)"
-                }
+            "isOnlineInput": {
+                "label": "Trifft sich diese Gruppe online oder offline?"
             }
         }
     }
