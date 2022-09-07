@@ -23,7 +23,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
                 WHERE tutorialGroup.id = :tutorialGroupId
             """)
     @Cacheable(cacheNames = "tutorialGroupTitle", key = "#tutorialGroupId", unless = "#result == null")
-    String getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
+    Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
 
     @Query("""
             SELECT tutorialGroup
