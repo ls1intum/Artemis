@@ -79,6 +79,9 @@ describe('Plagiarism Cases Instructor View Component', () => {
         component.plagiarismCaseId = 1;
         component.plagiarismCase = { id: 1 };
         expect(() => component.saveVerdict()).toThrow(Error);
+        expect(() => component.savePointDeductionVerdict()).toThrow(Error);
+        expect(() => component.saveWarningVerdict()).toThrow(Error);
+        expect(() => component.saveNoPlagiarismVerdict()).toThrow(Error);
     });
 
     it('should save plagiarism case plagiarism verdict', fakeAsync(() => {
@@ -127,13 +130,80 @@ describe('Plagiarism Cases Instructor View Component', () => {
         expect(component.plagiarismCase).toEqual({ id: 1, verdict: PlagiarismVerdict.NO_PLAGIARISM });
     }));
 
-    it('should create student notification', () => {
+    it('should create student notification for course exercise', () => {
+        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+
         component.plagiarismCase = plagiarismCase;
         component.ngOnInit();
         component.createEmptyPost();
         expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
         expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
         expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
+
+        expect(translateServiceSpy).toBeCalledTimes(6);
+        expect(translateServiceSpy).toHaveBeenCalledWith(
+            'artemisApp.plagiarism.plagiarismCases.notification.body',
+            expect.objectContaining({
+                student: plagiarismCase.student!.name,
+                exercise: plagiarismCase.exercise!.title,
+                inCourseOrExam: 'artemisApp.plagiarism.plagiarismCases.notification.inCourse',
+                courseOrExam: exercise.course!.title,
+            }),
+        );
+    });
+
+    it('should create student notification for exam exercise', () => {
+        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+
+        const examTitle = 'Exam Title';
+        const examPlagiarismCase = {
+            ...plagiarismCase,
+            exercise: { ...exercise, course: undefined, exerciseGroup: { exam: { id: 3, title: examTitle } } },
+        };
+        component.plagiarismCase = examPlagiarismCase;
+        component.createEmptyPost();
+        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
+        expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
+
+        expect(translateServiceSpy).toBeCalledTimes(3);
+        expect(translateServiceSpy).toHaveBeenCalledWith(
+            'artemisApp.plagiarism.plagiarismCases.notification.body',
+            expect.objectContaining({
+                student: examPlagiarismCase.student!.name,
+                exercise: examPlagiarismCase.exercise!.title,
+                inCourseOrExam: 'artemisApp.plagiarism.plagiarismCases.notification.inExam',
+                courseOrExam: examTitle,
+            }),
+        );
+    });
+
+    it('should create student notification with empty names and titles', () => {
+        const translateService = fixture.debugElement.injector.get(TranslateService);
+        const translateServiceSpy = jest.spyOn(translateService, 'instant');
+
+        component.plagiarismCase = {
+            ...plagiarismCase,
+            student: undefined,
+            exercise: undefined,
+        } as PlagiarismCase;
+
+        component.createEmptyPost();
+        expect(component.createdPost.plagiarismCase).toEqual({ id: 1 });
+        expect(component.createdPost.title).toBe('artemisApp.plagiarism.plagiarismCases.notification.title');
+        expect(component.createdPost.content).toBe('artemisApp.plagiarism.plagiarismCases.notification.body');
+
+        expect(translateServiceSpy).toBeCalledTimes(3);
+        expect(translateServiceSpy).toHaveBeenCalledWith(
+            'artemisApp.plagiarism.plagiarismCases.notification.body',
+            expect.objectContaining({
+                student: '',
+                exercise: '',
+                courseOrExam: '',
+            }),
+        );
     });
 
     it('should notify student', () => {
