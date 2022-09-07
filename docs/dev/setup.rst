@@ -261,122 +261,41 @@ Logs can be fetched using ``sudo journalctl -u artemis -f -n 200``.
 Run the server via Docker
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Artemis provides a Docker image named ``ghcr.io/ls1intum/artemis:<VERSION>``.
-The current develop branch will be deployed as ``latest`` version.
-Releases like ``5.7.1`` are deployed as ``ghcr.io/ls1intum/artemis:5.7.1``.
-The easiest way to configure a local deployment via Docker is a deployment with a docker-compose file.
-You could use a compose file similar to this (as an example this deployment uses the Gitlab+Jenkins configuration of Artemis:
-
-.. code:: yaml
-
-    version: '3'
-
-    services:
-      gitlab:
-        image: gitlab/gitlab-ce
-        restart: unless-stopped
-        volumes:
-          - ./data/gitlab/config:/etc/gitlab
-          - ./data/gitlab/logs:/var/log/gitlab
-          # - $BACKUP_DIR/gitlab:/var/opt/gitlab/backups # Optional but useful
-          - ./data/gitlab/data:/var/opt/gitlab
-        environment:
-          - GITLAB_OMNIBUS_CONFIG: |
-              external_url "https://${GIT_SERVER_NAME}"
-              nginx['listen_port'] = 80
-              nginx['listen_https'] = false
-              nginx['hsts_max_age'] = 0
-              prometheus_monitoring['enable'] = false
-              gitlab_rails['monitoring_whitelist'] = ['0.0.0.0/0']
-              gitlab_rails['gitlab_username_changing_enabled'] = false
-              gitlab_rails['gitlab_default_can_create_group'] = false
-              gitlab_rails['gitlab_default_projects_features_issues'] = false
-              gitlab_rails['gitlab_default_projects_features_merge_requests'] = false
-              gitlab_rails['gitlab_default_projects_features_wiki'] = false
-              gitlab_rails['gitlab_default_projects_features_snippets'] = false
-              gitlab_rails['gitlab_default_projects_features_builds'] = false
-              gitlab_rails['gitlab_default_projects_features_container_registry'] = false
-              gitlab_rails['backup_keep_time'] = 604800
-        ports:
-          - "${GITLAB_SSH_PORT}:22"
-          - "${GITLAB_HTTP_PORT}:80"
-        networks:
-          - artemis-net
-
-      jenkins:
-        image: jenkins/jenkins:lts
-        restart: unless-stopped
-        user: root
-        volumes:
-          # - $BACKUP_DIR/jenkins:/var/jenkins_backup # Optional but useful
-          - ./data/jenkins/home:/var/jenkins_home
-          - /var/run/docker.sock:/var/run/docker.sock
-          - /usr/bin/docker:/usr/bin/docker:ro
-        ports:
-          - "${JENKINS_HTTP_PORT}:8080"
-          - "50000:50000"
-        networks:
-          - artemis-net
-
-      artemis:
-        image: ghcr.io/ls1intum/artemis:${ARTEMIS_VERSION:-latest}
-        restart: unless-stopped
-        depends_on:
-          - artemis-db
-          - gitlab
-          - jenkins
-        volumes:
-          - ./data/artemis/config:/opt/artemis/config
-          - ./data/artemis/data:/opt/artemis/data
-          - ./branding:/opt/artemis/public/content:ro
-        environment:
-          - spring.profiles.active=prod,jenkins,gitlab,artemis,scheduling
-        ports:
-          - "${ARTEMIS_HTTP_PORT:-8080}:8080"
-        networks:
-          - artemis-net
-
-      artemis-db:
-        image: mysql:8.0.23
-        restart: unless-stopped
-        volumes:
-          - ./data/artemis-db:/var/lib/mysql
-        environment:
-          - MYSQL_ALLOW_EMPTY_PASSWORD=yes
-          - MYSQL_DATABASE=Artemis
-        command: mysqld --lower_case_table_names=1 --skip-ssl --character_set_server=utf8mb4 --collation-server=utf8mb4_unicode_ci --explicit_defaults_for_timestamp
-        networks:
-          - artemis-net
-        cap_add:
-          - SYS_NICE
-
-    networks:
-      artemis-net:
-        ipam:
-          driver: default
-          config:
-            - subnet: 10.1.0.0/16 # Arbitrary, but set this to the IPs your department defines for local docker networks
+| Artemis provides a Docker image named ``ghcr.io/ls1intum/artemis:<TAG/VERSION>``.
+| The current develop branch is provided by the tag ``develop``.
+| The latest release is provided by the tag ``latest``.
+| Specific releases like ``5.7.1`` can be retrieved as ``ghcr.io/ls1intum/artemis:5.7.1``.
+| Branches tied to a pull request can be obtained by using the tag ``PR-<PR NUMBER>``.
 
 
-You can find the latest Dockerfile with additional information `here <https://github.com/ls1intum/Artemis/blob/develop/src/main/docker/Dockerfile>`__.
+Dockerfile
+""""""""""
 
+You can find the latest Artemis Dockerfile at ``src/main/docker/artemis/Dockerfile``.
 
 * The Dockerfile defines three Docker volumes
 
-    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory is empty, the default configuration of Artemis will be copied upon container start.
-    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories). Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change some properties in configuration files (i.e., ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``, ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``). Otherwise you'll get permission failures.
-    * ``/opt/artemis/public/content``: This directory will be used for branding. You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
+    * ``/opt/artemis/config``: This will be used to store the configuration of Artemis in YAML files. If this directory
+      is empty, the default configuration of Artemis will be copied upon container start.
+.. TODO: add defaults and recheck config volume to docker-compose base service and Dockerfile
 
-* The Dockerfile sets the correct permissions to the folders that are mounted to the volumes on startup (not recursive).
+    * ``/opt/artemis/data``: This directory should be used for any data (e.g., local clone of repositories).
+      Therefore, configure Artemis to store this files into this directory. In order to do that, you have to change
+      some properties in configuration files (i.e., ``artemis.repo-clone-path``, ``artemis.repo-download-clone-path``,
+      ``artemis.course-archives-path``, ``artemis.submission-export-path``, and ``artemis.file-upload-path``).
+      Otherwise you'll get permission failures.
+    * ``/opt/artemis/public/content``: This directory will be used for branding.
+      You can specify a favicon, ``imprint.html``, and ``privacy_statement.html`` here.
 
-* The startup script is located `here <https://github.com/ls1intum/Artemis/blob/develop/bootstrap.sh>`__.
+* The startup script is located at ``src/main/docker/artemis/run_artemis.sh`` and contains all default environment
+  variables needed to start Artemis in a Docker container.
 
-* The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
+* The Dockerfile assumes that the mounted volumes are located on a file system with the following locale settings
+  (see `#4439 <https://github.com/ls1intum/Artemis/issues/4439>`__ for more details):
 
     * LC_ALL ``en_US.UTF-8``
     * LANG ``en_US.UTF-8``
     * LANGUAGE ``en_US.UTF-8``
-
 
 Run the server via a run configuration in IntelliJ
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -560,41 +479,63 @@ instead of the TUM defaults:
 * The imprint statement HTML → ``${artemisRunDirectory}/public/content/imprint.html``
 * The contact email address in the ``application-{dev,prod}.yml`` configuration file under the key ``info.contact``
 
-Alternative: Using docker-compose
+Alternative: Docker-Compose Setup
 ---------------------------------
 
-A full functioning development environment can also be set up using
-docker-compose:
+The easiest way to configure a local deployment via Docker is a deployment with a docker-compose file.
+In the directory ``src/main/docker/`` you can find the following docker-compose files for different setups:
 
-1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
-2. Configure the credentials in ``application-artemis.yml`` in the folder ``src/main/resources/config`` as described above
-3. Run ``docker-compose up``
-4. Go to http://localhost:9000
+* ``artemis-dev-mysql.yml``: **Artemis-Dev-MySQL** Setup containing the development build of Artemis and a MySQL DB
+* ``artemis-server-client-mysql.yml``: **Artemis-Server-Client-MySQL** Setup containing a separate client and server
+  container which mount the code as volumes and are therefore just suited for development purposes.
+  As Npm is used with its live reload mode to build and run the client, any change in the client’s codebase will trigger
+  a rebuild automatically. In case of changes in the codebase of the server one has to restart the ``artemis-server``
+  container.
+* ``atlassian.yml``: **Atlassian** Setup containing a Jira, Bitbucket and Bamboo instance
+* ``gitlab-gitlabci.yml``: **GitLab-GitLabCI** Setup containing a GitLab and GitLabCI instance
+* ``gitlab-jenkins.yml``: **GitLab-Jenkins** Setup containing a GitLab and Jenkins instance
+* ``gitlab-jenkins-mysql.yml``: **GitLab-Jenkins-MySQL** Setup containing a GitLab, Jenkins and MySQL DB instance
 
-The client and the server will run in different containers. As Npm is
-used with its live reload mode to build and run the client, any change
-in the client’s codebase will trigger a rebuild automatically. In case
-of changes in the codebase of the server one has to restart the
-``artemis-server`` container via
-``docker-compose restart artemis-server``.
+There is also a single ``docker-compose.yml`` in the project root which mirrors the setup of ``artemis-dev-mysql.yml``.
+This should provide a quick way, without manual changes necessary, for new contributors to startup an Artemis instance.
+
+For each service being used in these docker-compose files a base service is defined in the following files:
+
+* ``artemis/artemis.yml``: **Artemis Service**
+* ``mysql.yaml``: **MySQL DB Service**
+* ``gitlab/gitlab.yaml``: **GitLab Service**
+* ``jenkins/jenkins.yaml``: **Jenkins Service**
 
 (Native) Running and Debugging from IDEs is currently not supported.
 
-Get a shell into the containers:
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Getting Started with Docker-Compose Setups
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+To get started with one of the mentioned Docker-Compose Setups do the following:
+
+1. Install `docker <https://docs.docker.com/install/>`__ and `docker-compose <https://docs.docker.com/compose/install/>`__
+2. ( Depending on the chosen setup it's necessary to configure the Artemis configs like ``application-local.yml``
+   in the folder ``src/main/resources/config`` as described above. The default setup ``docker-compose.yml`` should
+   run without the default configurations, so no changes are required.)
+3. Run ``docker-compose up`` or ``docker-compose up -f src/main/docker/<setup to be launched>.yml``
+4. For Artemis instances go to http://localhost:8080 (http://localhost:9000 for the seperated server and client setup)
+
+Get a shell into the containers
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 -  app container:
-   ``docker exec -it $(docker-compose ps -q artemis-app) sh``
+   ``docker-compose exec artemis-app bash``
 -  mysql container:
-   ``docker exec -it $(docker-compose ps -q artemis-mysql) mysql``
+   ``docker-compose exec artemis-mysql bash`` or directly into mysql ``docker-compose exec artemis-mysql mysql``
 
-Other useful commands:
-^^^^^^^^^^^^^^^^^^^^^^
+Analog for other services
 
--  Stop the server: ``docker-compose stop artemis-server`` (restart via
-   ``docker-compose start artemis-server``)
--  Stop the client: ``docker-compose stop artemis-client`` (restart via
-   ``docker-compose start artemis-client``)
+Other useful commands
+^^^^^^^^^^^^^^^^^^^^^
+
+-  Stop a service: ``docker-compose stop <name of the service>`` (restart via
+   ``docker-compose start <name of the service>``)
+-  Restart a service: ``docker-compose restart <name of the service>``
 
 Athene Service
 --------------

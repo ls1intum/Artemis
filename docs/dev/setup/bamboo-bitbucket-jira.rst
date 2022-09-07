@@ -99,7 +99,7 @@ under ``localhost:7990``.
 
    Execute the shell script ``atlassian-setup.sh`` in the
    ``src/main/docker`` directory (e.g. with
-   ``src/main/docker/./atlassian-setup.sh``). This script creates
+   ``./src/main/docker/atlassian/atlassian-setup.sh``). This script creates
    groups, users and assigns the user to their respective group.
    In addition, it configures disabled application links between the 3 applications.
 
