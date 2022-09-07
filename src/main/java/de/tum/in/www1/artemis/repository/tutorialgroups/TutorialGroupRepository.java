@@ -32,7 +32,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
-    Optional<TutorialGroup> findByTitle(String title);
+    Optional<TutorialGroup> findByTitleAndCourse(String title, Course course);
 
     @Query("""
             SELECT tutorialGroup

@@ -261,7 +261,7 @@ public class TutorialGroupResource {
     }
 
     private void checkTitleIsUnique(TutorialGroup tutorialGroup) {
-        if (tutorialGroupRepository.findByTitle(tutorialGroup.getTitle()).isPresent()) {
+        if (tutorialGroupRepository.findByTitleAndCourse(tutorialGroup.getTitle(), tutorialGroup.getCourse()).isPresent()) {
             throw new BadRequestException("A tutorial group with this title already exists in the course.");
         }
     }
