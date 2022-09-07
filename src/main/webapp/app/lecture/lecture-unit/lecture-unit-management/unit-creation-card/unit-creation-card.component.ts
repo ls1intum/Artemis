@@ -4,7 +4,6 @@ import { faCheck, faFileUpload, faLink, faScroll, faVideo } from '@fortawesome/f
 @Component({
     selector: 'jhi-unit-creation-card',
     templateUrl: './unit-creation-card.component.html',
-    styleUrls: ['./unit-creation-card.component.scss'],
 })
 export class UnitCreationCardComponent {
     // Icons

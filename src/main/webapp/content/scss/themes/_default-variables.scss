@@ -135,8 +135,10 @@ $mat-form-field-outline: #ccc;
 
 // Feature Overview
 $fo-wrapper-background: white;
-$fo-container-box-icon-background: #f2f2f2;
+$fo-header-font-color: white;
+$fo-container-box-icon-background: $gray-200;
 $fo-blue-font-color: #3070b3;
+$fo-box-overlay-background: $gray-100;
 
 // Header Participation
 $header-participation-page-info-bar-background: saturate(lighten($artemis-dark, 10%), 15%);
@@ -167,6 +169,9 @@ $reaction-button-emoji-count-color: black;
 
 $metis-post-tag-selector-tag-option-background: white;
 $metis-post-tag-selector-tag-option-hover-background: $gray-200;
+
+// Component: plagiarism-case-instructor-detail-view.component.scss
+$plagiarism-verdict-disabled-overlay-color: rgba($gray-300, 0.9);
 
 // Component: plagiarism-inspector.component.scss
 $plagiarism-inspector-darker-artemis-dark: darken($artemis-dark, 4);
@@ -307,6 +312,7 @@ $lecture-unit-card-body-background: white;
 $lecture-unit-card-header-background: rgba($overview-light-border-color, 0.3);
 $lecture-unit-card-shadow: rgba(0, 0, 0, 0.25);
 $lecture-unit-card-hover-shadow: $primary;
+$lecture-unit-create-row-hover-background: $gray-400;
 
 // Lecture Attachments
 $lecture-attachment-edit-overlay-color: rgba($gray-300, 0.9);
