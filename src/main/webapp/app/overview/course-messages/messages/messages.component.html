@@ -1,7 +1,7 @@
 <div class="row p-3 justify-content-center" *ngIf="course">
     <div class="justify-content-center">
         <div class="row justify-content-center">
-            <div class="row ps-0">
+            <div class="row ps-0" *ngIf="totalItems !== 0">
                 <!-- search bar -->
                 <div class="input-group col-10 px-0 mb-4">
                     <input
@@ -14,9 +14,9 @@
                     <jhi-button [btnType]="ButtonType.SECONDARY" [icon]="faTimes" (onClick)="searchText = ''; onSelectContext()"></jhi-button>
                     <jhi-button class="ms-1" [icon]="faSearch" (onClick)="onSelectContext()"></jhi-button>
                 </div>
+                <div class="bold-line row mt-1 mb-2"></div>
             </div>
         </div>
-        <div class="bold-line row mt-1 mb-2"></div>
         <div class="row">
             <!-- loading messages -->
             <div *ngIf="isLoading" class="envelope">
@@ -39,7 +39,7 @@
                     #postingThread
                     *ngFor="let post of posts; trackBy: postsTrackByFn"
                     [post]="post"
-                    [showAnswers]="posts.length === 1"
+                    [showAnswers]="false"
                     [isCourseMessagesPage]="true"
                     (openThread)="setPostForThread($event)"
                 >

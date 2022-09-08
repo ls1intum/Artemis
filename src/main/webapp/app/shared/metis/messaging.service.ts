@@ -10,7 +10,7 @@ import { MetisPostAction, MetisWebsocketChannelPrefix } from 'app/shared/metis/m
 import { Conversation } from 'app/entities/metis/conversation/conversation.model';
 
 @Injectable()
-export class CourseMessagesService implements OnDestroy {
+export class MessagingService implements OnDestroy {
     private conversationsOfUser: Conversation[];
     private conversations$: ReplaySubject<Conversation[]> = new ReplaySubject<Conversation[]>(1);
     private conversation$ = new ReplaySubject<Conversation>(1);

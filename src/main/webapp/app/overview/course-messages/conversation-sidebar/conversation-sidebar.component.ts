@@ -4,7 +4,7 @@ import { ActivatedRoute, Params } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { faChevronLeft, faChevronRight, faComments, faGripLinesVertical, faMessage } from '@fortawesome/free-solid-svg-icons';
 
-import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
+import { MessagingService } from 'app/shared/metis/messaging.service';
 import { combineLatest, Observable, of, Subscription } from 'rxjs';
 import { User } from 'app/core/user/user.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
@@ -18,7 +18,7 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-conversation-sidebar',
     styleUrls: ['./conversation-sidebar.component.scss'],
     templateUrl: './conversation-sidebar.component.html',
-    providers: [CourseMessagesService],
+    providers: [MessagingService],
 })
 export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDestroy {
     @Output() selectConversation = new EventEmitter<Conversation>();
@@ -46,7 +46,7 @@ export class ConversationSidebarComponent implements OnInit, AfterViewInit, OnDe
     faConversation = faComments;
     faMessage = faMessage;
 
-    constructor(protected courseMessagesService: CourseMessagesService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
+    constructor(protected courseMessagesService: MessagingService, private courseManagementService: CourseManagementService, private activatedRoute: ActivatedRoute) {}
 
     ngOnInit(): void {
         this.paramSubscription = combineLatest({

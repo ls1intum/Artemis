@@ -16,7 +16,7 @@
             <column name="creation_date" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
-            <column name="last_message_date" type="TIMESTAMP"/>
+            <column name="last_message_date" type="DATETIME"/>
         </createTable>
 
         <createTable tableName="conversation_participant">
@@ -25,7 +25,7 @@
             </column>
             <column name="conversation_id" type="BIGINT"/>
             <column name="user_id" type="BIGINT"/>
-            <column name="last_read" type="TIMESTAMP"/>
+            <column name="last_read" type="DATETIME"/>
         </createTable>
 
         <addForeignKeyConstraint baseColumnNames="conversation_id" baseTableName="post" constraintName="fk_post_conversation_id" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="conversation"/>

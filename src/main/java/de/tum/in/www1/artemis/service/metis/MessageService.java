@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.repository.metis.ConversationParticipantRepository;
 import de.tum.in.www1.artemis.repository.metis.MessageRepository;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.web.rest.dto.PostContextFilter;
@@ -36,15 +35,12 @@ public class MessageService extends PostingService {
 
     private final MessageRepository messageRepository;
 
-    private final ConversationParticipantRepository conversationParticipantRepository;
-
     protected MessageService(CourseRepository courseRepository, ExerciseRepository exerciseRepository, LectureRepository lectureRepository, MessageRepository messageRepository,
             AuthorizationCheckService authorizationCheckService, SimpMessageSendingOperations messagingTemplate, UserRepository userRepository,
-            ConversationService conversationService, ConversationParticipantRepository conversationParticipantRepository) {
+            ConversationService conversationService) {
         super(courseRepository, userRepository, exerciseRepository, lectureRepository, authorizationCheckService, messagingTemplate);
         this.conversationService = conversationService;
         this.messageRepository = messageRepository;
-        this.conversationParticipantRepository = conversationParticipantRepository;
     }
 
     /**
