@@ -16,13 +16,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingLanguageFeatureServ
 public class GitLabCIProgrammingLanguageFeatureService extends ProgrammingLanguageFeatureService {
 
     public GitLabCIProgrammingLanguageFeatureService() {
-        // TODO: Add all programming languages ?
         programmingLanguageFeatures.put(EMPTY, new ProgrammingLanguageFeature(EMPTY, false, false, false, false, false, List.of()));
-        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, true, true, true, true, false, List.of(PLAIN_MAVEN, MAVEN_MAVEN)));
-        programmingLanguageFeatures.put(KOTLIN, new ProgrammingLanguageFeature(KOTLIN, true, false, false, true, false, List.of()));
-        programmingLanguageFeatures.put(PYTHON, new ProgrammingLanguageFeature(PYTHON, false, false, true, false, false, List.of()));
-        programmingLanguageFeatures.put(SWIFT, new ProgrammingLanguageFeature(SWIFT, false, true, false, true, false, List.of(PLAIN)));
-        programmingLanguageFeatures.put(C, new ProgrammingLanguageFeature(C, false, false, true, false, false, List.of(FACT, GCC)));
-        programmingLanguageFeatures.put(HASKELL, new ProgrammingLanguageFeature(HASKELL, false, false, false, false, false, List.of()));
+        programmingLanguageFeatures.put(JAVA, new ProgrammingLanguageFeature(JAVA, false, false, false, true, false, List.of(PLAIN_MAVEN, MAVEN_MAVEN)));
     }
 }

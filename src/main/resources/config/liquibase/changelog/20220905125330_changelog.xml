@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+    xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
+                      http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.15.xsd"
+    objectQuotingStrategy="QUOTE_ONLY_RESERVED_WORDS">
+    <changeSet id="20220905125330" author="bensofficial">
+        <createTable tableName="build_plan">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true" primaryKeyName="pk_build_plan"/>
+            </column>
+            <column name="build_plan" type="VARCHAR(10000)"/>
+        </createTable>
+
+        <addColumn tableName="programming_exercise_details">
+            <column name="build_plan_access_secret" type="VARCHAR(36)"/>
+            <column name="build_plan_id" type="BIGINT">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+
+        <addForeignKeyConstraint baseColumnNames="build_plan_id" baseTableName="programming_exercise_details"
+                                 constraintName="FK_EXERCISE_ON_BUILDPLAN"
+                                 referencedColumnNames="id" referencedTableName="build_plan"/>
+        <!-- TODO: Column can't be unique because it is too long (Specified key was too long; max key length is 3072 bytes)
+        <addUniqueConstraint columnNames="build_plan" constraintName="UC_BUILD_PLAN_BUILD_PLAN_COL"
+                             tableName="build_plan"/> -->
+    </changeSet>
+
+</databaseChangeLog>

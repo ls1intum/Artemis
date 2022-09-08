@@ -94,7 +94,8 @@ entity ProgrammingExercise {        //extends Exercise
     publishBuildPlanUrl Boolean,
     allowOnlineEditor Boolean,
     programmingLanguage ProgrammingLanguage,
-    packageName String
+    packageName String,
+    buildPlanAccessSecret String
 }
 
 enum ProgrammingLanguage {
@@ -107,6 +108,10 @@ enum ProgrammingLanguage {
     ASSEMBLER,
     SWIFT,
     OCAML
+}
+
+entity BuildPlan {
+    buildPlan String
 }
 
 entity ModelingExercise {           //extends Exercise
@@ -499,7 +504,7 @@ relationship OneToMany {
     ModelAssessmentConflict{resultsInConflict} to ConflictingResult{conflict},
     TextSubmission{blocks} to TextBlock{submission},
     TextCluster{blocks} to TextBlock{cluster},
-    TextExercise{clusters} to TextCluster{exercise}
+    TextExercise{clusters} to TextCluster{exercise},
 }
 
 relationship OneToOne {
@@ -541,6 +546,7 @@ relationship ManyToOne {
     Complaint{student} to User,
     ComplaintResponse{reviewer} to User,
     ModelAssessmentConflict{result} to ExerciseResult,
+    ProgrammingExercise{buildPlan} to BuildPlan,
 }
 
 relationship ManyToMany {
