@@ -12,6 +12,7 @@ public record BambooProjectDTO(String key, String name, String description, Bamb
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
     public record BambooBuildPlansDTO(List<BambooBuildPlanDTO> plan) {
 
+        // Note: this constructor makes sure that null values are deserialized as empty lists (to allow iterations): https://github.com/FasterXML/jackson-databind/issues/2974
         @JsonCreator
         public BambooBuildPlansDTO(@JsonProperty("plan") @JsonSetter(nulls = Nulls.AS_EMPTY) List<BambooBuildPlanDTO> plan) {
             this.plan = plan;
