@@ -48,6 +48,9 @@ public abstract class Exercise extends BaseExercise implements Completable {
     @Column(name = "allow_complaints_for_automatic_assessments")
     private boolean allowComplaintsForAutomaticAssessments;
 
+    @Column(name = "allow_manual_feedback_requests")
+    private boolean allowManualFeedbackRequests;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "included_in_overall_score")
     private IncludedInOverallScore includedInOverallScore = IncludedInOverallScore.INCLUDED_COMPLETELY;
@@ -181,6 +184,14 @@ public abstract class Exercise extends BaseExercise implements Completable {
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
+    }
+
+    public boolean getAllowManualFeedbackRequests() {
+        return allowManualFeedbackRequests;
+    }
+
+    public void setAllowManualFeedbackRequests(boolean allowManualFeedbackRequests) {
+        this.allowManualFeedbackRequests = allowManualFeedbackRequests;
     }
 
     public boolean getAllowComplaintsForAutomaticAssessments() {
