@@ -40,7 +40,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private static final Logger log = LoggerFactory.getLogger(GitLabCIService.class);
 
-    private static final String VARIABLE_DOCKER_IMAGE_NAME = "dockerimage";
+    private static final String VARIABLE_DOCKER_IMAGE_NAME = "ARTEMIS_DOCKER_IMAGE";
+
+    private static final String VARIABLE_BRANCH_NAME = "ARTEMIS_BRANCH";
+
+    private static final String VARIABLE_ARTEMIS_SERVER_URL_NAME = "ARTEMIS_SERVER_URL";
 
     private final GitLabApi gitlab;
 
@@ -99,10 +103,12 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         }
 
         try {
+            // TODO: Update variables
             projectApi.createVariable(repositoryPath, VARIABLE_DOCKER_IMAGE_NAME,
                     programmingLanguageConfiguration.getImage(exercise.getProgrammingLanguage(), Optional.ofNullable(exercise.getProjectType())), Variable.Type.ENV_VAR, false,
                     true);
-
+            projectApi.createVariable(repositoryPath, VARIABLE_BRANCH_NAME, exercise.getBranch(), Variable.Type.ENV_VAR, false, true);
+            projectApi.createVariable(repositoryPath, VARIABLE_ARTEMIS_SERVER_URL_NAME, artemisServerUrl.toExternalForm(), Variable.Type.ENV_VAR, false, true);
         }
         catch (GitLabApiException e) {
             log.error("Error creating variable for " + repositoryURL.toString() + " The variables may already have been created.", e);

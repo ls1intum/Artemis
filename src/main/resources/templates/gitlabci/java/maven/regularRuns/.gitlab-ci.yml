@@ -1,14 +1,16 @@
-image: ${imagename}
+image: ${ARTEMIS_DOCKER_IMAGE}
 
 stages:
     - test
 
 test-job:
     stage: test
+    only:
+        - ${ARTEMIS_BRANCH}
     allow_failure: true
     variables:
         GIT_STRATEGY: none
-        serverurl: $serverurl
+        ARTEMIS_SERVER_URL: $ARTEMIS_SERVER_URL
         studentid: $studentid
         uploadsecret: $uploadsecret
     script:
