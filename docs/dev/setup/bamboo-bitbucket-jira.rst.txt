@@ -119,42 +119,43 @@ under ``localhost:7990``.
      Bitbucket → Bamboo URl to** ``http://localhost:7990`` **and**
      ``http://localhost:8085`` **.**
 
-        **Bamboo:**
+        .. list-table::
+           :widths: 33 33 33
+           :header-rows: 1
 
-        .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
-           :align: center
+           * - **Bamboo:**
+             - **Bitbucket:**
+             - **Jira:**
+           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_bitbucket_applicationLink.png
+                  :align: center
+                  :target: ../_images/bamboo_bitbucket_applicationLink.png
 
-           Bamboo → Bitbucket
+                  Bamboo → Bitbucket
+             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
+                  :align: center
+                  :target: ../_images/bitbucket_bamboo_applicationLink.png
 
-        .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
-           :align: center
+                  Bitbucket → Bamboo
+             - .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
+                  :align: center
+                  :target: ../_images/jira_bamboo_applicationLink.png
 
-           Bamboo → Jira
+                  Jira → Bamboo
+           * - .. figure:: setup/bamboo-bitbucket-jira/bamboo_jira_applicationLink.png
+                  :align: center
+                  :target: ../_images/bamboo_jira_applicationLink.png
 
+                  Bamboo → Jira
+             - .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
+                  :align: center
+                  :target: ../_images/bitbucket_jira_applicationLink.png
 
-        **Bitbucket:**
+                  Bitbucket → Jira
+             - .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
+                  :align: center
+                  :target: ../_images/jira_bitbucket_applicationLink.png
 
-        .. figure:: setup/bamboo-bitbucket-jira/bitbucket_bamboo_applicationLink.png
-           :align: center
-
-           Bitbucket → Bamboo
-
-        .. figure:: setup/bamboo-bitbucket-jira/bitbucket_jira_applicationLink.png
-           :align: center
-
-           Bitbucket → Jira
-
-        **Jira:**
-
-        .. figure:: setup/bamboo-bitbucket-jira/jira_bamboo_applicationLink.png
-           :align: center
-
-           Jira → Bamboo
-
-        .. figure:: setup/bamboo-bitbucket-jira/jira_bitbucket_applicationLink.png
-           :align: center
-
-           Jira → Bitbucket
+                  Jira → Bitbucket
 
 #. The script *(step 3)* has already created the required users and assigned them to their respective group in Jira.
    Now, make sure that they are assigned correctly according to the following test setup:
