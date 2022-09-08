@@ -82,7 +82,7 @@ describe('Course Group Membership Component', () => {
             fixture.detectChanges();
             expect(comp.course).toEqual(course);
             expect(comp.courseGroup).toEqual(courseGroup);
-            expect(getUsersStub).toHaveBeenCalledTimes(1);
+            expect(getUsersStub).toHaveBeenCalledOnce();
         });
     });
 
