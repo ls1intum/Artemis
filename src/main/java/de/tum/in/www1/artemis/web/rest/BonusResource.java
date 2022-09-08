@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Objects;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,17 +181,23 @@ public class BonusResource {
     }
 
     /**
-     * PUT /courses/{courseId}/exams/{examId}/bonus : Update bonus applying to exam
+     * PUT /courses/{courseId}/exams/{examId}/bonus/{bonusId} : Update bonus applying to exam
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the bonus belongs
      * @param bonus    the bonus which will be updated
+     * @param bonusId  the id of the bonus to update
      * @return ResponseEntity with status 200 (Ok) with body the newly updated bonus if it is correctly formatted and 400 (Bad request) otherwise
      */
-    @PutMapping("/courses/{courseId}/exams/{examId}/bonus")
+    @PutMapping("/courses/{courseId}/exams/{examId}/bonus/{bonusId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @RequestBody Bonus bonus) {
-        log.debug("REST request to update a bonus: {}", bonus.getId());
+    public ResponseEntity<Bonus> updateBonus(@PathVariable Long courseId, @PathVariable Long examId, @PathVariable Long bonusId, @RequestBody Bonus bonus) {
+        log.debug("REST request to update a bonus: {}", bonusId);
+
+        if (!Objects.equals(bonus.getId(), bonusId)) {
+            throw new ConflictException("The bonus id in the body and path do not match", ENTITY_NAME, "bonusIdMismatch");
+        }
+
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
 
         Bonus oldBonus = bonusRepository.findByIdElseThrow(bonus.getId());

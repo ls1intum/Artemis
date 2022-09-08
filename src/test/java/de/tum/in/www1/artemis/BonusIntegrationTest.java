@@ -164,7 +164,13 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testUpdateBonusIsNotAtLeastInstructorInCourseForbidden() throws Exception {
-        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/", courseBonus, HttpStatus.FORBIDDEN);
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId(), courseBonus, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testUpdateBonusWithMismatchingIdsInPathAndBodyConflict() throws Exception {
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + courseBonus.getId() + 1, courseBonus, HttpStatus.CONFLICT);
     }
 
     @Test
@@ -178,7 +184,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         double newWeight = -foundBonus.getWeight();
         foundBonus.setWeight(newWeight);
 
-        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/", foundBonus, HttpStatus.OK);
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
         Bonus updatedBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
         assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
         assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);
@@ -199,7 +205,7 @@ class BonusIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraT
         assertThat(foundBonus.getSourceGradingScale().getId()).isNotEqualTo(sourceExamGradingScale.getId());
         foundBonus.setSourceGradingScale(sourceExamGradingScale);
 
-        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/", foundBonus, HttpStatus.OK);
+        request.put("/api/courses/" + courseId + "/exams/" + examId + "/bonus/" + foundBonus.getId(), foundBonus, HttpStatus.OK);
         Bonus updatedBonus = request.get("/api/courses/" + courseId + "/exams/" + examId + "/bonus", HttpStatus.OK, Bonus.class);
         assertThat(updatedBonus.getId()).isEqualTo(foundBonus.getId());
         assertBonusesAreEqualIgnoringId(updatedBonus, foundBonus);

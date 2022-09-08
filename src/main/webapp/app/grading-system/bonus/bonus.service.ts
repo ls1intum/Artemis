@@ -45,7 +45,7 @@ export class BonusService {
      * @param bonus the bonus to be updated
      */
     updateBonus(courseId: number, examId: number, bonus: Bonus): Observable<EntityResponseType> {
-        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus`, this.filterBonusForRequest(bonus), { observe: 'response' });
+        return this.http.put<Bonus>(`${this.resourceUrl}/courses/${courseId}/exams/${examId}/bonus/${bonus.id}`, this.filterBonusForRequest(bonus), { observe: 'response' });
     }
 
     /**
