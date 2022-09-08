@@ -54,13 +54,13 @@ make.bat livehtml
 
 To generate the documentation as an HTML file, use the provided docker command from the project root:
 ```bash
-docker run --rm -v $PWD/docs:/docs $(docker build -q -t sphinx -f docs/Dockerfile ./docs) make singlehtml
+docker run --rm -v ${PWD}/docs:/docs $(docker build -q -t sphinx -f docs/Dockerfile ./docs) make singlehtml
 ```
 
 To auto-generate the documentation as HTML file and live-reload on changes,
 use the provided docker command from the project root:
 ```bash
-docker run --rm -v $PWD/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
+docker run --rm -v ${PWD}/docs:/docs -p 8000:8000 $(docker build -q -t sphinx -f docs/Dockerfile ./docs)
 ```
 
 ## Tool support
