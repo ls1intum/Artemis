@@ -10,7 +10,7 @@ import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { AccountService } from 'app/core/auth/account.service';
 import { ExamManagementService } from 'app/exam/manage/exam-management.service';
 import dayjs from 'dayjs/esm';
-import { faClipboard, faEye, faListAlt, faTable, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faClipboard, faEye, faHeartBroken, faListAlt, faTable, faThList, faTimes, faUndo, faUser, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
@@ -39,6 +39,7 @@ export class ExamDetailComponent implements OnInit, OnDestroy {
     faListAlt = faListAlt;
     faClipboard = faClipboard;
     faThList = faThList;
+    faHeartBroken = faHeartBroken;
 
     isAdmin = false;
 

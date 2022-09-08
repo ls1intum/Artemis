@@ -152,4 +152,20 @@ export class ExamChecklistService {
     checkAtLeastOneRegisteredStudent(exam: Exam): boolean {
         return !!exam.numberOfRegisteredUsers && exam.numberOfRegisteredUsers > 0;
     }
+
+    /**
+     * Returns the topic to get updates of submitted exams.
+     * @param exam corresponding exam
+     */
+    getSubmittedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/submitted`;
+    }
+
+    /**
+     * Returns the topic to get updates of started exams
+     * @param exam corresponding exam
+     */
+    getStartedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/started`;
+    }
 }
