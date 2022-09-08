@@ -180,6 +180,7 @@
                                 <fa-icon [icon]="faWrench"></fa-icon>
                                 <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
                             </a>
+                            <button class="btn btn-success btn-sm" *ngIf="isLdapProfileActive" (click)="ldapSync(user.id!)" jhiTranslate="entity.action.ldap"></button>
                             <button
                                 jhiDeleteButton
                                 [entityTitle]="user.login!"
@@ -306,6 +307,40 @@
                             <input class="form-check-input" type="radio" (click)="this.toggleOriginFilter()" [checked]="this.filters.originFilter.size === 0" />
                             <label class="form-check-label ps-1">
                                 {{ 'artemisApp.userManagement.filter.none' | artemisTranslate }}
+                            </label>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="row row user-management-border-bottom">
+                <div class="col d-flex flex-row pt-3 pb-1">
+                    <h5 class="my-0">{{ 'userManagement.filter.registrationNumber.title' | artemisTranslate: { num: this.filters.registrationNumberFilter.size } }}</h5>
+                    <jhi-help-icon class="ps-1" placement="top" text="userManagement.filter.registrationNumber.tooltip"></jhi-help-icon>
+                </div>
+            </div>
+            <div class="row user-management-background-accent">
+                <div class="col container px-3">
+                    <ul class="text-nowrap list-unstyled row my-0 py-2">
+                        <li *ngFor="let registrationNumber of this.registrationNumberFilters" class="col">
+                            <label>
+                                <input
+                                    class="form-check-input"
+                                    (change)="this.toggleRegistrationNumberFilter(registrationNumber)"
+                                    [checked]="this.filters.registrationNumberFilter.has(registrationNumber)"
+                                    type="radio"
+                                />
+                                <span class="ps-1">{{ 'userManagement.filter.registrationNumber.' + registrationNumber.toString().toLowerCase() | artemisTranslate }}</span>
+                            </label>
+                        </li>
+                        <li class="col-3">
+                            <input
+                                class="form-check-input"
+                                type="radio"
+                                (click)="this.toggleRegistrationNumberFilter()"
+                                [checked]="this.filters.registrationNumberFilter.size === 0"
+                            />
+                            <label class="form-check-label ps-1">
+                                {{ 'userManagement.filter.none' | artemisTranslate }}
                             </label>
                         </li>
                     </ul>

@@ -1,0 +1,33 @@
+.git-diff-file {
+    .removed-line {
+        position: absolute;
+        background: var(--git-diff-viewer-removed-line-background);
+    }
+
+    .removed-line-gutter {
+        background: var(--git-diff-viewer-removed-line-gutter-background);
+    }
+
+    .added-line {
+        position: absolute;
+        background: var(--git-diff-viewer-added-line-background);
+    }
+
+    .added-line-gutter {
+        background: var(--git-diff-viewer-added-line-gutter-background);
+    }
+
+    .placeholder-line {
+        position: absolute;
+        background: var(--git-diff-viewer-placeholder-line-background);
+    }
+
+    .placeholder-line-gutter {
+        background: var(--git-diff-viewer-placeholder-line-gutter-background);
+    }
+
+    .col {
+        padding-right: calc(var(--bs-gutter-x) * 0.15);
+        padding-left: calc(var(--bs-gutter-x) * 0.15);
+    }
+}

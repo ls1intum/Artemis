@@ -32,6 +32,12 @@
                     "internal": "Internal",
                     "external": "External"
                 },
+                "registrationNumber": {
+                    "title": "Registration Number ({{ num }})",
+                    "tooltip": "Filter the users based on their registration number",
+                    "with_reg_no": "With registration number",
+                    "without_reg_no": "Without registration number"
+                },
                 "status": {
                     "title": "Status ({{ num }})",
                     "tooltip": "Filter the users based on their account status",

@@ -1,0 +1,27 @@
+<div>
+    <div class="modal-header">
+        <h3 class="modal-title" jhiTranslate="artemisApp.programmingExercise.diffReport.title">Diff Report</h3>
+        <button type="button" class="btn-close" aria-label="Close" (click)="close()"></button>
+    </div>
+    <div class="modal-body">
+        <div *ngIf="templateFileContentByPath && solutionFileContentByPath; else spinner" class="row mb-2">
+            <jhi-git-diff-report
+                [report]="report"
+                [templateFileContentByPath]="templateFileContentByPath"
+                [solutionFileContentByPath]="solutionFileContentByPath"
+            ></jhi-git-diff-report>
+        </div>
+        <ng-template #spinner>
+            <div class="text-center" *ngIf="!errorWhileFetchingRepos">
+                <span class="spinner-border spinner-border-lg" role="status" aria-hidden="true">
+                    <span class="sr-only">Loading...</span>
+                </span>
+            </div>
+        </ng-template>
+        <div *ngIf="errorWhileFetchingRepos">
+            <div class="alert alert-danger">
+                <div jhiTranslate="artemisApp.programmingExercise.diffReport.errorWhileFetchingRepos">Error while fetching repos</div>
+            </div>
+        </div>
+    </div>
+</div>

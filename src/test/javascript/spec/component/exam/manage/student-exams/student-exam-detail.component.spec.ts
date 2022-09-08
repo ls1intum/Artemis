@@ -104,7 +104,7 @@ describe('StudentExamDetailComponent', () => {
                 userId: 1,
                 name: 'user1',
                 login: 'user1',
-                eMail: 'user1@tum.de',
+                email: 'user1@tum.de',
                 registrationNumber: '111',
                 overallPointsAchieved: 40,
                 overallScoreAchieved: 40,

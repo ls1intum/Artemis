@@ -376,12 +376,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.getPointsPerCriterion()).isEmpty();
+            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
         }
     }
 
@@ -398,25 +398,25 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         final GradingCriterion criterion1 = getGradingCriterionByTitle(fileUploadExercise, "test title");
         final GradingCriterion criterion2 = getGradingCriterionByTitle(fileUploadExercise, "test title2");
 
         for (final var resultWithPoints : resultsWithPoints) {
-            final Map<Long, Double> points = resultWithPoints.getPointsPerCriterion();
-            if (resultWithPoints.getResult().getScore() == 10.0) {
+            final Map<Long, Double> points = resultWithPoints.pointsPerCriterion();
+            if (resultWithPoints.result().getScore() == 10.0) {
                 // feedback without criterion (1.1 points) is considered in the total points calculation
-                assertThat(resultWithPoints.getTotalPoints()).isEqualTo(6.1);
+                assertThat(resultWithPoints.totalPoints()).isEqualTo(6.1);
                 // two feedbacks of the same criterion -> credits should be summed up in one entry of the map
                 assertThat(points).hasSize(1);
                 assertThat(points).containsEntry(criterion1.getId(), 5.0);
             }
             else {
-                assertThat(resultWithPoints.getTotalPoints()).isEqualTo(14);
+                assertThat(resultWithPoints.totalPoints()).isEqualTo(14);
                 // two feedbacks of different criteria -> map should contain two entries
-                assertThat(resultWithPoints.getPointsPerCriterion()).hasSize(2);
+                assertThat(resultWithPoints.pointsPerCriterion()).hasSize(2);
                 assertThat(points).containsEntry(criterion1.getId(), 1.0);
                 assertThat(points).containsEntry(criterion2.getId(), 3.0);
             }
@@ -545,12 +545,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // with points should return the same results as the /results endpoint
         assertThat(results).hasSize(5);
         assertThat(resultsWithPoints).hasSameSizeAs(results);
-        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::getResult).toList();
+        final List<Result> resultWithPoints2 = resultsWithPoints.stream().map(ResultWithPointsPerGradingCriterionDTO::result).toList();
         assertThat(resultWithPoints2).containsExactlyElementsOf(results);
 
         // the exercise has no grading criteria -> empty points map in every resultWithPoints
         for (final var resultWithPoints : resultsWithPoints) {
-            assertThat(resultWithPoints.getPointsPerCriterion()).isEmpty();
+            assertThat(resultWithPoints.pointsPerCriterion()).isEmpty();
         }
     }
 

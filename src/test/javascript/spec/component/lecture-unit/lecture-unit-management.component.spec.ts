@@ -11,7 +11,7 @@ import { VideoUnitComponent } from 'app/overview/course-lectures/video-unit/vide
 import { TextUnitComponent } from 'app/overview/course-lectures/text-unit/text-unit.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
-import { ActivatedRoute, Params, Router, RouterOutlet } from '@angular/router';
+import { ActivatedRoute, Params, Router } from '@angular/router';
 import { LectureUnitService } from 'app/lecture/lecture-unit/lecture-unit-management/lectureUnit.service';
 import { LectureService } from 'app/lecture/lecture.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -72,7 +72,6 @@ describe('LectureUnitManagementComponent', () => {
                 MockComponent(FaIconComponent),
                 MockDirective(DeleteButtonDirective),
                 MockDirective(HasAnyAuthorityDirective),
-                MockDirective(RouterOutlet),
                 MockRouterLinkDirective,
             ],
             providers: [
