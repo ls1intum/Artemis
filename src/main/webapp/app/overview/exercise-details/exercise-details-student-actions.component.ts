@@ -146,6 +146,27 @@ export class ExerciseDetailsStudentActionsComponent {
             });
     }
 
+    requestFeedback() {
+        this.exercise.loading = true;
+        this.courseExerciseService
+            .requestFeedback(this.exercise.id!)
+            .pipe(finalize(() => (this.exercise.loading = false)))
+            .subscribe({
+                next: (participation: StudentParticipation) => {
+                    if (participation) {
+                        // TODO: evaluate if all those calls are necessary
+                        participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
+                        this.exercise.studentParticipations = [participation];
+                        this.exercise.participationStatus = participationStatus(this.exercise);
+                        this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                    }
+                },
+                error: (error) => {
+                    this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
+                },
+            });
+    }
+
     /**
      * Wrapper for using participationStatus() in the template
      *
@@ -167,10 +188,6 @@ export class ExerciseDetailsStudentActionsComponent {
             !!this.exercise.studentParticipations &&
             this.exercise.studentParticipations!.length > 0
         );
-    }
-
-    requestFeedback() {
-        console.log('todo');
     }
 
     /**

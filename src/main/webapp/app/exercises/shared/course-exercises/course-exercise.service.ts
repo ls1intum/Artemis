@@ -101,6 +101,14 @@ export class CourseExerciseService {
         );
     }
 
+    requestFeedback(exerciseId: number): Observable<StudentParticipation> {
+        return this.http.put<StudentParticipation>(SERVER_API_URL + `api/exercises/${exerciseId}/request-feedback`, {}).pipe(
+            map((participation: StudentParticipation) => {
+                return this.handleParticipation(participation);
+            }),
+        );
+    }
+
     /**
      * handle the given student participation by adding in the participationWebsocketService
      * @param participation - the participation to be handled
