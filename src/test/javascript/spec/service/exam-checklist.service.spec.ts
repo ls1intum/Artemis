@@ -284,4 +284,14 @@ describe('ExamChecklistService', () => {
             expect(numericResult).toBe(100);
         });
     });
+
+    describe('test topics', () => {
+        it('should return the submitted topic', () => {
+            expect(service.getSubmittedTopic(exam)).toBe(`/topic/exam/${exam.id}/submitted`);
+        });
+
+        it('should return the started topic', () => {
+            expect(service.getStartedTopic(exam)).toBe(`/topic/exam/${exam.id}/started`);
+        });
+    });
 });

@@ -46,6 +46,10 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
 
     String FILTER_DEACTIVATED = "DEACTIVATED";
 
+    String FILTER_WITH_REG_NO = "WITH_REG_NO";
+
+    String FILTER_WITHOUT_REG_NO = "WITHOUT_REG_NO";
+
     @EntityGraph(type = LOAD, attributePaths = { "groups" })
     Optional<User> findOneWithGroupsByActivationKey(String activationKey);
 
@@ -250,9 +254,14 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         // Course Ids
         var courseIds = userSearch.getCourseIds();
 
+        // Users without registration numbers or with registration numbers
+        var noRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITHOUT_REG_NO);
+        var withRegistrationNumber = userSearch.getRegistrationNumbers().contains(FILTER_WITH_REG_NO);
+
         Specification<User> specification = Specification.where(distinct()).and(getSearchTermSpecification(searchTerm)).and(getInternalOrExternalSpecification(internal, external))
                 .and(getActivatedOrDeactivatedSpecification(activated, deactivated)).and(getAuthoritySpecification(modifiedAuthorities, courseIds))
-                .and(getCourseSpecification(courseIds, modifiedAuthorities)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities));
+                .and(getCourseSpecification(courseIds, modifiedAuthorities)).and(getAuthorityAndCourseSpecification(courseIds, modifiedAuthorities))
+                .and(getWithOrWithoutRegistrationNumberSpecification(noRegistrationNumber, withRegistrationNumber));
 
         return findAll(specification, sorted).map(user -> {
             user.setVisibleRegistrationNumber();
