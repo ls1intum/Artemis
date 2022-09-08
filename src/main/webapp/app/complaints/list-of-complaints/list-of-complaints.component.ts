@@ -137,7 +137,7 @@ export class ListOfComplaintsComponent implements OnInit {
             return;
         }
         this.correctionRound = this.correctionRound || 0;
-        if (complaint.accepted === true) {
+        if (complaint.accepted) {
             this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(
