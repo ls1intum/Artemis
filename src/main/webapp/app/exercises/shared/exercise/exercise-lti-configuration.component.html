@@ -1,77 +1,89 @@
 <form name="editForm" role="form" novalidate>
     <div class="modal-header">
-        <h4
-            class="modal-title"
-            id="myProgrammingExerciseLabel"
-            jhiTranslate="artemisApp.exerciseLtiConfiguration.configurationForExercise"
-            [translateValues]="{ title: exercise?.title }"
-        >
+        <h4 class="modal-title" id="myProgrammingExerciseLabel" jhiTranslate="artemisApp.lti.configurationForExercise" [translateValues]="{ title: exercise?.title }">
             LTI Configuration for exercise {{ exercise?.title }}
         </h4>
     </div>
     <hr />
 
     <div class="modal-body">
-        <dt><span>LTI ID</span></dt>
+        <dt>
+            <span>{{ 'artemisApp.lti.ltiId' | artemisTranslate }}</span>
+        </dt>
         <dd>
             <span>{{ ltiConfiguration?.ltiId }}</span>
         </dd>
 
-        <dt><span>LTI Key</span></dt>
+        <dt>
+            <span>{{ 'artemisApp.lti.ltiKey' | artemisTranslate }}</span>
+        </dt>
         <dd>
             <span>{{ ltiConfiguration?.ltiKey }}</span>
         </dd>
 
-        <dt><span>LTI Secret</span></dt>
+        <dt>
+            <span>{{ 'artemisApp.lti.ltiSecret' | artemisTranslate }}</span>
+        </dt>
         <dd>
             <span>{{ ltiConfiguration?.ltiSecret }}</span>
         </dd>
 
-        <dt><span>LTI Launch URL</span></dt>
+        <dt>
+            <span>{{ 'artemisApp.lti.ltiLaunchUrl' | artemisTranslate }}</span>
+        </dt>
         <dd>
             <span>{{ ltiConfiguration?.launchUrl }}</span>
         </dd>
 
         <dt>
-            <span>LTI Launch Target</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.launchTarget' | artemisTranslate }}"></fa-icon>
+            <span>{{ 'artemisApp.lti.ltiLaunchTarget' | artemisTranslate }}</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.launchTargetTooltip' | artemisTranslate }}"></fa-icon>
         </dt>
         <dd>
             <span>New Window</span>
         </dd>
 
-        <dt><span>Scored</span></dt>
-        <dd>
-            <span>True</span>
-        </dd>
-
-        <dt><span>Request user's username</span></dt>
+        <dt>
+            <span>{{ 'artemisApp.lti.scored' | artemisTranslate }}</span>
+        </dt>
         <dd>
             <span>True</span>
         </dd>
 
         <dt>
-            <span>Request user's email</span>
-            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.requestUserEmail' | artemisTranslate }}"></fa-icon>
+            <span>{{ 'artemisApp.lti.requestUsername' | artemisTranslate }}</span>
+        </dt>
+        <dd>
+            <span>True</span>
+        </dd>
+
+        <dt>
+            <span>{{ 'artemisApp.lti.requestEmail' | artemisTranslate }}</span>
+            <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.requestUserEmailTooltip' | artemisTranslate }}"></fa-icon>
         </dt>
         <dd>
             <span>True</span>
         </dd>
 
         <div class="form-group">
-            <h4>Custom Parameters</h4>
+            <h4>{{ 'artemisApp.lti.customParameters' | artemisTranslate }}</h4>
 
             <dt>
-                <span>Require existing user</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}"></fa-icon>
+                <span>{{ 'artemisApp.lti.requireExistingUser' | artemisTranslate }}</span>
+                <fa-icon
+                    [icon]="faQuestionCircle"
+                    class="text-secondary"
+                    placement="top"
+                    ngbTooltip="{{ 'artemisApp.lti.requireExistingUserTooltip' | artemisTranslate }}"
+                ></fa-icon>
             </dt>
             <dd>
                 <input type="checkbox" class="form-check-input" (change)="requireExistingUser = !requireExistingUser" [checked]="requireExistingUser" />
             </dd>
 
             <dt>
-                <span>Lookup user by email</span>
-                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.lookupUserByEmail' | artemisTranslate }}"></fa-icon>
+                <span>{{ 'artemisApp.lti.lookupByEmail' | artemisTranslate }}</span>
+                <fa-icon [icon]="faQuestionCircle" class="text-secondary" placement="top" ngbTooltip="{{ 'artemisApp.lti.lookupUserByEmailTooltip' | artemisTranslate }}"></fa-icon>
             </dt>
             <dd>
                 <input type="checkbox" class="form-check-input" (change)="lookupUserByEmail = !lookupUserByEmail" [checked]="lookupUserByEmail" />
