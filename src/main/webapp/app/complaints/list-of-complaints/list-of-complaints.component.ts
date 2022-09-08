@@ -136,9 +136,9 @@ export class ListOfComplaintsComponent implements OnInit {
         if (!exercise || !exercise.type || !submissionId) {
             return;
         }
-        let correctionRound = this.correctionRound ?? 0;
+        this.correctionRound = this.correctionRound ?? 0;
         if (complaint.accepted === true) {
-            correctionRound += 1;
+            this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(
             exercise.type,
@@ -150,7 +150,7 @@ export class ListOfComplaintsComponent implements OnInit {
             0,
             complaint.result.id,
         );
-        this.router.navigate(url, { queryParams: { 'correction-round': correctionRound } });
+        this.router.navigate(url, { queryParams: { 'correction-round': this.correctionRound } });
     }
 
     sortRows() {
