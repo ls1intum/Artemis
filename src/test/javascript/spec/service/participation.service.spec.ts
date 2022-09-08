@@ -56,19 +56,6 @@ describe('Participation Service', () => {
         tick();
     }));
 
-    it('should find an element with latest result', fakeAsync(() => {
-        const returnedFromService = { ...participationDefault, initializationDate: currentDate.toDate() };
-        returnedFromService.results = [{ id: 1 }];
-        service
-            .findWithLatestResult(123)
-            .pipe(take(1))
-            .subscribe((resp) => expect(resp).toMatchObject({ body: returnedFromService }));
-
-        const req = httpMock.expectOne({ method: 'GET' });
-        req.flush(returnedFromService);
-        tick();
-    }));
-
     it('should find participation for the exercise', fakeAsync(() => {
         const returnedFromService = { ...participationDefault, initializationDate: currentDate.toDate() };
         returnedFromService.id = 123;
