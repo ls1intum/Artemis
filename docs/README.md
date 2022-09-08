@@ -52,7 +52,7 @@ make.bat livehtml
 
 ## Running Sphinx Locally with Docker
 
-To generate the documentation as HTML file, use the provided docker command from the project root:
+To generate the documentation as an HTML file, use the provided docker command from the project root:
 ```bash
 docker run --rm -v $PWD/docs:/docs $(docker build -q -t sphinx -f docs/Dockerfile ./docs) make html
 ```
