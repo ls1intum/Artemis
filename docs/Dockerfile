@@ -11,4 +11,5 @@ RUN pip3 install -r requirements.txt
 USER sphinx-user
 EXPOSE 8000
 # use the autobuild as default command
-CMD exec sphinx-autobuild --port 8000 --host 0.0.0.0 -b html /docs /docs/_build/html
+ENV SPHINXOPTS="--port 8000 --host 0.0.0.0"
+CMD exec make livehtml
