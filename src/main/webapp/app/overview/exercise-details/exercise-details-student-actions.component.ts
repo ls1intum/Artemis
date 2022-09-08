@@ -12,7 +12,7 @@ import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 import { finalize } from 'rxjs/operators';
-import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import { faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers, faExternalLinkAlt, faComment } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 
 @Component({
@@ -42,6 +42,7 @@ export class ExerciseDetailsStudentActionsComponent {
     @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
     // Icons
+    faComment = faComment;
     faFolderOpen = faFolderOpen;
     faUsers = faUsers;
     faEye = faEye;
@@ -82,6 +83,10 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isOfflineIdeAllowed() {
         return (this.exercise as ProgrammingExercise).allowOfflineIde;
+    }
+
+    isManualFeedbackRequestsAllowed() {
+        return (this.exercise as ProgrammingExercise).allowManualFeedbackRequests;
     }
 
     /**
@@ -162,6 +167,10 @@ export class ExerciseDetailsStudentActionsComponent {
             !!this.exercise.studentParticipations &&
             this.exercise.studentParticipations!.length > 0
         );
+    }
+
+    requestFeedback() {
+        console.log('todo');
     }
 
     /**

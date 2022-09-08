@@ -10,6 +10,7 @@
             "statistics": "Quiz Statistics",
             "startExercise": "Start exercise",
             "resumeExercise": "Resume exercise",
+            "requestFeedback": "Request feedback",
             "resumeExerciseError": "Error trying to resume the exercise",
             "openCodeEditor": "Open code editor",
             "openModelingEditor": "Open modeling editor",

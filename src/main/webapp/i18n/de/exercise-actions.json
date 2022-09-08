@@ -10,6 +10,7 @@
             "statistics": "Quiz-Statistiken",
             "startExercise": "Aufgabe starten",
             "resumeExercise": "Aufgabe fortführen",
+            "requestFeedback": "Feedback anfragen",
             "resumeExerciseError": "Fehler beim Versuch die Aufgabe fortzuführen",
             "openCodeEditor": "Programmiereditor öffnen",
             "openModelingEditor": "Modellierungseditor öffnen",

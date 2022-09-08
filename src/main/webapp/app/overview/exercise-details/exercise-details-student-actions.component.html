@@ -214,6 +214,7 @@
                     [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations![0].id]"
                 ></button>
                 <jhi-clone-repo-button
+                    class="me-2"
                     [loading]="!!exercise.loading"
                     [smallButtons]="smallButtons"
                     [repositoryUrl]="repositoryUrl(exercise.studentParticipations![0])!"
@@ -221,6 +222,18 @@
                     *ngIf="isOfflineIdeAllowed()"
                 >
                 </jhi-clone-repo-button>
+                <button
+                    [id]="'request-feedback-' + exercise.id"
+                    jhi-exercise-action-button
+                    [buttonIcon]="faComment"
+                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                    [buttonLabel]="'artemisApp.exerciseActions.requestFeedback' | artemisTranslate"
+                    [buttonLoading]="!!exercise.loading"
+                    [smallButton]="smallButtons"
+                    [hideLabelMobile]="false"
+                    *ngIf="isManualFeedbackRequestsAllowed()"
+                    (click)="requestFeedback()"
+                ></button>
             </ng-container>
         </ng-container>
         <!-- NOTE: we use the same logic 'isStartExerciseAvailable' in ngIf as above because start and resume are not always possible -->
