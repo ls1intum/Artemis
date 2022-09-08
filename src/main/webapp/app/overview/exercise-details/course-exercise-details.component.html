@@ -8,6 +8,7 @@
     <div class="tab-bar tab-bar-exercise-details ps-2 pe-2 mb-2 justify-content-between">
         <jhi-exercise-details-student-actions
             *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult != undefined }"
+            [studentParticipation]="studentParticipation"
             [courseId]="courseId"
             [exercise]="exercise"
             [showResult]="showResults && latestRatedResult != undefined"

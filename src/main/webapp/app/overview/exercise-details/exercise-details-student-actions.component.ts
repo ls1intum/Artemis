@@ -30,6 +30,7 @@ export class ExerciseDetailsStudentActionsComponent {
     @Input() @HostBinding('class.col-auto') smallColumns = false;
 
     @Input() exercise: Exercise;
+    @Input() studentParticipation?: StudentParticipation;
     @Input() courseId: number;
 
     @Input() actionsOnly: boolean;
@@ -52,6 +53,19 @@ export class ExerciseDetailsStudentActionsComponent {
     faExternalLinkAlt = faExternalLinkAlt;
 
     constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
+
+    // TODO: this is duplicate code from submission-result-status.component.ts
+    //       can we refactor this into a function for participation.service.ts?
+    /**
+     * If a student participation is supplied explicitly, use that one.
+     * Otherwise, use the first student participation on the exercise.
+     */
+    get participation() {
+        if (this.studentParticipation) {
+            return this.studentParticipation;
+        }
+        return this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0 ? this.exercise.studentParticipations[0] : undefined;
+    }
 
     /**
      * check if practiceMode is available
@@ -86,6 +100,9 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     isManualFeedbackRequestsAllowed() {
+        // TODO: access latest result and check if it is successful
+        // this.studentParticipation.results;
+        // Implement this as a function in participation.service.ts?
         return (this.exercise as ProgrammingExercise).allowManualFeedbackRequests;
     }
 
