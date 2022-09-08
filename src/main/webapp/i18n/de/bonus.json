@@ -19,7 +19,7 @@
             },
             "bonusSource": {
                 "title": "Wähle die Quelle für den Bonus",
-                "helpText": "Prüfungen und Kurse mit einem \"Bonus\"-Notenschlüssel sind unten aufgeführt. Die Punktzahl oder Note der Studierenden für den gewählten Kurs/Prüfung bestimmen die Höhe des Bonuses.",
+                "helpText": "Prüfungen und Kurse mit einem \"Bonus\"-Notenschlüssel sind unten aufgeführt. Die Note der Studierenden für den gewählten Kurs/Prüfung bestimmt die Höhe des Bonuses.",
                 "selectedBonusSource": "Notenschlüssel für die ausgewälte Bonusquelle"
             },
             "examples": {
@@ -29,21 +29,21 @@
                 "examGrade": "Prüfungsnote",
                 "bonusSourceStudentPoints": "Studierenden-Punkte der Bonusquelle",
                 "bonusGrade": "Bonus",
-                "finalPoints": "Finale Punktzahl",
+                "finalPoints": "Finale<br>Punktzahl",
                 "finalGrade": "Endnote",
                 "any": "(Alle)",
-                "exceedsMax": "Der Wert übersteigt das bestmögliche Ergebnis, also wird er dort gedeckelt. Wenn das nicht gewollt ist, überprüfe die −/+ Auswahl noch einmal."
+                "exceedsMax": "Der Wert übersteigt das bestmögliche Ergebnis, deshalb wird er dort gedeckelt. Wenn das nicht gewollt ist, überprüfe die −/+ Auswahl noch einmal."
             },
             "formula": {
                 "title": "Formel",
                 "examPoints": "Prüfungspunkte",
                 "examGrade": "Prüfungsnote",
-                "bonusSourceStudentPoints": "Bonusquelle Studentenpunkte",
+                "bonusSourceStudentPoints": "Studierenden-Punkte der Bonusquelle",
                 "bonusGrade": "Bonus",
-                "finalPoints": "Letzte<br/>Punkte",
+                "finalPoints": "Finale<br/>Punktzahl",
                 "finalGrade": "Endnote",
                 "finalGradeLimit": "(Du kannst keine bessere Endnote als {{maxPossibleGrade}} bekommen)",
-                "finalGradeFromPoints": "Die finale Punktzahl bestimmen die Endnote, indem sie mit dem normalen Notenschlüssel umgerechnet werden."
+                "finalGradeFromPoints": "Die finale Punktzahl bestimmt die Endnote, indem sie mit dem normalen Notenschlüssel umgerechnet wird."
             },
             "title": "Bonus",
             "deleteQuestion": "Willst du den Bonus wirklich löschen?",

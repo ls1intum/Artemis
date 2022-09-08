@@ -3,7 +3,7 @@
         "bonus": {
             "bonusStrategy": {
                 "title": "Select a Bonus Strategy",
-                "helpText": "GRADES: First, calculates target exam grade. Then, applies bonus to that.<br>POINTS: First, applies bonus to the student's points. Then, calculates the final grade by matching the resulting points to the target exam's grading key.",
+                "helpText": "GRADES: First, calculates the target exam grade. Then, applies the bonus to that.<br>POINTS: First, applies the bonus to the student's points. Then, calculates the final grade by matching the resulting points to the target exam's grading key.",
                 "grades": "GRADES",
                 "points": "POINTS"
             },
