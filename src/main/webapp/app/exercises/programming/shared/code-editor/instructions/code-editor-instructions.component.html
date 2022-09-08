@@ -20,7 +20,8 @@
         </h3>
         <fa-icon *ngIf="!collapsed" class="ms-auto clickable" [icon]="faChevronRight"></fa-icon>
     </div>
-    <ng-content *ngIf="!collapsed"></ng-content>
+    <div style="display: contents" [hidden]="collapsed">
+        <ng-content></ng-content>
+    </div>
     <!-- Required for resizing; don't remove empty span -->
-    <div class="rg-left"><span></span></div>
 </div>
