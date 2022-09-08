@@ -16,9 +16,7 @@
             "launchTarget": "The recommended launch target is 'New Window' for the best user experience",
             "requestUserEmail": "The user's email must be sent as it is required by Artemis to create or find the user",
             "requireExistingUser": "If true, launching the exercise requires an existing user on Artemis. If false, a user can be created on first launch if it does not yet exist",
-            "lookupUserByEmail": "If true, Artemis will try to find an existing user with the provided email",
-            "consumerInstanceName": "This needs to be a name that uniquely identifies your learning management system",
-            "consumerInstanceNamePlaceholder": "Enter the unique name here"
+            "lookupUserByEmail": "If true, Artemis will try to find an existing user with the provided email"
         }
     }
 }
