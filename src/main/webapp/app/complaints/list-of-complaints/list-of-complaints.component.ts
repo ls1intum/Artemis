@@ -136,7 +136,7 @@ export class ListOfComplaintsComponent implements OnInit {
         if (!exercise || !exercise.type || !submissionId) {
             return;
         }
-        this.correctionRound = this.correctionRound ?? 0;
+        this.correctionRound = this.correctionRound || 0;
         if (complaint.accepted === true) {
             this.correctionRound += 1;
         }
