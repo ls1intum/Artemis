@@ -1,3 +1,5 @@
+.. _programming-exercises:
+
 Programming Exercise adjustments
 --------------------------------
 

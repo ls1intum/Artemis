@@ -27,7 +27,9 @@ Multiple instances of the application server are used to distribute the load:
 A load balancer (typically a reverse proxy such as nginx) is added, that distributes the requests to the different instances.
 
 **Note:** This documentation focuses on the practical setup of this distributed setup.
-More details regarding the theoretical aspects can be found in the Bachelor's Thesis `Securing and Scaling Artemis WebSocket Architecture`, which can be found here: :download:`pdf <distributed/thesis_securing_scaling_artemis.pdf>`.
+More details regarding the theoretical aspects can be found in the Bachelor's Thesis
+`Securing and Scaling Artemis WebSocket Architecture`, which can be found here:
+:download:`pdf <setup/distributed/thesis_securing_scaling_artemis.pdf>`.
 
 Additional synchronization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^

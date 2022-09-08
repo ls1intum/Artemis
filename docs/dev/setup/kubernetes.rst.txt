@@ -344,7 +344,7 @@ You can also change ``prod`` to ``dev`` if you want to run in development profil
 
 
 Deploy Kubernetes Resources
-^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Kustomization files declare the resources that will be deployed in one place and with their help we can do
 the deployment with only one command.
 

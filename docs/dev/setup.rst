@@ -39,9 +39,10 @@ following dependencies/tools on your machine:
    but it's necessary for production setups as otherwise errors will show up during runtime. )
 6. ( A **version control** and **build** system is necessary for the **programming exercise** feature of Artemis.
    There are multiple stacks available for the integration with Artemis:
-    * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
-    * GitLab and GitLab CI
-    * `Bamboo, Bitbucket and Jira  <#bamboo-bitbucket-and-jira-setup>`__)
+
+   * `GitLab and Jenkins <#jenkins-and-gitlab-setup>`__
+   * GitLab and GitLab CI
+   * `Bamboo, Bitbucket and Jira <#bamboo-bitbucket-and-jira-setup>`__)
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -508,15 +509,15 @@ instead of the TUM defaults:
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/programming-exercises.rst
+.. include:: setup/programming-exercises.rst.txt
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/bamboo-bitbucket-jira.rst
+.. include:: setup/bamboo-bitbucket-jira.rst.txt
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/jenkins-gitlab.rst
+.. include:: setup/jenkins-gitlab.rst.txt
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -583,12 +584,12 @@ HTTP. We need to extend the configuration in the file
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/common-problems.rst
+.. include:: setup/common-problems.rst.txt
 
 ------------------------------------------------------------------------------------------------------------------------
 
 .. TODO: ask Simon or someone if structure is alright
-.. include:: setup/distributed.rst
+.. include:: setup/distributed.rst.txt
 
 ------------------------------------------------------------------------------------------------------------------------
 
@@ -630,4 +631,4 @@ Other useful commands
 
 ------------------------------------------------------------------------------------------------------------------------
 
-.. include:: setup/kubernetes.rst
+.. include:: setup/kubernetes.rst.txt

@@ -88,7 +88,7 @@ In addition, you have to start Artemis with the profiles ``gitlab`` and
 
    --spring.profiles.active=dev,jenkins,gitlab,artemis,scheduling
 
-Please read :doc:`../setup` for more details.
+Please read :ref:`Server Setup` for more details.
 
 For a local setup on Windows you can use `http://host.docker.internal` appended
 by the chosen ports as the version-control and continuous-integration url.
@@ -1241,7 +1241,7 @@ Caching
 ^^^^^^^
 
 You can configure caching for e.g. Maven repositories.
-See :doc:`programming-exercises` for more details.
+See :ref:`programming-exercises` for more details.
 
 
 Separate NGINX Configurations
