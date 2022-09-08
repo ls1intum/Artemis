@@ -18,6 +18,7 @@ export class EditTutorialGroupComponent implements OnInit {
     tutorialGroup: TutorialGroup;
     formData: TutorialGroupFormData;
     courseId: number;
+    tutorialGroupId: number;
 
     constructor(private activatedRoute: ActivatedRoute, private router: Router, private tutorialGroupService: TutorialGroupsService, private alertService: AlertService) {}
 
@@ -27,9 +28,9 @@ export class EditTutorialGroupComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const tutorialGroupId = Number(params.get('tutorialGroupId'));
+                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupService.getOne(tutorialGroupId);
+                    return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -71,7 +72,7 @@ export class EditTutorialGroupComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.tutorialGroup)
+            .update(this.courseId, this.tutorialGroupId, this.tutorialGroup)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

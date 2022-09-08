@@ -29,7 +29,7 @@ describe('TutorialGroupService', () => {
     it('getOneOfCourse', fakeAsync(() => {
         const returnedFromService = { ...elemDefault };
         service
-            .getOne(1)
+            .getOneOfCourse(1, 1)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: elemDefault }));
 
@@ -56,7 +56,7 @@ describe('TutorialGroupService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .update(expected)
+            .update(1, 1, expected)
             .pipe(take(1))
             .subscribe((resp) => expect(resp).toMatchObject({ body: expected }));
 
@@ -84,7 +84,7 @@ describe('TutorialGroupService', () => {
 
     it('deregisterStudent', fakeAsync(() => {
         service
-            .deregisterStudent(1, 'login')
+            .deregisterStudent(1, 1, 'login')
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
@@ -95,7 +95,7 @@ describe('TutorialGroupService', () => {
 
     it('registerStudent', fakeAsync(() => {
         service
-            .registerStudent(1, 'login')
+            .registerStudent(1, 1, 'login')
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
@@ -106,7 +106,7 @@ describe('TutorialGroupService', () => {
 
     it('delete', fakeAsync(() => {
         service
-            .delete(1)
+            .delete(1, 1)
             .pipe(take(1))
             .subscribe((res) => expect(res.body).toEqual({}));
 
@@ -121,7 +121,7 @@ describe('TutorialGroupService', () => {
         const expected = { ...returnedFromService };
 
         service
-            .registerMultipleStudents(1, [returnedFromService])
+            .registerMultipleStudents(1, 1, [returnedFromService])
             .pipe(
                 take(1),
                 map((resp) => resp.body),

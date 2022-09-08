@@ -25,7 +25,7 @@ export class TutorialGroupRowButtonsComponent {
     public constructor(private tutorialGroupsService: TutorialGroupsService) {}
 
     deleteTutorialGroup = () => {
-        this.tutorialGroupsService.delete(this.tutorialGroup.id!).subscribe({
+        this.tutorialGroupsService.delete(this.courseId, this.tutorialGroup.id!).subscribe({
             next: () => {
                 this.dialogErrorSource.next('');
                 this.tutorialGroupDeleted.emit();

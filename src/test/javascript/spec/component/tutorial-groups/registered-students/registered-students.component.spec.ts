@@ -98,7 +98,7 @@ describe('Registered Students Component', () => {
                 registrationTwo.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
-                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOne').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
             });
     });
 
