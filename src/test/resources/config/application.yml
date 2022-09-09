@@ -68,22 +68,23 @@ spring:
                 physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
-            hibernate.jdbc.time_zone: UTC
             hibernate.id.new_generator_mappings: true
             hibernate.connection.provider_disables_autocommit: true
-            hibernate.cache.use_second_level_cache: true
-            hibernate.cache.use_query_cache: false
             hibernate.generate_statistics: false
-            # modify batch size as necessary
-            hibernate.jdbc.batch_size: 25
             hibernate.order_inserts: true
             hibernate.order_updates: true
 #            hibernate.query.fail_on_pagination_over_collection_fetch: true  # not appropriate in our case: https://vladmihalcea.com/hibernate-query-fail-on-pagination-over-collection-fetch/
             hibernate.query.in_clause_parameter_padding: true
+            hibernate.cache.use_second_level_cache: true
+            hibernate.cache.use_query_cache: false
             hibernate.cache.region.factory_class: com.hazelcast.hibernate.HazelcastLocalCacheRegionFactory
             hibernate.cache.use_minimal_puts: true
             hibernate.cache.hazelcast.instance_name: Artemis
             hibernate.cache.hazelcast.use_lite_member: true
+            # modify batch size as necessary
+            hibernate.jdbc.batch_size: 25
+            hibernate.jdbc.time_zone: UTC
+            hibernate.jdbc.lob.non_contextual_creation: true
     liquibase:
         contexts: tests
         enabled: false

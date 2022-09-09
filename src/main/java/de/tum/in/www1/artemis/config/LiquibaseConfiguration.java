@@ -12,9 +12,11 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
@@ -33,6 +35,12 @@ public class LiquibaseConfiguration {
 
     private final BuildProperties buildProperties;
 
+    private DataSource dataSource;
+
+    private String currentVersionString;
+
+    private String previousVersionString;
+
     public LiquibaseConfiguration(Environment env, BuildProperties buildProperties) {
         this.env = env;
         this.buildProperties = buildProperties;
@@ -43,18 +51,19 @@ public class LiquibaseConfiguration {
      *
      * @param liquibaseDataSource the liquibase sql data source
      * @param liquibaseProperties the liquibase properties
-     * @param dataSource the sql data source
+     * @param dataSourceObjectProvider the sql data source
      * @param dataSourceProperties data source properties
      * @return the configured spring liquibase object
      */
     @Bean
     public SpringLiquibase liquibase(@LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource, LiquibaseProperties liquibaseProperties,
-            ObjectProvider<DataSource> dataSource, DataSourceProperties dataSourceProperties) {
+            ObjectProvider<DataSource> dataSourceObjectProvider, DataSourceProperties dataSourceProperties) {
 
-        checkMigrationPath(dataSource.getIfUnique());
+        this.dataSource = dataSourceObjectProvider.getIfUnique();
+        this.currentVersionString = buildProperties.getVersion();
+        checkMigrationPath();
 
-        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource.getIfUnique(),
-                dataSourceProperties);
+        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
@@ -80,12 +89,10 @@ public class LiquibaseConfiguration {
 
     String migrationPathVersion5_10_3_String = "5.10.3";
 
-    String initialCheckSum5_10_3_String = "8:ebe0513b909c8b3f341dfa8a1278600e";
+    String initialCheckSum5_10_3_String = "8:6a1e4d1338f16062a79c7ef6e2cfdae9";
 
-    private void checkMigrationPath(DataSource dataSource) {
-
-        var currentVersion = new Semver(buildProperties.getVersion());
-
+    private void checkMigrationPath() {
+        var currentVersion = new Semver(currentVersionString);
         var migrationPathVersion = new Semver(migrationPathVersion5_10_3_String);
         var version600 = new Semver("6.0.0");
         var version700 = new Semver("7.0.0");
@@ -93,7 +100,7 @@ public class LiquibaseConfiguration {
             log.info("Migration path check: Not necessary");
         }
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
-            var previousVersionString = getPreviousVersionElseThrow(dataSource);
+            previousVersionString = getPreviousVersionElseThrow();
             if (previousVersionString == null) {
                 // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
                 return;
@@ -103,13 +110,13 @@ public class LiquibaseConfiguration {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_10_3_String);
             }
             else if (previousVersion.isEqualTo(migrationPathVersion)) {
-                updateInitialChecksum(dataSource, initialCheckSum5_10_3_String);
+                updateInitialChecksum(initialCheckSum5_10_3_String);
             }
         }
 
     }
 
-    private String getPreviousVersionElseThrow(DataSource dataSource) {
+    private String getPreviousVersionElseThrow() {
         Statement statement;
         try {
             var connection = dataSource.getConnection();
@@ -123,7 +130,7 @@ public class LiquibaseConfiguration {
                 + " first, otherwise the migration will fail";
         ResultSet result;
         try {
-            result = statement.executeQuery("SELECT * FROM DATABASECHANGELOG");
+            statement.executeQuery("SELECT * FROM DATABASECHANGELOG");
             result = statement.executeQuery("SELECT latest_version FROM artemis_version");
             if (result.next()) {
                 return result.getString("latest_version");
@@ -133,8 +140,7 @@ public class LiquibaseConfiguration {
             throw new RuntimeException(error);
         }
         catch (SQLException e) {
-            // TODO: generalize this
-            if (e.getMessage().contains("Table 'artemis_new.databasechangelog' doesn't exist") || e.getMessage().contains("ERROR: relation \"databasechangelog\" does not exist")) {
+            if (e.getMessage().contains("databasechangelog") && (e.getMessage().contains("does not exist") || (e.getMessage().contains("doesn't exist")))) {
                 return null;
             }
             log.error(error);
@@ -142,7 +148,7 @@ public class LiquibaseConfiguration {
         }
     }
 
-    private void updateInitialChecksum(DataSource dataSource, String newCheckSum) {
+    private void updateInitialChecksum(String newCheckSum) {
         Statement statement;
         try {
             var connection = dataSource.getConnection();
@@ -158,13 +164,31 @@ public class LiquibaseConfiguration {
                             `DEPLOYMENT_ID` = NULL,
                             `FILENAME` = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
                         WHERE
-                            `ID` = '00000000000001'
-                        LIMIT 1;
+                            `ID` = '00000000000001';
                     """.formatted(newCheckSum));
         }
         catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
 
+    @EventListener(ApplicationReadyEvent.class)
+    public void storeCurrentVersionToDatabase() {
+        Statement statement;
+        try {
+            var connection = dataSource.getConnection();
+            statement = connection.createStatement();
+            if (previousVersionString == null) {
+                log.info("Insert latest version " + currentVersionString + " into database");
+                statement.execute("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "')");
+            }
+            else {
+                log.info("Update latest version to " + currentVersionString + " in database");
+                statement.execute("UPDATE artemis_version SET latest_version = '" + currentVersionString + "'");
+            }
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

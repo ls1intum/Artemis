@@ -4,5 +4,8 @@
         <sql>
             DELETE FROM DATABASECHANGELOG WHERE ID not like '00000000000001'
         </sql>
+        <sql>
+            DELETE FROM migration_changelog
+        </sql>
     </changeSet>
 </databaseChangeLog>
