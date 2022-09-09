@@ -80,7 +80,7 @@ public class LiquibaseConfiguration {
 
     String migrationPathVersion5_10_3_String = "5.10.3";
 
-    String initialCheckSum5_10_3_String = "";
+    String initialCheckSum5_10_3_String = "8:ebe0513b909c8b3f341dfa8a1278600e";
 
     private void checkMigrationPath(DataSource dataSource) {
 
@@ -133,7 +133,8 @@ public class LiquibaseConfiguration {
             throw new RuntimeException(error);
         }
         catch (SQLException e) {
-            if (e.getMessage().contains("Table 'artemis_new.databasechangelog' doesn't exist")) {
+            // TODO: generalize this
+            if (e.getMessage().contains("Table 'artemis_new.databasechangelog' doesn't exist") || e.getMessage().contains("ERROR: relation \"databasechangelog\" does not exist")) {
                 return null;
             }
             log.error(error);

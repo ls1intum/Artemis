@@ -5,13 +5,13 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="is_correct" type="BIT(1)"/>
+            <column name="is_correct" type="boolean"/>
             <column name="text" type="VARCHAR(255)"/>
             <column name="question_id" type="BIGINT"/>
             <column name="explanation" type="VARCHAR(500)"/>
             <column name="hint" type="VARCHAR(255)"/>
             <column name="answer_options_order" type="INT"/>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
         </createTable>
         <createTable tableName="answer_post">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -22,7 +22,7 @@
             <column name="author_id" type="BIGINT"/>
             <column name="post_id" type="BIGINT"/>
             <column name="tokenized_content" type="VARCHAR(1000)"/>
-            <column defaultValueBoolean="false" name="resolves_post" type="BIT(1)">
+            <column defaultValueBoolean="false" name="resolves_post" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -67,7 +67,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="accepted" type="BIT(1)"/>
+            <column name="accepted" type="boolean"/>
             <column name="complaint_text" type="TEXT"/>
             <column name="result_before_complaint" type="LONGTEXT"/>
             <column name="submitted_time" type="datetime"/>
@@ -100,7 +100,7 @@
             <column name="teaching_assistant_group_name" type="VARCHAR(255)"/>
             <column name="end_date" type="datetime"/>
             <column name="instructor_group_name" type="VARCHAR(255)"/>
-            <column name="online_course" type="BIT(1)"/>
+            <column name="online_course" type="boolean"/>
             <column name="start_date" type="datetime"/>
             <column name="short_name" type="VARCHAR(255)">
                 <constraints unique="true"/>
@@ -112,15 +112,15 @@
             <column name="description" type="LONGTEXT"/>
             <column name="color" type="VARCHAR(255)"/>
             <column name="course_icon" type="VARCHAR(255)"/>
-            <column name="registration_enabled" type="BIT(1)"/>
+            <column name="registration_enabled" type="boolean"/>
             <column name="presentation_score" type="TINYINT(3)"/>
             <column defaultValueNumeric="7" name="max_complaint_time_days" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column name="posts_enabled" type="BIT(1)"/>
+            <column name="posts_enabled" type="boolean"/>
             <column name="registration_confirmation_message" type="VARCHAR(2000)"/>
             <column name="semester" type="VARCHAR(25)"/>
-            <column defaultValueBoolean="false" name="test_course" type="BIT(1)">
+            <column defaultValueBoolean="false" name="test_course" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="language" type="VARCHAR(25)"/>
@@ -178,7 +178,7 @@
             <column name="question_id" type="BIGINT"/>
             <column name="submitted_answer_id" type="BIGINT"/>
             <column name="correct_mappings_order" type="INT"/>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
         </createTable>
         <createTable tableName="drag_item">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -188,7 +188,7 @@
             <column name="text" type="VARCHAR(255)"/>
             <column name="question_id" type="BIGINT"/>
             <column name="drag_items_order" type="INT"/>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
         </createTable>
         <createTable tableName="drop_location">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -200,7 +200,7 @@
             <column name="width" type="DOUBLE"/>
             <column name="question_id" type="BIGINT"/>
             <column name="drop_locations_order" type="INT"/>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
         </createTable>
         <createTable tableName="exam">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -212,7 +212,7 @@
             <column name="end_text" type="LONGTEXT"/>
             <column name="max_points" type="INT"/>
             <column name="number_of_exercises_in_exam" type="INT"/>
-            <column name="randomize_exercise_order" type="BIT(1)"/>
+            <column name="randomize_exercise_order" type="boolean"/>
             <column name="start_date" type="datetime"/>
             <column name="start_text" type="LONGTEXT"/>
             <column name="title" type="VARCHAR(255)">
@@ -229,11 +229,11 @@
             <column name="course_name" type="VARCHAR(255)"/>
             <column defaultValueNumeric="1" name="number_of_correction_rounds" type="INT"/>
             <column name="exam_archive_path" type="VARCHAR(255)"/>
-            <column defaultValueBoolean="false" name="test_exam" type="BIT(1)"/>
+            <column defaultValueBoolean="false" name="test_exam" type="boolean"/>
             <column name="working_time" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="monitoring" type="BIT(1)"/>
+            <column defaultValueBoolean="false" name="monitoring" type="boolean"/>
         </createTable>
         <createTable tableName="exam_session">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -262,7 +262,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="used_for_tutorial" type="BIT(1)"/>
+            <column name="used_for_tutorial" type="boolean"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="submission_id" type="BIGINT"/>
             <column name="assessment_explanation" type="VARCHAR(2000)"/>
@@ -275,16 +275,16 @@
             <column name="release_date" type="timestamp"/>
             <column name="due_date" type="timestamp"/>
             <column name="course_id" type="BIGINT"/>
-            <column name="publish_build_plan_url" type="BIT(1)"/>
+            <column name="publish_build_plan_url" type="boolean"/>
             <column name="discriminator" type="VARCHAR(31)">
                 <constraints nullable="false"/>
             </column>
             <column name="duration" type="INT"/>
-            <column name="is_open_for_practice" type="BIT(1)"/>
-            <column name="is_planned_to_start" type="BIT(1)"/>
-            <column name="is_visible_before_start" type="BIT(1)"/>
+            <column name="is_open_for_practice" type="boolean"/>
+            <column name="is_planned_to_start" type="boolean"/>
+            <column name="is_visible_before_start" type="boolean"/>
             <column name="allowed_number_of_attempts" type="INT"/>
-            <column name="randomize_question_order" type="BIT(1)"/>
+            <column name="randomize_question_order" type="boolean"/>
             <column name="quiz_point_statistic_id" type="BIGINT"/>
             <column name="max_points" type="DOUBLE"/>
             <column name="diagram_type" type="VARCHAR(255)"/>
@@ -305,9 +305,9 @@
             <column name="assessment_due_date" type="datetime"/>
             <column name="solution_participation_id" type="BIGINT"/>
             <column name="template_participation_id" type="BIGINT"/>
-            <column name="sequential_test_runs" type="BIT(1)"/>
+            <column name="sequential_test_runs" type="boolean"/>
             <column name="assessment_type" type="VARCHAR(25)"/>
-            <column name="presentation_score_enabled" type="BIT(1)"/>
+            <column name="presentation_score_enabled" type="boolean"/>
             <column name="team_assignment_config_id" type="BIGINT"/>
             <column name="exercise_group_id" type="BIGINT"/>
             <column name="bonus_points" type="DOUBLE">
@@ -316,10 +316,10 @@
             <column defaultValue="INCLUDED_COMPLETELY" name="included_in_overall_score" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="second_correction_enabled" type="BIT(1)">
+            <column defaultValueBoolean="false" name="second_correction_enabled" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="allow_complaints_for_automatic_assessments" type="BIT(1)"/>
+            <column defaultValueBoolean="false" name="allow_complaints_for_automatic_assessments" type="boolean"/>
             <column name="submission_policy_id" type="BIGINT"/>
             <column name="example_solution_publication_date" type="datetime"/>
             <column defaultValue="SYNCHRONIZED" name="quiz_mode" type="VARCHAR(63)">
@@ -337,7 +337,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="is_mandatory" type="BIT(1)">
+            <column name="is_mandatory" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="title" type="VARCHAR(255)"/>
@@ -383,7 +383,7 @@
             <column name="text" type="VARCHAR(500)"/>
             <column name="result_id" type="BIGINT"/>
             <column name="type" type="VARCHAR(255)"/>
-            <column name="positive" type="BIT(1)"/>
+            <column name="positive" type="boolean"/>
             <column name="feedbacks_order" type="INT"/>
             <column name="credits" type="DOUBLE"/>
             <column name="reference" type="VARCHAR(255)"/>
@@ -394,7 +394,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="conflict" type="BIT(1)">
+            <column name="conflict" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="created_at" type="timestamp"/>
@@ -408,7 +408,7 @@
             <column name="second_feedback_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="discard" type="BIT(1)"/>
+            <column defaultValueBoolean="false" name="discard" type="boolean"/>
         </createTable>
         <createTable tableName="grade_step">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -420,16 +420,16 @@
             <column name="upper_bound_percentage" type="DOUBLE">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="true" name="lower_bound_inclusive" type="BIT(1)">
+            <column defaultValueBoolean="true" name="lower_bound_inclusive" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="upper_bound_inclusive" type="BIT(1)">
+            <column defaultValueBoolean="false" name="upper_bound_inclusive" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="grade_name" type="VARCHAR(100)">
                 <constraints nullable="false"/>
             </column>
-            <column name="is_passing_grade" type="BIT(1)">
+            <column name="is_passing_grade" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="grading_scale_id" type="BIGINT"/>
@@ -508,7 +508,7 @@
             <column name="first_name" type="VARCHAR(50)"/>
             <column name="last_name" type="VARCHAR(50)"/>
             <column name="email" type="VARCHAR(100)"/>
-            <column name="activated" type="BIT(1)">
+            <column name="activated" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="lang_key" type="VARCHAR(5)"/>
@@ -525,7 +525,7 @@
                 <constraints unique="true"/>
             </column>
             <column name="hide_notifications_until" type="timestamp"/>
-            <column defaultValueBoolean="true" name="is_internal" type="BIT(1)">
+            <column defaultValueBoolean="true" name="is_internal" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="vcs_access_token" type="VARCHAR(50)"/>
@@ -710,7 +710,7 @@
             <column defaultValue="MEDIUM" name="priority" type="VARCHAR(15)">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="outdated" type="BIT(1)">
+            <column defaultValueBoolean="false" name="outdated" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -721,10 +721,10 @@
             <column name="setting_id" type="VARCHAR(255)">
                 <constraints nullable="false"/>
             </column>
-            <column name="webapp" type="BIT(1)">
+            <column name="webapp" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column name="email" type="BIT(1)">
+            <column name="email" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="user_id" type="BIGINT">
@@ -780,7 +780,7 @@
             <column name="discriminator" type="VARCHAR(31)">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="test_run" type="BIT(1)"/>
+            <column defaultValueBoolean="false" name="test_run" type="boolean"/>
             <column name="individual_due_date" type="datetime"/>
             <column name="branch" type="VARCHAR(16)"/>
         </createTable>
@@ -878,7 +878,7 @@
             </column>
             <column name="creation_date" type="datetime"/>
             <column name="content" type="VARCHAR(1000)"/>
-            <column name="visible_for_students" type="BIT(1)"/>
+            <column name="visible_for_students" type="boolean"/>
             <column name="author_id" type="BIGINT"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="lecture_id" type="BIGINT"/>
@@ -915,15 +915,15 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="build_and_test_student_submissions_after_due_date" type="datetime"/>
-            <column name="test_cases_changed" type="BIT(1)"/>
+            <column name="test_cases_changed" type="boolean"/>
             <column name="project_key" type="VARCHAR(255)"/>
-            <column name="allow_online_editor" type="BIT(1)"/>
-            <column defaultValueBoolean="true" name="allow_offline_ide" type="BIT(1)"/>
-            <column defaultValueBoolean="false" name="static_code_analysis_enabled" type="BIT(1)"/>
+            <column name="allow_online_editor" type="boolean"/>
+            <column defaultValueBoolean="true" name="allow_offline_ide" type="boolean"/>
+            <column defaultValueBoolean="false" name="static_code_analysis_enabled" type="boolean"/>
             <column name="max_static_code_analysis_penalty" type="INT"/>
             <column name="project_type" type="VARCHAR(45)"/>
-            <column defaultValueBoolean="false" name="show_test_names_to_students" type="BIT(1)"/>
-            <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="BIT(1)">
+            <column defaultValueBoolean="false" name="show_test_names_to_students" type="boolean"/>
+            <column defaultValueBoolean="false" name="testwise_coverage_enabled" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="branch" type="VARCHAR(16)"/>
@@ -989,7 +989,7 @@
                 <constraints nullable="false"/>
             </column>
             <column defaultValueNumeric="1.0" name="weight" type="DOUBLE"/>
-            <column name="active" type="BIT(1)">
+            <column name="active" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="exercise_id" type="BIGINT"/>
@@ -1023,20 +1023,20 @@
             <column name="background_file_path" type="VARCHAR(255)"/>
             <column name="explanation" type="VARCHAR(500)"/>
             <column name="hint" type="VARCHAR(255)"/>
-            <column name="randomize_order" type="BIT(1)"/>
+            <column name="randomize_order" type="boolean"/>
             <column name="points" type="INT"/>
             <column name="scoring_type" type="VARCHAR(255)"/>
             <column name="exercise_id" type="BIGINT"/>
             <column name="quiz_questions_order" type="BIGINT"/>
             <column name="quiz_question_statistic_id" type="BIGINT"/>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
             <column defaultValueNumeric="85" name="similarity_value" type="INT">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="match_letter_case" type="BIT(1)">
+            <column defaultValueBoolean="false" name="match_letter_case" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="single_choice" type="BIT(1)">
+            <column defaultValueBoolean="false" name="single_choice" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -1085,16 +1085,16 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="completion_date" type="datetime"/>
-            <column name="jhi_successful" type="BIT(1)"/>
+            <column name="jhi_successful" type="boolean"/>
             <column name="participation_id" type="BIGINT"/>
             <column name="score" type="DOUBLE"/>
             <column name="submission_id" type="BIGINT"/>
-            <column name="rated" type="BIT(1)"/>
-            <column name="has_feedback" type="BIT(1)"/>
+            <column name="rated" type="boolean"/>
+            <column name="has_feedback" type="boolean"/>
             <column name="assessment_type" type="VARCHAR(255)"/>
             <column name="assessor_id" type="BIGINT"/>
-            <column name="example_result" type="BIT(1)"/>
-            <column name="has_complaint" type="BIT(1)"/>
+            <column name="example_result" type="boolean"/>
+            <column name="has_complaint" type="boolean"/>
             <column defaultValueNumeric="0" name="results_order" type="INT"/>
             <column defaultValueNumeric="0" name="test_case_count" type="TINYINT(3) UNSIGNED"/>
             <column defaultValueNumeric="0" name="passed_test_case_count" type="TINYINT(3) UNSIGNED"/>
@@ -1113,7 +1113,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
             <column name="short_answer_solution_index" type="INT"/>
             <column name="short_answer_spot_index" type="INT"/>
             <column name="question_id" type="BIGINT"/>
@@ -1125,7 +1125,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
             <column name="text" type="VARCHAR(255)"/>
             <column name="question_id" type="BIGINT"/>
             <column name="solutions_order" type="INT"/>
@@ -1134,7 +1134,7 @@
             <column autoIncrement="true" name="id" type="BIGINT">
                 <constraints nullable="false" primaryKey="true"/>
             </column>
-            <column name="invalid" type="BIT(1)"/>
+            <column name="invalid" type="boolean"/>
             <column name="width" type="INT"/>
             <column name="question_id" type="BIGINT"/>
             <column name="spots_order" type="INT"/>
@@ -1147,7 +1147,7 @@
             <column name="text" type="VARCHAR(255)"/>
             <column name="spot_id" type="BIGINT"/>
             <column name="submitted_answer_id" type="BIGINT"/>
-            <column name="is_correct" type="BIT(1)"/>
+            <column name="is_correct" type="boolean"/>
         </createTable>
         <createTable tableName="static_code_analysis_category">
             <column autoIncrement="true" name="id" type="BIGINT">
@@ -1172,9 +1172,9 @@
             <column name="exam_id" type="BIGINT"/>
             <column name="user_id" type="BIGINT"/>
             <column name="working_time" type="INT"/>
-            <column name="submitted" type="BIT(1)"/>
-            <column defaultValueBoolean="false" name="started" type="BIT(1)"/>
-            <column defaultValueBoolean="false" name="test_run" type="BIT(1)"/>
+            <column name="submitted" type="boolean"/>
+            <column defaultValueBoolean="false" name="started" type="boolean"/>
+            <column defaultValueBoolean="false" name="test_run" type="boolean"/>
             <column name="created_by" type="VARCHAR(45)"/>
             <column name="last_modified_by" type="VARCHAR(45)"/>
             <column name="last_modified_date" type="timestamp"/>
@@ -1201,7 +1201,7 @@
                 <constraints nullable="false" primaryKey="true"/>
             </column>
             <column name="jhi_type" type="VARCHAR(255)"/>
-            <column name="submitted" type="BIT(1)"/>
+            <column name="submitted" type="boolean"/>
             <column name="score_in_points" type="DOUBLE"/>
             <column name="commit_hash" type="VARCHAR(60)"/>
             <column name="participation_id" type="BIGINT"/>
@@ -1209,13 +1209,13 @@
             <column name="file_path" type="VARCHAR(255)"/>
             <column name="text" type="LONGTEXT"/>
             <column name="explanation_text" type="LONGTEXT"/>
-            <column name="example_submission" type="BIT(1)"/>
+            <column name="example_submission" type="boolean"/>
             <column name="model" type="LONGTEXT"/>
             <column name="language" type="VARCHAR(10)"/>
-            <column defaultValueBoolean="false" name="build_failed" type="BIT(1)">
+            <column defaultValueBoolean="false" name="build_failed" type="boolean">
                 <constraints nullable="false"/>
             </column>
-            <column defaultValueBoolean="false" name="build_artifact" type="BIT(1)">
+            <column defaultValueBoolean="false" name="build_artifact" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="quiz_batch" type="BIGINT"/>
@@ -1228,7 +1228,7 @@
                 <constraints nullable="false"/>
             </column>
             <column name="submission_limit" type="INT"/>
-            <column defaultValueBoolean="true" name="active" type="BIT(1)">
+            <column defaultValueBoolean="true" name="active" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="exceeding_penalty" type="DOUBLE"/>
@@ -1360,7 +1360,7 @@
             <column name="probabilities" type="LONGBLOB"/>
             <column name="distance_matrix" type="LONGBLOB"/>
             <column name="exercise_id" type="BIGINT"/>
-            <column defaultValueBoolean="false" name="disabled" type="BIT(1)">
+            <column defaultValueBoolean="false" name="disabled" type="boolean">
                 <constraints nullable="false"/>
             </column>
         </createTable>
@@ -1422,8 +1422,8 @@
                 <constraints nullable="false"/>
             </column>
         </createTable>
-        <addPrimaryKey columnNames="organization_id, course_id" constraintName="PRIMARY" tableName="course_organization"/>
-        <addPrimaryKey columnNames="organization_id, user_id" constraintName="PRIMARY" tableName="user_organization"/>
+        <addPrimaryKey columnNames="organization_id, course_id" constraintName="fk_organization_course" tableName="course_organization"/>
+        <addPrimaryKey columnNames="organization_id, user_id" constraintName="fk_organization_user" tableName="user_organization"/>
         <createIndex indexName="FK11jgyics37wyibhhpp866exa8" tableName="quiz_statistic_counter">
             <column name="drag_and_drop_question_statistic_id"/>
         </createIndex>
@@ -2029,10 +2029,10 @@
             <column name="quiz_id"/>
             <column name="password"/>
         </createIndex>
-        <createIndex indexName="reference" tableName="model_cluster">
+        <createIndex indexName="model_cluster_reference" tableName="model_cluster">
             <column name="model_element_type"/>
         </createIndex>
-        <createIndex indexName="reference" tableName="model_element">
+        <createIndex indexName="model_element_reference" tableName="model_element">
             <column name="model_element_type"/>
         </createIndex>
         <createIndex indexName="repository_url" tableName="participation">
