@@ -78,12 +78,12 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                         .getId();
     }
 
-    private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String location,
+    private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus,
             Language language, User teachingAssistant, Set<User> registeredStudents) {
         var course = courseRepository.findByIdElseThrow(courseId);
 
         var tutorialGroup = tutorialGroupRepository
-                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, location, language, teachingAssistant, new HashSet<>()));
+                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language, teachingAssistant, new HashSet<>()));
 
         var registrations = new HashSet<TutorialGroupRegistration>();
         for (var student : registeredStudents) {

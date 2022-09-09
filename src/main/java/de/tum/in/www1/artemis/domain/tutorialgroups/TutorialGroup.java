@@ -46,11 +46,6 @@ public class TutorialGroup extends DomainObject {
     @NotNull
     private Boolean isOnline = false;
 
-    @Column(name = "location")
-    @Size(max = 2000)
-    @Lob
-    private String location;
-
     @Column(name = "campus")
     @Size(min = 1, max = 256)
     private String campus;
@@ -71,14 +66,14 @@ public class TutorialGroup extends DomainObject {
         // Empty constructor needed for Jackson.
     }
 
-    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String location, Language language, User teachingAssistant,
+    public TutorialGroup(Course course, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language, User teachingAssistant,
             Set<TutorialGroupRegistration> registrations) {
         this.course = course;
         this.title = title;
         this.additionalInformation = additionalInformation;
         this.capacity = capacity;
         this.isOnline = isOnline;
-        this.location = location;
+        this.campus = campus;
         this.language = language;
         this.teachingAssistant = teachingAssistant;
         this.registrations = registrations;
@@ -122,14 +117,6 @@ public class TutorialGroup extends DomainObject {
 
     public void setOnline(Boolean online) {
         isOnline = online;
-    }
-
-    public String getLocation() {
-        return location;
-    }
-
-    public void setLocation(String location) {
-        this.location = location;
     }
 
     public Language getLanguage() {

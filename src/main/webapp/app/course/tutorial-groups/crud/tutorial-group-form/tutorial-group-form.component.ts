@@ -17,7 +17,6 @@ export interface TutorialGroupFormData {
     additionalInformation?: string;
     capacity?: number;
     isOnline?: boolean;
-    location?: string;
     language?: Language;
     campus?: string;
 }
@@ -40,7 +39,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         additionalInformation: undefined,
         capacity: undefined,
         isOnline: undefined,
-        location: undefined,
         language: undefined,
         campus: undefined,
     };
@@ -96,10 +94,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     get isOnlineControl() {
         return this.form.get('isOnline');
-    }
-
-    get locationControl() {
-        return this.form.get('location');
     }
 
     get languageControl() {
@@ -165,7 +159,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             teachingAssistant: [undefined, [Validators.required]],
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false],
-            location: [undefined, [Validators.maxLength(2000)]],
             language: [this.GERMAN],
             campus: [undefined, Validators.maxLength(255)],
         });

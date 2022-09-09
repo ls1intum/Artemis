@@ -32,7 +32,7 @@ export class CreateTutorialGroupComponent implements OnInit {
             return;
         }
 
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, campus } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus } = formData;
 
         this.tutorialGroupToCreate.title = title;
         this.tutorialGroupToCreate.teachingAssistant = teachingAssistant;
@@ -40,7 +40,6 @@ export class CreateTutorialGroupComponent implements OnInit {
         this.tutorialGroupToCreate.capacity = capacity;
         this.tutorialGroupToCreate.isOnline = isOnline;
         this.tutorialGroupToCreate.language = language;
-        this.tutorialGroupToCreate.location = location;
         this.tutorialGroupToCreate.campus = campus;
 
         this.isLoading = true;

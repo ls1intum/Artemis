@@ -79,27 +79,6 @@
                     </div>
                 </div>
             </div>
-            <!-- Location -->
-            <div class="form-group">
-                <label *ngIf="isOnlineControl!.value" for="location">{{ 'artemisApp.tutorialGroupForm.locationInput.labelOnline' | artemisTranslate }}</label>
-                <label *ngIf="!isOnlineControl!.value" for="location">{{ 'artemisApp.tutorialGroupForm.locationInput.labelOffline' | artemisTranslate }}</label>
-                <textarea
-                    class="form-control"
-                    id="location"
-                    rows="1"
-                    formControlName="location"
-                    [placeholder]="
-                        (isOnlineControl!.value ? 'artemisApp.tutorialGroupForm.locationInput.placeholderOnline' : 'artemisApp.tutorialGroupForm.locationInput.placeholderOffline')
-                            | artemisTranslate
-                    "
-                ></textarea>
-                <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="locationControl?.errors?.maxlength">
-                        {{ 'artemisApp.tutorialGroupForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
-                    </div>
-                </div>
-            </div>
-
             <!-- Capacity -->
             <div class="row">
                 <div class="col-auto">

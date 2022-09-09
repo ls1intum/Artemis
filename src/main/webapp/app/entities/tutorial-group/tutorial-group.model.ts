@@ -7,7 +7,6 @@ export class TutorialGroup implements BaseEntity {
     public title?: string;
     public course?: Course;
     public capacity?: number;
-    public location?: string;
     public campus?: string;
     public language?: Language;
     public additionalInformation?: string;
