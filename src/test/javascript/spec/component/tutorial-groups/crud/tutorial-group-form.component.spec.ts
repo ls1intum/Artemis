@@ -87,7 +87,6 @@ describe('TutorialGroupFormComponent', () => {
         tutorialGroupFormComponent.isOnlineControl?.setValue(true);
         tutorialGroupFormComponent.teachingAssistantControl!.setValue(exampleTeachingAssistant);
         tutorialGroupFormComponent.languageControl!.setValue('GERMAN');
-        tutorialGroupFormComponent.locationControl!.setValue('example');
         tutorialGroupFormComponent.campusControl!.setValue('Garching');
 
         tutorialGroupFormComponentFixture.detectChanges();
@@ -107,7 +106,6 @@ describe('TutorialGroupFormComponent', () => {
                 capacity: 1,
                 isOnline: true,
                 language: 'GERMAN',
-                location: 'example',
                 campus: 'Garching',
             });
 

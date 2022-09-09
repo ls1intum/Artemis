@@ -75,10 +75,6 @@
                                 <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.isOnline' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
-                            <th jhiSortBy="location">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.location' | artemisTranslate }}</a>
-                                <fa-icon [icon]="faSort"></fa-icon>
-                            </th>
                             <th jhiSortBy="language">
                                 <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.language' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
@@ -105,9 +101,6 @@
                                     (tutorialGroup.isOnline ? 'artemisApp.manageTutorialGroups.columns.online' : 'artemisApp.manageTutorialGroups.columns.offline')
                                         | artemisTranslate
                                 }}
-                            </td>
-                            <td>
-                                <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.location }} </span>
                             </td>
                             <td>
                                 {{

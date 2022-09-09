@@ -365,7 +365,6 @@ public class TutorialGroupResource {
         originalTutorialGroup.setCapacity(sourceTutorialGroup.getCapacity());
         originalTutorialGroup.setOnline(sourceTutorialGroup.getOnline());
         originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
-        originalTutorialGroup.setLocation(sourceTutorialGroup.getLocation());
         originalTutorialGroup.setCampus(sourceTutorialGroup.getCampus());
     }
 

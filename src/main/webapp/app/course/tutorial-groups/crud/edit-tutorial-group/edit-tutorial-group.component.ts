@@ -62,7 +62,6 @@ export class EditTutorialGroupComponent implements OnInit {
                             capacity: this.tutorialGroup.capacity,
                             isOnline: this.tutorialGroup.isOnline,
                             language: this.tutorialGroup.language,
-                            location: this.tutorialGroup.location,
                             campus: this.tutorialGroup.campus,
                         };
                         if (this.tutorialGroup.tutorialGroupSchedule) {
@@ -82,14 +81,13 @@ export class EditTutorialGroupComponent implements OnInit {
     }
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, campus, schedule } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule } = formData;
         this.tutorialGroup.title = title;
         this.tutorialGroup.teachingAssistant = teachingAssistant;
         this.tutorialGroup.additionalInformation = additionalInformation;
         this.tutorialGroup.capacity = capacity;
         this.tutorialGroup.isOnline = isOnline;
         this.tutorialGroup.language = language;
-        this.tutorialGroup.location = location;
         this.tutorialGroup.campus = campus;
 
         if (schedule) {

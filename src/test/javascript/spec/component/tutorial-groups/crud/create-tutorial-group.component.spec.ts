@@ -109,7 +109,6 @@ describe('CreateTutorialGroupComponent', () => {
             expect(tutorialGroupCallArgument.additionalInformation).toEqual(formData.additionalInformation);
             expect(tutorialGroupCallArgument.capacity).toEqual(formData.capacity);
             expect(tutorialGroupCallArgument.isOnline).toEqual(formData.isOnline);
-            expect(tutorialGroupCallArgument.location).toEqual(formData.location);
             expect(tutorialGroupCallArgument.campus).toEqual(formData.campus);
 
             expect(createStub).toHaveBeenCalledOnce();
