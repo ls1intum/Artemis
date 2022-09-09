@@ -125,8 +125,8 @@ public class LiquibaseConfiguration {
         String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_10_3_String
                 + " first, otherwise the migration will fail";
         try (var statement = createStatement()) {
-            statement.executeQuery("SELECT * FROM DATABASECHANGELOG");
-            var result = statement.executeQuery("SELECT latest_version FROM artemis_version");
+            statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");
+            var result = statement.executeQuery("SELECT latest_version FROM artemis_version;");
             statement.closeOnCompletion();
             if (result.next()) {
                 return result.getString("latest_version");
@@ -171,11 +171,11 @@ public class LiquibaseConfiguration {
         try (var statement = createStatement()) {
             if (previousVersionString == null) {
                 log.info("Insert latest version " + currentVersionString + " into database");
-                statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "')");
+                statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "');");
             }
             else {
                 log.info("Update latest version to " + currentVersionString + " in database");
-                statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "'");
+                statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "';");
             }
             statement.getConnection().commit();
             statement.closeOnCompletion();
