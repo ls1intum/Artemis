@@ -31,7 +31,7 @@ plugins {
 }
 
 group = "de.tum.in.www1.artemis"
-version = "5.10.2"
+version = "6.0.0"
 description = "Interactive Learning with Individual Feedback"
 
 sourceCompatibility=17
@@ -189,6 +189,7 @@ dependencies {
     implementation "commons-codec:commons-codec:1.15"   // needed for spring security saml2
 
     implementation "org.springdoc:springdoc-openapi-ui:1.6.11"
+    implementation "com.vdurmont:semver4j:3.1.0"
 
     // import JHipster dependencies BOM
     implementation platform("tech.jhipster:jhipster-dependencies:${jhipster_dependencies_version}")
