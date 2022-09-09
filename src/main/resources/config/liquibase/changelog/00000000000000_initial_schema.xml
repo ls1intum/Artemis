@@ -2270,5 +2270,9 @@
         <addForeignKeyConstraint baseColumnNames="assessed_exercise_id" baseTableName="tutor_participation" constraintName="fk_tutor_participation_exercise_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="exercise" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="tutor_id" baseTableName="tutor_participation" constraintName="fk_tutor_participation_student_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
         <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="jhi_user_authority" constraintName="fk_user_id" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="jhi_user" validate="true"/>
+        <loadData encoding="UTF-8"
+                  file="config/liquibase/authorities.csv"
+                  separator=";"
+                  tableName="jhi_authority"/>
     </changeSet>
 </databaseChangeLog>
