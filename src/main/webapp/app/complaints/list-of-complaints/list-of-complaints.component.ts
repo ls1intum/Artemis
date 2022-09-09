@@ -136,10 +136,8 @@ export class ListOfComplaintsComponent implements OnInit {
         if (!exercise || !exercise.type || !submissionId) {
             return;
         }
-        if (!this.correctionRound) {
-            this.correctionRound = 0;
-        }
-        if (complaint.accepted != undefined) {
+        this.correctionRound = this.correctionRound || 0;
+        if (complaint.accepted) {
             this.correctionRound += 1;
         }
         const url = getLinkToSubmissionAssessment(
