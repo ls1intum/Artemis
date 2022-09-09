@@ -5,6 +5,7 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial
 import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { CancellationModalComponent } from 'app/course/tutorial-groups/session-management/cancellation-modal/cancellation-modal.component';
+import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons-component',
@@ -31,8 +32,13 @@ export class TutorialGroupSessionRowButtonsComponent {
     constructor(private tutorialGroupSessionService: TutorialGroupSessionService, private modalService: NgbModal) {}
 
     deleteTutorialGroupSession = () => {
-        // ToDo: implement
-        return null;
+        this.tutorialGroupSessionService.delete(this.courseId, this.tutorialGroupId, this.tutorialGroupSession.id!).subscribe({
+            next: () => {
+                this.dialogErrorSource.next('');
+                this.tutorialGroupSessionDeleted.emit();
+            },
+            error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
     };
 
     openCancellationModal(session: TutorialGroupSession): void {

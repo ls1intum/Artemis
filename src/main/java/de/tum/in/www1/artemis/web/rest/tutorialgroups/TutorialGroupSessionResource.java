@@ -127,6 +127,26 @@ public class TutorialGroupSessionResource {
     }
 
     /**
+     * DELETE /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : delete a tutorial group session
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId the id of the tutorial group to which the session belongs to
+     * @param sessionId       the id of the session to delete
+     * @return the ResponseEntity with status 204 (NO_CONTENT)
+     */
+    @DeleteMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<Void> deregisterStudent(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) {
+        log.debug("REST request to delete session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
+        var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkEntityIdMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionFromDatabase.getTutorialGroup().getCourse(), null);
+        tutorialGroupSessionRepository.deleteById(sessionId);
+        return ResponseEntity.noContent().build();
+    }
+
+    /**
      * POST /tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group.
      *
      * @param tutorialGroupSession the tutorial group that should be created

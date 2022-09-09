@@ -17,9 +17,10 @@
     <!-- Delete -->
     <button
         jhiDeleteButton
-        [entityTitle]="''"
-        deleteQuestion="artemisApp.manageTutorialGroups.deleteButton.question"
-        deleteConfirmationText="artemisApp.manageTutorialGroups.deleteButton.typeNameToConfirm"
+        entityTitle="{{ tutorialGroupSession!.start! | artemisDate: 'short-date' }}  {{ tutorialGroupSession!.start! | artemisDate: 'time' }} - {{
+            tutorialGroupSession!.end! | artemisDate: 'time'
+        }}"
+        deleteQuestion="artemisApp.deleteSession.question"
         (delete)="deleteTutorialGroupSession()"
         [dialogError]="dialogError$"
     >

@@ -13,6 +13,9 @@
         "editSession": {
             "title": "Edit Individual Session"
         },
+        "deleteSession": {
+            "question": "Are you sure that you want to delete the tutorial group session: {{ title }}?"
+        },
         "cancelSession": {
             "title": "Cancel Session",
             "question": "Do you really want to cancel the session {{label}}?",
