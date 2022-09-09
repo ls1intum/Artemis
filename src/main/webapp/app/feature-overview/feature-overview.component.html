@@ -1,121 +1,61 @@
-<body>
-    <div class="wrapper">
-        <div class="header">
-            <h1>{{ 'featureOverview.title' | artemisTranslate }}</h1>
+<div class="wrapper">
+    <div class="header">
+        <h1>{{ 'featureOverview.title' | artemisTranslate }}</h1>
+    </div>
+    <div class="content mx-auto">
+        <div class="features-overview">
+            <h2>{{ 'featureOverview.' + targetAudience + '.featureOverview' | artemisTranslate }}</h2>
         </div>
-        <div class="content">
-            <div class="features-overview">
-                <h2 style="padding-top: 1.5em">{{ 'featureOverview.' + targetAudience + '.featureOverview' | artemisTranslate }}</h2>
-                <div class="mb-4">
-                    <hr class="hr-text" />
+        <div class="custom-container">
+            <div *ngFor="let feature of features" id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
+                <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true"></fa-icon>
+                <h3 class="title">{{ feature.title | artemisTranslate }}</h3>
+                <div class="feature-short-description">
+                    {{ feature.shortDescription | artemisTranslate }}
                 </div>
             </div>
-            <div class="container">
-                <div *ngFor="let feature of features" id="featureOverview{{ feature.id }}" class="box" (click)="navigateToFeature(feature.id)">
-                    <div class="icon">
-                        <fa-icon class="fa" [icon]="feature.icon" aria-hidden="true"></fa-icon>
-                        <div class="title">
-                            <h3>{{ feature.title | artemisTranslate }}</h3>
-                        </div>
-                    </div>
-
-                    <div class="feature-short-description">
-                        <p>{{ feature.shortDescription | artemisTranslate }}</p>
-                    </div>
-                </div>
-            </div>
-            <div style="padding-bottom: 3em; padding-top: 8px" class="features-overview">
-                <div class="mb-4">
-                    <hr class="hr-text" />
-                </div>
-            </div>
-            <hr class="hr-gradient" />
-            <h2 style="padding-top: 1.5em">{{ 'featureOverview.featureDetails' | artemisTranslate }}</h2>
-            <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-content">
-                <h3>{{ feature.title | artemisTranslate }}</h3>
-                <div class="feature-full-description">
-                    <ng-container *ngIf="feature.descriptionTextTwo; else noSecondText">
-                        <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeftTwoImages">
-                            <img
-                                *ngIf="feature.imageOne"
-                                class="text-wrap-right"
-                                src="{{ feature.imageOne }}"
-                                alt="feature-image-one"
-                                style="margin-top: 5px; max-width: 800px; width: 100%"
-                            />
+        </div>
+        <h2>{{ 'featureOverview.featureDetails' | artemisTranslate }}</h2>
+        <div *ngFor="let feature of features" id="feature{{ feature.id }}" class="feature-content">
+            <h3>{{ feature.title | artemisTranslate }}</h3>
+            <div class="feature-full-description">
+                <ng-container *ngIf="feature.descriptionTextTwo; else noSecondText">
+                    <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeftTwoImages">
+                        <img *ngIf="feature.imageOne" class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" />
+                        <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
+                        <img *ngIf="feature.imageTwo" class="text-wrap-left" src="{{ feature.imageTwo }}" alt="feature-image-two" />
+                        <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
+                    </ng-container>
+                    <ng-template #alignFirstImageLeftTwoImages>
+                        <img *ngIf="feature.imageOne" class="text-wrap-left" src="{{ feature.imageOne }}" alt="feature-image-one" />
+                        <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
+                        <img *ngIf="feature.imageTwo" class="text-wrap-right" src="{{ feature.imageTwo }}" alt="feature-image-two" />
+                        <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
+                    </ng-template>
+                </ng-container>
+                <ng-template #noSecondText>
+                    <ng-container *ngIf="!feature.centered; else centerTextAndImage">
+                        <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeft">
+                            <img *ngIf="feature.imageOne" class="text-wrap-right" src="{{ feature.imageOne }}" alt="feature-image-one" />
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            <img *ngIf="feature.imageTwo" class="text-wrap-left" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
-                            <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
+                            <img *ngIf="feature.imageTwo" class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" />
                         </ng-container>
-                        <ng-template #alignFirstImageLeftTwoImages>
-                            <img
-                                *ngIf="feature.imageOne"
-                                class="text-wrap-left"
-                                src="{{ feature.imageOne }}"
-                                alt="feature-image-one"
-                                style="margin-top: 5px; max-width: 800px; width: 100%"
-                            />
+                        <ng-template #alignFirstImageLeft>
+                            <img *ngIf="feature.imageOne" class="text-wrap-left" src="{{ feature.imageOne }}" alt="feature-image-one" />
                             <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            <img *ngIf="feature.imageTwo" class="text-wrap-right" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
-                            <p>{{ feature.descriptionTextTwo | artemisTranslate }}</p>
+                            <img *ngIf="feature.imageTwo" class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" />
                         </ng-template>
                     </ng-container>
-                    <ng-template #noSecondText>
-                        <ng-container *ngIf="!feature.centered; else centerTextAndImage">
-                            <ng-container *ngIf="!feature.firstImageLeft; else alignFirstImageLeft">
-                                <img
-                                    *ngIf="feature.imageOne"
-                                    class="text-wrap-right"
-                                    src="{{ feature.imageOne }}"
-                                    alt="feature-image-one"
-                                    style="margin-top: 5px; max-width: 800px; width: 100%"
-                                />
-                                <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                                <img *ngIf="feature.imageTwo" class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
-                            </ng-container>
-                            <ng-template #alignFirstImageLeft>
-                                <img
-                                    *ngIf="feature.imageOne"
-                                    class="text-wrap-left"
-                                    src="{{ feature.imageOne }}"
-                                    alt="feature-image-one"
-                                    style="margin-top: 5px; max-width: 800px; width: 100%"
-                                />
-                                <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                                <img *ngIf="feature.imageTwo" class="center" src="{{ feature.imageTwo }}" alt="feature-image-two" style="max-width: 800px; width: 100%" />
-                            </ng-template>
-                        </ng-container>
-                        <ng-template #centerTextAndImage>
-                            <p style="text-align: center">{{ feature.descriptionTextOne | artemisTranslate }}</p>
-                            <img
-                                *ngIf="feature.imageOne && !feature.expandedImage && !feature.shrunkImage"
-                                src="{{ feature.imageOne }}"
-                                class="center"
-                                alt="feature-image-one"
-                                style="margin-top: 5px; max-width: 800px; width: 100%"
-                            />
-                            <img
-                                *ngIf="feature.imageOne && feature.expandedImage"
-                                src="{{ feature.imageOne }}"
-                                class="center"
-                                alt="feature-image-one"
-                                style="margin-top: 5px; max-width: 1600px; width: 100%"
-                            />
-                            <img
-                                *ngIf="feature.imageOne && feature.shrunkImage"
-                                src="{{ feature.imageOne }}"
-                                class="center"
-                                alt="feature-image-one"
-                                style="margin-top: 5px; max-width: 400px; width: 100%"
-                            />
-                            <img *ngIf="feature.imageTwo" src="{{ feature.imageTwo }}" class="center" alt="feature-image-one" style="max-width: 800px; width: 100%" />
-                        </ng-template>
+                    <ng-template #centerTextAndImage>
+                        <p>{{ feature.descriptionTextOne | artemisTranslate }}</p>
+                        <img *ngIf="feature.imageOne && !feature.expandedImage && !feature.shrunkImage" src="{{ feature.imageOne }}" class="center" alt="feature-image-one" />
+                        <img *ngIf="feature.imageOne && feature.expandedImage" src="{{ feature.imageOne }}" class="center" alt="feature-image-one" />
+                        <img *ngIf="feature.imageOne && feature.shrunkImage" src="{{ feature.imageOne }}" class="center" alt="feature-image-one" />
+                        <img *ngIf="feature.imageTwo" src="{{ feature.imageTwo }}" class="center" alt="feature-image-one" />
                     </ng-template>
-                </div>
-                <div class="mb-4">
-                    <hr class="hr-text" />
-                </div>
+                </ng-template>
             </div>
+            <hr class="hr-text" />
         </div>
     </div>
-</body>
+</div>

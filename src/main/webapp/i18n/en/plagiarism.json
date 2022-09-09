@@ -60,7 +60,9 @@
                 "resolvedPlagiarismCase": "Resolved Plagiarism Case",
                 "notification": {
                     "title": "Plagiarism Case: {{ exercise }}",
-                    "body": "Dear {{ student }}, after a meticulous review of your final submission for the exercise “{{ exercise }}“ in the course “{{ course }}“, we have concluded that you have committed plagiarism. This is a violation of the [Student Code of Conduct]({{ cocLink }}) of the faculty of computer science that you have agreed upon. The *[Allgemeine Studien- und Prüfungsordnung]({{ aspoLink }})* (General Examination and Study Regulations) regulates consequences for such cases in §22.1. **You have one week to provide a statement about this situation.**"
+                    "body": "Dear {{ student }}, after a meticulous review of your final submission for the exercise “{{ exercise }}“ {{ inCourseOrExam }} “{{ courseOrExam }}“, we have concluded that you have committed plagiarism. This is a violation of the [Student Code of Conduct]({{ cocLink }}) of the faculty of computer science that you have agreed upon. The *[Allgemeine Studien- und Prüfungsordnung]({{ aspoLink }})* (General Examination and Study Regulations) regulates consequences for such cases in §22.1. **You have one week to provide a statement about this situation.**",
+                    "inCourse": "in the course",
+                    "inExam": "in the exam"
                 },
                 "verdict": {
                     "verdict": "Verdict",
@@ -93,7 +95,8 @@
                 "notNotified": "Not yet notified",
                 "respondedByStudent": "Student has given a statement",
                 "notResponded": "Not yet responded",
-                "noCases": "No plagiarism cases in this course",
+                "noCourseCases": "No plagiarism cases in this course",
+                "noExamCases": "No plagiarism cases in this exam",
                 "notifyStudent": "Notify student",
                 "studentNotified": "Student has been notified."
             },

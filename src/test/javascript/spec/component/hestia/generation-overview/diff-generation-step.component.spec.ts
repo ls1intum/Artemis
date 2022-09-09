@@ -4,7 +4,7 @@ import { of } from 'rxjs';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { DiffGenerationStepComponent } from 'app/exercises/programming/hestia/generation-overview/steps/diff-generation-step/diff-generation-step.component';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 describe('DiffGenerationStep Component', () => {
     let comp: DiffGenerationStepComponent;
@@ -15,7 +15,8 @@ describe('DiffGenerationStep Component', () => {
     let onGitDiffLoadedSpy: jest.SpyInstance;
 
     let exercise: ProgrammingExercise;
-    let gitDiffReport: ProgrammingExerciseFullGitDiffReport;
+    let fileContentByPath: Map<string, string>;
+    let gitDiffReport: ProgrammingExerciseGitDiffReport;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -32,7 +33,11 @@ describe('DiffGenerationStep Component', () => {
         exercise.id = 1;
         comp.exercise = exercise;
 
-        gitDiffReport = new ProgrammingExerciseFullGitDiffReport();
+        fileContentByPath = new Map<string, string>();
+        fileContentByPath.set('A.java', 'abc');
+        fileContentByPath.set('B.java', 'def');
+
+        gitDiffReport = new ProgrammingExerciseGitDiffReport();
         gitDiffReport.programmingExercise = exercise;
     });
 
@@ -41,12 +46,18 @@ describe('DiffGenerationStep Component', () => {
     });
 
     it('should load all code hints on init', () => {
-        const loadFilesSpy = jest.spyOn(exerciseService, 'getFullDiffReport').mockReturnValue(of(gitDiffReport));
+        const loadTemplateFilesSpy = jest.spyOn(exerciseService, 'getTemplateRepositoryTestFilesWithContent').mockReturnValue(of(fileContentByPath));
+        const loadSolutionFilesSpy = jest.spyOn(exerciseService, 'getSolutionRepositoryTestFilesWithContent').mockReturnValue(of(fileContentByPath));
+        const loadReportSpy = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
 
         comp.ngOnInit();
 
-        expect(loadFilesSpy).toHaveBeenCalledOnce();
-        expect(loadFilesSpy).toHaveBeenCalledWith(1);
+        expect(loadTemplateFilesSpy).toHaveBeenCalledOnce();
+        expect(loadTemplateFilesSpy).toHaveBeenCalledWith(1);
+        expect(loadSolutionFilesSpy).toHaveBeenCalledOnce();
+        expect(loadSolutionFilesSpy).toHaveBeenCalledWith(1);
+        expect(loadReportSpy).toHaveBeenCalledOnce();
+        expect(loadReportSpy).toHaveBeenCalledWith(1);
 
         expect(comp.gitDiffReport).toEqual(gitDiffReport);
         expect(comp.isLoading).toBeFalse();
