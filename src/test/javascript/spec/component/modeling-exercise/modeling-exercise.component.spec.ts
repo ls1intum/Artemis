@@ -154,7 +154,7 @@ describe('ModelingExercise Management Component', () => {
             name: 'modelingExerciseListModification',
             content: 'Deleted an modelingExercise',
         });
-        expect(broadcastSpy).toHaveBeenCalledTimes(1);
+        expect(broadcastSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sort rows', () => {

@@ -1,10 +1,11 @@
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnInit, OnDestroy } from '@angular/core';
 import { faArrowRight, faCheckCircle, faTimes, faTimesCircle, faDotCircle, faCircleExclamation } from '@fortawesome/free-solid-svg-icons';
 import { Exam } from 'app/entities/exam.model';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export enum ExamReviewState {
     UNSET = 'unset',
@@ -25,7 +26,7 @@ export enum ExamConductionState {
     templateUrl: './exam-status.component.html',
     styleUrls: ['./exam-status.component.scss'],
 })
-export class ExamStatusComponent implements OnChanges {
+export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     @Input()
     public exam: Exam;
 
@@ -56,6 +57,9 @@ export class ExamStatusComponent implements OnChanges {
     readonly round = round;
     readonly Math = Math;
 
+    numberOfSubmitted = 0;
+    numberOfStarted = 0;
+
     // Icons
     faTimes = faTimes;
     faTimesCircle = faTimesCircle;
@@ -64,7 +68,16 @@ export class ExamStatusComponent implements OnChanges {
     faDotCircle = faDotCircle;
     faCircleExclamation = faCircleExclamation;
 
-    constructor(private examChecklistService: ExamChecklistService) {}
+    constructor(private examChecklistService: ExamChecklistService, private websocketService: JhiWebsocketService) {}
+
+    ngOnInit() {
+        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
+        this.websocketService.subscribe(submittedTopic);
+        this.websocketService.receive(submittedTopic).subscribe(() => (this.numberOfSubmitted += 1));
+        const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
+        this.websocketService.subscribe(startedTopic);
+        this.websocketService.receive(startedTopic).subscribe(() => (this.numberOfStarted += 1));
+    }
 
     ngOnChanges(): void {
         this.examChecklistService.getExamStatistics(this.exam).subscribe((examStats) => {
@@ -85,7 +98,17 @@ export class ExamStatusComponent implements OnChanges {
                 this.setReviewState();
                 this.setCorrectionState();
             }
+
+            this.numberOfStarted = this.examChecklist.numberOfExamsStarted;
+            this.numberOfSubmitted = this.examChecklist.numberOfExamsSubmitted;
         });
+    }
+
+    ngOnDestroy(): void {
+        const submittedTopic = this.examChecklistService.getSubmittedTopic(this.exam);
+        this.websocketService.unsubscribe(submittedTopic);
+        const startedTopic = this.examChecklistService.getStartedTopic(this.exam);
+        this.websocketService.unsubscribe(startedTopic);
     }
 
     /**

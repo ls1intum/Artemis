@@ -40,4 +40,12 @@ export class MockExamChecklistService {
     calculateExercisePoints(pointsExercisesEqual: boolean, exam: Exam) {
         return pointsExercisesEqual ? 10 : 0;
     }
+
+    getSubmittedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/submitted`;
+    }
+
+    getStartedTopic(exam: Exam) {
+        return `/topic/exam/${exam.id}/started`;
+    }
 }
