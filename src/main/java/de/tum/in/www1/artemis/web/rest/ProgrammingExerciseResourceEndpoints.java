@@ -62,6 +62,8 @@ public final class ProgrammingExerciseResourceEndpoints {
 
     public static final String SOLUTION_REPOSITORY_FILE_NAMES = PROGRAMMING_EXERCISE + "/file-names";
 
+    public static final String BUILD_PLAN = PROGRAMMING_EXERCISE + "/build-plan";
+
     private ProgrammingExerciseResourceEndpoints() {
     }
 }

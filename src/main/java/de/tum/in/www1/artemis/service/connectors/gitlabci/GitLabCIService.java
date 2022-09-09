@@ -81,7 +81,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             VcsRepositoryUrl solutionRepositoryURL) {
         addBuildPlanToProgrammingExerciseIfUnset(exercise);
         setupGitLabCIConfiguration(repositoryURL, exercise);
-        // TODO: triggerBuild(repositoryURL);
+        // TODO: triggerBuild(repositoryURL, exercise.getBranch());
     }
 
     private void setupGitLabCIConfiguration(VcsRepositoryUrl repositoryURL, ProgrammingExercise exercise) {
@@ -131,11 +131,11 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
         VcsRepositoryUrl templateUrl = exercise.getVcsTemplateRepositoryUrl();
         setupGitLabCIConfiguration(templateUrl, exercise);
-        // TODO: triggerBuild(templateUrl);
+        // TODO: triggerBuild(templateUrl, exercise.getBranch());
 
         VcsRepositoryUrl solutionUrl = exercise.getVcsSolutionRepositoryUrl();
         setupGitLabCIConfiguration(solutionUrl, exercise);
-        // TODO: triggerBuild(solutionUrl);
+        // TODO: triggerBuild(solutionUrl, exercise.getBranch());
     }
 
     @Override
@@ -157,18 +157,19 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     @Override
     public void triggerBuild(ProgrammingExerciseParticipation participation) throws ContinuousIntegrationException {
-        triggerBuild(participation.getVcsRepositoryUrl());
+        triggerBuild(participation.getVcsRepositoryUrl(), participation.getProgrammingExercise().getBranch());
     }
 
-    private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl) {
+    private void triggerBuild(VcsRepositoryUrl vcsRepositoryUrl, String branch) {
         final String repositoryPath = getRepositoryPath(vcsRepositoryUrl);
         try {
             Trigger trigger = gitlab.getPipelineApi().createPipelineTrigger(repositoryPath, "Trigger build");
-            gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, "Trigger build", null);
+            gitlab.getPipelineApi().triggerPipeline(repositoryPath, trigger, branch, null);
             gitlab.getPipelineApi().deletePipelineTrigger(repositoryPath, trigger.getId());
         }
         catch (GitLabApiException e) {
-            throw new GitLabCIException("Error triggering the build for " + repositoryPath);
+            e.getValidationErrors().forEach((key, value) -> log.error(key + ":" + value));
+            throw new GitLabCIException("Error triggering the build for " + repositoryPath, e);
         }
     }
 
@@ -292,6 +293,8 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
 
     private String generateBuildPlanURL(ProgrammingExercise exercise) {
         programmingExerciseRepository.generateBuildPlanAccessSecretIfNotExists(exercise);
-        return String.format("%s/api/files/attachments/exercise/%s/build-plan?secret=%s", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
+        // We need this workaround (&file-extension=.yml) since GitLab only accepts URLs ending with .yml.
+        // See https://gitlab.com/gitlab-org/gitlab/-/issues/27526
+        return String.format("%s/api/programming-exercises/%s/build-plan?secret=%s&file-extension=.yml", artemisServerUrl, exercise.getId(), exercise.getBuildPlanAccessSecret());
     }
 }

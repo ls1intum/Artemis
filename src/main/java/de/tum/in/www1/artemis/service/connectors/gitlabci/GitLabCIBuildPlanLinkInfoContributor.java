@@ -20,7 +20,7 @@ public class GitLabCIBuildPlanLinkInfoContributor implements InfoContributor {
     @Override
     public void contribute(Info.Builder builder) {
         // TODO: Not defined in https://github.com/ls1intum/Artemis/blob/develop/src/main/webapp/app/exercises/programming/shared/utils/programming-exercise.utils.ts#L24-L28
-        final var buildPlanURLTemplate = artemisServerUrl + "/api/files/attachments/exercise/{exerciseId}/build-plan";
+        final var buildPlanURLTemplate = artemisServerUrl + "/api/programming-exercises/{exerciseId}/build-plan";
         builder.withDetail(Constants.INFO_BUILD_PLAN_URL_DETAIL, buildPlanURLTemplate);
     }
 }

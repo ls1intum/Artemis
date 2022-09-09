@@ -81,8 +81,6 @@ public class FileResource {
 
     private static final int FILE_ACCESS_TOKEN_VALIDITY = 30;
 
-    private final ProgrammingExerciseRepository programmingExerciseRepository;
-
     /**
      * The list of file extensions that are allowed to be uploaded in a Markdown editor.
      * Extensions must be lower-case without leading dots.
@@ -100,8 +98,7 @@ public class FileResource {
 
     public FileResource(FileService fileService, ResourceLoaderService resourceLoaderService, LectureRepository lectureRepository, TokenProvider tokenProvider,
             FileUploadSubmissionRepository fileUploadSubmissionRepository, FileUploadExerciseRepository fileUploadExerciseRepository, AttachmentRepository attachmentRepository,
-            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserRepository userRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository) {
+            AttachmentUnitRepository attachmentUnitRepository, AuthorizationCheckService authCheckService, CourseRepository courseRepository, UserRepository userRepository) {
         this.fileService = fileService;
         this.resourceLoaderService = resourceLoaderService;
         this.lectureRepository = lectureRepository;
@@ -113,7 +110,6 @@ public class FileResource {
         this.authCheckService = authCheckService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
-        this.programmingExerciseRepository = programmingExerciseRepository;
     }
 
     /**
@@ -522,25 +518,6 @@ public class FileResource {
             return false;
         }
         return true;
-    }
-
-    @GetMapping("files/attachments/exercise/{exerciseId}/build-plan")
-    @PreAuthorize("permitAll()")
-    public ResponseEntity<String> getBuildPlan(@PathVariable Long exerciseId, @RequestParam("secret") String secret) {
-        log.debug("REST request to get build plan for programming exercise with id : {}", exerciseId);
-        Optional<ProgrammingExercise> optionalProgrammingExercise = programmingExerciseRepository.findById(exerciseId);
-        if (optionalProgrammingExercise.isEmpty()) {
-            return ResponseEntity.badRequest().build();
-        }
-        ProgrammingExercise programmingExercise = optionalProgrammingExercise.get();
-        if (programmingExercise.getBuildPlanAccessSecret() == null || !secret.equals(programmingExercise.getBuildPlanAccessSecret())) {
-            // NOTE: this is a special case, because we like to show this error message directly in the browser (without the angular client being active)
-            // TODO: Comment for the error message (in the case that e. g. GitLab CI accesses the error page)
-            // String errorMessage = "# You don't have the access rights for the build plan!";
-            // return ResponseEntity.status(HttpStatus.FORBIDDEN).body(errorMessage.getBytes());
-            throw new AccessForbiddenException();
-        }
-        return ResponseEntity.ok().body(programmingExercise.getBuildPlan().getBuildPlan());
     }
 
     /**
