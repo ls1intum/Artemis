@@ -2,10 +2,12 @@ package de.tum.in.www1.artemis.service.hestia;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
@@ -26,10 +28,7 @@ import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.repository.SolutionProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.TemplateProgrammingExerciseParticipationRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseGitDiffReportRepository;
-import de.tum.in.www1.artemis.service.RepositoryService;
 import de.tum.in.www1.artemis.service.connectors.GitService;
-import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffEntryDTO;
-import de.tum.in.www1.artemis.web.rest.dto.hestia.ProgrammingExerciseFullGitDiffReportDTO;
 import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 /**
@@ -41,8 +40,6 @@ public class ProgrammingExerciseGitDiffReportService {
     private final Logger log = LoggerFactory.getLogger(ProgrammingExerciseGitDiffReportService.class);
 
     private final GitService gitService;
-
-    private final RepositoryService repositoryService;
 
     private final ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository;
 
@@ -56,100 +53,16 @@ public class ProgrammingExerciseGitDiffReportService {
 
     private final Pattern gitDiffLinePattern = Pattern.compile("@@ -(?<previousLine>\\d+)(,(?<previousLineCount>\\d+))? \\+(?<newLine>\\d+)(,(?<newLineCount>\\d+))? @@");
 
-    public ProgrammingExerciseGitDiffReportService(GitService gitService, RepositoryService repositoryService,
-            ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository, ProgrammingSubmissionRepository programmingSubmissionRepository,
-            ProgrammingExerciseRepository programmingExerciseRepository, TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
+    public ProgrammingExerciseGitDiffReportService(GitService gitService, ProgrammingExerciseGitDiffReportRepository programmingExerciseGitDiffReportRepository,
+            ProgrammingSubmissionRepository programmingSubmissionRepository, ProgrammingExerciseRepository programmingExerciseRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository) {
         this.gitService = gitService;
-        this.repositoryService = repositoryService;
         this.programmingExerciseGitDiffReportRepository = programmingExerciseGitDiffReportRepository;
         this.programmingSubmissionRepository = programmingSubmissionRepository;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
-    }
-
-    /**
-     * Gets the full git-diff report of a programming exercise. A full git-diff report is created from the normal git-diff report
-     * but contains the actual code blocks of the template and solution.
-     * If the git-diff report does not exist yet it will generate it first.
-     *
-     * @param programmingExercise The programming exercise
-     * @return The full git-diff report for the given programming exercise
-     */
-    public ProgrammingExerciseFullGitDiffReportDTO getFullReport(ProgrammingExercise programmingExercise) {
-        try {
-            var report = this.getReportOfExercise(programmingExercise);
-            if (report == null) {
-                // Generate the report if it does not exist yet
-                report = updateReport(programmingExercise);
-                if (report == null) {
-                    // Report could not be generated
-                    return null;
-                }
-            }
-            var templateParticipationOptional = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
-            var solutionParticipationOptional = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseId(programmingExercise.getId());
-            if (templateParticipationOptional.isEmpty() || solutionParticipationOptional.isEmpty()) {
-                return null;
-            }
-            var templateParticipation = templateParticipationOptional.get();
-            var solutionParticipation = solutionParticipationOptional.get();
-            var templateRepo = gitService.getOrCheckoutRepository(templateParticipation.getVcsRepositoryUrl(), true);
-            var solutionRepo = gitService.getOrCheckoutRepository(solutionParticipation.getVcsRepositoryUrl(), true);
-
-            gitService.resetToOriginHead(templateRepo);
-            gitService.pullIgnoreConflicts(templateRepo);
-            gitService.resetToOriginHead(solutionRepo);
-            gitService.pullIgnoreConflicts(solutionRepo);
-
-            var fullReport = new ProgrammingExerciseFullGitDiffReportDTO();
-            fullReport.setTemplateRepositoryCommitHash(report.getTemplateRepositoryCommitHash());
-            fullReport.setSolutionRepositoryCommitHash(report.getSolutionRepositoryCommitHash());
-            var templateFiles = repositoryService.getFilesWithContent(templateRepo);
-            var solutionFiles = repositoryService.getFilesWithContent(solutionRepo);
-            fullReport.setEntries(report.getEntries().stream().map(entry -> convertToFullEntry(entry, templateFiles, solutionFiles)).filter(fullEntry -> !fullEntry.isEmpty())
-                    .collect(Collectors.toSet()));
-
-            return fullReport;
-        }
-        catch (GitAPIException e) {
-            log.error("Exception while generating full git diff report", e);
-            throw new InternalServerErrorException("Error while generating full git-diff: " + e.getMessage());
-        }
-    }
-
-    /**
-     * Converts a normal git-diff entry to a full git-diff entry containing the actual code block of the change it represents.
-     *
-     * @param entry The normal git-diff entry
-     * @param templateRepoFiles The files of the solution repository
-     * @param solutionRepoFiles The files of the template repository
-     * @return The full git-diff entry
-     */
-    private ProgrammingExerciseFullGitDiffEntryDTO convertToFullEntry(ProgrammingExerciseGitDiffEntry entry, Map<String, String> templateRepoFiles,
-            Map<String, String> solutionRepoFiles) {
-        var fullEntry = new ProgrammingExerciseFullGitDiffEntryDTO();
-        fullEntry.setLine(entry.getStartLine());
-        fullEntry.setPreviousLine(entry.getPreviousStartLine());
-        fullEntry.setFilePath(entry.getFilePath());
-        fullEntry.setPreviousFilePath(entry.getPreviousFilePath());
-        if (entry.getPreviousFilePath() != null && entry.getPreviousStartLine() != null && entry.getPreviousLineCount() != null) {
-            var fileContent = templateRepoFiles.get(entry.getPreviousFilePath());
-            if (fileContent != null) {
-                var previousCode = Arrays.stream(fileContent.split("\n")).skip(entry.getPreviousStartLine() - 1).limit(entry.getPreviousLineCount())
-                        .collect(Collectors.joining("\n"));
-                fullEntry.setPreviousCode(previousCode);
-            }
-        }
-        if (entry.getFilePath() != null && entry.getStartLine() != null && entry.getLineCount() != null) {
-            var fileContent = solutionRepoFiles.get(entry.getFilePath());
-            if (fileContent != null) {
-                var code = Arrays.stream(fileContent.split("\n")).skip(entry.getStartLine() - 1).limit(entry.getLineCount()).collect(Collectors.joining("\n"));
-                fullEntry.setCode(code);
-            }
-        }
-        return fullEntry;
     }
 
     /**
