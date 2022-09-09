@@ -81,7 +81,6 @@
                 "isOnline": "Online/Offline",
                 "online": "Online",
                 "offline": "Offline",
-                "location": "Location",
                 "language": "Language",
                 "additionalInfo": "Additional Information",
                 "schedule": {
@@ -162,13 +161,6 @@
                 "label": "Additional Information",
                 "placeholder": "Additional information about the tutorial group.",
                 "maxLengthValidationError": "Additional information is limited to {{ max }} characters!"
-            },
-            "locationInput": {
-                "labelOnline": "Meeting Link",
-                "labelOffline": "Meeting Place",
-                "placeholderOnline": "How can the students join the online meeting?",
-                "placeholderOffline": "How can the students find the room?",
-                "maxLengthValidationError": "Location is limited to {{ max }} characters!"
             },
             "capacityInput": {
                 "label": "Capacity",
