@@ -31,6 +31,8 @@ class CourseGroupStubComponent {
     @Input()
     exportFileName: string;
     @Input()
+    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
+    @Input()
     addUserToGroup: (login: string) => Observable<any> = () => of({});
     @Input()
     removeUserFromGroup: (login: string) => Observable<any> = () => of({});
