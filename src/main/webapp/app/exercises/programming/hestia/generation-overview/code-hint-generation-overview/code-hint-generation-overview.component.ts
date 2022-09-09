@@ -3,8 +3,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { CoverageReport } from 'app/entities/hestia/coverage-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { CodeHint, CodeHintGenerationStep } from 'app/entities/hestia/code-hint-model';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
     selector: 'jhi-code-hint-generation-overview',
@@ -69,7 +69,7 @@ export class CodeHintGenerationOverviewComponent implements OnInit {
         this.currentStep = step;
     }
 
-    onDiffReportLoaded(diffReport?: ProgrammingExerciseFullGitDiffReport) {
+    onDiffReportLoaded(diffReport?: ProgrammingExerciseGitDiffReport) {
         this.isPerformedByStep.set(CodeHintGenerationStep.GIT_DIFF, diffReport !== undefined);
         this.setLatestPerformedStep(CodeHintGenerationStep.GIT_DIFF);
     }
