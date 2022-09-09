@@ -13,7 +13,7 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { SortService } from 'app/shared/service/sort.service';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CancellationModalComponent } from 'app/course/tutorial-groups/schedule-management/cancellation-modal/cancellation-modal.component';
+import { CancellationModalComponent } from 'app/course/tutorial-groups/session-management/cancellation-modal/cancellation-modal.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -35,7 +35,6 @@ export class SessionManagementComponent implements OnInit {
         private alertService: AlertService,
         private sortService: SortService,
         private changeDetectorRef: ChangeDetectorRef,
-        private modalService: NgbModal,
     ) {}
 
     faPlus = faPlus;
@@ -48,16 +47,6 @@ export class SessionManagementComponent implements OnInit {
     pastSessions: TutorialGroupSession[] = [];
 
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
-
-    openCancellationModal(session: TutorialGroupSession): void {
-        const modalRef = this.modalService.open(CancellationModalComponent);
-        modalRef.componentInstance.tutorialGroupSession = session;
-        modalRef.result.then((result) => {
-            if (result === 'confirmed') {
-                this.loadAll();
-            }
-        });
-    }
 
     determineRowClass(session: TutorialGroupSession): string {
         if (session.status === TutorialGroupSessionStatus.CANCELLED) {
@@ -73,7 +62,7 @@ export class SessionManagementComponent implements OnInit {
         this.loadAll();
     }
 
-    private loadAll() {
+    loadAll() {
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
             .pipe(
@@ -92,7 +81,7 @@ export class SessionManagementComponent implements OnInit {
                     if (tutorialGroup) {
                         this.tutorialGroup = tutorialGroup;
                         if (tutorialGroup.tutorialGroupSessions) {
-                            this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', true));
+                            this.splitIntoUpcomingAndPastSessions(this.sortService.sortByProperty(tutorialGroup.tutorialGroupSessions, 'start', false));
                         }
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;

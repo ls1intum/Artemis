@@ -32,17 +32,12 @@
                         <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>
-                            <div class="btn-group">
-                                <!-- Cancel/Activate -->
-                                <button type="button" class="btn btn-secondary" (click)="openCancellationModal(session)">
-                                    {{
-                                        (session.status === tutorialGroupSessionStatus.CANCELLED
-                                            ? 'artemisApp.manageSessions.activateButton'
-                                            : 'artemisApp.manageSessions.cancelButton'
-                                        ) | artemisTranslate
-                                    }}
-                                </button>
-                            </div>
+                            <jhi-tutorial-group-session-row-buttons-component
+                                [tutorialGroupSession]="session"
+                                [courseId]="courseId"
+                                [tutorialGroupId]="tutorialGroup.id!"
+                                (cancelOrActivatePressed)="loadAll()"
+                            ></jhi-tutorial-group-session-row-buttons-component>
                         </td>
                     </tr>
                     <tr class="table-dark text-center">
@@ -53,17 +48,12 @@
                         <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>
-                            <div class="btn-group">
-                                <!-- Cancel/Activate -->
-                                <button type="button" class="btn btn-secondary" (click)="openCancellationModal(session)">
-                                    {{
-                                        (session.status === tutorialGroupSessionStatus.CANCELLED
-                                            ? 'artemisApp.manageSessions.activateButton'
-                                            : 'artemisApp.manageSessions.cancelButton'
-                                        ) | artemisTranslate
-                                    }}
-                                </button>
-                            </div>
+                            <jhi-tutorial-group-session-row-buttons-component
+                                [tutorialGroupSession]="session"
+                                [courseId]="courseId"
+                                [tutorialGroupId]="tutorialGroup.id!"
+                                (cancelOrActivatePressed)="loadAll()"
+                            ></jhi-tutorial-group-session-row-buttons-component>
                         </td>
                     </tr>
                 </tbody>

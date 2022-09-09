@@ -1,0 +1,28 @@
+<div class="btn-group flex-btn-group-container">
+    <!-- Cancel/Activate -->
+    <button type="button" class="btn btn-secondary" (click)="openCancellationModal(tutorialGroupSession)">
+        {{
+            (tutorialGroupSession.status === tutorialGroupSessionStatus.CANCELLED ? 'artemisApp.manageSessions.activateButton' : 'artemisApp.manageSessions.cancelButton')
+                | artemisTranslate
+        }}
+    </button>
+    <!-- Edit -->
+    <a
+        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']"
+        class="btn btn-warning btn-sm me-1"
+    >
+        <fa-icon [icon]="faWrench"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+    </a>
+    <!-- Delete -->
+    <button
+        jhiDeleteButton
+        [entityTitle]="''"
+        deleteQuestion="artemisApp.manageTutorialGroups.deleteButton.question"
+        deleteConfirmationText="artemisApp.manageTutorialGroups.deleteButton.typeNameToConfirm"
+        (delete)="deleteTutorialGroupSession()"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faTimes"></fa-icon>
+    </button>
+</div>

@@ -4,6 +4,7 @@ import { Observable } from 'rxjs';
 import { convertDateFromClient, convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
 type EntityArrayResponseType = HttpResponse<TutorialGroupSession[]>;
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
@@ -13,6 +14,18 @@ export class TutorialGroupSessionService {
     private resourceURL = SERVER_API_URL + 'api';
 
     constructor(private httpClient: HttpClient) {}
+    getOneOfTutorialGroup(courseId: number, tutorialGroupId: number, sessionId: number) {
+        return this.httpClient
+            .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    }
+
+    update(courseId: number, tutorialGroupId: number, sessionId: number, session: TutorialGroupSession): Observable<EntityResponseType> {
+        const copy = this.convertTutorialGroupSessionDatesFromClient(session);
+        return this.httpClient
+            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, copy, { observe: 'response' })
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
+    }
 
     create(tutorialGroupId: number, tutorialGroupSession: TutorialGroupSession): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupSessionDatesFromClient(tutorialGroupSession);

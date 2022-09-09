@@ -10,6 +10,9 @@
             "createSessionButton": "Create Session",
             "title": "Create Individual Session"
         },
+        "editSession": {
+            "title": "Edit Individual Session"
+        },
         "cancelSession": {
             "title": "Cancel Session",
             "question": "Do you really want to cancel the session {{label}}?",
@@ -122,9 +125,12 @@
             }
         },
         "sessionForm": {
-            "date": "Date",
-            "requiredDateWarning": "You need to select a date!",
-            "dateParseError": "Date must be in the format 'YYYY-MM-DD'"
+            "startInput": {
+                "label": "Start of the session"
+            },
+            "endInput": {
+                "label": "End of the session"
+            }
         },
         "tutorialGroupForm": {
             "titleInput": {

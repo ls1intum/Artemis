@@ -11,7 +11,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { SchedulePickerComponent } from './crud/schedule-picker/schedule-picker/schedule-picker.component';
-import { SessionManagementComponent } from './schedule-management/session-management.component';
+import { SessionManagementComponent } from './session-management/session-management.component';
 import { CalendarModule } from 'angular-calendar';
 import { ScheduleFormComponent } from './crud/tutorial-group-form/schedule-form/schedule-form.component';
 import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
@@ -20,11 +20,13 @@ import { CreateTutorialGroupsConfigurationComponent } from './tutorial-groups-co
 import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { TutorialGroupSessionFormComponent } from './tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { CreateTutorialGroupSessionComponent } from './tutorial-groups-session/crud/create-tutorial-group-session/create-tutorial-group-session.component';
-import { CancellationModalComponent } from './schedule-management/cancellation-modal/cancellation-modal.component';
+import { CancellationModalComponent } from './session-management/cancellation-modal/cancellation-modal.component';
 import { TutorialFreeDaysComponent } from './tutorial-free-days/tutorial-free-days.component';
 import { TutorialFreeDayFormComponent } from './tutorial-free-days/crud/tutorial-free-day-form/tutorial-free-day-form.component';
 import { CreateTutorialGroupFreeDayComponent } from './tutorial-free-days/crud/create-tutorial-group-free-day/create-tutorial-group-free-day.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { EditTutorialGroupSessionComponent } from './tutorial-groups-session/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
+import { TutorialGroupSessionRowButtonsComponent } from './session-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule, CalendarModule, OwlDateTimeModule],
@@ -47,6 +49,8 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         TutorialFreeDaysComponent,
         TutorialFreeDayFormComponent,
         CreateTutorialGroupFreeDayComponent,
+        EditTutorialGroupSessionComponent,
+        TutorialGroupSessionRowButtonsComponent,
     ],
 })
 export class ArtemisTutorialGroupsModule {}
