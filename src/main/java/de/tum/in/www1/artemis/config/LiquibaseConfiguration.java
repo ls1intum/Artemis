@@ -2,7 +2,6 @@ package de.tum.in.www1.artemis.config;
 
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
-import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
@@ -115,28 +114,19 @@ public class LiquibaseConfiguration {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_10_3_String);
             }
             else if (previousVersion.isEqualTo(migrationPathVersion)) {
-                updateInitialChecksum(initialCheckSum5_10_3_String);
+                // TODO: for some reason this does not work and leads to a timeout exception
+                // updateInitialChecksum(initialCheckSum5_10_3_String);
             }
         }
 
     }
 
     private String getPreviousVersionElseThrow() {
-        Statement statement;
-        try {
-            var connection = dataSource.getConnection();
-            statement = connection.createStatement();
-        }
-        catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-
         String error = "Cannot start Artemis because version table does not exist, but a migration path is necessary! Please start the release " + migrationPathVersion5_10_3_String
                 + " first, otherwise the migration will fail";
-        ResultSet result;
-        try {
+        try (var statement = createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG");
-            result = statement.executeQuery("SELECT latest_version FROM artemis_version");
+            var result = statement.executeQuery("SELECT latest_version FROM artemis_version");
             if (result.next()) {
                 return result.getString("latest_version");
             }
@@ -154,27 +144,21 @@ public class LiquibaseConfiguration {
     }
 
     private void updateInitialChecksum(String newCheckSum) {
-        Statement statement;
-        try {
-            var connection = dataSource.getConnection();
-            statement = connection.createStatement();
-            statement.execute("""
-                        UPDATE
-                            `DATABASECHANGELOG`
-                        SET
-                            `DATEEXECUTED` = now(),
-                            `MD5SUM` = '%s',
-                            `DESCRIPTION` = 'Initial schema',
-                            `LIQUIBASE` = '4.15.0',
-                            `DEPLOYMENT_ID` = NULL,
-                            `FILENAME` = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
-                        WHERE
-                            `ID` = '00000000000001';
-                    """.formatted(newCheckSum));
+        try (var statement = createStatement()) {
+            log.info("Update checksum of initial schema to {}", newCheckSum);
+            statement.executeUpdate("UPDATE DATABASECHANGELOG" + "\n" + "SET" + "\n" + "    DATEEXECUTED = now()," + "\n" + "    MD5SUM = '" + newCheckSum + "'," + "\n"
+                    + "    DESCRIPTION = 'Initial schema generation for version 6.0.0'," + "\n" + "    LIQUIBASE = '4.15.0'," + "\n"
+                    + "    FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'" + "\n" + "WHERE" + "\n" + "    ID = '00000000000001';");
         }
         catch (SQLException e) {
+            log.error("Cannot update checksum for initial schema migration", e);
             throw new RuntimeException(e);
         }
+    }
+
+    private Statement createStatement() throws SQLException {
+        var connection = dataSource.getConnection();
+        return connection.createStatement();
     }
 
     @EventListener()
@@ -182,17 +166,14 @@ public class LiquibaseConfiguration {
         if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
             return;
         }
-        Statement statement;
-        try {
-            var connection = dataSource.getConnection();
-            statement = connection.createStatement();
+        try (var statement = createStatement()) {
             if (previousVersionString == null) {
                 log.info("Insert latest version " + currentVersionString + " into database");
-                statement.execute("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "')");
+                statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "')");
             }
             else {
                 log.info("Update latest version to " + currentVersionString + " in database");
-                statement.execute("UPDATE artemis_version SET latest_version = '" + currentVersionString + "'");
+                statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "'");
             }
         }
         catch (SQLException e) {
