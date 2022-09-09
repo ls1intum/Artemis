@@ -48,11 +48,11 @@ export class CourseGroupComponent implements OnDestroy {
     exportFileName: string;
 
     @Input()
-    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
+    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>> = () => of(new HttpResponse<User[]>({ body: [] }));
     @Input()
-    addUserToGroup: (login: string) => Observable<any> = () => of({});
+    addUserToGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
     @Input()
-    removeUserFromGroup: (login: string) => Observable<any> = () => of({});
+    removeUserFromGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
     @Input()
     handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
 
