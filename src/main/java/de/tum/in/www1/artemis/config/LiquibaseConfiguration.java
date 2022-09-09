@@ -93,8 +93,6 @@ public class LiquibaseConfiguration {
 
     String migrationPathVersion5_10_3_String = "5.10.3";
 
-    String initialCheckSum5_10_3_String = "8:6a1e4d1338f16062a79c7ef6e2cfdae9";
-
     private void checkMigrationPath() {
         var currentVersion = new Semver(currentVersionString);
         var migrationPathVersion = new Semver(migrationPathVersion5_10_3_String);
@@ -105,6 +103,7 @@ public class LiquibaseConfiguration {
         }
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
             previousVersionString = getPreviousVersionElseThrow();
+            log.info("The previous version was " + previousVersionString);
             if (previousVersionString == null) {
                 // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
                 return;
@@ -114,8 +113,9 @@ public class LiquibaseConfiguration {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_10_3_String);
             }
             else if (previousVersion.isEqualTo(migrationPathVersion)) {
+                // this means this is the first start after the mandatory previous update, we need to set the checksum of the initial schema to null
                 // TODO: for some reason this does not work and leads to a timeout exception
-                // updateInitialChecksum(initialCheckSum5_10_3_String);
+                updateInitialChecksum();
             }
         }
 
@@ -127,6 +127,7 @@ public class LiquibaseConfiguration {
         try (var statement = createStatement()) {
             statement.executeQuery("SELECT * FROM DATABASECHANGELOG");
             var result = statement.executeQuery("SELECT latest_version FROM artemis_version");
+            statement.closeOnCompletion();
             if (result.next()) {
                 return result.getString("latest_version");
             }
@@ -143,12 +144,13 @@ public class LiquibaseConfiguration {
         }
     }
 
-    private void updateInitialChecksum(String newCheckSum) {
+    private void updateInitialChecksum() {
         try (var statement = createStatement()) {
-            log.info("Update checksum of initial schema to {}", newCheckSum);
-            statement.executeUpdate("UPDATE DATABASECHANGELOG" + "\n" + "SET" + "\n" + "    DATEEXECUTED = now()," + "\n" + "    MD5SUM = '" + newCheckSum + "'," + "\n"
-                    + "    DESCRIPTION = 'Initial schema generation for version 6.0.0'," + "\n" + "    LIQUIBASE = '4.15.0'," + "\n"
-                    + "    FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml'" + "\n" + "WHERE" + "\n" + "    ID = '00000000000001';");
+            log.info("Set checksum of initial schema to null so that liquibase will recalculate it");
+            statement.executeUpdate(
+                    "UPDATE DATABASECHANGELOG SET MD5SUM = null, DATEEXECUTED = now(), DESCRIPTION = 'Initial schema generation for version 6.0.0', LIQUIBASE = '4.15.0', FILENAME = 'config/liquibase/changelog/00000000000000_initial_schema.xml' WHERE ID = '00000000000001';");
+            statement.getConnection().commit();
+            statement.closeOnCompletion();
         }
         catch (SQLException e) {
             log.error("Cannot update checksum for initial schema migration", e);
@@ -175,6 +177,8 @@ public class LiquibaseConfiguration {
                 log.info("Update latest version to " + currentVersionString + " in database");
                 statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "'");
             }
+            statement.getConnection().commit();
+            statement.closeOnCompletion();
         }
         catch (SQLException e) {
             throw new RuntimeException(e);
