@@ -12,6 +12,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { of } from 'rxjs';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 enum DateOffsetType {
     HOURS = 'hours',
@@ -58,6 +60,7 @@ describe('ExamStatusComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()
