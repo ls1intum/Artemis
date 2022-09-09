@@ -128,6 +128,8 @@ describe('LectureAttachmentsComponent', () => {
         expect(comp.attachmentToBeCreated).not.toBeNull();
         comp.attachmentToBeCreated!.name = 'Test File Name';
         jest.spyOn(fileUploaderService, 'uploadFile').mockReturnValue(Promise.resolve({ path: 'test' }));
+        fixture.detectChanges();
+        expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
         fixture.detectChanges();
         tick();
@@ -150,6 +152,8 @@ describe('LectureAttachmentsComponent', () => {
         expect(uploadAttachmentButton).not.toBeNull();
         expect(comp.attachmentToBeCreated).not.toBeNull();
         comp.attachmentToBeCreated!.name = 'Test File Name';
+        fixture.detectChanges();
+        expect(uploadAttachmentButton.nativeElement.disabled).toBeFalse();
         uploadAttachmentButton.nativeElement.click();
         tick();
         fixture.detectChanges();

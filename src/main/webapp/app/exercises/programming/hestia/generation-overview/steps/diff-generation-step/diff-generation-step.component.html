@@ -1,7 +1,13 @@
 <div *ngIf="isLoading" class="text-center">
     <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
 </div>
-<jhi-git-diff-report *ngIf="gitDiffReport" [report]="gitDiffReport"></jhi-git-diff-report>
+<div *ngIf="!isLoading && gitDiffReport">
+    <jhi-git-diff-report
+        [report]="gitDiffReport"
+        [templateFileContentByPath]="templateFileContentByPath"
+        [solutionFileContentByPath]="solutionFileContentByPath"
+    ></jhi-git-diff-report>
+</div>
 <div *ngIf="!isLoading && !gitDiffReport" class="text-center">
     <span jhiTranslate="artemisApp.codeHint.management.step2.notGenerated">Git-Diff report has not been generated yet.</span>
 </div>

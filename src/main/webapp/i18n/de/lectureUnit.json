@@ -131,7 +131,7 @@
                 "fileRequiredValidationError": "Du musst eine Datei zum uploaden auswählen.",
                 "chooseFile": "Datei auswählen",
                 "fileLimitation": "Max. Dateigröße 10 MB",
-                "fileFormat": "Unterstützte Formate"
+                "fileLimitationTooltip": "Unterstützte Formate: {{ extensions }}"
             },
             "editAttachmentUnit": {
                 "title": "Bearbeite Dateieinheit"
