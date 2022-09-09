@@ -44,7 +44,7 @@ def liquibaseCommand(command) {
         args "--referenceUrl=hibernate:spring:de.tum.in.www1.artemis.domain?dialect=org.hibernate.dialect.MySQL8Dialect&hibernate.physical_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy&hibernate.implicit_naming_strategy=org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy"
         args "--username=root"
         args "--password="
-        args "--url=jdbc:mysql://localhost:3306/Artemis?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
+        args "--url=jdbc:mysql://localhost:3306/ArTEMiS?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=utf8&useSSL=false&useLegacyDatetimeCode=false&serverTimezone=UTC"
         args "--driver=com.mysql.cj.jdbc.Driver"
         args command
     }
@@ -59,6 +59,12 @@ task liquibaseDiffChangeLog(dependsOn: initPaths) {
 task liquibaseClearChecksums(dependsOn: initPaths) {
     doLast {
         liquibaseCommand("clearChecksums")
+    }
+}
+
+task liquibaseGenerateChangelog(dependsOn: initPaths) {
+    doLast {
+        liquibaseCommand("generateChangelog")
     }
 }
 

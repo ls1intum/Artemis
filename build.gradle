@@ -256,6 +256,7 @@ dependencies {
     }
     implementation "io.springfox:springfox-bean-validators:3.0.0"
     implementation "mysql:mysql-connector-java:8.0.30"
+    implementation "org.postgresql:postgresql:42.5.0"
 
     implementation "org.zalando:problem-spring-web:0.27.0"
     implementation "com.ibm.icu:icu4j:71.1"
@@ -415,3 +416,5 @@ pitest {
 // 10) Detects uses of legacy code:                 ./gradlew modernizer -x webapp
 // 11) Run PIT Mutation Tests:                      ./gradlew pitest -x webapp
 // 12) Check for vulnerabilities in dependencies    ./gradlew dependencyCheckAnalyze
+// 13) Create changelog between Java and DB         ./gradlew liquibaseDiffChangeLog (make sure to set the correct username and password in liquibase.gradle)
+// 13) Generate initial schema from DB              ./gradlew liquibaseGenerateChangelog (make sure to set the correct username and password in liquibase.gradle)

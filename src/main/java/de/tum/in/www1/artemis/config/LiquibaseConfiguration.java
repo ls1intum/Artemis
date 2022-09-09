@@ -80,6 +80,8 @@ public class LiquibaseConfiguration {
 
     String migrationPathVersion5_10_3_String = "5.10.3";
 
+    String initialCheckSum5_10_3_String = "";
+
     private void checkMigrationPath(DataSource dataSource) {
 
         var currentVersion = new Semver(buildProperties.getVersion());
@@ -91,9 +93,17 @@ public class LiquibaseConfiguration {
             log.info("Migration path check: Not necessary");
         }
         if (currentVersion.isGreaterThanOrEqualTo(version600) && currentVersion.isLowerThan(version700)) {
-            var previousVersion = new Semver(getPreviousVersionElseThrow(dataSource));
+            var previousVersionString = getPreviousVersionElseThrow(dataSource);
+            if (previousVersionString == null) {
+                // this means Artemis was never started before and no DATABASECHANGELOG exists, we can simply proceed
+                return;
+            }
+            var previousVersion = new Semver(previousVersionString);
             if (previousVersion.isLowerThan(migrationPathVersion)) {
                 log.error("Cannot start Artemis. Please start the release {} first, otherwise the migration will fail", migrationPathVersion5_10_3_String);
+            }
+            else if (previousVersion.isEqualTo(migrationPathVersion)) {
+                updateInitialChecksum(dataSource, initialCheckSum5_10_3_String);
             }
         }
 
@@ -113,16 +123,46 @@ public class LiquibaseConfiguration {
                 + " first, otherwise the migration will fail";
         ResultSet result;
         try {
+            result = statement.executeQuery("SELECT * FROM DATABASECHANGELOG");
             result = statement.executeQuery("SELECT latest_version FROM artemis_version");
             if (result.next()) {
                 return result.getString("latest_version");
             }
+            // if no version exists, we fail here
             log.error(error);
             throw new RuntimeException(error);
         }
         catch (SQLException e) {
+            if (e.getMessage().contains("Table 'artemis_new.databasechangelog' doesn't exist")) {
+                return null;
+            }
             log.error(error);
             throw new RuntimeException(error, e);
+        }
+    }
+
+    private void updateInitialChecksum(DataSource dataSource, String newCheckSum) {
+        Statement statement;
+        try {
+            var connection = dataSource.getConnection();
+            statement = connection.createStatement();
+            statement.execute("""
+                        UPDATE
+                            `DATABASECHANGELOG`
+                        SET
+                            `DATEEXECUTED` = now(),
+                            `MD5SUM` = '%s',
+                            `DESCRIPTION` = 'Initial schema',
+                            `LIQUIBASE` = '4.15.0',
+                            `DEPLOYMENT_ID` = NULL,
+                            `FILENAME` = 'config/liquibase/changelog/00000000000000_initial_schema.xml'
+                        WHERE
+                            `ID` = '00000000000001'
+                        LIMIT 1;
+                    """.formatted(newCheckSum));
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
         }
 
     }
