@@ -24,6 +24,7 @@
             <column name="course_id" type="BIGINT"/>
             <column name="additional_information" type="LONGTEXT"/>
             <column name="language" type="VARCHAR(255)"/>
+            <column name="campus" type="VARCHAR(255)"/>
             <column name="location" type="LONGTEXT"/>
             <column name="capacity" type="INT"/>
         </createTable>

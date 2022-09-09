@@ -37,7 +37,6 @@ jest.mock('export-to-csv', () => ({
 describe('Course Group Component', () => {
     let comp: CourseGroupComponent;
     let fixture: ComponentFixture<CourseGroupComponent>;
-    let courseService: CourseManagementService;
     let userService: UserService;
     const courseGroup = CourseGroup.STUDENTS;
     const course = { id: 123, title: 'Course Title', isAtLeastInstructor: true, endDate: dayjs().subtract(5, 'minutes'), courseArchivePath: 'some-path' };
@@ -78,7 +77,6 @@ describe('Course Group Component', () => {
             .then(() => {
                 fixture = TestBed.createComponent(CourseGroupComponent);
                 comp = fixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
                 userService = TestBed.inject(UserService);
                 comp.userSearch = (searchTerm: string) => userService.search(searchTerm);
             });
@@ -148,7 +146,7 @@ describe('Course Group Component', () => {
         let user: User;
 
         beforeEach(() => {
-            addUserStub = jest.spyOn(comp, 'addUserToGroup').mockReturnValue(of({}));
+            addUserStub = jest.spyOn(comp, 'addUserToGroup').mockReturnValue(of(new HttpResponse<void>()));
             user = courseGroupUser;
             comp.allGroupUsers = [];
             comp.course = course;
@@ -180,7 +178,7 @@ describe('Course Group Component', () => {
         let removeUserStub: jest.SpyInstance;
 
         beforeEach(() => {
-            removeUserStub = jest.spyOn(comp, 'removeUserFromGroup').mockReturnValue(of({}));
+            removeUserStub = jest.spyOn(comp, 'removeUserFromGroup').mockReturnValue(of(new HttpResponse<void>()));
             comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
             comp.course = course;
             comp.courseGroup = courseGroup;

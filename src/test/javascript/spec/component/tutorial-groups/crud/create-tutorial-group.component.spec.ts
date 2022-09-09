@@ -82,6 +82,7 @@ describe('CreateTutorialGroupComponent', () => {
             capacity: 1,
             isOnline: true,
             location: 'Test Location',
+            campus: 'Garching',
         };
 
         const response: HttpResponse<TutorialGroup> = new HttpResponse({
@@ -109,6 +110,7 @@ describe('CreateTutorialGroupComponent', () => {
             expect(tutorialGroupCallArgument.capacity).toEqual(formData.capacity);
             expect(tutorialGroupCallArgument.isOnline).toEqual(formData.isOnline);
             expect(tutorialGroupCallArgument.location).toEqual(formData.location);
+            expect(tutorialGroupCallArgument.campus).toEqual(formData.campus);
 
             expect(createStub).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledOnce();

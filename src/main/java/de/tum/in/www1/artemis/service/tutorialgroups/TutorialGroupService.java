@@ -73,42 +73,19 @@ public class TutorialGroupService {
      * @return The students that could not be found and thus not registered.
      */
     public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs) {
-        Set<User> foundStudents = new HashSet();
+        Set<User> foundStudents = new HashSet<>();
         Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
         for (var studentDto : studentDTOs) {
-            var studentOptional = findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName());
-            if (studentOptional.isEmpty()) {
-                notFoundStudentDTOs.add(studentDto);
-            }
-            else {
-                foundStudents.add(studentOptional.get());
-            }
+            findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup);
         return notFoundStudentDTOs;
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {
-        var registrationNumber = studentDto.getRegistrationNumber();
-        var login = studentDto.getLogin();
-
-        // try to find the user by login
-        var studentByRegistrationNumber = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(registrationNumber);
-        if (studentByRegistrationNumber.isPresent()) {
-            var student = studentByRegistrationNumber.get();
-            if (student.getGroups().contains(studentCourseGroupName)) {
-                return studentByRegistrationNumber;
-            }
-        }
-        // try to find the student by login
-        var studentByLogin = userRepository.findUserWithGroupsAndAuthoritiesByLogin(login);
-        if (studentByLogin.isPresent()) {
-            var student = studentByLogin.get();
-            if (student.getGroups().contains(studentCourseGroupName)) {
-                return studentByLogin;
-            }
-        }
-        return Optional.empty();
+        var userOptional = userRepository.findUserWithGroupsAndAuthoritiesByRegistrationNumber(studentDto.getRegistrationNumber())
+                .or(() -> userRepository.findUserWithGroupsAndAuthoritiesByLogin(studentDto.getLogin()));
+        return userOptional.isPresent() && userOptional.get().getGroups().contains(studentCourseGroupName) ? userOptional : Optional.empty();
     }
 
 }

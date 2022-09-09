@@ -22,6 +22,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
     tutorialGroupSessionToCreate: TutorialGroupSession = new TutorialGroupSession();
     isLoading: boolean;
     tutorialGroup: TutorialGroup;
+    courseId: number;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -39,7 +40,8 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
                 take(1),
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    return this.tutorialGroupService.getOne(tutorialGroupId);
+                    this.courseId = Number(parentParams.get('courseId'));
+                    return this.tutorialGroupService.getOneOfCourse(this.courseId, tutorialGroupId);
                 }),
                 map((res: HttpResponse<TutorialGroup>) => res.body),
                 finalize(() => (this.isLoading = false)),

@@ -20,12 +20,15 @@
                     </div>
                 </div>
             </div>
-            <!--Additional Settings -->
+            <!--Online / Offline -->
             <div class="form-group">
-                <label>{{ 'artemisApp.tutorialGroupForm.additionalSettings.title' | artemisTranslate }}</label>
-                <div class="form-check form-switch">
-                    <label class="form-check-label" for="isOnline">{{ 'artemisApp.tutorialGroupForm.additionalSettings.isOnlineInput.label' | artemisTranslate }}</label>
-                    <input id="isOnline" type="checkbox" class="form-check-input" formControlName="isOnline" />
+                <label class="d-block">{{ 'artemisApp.tutorialGroupForm.isOnlineInput.label' | artemisTranslate }}</label>
+                <div class="btn-group" role="group">
+                    <input formControlName="isOnline" type="radio" class="btn-check" id="online" autocomplete="off" checked [value]="true" />
+                    <label class="btn btn-secondary" for="online">{{ 'artemisApp.manageTutorialGroups.columns.online' | artemisTranslate }}</label>
+
+                    <input formControlName="isOnline" type="radio" class="btn-check" id="offline" autocomplete="off" [value]="false" />
+                    <label class="btn btn-secondary" for="offline">{{ 'artemisApp.manageTutorialGroups.columns.offline' | artemisTranslate }}</label>
                 </div>
             </div>
             <!-- Teaching Assistant -->
@@ -52,6 +55,30 @@
                     </div>
                 </div>
             </div>
+            <!-- Campus -->
+            <div class="form-group">
+                <label for="campus">{{ 'artemisApp.tutorialGroupForm.campusInput.label' | artemisTranslate }}</label>
+                <input
+                    id="campus"
+                    type="text"
+                    class="form-control"
+                    formControlName="campus"
+                    [placeholder]="'artemisApp.tutorialGroupForm.campusInput.placeholder' | artemisTranslate"
+                    [inputFormatter]="campusFormatter"
+                    [resultFormatter]="campusFormatter"
+                    [ngbTypeahead]="campusSearch"
+                    [editable]="true"
+                    #campusInput="ngbTypeahead"
+                    (focus)="campusFocus$.next($any($event).target.value)"
+                    (click)="campusClick$.next($any($event).target.value)"
+                />
+                <small id="campusHelp" class="form-text text-muted">{{ 'artemisApp.tutorialGroupForm.campusInput.campusHelp' | artemisTranslate }}</small>
+                <div *ngIf="campusControl?.invalid && (campusControl?.dirty || campusControl?.touched)" class="alert alert-danger">
+                    <div *ngIf="campusControl?.errors?.max">
+                        {{ 'artemisApp.tutorialGroupForm.campusInput.maxLengthValidationError' | artemisTranslate: { max: '255' } }}
+                    </div>
+                </div>
+            </div>
             <!-- Location -->
             <div class="form-group">
                 <label *ngIf="isOnlineControl!.value" for="location">{{ 'artemisApp.tutorialGroupForm.locationInput.labelOnline' | artemisTranslate }}</label>
@@ -59,7 +86,7 @@
                 <textarea
                     class="form-control"
                     id="location"
-                    rows="2"
+                    rows="1"
                     formControlName="location"
                     [placeholder]="
                         (isOnlineControl!.value ? 'artemisApp.tutorialGroupForm.locationInput.placeholderOnline' : 'artemisApp.tutorialGroupForm.locationInput.placeholderOffline')
@@ -73,7 +100,7 @@
                 </div>
             </div>
 
-            <!-- Capacity, Language -->
+            <!-- Capacity -->
             <div class="row">
                 <div class="col-auto">
                     <label for="capacity">{{ 'artemisApp.tutorialGroupForm.capacityInput.label' | artemisTranslate }}</label>
@@ -82,12 +109,16 @@
                         <div class="input-group-text">{{ 'artemisApp.tutorialGroupForm.capacityInput.unit' | artemisTranslate }}</div>
                     </div>
                 </div>
-                <div class="col-auto my-auto">
-                    <label for="language">{{ 'artemisApp.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
-                    <select id="language" class="form-select" formControlName="language">
-                        <option [value]="GERMAN">{{ 'artemisApp.tutorialGroupForm.languageInput.german' | artemisTranslate }}</option>
-                        <option [value]="ENGLISH">{{ 'artemisApp.tutorialGroupForm.languageInput.english' | artemisTranslate }}</option>
-                    </select>
+            </div>
+            <!--Language -->
+            <div class="form-group">
+                <label class="d-block">{{ 'artemisApp.tutorialGroupForm.languageInput.label' | artemisTranslate }}</label>
+                <div class="btn-group" role="group">
+                    <input formControlName="language" type="radio" class="btn-check" id="german" autocomplete="off" checked [value]="GERMAN" />
+                    <label class="btn btn-secondary" for="german">{{ 'artemisApp.tutorialGroupForm.languageInput.german' | artemisTranslate }}</label>
+
+                    <input formControlName="language" type="radio" class="btn-check" id="english" autocomplete="off" [value]="ENGLISH" />
+                    <label class="btn btn-secondary" for="english">{{ 'artemisApp.tutorialGroupForm.languageInput.english' | artemisTranslate }}</label>
                 </div>
             </div>
             <!-- Validation Errors for the smaller input from above-->
@@ -100,19 +131,18 @@
             </div>
             <!-- Additional Information -->
             <div class="form-group">
-                <label for="additionalInformation">{{ 'artemisApp.tutorialGroupForm.additionalInformationInput.label' | artemisTranslate }}</label>
-                <textarea
-                    class="form-control"
-                    id="additionalInformation"
-                    rows="6"
-                    formControlName="additionalInformation"
-                    [placeholder]="'artemisApp.tutorialGroupForm.additionalInformationInput.placeholder' | artemisTranslate"
-                ></textarea>
-                <div *ngIf="additionalInformationControl?.invalid && (additionalInformationControl?.dirty || additionalInformationControl?.touched)" class="alert alert-danger">
-                    <div *ngIf="additionalInformationControl?.errors?.maxlength">
-                        {{ 'artemisApp.tutorialGroupForm.additionalInformationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
-                    </div>
-                </div>
+                <label class="d-block" for="additionalInfo">{{ 'artemisApp.tutorialGroupForm.additionalInformationInput.label' | artemisTranslate }}</label>
+                <small id="additionalInfoHelp" class="form-text mb-1 text-muted">
+                    <a href="https://guides.github.com/features/mastering-markdown/"> GitHub Markdown Guide</a>
+                </small>
+                <!-- not included in reactive form -->
+                <jhi-markdown-editor
+                    aria-describedby="additionalInfoHelp"
+                    id="additionalInfo"
+                    class="markdown-editor"
+                    [(markdown)]="additionalInformation"
+                    [enableResize]="true"
+                ></jhi-markdown-editor>
             </div>
             <hr />
             <div class="form-check">

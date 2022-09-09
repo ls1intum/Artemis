@@ -22,15 +22,19 @@ export class TutorialGroupsService {
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
     ) {}
 
+    getUniqueCampusValues(courseId: number): Observable<HttpResponse<string[]>> {
+        return this.httpClient.get<string[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/campus-values`, { observe: 'response' });
+    }
+
     getAllOfCourse(courseId: number): Observable<EntityArrayResponseType> {
         return this.httpClient
             .get<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups`, { observe: 'response' })
             .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupResponseArrayDatesFromServer(res)));
     }
 
-    getOne(tutorialGroupId: number) {
+    getOneOfCourse(courseId: number, tutorialGroupId: number) {
         return this.httpClient
-            .get<TutorialGroup>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' })
+            .get<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
@@ -41,29 +45,29 @@ export class TutorialGroupsService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    update(tutorialGroup: TutorialGroup): Observable<EntityResponseType> {
+    update(courseId: number, tutorialGroupId: number, tutorialGroup: TutorialGroup): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupDatesFromClient(tutorialGroup);
         return this.httpClient
-            .put<TutorialGroup>(`${this.resourceURL}/tutorial-groups`, copy, { observe: 'response' })
+            .put<TutorialGroup>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, copy, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupResponseDatesFromServer(res)));
     }
 
-    deregisterStudent(tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
+    deregisterStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/deregister/${login}`, { observe: 'response' });
     }
 
-    registerStudent(tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
-        return this.httpClient.post<void>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/register/${login}`, {}, { observe: 'response' });
+    registerStudent(courseId: number, tutorialGroupId: number, login: string): Observable<HttpResponse<void>> {
+        return this.httpClient.post<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register/${login}`, {}, { observe: 'response' });
     }
 
-    registerMultipleStudents(tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
-        return this.httpClient.post<StudentDTO[]>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
+    registerMultipleStudents(courseId: number, tutorialGroupId: number, studentDtos: StudentDTO[]): Observable<HttpResponse<StudentDTO[]>> {
+        return this.httpClient.post<StudentDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/register-multiple`, studentDtos, {
             observe: 'response',
         });
     }
 
-    delete(tutorialGroupId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
+    delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}`, { observe: 'response' });
     }
 
     private convertTutorialGroupDatesFromServer(tutorialGroup: TutorialGroup): TutorialGroup {

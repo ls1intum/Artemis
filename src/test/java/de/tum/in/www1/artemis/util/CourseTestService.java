@@ -1290,7 +1290,11 @@ public class CourseTestService {
         assertThat(updatedCourse.getCourseArchivePath()).isNotEmpty();
     }
 
-    // Test
+    /**
+     * Test
+     *
+     * @throws Exception
+     */
     public void searchStudentsInCourse() throws Exception {
         var course = database.createCourse();
 

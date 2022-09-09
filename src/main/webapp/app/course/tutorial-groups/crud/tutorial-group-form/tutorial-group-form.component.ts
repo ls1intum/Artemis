@@ -11,6 +11,7 @@ import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import _ from 'lodash';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -20,6 +21,7 @@ export interface TutorialGroupFormData {
     isOnline?: boolean;
     location?: string;
     language?: Language;
+    campus?: string;
     schedule?: ScheduleFormData;
 }
 
@@ -43,6 +45,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         isOnline: undefined,
         location: undefined,
         language: undefined,
+        campus: undefined,
     };
     GERMAN = Language.GERMAN;
     ENGLISH = Language.ENGLISH;
@@ -52,17 +55,31 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
 
     form: FormGroup;
+    // not included in reactive form
+    additionalInformation: string | undefined;
+
     teachingAssistantsAreLoading = false;
     teachingAssistants: UserWithLabel[];
-    @ViewChild('teachingAssistantInput') taTypeAhead: NgbTypeahead;
+    @ViewChild('teachingAssistantInput', { static: true }) taTypeAhead: NgbTypeahead;
     taFocus$ = new Subject<string>();
     taClick$ = new Subject<string>();
+
+    campusAreLoading = false;
+    campus: string[];
+    @ViewChild('campusInput', { static: true }) campusTypeAhead: NgbTypeahead;
+    campusFocus$ = new Subject<string>();
+    campusClick$ = new Subject<string>();
 
     configureSchedule = true;
     @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
     existingScheduleFormDate: ScheduleFormData | undefined;
 
-    constructor(private fb: FormBuilder, private courseManagementService: CourseManagementService, private alertService: AlertService) {}
+    constructor(
+        private fb: FormBuilder,
+        private courseManagementService: CourseManagementService,
+        private tutorialGroupService: TutorialGroupsService,
+        private alertService: AlertService,
+    ) {}
 
     get titleControl() {
         return this.form.get('title');
@@ -74,6 +91,10 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     get additionalInformationControl() {
         return this.form.get('additionalInformation');
+    }
+
+    get campusControl() {
+        return this.form.get('campus');
     }
 
     get capacityControl() {
@@ -102,6 +123,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     ngOnInit(): void {
         this.getTeachingAssistantsInCourse();
+        this.getUniqueCampusValuesOfCourse();
         this.initializeForm();
     }
 
@@ -114,6 +136,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     submitForm() {
         const tutorialGroupFormData: TutorialGroupFormData = { ...this.form.value };
+        tutorialGroupFormData.additionalInformation = this.additionalInformation;
         if (!this.configureSchedule) {
             tutorialGroupFormData.schedule = undefined;
         }
@@ -126,14 +149,25 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     taFormatter = (user: UserWithLabel) => user.label;
     taSearch: OperatorFunction<string, readonly UserWithLabel[]> = (text$: Observable<string>) => {
-        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
-        const clicksWithClosedPopup$ = this.taClick$.pipe(filter(() => !this.taTypeAhead.isPopupOpen()));
-        const inputFocus$ = this.taFocus$;
-
-        return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
+        return this.mergeSearch$(text$, this.taFocus$, this.taClick$, this.taTypeAhead).pipe(
             map((term) => (term === '' ? this.teachingAssistants : this.teachingAssistants.filter((ta) => ta.label.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
+
+    campusFormatter = (campus: string) => campus;
+
+    campusSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
+        return this.mergeSearch$(text$, this.campusFocus$, this.campusClick$, this.campusTypeAhead).pipe(
+            map((term) => (term === '' ? this.campus : this.campus.filter((campus) => campus.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+        );
+    };
+
+    private mergeSearch$(text$: Observable<string>, focus$: Subject<string>, click$: Subject<string>, typeahead: NgbTypeahead) {
+        const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
+        const clicksWithClosedPopup$ = click$.pipe(filter(() => typeahead && !typeahead.isPopupOpen()));
+        return merge(debouncedText$, focus$, clicksWithClosedPopup$);
+    }
+
     private initializeForm() {
         if (this.form) {
             return;
@@ -142,11 +176,11 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.form = this.fb.group({
             title: [undefined, [Validators.required, Validators.maxLength(255), Validators.pattern(nonWhitespaceRegExp)]],
             teachingAssistant: [undefined, [Validators.required]],
-            additionalInformation: [undefined, [Validators.maxLength(2000)]],
             capacity: [undefined, [Validators.min(1)]],
             isOnline: [false],
             location: [undefined, [Validators.maxLength(2000)]],
             language: [this.GERMAN],
+            campus: [undefined, Validators.maxLength(255)],
         });
     }
 
@@ -157,6 +191,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         this.configureSchedule = !!formData.schedule;
         this.existingScheduleFormDate = formData.schedule;
         this.form.patchValue(formData);
+        this.additionalInformation = formData.additionalInformation;
     }
 
     private createUserWithLabel(user: User): UserWithLabel {
@@ -196,6 +231,24 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
             ),
         ).subscribe((users: UserWithLabel[]) => {
             this.teachingAssistants = users;
+        });
+    }
+
+    private getUniqueCampusValuesOfCourse() {
+        return concat(
+            of([]), // default items
+            this.tutorialGroupService.getUniqueCampusValues(this.course.id!).pipe(
+                catchError((res: HttpErrorResponse) => {
+                    onError(this.alertService, res);
+                    return of([]);
+                }),
+                map((res: HttpResponse<string[]>) => res.body!),
+                finalize(() => {
+                    this.campusAreLoading = false;
+                }),
+            ),
+        ).subscribe((campus: string[]) => {
+            this.campus = campus;
         });
     }
 }

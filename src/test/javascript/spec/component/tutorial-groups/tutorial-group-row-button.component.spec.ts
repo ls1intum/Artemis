@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
@@ -7,6 +7,7 @@ import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../helpers/mocks/directive/mock-router-link.directive';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -14,7 +15,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupRowButtonsComponent, MockComponent(FaIconComponent), MockRouterLinkDirective],
+            declarations: [TutorialGroupRowButtonsComponent, MockComponent(FaIconComponent), MockRouterLinkDirective, MockDirective(DeleteButtonDirective)],
             providers: [MockProvider(TutorialGroupsService)],
         })
             .compileComponents()
@@ -38,7 +39,7 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
         fixture.detectChanges();
         component.deleteTutorialGroup();
-        expect(deleteSpy).toHaveBeenCalledWith(tutorialGroup.id);
+        expect(deleteSpy).toHaveBeenCalledWith(courseId, tutorialGroup.id);
         expect(deleteEventSpy).toHaveBeenCalledOnce();
     });
 });

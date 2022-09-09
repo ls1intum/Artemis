@@ -31,6 +31,8 @@ class CourseGroupStubComponent {
     @Input()
     exportFileName: string;
     @Input()
+    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
+    @Input()
     addUserToGroup: (login: string) => Observable<any> = () => of({});
     @Input()
     removeUserFromGroup: (login: string) => Observable<any> = () => of({});
@@ -98,7 +100,7 @@ describe('Registered Students Component', () => {
                 registrationTwo.type = TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION;
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
-                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOne').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+                getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
             });
     });
 
@@ -118,7 +120,7 @@ describe('Registered Students Component', () => {
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();
-            expect(getTutorialGroupSpy).toHaveBeenCalledWith(tutorialGroup.id);
+            expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id);
             expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));
         });
     });

@@ -43,6 +43,7 @@
                 "offline": "Offline",
                 "location": "Ort",
                 "language": "Sprache",
+                "campus": "Campus",
                 "additionalInfo": "Zusätzliche Informationen",
                 "schedule": {
                     "weekDay": "Wochentag",
@@ -83,6 +84,14 @@
                 "requiredValidationError": "Ein Tutor muss für diese Gruppe ausgewählt werden!",
                 "taHelp": "Du kannst nach einem Tutor suchen indem du in dieses Feld tippst"
             },
+            "campusInput": {
+                "label": "Campus",
+                "placeholder": "Wähle einen Campus aus, auf dem diese Gruppe stattfindet",
+                "loadingText": "Lade Campusse...",
+                "notFoundText": "Keine Campusse gefunden",
+                "campusHelp": "Du kannst nach Campusse suchen indem du in dieses Feld tippst",
+                "maxLengthValidationError": "Campus ist beschränkt auf {{ max }} Zeichen!"
+            },
             "additionalInformationInput": {
                 "label": "Zusätzliche Informationen",
                 "placeholder": "Zusätzliche Informationen zu dieser Gruppe",
@@ -106,11 +115,8 @@
                 "english": "Englisch",
                 "german": "Deutsch"
             },
-            "additionalSettings": {
-                "title": "Zusätzliche Einstellungen",
-                "isOnlineInput": {
-                    "label": "Trifft sich diese Gruppe online? (Online-Übungsgruppe)"
-                }
+            "isOnlineInput": {
+                "label": "Trifft sich diese Gruppe online oder offline?"
             }
         },
         "scheduleForm": {

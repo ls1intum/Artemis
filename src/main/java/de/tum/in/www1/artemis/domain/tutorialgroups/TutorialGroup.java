@@ -35,7 +35,6 @@ public class TutorialGroup extends DomainObject {
     private String title;
 
     @Column(name = "additional_information")
-    @Size(max = 2000)
     @Lob
     private String additionalInformation;
 
@@ -51,6 +50,10 @@ public class TutorialGroup extends DomainObject {
     @Size(max = 2000)
     @Lob
     private String location;
+
+    @Column(name = "campus")
+    @Size(min = 1, max = 256)
+    private String campus;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "language")
@@ -176,5 +179,13 @@ public class TutorialGroup extends DomainObject {
 
     public void setRegistrations(Set<TutorialGroupRegistration> registrations) {
         this.registrations = registrations;
+    }
+
+    public String getCampus() {
+        return campus;
+    }
+
+    public void setCampus(String campus) {
+        this.campus = campus;
     }
 }

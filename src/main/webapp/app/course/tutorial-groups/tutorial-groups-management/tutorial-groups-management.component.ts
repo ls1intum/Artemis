@@ -11,7 +11,7 @@ import { Course, Language } from 'app/entities/course.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { switchMap } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
-import { getDayTranslationKey, weekDays } from '../shared/weekdays';
+import { getDayTranslationKey } from '../shared/weekdays';
 
 @Component({
     selector: 'jhi-tutorial-groups-management',

@@ -24,9 +24,10 @@ import { CancellationModalComponent } from './schedule-management/cancellation-m
 import { TutorialFreeDaysComponent } from './tutorial-free-days/tutorial-free-days.component';
 import { TutorialFreeDayFormComponent } from './tutorial-free-days/crud/tutorial-free-day-form/tutorial-free-day-form.component';
 import { CreateTutorialGroupFreeDayComponent } from './tutorial-free-days/crud/create-tutorial-group-free-day/create-tutorial-group-free-day.component';
+import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, CalendarModule, OwlDateTimeModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule, CalendarModule, OwlDateTimeModule],
     declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,

@@ -69,7 +69,7 @@
             "columns": {
                 "id": "ID",
                 "title": "Title",
-                "teachingAssistant": "Teaching Assistant",
+                "teachingAssistant": "Tutor",
                 "capacity": "Capacity",
                 "registeredStudents": "Registered Students",
                 "isOnline": "Online/Offline",
@@ -134,12 +134,20 @@
                 "maxLengthValidationError": "Title can be max {{ max }} characters long!"
             },
             "teachingAssistantInput": {
-                "label": "Teaching Assistant",
-                "placeholder": "Select a teaching assistant that will be responsible for this group.",
-                "loadingText": "Loading teaching assistants...",
-                "notFoundText": "No teaching assistants found in this course.",
-                "requiredValidationError": "A tutorial groups needs a teaching assistant assigned!",
-                "taHelp": "You can search for a teaching assistant by typing into the field."
+                "label": "Tutor",
+                "placeholder": "Select a tutor that will be responsible for this group.",
+                "loadingText": "Loading tutors...",
+                "notFoundText": "No tutors found.",
+                "requiredValidationError": "A tutorial groups needs a tutor assigned!",
+                "taHelp": "You can search by typing into the field."
+            },
+            "campusInput": {
+                "label": "Campus",
+                "placeholder": "Select a campus where this group meets.",
+                "loadingText": "Loading campus...",
+                "notFoundText": "No campus found.",
+                "campusHelp": "You can search for a campus used in other tutorial groups by typing into the field.",
+                "maxLengthValidationError": "Campus is limited to {{ max }} characters!"
             },
             "additionalInformationInput": {
                 "label": "Additional Information",
@@ -164,11 +172,8 @@
                 "english": "English",
                 "german": "German"
             },
-            "additionalSettings": {
-                "title": "Settings",
-                "isOnlineInput": {
-                    "label": "Does this tutorial group meet online? (Online-Tutorial)"
-                }
+            "isOnlineInput": {
+                "label": "Does this tutorial group meet online of offline?"
             }
         },
         "scheduleForm": {

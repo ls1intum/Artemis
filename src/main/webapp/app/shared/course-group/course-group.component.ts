@@ -6,7 +6,6 @@ import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { ActionType } from 'app/shared/delete-dialog/delete-dialog.model';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
-import { UserService } from 'app/core/user/user.service';
 import { DataTableComponent } from 'app/shared/data-table/data-table.component';
 import { iconsAsHTML } from 'app/utils/icons.utils';
 import { ExportToCsv } from 'export-to-csv';
@@ -49,11 +48,11 @@ export class CourseGroupComponent implements OnDestroy {
     exportFileName: string;
 
     @Input()
-    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>>;
+    userSearch: (loginOrName: string) => Observable<HttpResponse<User[]>> = () => of(new HttpResponse<User[]>({ body: [] }));
     @Input()
-    addUserToGroup: (login: string) => Observable<any> = () => of({});
+    addUserToGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
     @Input()
-    removeUserFromGroup: (login: string) => Observable<any> = () => of({});
+    removeUserFromGroup: (login: string) => Observable<HttpResponse<void>> = () => of(new HttpResponse<void>());
     @Input()
     handleUsersSizeChange: (filteredUsersSize: number) => void = () => {};
 

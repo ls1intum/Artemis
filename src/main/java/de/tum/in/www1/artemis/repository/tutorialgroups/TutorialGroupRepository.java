@@ -23,7 +23,13 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
                 WHERE tutorialGroup.id = :tutorialGroupId
             """)
     @Cacheable(cacheNames = "tutorialGroupTitle", key = "#tutorialGroupId", unless = "#result == null")
-    String getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
+    Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
+
+    @Query("""
+            SELECT DISTINCT tutorialGroup.campus
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.course.id = :#{#courseId} AND tutorialGroup.campus IS NOT NULL""")
+    Set<String> findAllUniqueCampusValuesInCourse(@Param("courseId") Long courseId);
 
     @Query("""
             SELECT tutorialGroup
@@ -32,7 +38,7 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
             ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseId(@Param("courseId") Long courseId);
 
-    Optional<TutorialGroup> findByTitle(String title);
+    boolean existsByTitleAndCourse(String title, Course course);
 
     @Query("""
             SELECT tutorialGroup

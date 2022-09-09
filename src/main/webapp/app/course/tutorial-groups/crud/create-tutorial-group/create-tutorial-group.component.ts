@@ -59,7 +59,7 @@ export class CreateTutorialGroupComponent implements OnInit {
             return;
         }
 
-        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, schedule } = formData;
+        const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, location, campus, schedule } = formData;
 
         this.tutorialGroupToCreate.title = title;
         this.tutorialGroupToCreate.teachingAssistant = teachingAssistant;
@@ -68,6 +68,8 @@ export class CreateTutorialGroupComponent implements OnInit {
         this.tutorialGroupToCreate.isOnline = isOnline;
         this.tutorialGroupToCreate.language = language;
         this.tutorialGroupToCreate.location = location;
+        this.tutorialGroupToCreate.campus = campus;
+
         if (schedule) {
             this.tutorialGroupToCreate.tutorialGroupSchedule = new TutorialGroupSchedule();
             if (schedule.period && schedule.period.length === 2) {

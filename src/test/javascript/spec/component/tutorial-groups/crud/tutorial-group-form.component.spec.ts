@@ -6,10 +6,19 @@ import { TutorialGroupFormComponent, TutorialGroupFormData } from 'app/course/tu
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
-import { CourseGroup } from 'app/entities/course.model';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
 import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
+import { EventEmitter, Input, Output } from '@angular/core';
+import { Component } from '@angular/core';
+
+@Component({ selector: 'jhi-markdown-editor', template: '' })
+class MarkdownEditorStubComponent {
+    @Input() markdown: string;
+    @Input() enableResize = false;
+    @Output() markdownChange = new EventEmitter<string>();
+}
 
 describe('TutorialGroupFormComponent', () => {
     let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;
@@ -18,10 +27,15 @@ describe('TutorialGroupFormComponent', () => {
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule],
-            declarations: [TutorialGroupFormComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [TutorialGroupFormComponent, MarkdownEditorStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(CourseManagementService, {
-                    getAllUsersInCourseGroup: (courseId: number, courseGroup: CourseGroup) => {
+                    getAllUsersInCourseGroup: () => {
+                        return of(new HttpResponse({ body: [] }));
+                    },
+                }),
+                MockProvider(TutorialGroupsService, {
+                    getUniqueCampusValues: () => {
                         return of(new HttpResponse({ body: [] }));
                     },
                 }),
@@ -70,11 +84,11 @@ describe('TutorialGroupFormComponent', () => {
 
         tutorialGroupFormComponent.titleControl!.setValue('example');
         tutorialGroupFormComponent.capacityControl!.setValue(1);
-        tutorialGroupFormComponent.additionalInformationControl!.setValue('example');
         tutorialGroupFormComponent.isOnlineControl?.setValue(true);
         tutorialGroupFormComponent.teachingAssistantControl!.setValue(exampleTeachingAssistant);
         tutorialGroupFormComponent.languageControl!.setValue('GERMAN');
         tutorialGroupFormComponent.locationControl!.setValue('example');
+        tutorialGroupFormComponent.campusControl!.setValue('Garching');
 
         tutorialGroupFormComponentFixture.detectChanges();
         expect(tutorialGroupFormComponent.form.valid).toBeTrue();
@@ -90,11 +104,11 @@ describe('TutorialGroupFormComponent', () => {
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 title: 'example',
                 teachingAssistant: exampleTeachingAssistant,
-                additionalInformation: 'example',
                 capacity: 1,
                 isOnline: true,
                 language: 'GERMAN',
                 location: 'example',
+                campus: 'Garching',
             });
 
             submitFormSpy.mockRestore();
