@@ -13,6 +13,7 @@ export interface ScheduleFormData {
     endTime?: string;
     repetitionFrequency?: number;
     period?: Date[];
+    location?: string;
 }
 
 @Injectable()
@@ -75,6 +76,10 @@ export class ScheduleFormComponent implements OnInit {
         return !_.isEqual(this.defaultPeriod, this.formGroup.get('period')!.value);
     }
 
+    get parentIsOnlineControl() {
+        return this.parentFormGroup.get('isOnline');
+    }
+
     get periodControl() {
         return this.formGroup.get('period');
     }
@@ -85,6 +90,10 @@ export class ScheduleFormComponent implements OnInit {
 
     get endTimeControl() {
         return this.formGroup.get('endTime');
+    }
+
+    get locationControl() {
+        return this.formGroup.get('location');
     }
 
     get repetitionFrequencyControl() {
@@ -129,6 +138,7 @@ export class ScheduleFormComponent implements OnInit {
                 endTime: ['14:00:00', [Validators.required]],
                 repetitionFrequency: [1, [Validators.required, Validators.min(1), Validators.max(7)]],
                 period: [this.defaultPeriod, [Validators.required]],
+                location: [undefined, [Validators.required]],
             },
             { validators: validTimeRange },
         );

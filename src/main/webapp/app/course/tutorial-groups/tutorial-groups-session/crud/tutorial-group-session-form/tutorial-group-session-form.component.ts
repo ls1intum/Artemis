@@ -49,6 +49,7 @@ export interface TutorialGroupSessionFormData {
     date?: Date;
     startTime?: string;
     endTime?: string;
+    location?: string;
 }
 
 @Component({
@@ -81,6 +82,10 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
 
     get endTimeControl() {
         return this.form.get('endTime');
+    }
+
+    get locationControl() {
+        return this.form.get('location');
     }
 
     get isSubmitPossible() {
@@ -118,6 +123,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
                 startTime: ['13:00:00', [Validators.required]],
                 endTime: ['14:00:00', [Validators.required]],
                 date: [undefined, [Validators.required]],
+                location: [undefined, [Validators.required]],
             },
             { validators: validTimeRange },
         );

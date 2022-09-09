@@ -10,6 +10,7 @@ export class TutorialGroupSchedule implements BaseEntity {
     public startTime?: string;
     public endTime?: string;
     public repetitionFrequency?: number;
+    public location?: string;
     public validFromInclusive?: dayjs.Dayjs;
     public validToInclusive?: dayjs.Dayjs;
     public tutorialGroupSessions?: TutorialGroupSession[];

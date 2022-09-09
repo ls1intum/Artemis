@@ -72,6 +72,7 @@ export class EditTutorialGroupComponent implements OnInit {
                                 startTime: this.tutorialGroupSchedule.startTime,
                                 endTime: this.tutorialGroupSchedule.endTime,
                                 dayOfWeek: this.tutorialGroupSchedule.dayOfWeek,
+                                location: this.tutorialGroupSchedule.location,
                             };
                         }
                     }
@@ -94,7 +95,7 @@ export class EditTutorialGroupComponent implements OnInit {
             if (!this.tutorialGroup.tutorialGroupSchedule) {
                 this.tutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
             }
-            const { endTime, startTime, dayOfWeek, repetitionFrequency, period } = schedule;
+            const { endTime, startTime, dayOfWeek, repetitionFrequency, period, location } = schedule;
             if (period && period.length === 2) {
                 this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs(period[0]);
                 this.tutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs(period[1]);
@@ -103,6 +104,7 @@ export class EditTutorialGroupComponent implements OnInit {
             this.tutorialGroup.tutorialGroupSchedule.startTime = startTime;
             this.tutorialGroup.tutorialGroupSchedule.endTime = endTime;
             this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = repetitionFrequency;
+            this.tutorialGroup.tutorialGroupSchedule.location = location;
         } else {
             this.tutorialGroup.tutorialGroupSchedule = undefined;
         }

@@ -14,6 +14,9 @@
             <column name="end_time" type="TIME">
                 <constraints nullable="false"/>
             </column>
+            <column name="location" type="LONGTEXT">
+                <constraints nullable="false"/>
+            </column>
             <column name="repetition_frequency" type="SMALLINT">
                 <constraints nullable="false"/>
             </column>
@@ -35,6 +38,9 @@
                 <constraints nullable="false"/>
             </column>
             <column name="end" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="location" type="LONGTEXT">
                 <constraints nullable="false"/>
             </column>
             <column name="status" type="VARCHAR(255)">

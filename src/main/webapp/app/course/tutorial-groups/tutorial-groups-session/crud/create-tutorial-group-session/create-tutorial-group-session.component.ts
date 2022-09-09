@@ -57,11 +57,12 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
     }
 
     createTutorialGroupSession(formData: TutorialGroupSessionFormData) {
-        const { date, startTime, endTime } = formData;
+        const { date, startTime, endTime, location } = formData;
 
         // we send it already in utc
         this.tutorialGroupSessionToCreate.start = this.createUTC(date!, startTime!);
         this.tutorialGroupSessionToCreate.end = this.createUTC(date!, endTime!);
+        this.tutorialGroupSessionToCreate.location = location;
         this.isLoading = true;
         this.tutorialGroupSessionService
             .create(this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)

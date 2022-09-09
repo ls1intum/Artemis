@@ -64,6 +64,29 @@
                 </div>
             </div>
         </div>
+        <!-- Location -->
+        <div class="form-group">
+            <label *ngIf="parentIsOnlineControl!.value" for="location">{{ 'artemisApp.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</label>
+            <label *ngIf="!parentIsOnlineControl!.value" for="location">{{ 'artemisApp.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</label>
+            <textarea
+                class="form-control"
+                id="location"
+                rows="1"
+                formControlName="location"
+                [placeholder]="
+                    (parentIsOnlineControl!.value ? 'artemisApp.scheduleForm.locationInput.placeholderOnline' : 'artemisApp.scheduleForm.locationInput.placeholderOffline')
+                        | artemisTranslate
+                "
+            ></textarea>
+            <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
+                <div *ngIf="locationControl?.errors?.maxlength">
+                    {{ 'artemisApp.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
+                </div>
+                <div *ngIf="locationControl?.errors?.required">
+                    {{ 'artemisApp.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
+                </div>
+            </div>
+        </div>
         <!-- Period -->
         <div>
             <div *ngIf="defaultPeriodChanged" class="alert alert-warning" role="alert">

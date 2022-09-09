@@ -79,6 +79,7 @@ export class CreateTutorialGroupComponent implements OnInit {
             this.tutorialGroupToCreate.tutorialGroupSchedule.startTime = schedule.startTime;
             this.tutorialGroupToCreate.tutorialGroupSchedule.endTime = schedule.endTime;
             this.tutorialGroupToCreate.tutorialGroupSchedule.repetitionFrequency = schedule.repetitionFrequency;
+            this.tutorialGroupToCreate.tutorialGroupSchedule.location = schedule.location;
         }
 
         this.isLoading = true;

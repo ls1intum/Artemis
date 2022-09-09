@@ -189,6 +189,14 @@
                 "minValidationError": "Repetition frequency must be at least {{min}}!",
                 "maxValidationError": "Repetition frequency must be at most {{max}}!"
             },
+            "locationInput": {
+                "labelOnline": "Meeting Link",
+                "labelOffline": "Meeting Place",
+                "placeholderOnline": "How can the students join the online meeting?",
+                "placeholderOffline": "How can the students find the room?",
+                "maxLengthValidationError": "Location is limited to {{ max }} characters!",
+                "requiredValidationError": "You need to enter a location!"
+            },
             "weekDay": {
                 "label": "Weekday on which the tutorial group meets",
                 "monday": "Monday",

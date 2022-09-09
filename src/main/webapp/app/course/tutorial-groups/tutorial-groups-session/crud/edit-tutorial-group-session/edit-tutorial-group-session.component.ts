@@ -56,6 +56,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
                             date: session.start?.toDate(),
                             startTime: session.start?.format('HH:mm:ss'),
                             endTime: session.end?.format('HH:mm:ss'),
+                            location: session.location,
                         };
                     }
                 },
@@ -64,11 +65,12 @@ export class EditTutorialGroupSessionComponent implements OnInit {
     }
 
     updateSession(formData: TutorialGroupSessionFormData) {
-        const { date, startTime, endTime } = formData;
+        const { date, startTime, endTime, location } = formData;
 
         // we send it already in utc
         this.session.start = this.createUTC(date!, startTime!);
         this.session.end = this.createUTC(date!, endTime!);
+        this.session.location = location;
         this.isLoading = true;
         this.tutorialGroupSessionService
             .update(this.courseId, this.tutorialGroupId, this.sessionId, this.session)

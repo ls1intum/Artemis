@@ -70,7 +70,7 @@ public class TutorialGroupScheduleService {
             else {
                 session.setStatus(TutorialGroupSessionStatus.ACTIVE);
             }
-
+            session.setLocation(tutorialGroupSchedule.getLocation());
             sessions.add(session);
 
             sessionStart = sessionStart.plusWeeks(tutorialGroupSchedule.getRepetitionFrequency());

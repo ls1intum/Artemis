@@ -34,6 +34,11 @@ public class TutorialGroupSession extends DomainObject {
     @Size(min = 1, max = 256)
     private String statusExplanation;
 
+    @Column(name = "location")
+    @Size(max = 2000)
+    @Lob
+    private String location;
+
     @ManyToOne
     @JoinColumn(name = "tutorial_group_schedule_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -92,5 +97,13 @@ public class TutorialGroupSession extends DomainObject {
 
     public void setStatusExplanation(String statusExplanation) {
         this.statusExplanation = statusExplanation;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }

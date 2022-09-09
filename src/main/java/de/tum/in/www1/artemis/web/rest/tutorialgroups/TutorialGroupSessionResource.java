@@ -112,6 +112,7 @@ public class TutorialGroupSessionResource {
         // ToDo: Handle overlap case
         sessionFromDatabase.setStart(tutorialGroupSession.getStart());
         sessionFromDatabase.setEnd(tutorialGroupSession.getEnd());
+        sessionFromDatabase.setLocation(tutorialGroupSession.getLocation());
 
         // if the session belongs to a schedule we have to cut the connection to mark that it does not follow the schedule anymore
         if (sessionFromDatabase.getTutorialGroupSchedule() != null) {

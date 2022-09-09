@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Objects;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -44,6 +45,11 @@ public class TutorialGroupSchedule extends DomainObject {
     @Column(name = "valid_to_inclusive")
     private LocalDate validToInclusive;
 
+    @Column(name = "location")
+    @Size(max = 2000)
+    @Lob
+    private String location;
+
     @OneToMany(mappedBy = "tutorialGroupSchedule", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
     @JsonIgnoreProperties("tutorialGroupSchedule")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -52,7 +58,7 @@ public class TutorialGroupSchedule extends DomainObject {
     public boolean sameSchedule(TutorialGroupSchedule other) {
         return Objects.equals(this.dayOfWeek, other.dayOfWeek) && Objects.equals(this.startTime, other.startTime) && Objects.equals(this.endTime, other.endTime)
                 && Objects.equals(this.repetitionFrequency, other.repetitionFrequency) && Objects.equals(this.validFromInclusive, other.validFromInclusive)
-                && Objects.equals(this.validToInclusive, other.validToInclusive);
+                && Objects.equals(this.validToInclusive, other.validToInclusive) && Objects.equals(this.location, other.location);
     }
 
     public List<TutorialGroupSession> getTutorialGroupSessions() {
@@ -120,5 +126,13 @@ public class TutorialGroupSchedule extends DomainObject {
 
     public void setValidToInclusive(LocalDate validToInclusive) {
         this.validToInclusive = validToInclusive;
+    }
+
+    public String getLocation() {
+        return location;
+    }
+
+    public void setLocation(String location) {
+        this.location = location;
     }
 }
