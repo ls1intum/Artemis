@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -61,7 +63,10 @@ public class LiquibaseConfiguration {
 
         this.dataSource = dataSourceObjectProvider.getIfUnique();
         this.currentVersionString = buildProperties.getVersion();
-        checkMigrationPath();
+
+        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            checkMigrationPath();
+        }
 
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource, dataSourceProperties);
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
@@ -172,8 +177,11 @@ public class LiquibaseConfiguration {
         }
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void storeCurrentVersionToDatabase() {
+    @EventListener()
+    public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
+        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+            return;
+        }
         Statement statement;
         try {
             var connection = dataSource.getConnection();

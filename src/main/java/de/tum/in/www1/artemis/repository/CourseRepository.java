@@ -51,9 +51,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
 
     @Query("""
             SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :#{#now}
+            WHERE (c.startDate <= :now
             	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
+            AND (c.endDate >= :now
             	OR c.endDate IS NULL)
             """)
     List<Course> findAllActive(@Param("now") ZonedDateTime now);
@@ -61,9 +61,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "lectures", "lectures.attachments", "exams" })
     @Query("""
             SELECT DISTINCT c FROM Course c
-            WHERE (c.startDate <= :#{#now}
+            WHERE (c.startDate <= :now
             	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
+            AND (c.endDate >= :now
             	OR c.endDate IS NULL)
             """)
     List<Course> findAllActiveWithLecturesAndExams(@Param("now") ZonedDateTime now);
@@ -78,9 +78,9 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
             LEFT JOIN FETCH c.lectures lectures
             LEFT JOIN FETCH lectures.attachments
             LEFT JOIN FETCH exercises.categories
-            WHERE (c.startDate <= :#{#now}
+            WHERE (c.startDate <= :now
             	OR c.startDate IS NULL)
-            AND (c.endDate >= :#{#now}
+            AND (c.endDate >= :now
             	OR c.endDate IS NULL)
             """)
     List<Course> findAllActiveWithEagerExercisesAndLectures(@Param("now") ZonedDateTime now);
@@ -106,7 +106,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @EntityGraph(type = LOAD, attributePaths = { "exercises", "lectures", "lectures.lectureUnits", "learningGoals", "prerequisites" })
     Optional<Course> findWithEagerExercisesAndLecturesAndLectureUnitsAndLearningGoalsById(long courseId);
 
-    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :#{#now}) and (course.endDate is null or course.endDate >= :#{#now}) and course.onlineCourse = false and course.registrationEnabled = true")
+    @Query("select distinct course from Course course left join fetch course.organizations organizations left join fetch course.prerequisites prerequisites where (course.startDate is null or course.startDate <= :now) and (course.endDate is null or course.endDate >= :now) and course.onlineCourse = false and course.registrationEnabled = true")
     List<Course> findAllCurrentlyActiveNotOnlineAndRegistrationEnabledWithOrganizationsAndPrerequisites(@Param("now") ZonedDateTime now);
 
     @Query("select course from Course course left join fetch course.organizations co where course.id = :#{#courseId}")
@@ -168,13 +168,13 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
      */
     @Query("""
             SELECT new de.tum.in.www1.artemis.domain.statistics.StatisticsEntry(
-                substring(s.submissionDate, 1, 10), p.student.login
+                substring(cast(s.submissionDate as string), 1, 10), p.student.login
                 )
             FROM StudentParticipation p JOIN p.submissions s
             WHERE p.exercise.id IN :exerciseIds
-                AND s.submissionDate >= :#{#startDate}
-                AND s.submissionDate <= :#{#endDate}
-                group by substring(s.submissionDate, 1, 10), p.student.login
+                AND s.submissionDate >= cast(:startDate as timestamp)
+                AND s.submissionDate <= cast(:endDate as timestamp)
+                group by substring(cast(s.submissionDate as string), 1, 10), p.student.login
             """)
     List<StatisticsEntry> getActiveStudents(@Param("exerciseIds") Set<Long> exerciseIds, @Param("startDate") ZonedDateTime startDate, @Param("endDate") ZonedDateTime endDate);
 
@@ -189,7 +189,7 @@ public interface CourseRepository extends JpaRepository<Course, Long> {
     @Query("""
             SELECT c
             FROM Course c
-            WHERE (c.endDate IS NULL OR :#{#now} IS NULL OR c.endDate >= :#{#now})
+            WHERE (c.endDate IS NULL OR cast(:now as timestamp) IS NULL OR c.endDate >= cast(:now as timestamp))
                 AND (:isAdmin = TRUE OR c.teachingAssistantGroupName IN :userGroups OR c.editorGroupName IN :userGroups OR c.instructorGroupName IN :userGroups)
             """)
     List<Course> getAllCoursesForManagementOverview(@Param("now") ZonedDateTime now, @Param("isAdmin") boolean isAdmin, @Param("userGroups") List<String> userGroups);

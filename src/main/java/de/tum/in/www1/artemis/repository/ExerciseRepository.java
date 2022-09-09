@@ -57,7 +57,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.dueDate >= :#{#now}
+            	AND e.dueDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingDueDate(@Param("now") ZonedDateTime now);
@@ -65,7 +65,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.releaseDate >= :#{#now}
+            	AND e.releaseDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingReleaseDate(@Param("now") ZonedDateTime now);
@@ -73,7 +73,7 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @Query("""
             SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
-            	AND e.assessmentDueDate >= :#{#now}
+            	AND e.assessmentDueDate >= :now
             ORDER BY e.dueDate ASC
             """)
     Set<Exercise> findAllExercisesWithCurrentOrUpcomingAssessmentDueDate(@Param("now") ZonedDateTime now);

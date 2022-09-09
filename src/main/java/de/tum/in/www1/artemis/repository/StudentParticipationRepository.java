@@ -433,7 +433,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             LEFT JOIN FETCH s.results r
             LEFT JOIN FETCH r.feedbacks
             WHERE p.exercise.id = :#{#exerciseId}
-            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :#{#now})
+            AND (p.individualDueDate IS NULL OR p.individualDueDate <= :now)
             AND NOT EXISTS
                 (SELECT prs FROM p.results prs
                     WHERE prs.assessmentType IN ('MANUAL', 'SEMI_AUTOMATIC'))
