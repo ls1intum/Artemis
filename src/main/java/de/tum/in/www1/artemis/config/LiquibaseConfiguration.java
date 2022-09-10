@@ -60,7 +60,7 @@ public class LiquibaseConfiguration {
         SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSourceObjectProvider.getIfUnique(),
                 dataSourceProperties);
 
-        if (!env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (!isTestEnvironment(env)) {
             dataSource = dataSourceObjectProvider.getIfUnique();
             currentVersionString = buildProperties.getVersion();
             previousVersionString = getPreviousVersionElseThrow();
@@ -75,7 +75,7 @@ public class LiquibaseConfiguration {
         liquibase.setDatabaseChangeLogLockTable(liquibaseProperties.getDatabaseChangeLogLockTable());
         liquibase.setDatabaseChangeLogTable(liquibaseProperties.getDatabaseChangeLogTable());
         liquibase.setDropFirst(liquibaseProperties.isDropFirst());
-        liquibase.setLabels(liquibaseProperties.getLabels());
+        liquibase.setLabelFilter(liquibaseProperties.getLabels());
         liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         liquibase.setRollbackFile(liquibaseProperties.getRollbackFile());
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
@@ -118,7 +118,7 @@ public class LiquibaseConfiguration {
      */
     @EventListener()
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
-        if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
+        if (isTestEnvironment(event.getApplicationContext().getEnvironment())) {
             return;
         }
         try (var statement = createStatement()) {
@@ -136,5 +136,9 @@ public class LiquibaseConfiguration {
         catch (SQLException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private boolean isTestEnvironment(Environment env) {
+        return env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 }
