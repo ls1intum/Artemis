@@ -64,7 +64,7 @@ public class LiquibaseConfiguration {
             dataSource = dataSourceObjectProvider.getIfUnique();
             currentVersionString = buildProperties.getVersion();
             previousVersionString = getPreviousVersionElseThrow();
-            log.info("The previous version was " + previousVersionString);
+            log.info("The previous version was {}", previousVersionString);
         }
 
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
@@ -123,11 +123,11 @@ public class LiquibaseConfiguration {
         }
         try (var statement = createStatement()) {
             if (previousVersionString == null) {
-                log.info("Insert latest version " + currentVersionString + " into database");
+                log.info("Insert latest version {} into database", currentVersionString);
                 statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "');");
             }
             else {
-                log.info("Update latest version to " + currentVersionString + " in database");
+                log.info("Update latest version to {} in database", currentVersionString);
                 statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "';");
             }
             statement.getConnection().commit();
