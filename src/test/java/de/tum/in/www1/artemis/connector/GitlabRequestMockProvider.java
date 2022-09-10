@@ -711,4 +711,13 @@ public class GitlabRequestMockProvider {
             doReturn(project).when(projectApi).updateProject(any());
         }
     }
+
+    public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
+        List<Pipeline> pipelines = new ArrayList<>();
+        Pipeline pipeline = new Pipeline();
+        pipeline.setStatus(pipelineStatus);
+        pipelines.add(pipeline);
+
+        doReturn(pipelines).when(pipelineApi).getPipelines(anyString());
+    }
 }

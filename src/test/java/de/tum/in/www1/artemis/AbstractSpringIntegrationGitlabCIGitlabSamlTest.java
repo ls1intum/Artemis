@@ -11,6 +11,7 @@ import java.util.Set;
 
 import org.gitlab4j.api.GitLabApi;
 import org.gitlab4j.api.GitLabApiException;
+import org.gitlab4j.api.models.PipelineStatus;
 import org.junit.jupiter.api.AfterEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -371,6 +372,10 @@ public abstract class AbstractSpringIntegrationGitlabCIGitlabSamlTest extends Ab
     @Override
     public void mockDefaultBranch(ProgrammingExercise programmingExercise) throws GitLabApiException {
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);
+    }
+
+    public void mockGetBuildStatus(PipelineStatus pipelineStatus) throws GitLabApiException {
+        gitlabRequestMockProvider.mockGetBuildStatus(pipelineStatus);
     }
 
     @Override

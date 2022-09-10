@@ -168,7 +168,6 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
             gitlab.getPipelineApi().deletePipelineTrigger(repositoryPath, trigger.getId());
         }
         catch (GitLabApiException e) {
-            e.getValidationErrors().forEach((key, value) -> log.error(key + ":" + value));
             throw new GitLabCIException("Error triggering the build for " + repositoryPath, e);
         }
     }
@@ -202,6 +201,7 @@ public class GitLabCIService extends AbstractContinuousIntegrationService {
         // https://docs.gitlab.com/ee/api/pipelines.html#list-project-pipelines
         final String repositoryPath = getRepositoryPath(participation.getVcsRepositoryUrl());
         try {
+            // TODO: Get latest pipeline
             PipelineStatus status = gitlab.getPipelineApi().getPipelines(repositoryPath).get(0).getStatus();
             if (status.equals(PipelineStatus.CREATED) || status.equals(PipelineStatus.WAITING_FOR_RESOURCE) || status.equals(PipelineStatus.PREPARING)
                     || status.equals(PipelineStatus.PENDING)) {
