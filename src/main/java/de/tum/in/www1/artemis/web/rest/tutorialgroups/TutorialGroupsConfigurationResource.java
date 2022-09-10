@@ -2,9 +2,6 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.time.ZoneId;
 
 import javax.validation.Valid;
@@ -137,33 +134,12 @@ public class TutorialGroupsConfigurationResource {
         catch (Exception e) {
             throw new BadRequestException("Invalid time zone code");
         }
-
-        if (!isValidDateString(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()) || !isValidDateString(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
-            throw new BadRequestException("The period must be specified as a date range in the format 'yyyy-MM-dd'");
-        }
-        if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
-            throw new BadRequestException("The start date must be before the end date");
-        }
     }
 
     private static void overrideValues(TutorialGroupsConfiguration sourceConfiguration, TutorialGroupsConfiguration originalConfiguration) {
         originalConfiguration.setTimeZone(sourceConfiguration.getTimeZone());
         originalConfiguration.setTutorialPeriodStartInclusive(sourceConfiguration.getTutorialPeriodStartInclusive());
         originalConfiguration.setTutorialPeriodEndInclusive(sourceConfiguration.getTutorialPeriodEndInclusive());
-    }
-
-    private static boolean isValidDateString(String dateString) {
-        if (dateString == null || !dateString.matches("\\d{4}-[01]\\d-[0-3]\\d"))
-            return false;
-        SimpleDateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-        df.setLenient(false);
-        try {
-            df.parse(dateString);
-            return true;
-        }
-        catch (ParseException ex) {
-            return false;
-        }
     }
 
 }

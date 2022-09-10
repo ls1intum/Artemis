@@ -9,7 +9,6 @@ import { combineLatest } from 'rxjs';
 import { finalize, switchMap, take } from 'rxjs/operators';
 import timezones from 'timezones-list';
 import { HttpErrorResponse } from '@angular/common/http';
-import dayjs from 'dayjs/esm';
 
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
@@ -61,14 +60,10 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
     updateTutorialGroupsConfiguration(formData: ConfigurationFormData) {
         const { timeZone, period } = formData;
         this.tutorialGroupsConfiguration.timeZone = timeZone?.tzCode!;
-        if (period && period.length === 2) {
-            this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive = dayjs(period[0]);
-            this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive = dayjs(period[1]);
-        }
 
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
-            .update(this.tutorialGroupsConfiguration)
+            .update(this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

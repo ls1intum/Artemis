@@ -1,10 +1,12 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotEmpty;
+import javax.validation.constraints.NotNull;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -31,12 +33,12 @@ public class TutorialGroupsConfiguration extends DomainObject {
     private String timeZone;
 
     @Column(name = "tutorial_period_start_inclusive")
-    @NotEmpty
-    private String tutorialPeriodStartInclusive;
+    @NotNull
+    private LocalDate tutorialPeriodStartInclusive;
 
     @Column(name = "tutorial_period_end_inclusive")
-    @NotEmpty
-    private String tutorialPeriodEndInclusive;
+    @NotNull
+    private LocalDate tutorialPeriodEndInclusive;
 
     @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
@@ -58,26 +60,26 @@ public class TutorialGroupsConfiguration extends DomainObject {
         this.timeZone = timeZone;
     }
 
-    public String getTutorialPeriodStartInclusive() {
+    public LocalDate getTutorialPeriodStartInclusive() {
         return tutorialPeriodStartInclusive;
     }
 
-    public void setTutorialPeriodStartInclusive(String tutorialPeriodStartInclusive) {
+    public void setTutorialPeriodStartInclusive(LocalDate tutorialPeriodStartInclusive) {
         this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
     }
 
-    public String getTutorialPeriodEndInclusive() {
+    public LocalDate getTutorialPeriodEndInclusive() {
         return tutorialPeriodEndInclusive;
     }
 
-    public void setTutorialPeriodEndInclusive(String tutorialPeriodEndInclusive) {
+    public void setTutorialPeriodEndInclusive(LocalDate tutorialPeriodEndInclusive) {
         this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
     }
 
     public TutorialGroupsConfiguration() {
     }
 
-    public TutorialGroupsConfiguration(Course course, String timeZone, String tutorialPeriodStartInclusive, String tutorialPeriodEndInclusive,
+    public TutorialGroupsConfiguration(Course course, String timeZone, LocalDate tutorialPeriodStartInclusive, LocalDate tutorialPeriodEndInclusive,
             Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods) {
         this.course = course;
         this.timeZone = timeZone;

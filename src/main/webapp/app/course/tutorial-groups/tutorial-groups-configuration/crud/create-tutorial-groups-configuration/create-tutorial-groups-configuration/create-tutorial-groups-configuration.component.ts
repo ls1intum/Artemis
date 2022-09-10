@@ -35,17 +35,11 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
 
     createTutorialsGroupConfiguration(formData: ConfigurationFormData) {
         const { timeZone, period } = formData;
-
         this.newTutorialGroupsConfiguration.timeZone = timeZone?.tzCode!;
-        if (period && period.length === 2) {
-            this.newTutorialGroupsConfiguration.tutorialPeriodStartInclusive = dayjs(period[0]);
-            this.newTutorialGroupsConfiguration.tutorialPeriodEndInclusive = dayjs(period[1]);
-        }
-
         this.isLoading = true;
 
         this.tutorialGroupsConfigurationService
-            .create(this.newTutorialGroupsConfiguration, this.courseId)
+            .create(this.newTutorialGroupsConfiguration, this.courseId, period ?? [])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
