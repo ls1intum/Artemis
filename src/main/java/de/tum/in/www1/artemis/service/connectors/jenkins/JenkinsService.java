@@ -114,7 +114,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     @Override
     public void updatePlanRepository(String buildProjectKey, String buildPlanKey, String ciRepoName, String repoProjectKey, String newRepoUrl, String existingRepoUrl,
             String newDefaultBranch, Optional<List<String>> optionalTriggeredByRepositories) {
-        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, ciRepoName, newRepoUrl, existingRepoUrl);
+        jenkinsBuildPlanService.updateBuildPlanRepositories(buildProjectKey, buildPlanKey, newRepoUrl, existingRepoUrl);
     }
 
     @Override
@@ -183,14 +183,14 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
         // Extract test case feedback
         for (final var job : jobs) {
-            for (final var testCase : job.getTestCases()) {
+            for (final var testCase : job.testCases()) {
                 var feedbackMessages = extractMessageFromTestCase(testCase).map(List::of).orElse(List.of());
-                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.getName(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
+                var feedback = feedbackRepository.createFeedbackFromTestCase(testCase.name(), feedbackMessages, testCase.isSuccessful(), programmingLanguage, projectType);
                 result.addFeedback(feedback);
             }
 
-            int passedTestCasesAmount = (int) job.getTestCases().stream().filter(TestCaseDTO::isSuccessful).count();
-            result.setTestCaseCount(result.getTestCaseCount() + job.getTests());
+            int passedTestCasesAmount = (int) job.testCases().stream().filter(TestCaseDTO::isSuccessful).count();
+            result.setTestCaseCount(result.getTestCaseCount() + job.tests());
             result.setPassedTestCaseCount(result.getPassedTestCaseCount() + passedTestCasesAmount);
         }
 
@@ -219,25 +219,25 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
      * @return the most helpful message that can be added to an automatic {@link Feedback}.
      */
     private Optional<String> extractMessageFromTestCase(final TestCaseDTO testCase) {
-        var hasErrors = !CollectionUtils.isEmpty(testCase.getErrors());
-        var hasFailures = !CollectionUtils.isEmpty(testCase.getFailures());
-        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.getSuccessInfos());
+        var hasErrors = !CollectionUtils.isEmpty(testCase.errors());
+        var hasFailures = !CollectionUtils.isEmpty(testCase.failures());
+        var hasSuccessInfos = !CollectionUtils.isEmpty(testCase.successInfos());
         boolean successful = testCase.isSuccessful();
 
-        if (successful && hasSuccessInfos && testCase.getSuccessInfos().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getSuccessInfos().get(0).getMostInformativeMessage());
+        if (successful && hasSuccessInfos && testCase.successInfos().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.successInfos().get(0).getMostInformativeMessage());
         }
-        else if (hasErrors && testCase.getErrors().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getErrors().get(0).getMostInformativeMessage());
+        else if (hasErrors && testCase.errors().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.errors().get(0).getMostInformativeMessage());
         }
-        else if (hasFailures && testCase.getFailures().get(0).getMostInformativeMessage() != null) {
-            return Optional.of(testCase.getFailures().get(0).getMostInformativeMessage());
+        else if (hasFailures && testCase.failures().get(0).getMostInformativeMessage() != null) {
+            return Optional.of(testCase.failures().get(0).getMostInformativeMessage());
         }
-        else if (hasErrors && testCase.getErrors().get(0).getType() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getErrors().get(0).getType()));
+        else if (hasErrors && testCase.errors().get(0).type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.errors().get(0).type()));
         }
-        else if (hasFailures && testCase.getFailures().get(0).getType() != null) {
-            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.getFailures().get(0).getType()));
+        else if (hasFailures && testCase.failures().get(0).type() != null) {
+            return Optional.of(String.format("Unsuccessful due to an error of type: %s", testCase.failures().get(0).type()));
         }
         else if (!successful) {
             // this is an edge case which typically does not happen
