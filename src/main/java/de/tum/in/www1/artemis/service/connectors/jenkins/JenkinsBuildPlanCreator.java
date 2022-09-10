@@ -19,11 +19,11 @@ import org.springframework.util.StreamUtils;
 import org.w3c.dom.Document;
 
 import de.tum.in.www1.artemis.config.Constants;
+import de.tum.in.www1.artemis.config.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.service.ResourceLoaderService;
-import de.tum.in.www1.artemis.service.connectors.ProgrammingLanguageConfiguration;
 import de.tum.in.www1.artemis.service.util.XmlFileUtils;
 
 @Profile("jenkins")
