@@ -112,6 +112,10 @@ public class LiquibaseConfiguration {
         return connection.createStatement();
     }
 
+    /**
+     * Stores the current version in the database after the application is ready
+     * @param event used to prevent this method for running in tests
+     */
     @EventListener()
     public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
         if (event.getApplicationContext().getEnvironment().acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST))) {
