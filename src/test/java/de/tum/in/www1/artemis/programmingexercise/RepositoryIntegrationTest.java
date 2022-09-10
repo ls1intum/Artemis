@@ -411,6 +411,66 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    void testGetFileWithRelevantPlagiarismCaseAfterExam() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+
+        // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
+        // should be in the past for this test.
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam);
+
+        addPlagiarismCaseToProgrammingExercise("student2", "student1");
+
+        LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+        params.add("file", currentLocalFileName);
+        var file = request.get(studentRepoBaseUrl + participation.getId() + "/file", HttpStatus.OK, byte[].class, params);
+        assertThat(file).isNotEmpty();
+        assertThat(new String(file)).isEqualTo(currentLocalFileContent);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetFilesWithRelevantPlagiarismCaseAfterExam_forbidden() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+
+        // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
+        // should be in the past for this test.
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam);
+
+        // student1 is NOT notified yet.
+        addPlagiarismCaseToProgrammingExercise("student1", "student2");
+
+        request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.FORBIDDEN, String.class, FileType.class);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testGetFilesWithRelevantPlagiarismCaseAfterExam() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        Exam exam = programmingExercise.getExerciseGroup().getExam();
+
+        // The calculated exam end date (startDate of exam + workingTime of studentExam (7200 seconds))
+        // should be in the past for this test.
+        exam.setStartDate(ZonedDateTime.now().minusHours(3));
+        examRepository.save(exam);
+
+        // student1 is notified.
+        addPlagiarismCaseToProgrammingExercise("student2", "student1");
+
+        var files = request.getMap(studentRepoBaseUrl + participation.getId() + "/files", HttpStatus.OK, String.class, FileType.class);
+        assertThat(files).isNotEmpty();
+
+        // Check if all files exist
+        for (String key : files.keySet()) {
+            assertThat(Path.of(studentRepository.localRepoFile + "/" + key)).exists();
+        }
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void testGetFile_shouldThrowException() throws Exception {
         LinkedMultiValueMap<String, String> params = new LinkedMultiValueMap<>();
         params.add("file", currentLocalFileName);
@@ -828,8 +888,14 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testResetNotAllowedForExamBeforeDueDate() throws Exception {
+        programmingExercise = createProgrammingExerciseForExam();
+        // A tutor is not allowed to reset the repository during the exam time
+        assertUnchangedRepositoryStatusForForbiddenReset();
+    }
+
+    private ProgrammingExercise createProgrammingExerciseForExam() {
         // Create an exam programming exercise
-        programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseRepository.save(programmingExercise);
         participation.setExercise(programmingExercise);
         studentParticipationRepository.save(participation);
@@ -842,8 +908,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         studentExam.setUser(participation.getStudent().get());
         studentExam.addExercise(programmingExercise);
         studentExamRepository.save(studentExam);
-        // A tutor is not allowed to reset the repository during the exam time
-        assertUnchangedRepositoryStatusForForbiddenReset();
+        return programmingExercise;
     }
 
     @Test

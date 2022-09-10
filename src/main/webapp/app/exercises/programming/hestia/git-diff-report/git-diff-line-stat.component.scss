@@ -1,10 +1,14 @@
-.diff-block {
-    display: inline-block;
-    width: 10px;
-    height: 10px;
-    margin-left: 1px;
-}
+.diff-line-stat {
+    white-space: nowrap;
 
-.diff-block-bar {
-    font-size: 0;
+    .diff-block {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        margin-left: 1px;
+    }
+
+    .diff-block-bar {
+        font-size: 0;
+    }
 }
