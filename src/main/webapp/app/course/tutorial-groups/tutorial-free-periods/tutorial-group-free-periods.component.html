@@ -2,7 +2,7 @@
     <div *ngIf="tutorialGroupsConfiguration">
         <div class="row">
             <div class="col-12">
-                <!-- Create Tutorial Group Free Day -->
+                <!-- Create Tutorial Group Free Period -->
                 <a
                     [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
                     class="btn btn-primary btn-sm me-1"
@@ -14,17 +14,17 @@
         <div class="row">
             <div class="col-12">
                 <ngb-accordion type="info" [closeOthers]="true">
-                    <ngb-panel cardClass="my-2" *ngFor="let freeDay of tutorialGroupFreeDays" id="day-{{ freeDay.id }}">
+                    <ngb-panel cardClass="my-2" *ngFor="let freePeriod of tutorialGroupFreePeriods" id="day-{{ freePeriod.id }}">
                         <ng-template ngbPanelHeader let-opened="opened">
                             <div class="accordion-button custom-header justify-content-between" [class.collapsed]="!opened">
-                                <button ngbPanelToggle class="p-0 btn btn-link container-fluid text-start ps-0">{{ freeDay.date | artemisDate: 'long-date' }}</button>
+                                <button ngbPanelToggle class="p-0 btn btn-link container-fluid text-start ps-0">{{ freePeriod.start! | artemisDate: 'long-date' }}</button>
                                 <div>
                                     <button
                                         jhiDeleteButton
-                                        [entityTitle]="freeDay.date | artemisDate: 'long-date'"
+                                        [entityTitle]="freePeriod.start! | artemisDate: 'long-date'"
                                         deleteQuestion="artemisApp.tutorialFreeDays.deleteButton.question"
                                         deleteConfirmationText="artemisApp.tutorialFreeDays.deleteButton.typeNameToConfirm"
-                                        (delete)="deleteTutorialFreeDay(freeDay)"
+                                        (delete)="deleteTutorialGroupFreePeriod(freePeriod)"
                                         [dialogError]="dialogError$"
                                     >
                                         <fa-icon [icon]="faTimes"></fa-icon>
@@ -33,7 +33,7 @@
                             </div>
                         </ng-template>
                         <ng-template ngbPanelContent>
-                            {{ freeDay.reason ? freeDay.reason : ('artemisApp.tutorialFreeDays.noReason' | artemisTranslate) }}
+                            {{ freePeriod.reason ? freePeriod.reason : ('artemisApp.tutorialFreeDays.noReason' | artemisTranslate) }}
                         </ng-template>
                     </ngb-panel>
                 </ngb-accordion>

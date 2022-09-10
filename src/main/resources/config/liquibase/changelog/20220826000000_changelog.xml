@@ -68,14 +68,17 @@
             <column name="tutorial_period_end_inclusive" type="DATE">
             </column>
         </createTable>
-        <createTable tableName="tutorial_group_free_day">
+        <createTable tableName="tutorial_group_free_period">
             <column autoIncrement="true" name="id" type="BIGINT">
-                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_free_day_PK"/>
+                <constraints nullable="false" primaryKey="true" primaryKeyName="tutorial_group_free_period_PK"/>
             </column>
             <column name="tutorial_groups_configuration_id" type="BIGINT">
                 <constraints nullable="false"/>
             </column>
-            <column name="date" type="DATE">
+            <column name="start" type="DATETIME">
+                <constraints nullable="false"/>
+            </column>
+            <column name="end" type="DATETIME">
                 <constraints nullable="false"/>
             </column>
             <column name="reason" type="VARCHAR(255)">
@@ -100,9 +103,9 @@
                                  constraintName="fk_tutorial_groups_configuration_course_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="course"
                                  validate="true"/>
-        <!-- fks for tutorial_group_free_day table -->
-        <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="tutorial_group_free_day"
-                                 constraintName="fk_tutorial_group_free_day_tutorial_group_configuration_id" deferrable="false"
+        <!-- fks for tutorial_group_free_period table -->
+        <addForeignKeyConstraint baseColumnNames="tutorial_groups_configuration_id" baseTableName="tutorial_group_free_period"
+                                 constraintName="fk_tutorial_group_free_period_tutorial_group_configuration_id" deferrable="false"
                                  initiallyDeferred="false" referencedColumnNames="id" referencedTableName="tutorial_groups_configuration"
                                  validate="true"/>
     </changeSet>

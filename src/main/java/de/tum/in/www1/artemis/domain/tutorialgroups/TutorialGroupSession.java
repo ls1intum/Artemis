@@ -20,9 +20,15 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TutorialGroupSession extends DomainObject {
 
+    /**
+     * NOTE: Stored in UTC in the database
+     */
     @Column(name = "start")
     private ZonedDateTime start;
 
+    /**
+     * NOTE: Stored in UTC in the database
+     */
     @Column(name = "end")
     private ZonedDateTime end;
 

@@ -22,13 +22,13 @@ public class TutorialGroupScheduleService {
 
     private final TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
 
-    private final TutorialGroupFreeDayService tutorialGroupFreeDayService;
+    private final TutorialGroupFreePeriodService tutorialGroupFreePeriodService;
 
     public TutorialGroupScheduleService(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
-            TutorialGroupRepository tutorialGroupRepository, TutorialGroupFreeDayService tutorialGroupFreeDayService) {
+            TutorialGroupRepository tutorialGroupRepository, TutorialGroupFreePeriodService tutorialGroupFreePeriodService) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
-        this.tutorialGroupFreeDayService = tutorialGroupFreeDayService;
+        this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
     }
 
     public void save(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule tutorialGroupSchedule) {
@@ -63,7 +63,7 @@ public class TutorialGroupScheduleService {
             session.setTutorialGroupSchedule(tutorialGroupSchedule);
             session.setTutorialGroup(tutorialGroupSchedule.getTutorialGroup());
 
-            if (!tutorialGroupFreeDayService.findOverlappingFreeDays(tutorialGroupsConfiguration.getCourse(), session).isEmpty()) {
+            if (!tutorialGroupFreePeriodService.findOverlappingPeriods(tutorialGroupsConfiguration.getCourse(), session).isEmpty()) {
                 session.setStatus(TutorialGroupSessionStatus.CANCELLED);
                 // Todo: Set Status reason
             }

@@ -62,7 +62,7 @@ public class TutorialGroupsConfigurationResource {
     public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long tutorialGroupsConfigurationId) {
         log.debug("REST request to get tutorial groups configuration: {}", tutorialGroupsConfigurationId);
 
-        var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreeDays(tutorialGroupsConfigurationId);
+        var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriods(tutorialGroupsConfigurationId);
 
         if (configuration.isEmpty()) {
             return ResponseEntity.notFound().build();

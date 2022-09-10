@@ -39,9 +39,15 @@ public class TutorialGroupSchedule extends DomainObject {
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
 
+    /**
+     * Note: Just a date in the format YYYY-MM-DD is stored in the database
+     */
     @Column(name = "valid_from_inclusive")
     private LocalDate validFromInclusive;
 
+    /**
+     * Note: Just a date in the format YYYY-MM-DD is stored in the database
+     */
     @Column(name = "valid_to_inclusive")
     private LocalDate validToInclusive;
 

@@ -1,9 +1,9 @@
 import { Component, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import dayjs from 'dayjs/esm';
-import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/tutorial-group-free-day.service';
-import { TutorialGroupFreeDayFormData } from 'app/course/tutorial-groups/tutorial-free-days/crud/tutorial-free-day-form/tutorial-free-day-form.component';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriodDTO, TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodFormData } from 'app/course/tutorial-groups/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { finalize, take } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
@@ -13,17 +13,22 @@ import { AlertService } from 'app/core/util/alert.service';
 
 @Component({
     selector: 'jhi-create-tutorial-group-free-day',
-    templateUrl: './create-tutorial-group-free-day.component.html',
-    styleUrls: ['./create-tutorial-group-free-day.component.scss'],
+    templateUrl: './create-tutorial-group-free-period.component.html',
+    styleUrls: ['./create-tutorial-group-free-period.component.scss'],
 })
-export class CreateTutorialGroupFreeDayComponent implements OnInit {
-    tutorialFreeDayToCreate: TutorialGroupFreeDay = new TutorialGroupFreeDay();
+export class CreateTutorialGroupFreePeriodComponent implements OnInit {
+    tutorialGroupFreePeriodToCreate: TutorialGroupFreePeriodDTO = new TutorialGroupFreePeriodDTO();
     isLoading: boolean;
     tutorialGroup: TutorialGroup;
     tutorialGroupConfigurationId: number;
     courseId: number;
 
-    constructor(private tutorialFreeDayService: TutorialGroupFreeDayService, private router: Router, private activatedRoute: ActivatedRoute, private alertService: AlertService) {}
+    constructor(
+        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
+        private router: Router,
+        private activatedRoute: ActivatedRoute,
+        private alertService: AlertService,
+    ) {}
 
     ngOnInit(): void {
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
@@ -35,15 +40,15 @@ export class CreateTutorialGroupFreeDayComponent implements OnInit {
                 },
             });
     }
-    createTutorialGroupFreeDay(formData: TutorialGroupFreeDayFormData) {
+    createTutorialGroupFreePeriod(formData: TutorialGroupFreePeriodFormData) {
         const { date, reason } = formData;
 
-        this.tutorialFreeDayToCreate.date = dayjs(date);
-        this.tutorialFreeDayToCreate.reason = reason;
+        this.tutorialGroupFreePeriodToCreate.date = date;
+        this.tutorialGroupFreePeriodToCreate.reason = reason;
 
         this.isLoading = true;
-        this.tutorialFreeDayService
-            .create(this.tutorialGroupConfigurationId, this.tutorialFreeDayToCreate)
+        this.tutorialGroupFreePeriodService
+            .create(this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -51,7 +56,7 @@ export class CreateTutorialGroupFreeDayComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', this.tutorialGroupConfigurationId, 'tutorial-free-days']);
+                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', this.tutorialGroupConfigurationId, 'tutorial-free-periods']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

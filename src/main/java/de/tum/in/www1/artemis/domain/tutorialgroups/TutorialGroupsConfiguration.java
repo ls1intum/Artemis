@@ -40,7 +40,7 @@ public class TutorialGroupsConfiguration extends DomainObject {
 
     @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
-    private Set<TutorialGroupFreeDay> tutorialGroupFreeDays = new HashSet<>();
+    private Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods = new HashSet<>();
 
     public Course getCourse() {
         return course;
@@ -78,19 +78,19 @@ public class TutorialGroupsConfiguration extends DomainObject {
     }
 
     public TutorialGroupsConfiguration(Course course, String timeZone, String tutorialPeriodStartInclusive, String tutorialPeriodEndInclusive,
-            Set<TutorialGroupFreeDay> tutorialGroupFreeDays) {
+            Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods) {
         this.course = course;
         this.timeZone = timeZone;
         this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
         this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
-        this.tutorialGroupFreeDays = tutorialGroupFreeDays;
+        this.tutorialGroupFreePeriods = tutorialGroupFreePeriods;
     }
 
-    public Set<TutorialGroupFreeDay> getTutorialGroupFreeDays() {
-        return tutorialGroupFreeDays;
+    public Set<TutorialGroupFreePeriod> getTutorialGroupFreePeriods() {
+        return tutorialGroupFreePeriods;
     }
 
-    public void setTutorialGroupFreeDays(Set<TutorialGroupFreeDay> tutorialGroupFreeDays) {
-        this.tutorialGroupFreeDays = tutorialGroupFreeDays;
+    public void setTutorialGroupFreePeriods(Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods) {
+        this.tutorialGroupFreePeriods = tutorialGroupFreePeriods;
     }
 }

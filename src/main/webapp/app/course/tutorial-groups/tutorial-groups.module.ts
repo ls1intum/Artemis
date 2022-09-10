@@ -21,9 +21,9 @@ import { EditTutorialGroupsConfigurationComponent } from './tutorial-groups-conf
 import { TutorialGroupSessionFormComponent } from './tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { CreateTutorialGroupSessionComponent } from './tutorial-groups-session/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { CancellationModalComponent } from './session-management/cancellation-modal/cancellation-modal.component';
-import { TutorialFreeDaysComponent } from './tutorial-free-days/tutorial-free-days.component';
-import { TutorialFreeDayFormComponent } from './tutorial-free-days/crud/tutorial-free-day-form/tutorial-free-day-form.component';
-import { CreateTutorialGroupFreeDayComponent } from './tutorial-free-days/crud/create-tutorial-group-free-day/create-tutorial-group-free-day.component';
+import { TutorialGroupFreePeriodsComponent } from './tutorial-free-periods/tutorial-group-free-periods.component';
+import { TutorialGroupFreePeriodForm } from './tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { CreateTutorialGroupFreePeriodComponent } from './tutorial-free-periods/crud/create-tutorial-group-free-period/create-tutorial-group-free-period.component';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { EditTutorialGroupSessionComponent } from './tutorial-groups-session/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupSessionRowButtonsComponent } from './session-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
@@ -46,9 +46,9 @@ import { TutorialGroupSessionRowButtonsComponent } from './session-management/tu
         TutorialGroupSessionFormComponent,
         CreateTutorialGroupSessionComponent,
         CancellationModalComponent,
-        TutorialFreeDaysComponent,
-        TutorialFreeDayFormComponent,
-        CreateTutorialGroupFreeDayComponent,
+        TutorialGroupFreePeriodsComponent,
+        TutorialGroupFreePeriodForm,
+        CreateTutorialGroupFreePeriodComponent,
         EditTutorialGroupSessionComponent,
         TutorialGroupSessionRowButtonsComponent,
     ],

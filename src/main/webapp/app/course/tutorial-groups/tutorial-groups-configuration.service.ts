@@ -41,9 +41,10 @@ export class TutorialGroupsConfigurationService {
     private convertTutorialGroupsConfigurationResponseDatesFromServer(res: HttpResponse<TutorialGroupsConfiguration>): HttpResponse<TutorialGroupsConfiguration> {
         res.body!.tutorialPeriodStartInclusive = convertDateFromServer(res.body!.tutorialPeriodStartInclusive);
         res.body!.tutorialPeriodEndInclusive = convertDateFromServer(res.body!.tutorialPeriodEndInclusive);
-        if (res.body!.tutorialGroupFreeDays) {
-            res.body!.tutorialGroupFreeDays.forEach((tutorialGroupFreeDay) => {
-                tutorialGroupFreeDay.date = convertDateFromServer(tutorialGroupFreeDay.date);
+        if (res.body!.tutorialGroupFreePeriods) {
+            res.body!.tutorialGroupFreePeriods.forEach((tutorialGroupFreePeriod) => {
+                tutorialGroupFreePeriod.start = convertDateFromServer(tutorialGroupFreePeriod.start);
+                tutorialGroupFreePeriod.end = convertDateFromServer(tutorialGroupFreePeriod.end);
             });
         }
 

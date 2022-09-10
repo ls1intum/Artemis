@@ -3,18 +3,18 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 
-export interface TutorialGroupFreeDayFormData {
+export interface TutorialGroupFreePeriodFormData {
     date?: Date;
     reason?: string;
 }
 @Component({
     selector: 'jhi-tutorial-free-day-form',
-    templateUrl: './tutorial-free-day-form.component.html',
-    styleUrls: ['./tutorial-free-day-form.component.scss'],
+    templateUrl: './tutorial-group-free-period-form.component.html',
+    styleUrls: ['./tutorial-group-free-period-form.component.scss'],
 })
-export class TutorialFreeDayFormComponent implements OnInit, OnChanges {
+export class TutorialGroupFreePeriodForm implements OnInit, OnChanges {
     @Input()
-    formData: TutorialGroupFreeDayFormData = {
+    formData: TutorialGroupFreePeriodFormData = {
         date: undefined,
         reason: undefined,
     };
@@ -53,11 +53,11 @@ export class TutorialFreeDayFormComponent implements OnInit, OnChanges {
     }
 
     submitForm() {
-        const tutorialGroupFreeDayFormData: TutorialGroupFreeDayFormData = { ...this.form.value };
-        this.formSubmitted.emit(tutorialGroupFreeDayFormData);
+        const tutorialGroupFreePeriodFormData: TutorialGroupFreePeriodFormData = { ...this.form.value };
+        this.formSubmitted.emit(tutorialGroupFreePeriodFormData);
     }
 
-    private setFormValues(formData: TutorialGroupFreeDayFormData) {
+    private setFormValues(formData: TutorialGroupFreePeriodFormData) {
         this.form.patchValue(formData);
     }
 

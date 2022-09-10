@@ -6,20 +6,20 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/t
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
-import { TutorialGroupFreeDay } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupFreeDayService } from 'app/course/tutorial-groups/tutorial-group-free-day.service';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/tutorial-group-free-period.service';
 
 @Component({
-    selector: 'jhi-tutorial-free-days',
-    templateUrl: './tutorial-free-days.component.html',
-    styleUrls: ['./tutorial-free-days.component.scss'],
+    selector: 'jhi-tutorial-free-periods',
+    templateUrl: './tutorial-group-free-periods.component.html',
+    styleUrls: ['./tutorial-group-free-periods.component.scss'],
 })
-export class TutorialFreeDaysComponent implements OnInit {
+export class TutorialGroupFreePeriodsComponent implements OnInit {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    tutorialGroupFreeDays: TutorialGroupFreeDay[] = [];
+    tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
     courseId: number;
     faTimes = faTimes;
 
@@ -29,7 +29,7 @@ export class TutorialFreeDaysComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private tutorialGroupFreeDaysService: TutorialGroupFreeDayService,
+        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private alertService: AlertService,
         private sortService: SortService,
@@ -55,8 +55,8 @@ export class TutorialFreeDaysComponent implements OnInit {
                 next: (tutorialGroupsConfigurationResult) => {
                     if (tutorialGroupsConfigurationResult.body) {
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
-                        if (this.tutorialGroupsConfiguration.tutorialGroupFreeDays) {
-                            this.tutorialGroupFreeDays = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreeDays, 'date', true);
+                        if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
+                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'date', true);
                         }
                     }
                 },
@@ -64,10 +64,10 @@ export class TutorialFreeDaysComponent implements OnInit {
             });
     }
 
-    deleteTutorialFreeDay(tutorialGroupFreeDay: TutorialGroupFreeDay) {
+    deleteTutorialGroupFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
         this.isLoading = true;
-        this.tutorialGroupFreeDaysService
-            .delete(tutorialGroupFreeDay.id!)
+        this.tutorialGroupFreePeriodService
+            .delete(tutorialGroupFreePeriod.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: () => {
