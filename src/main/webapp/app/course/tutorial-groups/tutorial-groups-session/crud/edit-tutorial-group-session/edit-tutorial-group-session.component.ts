@@ -9,8 +9,7 @@ import { combineLatest } from 'rxjs';
 import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
-import dayjs from 'dayjs/esm';
+import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
@@ -67,13 +66,17 @@ export class EditTutorialGroupSessionComponent implements OnInit {
     updateSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
-        // we send it already in utc
-        this.session.start = this.createUTC(date!, startTime!);
-        this.session.end = this.createUTC(date!, endTime!);
-        this.session.location = location;
+        const tutorialGroupSessionDTO = new TutorialGroupSessionDTO();
+
+        tutorialGroupSessionDTO.date = date;
+        tutorialGroupSessionDTO.startTime = startTime;
+        tutorialGroupSessionDTO.endTime = endTime;
+        tutorialGroupSessionDTO.location = location;
+
         this.isLoading = true;
+
         this.tutorialGroupSessionService
-            .update(this.courseId, this.tutorialGroupId, this.sessionId, this.session)
+            .update(this.courseId, this.tutorialGroupId, this.sessionId, tutorialGroupSessionDTO)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
@@ -85,11 +88,5 @@ export class EditTutorialGroupSessionComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
-    }
-
-    private createUTC(date: Date, time: string): dayjs.Dayjs {
-        const hours = time.split(':')[0];
-        const minutes = time.split(':')[1];
-        return dayjs(date).tz(this.session!.tutorialGroup!.course!.tutorialGroupsConfiguration?.timeZone).set({ hour: hours, minute: minutes }).utc();
     }
 }

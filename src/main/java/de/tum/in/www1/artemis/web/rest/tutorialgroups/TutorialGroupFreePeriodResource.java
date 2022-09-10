@@ -96,6 +96,12 @@ public class TutorialGroupFreePeriodResource {
         return ResponseEntity.noContent().build();
     }
 
-    record TutorialGroupFreePeriodDTO(Long id, LocalDate date, String reason) {
+    /**
+     * Used because we want to interpret the date in the time zone of the tutorial groups configuration
+     *
+     * @param date
+     * @param reason
+     */
+    record TutorialGroupFreePeriodDTO(LocalDate date, String reason) {
     }
 }

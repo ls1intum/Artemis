@@ -9,7 +9,7 @@ import { onError } from 'app/shared/util/global.utils';
 import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-session/crud/tutorial-group-session-form/tutorial-group-session-form.component';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
+import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
 import dayjs from 'dayjs/esm';
 import { combineLatest } from 'rxjs';
 
@@ -19,7 +19,7 @@ import { combineLatest } from 'rxjs';
     styleUrls: ['./create-tutorial-group-session.component.scss'],
 })
 export class CreateTutorialGroupSessionComponent implements OnInit {
-    tutorialGroupSessionToCreate: TutorialGroupSession = new TutorialGroupSession();
+    tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
     isLoading: boolean;
     tutorialGroup: TutorialGroup;
     courseId: number;
@@ -60,10 +60,13 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
         const { date, startTime, endTime, location } = formData;
 
         // we send it already in utc
-        this.tutorialGroupSessionToCreate.start = this.createUTC(date!, startTime!);
-        this.tutorialGroupSessionToCreate.end = this.createUTC(date!, endTime!);
+        this.tutorialGroupSessionToCreate.date = date;
+        this.tutorialGroupSessionToCreate.startTime = startTime;
+        this.tutorialGroupSessionToCreate.endTime = endTime;
         this.tutorialGroupSessionToCreate.location = location;
+
         this.isLoading = true;
+
         this.tutorialGroupSessionService
             .create(this.tutorialGroup.id!, this.tutorialGroupSessionToCreate)
             .pipe(
