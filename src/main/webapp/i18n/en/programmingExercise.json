@@ -397,6 +397,7 @@
                 "title": "Template-Solution-Diff",
                 "template": "Template",
                 "solution": "Solution",
+                "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
                 "lineStatLabel": "Lines added/removed between template and solution",
                 "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",

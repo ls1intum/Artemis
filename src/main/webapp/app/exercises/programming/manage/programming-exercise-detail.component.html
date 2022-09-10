@@ -473,6 +473,7 @@
                             [showUngradedResults]="true"
                             [showTestNames]="true"
                             [personalParticipation]="false"
+                            (onParticipationChange)="onParticipationChange()"
                             class="me-2"
                         ></jhi-updating-result>
                         <jhi-programming-exercise-instructor-status
@@ -541,7 +542,7 @@
                                 [icon]="faEye"
                                 [title]="'artemisApp.programmingExercise.diffReport.button'"
                                 [tooltip]="'artemisApp.programmingExercise.diffReport.tooltip'"
-                                (onClick)="getAndShowFullDiff()"
+                                (onClick)="showGitDiff()"
                                 class="ms-2"
                             ></jhi-button>
                         </div>

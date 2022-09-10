@@ -97,6 +97,8 @@ public class ProgrammingExerciseResource {
 
     private final SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository;
 
+    private final TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository;
+
     private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
 
     /**
@@ -123,6 +125,7 @@ public class ProgrammingExerciseResource {
             Optional<ProgrammingLanguageFeatureService> programmingLanguageFeatureService, CourseRepository courseRepository, GitService gitService,
             AuxiliaryRepositoryService auxiliaryRepositoryService, SubmissionPolicyService submissionPolicyService,
             SolutionProgrammingExerciseParticipationRepository solutionProgrammingExerciseParticipationRepository,
+            TemplateProgrammingExerciseParticipationRepository templateProgrammingExerciseParticipationRepository,
             BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
@@ -143,6 +146,7 @@ public class ProgrammingExerciseResource {
         this.auxiliaryRepositoryService = auxiliaryRepositoryService;
         this.submissionPolicyService = submissionPolicyService;
         this.solutionProgrammingExerciseParticipationRepository = solutionProgrammingExerciseParticipationRepository;
+        this.templateProgrammingExerciseParticipationRepository = templateProgrammingExerciseParticipationRepository;
         this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
@@ -756,6 +760,28 @@ public class ProgrammingExerciseResource {
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
 
         var participation = solutionProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
+
+        return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
+    }
+
+    /**
+     * GET programming-exercise/:exerciseId/template-files-content
+     *
+     * Returns the template repository files with content for a given programming exercise.
+     * Note: This endpoint redirects the request to the ProgrammingExerciseParticipationService. This is required if
+     * the template participation id is not known for the client.
+     * @param exerciseId the exercise for which the template repository files should be retrieved
+     * @return a redirect to the endpoint returning the files with content
+     */
+    @GetMapping(TEMPLATE_REPOSITORY_FILES_WITH_CONTENT)
+    @PreAuthorize("hasRole('TA')")
+    @FeatureToggle(Feature.ProgrammingExercises)
+    public ModelAndView redirectGetTemplateRepositoryFiles(@PathVariable Long exerciseId) {
+        log.debug("REST request to get latest Template Repository Files for ProgrammingExercise with id : {}", exerciseId);
+        ProgrammingExercise exercise = programmingExerciseRepository.findByIdElseThrow(exerciseId);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.TEACHING_ASSISTANT, exercise, null);
+
+        var participation = templateProgrammingExerciseParticipationRepository.findByProgrammingExerciseIdElseThrow(exerciseId);
 
         return new ModelAndView("forward:/api/repository/" + participation.getId() + "/files-content");
     }
