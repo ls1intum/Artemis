@@ -60,7 +60,7 @@ export class ExerciseDetailsStudentActionsComponent {
      * If a student participation is supplied explicitly, use that one.
      * Otherwise, use the first student participation on the exercise.
      */
-    get participation() {
+    getParticipation() {
         if (this.studentParticipation) {
             return this.studentParticipation;
         }
@@ -99,11 +99,16 @@ export class ExerciseDetailsStudentActionsComponent {
         return (this.exercise as ProgrammingExercise).allowOfflineIde;
     }
 
-    isManualFeedbackRequestsAllowed() {
-        // TODO: access latest result and check if it is successful
-        // this.studentParticipation.results;
-        // Implement this as a function in participation.service.ts?
-        return (this.exercise as ProgrammingExercise).allowManualFeedbackRequests;
+    isManualFeedbackRequestsAllowed(): boolean {
+        const participation = this.getParticipation();
+
+        // TODO: duplicate code UpdatingResultComponent:ngOnChanges
+        const showUngradedResults = true;
+
+        const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
+
+        // Checking booleans for true because they could be undefined
+        return latestResult !== undefined && latestResult.successful === true && this.exercise.allowManualFeedbackRequests === true;
     }
 
     /**

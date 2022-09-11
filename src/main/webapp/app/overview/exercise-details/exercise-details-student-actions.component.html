@@ -213,6 +213,7 @@
                     *ngIf="!examMode && isOnlineEditorAllowed()"
                     [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations![0].id]"
                 ></button>
+
                 <jhi-clone-repo-button
                     class="me-2"
                     [loading]="!!exercise.loading"
@@ -222,6 +223,7 @@
                     *ngIf="isOfflineIdeAllowed()"
                 >
                 </jhi-clone-repo-button>
+
                 <button
                     [id]="'request-feedback-' + exercise.id"
                     jhi-exercise-action-button

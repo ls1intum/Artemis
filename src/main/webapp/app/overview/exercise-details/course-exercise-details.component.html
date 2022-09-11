@@ -21,6 +21,7 @@
         >
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
         </a>
+
         <jhi-submission-result-status
             [exercise]="exercise"
             [studentParticipation]="studentParticipation"
@@ -29,6 +30,7 @@
             [triggerLastGraded]="false"
         >
         </jhi-submission-result-status>
+
         <div class="col-auto d-md-flex align-items-center" *ngIf="exercise.isAtLeastTutor">
             <span class="ms-1 me-1">{{
                 'artemisApp.courseOverview.exerciseDetails.instructorActions.title' + (exercise.isAtLeastInstructor ? '' : 'Tutor') | artemisTranslate
