@@ -8,7 +8,7 @@
         </sql>
         <addNotNullConstraint tableName="answer_post" columnName="tutor_approved" columnDataType="BIT(1)"/>
         <addColumn tableName="answer_post">
-            <column name="resolves_post" type="BIT(1)" valueComputed="tutor_approved" defaultValue="0">
+            <column name="resolves_post" type="BIT(1)" valueComputed="tutor_approved" defaultValueBoolean="false">
                 <constraints nullable="false"/>
             </column>
         </addColumn>
