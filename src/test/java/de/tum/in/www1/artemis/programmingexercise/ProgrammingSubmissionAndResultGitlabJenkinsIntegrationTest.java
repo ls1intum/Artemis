@@ -104,8 +104,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,9] not a statement");
         logs.add("[2021-05-10T15:19:49.740Z] [ERROR] BubbleSort.java:[15,10] ';' expected");
 
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
-        notification.setLogs(logs);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var submissionWithLogsOptional = submissionRepository.findWithEagerBuildLogEntriesById(submission.getId());
@@ -152,8 +151,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
         logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
 
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
-        notification.setLogs(logs);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
@@ -185,8 +183,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         logs.add("[2021-05-10T15:00:27.000Z] Total time: Some time"); // SCA finished
         logs.add("[2021-05-10T15:00:30.000Z] Everything finished"); // Job finished
 
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of());
-        notification.setLogs(logs);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
@@ -215,8 +212,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         logs.add("[2021-05-10T15:00:15.000Z] Total time: Some time"); // Build & test finished
         logs.add("[2021-05-10T15:00:20.000Z] Everything finished"); // Job finished
 
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of());
-        notification.setLogs(logs);
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.PYTHON, List.of(), logs, null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
@@ -245,7 +241,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of());
+        var notification = createJenkinsNewResultNotification("scrambled build plan key", userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.BAD_REQUEST);
 
         var results = resultRepository.findAllByParticipationIdOrderByCompletionDateDesc(participation.getId());
@@ -277,23 +273,17 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Build result for first commit is received
         var firstBuildCompleteDate = ZonedDateTime.now();
-        var firstVcsDTO = new CommitDTO();
-        firstVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
-        firstVcsDTO.setHash(firstCommitHash);
-        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
-        notificationDTOFirstCommit.setRunDate(firstBuildCompleteDate);
-        notificationDTOFirstCommit.setCommits(List.of(firstVcsDTO));
+        var firstVcsDTO = new CommitDTO(firstCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var notificationDTOFirstCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
+                firstBuildCompleteDate, List.of(firstVcsDTO));
 
         postResult(notificationDTOFirstCommit, HttpStatus.OK);
 
         // Build result for second commit is received
         var secondBuildCompleteDate = ZonedDateTime.now();
-        var secondVcsDTO = new CommitDTO();
-        secondVcsDTO.setRepositorySlug(urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()));
-        secondVcsDTO.setHash(secondCommitHash);
-        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of());
-        notificationDTOSecondCommit.setRunDate(secondBuildCompleteDate);
-        notificationDTOSecondCommit.setCommits(List.of(secondVcsDTO));
+        var secondVcsDTO = new CommitDTO(secondCommitHash, urlService.getRepositorySlugFromRepositoryUrl(testService.participation.getVcsRepositoryUrl()), defaultBranch);
+        var notificationDTOSecondCommit = createJenkinsNewResultNotification(testService.programmingExercise.getProjectKey(), userLogin, JAVA, List.of(), new ArrayList<>(),
+                secondBuildCompleteDate, List.of(secondVcsDTO));
 
         postResult(notificationDTOSecondCommit, HttpStatus.OK);
 
@@ -312,7 +302,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var submission = database.createProgrammingSubmission(participation, false);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         var result = assertBuildError(participation.getId(), userLogin, false);
@@ -334,7 +324,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
-        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of());
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, programmingLanguage, List.of(), new ArrayList<>(), null, new ArrayList<>());
         postResult(notification, HttpStatus.OK);
 
         assertBuildError(participation.getId(), userLogin, true);
@@ -413,13 +403,12 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         request.postWithoutLocation("/api/" + NEW_RESULT_RESOURCE_PATH, alteredObj, status, httpHeaders);
     }
 
-    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests) {
+    private TestResultsDTO createJenkinsNewResultNotification(String projectKey, String loginName, ProgrammingLanguage programmingLanguage, List<String> successfulTests,
+            List<String> logs, ZonedDateTime buildRunDate, List<CommitDTO> commits) {
         var repoName = (projectKey + "-" + loginName).toUpperCase();
         // The full name is specified as <FOLDER NAME> » <JOB NAME> <Build Number>
         var fullName = exercise.getProjectKey() + " » " + repoName + " #3";
-        var notification = ModelFactory.generateTestResultDTO(repoName, successfulTests, List.of(), programmingLanguage, false);
-        notification.setFullName(fullName);
-        return notification;
+        return ModelFactory.generateTestResultDTO(fullName, repoName, buildRunDate, programmingLanguage, false, successfulTests, List.of(), logs, commits, null);
     }
 
 }

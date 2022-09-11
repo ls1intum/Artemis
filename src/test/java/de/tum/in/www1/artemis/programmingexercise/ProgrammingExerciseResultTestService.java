@@ -361,7 +361,7 @@ public class ProgrammingExerciseResultTestService {
 
     private int getNumberOfBuildLogs(Object resultNotification) {
         if (resultNotification instanceof BambooBuildResultNotificationDTO) {
-            return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().getJobs().iterator().next().getLogs().size();
+            return ((BambooBuildResultNotificationDTO) resultNotification).getBuild().jobs().iterator().next().logs().size();
         }
         throw new UnsupportedOperationException("Build logs are only part of the Bamboo notification");
     }
