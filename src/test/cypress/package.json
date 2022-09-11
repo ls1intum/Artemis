@@ -7,7 +7,7 @@
         "node_modules"
     ],
     "devDependencies": {
-        "@4tw/cypress-drag-drop": "2.2.1",
+        "@4tw/cypress-drag-drop": "2.1.0",
         "@types/node": "18.7.16",
         "cypress": "9.5.4",
         "cypress-file-upload": "5.0.8",
