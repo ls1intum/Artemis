@@ -1,6 +1,6 @@
 <h3 *jhiExtensionPoint="overrideTitle">{{ exercise.title }}</h3>
 
-<jhi-expandable-section headerKey="assessmentInstructions.problemStatement" [ngSwitch]="exercise.type">
+<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.problemStatement" [ngSwitch]="exercise.type">
     <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
         <jhi-programming-exercise-instructions
             [exercise]="programmingExercise!"
@@ -11,7 +11,7 @@
     <p class="markdown-preview" [innerHTML]="problemStatement" *ngSwitchDefault></p>
 </jhi-expandable-section>
 
-<jhi-expandable-section headerKey="assessmentInstructions.sampleSolution" [ngSwitch]="exercise.type">
+<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.sampleSolution" [ngSwitch]="exercise.type">
     <ng-container *ngSwitchCase="ExerciseType.PROGRAMMING">
         <div class="mb-3">
             <a jhiSecureLink [href]="programmingExercise?.solutionParticipation?.repositoryUrl">
@@ -25,11 +25,11 @@
     </ng-container>
 </jhi-expandable-section>
 
-<jhi-expandable-section headerKey="assessmentInstructions.assessmentInstructions">
+<jhi-expandable-section headerKey="artemisApp.assessmentInstructions.assessmentInstructions">
     <p class="markdown-preview" [innerHTML]="gradingInstructions"></p>
     <jhi-structured-grading-instructions-assessment-layout [readonly]="readOnly" [criteria]="criteria"></jhi-structured-grading-instructions-assessment-layout>
 </jhi-expandable-section>
 
-<jhi-expandable-section *ngIf="isAssessmentTraining" headerKey="assessmentInstructions.trainingEvaluationCriteria.title">
-    <p jhiTranslate="assessmentInstructions.trainingEvaluationCriteria.description"></p>
+<jhi-expandable-section *ngIf="isAssessmentTraining" headerKey="artemisApp.assessmentInstructions.trainingEvaluationCriteria.title">
+    <p jhiTranslate="artemisApp.assessmentInstructions.trainingEvaluationCriteria.description"></p>
 </jhi-expandable-section>

@@ -105,7 +105,7 @@ public class NotificationSettingsService {
 
     // This set has to equal the UI configuration in the client notification settings structure file!
     private static final Set<NotificationType> NOTIFICATION_TYPES_WITH_EMAIL_SUPPORT = Set.of(EXERCISE_RELEASED, EXERCISE_PRACTICE, ATTACHMENT_CHANGE, NEW_ANNOUNCEMENT_POST,
-            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE);
+            FILE_SUBMISSION_SUCCESSFUL, EXERCISE_SUBMISSION_ASSESSED, DUPLICATE_TEST_CASE, NEW_PLAGIARISM_CASE_STUDENT, PLAGIARISM_CASE_VERDICT_STUDENT);
 
     public NotificationSettingsService(NotificationSettingRepository notificationSettingRepository) {
         this.notificationSettingRepository = notificationSettingRepository;

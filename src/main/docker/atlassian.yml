@@ -13,7 +13,7 @@ services:
                 ipv4_address: 172.20.0.2
     bitbucket:
         container_name: artemis_bitbucket
-        image: ghcr.io/ls1intum/artemis-bitbucket:7.21.3
+        image: ghcr.io/ls1intum/artemis-bitbucket:7.21.4
         volumes:
             - artemis-bitbucket:/var/atlassian/application-data/bitbucket
         environment:
@@ -27,7 +27,7 @@ services:
                 ipv4_address: 172.20.0.3
     bamboo:
         container_name: artemis_bamboo
-        image: ghcr.io/ls1intum/artemis-bamboo:8.1.8
+        image: ghcr.io/ls1intum/artemis-bamboo:8.2.5
         volumes:
             - artemis-bamboo:/var/atlassian/application-data/bamboo
         ports:

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { ProgrammingExerciseFullGitDiffReport } from 'app/entities/hestia/programming-exercise-full-git-diff-report.model';
 import { ProgrammingExerciseService } from 'app/exercises/programming/manage/services/programming-exercise.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { AlertService } from 'app/core/util/alert.service';
+import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 
 @Component({
     selector: 'jhi-diff-generation-step',
@@ -14,20 +14,33 @@ export class DiffGenerationStepComponent implements OnInit {
     exercise: ProgrammingExercise;
 
     @Output()
-    onGitDiffLoaded = new EventEmitter<ProgrammingExerciseFullGitDiffReport>();
+    onGitDiffLoaded = new EventEmitter<ProgrammingExerciseGitDiffReport>();
 
     isLoading = false;
-    gitDiffReport?: ProgrammingExerciseFullGitDiffReport;
+    gitDiffReport?: ProgrammingExerciseGitDiffReport;
+    templateFileContentByPath: Map<string, string>;
+    solutionFileContentByPath: Map<string, string>;
 
     constructor(private exerciseService: ProgrammingExerciseService, private alertService: AlertService) {}
 
     ngOnInit() {
         this.isLoading = true;
-        this.exerciseService.getFullDiffReport(this.exercise.id!).subscribe({
+        this.exerciseService.getDiffReport(this.exercise.id!).subscribe({
             next: (report) => {
                 this.gitDiffReport = report;
-                this.isLoading = false;
                 this.onGitDiffLoaded.emit(report);
+                this.exerciseService.getTemplateRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
+                    next: (response: Map<string, string>) => {
+                        this.templateFileContentByPath = response;
+                        this.isLoading = this.solutionFileContentByPath === undefined;
+                    },
+                });
+                this.exerciseService.getSolutionRepositoryTestFilesWithContent(this.exercise.id!).subscribe({
+                    next: (response: Map<string, string>) => {
+                        this.solutionFileContentByPath = response;
+                        this.isLoading = this.templateFileContentByPath === undefined;
+                    },
+                });
             },
             error: (error) => {
                 this.isLoading = false;

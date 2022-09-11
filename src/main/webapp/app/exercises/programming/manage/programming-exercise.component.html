@@ -289,7 +289,7 @@
             </button>
             <button type="submit" *ngIf="course.isAtLeastInstructor" (click)="openRepoExportModal()" class="btn btn-info btn-sm me-1">
                 <fa-icon [icon]="faDownload"></fa-icon>
-                <span class="d-none d-md-inline" jhiTranslate="instructorDashboard.exportSubmissions.title">Download Repos</span>
+                <span class="d-none d-md-inline" jhiTranslate="artemisApp.instructorDashboard.exportSubmissions.title">Download Repos</span>
             </button>
             <jhi-exercise-scores-export-button *ngIf="course.isAtLeastInstructor" [exercises]="selectedProgrammingExercises"></jhi-exercise-scores-export-button>
             <button *ngIf="course.isAtLeastInstructor" (click)="checkConsistencies()" class="btn btn-outline-primary btn-sm me-1">

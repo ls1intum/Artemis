@@ -353,8 +353,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(result).hasSize(1);
 
-        assertThat(result.get(0).getNumberOfCourses()).isEqualTo(1);
-        assertThat(result.get(0).getNumberOfUsers()).isEqualTo(1);
+        assertThat(result.get(0).numberOfCourses()).isEqualTo(1);
+        assertThat(result.get(0).numberOfUsers()).isEqualTo(1);
     }
 
     /**
@@ -375,8 +375,8 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         OrganizationCountDTO result = request.get("/api/organizations/" + organization.getId() + "/count", HttpStatus.OK, OrganizationCountDTO.class);
 
-        assertThat(result.getNumberOfUsers()).isEqualTo(1);
-        assertThat(result.getNumberOfCourses()).isEqualTo(1);
+        assertThat(result.numberOfUsers()).isEqualTo(1);
+        assertThat(result.numberOfCourses()).isEqualTo(1);
     }
 
     /**

@@ -1,12 +1,12 @@
 <div class="page">
     <div class="card-title ms-2">
-        <h2 class="mb-3 mt-3 font-weight-bold">{{ 'aboutUsOverview.title' | artemisTranslate }}</h2>
+        <h2 class="mb-3 mt-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.title' | artemisTranslate }}</h2>
     </div>
     <div class="mb-5 ms-2">
-        <h3 class="mb-3 font-weight-bold">{{ 'aboutUsOverview.feature' | artemisTranslate }}</h3>
+        <h3 class="mb-3 font-weight-bold">{{ 'artemisApp.aboutUsOverview.feature' | artemisTranslate }}</h3>
         <ol>
             <li *ngFor="let section of sections">
-                <span [jhiTranslate]="'aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
+                <span [jhiTranslate]="'artemisApp.aboutUsOverview.' + section[0] + '.text'" [translateValues]="section[1]"></span>
             </li>
         </ol>
     </div>
@@ -18,10 +18,10 @@
                     <div class="col-md-4"><img class="img-fluid w-100 rounded" [src]="SERVER_API_URL + pm.photoDirectory" /></div>
                     <div class="col-md-8">
                         <h4 class="font-weight-bold">{{ pm.fullName }}</h4>
-                        <h5>{{ 'aboutUsOverview.' + pm.role | artemisTranslate }}</h5>
+                        <h5>{{ 'artemisApp.aboutUsOverview.' + pm.role | artemisTranslate }}</h5>
                         <span>
                             <i></i>
-                            <a href="{{ pm.website }}" target="_blank">{{ 'aboutUsOverview.website' | artemisTranslate }}</a>
+                            <a href="{{ pm.website }}" target="_blank" rel="noopener noreferrer">{{ 'artemisApp.aboutUsOverview.website' | artemisTranslate }}</a>
                         </span>
                     </div>
                 </div>
@@ -29,7 +29,7 @@
         </div>
     </div>
     <div>
-        <h3 class="mb-3 ms-2 font-weight-bold">{{ 'aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
+        <h3 class="mb-3 ms-2 font-weight-bold">{{ 'artemisApp.aboutUsOverview.getInTouch' | artemisTranslate }}</h3>
         <ul>
             <li>
                 <a [href]="bugReportUrl" rel="noreferrer noopener" class="footer-text ms-3" target="_blank">{{ 'bug' | artemisTranslate }}</a>
@@ -46,7 +46,7 @@
         </ul>
     </div>
     <div class="mt-5 ms-2 me-2" *ngIf="data && data.contributors">
-        <h3 class="font-weight-bold">{{ 'aboutUsOverview.contributors' | artemisTranslate }}</h3>
+        <h3 class="font-weight-bold">{{ 'artemisApp.aboutUsOverview.contributors' | artemisTranslate }}</h3>
         <div class="row">
             <div class="contributor text-center" *ngFor="let contributor of data.contributors">
                 <img class="img-fluid" [src]="SERVER_API_URL + contributor.photoDirectory" />

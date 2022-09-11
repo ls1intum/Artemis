@@ -15,7 +15,7 @@ import { faDownload } from '@fortawesome/free-solid-svg-icons';
             [shouldSubmit]="false"
             [featureToggle]="[FeatureToggle.ProgrammingExercises, FeatureToggle.Exports]"
             [icon]="faDownload"
-            [title]="singleParticipantMode ? 'instructorDashboard.exportRepos.titleSingle' : 'instructorDashboard.exportRepos.title'"
+            [title]="singleParticipantMode ? 'artemisApp.instructorDashboard.exportRepos.titleSingle' : 'artemisApp.instructorDashboard.exportRepos.title'"
             (onClick)="openRepoExportDialog($event)"
         ></jhi-button>
     `,

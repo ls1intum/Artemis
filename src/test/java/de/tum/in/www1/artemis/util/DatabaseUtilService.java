@@ -580,7 +580,8 @@ public class DatabaseUtilService {
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
         Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        Lecture lecture1 = course1.getLectures().stream().findFirst().get();
+        // always use the lecture with the smallest ID, otherwise tests related to search might fail (in a flaky way)
+        Lecture lecture1 = course1.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
         TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         VideoUnit videoUnit = createVideoUnit();
         TextUnit textUnit = createTextUnit();
@@ -872,6 +873,7 @@ public class DatabaseUtilService {
     private Post createBasicPost(PlagiarismCase plagiarismCase) {
         Post postToAdd = createBasicPost(0, "instructor");
         postToAdd.setPlagiarismCase(plagiarismCase);
+        postToAdd.getPlagiarismCase().setExercise(null);
         return postRepository.save(postToAdd);
     }
 
@@ -913,6 +915,15 @@ public class DatabaseUtilService {
         answerPosts.add(answerPost);
         answerPostRepository.save(answerPost);
         return answerPosts;
+    }
+
+    public void createMultipleCoursesWithAllExercisesAndLectures(int numberOfCoursesWithExercises, int numberOfCoursesWithLectures) throws Exception {
+        for (int i = 0; i < numberOfCoursesWithExercises; i++) {
+            createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(true);
+        }
+        for (int i = 0; i < numberOfCoursesWithLectures; i++) {
+            createCoursesWithExercisesAndLecturesAndLectureUnits(true, true);
+        }
     }
 
     public Course createCourseWithAllExerciseTypesAndParticipationsAndSubmissionsAndResults(boolean hasAssessmentDueDatePassed) {
