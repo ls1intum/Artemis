@@ -678,7 +678,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        database.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
