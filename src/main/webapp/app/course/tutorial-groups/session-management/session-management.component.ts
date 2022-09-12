@@ -12,8 +12,6 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
-import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { CancellationModalComponent } from 'app/course/tutorial-groups/session-management/cancellation-modal/cancellation-modal.component';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -64,7 +62,7 @@ export class SessionManagementComponent implements OnInit {
 
     loadAll() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {

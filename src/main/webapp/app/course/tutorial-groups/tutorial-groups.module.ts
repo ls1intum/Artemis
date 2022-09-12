@@ -27,9 +27,19 @@ import { CreateTutorialGroupFreePeriodComponent } from './tutorial-free-periods/
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { EditTutorialGroupSessionComponent } from './tutorial-groups-session/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
 import { TutorialGroupSessionRowButtonsComponent } from './session-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
+import { tutorialGroupRoutes } from 'app/course/tutorial-groups/tutorial-group.route';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule, CalendarModule, OwlDateTimeModule],
+    imports: [
+        ArtemisSharedModule,
+        RouterModule.forChild(tutorialGroupRoutes),
+        ArtemisDataTableModule,
+        NgxDatatableModule,
+        ArtemisCourseGroupModule,
+        ArtemisMarkdownModule,
+        CalendarModule,
+        OwlDateTimeModule,
+    ],
     declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,

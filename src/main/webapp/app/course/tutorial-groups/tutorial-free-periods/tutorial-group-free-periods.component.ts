@@ -41,7 +41,7 @@ export class TutorialGroupFreePeriodsComponent implements OnInit {
 
     private loadAll() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {

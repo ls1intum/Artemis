@@ -25,6 +25,9 @@ export class RegisteredStudentsComponent implements OnInit {
     isAdmin = false;
     filteredUsersSize = 0;
 
+    tutorialGroupId: number;
+    courseId: number;
+
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
@@ -57,13 +60,17 @@ export class RegisteredStudentsComponent implements OnInit {
     loadAll = () => {
         this.isLoading = true;
         this.isAdmin = this.accountService.isAdmin();
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.data])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
             .pipe(
                 take(1),
-                switchMap(([params, data]) => {
-                    const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.course = data.course;
-                    return this.tutorialGroupService.getOneOfCourse(this.course.id!, tutorialGroupId);
+                switchMap(([params, parentParams]) => {
+                    this.tutorialGroupId = Number(params.get('tutorialGroupId'));
+                    this.courseId = Number(parentParams.get('courseId'));
+                    return this.courseService.find(this.courseId);
+                }),
+                switchMap((res) => {
+                    this.course = res.body!;
+                    return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )

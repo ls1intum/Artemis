@@ -4,7 +4,6 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { onError } from 'app/shared/util/global.utils';
 import { ConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
-import dayjs from 'dayjs/esm';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-configuration.service';
 import { finalize } from 'rxjs/operators';
 import { HttpErrorResponse } from '@angular/common/http';
@@ -37,7 +36,6 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
         const { timeZone, period } = formData;
         this.newTutorialGroupsConfiguration.timeZone = timeZone?.tzCode!;
         this.isLoading = true;
-
         this.tutorialGroupsConfigurationService
             .create(this.newTutorialGroupsConfiguration, this.courseId, period ?? [])
             .pipe(

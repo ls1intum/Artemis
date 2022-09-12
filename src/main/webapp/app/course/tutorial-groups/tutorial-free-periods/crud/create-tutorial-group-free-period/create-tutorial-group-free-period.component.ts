@@ -31,7 +31,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
             .pipe(take(1))
             .subscribe({
                 next: ([params, parentParams]) => {
