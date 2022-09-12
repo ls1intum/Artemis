@@ -13,6 +13,8 @@ import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import { of } from 'rxjs';
 import { Course } from 'app/entities/course.model';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 enum DateOffsetType {
     HOURS = 'hours',
@@ -59,6 +61,7 @@ describe('ExamStatusComponent', () => {
             providers: [
                 { provide: TranslateService, useClass: MockTranslateService },
                 { provide: ExamChecklistService, useClass: MockExamChecklistService },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
         })
             .compileComponents()
