@@ -146,7 +146,7 @@ describe('Course Group Component', () => {
         let user: User;
 
         beforeEach(() => {
-            addUserStub = jest.spyOn(comp, 'addUserToGroup').mockReturnValue(of({}));
+            addUserStub = jest.spyOn(comp, 'addUserToGroup').mockReturnValue(of(new HttpResponse<void>()));
             user = courseGroupUser;
             comp.allGroupUsers = [];
             comp.course = course;
@@ -178,7 +178,7 @@ describe('Course Group Component', () => {
         let removeUserStub: jest.SpyInstance;
 
         beforeEach(() => {
-            removeUserStub = jest.spyOn(comp, 'removeUserFromGroup').mockReturnValue(of({}));
+            removeUserStub = jest.spyOn(comp, 'removeUserFromGroup').mockReturnValue(of(new HttpResponse<void>()));
             comp.allGroupUsers = [courseGroupUser, courseGroupUser2];
             comp.course = course;
             comp.courseGroup = courseGroup;
