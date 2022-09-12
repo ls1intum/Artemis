@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.domain;
 
+import static de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseTestCaseType.DEFAULT;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -58,8 +60,8 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     private ProgrammingExercise exercise;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_case_type")
-    private ProgrammingExerciseTestCaseType type;
+    @Column(name = "test_case_type", nullable = false)
+    private ProgrammingExerciseTestCaseType type = DEFAULT;     // default value
 
     @OneToMany(mappedBy = "testCase", fetch = FetchType.LAZY)
     @JsonIgnoreProperties("testCase")
