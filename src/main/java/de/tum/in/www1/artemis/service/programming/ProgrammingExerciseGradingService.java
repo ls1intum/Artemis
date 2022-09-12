@@ -131,12 +131,8 @@ public class ProgrammingExerciseGradingService {
         Result newResult = null;
         try {
             var buildResult = continuousIntegrationService.get().convertBuildResult(requestBody);
-            var optionalBranchNameFromAssignmentRepo = buildResult.getBranchNameFromAssignmentRepo();
+            checkCorrectBranchElseThrow(participation.getProgrammingExercise(), buildResult);
 
-            // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
-            if (optionalBranchNameFromAssignmentRepo.isPresent() && !optionalBranchNameFromAssignmentRepo.get().equals(defaultGitBranch)) {
-                throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
-            }
             newResult = continuousIntegrationService.get().createResultFromBuildResult(buildResult, participation);
 
             // Fetch submission or create a fallback
@@ -165,6 +161,31 @@ public class ProgrammingExerciseGradingService {
         }
 
         return Optional.ofNullable(newResult).map(result -> processNewProgrammingExerciseResult(participation, result));
+    }
+
+    /**
+     * Checks that the build result belongs to the default branch of the exercise.
+     *
+     * @param exercise The exercise in which the submission was made.
+     * @param buildResult The build result received from the CI system.
+     * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
+     */
+    private void checkCorrectBranchElseThrow(final ProgrammingExercise exercise, final AbstractBuildResultNotificationDTO buildResult) throws IllegalArgumentException {
+        final String exerciseDefaultBranch = exercise.getBranch();
+        final String defaultBranch;
+        if (exerciseDefaultBranch == null) {
+            defaultBranch = defaultGitBranch;
+        }
+        else {
+            defaultBranch = exerciseDefaultBranch;
+        }
+
+        // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
+        buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
+            if (!branchName.equals(defaultBranch)) {
+                throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
+            }
+        });
     }
 
     /**

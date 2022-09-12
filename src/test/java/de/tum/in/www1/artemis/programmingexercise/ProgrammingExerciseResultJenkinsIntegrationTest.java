@@ -6,6 +6,7 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
@@ -14,6 +15,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -21,6 +23,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -99,5 +102,39 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of("test1", "test2", "test4"),
                 List.of(), new ArrayList<>(), new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("branchNames")
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldIgnoreResultOnOtherBranches(String defaultBranch) {
+        var commit = new CommitDTO("abc123", "slug", "other");
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnDefaultBranch(defaultBranch, notification);
+    }
+
+    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
+    @MethodSource("branchNames")
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnDefaultBranch(String defaultBranch) {
+        var commit = new CommitDTO("abc123", "slug", "main");
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnDefaultBranch(defaultBranch, notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnCustomDefaultBranch() {
+        final var customDefaultBranch = "dummy";
+        var commit = new CommitDTO("abc123", "slug", customDefaultBranch);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnDefaultBranch(customDefaultBranch, notification);
+    }
+
+    private static Stream<String> branchNames() {
+        return Stream.of(null, "main");
     }
 }
