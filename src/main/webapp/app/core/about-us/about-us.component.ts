@@ -74,7 +74,7 @@ export class AboutUsComponent implements OnInit {
                 }),
             )
             .subscribe((profileInfo) => {
-                if (profileInfo) {
+                if (profileInfo.git) {
                     this.gitCommitId = profileInfo.git.commit.id.abbrev;
                     this.gitBranchName = profileInfo.git.branch;
                 }
