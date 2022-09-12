@@ -13,13 +13,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-edit-tutorial-groups-configuration',
     templateUrl: './edit-tutorial-groups-configuration.component.html',
-    styleUrls: ['./edit-tutorial-groups-configuration.component.scss'],
 })
 export class EditTutorialGroupsConfigurationComponent implements OnInit {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
     formData: ConfigurationFormData;
     courseId: number;
+    tutorialGroupConfigurationId: number;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -34,9 +34,9 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
             .pipe(
                 take(1),
                 switchMap(([params, parentParams]) => {
-                    const tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
+                    this.tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupsConfigurationService.getOne(tutorialGroupConfigurationId);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.courseId, this.tutorialGroupConfigurationId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )
@@ -63,7 +63,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
-            .update(this.tutorialGroupsConfiguration, period ?? [])
+            .update(this.courseId, this.tutorialGroupConfigurationId, this.tutorialGroupsConfiguration, period ?? [])
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

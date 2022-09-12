@@ -4,12 +4,15 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
@@ -23,8 +26,14 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
     Set<TutorialGroupFreePeriod> getOverlappingPeriodsInCourse(@Param("course") Course course, @Param("from_inclusive") ZonedDateTime from_inclusive,
             @Param("to_inclusive") ZonedDateTime to_inclusive);
 
+    Set<TutorialGroupFreePeriod> findAllByTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration);
+
     default TutorialGroupFreePeriod findByIdElseThrow(Long tutorialGroupFreePeriodId) {
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));
     }
+
+    @Modifying
+    @Transactional
+    void deleteByTutorialGroupsConfiguration_Course(Course course);
 
 }

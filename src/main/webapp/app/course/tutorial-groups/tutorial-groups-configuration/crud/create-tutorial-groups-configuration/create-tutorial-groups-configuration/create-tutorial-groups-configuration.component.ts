@@ -11,7 +11,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-create-tutorial-groups-configuration',
     templateUrl: './create-tutorial-groups-configuration.component.html',
-    styleUrls: ['./create-tutorial-groups-configuration.component.scss'],
 })
 export class CreateTutorialGroupsConfigurationComponent implements OnInit {
     newTutorialGroupsConfiguration = new TutorialGroupsConfiguration();
@@ -45,7 +44,8 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management']);
+                    // at /course-management/courseID/tutorial-groups-management/configuration/create
+                    this.router.navigate(['../../'], { relativeTo: this.activatedRoute });
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

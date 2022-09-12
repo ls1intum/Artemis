@@ -13,9 +13,9 @@ export class TutorialGroupsConfigurationService {
 
     constructor(private httpClient: HttpClient) {}
 
-    getOne(tutorialGroupsConfigurationId: number) {
+    getOneOfCourse(courseId: number, tutorialGroupsConfigurationId: number) {
         return this.httpClient
-            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/tutorial-groups-configurations/${tutorialGroupsConfigurationId}`, { observe: 'response' })
+            .get<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}`, { observe: 'response' })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
     create(tutorialGroupsConfiguration: TutorialGroupsConfiguration, courseId: number, period: Date[]): Observable<EntityResponseType> {
@@ -25,10 +25,12 @@ export class TutorialGroupsConfigurationService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
 
-    update(tutorialGroupsConfiguration: TutorialGroupsConfiguration, period: Date[]): Observable<EntityResponseType> {
+    update(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupsConfiguration: TutorialGroupsConfiguration, period: Date[]): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupsConfigurationDatesFromClient(tutorialGroupsConfiguration, period);
         return this.httpClient
-            .put<TutorialGroupsConfiguration>(`${this.resourceURL}/tutorial-groups-configurations/${tutorialGroupsConfiguration.id}`, copy, { observe: 'response' })
+            .put<TutorialGroupsConfiguration>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}`, copy, {
+                observe: 'response',
+            })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupsConfigurationResponseDatesFromServer(res)));
     }
 

@@ -3,13 +3,13 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.time.ZoneId;
+import java.util.Optional;
 
 import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,14 +21,12 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.feature.Feature;
 import de.tum.in.www1.artemis.service.feature.FeatureToggle;
-import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
+import de.tum.in.www1.artemis.service.tutorialgroups.TutorialGroupsConfigurationService;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 @RestController
 @RequestMapping("/api")
 public class TutorialGroupsConfigurationResource {
-
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
 
     private static final String ENTITY_NAME = "tutorialGroupsConfiguration";
 
@@ -36,40 +34,40 @@ public class TutorialGroupsConfigurationResource {
 
     private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
+    private final TutorialGroupsConfigurationService tutorialGroupConfigurationService;
+
     private final CourseRepository courseRepository;
 
     private final AuthorizationCheckService authorizationCheckService;
 
-    public TutorialGroupsConfigurationResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository, CourseRepository courseRepository,
-            AuthorizationCheckService authorizationCheckService) {
+    public TutorialGroupsConfigurationResource(TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository,
+            TutorialGroupsConfigurationService tutorialGroupConfigurationService, CourseRepository courseRepository, AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
+        this.tutorialGroupConfigurationService = tutorialGroupConfigurationService;
         this.courseRepository = courseRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
     /**
-     * GET /tutorial-groups-configuration/:tutorialGroupsConfigurationId : gets the tutorial groups configuration with the specified id.
+     * GET /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId : gets the tutorial groups configuration with the specified id.
      *
+     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
      * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to retrieve
      * @return ResponseEntity with status 200 (OK) and with body the tutorial groups configuration
      */
-    @GetMapping("/tutorial-groups-configurations/{tutorialGroupsConfigurationId}")
+    @GetMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long tutorialGroupsConfigurationId) {
-        log.debug("REST request to get tutorial groups configuration: {}", tutorialGroupsConfigurationId);
-
-        var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriods(tutorialGroupsConfigurationId);
-
-        if (configuration.isEmpty()) {
-            return ResponseEntity.notFound().build();
-        }
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.get().getCourse(), null);
-        return ResponseEntity.ok().body(configuration.get());
+    public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId) {
+        log.debug("REST request to get tutorial groups configuration: {} of course: {}", tutorialGroupsConfigurationId, courseId);
+        var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
+        checkEntityIdMatchesPathIds(configuration, Optional.of(courseId), Optional.of(tutorialGroupsConfigurationId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
+        return ResponseEntity.ok().body(configuration);
     }
 
     /**
-     * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration.
+     * POST /courses/:courseId/tutorial-groups-configuration : creates a new tutorial group configuration for the specified course.
      *
      * @param courseId                    the id of the course to which the tutorial group configuration should be added
      * @param tutorialGroupsConfiguration the tutorial group configuration that should be created
@@ -86,48 +84,55 @@ public class TutorialGroupsConfigurationResource {
         }
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
-
         if (tutorialGroupsConfigurationRepository.findByCourse(course).isPresent()) {
             throw new BadRequestException("A tutorial group configuration already exists for this course");
         }
-
         isValidTutorialGroupConfiguration(tutorialGroupsConfiguration);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         tutorialGroupsConfiguration.setCourse(course);
         var persistedConfiguration = tutorialGroupsConfigurationRepository.save(tutorialGroupsConfiguration);
-        return ResponseEntity.created(new URI("/api/tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId())).body(persistedConfiguration);
+        return ResponseEntity.created(new URI("/api/courses/" + courseId + "tutorial-groups-configuration/" + tutorialGroupsConfiguration.getId())).body(persistedConfiguration);
     }
 
     /**
-     * PUT /tutorial-groups-configurations/:tutorialGroupsConfigurationId : Updates an existing tutorial groups configuration.
+     * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId : Updates an existing tutorial groups configuration.
      *
+     * @param courseId                          the id of the course to which the tutorial groups configuration belongs
      * @param updatedTutorialGroupConfiguration the configuration to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group configuration
      */
-    @PutMapping("/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
+    @PutMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long tutorialGroupsConfigurationId,
+    public ResponseEntity<TutorialGroupsConfiguration> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
             @RequestBody @Valid TutorialGroupsConfiguration updatedTutorialGroupConfiguration) {
-        log.debug("REST request to update TutorialGroupsConfiguration: {}", updatedTutorialGroupConfiguration);
+        log.debug("REST request to update TutorialGroupsConfiguration: {} of course: {}", updatedTutorialGroupConfiguration, courseId);
         if (updatedTutorialGroupConfiguration.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
-        if (!updatedTutorialGroupConfiguration.getId().equals(tutorialGroupsConfigurationId)) {
-            throw new ConflictException("The id of the body must match the id of the path", "TutorialGroupsConfiguration", "tutorialGroupsConfigurationWrongId");
-        }
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
-        var existingConfiguration = this.tutorialGroupsConfigurationRepository.findByIdWithElseThrow(updatedTutorialGroupConfiguration.getId());
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingConfiguration.getCourse(), null);
-        overrideValues(updatedTutorialGroupConfiguration, existingConfiguration);
-        var updatedTutorialGroup = tutorialGroupsConfigurationRepository.save(existingConfiguration);
+        var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
+        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupsConfigurationId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
-        // ToDo: Think about how to handle time zone changes logic
-        return ResponseEntity.ok(updatedTutorialGroup);
+        var timeZoneChanged = !configurationFromDatabase.getTimeZone().equals(updatedTutorialGroupConfiguration.getTimeZone());
+        configurationFromDatabase.setTutorialPeriodEndInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodEndInclusive());
+        configurationFromDatabase.setTutorialPeriodStartInclusive(updatedTutorialGroupConfiguration.getTutorialPeriodStartInclusive());
+        configurationFromDatabase.setTimeZone(updatedTutorialGroupConfiguration.getTimeZone());
+
+        var persistedConfiguration = tutorialGroupsConfigurationRepository.save(configurationFromDatabase);
+        if (timeZoneChanged) {
+            tutorialGroupConfigurationService.onTimeZoneUpdate(configurationFromDatabase.getCourse(), persistedConfiguration);
+        }
+        return ResponseEntity.ok(persistedConfiguration);
     }
 
     private static void isValidTutorialGroupConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        // check if time zone code exists
+        if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
+            throw new BadRequestException("Tutorial period start and end must be set");
+        }
+        if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive().isAfter(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
+            throw new BadRequestException("Tutorial period start must be before tutorial period end");
+        }
         try {
             ZoneId.of(tutorialGroupsConfiguration.getTimeZone());
         }
@@ -136,10 +141,18 @@ public class TutorialGroupsConfigurationResource {
         }
     }
 
-    private static void overrideValues(TutorialGroupsConfiguration sourceConfiguration, TutorialGroupsConfiguration originalConfiguration) {
-        originalConfiguration.setTimeZone(sourceConfiguration.getTimeZone());
-        originalConfiguration.setTutorialPeriodStartInclusive(sourceConfiguration.getTutorialPeriodStartInclusive());
-        originalConfiguration.setTutorialPeriodEndInclusive(sourceConfiguration.getTutorialPeriodEndInclusive());
+    private void checkEntityIdMatchesPathIds(TutorialGroupsConfiguration tutorialGroupsConfiguration, Optional<Long> courseId, Optional<Long> tutorialGroupConfigurationId) {
+        courseId.ifPresent(courseIdValue -> {
+            if (!tutorialGroupsConfiguration.getCourse().getId().equals(courseIdValue)) {
+                throw new BadRequestAlertException("The courseId in the path does not match the courseId in the tutorial groups configuration", ENTITY_NAME, "courseIdMismatch");
+            }
+        });
+        tutorialGroupConfigurationId.ifPresent(tutorialGroupIdValue -> {
+            if (!tutorialGroupsConfiguration.getId().equals(tutorialGroupIdValue)) {
+                throw new BadRequestAlertException("The tutorialGroupConfigurationId in the path does not match the id in the tutorial group configuration", ENTITY_NAME,
+                        "tutorialGroupConfigurationIdMismatch");
+            }
+        });
     }
 
 }

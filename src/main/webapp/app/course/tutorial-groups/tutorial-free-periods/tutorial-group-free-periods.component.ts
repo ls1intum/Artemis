@@ -47,7 +47,7 @@ export class TutorialGroupFreePeriodsComponent implements OnInit {
                 switchMap(([params, parentParams]) => {
                     const tutorialGroupConfigurationId = Number(params.get('tutorialGroupsConfigurationId'));
                     this.courseId = Number(parentParams.get('courseId'));
-                    return this.tutorialGroupsConfigurationService.getOne(tutorialGroupConfigurationId);
+                    return this.tutorialGroupsConfigurationService.getOneOfCourse(this.courseId, tutorialGroupConfigurationId);
                 }),
                 finalize(() => (this.isLoading = false)),
             )

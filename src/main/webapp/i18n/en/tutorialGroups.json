@@ -52,7 +52,7 @@
             "explanation": "Before you can start creating tutorial groups, you must specify some properties that concern all tutorial groups. This can also be changed later.",
             "timeZoneInput": {
                 "label": "Timezone",
-                "changeWarning": "You have changed the timezone. All tutorial groups session will be deleted as a consequence. Are you sure you want to do this?",
+                "changeWarning": "You have changed the timezone. All individually created sessions and tutorial free days will be deleted. Only schedules sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
                 "placeholder": "Select a time zone",
                 "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
                 "requiredValidationError": "You need to select a time zone!"

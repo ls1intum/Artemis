@@ -59,7 +59,8 @@ public class TutorialGroupFreePeriodResource {
     public ResponseEntity<TutorialGroupFreePeriod> create(@PathVariable Long tutorialGroupsConfigurationId, @RequestBody TutorialGroupFreePeriodDTO tutorialGroupFreePeriod)
             throws URISyntaxException {
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId);
-        TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithElseThrow(tutorialGroupsConfigurationId);
+        TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
+                .findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupsConfiguration.getCourse(), null);
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();

@@ -79,6 +79,10 @@ public class TutorialGroupScheduleService {
         return sessions;
     }
 
+    public void recalculateSessionsWithNewTimeZone(ZoneId oldTimeZone, ZoneId newTimeZone) {
+        List<TutorialGroupSchedule> schedules = tutorialGroupScheduleRepository.findAll();
+    }
+
     private LocalDate getFirstDateOfWeekDay(LocalDate start, Integer weekDay) {
         while (start.getDayOfWeek().getValue() != weekDay) {
             start = start.plusDays(1);

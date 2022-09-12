@@ -25,7 +25,7 @@ public class TutorialGroupsConfiguration extends DomainObject {
 
     @OneToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties(value = "tutorialGroupsConfiguration")
+    @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
     private Course course;
 
     @Column(name = "time_zone")

@@ -376,8 +376,7 @@ public class TutorialGroupResource {
         });
         tutorialGroupId.ifPresent(tutorialGroupIdValue -> {
             if (!tutorialGroup.getId().equals(tutorialGroupIdValue)) {
-                throw new BadRequestAlertException("The tutorialGroupId in the path does not match the tutorialGroupId in the tutorial group", ENTITY_NAME,
-                        "tutorialGroupIdMismatch");
+                throw new BadRequestAlertException("The tutorialGroupId in the path does not match the id in the tutorial group", ENTITY_NAME, "tutorialGroupIdMismatch");
             }
         });
     }

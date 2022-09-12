@@ -21,7 +21,6 @@ export interface ConfigurationFormData {
 @Component({
     selector: 'jhi-tutorial-groups-configuration-form',
     templateUrl: './tutorial-groups-configuration-form.component.html',
-    styleUrls: ['./tutorial-groups-configuration-form.component.scss'],
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
     @Input()
