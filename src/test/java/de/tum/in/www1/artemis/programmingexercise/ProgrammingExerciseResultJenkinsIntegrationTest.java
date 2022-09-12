@@ -1,12 +1,12 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import org.eclipse.jgit.lib.ObjectId;
 import org.gitlab4j.api.GitLabApiException;
@@ -15,7 +15,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentMatchers;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -104,24 +103,22 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("branchNames")
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void shouldIgnoreResultOnOtherBranches(String defaultBranch) {
+    void shouldIgnoreResultOnOtherBranches() {
         var commit = new CommitDTO("abc123", "slug", "other");
         var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
                 List.of(commit), null);
-        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnDefaultBranch(defaultBranch, notification);
+        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnDefaultBranch(notification);
     }
 
-    @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
-    @MethodSource("branchNames")
+    @Test
     @WithMockUser(username = "student1", roles = "USER")
-    void shouldCreateResultOnDefaultBranch(String defaultBranch) {
-        var commit = new CommitDTO("abc123", "slug", "main");
+    void shouldCreateResultOnDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
         var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
                 List.of(commit), null);
-        programmingExerciseResultTestService.shouldCreateResultOnDefaultBranch(defaultBranch, notification);
+        programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(defaultBranch, notification);
     }
 
     @Test
@@ -131,10 +128,6 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var commit = new CommitDTO("abc123", "slug", customDefaultBranch);
         var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
                 List.of(commit), null);
-        programmingExerciseResultTestService.shouldCreateResultOnDefaultBranch(customDefaultBranch, notification);
-    }
-
-    private static Stream<String> branchNames() {
-        return Stream.of(null, "main");
+        programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
     }
 }

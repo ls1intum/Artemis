@@ -14,7 +14,6 @@ import javax.validation.constraints.NotNull;
 import org.apache.commons.math3.util.Precision;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.audit.AuditEvent;
 import org.springframework.boot.actuate.audit.AuditEventRepository;
 import org.springframework.messaging.simp.SimpMessageSendingOperations;
@@ -83,9 +82,6 @@ public class ProgrammingExerciseGradingService {
     private final BuildLogEntryService buildLogService;
 
     private final TestwiseCoverageService testwiseCoverageService;
-
-    @Value("${artemis.version-control.default-branch:main}")
-    private String defaultGitBranch;
 
     public ProgrammingExerciseGradingService(ProgrammingExerciseTestCaseService testCaseService, StudentParticipationRepository studentParticipationRepository,
             ResultRepository resultRepository, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
@@ -171,18 +167,11 @@ public class ProgrammingExerciseGradingService {
      * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
     private void checkCorrectBranchElseThrow(final ProgrammingExercise exercise, final AbstractBuildResultNotificationDTO buildResult) throws IllegalArgumentException {
-        final String exerciseDefaultBranch = exercise.getBranch();
-        final String defaultBranch;
-        if (exerciseDefaultBranch == null) {
-            defaultBranch = defaultGitBranch;
-        }
-        else {
-            defaultBranch = exerciseDefaultBranch;
-        }
+        final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
 
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
-            if (!branchName.equals(defaultBranch)) {
+            if (!branchName.equals(exerciseDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
         });

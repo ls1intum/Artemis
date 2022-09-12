@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -104,7 +105,13 @@ public class ProgrammingExerciseResultTestService {
     public void setupForProgrammingLanguage(ProgrammingLanguage programmingLanguage) {
         Course course = database.addCourseWithOneProgrammingExercise(false, false, programmingLanguage);
         programmingExercise = programmingExerciseRepository.findAll().get(0);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         programmingExerciseWithStaticCodeAnalysis = database.addProgrammingExerciseToCourse(course, true, false, programmingLanguage);
+        programmingExerciseWithStaticCodeAnalysis.setBranch(DEFAULT_BRANCH);
+        programmingExerciseWithStaticCodeAnalysis = programmingExerciseRepository.save(programmingExerciseWithStaticCodeAnalysis);
+
         staticCodeAnalysisService.createDefaultCategories(programmingExerciseWithStaticCodeAnalysis);
         // This is done to avoid an unproxy issue in the processNewResult method of the ResultService.
         solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
@@ -334,19 +341,18 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldIgnoreResultIfNotOnDefaultBranch(String defaultBranch, Object resultNotification) {
-        programmingExercise.setBranch(defaultBranch);
-        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+    public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
         solutionParticipation.setProgrammingExercise(programmingExercise);
 
         assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class);
     }
 
     // Test
-    public void shouldCreateResultOnDefaultBranch(String defaultBranch, Object resultNotification) {
+    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, Object resultNotification) {
         programmingExercise.setBranch(defaultBranch);
         programmingExercise = programmingExerciseRepository.save(programmingExercise);
         solutionParticipation.setProgrammingExercise(programmingExercise);
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
 
         final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
         assertThat(result).isPresent();
