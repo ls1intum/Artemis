@@ -9,8 +9,13 @@ import { AssessmentType } from 'app/entities/assessment-type.model';
 export class Result implements BaseEntity {
     public id?: number;
     public completionDate?: dayjs.Dayjs;
-    public successful?: boolean; // Whether 100% of non-hidden tests passed
+    public successful?: boolean;
     public hasFeedback?: boolean;
+
+    /*
+     * Current score in percent i.e. between 1 - 100
+     * - Can be larger than 100 if bonus points are available
+     */
     public score?: number;
     public assessmentType?: AssessmentType;
     public rated?: boolean;

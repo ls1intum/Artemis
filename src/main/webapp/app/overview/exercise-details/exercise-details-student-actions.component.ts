@@ -108,7 +108,7 @@ export class ExerciseDetailsStudentActionsComponent {
         const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
 
         // Checking booleans for true because they could be undefined
-        return latestResult !== undefined && latestResult.successful === true && this.exercise.allowManualFeedbackRequests === true;
+        return latestResult?.score !== undefined && latestResult.score >= 100 && this.exercise.allowManualFeedbackRequests === true;
     }
 
     /**
