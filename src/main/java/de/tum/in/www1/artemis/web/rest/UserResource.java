@@ -60,10 +60,10 @@ public class UserResource {
 
     private final LtiUserIdRepository ltiUserIdRepository;
 
-    public UserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService, LtiUserIdRepository ltiUserIdRepository) {
-        this.userRepository = userRepository;
+    public UserResource(UserService userService, UserCreationService userCreationService, UserRepository userRepository, LtiUserIdRepository ltiUserIdRepository) {
         this.userService = userService;
         this.userCreationService = userCreationService;
+        this.userRepository = userRepository;
         this.ltiUserIdRepository = ltiUserIdRepository;
     }
 

@@ -19,12 +19,14 @@ import { Course } from 'app/entities/course.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { ButtonSize } from 'app/shared/components/button.component';
 import { AdminUserService } from 'app/core/user/admin-user.service';
+import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 
 export class UserFilter {
     authorityFilter: Set<AuthorityFilter> = new Set();
     originFilter: Set<OriginFilter> = new Set();
     statusFilter: Set<StatusFilter> = new Set();
     courseFilter: Set<number> = new Set();
+    registrationNumberFilter: Set<RegistrationNumberFilter> = new Set();
     noAuthority = false;
     noCourse = false;
 
@@ -39,6 +41,7 @@ export class UserFilter {
             options = options.append('authorities', [...this.authorityFilter].join(','));
         }
         options = options.append('origins', [...this.originFilter].join(','));
+        options = options.append('registrationNumbers', [...this.registrationNumberFilter].join(','));
         options = options.append('status', [...this.statusFilter].join(','));
         if (this.noCourse) {
             // -1 means that we filter for users without any course
@@ -53,7 +56,15 @@ export class UserFilter {
      * Returns the number of applied filters.
      */
     get numberOfAppliedFilters() {
-        return this.authorityFilter.size + this.originFilter.size + this.statusFilter.size + this.courseFilter.size + (this.noAuthority ? 1 : 0) + (this.noCourse ? 1 : 0);
+        return (
+            this.authorityFilter.size +
+            this.originFilter.size +
+            this.registrationNumberFilter.size +
+            this.statusFilter.size +
+            this.courseFilter.size +
+            (this.noAuthority ? 1 : 0) +
+            (this.noCourse ? 1 : 0)
+        );
     }
 }
 
@@ -70,6 +81,11 @@ export enum OriginFilter {
     EXTERNAL = 'EXTERNAL',
 }
 
+export enum RegistrationNumberFilter {
+    WITH_REG_NO = 'WITH_REG_NO',
+    WITHOUT_REG_NO = 'WITHOUT_REG_NO',
+}
+
 export enum StatusFilter {
     ACTIVATED = 'ACTIVATED',
     DEACTIVATED = 'DEACTIVATED',
@@ -81,9 +97,10 @@ export enum UserStorageKey {
     ORIGIN = 'artemis.userManagement.origin',
     STATUS = 'artemis.userManagement.status',
     NO_COURSE = 'artemis.userManagement.noCourse',
+    REGISTRATION_NUMBER = 'artemis.userManagement.registrationNumber',
 }
 
-type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter;
+type Filter = typeof AuthorityFilter | typeof OriginFilter | typeof StatusFilter | typeof RegistrationNumberFilter;
 
 @Component({
     selector: 'jhi-user-management',
@@ -105,6 +122,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     predicate!: string;
     ascending!: boolean;
     searchTermString = '';
+    isLdapProfileActive: boolean;
 
     // filters
     filters: UserFilter = new UserFilter();
@@ -113,6 +131,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     authorityKey = UserStorageKey.AUTHORITY;
     statusKey = UserStorageKey.STATUS;
     originKey = UserStorageKey.ORIGIN;
+    registrationKey = UserStorageKey.REGISTRATION_NUMBER;
 
     private dialogErrorSource = new Subject<string>();
     dialogError = this.dialogErrorSource.asObservable();
@@ -136,8 +155,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
         private router: Router,
         private eventManager: EventManager,
         private localStorage: LocalStorageService,
-        private curseManagementService: CourseManagementService,
+        private courseManagementService: CourseManagementService,
         private modalService: NgbModal,
+        private profileService: ProfileService,
     ) {}
 
     /**
@@ -145,13 +165,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     ngOnInit(): void {
         // Load all courses and create id to title map
-        this.curseManagementService.getAll().subscribe((courses) => {
+        this.courseManagementService.getAll().subscribe((courses) => {
             if (courses.body) {
                 this.courses = courses.body.sort((c1, c2) => (c1.title ?? '').localeCompare(c2.title ?? ''));
             }
             this.initFilters();
         });
-
         this.search
             .pipe(
                 tap(() => (this.loadingSearchResult = true)),
@@ -189,6 +208,9 @@ export class UserManagementComponent implements OnInit, OnDestroy {
             this.userListSubscription = this.eventManager.subscribe('userListModification', () => this.loadAll());
             this.handleNavigation();
         });
+        this.profileService.getProfileInfo().subscribe((profileInfo) => {
+            this.isLdapProfileActive = profileInfo.activeProfiles && profileInfo.activeProfiles?.includes('ldap');
+        });
     }
 
     /**
@@ -207,6 +229,7 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     initFilters() {
         this.filters.authorityFilter = this.initFilter<AuthorityFilter>(UserStorageKey.AUTHORITY, AuthorityFilter);
         this.filters.originFilter = this.initFilter<OriginFilter>(UserStorageKey.ORIGIN, OriginFilter);
+        this.filters.registrationNumberFilter = this.initFilter<RegistrationNumberFilter>(UserStorageKey.REGISTRATION_NUMBER, RegistrationNumberFilter);
         this.filters.statusFilter = this.initFilter<StatusFilter>(UserStorageKey.STATUS, StatusFilter);
 
         this.filters.noCourse = !!this.localStorage.retrieve(UserStorageKey.NO_COURSE);
@@ -284,6 +307,19 @@ export class UserManagementComponent implements OnInit, OnDestroy {
     }
 
     /**
+     * Method to add or remove a registration number filter and store the selected filters in the local store if required.
+     * @param registrationNumber corresponds to the registration number filter that is added or removed when the user clicks on the checkbox.
+     * When the filter is added, the value is set to the filter. Thus, when the value is present, the filter is toggled.
+     */
+    toggleRegistrationNumberFilter(registrationNumber?: RegistrationNumberFilter) {
+        const filter = this.filters.registrationNumberFilter;
+        this.deselectFilter<RegistrationNumberFilter>(filter, this.registrationKey);
+        if (registrationNumber) {
+            this.toggleFilter<RegistrationNumberFilter>(filter, registrationNumber, this.registrationKey);
+        }
+    }
+
+    /**
      * Deselect filter.
      */
     deselectFilter<E>(filter: Set<E>, key: UserStorageKey) {
@@ -318,6 +354,10 @@ export class UserManagementComponent implements OnInit, OnDestroy {
      */
     get statusFilters() {
         return this.getFilter(StatusFilter);
+    }
+
+    get registrationNumberFilters() {
+        return this.getFilter(RegistrationNumberFilter);
     }
 
     /**
@@ -532,6 +572,12 @@ export class UserManagementComponent implements OnInit, OnDestroy {
                 this.dialogErrorSource.next('');
             },
             error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
+        });
+    }
+
+    ldapSync(userId: number) {
+        this.userService.syncLdap(userId).subscribe(() => {
+            this.loadAll();
         });
     }
 

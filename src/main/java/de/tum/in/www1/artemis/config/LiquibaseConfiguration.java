@@ -1,5 +1,10 @@
 package de.tum.in.www1.artemis.config;
 
+import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
+
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import javax.sql.DataSource;
 
 import org.slf4j.Logger;
@@ -8,8 +13,11 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseDataSource;
 import org.springframework.boot.autoconfigure.liquibase.LiquibaseProperties;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.boot.info.BuildProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 
@@ -24,8 +32,17 @@ public class LiquibaseConfiguration {
 
     private final Environment env;
 
-    public LiquibaseConfiguration(Environment env) {
+    private final BuildProperties buildProperties;
+
+    private DataSource dataSource;
+
+    private String currentVersionString;
+
+    private String previousVersionString;
+
+    public LiquibaseConfiguration(Environment env, BuildProperties buildProperties) {
         this.env = env;
+        this.buildProperties = buildProperties;
     }
 
     /**
@@ -33,15 +50,23 @@ public class LiquibaseConfiguration {
      *
      * @param liquibaseDataSource the liquibase sql data source
      * @param liquibaseProperties the liquibase properties
-     * @param dataSource the sql data source
+     * @param dataSourceObjectProvider the sql data source
      * @param dataSourceProperties data source properties
      * @return the configured spring liquibase object
      */
     @Bean
     public SpringLiquibase liquibase(@LiquibaseDataSource ObjectProvider<DataSource> liquibaseDataSource, LiquibaseProperties liquibaseProperties,
-            ObjectProvider<DataSource> dataSource, DataSourceProperties dataSourceProperties) {
-        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSource.getIfUnique(),
+            ObjectProvider<DataSource> dataSourceObjectProvider, DataSourceProperties dataSourceProperties) {
+        SpringLiquibase liquibase = SpringLiquibaseUtil.createSpringLiquibase(liquibaseDataSource.getIfAvailable(), liquibaseProperties, dataSourceObjectProvider.getIfUnique(),
                 dataSourceProperties);
+
+        if (!isTestEnvironment(env)) {
+            dataSource = dataSourceObjectProvider.getIfUnique();
+            currentVersionString = buildProperties.getVersion();
+            previousVersionString = getPreviousVersionElseThrow();
+            log.info("The previous version was {}", previousVersionString);
+        }
+
         liquibase.setChangeLog("classpath:config/liquibase/master.xml");
         liquibase.setContexts(liquibaseProperties.getContexts());
         liquibase.setDefaultSchema(liquibaseProperties.getDefaultSchema());
@@ -50,7 +75,7 @@ public class LiquibaseConfiguration {
         liquibase.setDatabaseChangeLogLockTable(liquibaseProperties.getDatabaseChangeLogLockTable());
         liquibase.setDatabaseChangeLogTable(liquibaseProperties.getDatabaseChangeLogTable());
         liquibase.setDropFirst(liquibaseProperties.isDropFirst());
-        liquibase.setLabels(liquibaseProperties.getLabels());
+        liquibase.setLabelFilter(liquibaseProperties.getLabels());
         liquibase.setChangeLogParameters(liquibaseProperties.getParameters());
         liquibase.setRollbackFile(liquibaseProperties.getRollbackFile());
         liquibase.setTestRollbackOnUpdate(liquibaseProperties.isTestRollbackOnUpdate());
@@ -63,5 +88,57 @@ public class LiquibaseConfiguration {
             log.info("Liquibase is enabled");
         }
         return liquibase;
+    }
+
+    private String getPreviousVersionElseThrow() {
+        try (var statement = createStatement()) {
+            statement.executeQuery("SELECT * FROM DATABASECHANGELOG;");
+            var result = statement.executeQuery("SELECT latest_version FROM artemis_version;");
+            statement.closeOnCompletion();
+            if (result.next()) {
+                return result.getString("latest_version");
+            }
+            return null;
+        }
+        catch (SQLException e) {
+            log.info(e.getMessage());
+            // if no changelog or no version cane be found, it means it is not yet available, we do not need to throw an exception
+            return null;
+        }
+    }
+
+    private Statement createStatement() throws SQLException {
+        var connection = dataSource.getConnection();
+        return connection.createStatement();
+    }
+
+    /**
+     * Stores the current version in the database after the application is ready
+     * @param event used to prevent this method for running in tests
+     */
+    @EventListener()
+    public void storeCurrentVersionToDatabase(ApplicationReadyEvent event) {
+        if (isTestEnvironment(event.getApplicationContext().getEnvironment())) {
+            return;
+        }
+        try (var statement = createStatement()) {
+            if (previousVersionString == null) {
+                log.info("Insert latest version {} into database", currentVersionString);
+                statement.executeUpdate("INSERT INTO artemis_version (latest_version) VALUES('" + currentVersionString + "');");
+            }
+            else {
+                log.info("Update latest version to {} in database", currentVersionString);
+                statement.executeUpdate("UPDATE artemis_version SET latest_version = '" + currentVersionString + "';");
+            }
+            statement.getConnection().commit();
+            statement.closeOnCompletion();
+        }
+        catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private boolean isTestEnvironment(Environment env) {
+        return env.acceptsProfiles(Profiles.of(SPRING_PROFILE_TEST));
     }
 }

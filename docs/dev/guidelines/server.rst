@@ -437,7 +437,7 @@ https://www.baeldung.com/spring-tests
 
 If you want to write tests for Programming Exercises to test student's submissions check out `this <https://confluence.ase.in.tum.de/display/ArTEMiS/Best+Practices+for+writing+Java+Programming+Exercise+Tests+in+Artemis>`__.
 
-23. Counting database query calls within tests
+24. Counting database query calls within tests
 ==============================================
 
 It's possible to write tests that check how many database calls are performed during a REST call. This is useful to ensure that code changes don't lead to more database calls,
@@ -447,19 +447,20 @@ However, we should consider carefully before adding such assertions to a test as
 An example on how to track how many database calls are performed during a REST call is shown below. It uses the ``HibernateQueryInterceptor`` which counts the number of queries.
 For ease of use, a custom assert ``assertThatDb`` was added that allows to do the check in one line. It also returns the original result of the REST call and so allows you to
 add any other assertions to the test, as shown below.
+
 .. code-block:: java
 
-    public class TestClass {
+    class TestClass {
 
         @Test
         @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-        public void testQueryCount() throws Exception {
+        void testQueryCount() throws Exception {
             Course course = assertThatDb(() -> request.get("/api/courses/" + courses.get(0).getId() + "/for-dashboard", HttpStatus.OK, Course.class)).hasBeenCalledTimes(3);
             assertThat(course).isNotNull();
         }
     }
 
-24. Avoid using @MockBean
+25. Avoid using @MockBean
 =========================
 
 Do not use the ``@SpyBean`` or ``@MockBean`` annotation unless absolutely necessary, or possibly in an abstract Superclass. If you want to see why in more detail, take a look `here <https://www.baeldung.com/spring-tests>`__.

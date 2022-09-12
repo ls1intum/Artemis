@@ -1,7 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpResponse, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
-
 import { createRequestOption } from 'app/shared/util/request.util';
 import { User } from 'app/core/user/user.model';
 import { UserFilter } from 'app/admin/user-management/user-management.component';
@@ -28,6 +27,15 @@ export class AdminUserService {
      */
     update(user: User): Observable<HttpResponse<User>> {
         return this.http.put<User>(this.resourceUrl, user, { observe: 'response' });
+    }
+
+    /**
+     * Call the LDAP server to update the info of a user on the server.
+     * @param userId The ID of the user to be updated from the LDAP server.
+     * @return Observable<User> with the updated user as body.
+     */
+    syncLdap(userId: number): Observable<User> {
+        return this.http.put<User>(`${this.resourceUrl}/${userId}/ldap-sync`, { observe: 'response' });
     }
 
     /**

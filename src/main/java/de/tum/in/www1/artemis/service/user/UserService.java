@@ -474,7 +474,8 @@ public class UserService {
      * @param password The password to check
      */
     public void checkUsernameAndPasswordValidity(String username, String password) {
-        if (username == null || username.length() < USERNAME_MIN_LENGTH) {
+
+        if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }
         else if (username.length() > USERNAME_MAX_LENGTH) {

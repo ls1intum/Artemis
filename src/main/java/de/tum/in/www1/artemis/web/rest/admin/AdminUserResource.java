@@ -3,12 +3,14 @@ package de.tum.in.www1.artemis.web.rest.admin;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
+import java.util.Optional;
 
 import javax.validation.Valid;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Profile;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -23,6 +25,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.ArtemisAuthenticationProvider;
 import de.tum.in.www1.artemis.security.annotations.EnforceAdmin;
 import de.tum.in.www1.artemis.service.dto.UserDTO;
+import de.tum.in.www1.artemis.service.ldap.LdapUserService;
 import de.tum.in.www1.artemis.service.user.UserCreationService;
 import de.tum.in.www1.artemis.service.user.UserService;
 import de.tum.in.www1.artemis.web.rest.UserResource;
@@ -59,13 +62,16 @@ public class AdminUserResource {
 
     private final AuthorityRepository authorityRepository;
 
+    private final Optional<LdapUserService> ldapUserService;
+
     public AdminUserResource(UserRepository userRepository, UserService userService, UserCreationService userCreationService,
-            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository) {
+            ArtemisAuthenticationProvider artemisAuthenticationProvider, AuthorityRepository authorityRepository, Optional<LdapUserService> ldapUserService) {
         this.userRepository = userRepository;
         this.userService = userService;
         this.userCreationService = userCreationService;
         this.artemisAuthenticationProvider = artemisAuthenticationProvider;
         this.authorityRepository = authorityRepository;
+        this.ldapUserService = ldapUserService;
     }
 
     /**
@@ -150,6 +156,26 @@ public class AdminUserResource {
         }
 
         return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "artemisApp.userManagement.updated", managedUserVM.getLogin())).body(new UserDTO(updatedUser));
+    }
+
+    /**
+     * PUT ldap : Updates an existing User based on the info available in the LDAP server.
+     *
+     * @param userId of the user to update
+     * @return the ResponseEntity with status 200 (OK) and with body the updated user
+     */
+    @PutMapping("users/{userId}/sync-ldap")
+    @EnforceAdmin
+    @Profile("ldap")
+    public ResponseEntity<UserDTO> syncUserViaLdap(@PathVariable Long userId) {
+        log.debug("REST request to update ldap information User : {}", userId);
+
+        var user = userRepository.findByIdWithGroupsAndAuthoritiesElseThrow(userId);
+
+        ldapUserService.ifPresent(service -> service.loadUserDetailsFromLdap(user));
+        userCreationService.saveUser(user);
+
+        return ResponseEntity.ok().headers(HeaderUtil.createAlert(applicationName, "userManagement.updated", userId.toString())).body(new UserDTO(user));
     }
 
     /**
