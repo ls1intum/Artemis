@@ -167,10 +167,10 @@ public class ProgrammingExerciseGradingService {
      * @throws IllegalArgumentException Thrown if the result does not belong to the default branch of the exercise.
      */
     private void checkCorrectBranchElseThrow(final ProgrammingExercise exercise, final AbstractBuildResultNotificationDTO buildResult) throws IllegalArgumentException {
-        final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
-
         // If the branch is not present, it might be because the assignment repo did not change because only the test repo was changed
         buildResult.getBranchNameFromAssignmentRepo().ifPresent(branchName -> {
+            final String exerciseDefaultBranch = versionControlService.get().getOrRetrieveBranchOfExercise(exercise);
+
             if (!branchName.equals(exerciseDefaultBranch)) {
                 throw new IllegalArgumentException("Result was produced for a different branch than the default branch");
             }
