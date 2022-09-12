@@ -89,6 +89,6 @@ describe('ProgrammingExerciseTestScheduleDatePickerComponent', () => {
         comp.resetDate();
 
         expect(comp.selectedDate).toBeNull();
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
     });
 });
