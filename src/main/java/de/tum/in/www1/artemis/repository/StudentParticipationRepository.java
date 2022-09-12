@@ -988,7 +988,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
                 LEFT JOIN s.participation p
             WHERE
                 p.exercise.exerciseGroup.exam.id = :examId
-            GROUP BY s.id
+            GROUP BY s.id, p.id
             """)
     List<QuizSubmittedAnswerCount> findSubmittedAnswerCountForQuizzesInExam(@Param("examId") long examId);
 }
