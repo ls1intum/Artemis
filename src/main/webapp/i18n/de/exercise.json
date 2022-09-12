@@ -131,6 +131,7 @@
             "personalRepositoryOnline": "Dein persönliches Repository wurde eingerichtet. Klicke auf den Button <i>Programmiereditor öffnen</i>!",
             "resumeProgrammingExercise": "Die Aufgabe wurde wieder aufgenommen. Du kannst nun weiterarbeiten!",
             "feedbackRequestSent": "Deine Feedback anfrage wurde gesendet",
+            "feedbackRequestAlreadySent": "Deine Feedback anfrage wurde bereits gesendet",
             "startError": "<strong>Uh oh! Etwas ist schief gelaufen... Bitte versuch es in wenigen Minuten noch einmal die Aufgabe zu starten.</strong>",
             "studentName": "Name Studierende:r",
             "studentId": "Login",

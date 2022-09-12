@@ -174,13 +174,11 @@ export class ExerciseDetailsStudentActionsComponent {
             .requestFeedback(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe({
-                next: (participation: StudentParticipation) => {
-                    if (participation) {
-                        // TODO: evaluate if all those calls are necessary
-                        participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
-                        this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = participationStatus(this.exercise);
+                next: (requestSent: boolean) => {
+                    if (requestSent) {
                         this.alertService.success('artemisApp.exercise.feedbackRequestSent');
+                    } else {
+                        this.alertService.error('artemisApp.exercise.feedbackRequestAlreadySent');
                     }
                 },
                 error: (error) => {

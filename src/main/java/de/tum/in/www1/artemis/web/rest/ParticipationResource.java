@@ -225,19 +225,27 @@ public class ParticipationResource {
         return ResponseEntity.ok().body(participation);
     }
 
+    /**
+     * PUT exercises/:exerciseId/request-feedback: Requests manual feedback for the latest participation
+     *
+     * @param exerciseId of the exercise for which to resume participation
+     * @param principal  current user principal
+     * @return ResponseEntity with status 200 (OK)
+     */
     @PutMapping("exercises/{exerciseId}/request-feedback")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<Boolean> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feeback request: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
 
+        var currentDate = ZonedDateTime.now();
         // TODO check if this is the correct field
-        participation.setIndividualDueDate(ZonedDateTime.now());
+        participation.setIndividualDueDate(currentDate);
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
 
-        return ResponseEntity.ok().body(participation);
+        return ResponseEntity.ok().body(true);
     }
 
     private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {
