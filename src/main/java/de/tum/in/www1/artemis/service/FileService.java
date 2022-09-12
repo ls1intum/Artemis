@@ -93,24 +93,6 @@ public class FileService implements DisposableBean {
      */
     private static final List<String> IGNORED_DIRECTORIES = List.of(".xcassets/", ".colorset/", ".appiconset/", ".xcworkspace/", ".xcodeproj/", ".swiftpm/");
 
-    /**
-     * Extends the default allowed file extensions with the provided one
-     *
-     * @param fileExtension file extension to add
-     */
-    public void addAllowedFileExtension(String fileExtension) {
-        this.allowedFileExtensions.add(fileExtension);
-    }
-
-    /**
-     * Removes the provided file extension from the allowed file extensions
-     *
-     * @param fileExtension file extension to remove
-     */
-    public void removeFileExtension(String fileExtension) {
-        this.allowedFileExtensions.remove(fileExtension);
-    }
-
     @Override
     public void destroy() {
         futures.values().forEach(future -> future.cancel(true));
