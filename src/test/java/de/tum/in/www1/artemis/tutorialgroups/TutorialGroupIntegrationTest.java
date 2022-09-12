@@ -2,10 +2,10 @@ package de.tum.in.www1.artemis.tutorialgroups;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -18,9 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import com.google.common.collect.ImmutableSet;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
@@ -28,6 +26,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -43,6 +42,9 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
+    @Autowired
+    private DatabaseUtilService databaseUtilService;
 
     private Long exampleCourseId;
 
@@ -69,28 +71,17 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var course = this.database.createCourse();
         exampleCourseId = course.getId();
 
-        exampleOneTutorialGroupId = createAndSaveTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH,
-                userRepository.findOneByLogin("tutor1").get(), ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
-                        userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get())).getId();
+        databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, "Europe/Berlin", LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1));
 
-        exampleTwoTutorialGroupId = createAndSaveTutorialGroup(exampleCourseId, "ExampleTitle2", "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN,
+        exampleOneTutorialGroupId = databaseUtilService
+                .createTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH, userRepository.findOneByLogin("tutor1").get(),
+                        ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
+                                userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get()))
+                .getId();
+
+        exampleTwoTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, "ExampleTitle2", "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN,
                 userRepository.findOneByLogin("tutor2").get(), ImmutableSet.of(userRepository.findOneByLogin("student6").get(), userRepository.findOneByLogin("student7").get()))
-                        .getId();
-    }
-
-    private TutorialGroup createAndSaveTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus,
-            Language language, User teachingAssistant, Set<User> registeredStudents) {
-        var course = courseRepository.findByIdElseThrow(courseId);
-
-        var tutorialGroup = tutorialGroupRepository
-                .saveAndFlush(new TutorialGroup(course, title, additionalInformation, capacity, isOnline, campus, language, teachingAssistant, new HashSet<>()));
-
-        var registrations = new HashSet<TutorialGroupRegistration>();
-        for (var student : registeredStudents) {
-            registrations.add(new TutorialGroupRegistration(student, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION));
-        }
-        tutorialGroupRegistrationRepository.saveAllAndFlush(registrations);
-        return tutorialGroup;
+                .getId();
     }
 
     private TutorialGroup createNewTutorialGroup() {

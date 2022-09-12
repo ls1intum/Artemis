@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -41,6 +42,7 @@ import com.opencsv.CSVReader;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.enumeration.*;
+import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.exam.ExerciseGroup;
 import de.tum.in.www1.artemis.domain.exam.StudentExam;
@@ -58,6 +60,9 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -67,6 +72,9 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -282,6 +290,15 @@ public class DatabaseUtilService {
 
     @Autowired
     private PasswordService passwordService;
+
+    @Autowired
+    private TutorialGroupRepository tutorialGroupRepository;
+
+    @Autowired
+    private TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
+    @Autowired
+    private TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
@@ -4150,5 +4167,30 @@ public class DatabaseUtilService {
             assertThat(reaction.getUser().getLogin()).isNull();
             assertThat(reaction.getUser().getRegistrationNumber()).isNull();
         }
+    }
+
+    public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language,
+            User teachingAssistant, Set<User> registeredStudents) {
+        var course = courseRepo.findByIdElseThrow(courseId);
+
+        var tutorialGroup = ModelFactory.generateTutorialGroup(title, additionalInformation, capacity, isOnline, language, campus);
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTeachingAssistant(teachingAssistant);
+
+        var persistedTutorialGroup = tutorialGroupRepository.saveAndFlush(tutorialGroup);
+
+        var registrations = new HashSet<TutorialGroupRegistration>();
+        for (var student : registeredStudents) {
+            registrations.add(new TutorialGroupRegistration(student, persistedTutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION));
+        }
+        tutorialGroupRegistrationRepository.saveAllAndFlush(registrations);
+        return persistedTutorialGroup;
+    }
+
+    public TutorialGroupsConfiguration createTutorialGroupConfiguration(Long courseId, String timeZone, LocalDate start, LocalDate end) {
+        var course = courseRepo.findByIdElseThrow(courseId);
+        var tutorialGroupConfiguration = ModelFactory.generateTutorialGroupsConfiguration(timeZone, start, end);
+        tutorialGroupConfiguration.setCourse(course);
+        return tutorialGroupsConfigurationRepository.saveAndFlush(tutorialGroupConfiguration);
     }
 }

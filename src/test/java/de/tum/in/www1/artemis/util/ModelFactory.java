@@ -6,6 +6,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,6 +33,8 @@ import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentPar
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
@@ -1359,5 +1362,24 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
+    }
+
+    public static TutorialGroup generateTutorialGroup(String title, String additionalInformation, Integer capacity, Boolean isOnline, Language language, String campus) {
+        TutorialGroup tutorialGroup = new TutorialGroup();
+        tutorialGroup.setTitle(title);
+        tutorialGroup.setAdditionalInformation(additionalInformation);
+        tutorialGroup.setCapacity(capacity);
+        tutorialGroup.setOnline(isOnline);
+        tutorialGroup.setLanguage(language);
+        tutorialGroup.setCampus(campus);
+        return tutorialGroup;
+    }
+
+    public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(String timeZone, LocalDate start, LocalDate end) {
+        TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+        tutorialGroupsConfiguration.setTimeZone(timeZone);
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start);
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end);
+        return tutorialGroupsConfiguration;
     }
 }
