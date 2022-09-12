@@ -802,7 +802,7 @@
             <column name="last_modified_by" type="VARCHAR(50)"/>
             <column name="last_modified_date" type="timestamp"/>
             <column name="verdict" type="VARCHAR(255)"/>
-            <column name="verdict_by_id" type="VARCHAR(255)"/>
+            <column name="verdict_by_id" type="BIGINT"/>
             <column name="verdict_date" type="timestamp"/>
             <column name="verdict_message" type="LONGTEXT"/>
             <column name="verdict_point_deduction" type="INT"/>
