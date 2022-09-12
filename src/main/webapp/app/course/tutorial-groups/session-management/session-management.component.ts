@@ -62,12 +62,13 @@ export class SessionManagementComponent implements OnInit {
 
     loadAll() {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, data]) => {
                     const tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = Number(parentParams.get('courseId'));
+                    this.courseId = data['course'].id;
+                    this.tutorialGroupsConfiguration = data['course'].tutorialGroupsConfiguration;
                     return this.tutorialGroupService.getOneOfCourse(this.courseId, tutorialGroupId).pipe(finalize(() => (this.isLoading = false)));
                 }),
                 map((res: HttpResponse<TutorialGroup>) => {
@@ -84,14 +85,11 @@ export class SessionManagementComponent implements OnInit {
                         if (tutorialGroup.tutorialGroupSchedule) {
                             this.tutorialGroupSchedule = tutorialGroup.tutorialGroupSchedule;
                         }
-                        if (tutorialGroup.course?.tutorialGroupsConfiguration) {
-                            this.tutorialGroupsConfiguration = tutorialGroup.course.tutorialGroupsConfiguration;
-                            // convert sessions to the configured timezone for easier management
-                            this.upcomingSessions.forEach((session) => {
-                                session.start = session.start?.tz(this.tutorialGroupsConfiguration.timeZone);
-                                session.end = session.end?.tz(this.tutorialGroupsConfiguration.timeZone);
-                            });
-                        }
+                        // convert sessions to the configured timezone to not be confusing for the user
+                        this.upcomingSessions.forEach((session) => {
+                            session.start = session.start?.tz(this.tutorialGroupsConfiguration.timeZone);
+                            session.end = session.end?.tz(this.tutorialGroupsConfiguration.timeZone);
+                        });
                     }
                     this.isLoading = false;
                     this.changeDetectorRef.detectChanges();

@@ -105,6 +105,7 @@
         },
         "manageSessions": {
             "title": "Manage Sessions",
+            "timeZone": "Everything displayed in the time zone {{ timeZone }}",
             "tableCaption": "Sessions of the tutorial group {{ title }}",
             "createButton": "Create Additional Session",
             "cancelButton": "Cancel Session",

@@ -16,6 +16,11 @@
             <span class="badge bg-danger">{{ 'artemisApp.manageSessions.legend.cancelled' | artemisTranslate }}</span>
             <span class="badge bg-warning">{{ 'artemisApp.manageSessions.legend.individual' | artemisTranslate }}</span>
         </div>
+        <div class="col-12 mb-2">
+            <div class="alert alert-info">
+                {{ 'artemisApp.manageSessions.timeZone' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
+            </div>
+        </div>
         <div class="table-responsive" *ngIf="upcomingSessions && upcomingSessions.length > 0">
             <table class="table table-bordered">
                 <thead>
@@ -28,7 +33,11 @@
                 </thead>
                 <tbody>
                     <tr *ngFor="let session of pastSessions" [class]="determineRowClass(session)">
-                        <td>{{ session.start | artemisDate: 'short-date' }} {{ session.start | artemisDate: 'time' }} - {{ session.end | artemisDate: 'time' }}</td>
+                        <td>
+                            {{ session.start | artemisDate: 'short-date':false:this.tutorialGroupsConfiguration.timeZone }}
+                            {{ session.start | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }} -
+                            {{ session.end | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }}
+                        </td>
                         <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>
@@ -45,7 +54,11 @@
                         <td colspan="4">UPCOMING ↑ PAST ↓</td>
                     </tr>
                     <tr *ngFor="let session of upcomingSessions" [class]="determineRowClass(session)">
-                        <td>{{ session.start | artemisDate: 'short-date' }} {{ session.start | artemisDate: 'time' }} - {{ session.end | artemisDate: 'time' }}</td>
+                        <td>
+                            {{ session.start | artemisDate: 'short-date':false:this.tutorialGroupsConfiguration.timeZone }}
+                            {{ session.start | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }} -
+                            {{ session.end | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }}
+                        </td>
                         <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
                         <td>

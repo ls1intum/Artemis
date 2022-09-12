@@ -10,6 +10,7 @@ import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
+import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
@@ -23,6 +24,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
     courseId: number;
     tutorialGroupId: number;
     sessionId: number;
+    tutorialGroupsConfiguration: TutorialGroupsConfiguration;
 
     constructor(
         private activatedRoute: ActivatedRoute,
@@ -35,13 +37,14 @@ export class EditTutorialGroupSessionComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.data])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params, data]) => {
                     this.sessionId = Number(params.get('sessionId'));
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = Number(parentParams.get('courseId'));
+                    this.courseId = data['course'].id;
+                    this.tutorialGroupsConfiguration = data['course'].tutorialGroupsConfiguration;
                     return this.tutorialGroupSessionService.getOneOfTutorialGroup(this.courseId, this.tutorialGroupId, this.sessionId);
                 }),
                 map((res: HttpResponse<TutorialGroupSession>) => res.body),
@@ -52,9 +55,9 @@ export class EditTutorialGroupSessionComponent implements OnInit {
                     if (session) {
                         this.session = session;
                         this.formData = {
-                            date: session.start?.toDate(),
-                            startTime: session.start?.format('HH:mm:ss'),
-                            endTime: session.end?.format('HH:mm:ss'),
+                            date: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).toDate(),
+                            startTime: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).format('HH:mm:ss'),
+                            endTime: session.end?.tz(this.tutorialGroupsConfiguration.timeZone).format('HH:mm:ss'),
                             location: session.location,
                         };
                     }

@@ -69,6 +69,9 @@ export const courseManagementState: Routes = [
     },
     {
         path: ':courseId/tutorial-groups-management',
+        resolve: {
+            course: CourseManagementResolve,
+        },
         loadChildren: () => import('app/course/tutorial-groups/tutorial-groups.module').then((m) => m.ArtemisTutorialGroupsModule),
     },
     {

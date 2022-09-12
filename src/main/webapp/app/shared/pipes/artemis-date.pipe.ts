@@ -39,13 +39,19 @@ export class ArtemisDatePipe implements PipeTransform, OnDestroy {
      * @param dateTime The date time that should be formatted. Must be convertible to dayjs().
      * @param format Format of the localized date time. Defaults to 'long'.
      * @param seconds Should seconds be displayed? Defaults to false.
+     * @param timeZone Explicit time zone that should be used instead of the local time zone.
      */
-    transform(dateTime: Date | dayjs.Dayjs | string | number | null | undefined, format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long', seconds = false): string {
+    transform(
+        dateTime: Date | dayjs.Dayjs | string | number | null | undefined,
+        format: 'short' | 'long' | 'short-date' | 'long-date' | 'time' = 'long',
+        seconds = false,
+        timeZone: string | undefined = undefined,
+    ): string {
         // Return empty string if given dateTime equals null or is not convertible to dayjs.
         if (!dateTime || !dayjs(dateTime).isValid()) {
             return '';
         }
-        this.dateTime = dayjs(dateTime);
+        this.dateTime = timeZone ? dayjs(dateTime).tz(timeZone) : dayjs(dateTime);
         this.long = format === 'long' || format === 'long-date';
         this.showDate = format !== 'time';
         this.showTime = format !== 'short-date' && format !== 'long-date';
