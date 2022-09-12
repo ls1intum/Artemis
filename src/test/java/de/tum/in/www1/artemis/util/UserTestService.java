@@ -953,7 +953,7 @@ public class UserTestService {
             users.get(0).setRegistrationNumber("");
             users.get(1).setRegistrationNumber("");
             userRepository.saveAll(users);
-            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());
         }
     }
@@ -978,7 +978,7 @@ public class UserTestService {
             users.get(0).setRegistrationNumber("5461351");
             users.get(1).setRegistrationNumber("");
             userRepository.saveAll(users);
-            result = request.getList("/api/users", HttpStatus.OK, User.class, params);
+            result = request.getList("/api/admin/users", HttpStatus.OK, User.class, params);
             assertThat(result.get(0)).isEqualTo(users.get(2));
         }
     }
