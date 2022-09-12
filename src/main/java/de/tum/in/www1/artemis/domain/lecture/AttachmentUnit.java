@@ -16,7 +16,7 @@ public class AttachmentUnit extends LectureUnit {
 
     // Note: Name and Release Date will always be taken from associated attachment
     @Column(name = "description")
-    @Lob
+    // @Lob
     private String description;
 
     @OneToOne(mappedBy = "attachmentUnit", cascade = CascadeType.REMOVE, orphanRemoval = true)

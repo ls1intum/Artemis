@@ -55,9 +55,9 @@ public class QuizExercise extends Exercise {
     private Boolean isOpenForPractice;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "quiz_mode")
+    @Column(name = "quiz_mode", columnDefinition = "varchar(63) default 'SYNCHRONIZED'", nullable = false)
     @JsonView(QuizView.Before.class)
-    private QuizMode quizMode;
+    private QuizMode quizMode = QuizMode.SYNCHRONIZED; // default value
 
     /**
      * The duration of the quiz exercise in seconds

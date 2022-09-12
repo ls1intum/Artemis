@@ -17,7 +17,7 @@ import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
 public class FileUploadExercise extends Exercise {
 
     @Column(name = "example_solution")
-    @Lob
+    // @Lob
     private String exampleSolution;
 
     @Column(name = "filePattern")

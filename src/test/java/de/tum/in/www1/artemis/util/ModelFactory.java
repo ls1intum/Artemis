@@ -4,7 +4,6 @@ import static org.assertj.core.api.Assertions.fail;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.*;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.domain.notification.SystemNotification;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseStudentParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
-import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
@@ -226,7 +224,7 @@ public class ModelFactory {
         return (FileUploadExercise) populateExerciseForExam(fileUploadExercise, exerciseGroup);
     }
 
-    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) throws URISyntaxException {
+    public static GitUtilService.MockFileRepositoryUrl getMockFileRepositoryUrl(LocalRepository repository) {
         return new GitUtilService.MockFileRepositoryUrl(repository.originRepoFile);
     }
 
@@ -985,13 +983,6 @@ public class ModelFactory {
         apollonDiagram.setDiagramType(diagramType);
         apollonDiagram.setTitle(title);
         return apollonDiagram;
-    }
-
-    public static LockRepositoryPolicy generateLockRepositoryPolicy(int submissionLimit, boolean active) {
-        LockRepositoryPolicy policy = new LockRepositoryPolicy();
-        policy.setSubmissionLimit(submissionLimit);
-        policy.setActive(active);
-        return policy;
     }
 
     /**

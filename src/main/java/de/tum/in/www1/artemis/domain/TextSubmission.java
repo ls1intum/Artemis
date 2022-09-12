@@ -22,7 +22,7 @@ public class TextSubmission extends Submission {
     private static final int MAX_EXCERPT_LENGTH = 100;
 
     @Column(name = "text")
-    @Lob
+    // @Lob
     private String text;
 
     @Enumerated(EnumType.STRING)

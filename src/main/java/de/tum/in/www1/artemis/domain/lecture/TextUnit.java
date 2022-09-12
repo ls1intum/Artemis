@@ -9,7 +9,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class TextUnit extends LectureUnit {
 
-    @Lob
+    // @Lob
     @Column(name = "content")
     private String content;
 

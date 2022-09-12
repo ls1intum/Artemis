@@ -21,7 +21,7 @@ public class LearningGoal extends DomainObject {
     private String title;
 
     @Column(name = "description")
-    @Lob
+    // @Lob
     private String description;
 
     @ManyToOne

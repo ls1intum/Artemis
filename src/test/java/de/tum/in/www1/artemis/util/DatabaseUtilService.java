@@ -3999,7 +3999,7 @@ public class DatabaseUtilService {
     }
 
     public Course createCourseWithExamAndExercises() throws IOException {
-        Course course = courseRepo.save(addEmptyCourse());
+        var course = addEmptyCourse();
 
         // Create a file upload exercise with a dummy submission file
         var exerciseGroup1 = exerciseGroupRepository.save(new ExerciseGroup());

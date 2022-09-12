@@ -61,10 +61,10 @@ public class DatabaseCleanupService implements InitializingBean {
     @Transactional // ok
     public void clearDatabase() {
         entityManager.flush();
-        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
-        tableNames.forEach(tableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + tableName).executeUpdate());
-        joinTableNames.forEach(joinTableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + joinTableName).executeUpdate());
-        entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
+        // entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY FALSE").executeUpdate();
+        tableNames.forEach(tableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + tableName + " CASCADE").executeUpdate());
+        joinTableNames.forEach(joinTableName -> entityManager.createNativeQuery("TRUNCATE TABLE " + joinTableName + " CASCADE").executeUpdate());
+        // entityManager.createNativeQuery("SET REFERENTIAL_INTEGRITY TRUE").executeUpdate();
 
     }
 }

@@ -3,7 +3,6 @@ package de.tum.in.www1.artemis.domain.lecture;
 import javax.persistence.Column;
 import javax.persistence.DiscriminatorValue;
 import javax.persistence.Entity;
-import javax.persistence.Lob;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
@@ -13,11 +12,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class OnlineUnit extends LectureUnit {
 
     @Column(name = "description")
-    @Lob
+    // @Lob
     private String description;
 
     @Column(name = "source")
-    @Lob
+    // @Lob
     private String source;
 
     public String getSource() {

@@ -43,7 +43,7 @@ spring:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
         name:
         username:
         password:
@@ -59,17 +59,19 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: tech.jhipster.domain.util.FixedH2Dialect
+        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database: POSTGRESQL
         open-in-view: false
         show-sql: false
         hibernate:
-#            ddl-auto: none                         # out commented because it would lead to test execution errors
+            ddl-auto: none
             naming:
                 physical-strategy: org.springframework.boot.orm.jpa.hibernate.SpringPhysicalNamingStrategy
                 implicit-strategy: org.springframework.boot.orm.jpa.hibernate.SpringImplicitNamingStrategy
         properties:
             hibernate.id.new_generator_mappings: true
-            hibernate.connection.provider_disables_autocommit: true
+            hibernate.connection.provider_disables_autocommit: false
+            hibernate.connection.autocommit: false
             hibernate.generate_statistics: false
             hibernate.order_inserts: true
             hibernate.order_updates: true
@@ -87,7 +89,8 @@ spring:
             hibernate.jdbc.lob.non_contextual_creation: true
     liquibase:
         contexts: tests
-        enabled: false
+        enabled: true
+        driver-class-name: org.postgresql.Driver
     mail:
         host: localhost
     main:

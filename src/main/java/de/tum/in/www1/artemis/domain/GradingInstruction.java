@@ -29,11 +29,11 @@ public class GradingInstruction extends DomainObject {
     private String gradingScale;
 
     @Column(name = "instruction_description")
-    @Lob
+    // @Lob
     private String instructionDescription;
 
     @Column(name = "feedback")
-    @Lob
+    // @Lob
     private String feedback;
 
     // how often points for this grading instruction should be calculated if the criteria is applicable more than once for the same submission (e.g. to prevent consequential

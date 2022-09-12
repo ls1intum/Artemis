@@ -10,11 +10,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 public class VideoUnit extends LectureUnit {
 
     @Column(name = "description")
-    @Lob
+    // @Lob
     private String description;
 
     @Column(name = "source")
-    @Lob
+    // @Lob
     private String source;
 
     public String getSource() {

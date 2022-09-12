@@ -23,7 +23,7 @@ public class ApollonDiagram extends DomainObject {
     private String title;
 
     @Column(name = "json_representation")
-    @Lob
+    // @Lob
     private String jsonRepresentation;
 
     @Enumerated(EnumType.STRING)
