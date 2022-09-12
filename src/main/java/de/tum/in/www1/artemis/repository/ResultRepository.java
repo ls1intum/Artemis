@@ -467,7 +467,7 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             WHERE
                 r.completionDate is not null
                 and e.id IN :exerciseIds
-            GROUP BY a.id
+            GROUP BY r.assessor.id
             """)
     List<TutorLeaderboardAssessments> findTutorLeaderboardAssessmentByCourseId(@Param("exerciseIds") Set<Long> exerciseIds);
 
