@@ -81,7 +81,6 @@ describe('CreateTutorialGroupComponent', () => {
             additionalInformation: 'Test Info',
             capacity: 1,
             isOnline: true,
-            location: 'Test Location',
             campus: 'Garching',
         };
 
