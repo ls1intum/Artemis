@@ -55,7 +55,7 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Lecture lecture;
 
-    @ManyToMany(mappedBy = "lectureUnits", fetch = FetchType.LAZY, cascade = CascadeType.DETACH)
+    @ManyToMany(mappedBy = "lectureUnits")
     @OrderBy("title")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     protected Set<LearningGoal> learningGoals = new HashSet<>();
@@ -132,10 +132,5 @@ public abstract class LectureUnit extends DomainObject implements Completable {
     @Override
     public Optional<ZonedDateTime> getCompletionDate(User user) {
         return getCompletedUsers().stream().filter(completion -> completion.getUser().getId().equals(user.getId())).map(LectureUnitCompletion::getCompletedAt).findFirst();
-    }
-
-    @Override
-    public String toString() {
-        return "LectureUnit{" + "id=" + getId() + '}';
     }
 }
