@@ -22,21 +22,21 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
 import org.springframework.core.annotation.Order;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.saml2.core.Saml2X509Credential;
 import org.springframework.security.saml2.provider.service.registration.*;
+import org.springframework.security.web.SecurityFilterChain;
 
 /**
  * This class describes the security configuration for SAML2.
- *
- * Since this {@link WebSecurityConfigurerAdapter} is annotated with {@link Order} and {@link SecurityConfiguration}
+ * <p>
+ * Since this {@link SAML2Configuration} is annotated with {@link Order} and {@link SecurityConfiguration}
  * is not, this configuration is evaluated first when the SAML2 Profile is active.
  */
 // @formatter:off
 @Configuration
 @Order(1)
 @Profile("saml2")
-public class SAML2Configuration extends WebSecurityConfigurerAdapter {
+public class SAML2Configuration {
 
     private final Logger log = LoggerFactory.getLogger(SAML2Configuration.class);
 
@@ -55,7 +55,7 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
 
     /**
      * Returns the RelyingPartyRegistrationRepository used by SAML2 configuration.
-     *
+     * <p>
      * The relying parties are configured in the SAML2 properties. A helper method
      * {@link RelyingPartyRegistrations#fromMetadataLocation} extracts the needed information from the given
      * XML metadata file. Optionally X509 Credentials can be supplied to enable encryption.
@@ -139,8 +139,8 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
         }
     }
 
-    @Override
-    protected void configure(final HttpSecurity http) throws Exception {
+    @Bean
+    protected SecurityFilterChain saml2FilterChain(final HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .requestMatchers()
@@ -166,6 +166,9 @@ public class SAML2Configuration extends WebSecurityConfigurerAdapter {
             .saml2Login()
                 // Redirect back to the root
                 .defaultSuccessUrl("/", true);
+        // @formatter:on
+
+        return http.build();
     }
 
 }

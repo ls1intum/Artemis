@@ -12,6 +12,8 @@ import { ArtemisTestModule } from '../../../../test.module';
 import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-component/exam-checklist.service';
 import { MockExamChecklistService } from '../../../../helpers/mocks/service/mock-exam-checklist.service';
 import { of } from 'rxjs';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 function getExerciseGroups(equalPoints: boolean) {
     const dueDateStatArray = [{ inTime: 0, late: 0, total: 0 }];
@@ -51,7 +53,10 @@ describe('ExamChecklistComponent', () => {
                 ProgressBarComponent,
                 MockDirective(NgbTooltip),
             ],
-            providers: [{ provide: ExamChecklistService, useClass: MockExamChecklistService }],
+            providers: [
+                { provide: ExamChecklistService, useClass: MockExamChecklistService },
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
+            ],
         })
             .compileComponents()
             .then(() => {
