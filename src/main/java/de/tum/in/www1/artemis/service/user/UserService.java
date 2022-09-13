@@ -473,8 +473,7 @@ public class UserService {
      * @param username The username to check
      * @param password The password to check
      */
-    public void checkUsernameAndPasswordValidity(String username, String password) {
-
+    public void checkUsernameAndPasswordValidityElseThrow(String username, String password) {
         if (!StringUtils.hasLength(username) || username.length() < USERNAME_MIN_LENGTH) {
             throw new AccessForbiddenException("The username has to be at least " + USERNAME_MIN_LENGTH + " characters long");
         }

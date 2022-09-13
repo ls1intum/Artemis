@@ -47,12 +47,11 @@ public class SystemNotificationService {
      * Validates the dates of a system notification and throws an exception if the dates are invalid.
      * @param systemNotification the system notification to validate
      */
-    public void validateDatesOrThrow(SystemNotification systemNotification) {
+    public void validateDatesElseThrow(SystemNotification systemNotification) {
         if (systemNotification.getNotificationDate() == null || systemNotification.getExpireDate() == null) {
             throw new BadRequestAlertException("System notification needs both a notification and expiration date.", ENTITY_NAME, "systemNotificationNeedsBothDates");
         }
-        if (systemNotification.getNotificationDate().isAfter(systemNotification.getExpireDate())
-                || systemNotification.getNotificationDate().equals(systemNotification.getExpireDate())) {
+        if (!systemNotification.getNotificationDate().isBefore(systemNotification.getExpireDate())) {
             throw new BadRequestAlertException("The notification date must be before the expiration date.", ENTITY_NAME, "systemNotificationNeedsNotificationBeforeExpiration");
         }
     }

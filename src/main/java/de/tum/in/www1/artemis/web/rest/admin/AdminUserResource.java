@@ -88,7 +88,7 @@ public class AdminUserResource {
     @EnforceAdmin
     public ResponseEntity<User> createUser(@Valid @RequestBody ManagedUserVM managedUserVM) throws URISyntaxException {
 
-        this.userService.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
+        this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
 
         log.debug("REST request to save User : {}", managedUserVM);
 
@@ -126,7 +126,7 @@ public class AdminUserResource {
     @PutMapping("users")
     @EnforceAdmin
     public ResponseEntity<UserDTO> updateUser(@Valid @RequestBody ManagedUserVM managedUserVM) {
-        this.userService.checkUsernameAndPasswordValidity(managedUserVM.getLogin(), managedUserVM.getPassword());
+        this.userService.checkUsernameAndPasswordValidityElseThrow(managedUserVM.getLogin(), managedUserVM.getPassword());
         log.debug("REST request to update User : {}", managedUserVM);
 
         var existingUserByEmail = userRepository.findOneByEmailIgnoreCase(managedUserVM.getEmail());

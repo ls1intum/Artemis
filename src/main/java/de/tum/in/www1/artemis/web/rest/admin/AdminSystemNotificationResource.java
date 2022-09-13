@@ -54,7 +54,7 @@ public class AdminSystemNotificationResource {
         if (systemNotification.getId() != null) {
             throw new BadRequestAlertException("A new system notification cannot already have an ID", ENTITY_NAME, "idExists");
         }
-        this.systemNotificationService.validateDatesOrThrow(systemNotification);
+        this.systemNotificationService.validateDatesElseThrow(systemNotification);
         SystemNotification result = systemNotificationRepository.save(systemNotification);
         systemNotificationService.distributeActiveAndFutureNotificationsToClients();
         return ResponseEntity.created(new URI("/api/notifications/" + result.getId()))
@@ -75,7 +75,7 @@ public class AdminSystemNotificationResource {
         if (systemNotification.getId() == null) {
             throw new BadRequestAlertException("ID must not be null", ENTITY_NAME, "idnull");
         }
-        this.systemNotificationService.validateDatesOrThrow(systemNotification);
+        this.systemNotificationService.validateDatesElseThrow(systemNotification);
         if (!systemNotificationRepository.existsById(systemNotification.getId())) {
             throw new BadRequestAlertException("No system notification with this ID found", ENTITY_NAME, "idNull");
         }
