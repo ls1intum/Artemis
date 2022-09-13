@@ -235,17 +235,26 @@ public class ParticipationResource {
     @PutMapping("exercises/{exerciseId}/request-feedback")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<Boolean> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> requestFeedback(@PathVariable Long exerciseId, Principal principal) {
         log.debug("REST request for feeback request: {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
         var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
+        User user = userRepository.getUserWithGroupsAndAuthorities();
+
+        checkAccessPermissionOwner(participation, user);
 
         var currentDate = ZonedDateTime.now();
-        // TODO check if this is the correct field
+
+        if (participation.getIndividualDueDate().isBefore(currentDate)) {
+            throw new IllegalArgumentException("Request has already been sent");
+        }
+
         participation.setIndividualDueDate(currentDate);
+
+        participation = programmingExerciseStudentParticipationRepository.save(participation);
         programmingExerciseParticipationService.lockStudentRepository(programmingExercise, participation);
 
-        return ResponseEntity.ok().body(true);
+        return ResponseEntity.ok().body(participation);
     }
 
     private boolean isNotAllowedToStartProgrammingExercise(ProgrammingExercise programmingExercise, @Nullable StudentParticipation participation) {

@@ -174,12 +174,12 @@ export class ExerciseDetailsStudentActionsComponent {
             .requestFeedback(this.exercise.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe({
-                next: (requestSent: boolean) => {
-                    if (requestSent) {
+                next: (participation: StudentParticipation) => {
+                    if (participation) {
                         this.alertService.success('artemisApp.exercise.feedbackRequestSent');
-                    } else {
-                        this.alertService.error('artemisApp.exercise.feedbackRequestAlreadySent');
                     }
+                    // TODO: message when feedback has already been sent
+                    //       this.alertService.error('artemisApp.exercise.feedbackRequestAlreadySent');
                 },
                 error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
