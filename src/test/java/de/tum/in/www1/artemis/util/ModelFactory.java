@@ -182,6 +182,7 @@ public class ModelFactory {
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
