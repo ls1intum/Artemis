@@ -25,8 +25,8 @@ describe('ExerciseHint Management Detail Component', () => {
         comp = fixture.componentInstance;
     });
 
-    describe('OnInit', () => {
-        it('Should call load all on init', () => {
+    describe('onInit', () => {
+        it('should call load all on init', () => {
             // WHEN
             comp.ngOnInit();
 

@@ -99,7 +99,7 @@ describe('TeamComponent', () => {
             expect(comp.exercise).toEqual(mockExercise);
             expect(comp.team).toEqual(mockTeam);
             expect(comp.isTeamOwner).toBeFalse();
-            expect(exerciseService['find']).toHaveBeenCalled();
+            expect(exerciseService['find']).toHaveBeenCalledOnce();
         });
 
         it('should call alert service error when exercise service fails', () => {
@@ -107,8 +107,8 @@ describe('TeamComponent', () => {
             alertServiceStub = jest.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
-                expect(exerciseStub).toHaveBeenCalled();
-                expect(alertServiceStub).toHaveBeenCalled();
+                expect(exerciseStub).toHaveBeenCalledOnce();
+                expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isLoading).toBeFalse();
             });
         });
@@ -118,8 +118,8 @@ describe('TeamComponent', () => {
             alertServiceStub = jest.spyOn(alertService, 'error');
             waitForAsync(() => {
                 comp.ngOnInit();
-                expect(teamStub).toHaveBeenCalled();
-                expect(alertServiceStub).toHaveBeenCalled();
+                expect(teamStub).toHaveBeenCalledOnce();
+                expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isLoading).toBeFalse();
             });
         });

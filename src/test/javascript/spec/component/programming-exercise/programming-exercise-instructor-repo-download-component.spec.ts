@@ -37,7 +37,7 @@ describe('ProgrammingExerciseInstructorRepoDownloadComponent', () => {
     it('should not download when there is no exercise', () => {
         const spy = jest.spyOn(service, 'exportInstructorRepository');
         component.exportRepository();
-        expect(spy).toHaveBeenCalledTimes(0);
+        expect(spy).not.toHaveBeenCalled();
     });
 
     it('should download the repos', () => {

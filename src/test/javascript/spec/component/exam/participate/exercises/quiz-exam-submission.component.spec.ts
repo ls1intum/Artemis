@@ -159,9 +159,9 @@ describe('QuizExamSubmissionComponent', () => {
         component.navigateToQuestion(1);
         component.exercise = exercise;
         fixture.detectChanges();
-        expect(getNavigationStub).toHaveBeenCalled();
-        expect(yOffsetStub).toHaveBeenCalled();
-        expect(windowSpy).toHaveBeenCalled();
+        expect(getNavigationStub).toHaveBeenCalledTimes(2);
+        expect(yOffsetStub).toHaveBeenCalledOnce();
+        expect(windowSpy).toHaveBeenCalledOnce();
     });
 
     it('should create multiple choice submission from users selection', () => {

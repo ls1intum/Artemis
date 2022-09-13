@@ -142,7 +142,7 @@ describe('GradeKeyOverviewComponent', () => {
         comp.printPDF();
 
         tick();
-        expect(printSpy).toHaveBeenCalled();
+        expect(printSpy).toHaveBeenCalledOnce();
     }));
 
     it('should round correctly', () => {

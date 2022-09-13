@@ -8,8 +8,8 @@ import { Result } from 'app/entities/result.model';
  * For individual exercises, complaints are handled by a secondary reviewer and feedback requests by the assessor himself
  * For exam test runs, the original assessor is allowed to respond to complaints.
  */
-export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean, isTestRun: boolean, isAssessor: boolean, complaint: Complaint, exercise?: Exercise): boolean => {
-    if (isAtLeastInstructor) {
+export const isAllowedToRespondToComplaintAction = (isTestRun: boolean, isAssessor: boolean, complaint: Complaint, exercise?: Exercise): boolean => {
+    if (exercise?.isAtLeastInstructor) {
         return true;
     }
     if (exercise?.teamMode || isTestRun) {
@@ -28,7 +28,6 @@ export const isAllowedToRespondToComplaintAction = (isAtLeastInstructor: boolean
  * If a complaint was filed, the feedback should be only modifiable if the user is allowed to handle the complaint.
  */
 export const isAllowedToModifyFeedback = (
-    isAtLeastInstructor: boolean,
     isTestRun: boolean,
     isAssessor: boolean,
     hasAssessmentDueDatePassed: boolean,
@@ -36,7 +35,7 @@ export const isAllowedToModifyFeedback = (
     complaint?: Complaint,
     exercise?: Exercise,
 ): boolean => {
-    if (isAtLeastInstructor) {
+    if (exercise?.isAtLeastInstructor) {
         return true;
     }
     if (!result) {
@@ -47,9 +46,9 @@ export const isAllowedToModifyFeedback = (
     }
     if (complaint) {
         if (exercise?.assessmentType === AssessmentType.AUTOMATIC) {
-            return isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+            return isAllowedToRespondToComplaintAction(isTestRun, isAssessor, complaint, exercise);
         } else {
-            return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isAtLeastInstructor, isTestRun, isAssessor, complaint, exercise);
+            return complaint.complaintType === ComplaintType.COMPLAINT && isAllowedToRespondToComplaintAction(isTestRun, isAssessor, complaint, exercise);
         }
     }
     return !hasAssessmentDueDatePassed;
