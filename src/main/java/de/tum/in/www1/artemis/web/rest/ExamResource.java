@@ -133,7 +133,7 @@ public class ExamResource {
     public ResponseEntity<Exam> createExam(@PathVariable Long courseId, @RequestBody Exam exam) throws URISyntaxException {
         log.debug("REST request to create an exam : {}", exam);
         if (exam.getId() != null) {
-            throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new exam cannot already have an ID", ENTITY_NAME, "idExists");
         }
 
         checkForExamConflictsElseThrow(courseId, exam);
@@ -215,7 +215,7 @@ public class ExamResource {
             examService.scheduleModelingExercises(examWithExercises);
         }
 
-        return ResponseEntity.ok().headers(HeaderUtil.createEntityUpdateAlert(applicationName, true, ENTITY_NAME, result.getTitle())).body(result);
+        return ResponseEntity.ok(result);
     }
 
     /**
@@ -356,7 +356,7 @@ public class ExamResource {
      * GET /exams : Find all exams the user is allowed to access
      *
      * @param withExercises if only exams with at least one exercise Groups should be considered
-     * @param search Pagable with all relevant information
+     * @param search Pageable with all relevant information
      * @return the ResponseEntity with status 200 (OK) and a list of exams. The list can be empty
      */
     @GetMapping("/exams")
@@ -474,7 +474,7 @@ public class ExamResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<ExamScoresDTO> getExamScore(@PathVariable Long courseId, @PathVariable Long examId) {
         long start = System.currentTimeMillis();
-        log.debug("REST request to get score for exam : {}", examId);
+        log.info("REST request to get score for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
         ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
         log.info("get scores for exam {} took {}ms", examId, System.currentTimeMillis() - start);
@@ -729,6 +729,10 @@ public class ExamResource {
         log.info("REST request to generate student exams for exam {}", examId);
 
         final var exam = checkAccessForStudentExamGenerationAndLogAuditEvent(courseId, examId, Constants.GENERATE_STUDENT_EXAMS);
+
+        // Reset existing student exams & participations in case they already exist
+        examService.deleteStudentExamsAndExistingParticipationsForExam(exam.getId());
+
         List<StudentExam> studentExams = studentExamRepository.generateStudentExams(exam);
 
         // we need to break a cycle for the serialization
@@ -950,7 +954,7 @@ public class ExamResource {
     }
 
     /**
-     * DELETE /courses/{courseId}/exams/{examId}/allstudents :
+     * DELETE /courses/{courseId}/exams/{examId}/students :
      * Remove all students of the exam so that they cannot access the exam anymore.
      * Optionally, also deletes participations and submissions of all students in their student exams.
      *
@@ -970,7 +974,7 @@ public class ExamResource {
         var exam = examRepository.findWithRegisteredUsersById(examId).orElseThrow(() -> new EntityNotFoundException("Exam", examId));
 
         if (exam.isTestExam()) {
-            throw new BadRequestAlertException("Unregistration is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
+            throw new BadRequestAlertException("Deregister students is only allowed for real exams", ENTITY_NAME, "unregisterAllOnlyForRealExams");
         }
 
         examRegistrationService.unregisterAllStudentFromExam(exam, withParticipationsAndSubmission);
@@ -1041,7 +1045,7 @@ public class ExamResource {
      *
      * @param courseId the id of the course
      * @param examId   the id of the exam
-     * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it culd not be
+     * @return the ResponseEntity with status 200 (OK) and with the found exam as body or NotFound if it could not be
      * determined
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/latest-end-date")

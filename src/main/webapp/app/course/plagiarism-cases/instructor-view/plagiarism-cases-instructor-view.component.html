@@ -72,4 +72,4 @@
         </div>
     </div>
 </div>
-<ng-template #noPlagiarismCases>{{ 'artemisApp.plagiarism.plagiarismCases.noCases' | artemisTranslate }}</ng-template>
+<ng-template #noPlagiarismCases>{{ 'artemisApp.plagiarism.plagiarismCases.' + (this.examId ? 'noExamCases' : 'noCourseCases') | artemisTranslate }}</ng-template>

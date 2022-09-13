@@ -1,3 +1,5 @@
+.. _quiz:
+
 Quiz exercise
 =============
 .. contents:: Content of this document
@@ -12,7 +14,7 @@ Overview
 - Resolve a Quiz Exercise: Students can solve quiz exercises.
 
 Prepare a Quiz Exercise
---------
+-----------------------
 This section describes the process to:
 
     - Create Quiz Exercises
@@ -21,7 +23,7 @@ This section describes the process to:
     - Export Quiz Exercises
 
 Create new Quiz Exercise
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 
 - On the Artemis home page, click on the Course Management button |CourseManagementButton|.
 
@@ -238,7 +240,7 @@ Create new Quiz Exercise
         - Save button
 
 Create Drag and Drop Model Quiz Exercise
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
     - In the quiz exercises section click on the Create Quiz button |CreateDragAndDropQuizButton|.
 
@@ -304,7 +306,7 @@ Create Drag and Drop Model Quiz Exercise
         - Elements to Drag and Drop in the Modeling field.
 
 Import a Quiz
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
     - In the quiz exercises section, click on the Import a Quiz button |ImportQuizButton|.
 
@@ -321,7 +323,7 @@ Import a Quiz
         - Clicking the Import button |ImportButton| opens the quiz editor with the existing questions. Here it is possible to edit all parameters such as in **Create new Quiz Exercise**.
 
 Export a Quiz
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^
 
     - In the quiz exercises section, click on the Export Quiz Exercises button |ExportQuizExerciseButton| and the list of quizzes will be shown
 
@@ -334,7 +336,7 @@ Export a Quiz
         - The Export button |ExportButton| will download the quiz in a JSON file.
 
 Resolve a Quiz Exercise
---------
+-----------------------
 
     - If a quiz exercise is available on the Artemis home page as a current exercise, it will be possible to see it in the course overview or inside the course where it belongs.
 

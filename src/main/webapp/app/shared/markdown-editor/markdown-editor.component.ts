@@ -34,6 +34,7 @@ import { HeadingThreeCommand } from 'app/shared/markdown-editor/commands/heading
 import { CodeBlockCommand } from 'app/shared/markdown-editor/commands/codeblock.command';
 import { faAngleRight, faGripLines, faQuestionCircle } from '@fortawesome/free-solid-svg-icons';
 import { MultiOptionCommand } from 'app/shared/markdown-editor/commands/multiOptionCommand';
+import { v4 as uuid } from 'uuid';
 
 export enum MarkdownEditorHeight {
     INLINE = 100,
@@ -157,14 +158,17 @@ export class MarkdownEditorComponent implements AfterViewInit {
      */
     @Input()
     enableFileUpload = true;
-    acceptedFileExtensions = 'png,jpg,jpeg,svg,pdf';
 
     // Icons
     faQuestionCircle = faQuestionCircle;
     faGripLines = faGripLines;
     faAngleRight = faAngleRight;
 
-    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {}
+    uniqueMarkdownEditorId: string;
+
+    constructor(private artemisMarkdown: ArtemisMarkdownService, private fileUploaderService: FileUploaderService, private alertService: AlertService) {
+        this.uniqueMarkdownEditorId = 'markdown-editor-' + uuid();
+    }
 
     /** {boolean} true when the plane html view is needed, false when the preview content is needed from the parent */
     get showDefaultPreview(): boolean {
@@ -252,10 +256,14 @@ export class MarkdownEditorComponent implements AfterViewInit {
      * @desc Sets up resizable to enable resizing for the user
      */
     setupResizable(): void {
-        // unregister previously set event listeners for class elements
-        interact('.markdown-editor').unset();
+        // Use a unique, random ID to select the editor
+        // This is required to select the correct one in case multiple editors are used at the same time
+        const selector = '#' + this.uniqueMarkdownEditorId;
 
-        this.interactResizable = interact('.markdown-editor')
+        // unregister previously set event listeners for class elements
+        interact(selector).unset();
+
+        this.interactResizable = interact(selector)
             .resizable({
                 // Enable resize from top edge; triggered by class rg-top
                 edges: { left: false, right: false, bottom: '.rg-bottom', top: false },
@@ -273,12 +281,12 @@ export class MarkdownEditorComponent implements AfterViewInit {
             })
             .on('resizeend', (event: any) => {
                 event.target.classList.remove('card-resizable');
-                this.aceEditorContainer.getEditor().resize();
             })
-            .on('resizemove', function (event: any) {
+            .on('resizemove', (event: any) => {
                 const target = event.target;
                 // Update element height
                 target.style.height = event.rect.height + 'px';
+                this.aceEditorContainer.getEditor().resize();
             });
     }
 
@@ -448,33 +456,26 @@ export class MarkdownEditorComponent implements AfterViewInit {
     embedFiles(files: File[]): void {
         const aceEditor = this.aceEditorContainer.getEditor();
         files.forEach((file: File) => {
-            const extension = file.name.split('.').pop()!.toLocaleLowerCase();
-            if (this.acceptedFileExtensions.split(',').indexOf(extension) === -1) {
-                const errorMessage = `Unsupported file type! Only files of type ${this.acceptedFileExtensions} allowed.`;
-                this.alertService.addAlert({
-                    type: AlertType.DANGER,
-                    message: errorMessage,
-                    disableTranslation: true,
-                });
-            } else {
-                this.fileUploaderService.uploadMarkdownFile(file).then(
-                    (res) => {
-                        let textToAdd = `[${file.name}](${res.path})\n`;
-                        if (extension !== 'pdf') {
-                            textToAdd = '!' + textToAdd;
-                        }
+            this.fileUploaderService.uploadMarkdownFile(file).then(
+                (res) => {
+                    const extension = file.name.split('.').pop()!.toLocaleLowerCase();
 
-                        aceEditor.insert(textToAdd);
-                    },
-                    (error: Error) => {
-                        this.alertService.addAlert({
-                            type: AlertType.DANGER,
-                            message: error.message,
-                            disableTranslation: true,
-                        });
-                    },
-                );
-            }
+                    let textToAdd = `[${file.name}](${res.path})\n`;
+                    if (extension !== 'pdf') {
+                        // Show file as embedded image
+                        textToAdd = '!' + textToAdd;
+                    }
+
+                    aceEditor.insert(textToAdd);
+                },
+                (error: Error) => {
+                    this.alertService.addAlert({
+                        type: AlertType.DANGER,
+                        message: error.message,
+                        disableTranslation: true,
+                    });
+                },
+            );
         });
     }
 

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository.plagiarism;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -18,11 +19,11 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, Long> {
 
     @Query("""
-                SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
-                LEFT JOIN FETCH plagiarismCase.post
-                LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
-                WHERE plagiarismCase.student.login = :studentLogin
-                AND plagiarismCase.exercise.id = :exerciseId
+            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            LEFT JOIN FETCH plagiarismCase.post
+            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmission
+            WHERE plagiarismCase.student.login = :studentLogin
+            AND plagiarismCase.exercise.id = :exerciseId
             """)
     Optional<PlagiarismCase> findByStudentLoginAndExerciseIdWithPlagiarismSubmissions(@Param("studentLogin") String studentLogin, @Param("exerciseId") Long exerciseId);
 
@@ -37,11 +38,30 @@ public interface PlagiarismCaseRepository extends JpaRepository<PlagiarismCase, 
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            LEFT JOIN FETCH plagiarismCase.post
+            LEFT JOIN FETCH plagiarismCase.plagiarismSubmissions plagiarismSubmissions
+            LEFT JOIN FETCH plagiarismSubmissions.plagiarismComparison plagiarismComparison
+            WHERE plagiarismCase.exercise.exerciseGroup.exam.id = :examId
+            """)
+    List<PlagiarismCase> findByExamIdWithPlagiarismSubmissionsAndComparison(@Param("examId") Long examId);
+
+    @Query("""
+            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            LEFT JOIN FETCH plagiarismCase.post p
             WHERE plagiarismCase.exercise.id = :exerciseId
             AND plagiarismCase.student.id = :userId
-            AND (plagiarismCase.post IS NOT NULL OR plagiarismCase.verdict IS NOT NULL)
+            AND p.id IS NOT NULL
             """)
-    Optional<PlagiarismCase> findByStudentIdAndExerciseId(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
+    Optional<PlagiarismCase> findByStudentIdAndExerciseIdWithPost(@Param("userId") Long userId, @Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase
+            LEFT JOIN FETCH plagiarismCase.post p
+            WHERE plagiarismCase.exercise.id IN :exerciseIds
+            AND plagiarismCase.student.id = :userId
+            AND p.id IS NOT NULL
+            """)
+    List<PlagiarismCase> findByStudentIdAndExerciseIdsWithPost(@Param("userId") Long userId, @Param("exerciseIds") Set<Long> exerciseIds);
 
     @Query("""
             SELECT DISTINCT plagiarismCase FROM PlagiarismCase plagiarismCase

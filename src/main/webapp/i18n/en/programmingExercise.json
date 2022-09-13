@@ -203,7 +203,7 @@
                     "state": "Determines whether issues in this category should be shown to the students and used for grading.",
                     "penalty": "Penalty points given on each detected issue of this category.",
                     "maxPenalty": "Maximum applied penalty for one student across all issues of this category.",
-                    "detectedIssues": "Shows the number of students grouped by amount of detected issues in a category, starting at 1 issue. The bars turn red when surpassing the threshold defined by the maxPenalty of the respective category.",
+                    "detectedIssues": "Shows the number of students grouped by number of detected issues in a category, starting at 1 issue. The bars turn red when surpassing the threshold defined by the maxPenalty of the respective category.",
                     "weight": "The weighting of a test case determines the points a student receives for passing the test case. The number of points a test case awards is proportional to its weight and calculated as a fraction of the total exercise points.",
                     "bonusMultiplier": "This multiplies the points given for passing a test case without affecting the fractions of other test cases. Multipliers greater than 1 can result in student scores greater than 100%.",
                     "bonusPoints": "Bonus points added on top of the regular points for passing a test case. Setting bonus points can result in student scores greater than 100%.",
@@ -325,7 +325,8 @@
                 "invalidRepositoryName": "A repository with that name already exists in this exercise!",
                 "duplicateRepositoryNames": "Multiple auxiliary repositories must not share the same name!",
                 "duplicateDirectoryNames": "Multiple auxiliary repositories must not share the same checkout directory!",
-                "warning": "Auxiliary repositories can be edited and removed. Changes do not cascade to the VCS and CIS and must be carried out manually.",
+                "warning": "Auxiliary repositories can be added, edited and removed. Changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
+                "editedWarning": "You changed the auxiliary repositories. These changes in Artemis do not carry over to the VCS and CIS and must be done manually in these systems.",
                 "repositoryNameRequired": {
                     "pattern": "Auxiliary repositories might not be named 'exercise', 'solution', 'tests', or 'auxiliary'. Names might not contain special characters other than '-' and '_'."
                 },
@@ -360,7 +361,7 @@
                 "submissionPenalty": {
                     "optionLabel": "Submission Penalty",
                     "penaltyInputFieldTitle": "Exceeding Submission Limit Penalty",
-                    "exceedingLimitDescription": "The amount of points that is deducted from the result score for each submission exceeding the submission limit. Enter any amount of points greater than 0.",
+                    "exceedingLimitDescription": "The number of points that is deducted from the result score for each submission exceeding the submission limit. Enter any number of points greater than 0.",
                     "penaltyInputFieldValidationWarning": {
                         "pattern": "The penalty must be a number greater than 0.",
                         "required": "The penalty must be set."
@@ -383,7 +384,7 @@
                     }
                 },
                 "submissionLimitTitle": "Submission limit",
-                "submissionLimitDescription": "The amount of submissions a participant can make before the system enforces the selected policy.",
+                "submissionLimitDescription": "The number of submissions a participant can make before the system enforces the selected policy.",
                 "editInGradingInformation": "The submission policy can only be edited and toggled on the grading page of the programming exercise!",
                 "submissionLimitWarning": {
                     "pattern": "The submission limit must be and integer between 1 and 500!",
@@ -396,6 +397,7 @@
                 "title": "Template-Solution-Diff",
                 "template": "Template",
                 "solution": "Solution",
+                "errorWhileFetchingRepos": "An error occurred while fetching the repositories. Please check your internet connection and reopen the modal.",
                 "404": "Template-Solution-Diff has not been generated yet. Please do a push to the template or solution repository to generate it.",
                 "lineStatLabel": "Lines added/removed between template and solution",
                 "lineStatTooltipDetailPage": "Unfiltered lines that were added and removed when comparing the template and solution repositories",

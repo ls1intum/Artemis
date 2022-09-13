@@ -34,7 +34,7 @@ import de.tum.in.www1.artemis.service.exam.ExamDateService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseGradingService;
 import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipationService;
-import de.tum.in.www1.artemis.service.programming.ProgrammingSubmissionService;
+import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.util.Tuple;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import tech.jhipster.config.JHipsterConstants;
@@ -59,7 +59,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     private final ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository;
 
-    private final ProgrammingSubmissionService programmingSubmissionService;
+    private final ProgrammingTriggerService programmingTriggerService;
 
     private final ProgrammingExerciseParticipationService programmingExerciseParticipationService;
 
@@ -75,17 +75,16 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
 
     public ProgrammingExerciseScheduleService(ScheduleService scheduleService, ProgrammingExerciseRepository programmingExerciseRepository,
             ProgrammingExerciseTestCaseRepository programmingExerciseTestCaseRepository, ResultRepository resultRepository, ParticipationRepository participationRepository,
-            ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env,
-            ProgrammingSubmissionService programmingSubmissionService, ProgrammingExerciseGradingService programmingExerciseGradingService,
-            GroupNotificationService groupNotificationService, ExamDateService examDateService, ProgrammingExerciseParticipationService programmingExerciseParticipationService,
-            StudentExamRepository studentExamRepository, GitService gitService) {
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseParticipationRepository, Environment env, ProgrammingTriggerService programmingTriggerService,
+            ProgrammingExerciseGradingService programmingExerciseGradingService, GroupNotificationService groupNotificationService, ExamDateService examDateService,
+            ProgrammingExerciseParticipationService programmingExerciseParticipationService, StudentExamRepository studentExamRepository, GitService gitService) {
         this.scheduleService = scheduleService;
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.programmingExerciseTestCaseRepository = programmingExerciseTestCaseRepository;
         this.resultRepository = resultRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseParticipationRepository = programmingExerciseParticipationRepository;
-        this.programmingSubmissionService = programmingSubmissionService;
+        this.programmingTriggerService = programmingTriggerService;
         this.groupNotificationService = groupNotificationService;
         this.studentExamRepository = studentExamRepository;
         this.examDateService = examDateService;
@@ -342,7 +341,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
             try {
                 log.info("Invoking scheduled task for participation {} in programming exercise with id {}.", participation.getId(), exercise.getId());
-                programmingSubmissionService.triggerBuildForParticipations(List.of(participation));
+                programmingTriggerService.triggerBuildForParticipations(List.of(participation));
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming participation with id {} in exercise {} is no longer available in database for use in scheduled task.", participation.getId(),
@@ -414,7 +413,7 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             SecurityUtils.setAuthorizationObject();
             try {
                 log.info("Invoking scheduled task programming exercise with id {}.", exercise.getId());
-                programmingSubmissionService.triggerInstructorBuildForExercise(exercise.getId());
+                programmingTriggerService.triggerInstructorBuildForExercise(exercise.getId());
             }
             catch (EntityNotFoundException ex) {
                 log.error("Programming exercise with id {} is no longer available in database for use in scheduled task.", exercise.getId());

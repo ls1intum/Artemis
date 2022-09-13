@@ -35,7 +35,7 @@ h4 {
 
 /* Increase contrast of links to get 100% on Lighthouse Accessibility Audit. Override this color if you want to change the link color, or use a Bootswatch theme */
 a,
-a:not(.btn):not(.dropdown-item):not(.page-link):hover {
+a:not(.btn):not(.dropdown-item):not(.page-link):not(.nav-link):hover {
     color: $link-color;
     font-weight: bold;
     /* make sure browsers use the pointer cursor for anchors, even with no href */

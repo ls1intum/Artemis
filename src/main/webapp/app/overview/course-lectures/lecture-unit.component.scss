@@ -1,7 +1,9 @@
 .unit-card {
-    border-radius: 8px;
-    box-shadow: 0 4px 4px 0 var(--lecture-unit-card-shadow);
+    border-radius: 3px;
+    box-shadow: 0 2px 6px 0 var(--lecture-unit-card-shadow);
     min-width: 100%;
+    border: none;
+    transition: box-shadow 0.1s linear;
 }
 
 .unit-card:hover {
@@ -16,11 +18,20 @@
 .unit-card-header {
     min-height: 50px;
     min-width: 100%;
-    border-radius: 8px 8px 0 0;
-    background-color: var(--lecture-unit-card-header-background);
+    border-radius: 3px 3px 0 0;
+    background-color: var(--overview-light-background-color);
     cursor: pointer;
+    flex-wrap: nowrap !important;
+
+    > div:first-child {
+        padding-left: 0.5rem;
+
+        @media (max-width: 575.98px) {
+            padding: 0 !important;
+        }
+    }
 }
 
 .rounded {
-    border-radius: 8px;
+    border-radius: 3px;
 }
