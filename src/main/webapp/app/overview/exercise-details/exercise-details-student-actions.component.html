@@ -2,15 +2,46 @@
 <div *ngIf="exercise.type === ExerciseType.QUIZ">
     <!-- ACTIONS START -->
     <div class="btn-group me-2">
+        <jhi-exercise-mode-switch
+            [exerciseID]="exercise.id === undefined ? '' : exercise.id.toString()"
+            [practiceModeAvailable]="isPracticeModeAvailable()"
+            [practiceMode]="isInPracticeMode()"
+            (onTogglePracticeMode)="togglePracticeMode(!isInPracticeMode())"
+        >
+        </jhi-exercise-mode-switch>
         <button
+            [id]="'start-exercise-' + exercise.id"
+            id="student-quiz-start-{{ exercise.id }}"
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
+            [buttonLoading]="!!exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="canStartExercise() && !isInPracticeMode()"
+            (click)="proceedExercise()"
+        ></button>
+        <button
+            [id]="'start-practice-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faRedo"
             [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="isPracticeModeAvailable()"
-            [routerLink]="['/courses', courseId, 'quiz-exercises', exercise.id, 'practice']"
+            *ngIf="isPracticeModeAvailable() && canStartPractice() && isInPracticeMode()"
+            (click)="startPractice()"
+        ></button>
+        <button
+            [id]="'open-exercise-' + exercise.id"
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
+            [buttonLoading]="!!exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
+            (click)="proceedExercise()"
         ></button>
         <button
             [id]="'open-exercise-' + exercise.id"
@@ -21,36 +52,14 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_NOT_STARTED"
-            (click)="startExercise()"
-        ></button>
-        <button
-            [id]="'start-exercise-' + exercise.id"
-            jhi-exercise-action-button
-            [buttonIcon]="faPlayCircle"
-            [buttonLabel]="'artemisApp.exerciseActions.startQuiz' | artemisTranslate"
-            [buttonLoading]="!!exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            id="student-quiz-start-{{ exercise.id }}"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_UNINITIALIZED"
-            (click)="startExercise()"
-        ></button>
-        <button
-            [id]="'open-exercise-' + exercise.id"
-            jhi-exercise-action-button
-            [buttonIcon]="faPlayCircle"
-            [buttonLabel]="'artemisApp.exerciseActions.openQuiz' | artemisTranslate"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_ACTIVE"
-            [buttonLoading]="!!exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            (click)="startExercise()"
+            (click)="proceedExercise()"
         ></button>
     </div>
     <!-- ACTIONS END -->
     <!-- INFORMATION START -->
-    <!-- TODO using startExercise() in these buttons is misleading, we should rather insert the route here -->
+    <!-- TODO using startExercise() in these buttons is misleading, we should rather insert the route here => Renamed to proceedQuizExercise -->
     <div class="btn-group" *ngIf="!actionsOnly">
+        <!-- TODO: Incorrect ID assigning + No hideLabelMobile ? -->
         <button
             id="view-submission"
             jhi-exercise-action-button
@@ -58,29 +67,31 @@
             [buttonLabel]="'artemisApp.exerciseActions.viewSubmissions' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_SUBMITTED"
             [smallButton]="smallButtons"
-            (click)="startExercise()"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_SUBMITTED"
+            (click)="proceedExercise()"
         ></button>
+        <!-- TODO: No ID + No hideLabelMobile ? -->
         <button
             jhi-exercise-action-button
             [buttonIcon]="faEye"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_FINISHED && showResult"
             [smallButton]="smallButtons"
-            (click)="startExercise()"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.QUIZ_FINISHED && showResult"
+            (click)="proceedExercise()"
         ></button>
+        <!-- TODO: No ID + No hideLabelMobile ? -->
         <button
             jhi-exercise-action-button
-            *ngIf="!!exercise.isAtLeastTutor"
             [buttonIcon]="faSignal"
             [buttonLabel]="'artemisApp.exerciseActions.statistics' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
-            routerLink="/course-management/{{ courseId }}/quiz-exercises/{{ exercise.id }}/quiz-point-statistic"
+            *ngIf="!!exercise.isAtLeastTutor"
+            (click)="showStatistics()"
         ></button>
     </div>
     <!-- INFORMATION END -->
@@ -89,16 +100,17 @@
 
 <!-- MODELING EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === ExerciseType.MODELING">
-    <!-- ACTION START -->
+    <!-- ACTIONS START -->
     <div class="btn-group me-2">
         <button
+            [id]="'view-team-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+            *ngIf="canViewTeam()"
+            (click)="viewTeam()"
         ></button>
         <button
             [id]="'start-exercise-' + exercise.id"
@@ -109,7 +121,7 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+            *ngIf="canStartExercise()"
             (click)="startExercise()"
         ></button>
         <button
@@ -121,15 +133,17 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            *ngIf="canOpenExercise()"
+            (click)="proceedExercise()"
         ></button>
     </div>
-    <!-- ACTION END -->
+    <!-- ACTIONS END -->
     <!-- INFORMATION START -->
     <div class="btn-group" *ngIf="!actionsOnly">
+        <!-- TODO: 2nd btn-group ? -->
         <div class="btn-group">
             <button
+                [id]="'view-submissions-' + exercise.id"
                 id="view-submission"
                 jhi-exercise-action-button
                 [buttonIcon]="faFolderOpen"
@@ -137,31 +151,22 @@
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
-                "
-                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                [hideLabelMobile]="false"
+                *ngIf="canViewSubmissions()"
+                (click)="proceedExercise()"
             ></button>
             <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
             <button
+                [id]="'view-results-' + exercise.id"
                 jhi-exercise-action-button
                 [buttonIcon]="faFolderOpen"
                 [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
                 [outlined]="true"
                 [buttonLoading]="!!exercise.loading"
                 [smallButton]="smallButtons"
-                *ngIf="
-                    exercise.studentParticipations &&
-                    exercise.studentParticipations.length > 0 &&
-                    exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                    exercise.studentParticipations[0].results &&
-                    exercise.studentParticipations[0].results.length > 0 &&
-                    showResult
-                "
-                [routerLink]="['/courses', courseId, 'modeling-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+                [hideLabelMobile]="false"
+                *ngIf="canViewResults()"
+                (click)="proceedExercise()"
             ></button>
         </div>
     </div>
@@ -172,17 +177,27 @@
 <!-- PROGRAMMING EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === ExerciseType.PROGRAMMING">
     <!-- ACTION START -->
+    <!-- TODO: btn-group not me-2? -->
     <div class="btn-group">
+        <jhi-exercise-mode-switch
+            [exerciseID]="exercise.id === undefined ? '' : exercise.id.toString()"
+            [practiceModeAvailable]="isPracticeModeAvailable()"
+            [practiceMode]="isInPracticeMode()"
+            (onTogglePracticeMode)="togglePracticeMode(!isInPracticeMode())"
+        >
+        </jhi-exercise-mode-switch>
         <button
+            [id]="'view-team-' + exercise.id"
             class="view-team"
             jhi-exercise-action-button
             [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+            *ngIf="canViewTeam()"
+            (click)="viewTeam()"
         ></button>
+        <!-- TODO: [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises" ? -->
         <button
             [id]="'start-exercise-' + exercise.id"
             class="start-exercise"
@@ -193,47 +208,19 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+            *ngIf="canStartExercise() && !isInPracticeMode()"
             (click)="startExercise()"
         ></button>
         <button
             [id]="'start-practice-' + exercise.id"
-            class="start-exercise"
             jhi-exercise-action-button
-            [buttonIcon]="faPlayCircle"
-            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [buttonLabel]="'artemisApp.exerciseActions.startPracticeMode' | artemisTranslate"
+            [buttonIcon]="faRedo"
+            [buttonLabel]="'artemisApp.exerciseActions.practice' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="!examMode && dayjs(exercise.dueDate).isBefore(dayjs())"
-            (click)="startPracticeMode()"
-        ></button>
-        <button
-            [id]="'enter-practice-' + exercise.id"
-            class="start-exercise"
-            jhi-exercise-action-button
-            [buttonIcon]="faPlayCircle"
-            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [buttonLabel]="'artemisApp.exerciseActions.enterPracticeMode' | artemisTranslate"
-            [buttonLoading]="!!exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="!examMode && dayjs(exercise.dueDate).isBefore(dayjs())"
-            (click)="togglePracticeMode(true)"
-        ></button>
-        <button
-            [id]="'leave-practice-' + exercise.id"
-            class="start-exercise"
-            jhi-exercise-action-button
-            [buttonIcon]="faPlayCircle"
-            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-            [buttonLabel]="('artemisApp.exerciseActions.enterPracticeMode' | artemisTranslate) + 'LEAVE'"
-            [buttonLoading]="!!exercise.loading"
-            [smallButton]="smallButtons"
-            [hideLabelMobile]="false"
-            *ngIf="!examMode && dayjs(exercise.dueDate).isBefore(dayjs())"
-            (click)="togglePracticeMode(false)"
+            *ngIf="isPracticeModeAvailable() && canStartPractice() && isInPracticeMode()"
+            (click)="startPractice()"
         ></button>
 
         <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
@@ -250,8 +237,8 @@
                     [buttonLoading]="!!exercise.loading"
                     [smallButton]="smallButtons"
                     [hideLabelMobile]="false"
-                    *ngIf="!examMode && isOnlineEditorAllowed()"
-                    [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', exercise.studentParticipations![0].id]"
+                    *ngIf="isOnlineEditorAllowed()"
+                    (click)="openOnlineEditor()"
                 ></button>
                 <jhi-clone-repo-button
                     [loading]="!!exercise.loading"
@@ -273,7 +260,7 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
+            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && canStartExercise()"
             (click)="resumeProgrammingExercise()"
         ></button>
         <a
@@ -298,13 +285,14 @@
     <!-- ACTIONS START -->
     <div class="btn-group me-2">
         <button
+            [id]="'view-team-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+            *ngIf="canViewTeam()"
+            (click)="viewTeam()"
         ></button>
         <button
             [id]="'start-exercise-' + exercise.id"
@@ -315,7 +303,7 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
+            *ngIf="canStartExercise()"
             (click)="startExercise()"
         ></button>
         <button
@@ -326,14 +314,15 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            *ngIf="canOpenExercise()"
+            (click)="proceedExercise()"
         ></button>
     </div>
     <!-- ACTIONS END -->
     <!-- INFORMATION START -->
     <div class="btn-group" *ngIf="!actionsOnly">
         <button
+            [id]="'view-submissions-' + exercise.id"
             id="view-submission"
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
@@ -342,31 +331,21 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
-            "
-            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            *ngIf="canViewSubmissions()"
+            (click)="proceedExercise()"
         ></button>
         <!-- TODO improve the distinction, in particular if there are multiple submissions and results -->
         <button
+            [id]="'view-results-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                exercise.studentParticipations[0].results &&
-                exercise.studentParticipations[0].results.length > 0 &&
-                showResult
-            "
-            [routerLink]="['/courses', courseId, 'text-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            [hideLabelMobile]="false"
+            *ngIf="canViewResults()"
+            (click)="proceedExercise()"
         ></button>
     </div>
     <!-- INFORMATION END -->
@@ -376,41 +355,46 @@
 <!-- FILE UPLOAD EXERCISE ACTIONS START -->
 <div *ngIf="exercise.type === ExerciseType.FILE_UPLOAD">
     <!-- ACTIONS START -->
+    <!-- TODO: btn-group not me-2? -->
     <div class="btn-group">
         <button
+            [id]="'view-team-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faUsers"
             [buttonLabel]="'artemisApp.exerciseActions.viewTeam' | artemisTranslate"
-            *ngIf="!!exercise.teamMode && participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="true"
-            [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
+            *ngIf="canViewTeam()"
+            (click)="viewTeam()"
         ></button>
         <button
+            [id]="'start-exercise-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faPlayCircle"
             [buttonLabel]="'artemisApp.exerciseActions.startExercise' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
+            *ngIf="canStartExercise()"
             (click)="startExercise()"
         ></button>
         <button
+            [id]="'open-exercise-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.uploadFile' | artemisTranslate"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="exercise.studentParticipations && exercise.studentParticipations.length > 0 && exercise.studentParticipations[0].initializationState === 'INITIALIZED'"
-            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            *ngIf="canOpenExercise()"
+            (click)="proceedExercise()"
         ></button>
     </div>
     <!-- ACTIONS END-->
     <!-- INFORMATION START -->
     <div class="btn-group" *ngIf="!actionsOnly">
         <button
+            [id]="'view-submissions-' + exercise.id"
             id="view-submission"
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
@@ -419,30 +403,20 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                (!exercise.studentParticipations[0].results || exercise.studentParticipations[0].results.length === 0 || !showResult)
-            "
-            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            *ngIf="canViewSubmissions()"
+            (click)="proceedExercise()"
         ></button>
         <button
+            [id]="'view-results-' + exercise.id"
             jhi-exercise-action-button
             [buttonIcon]="faFolderOpen"
             [buttonLabel]="'artemisApp.exerciseActions.viewResults' | artemisTranslate"
             [outlined]="true"
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
-            *ngIf="
-                exercise.studentParticipations &&
-                exercise.studentParticipations.length > 0 &&
-                exercise.studentParticipations[0].initializationState === 'FINISHED' &&
-                exercise.studentParticipations[0].results &&
-                exercise.studentParticipations[0].results.length > 0 &&
-                showResult
-            "
-            [routerLink]="['/courses', courseId, 'file-upload-exercises', exercise.id, 'participate', exercise.studentParticipations[0].id]"
+            [hideLabelMobile]="false"
+            *ngIf="canViewResults()"
+            (click)="proceedExercise()"
         ></button>
     </div>
     <!-- INFORMATION END -->

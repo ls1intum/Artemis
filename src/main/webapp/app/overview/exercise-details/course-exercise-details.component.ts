@@ -46,13 +46,14 @@ import { ModelingExercise } from 'app/entities/modeling-exercise.model';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { UMLModel } from '@ls1intum/apollon';
 import { SafeHtml } from '@angular/platform-browser';
-import { faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench, faAngleDown, faAngleUp } from '@fortawesome/free-solid-svg-icons';
+import { faAngleDown, faAngleUp, faBook, faEye, faFileSignature, faListAlt, faSignal, faTable, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TextExercise } from 'app/entities/text-exercise.model';
 import { FileUploadExercise } from 'app/entities/file-upload-exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { PlagiarismCase } from 'app/exercises/shared/plagiarism/types/PlagiarismCase';
 import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/exercise-hint.service';
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
+import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -90,6 +91,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public gradingCriteria: GradingCriterion[];
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
+    // TODO: isExamExercise is unused
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
@@ -97,12 +99,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     plagiarismCase?: PlagiarismCase;
     availableExerciseHints: ExerciseHint[];
     activatedExerciseHints: ExerciseHint[];
-    practiceMode: boolean;
 
     public modelingExercise?: ModelingExercise;
     public exampleSolution?: SafeHtml;
     public exampleSolutionUML?: UMLModel;
     public isProgrammingExerciseExampleSolutionPublished = false;
+
+    public exerciseOperationMode: ExerciseOperationMode = ExerciseOperationMode.EXERCISE;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -154,9 +157,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
-        this.route.queryParams.subscribe((params) => {
-            this.practiceMode = params['practice-mode'];
-        });
         this.route.params.subscribe((params) => {
             const didExerciseChange = this.exerciseId !== parseInt(params['exerciseId'], 10);
             const didCourseChange = this.courseId !== parseInt(params['courseId'], 10);
@@ -193,9 +193,52 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
     }
 
+    public isInExamMode(): boolean {
+        switch (this.exerciseOperationMode) {
+            case ExerciseOperationMode.EXAM:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public isPracticeModeAvailable(): boolean {
+        if (!this.isInExamMode() && !!this.exercise) {
+            switch (this.exercise.type) {
+                case ExerciseType.QUIZ:
+                    const quizExercise: QuizExercise = this.exercise as QuizExercise;
+                    return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
+                case ExerciseType.PROGRAMMING:
+                    const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
+                    const x = dayjs().isAfter(dayjs(programmingExercise.dueDate));
+                    return x;
+                default:
+                    return false;
+            }
+        } else {
+            return false;
+        }
+    }
+
+    public isInPracticeMode(): boolean {
+        switch (this.exerciseOperationMode) {
+            case ExerciseOperationMode.PRACTICE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public togglePracticeMode(toggle: boolean): void {
+        if (this.isPracticeModeAvailable()) {
+            this.exerciseOperationMode = toggle ? ExerciseOperationMode.PRACTICE : ExerciseOperationMode.EXERCISE;
+            this.loadExercise();
+        }
+    }
+
     loadExercise() {
         this.exercise = undefined;
-        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId, this.practiceMode);
+        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId, this.isInPracticeMode());
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -299,7 +342,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const filteredParticipations = participations.filter((participation: StudentParticipation) => {
             const personal = participation.student?.id === this.currentUser.id;
             const team = participation.team?.students?.map((s) => s.id).includes(this.currentUser.id);
-            const practiceParticipation = (participation.testRun && this.practiceMode) || (!participation.testRun && !this.practiceMode);
+            const practiceParticipation = (participation.testRun && this.isInPracticeMode()) || (!participation.testRun && !this.isInPracticeMode());
             return (personal || team) && practiceParticipation;
         });
         filteredParticipations.forEach((participation: Participation) => {
@@ -368,7 +411,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
+            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id && changedParticipation.testRun === this.isInPracticeMode()) {
                 // Notify student about late submission result
                 if (
                     changedParticipation.exercise?.dueDate &&

@@ -34,7 +34,9 @@
                 [equalColumns]="false"
                 [exercise]="exercise"
                 [ngClass]="'mt-2 mb-2 raised-actions'"
+                [exerciseOperationMode]="exerciseOperationMode"
                 *ngIf="!isPresentationMode"
+                (onTogglePracticeMode)="togglePracticeMode($event)"
             ></jhi-exercise-details-student-actions>
             <div class="exercise-tags col-auto col-sm d-flex justify-content-center mt-2">
                 <h4 class="fw-medium">
