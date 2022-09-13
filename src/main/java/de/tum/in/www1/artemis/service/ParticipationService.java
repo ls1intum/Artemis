@@ -251,7 +251,7 @@ public class ParticipationService {
         }
 
         programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exercise.getId());
-        participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation);
+        participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, false);
 
         return studentParticipationRepository.saveAndFlush(participation);
     }
