@@ -2153,16 +2153,6 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void testDatabaseTest() {
-        Course course = new Course();
-        course = courseRepo.save(course);
-        course.setEndDate(now().minusMinutes(5));
-        course = courseRepo.save(course);
-        assertThat(course.getEndDate()).isNotNull();
-    }
-
-    @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testArchiveCourseWithExam() throws Exception {
         Course course = database.createCourseWithExamAndExercises();
         course.setEndDate(now().minusMinutes(5));
