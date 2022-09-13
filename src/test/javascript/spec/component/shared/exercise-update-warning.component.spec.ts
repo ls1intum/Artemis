@@ -39,7 +39,7 @@ describe('Exercise Update Warning Component Tests', () => {
         fixture.detectChanges();
 
         expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should trigger reEvaluateExercise once', () => {
@@ -52,7 +52,7 @@ describe('Exercise Update Warning Component Tests', () => {
         fixture.detectChanges();
 
         expect(reEvaluateExerciseSpy).toHaveBeenCalledOnce();
-        expect(emitSpy).toHaveBeenCalled();
+        expect(emitSpy).toHaveBeenCalledOnce();
     });
 
     it('should trigger clear once', () => {

@@ -23,7 +23,7 @@ export class ApollonDiagramListComponent implements OnInit {
     predicate: string;
     reverse: boolean;
     courseId: number;
-    isAtLeastInstructor = false;
+    course: Course;
 
     // Icons
     faSort = faSort;
@@ -48,7 +48,7 @@ export class ApollonDiagramListComponent implements OnInit {
     ngOnInit() {
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.courseService.find(this.courseId).subscribe((courseResponse: HttpResponse<Course>) => {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(courseResponse.body!);
+            this.course = courseResponse.body!;
         });
         this.apollonDiagramsService.getDiagramsByCourse(this.courseId).subscribe({
             next: (response) => {
