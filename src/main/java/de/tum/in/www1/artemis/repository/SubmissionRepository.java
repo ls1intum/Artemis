@@ -289,7 +289,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT
                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                    p.exercise.id,
+                    e.id,
                     count(DISTINCT p)
                 )
             FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
@@ -398,7 +398,7 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
     @Query("""
             SELECT
                 new de.tum.in.www1.artemis.domain.assessment.dashboard.ExerciseMapEntry(
-                    p.exercise.id,
+                    e.id,
                     count(DISTINCT p)
                     )
             FROM StudentParticipation p JOIN p.submissions s JOIN p.exercise e
