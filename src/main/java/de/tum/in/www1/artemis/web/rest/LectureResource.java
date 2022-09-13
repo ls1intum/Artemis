@@ -288,11 +288,13 @@ public class LectureResource {
     public ResponseEntity<Void> deleteLecture(@PathVariable Long id) {
         Lecture lecture = lectureRepository.findByIdElseThrow(id);
 
-        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, lecture.getCourse(), null);
         Course course = lecture.getCourse();
         if (course == null) {
             return ResponseEntity.badRequest().build();
         }
+
+        authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
         log.debug("REST request to delete Lecture : {}", id);
         lectureService.delete(lecture);
         return ResponseEntity.ok().headers(HeaderUtil.createEntityDeletionAlert(applicationName, true, ENTITY_NAME, id.toString())).build();

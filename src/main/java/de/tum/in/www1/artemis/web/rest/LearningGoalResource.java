@@ -148,7 +148,7 @@ public class LearningGoalResource {
     public ResponseEntity<LearningGoal> getLearningGoal(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.debug("REST request to get LearningGoal : {}", learningGoalId);
         var learningGoal = findLearningGoal(Role.INSTRUCTOR, learningGoalId, courseId, false);
-        var lectureUnits = lectureUnitRepository.findAllByLearningGoal(learningGoalId);
+        var lectureUnits = lectureUnitRepository.findAllByLearningGoalId(learningGoalId);
         learningGoal.setLectureUnits(new HashSet<>(lectureUnits));
         return ResponseEntity.ok().body(learningGoal);
     }
@@ -159,7 +159,7 @@ public class LearningGoalResource {
             learningGoal = learningGoalRepository.findByIdWithLectureUnitsAndCompletionsElseThrow(learningGoalId);
         }
         else {
-            learningGoal = learningGoalRepository.findById(learningGoalId).orElseThrow();
+            learningGoal = learningGoalRepository.findByIdElseThrow(learningGoalId);
         }
 
         if (learningGoal.getCourse() == null) {

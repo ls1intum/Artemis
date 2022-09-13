@@ -36,7 +36,7 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
             WHERE lg1.id = :learningGoalId
             OR lg2.id = :learningGoalId
             """)
-    List<LectureUnit> findAllByLearningGoal(@Param("learningGoalId") Long learningGoalId);
+    List<LectureUnit> findAllByLearningGoalId(@Param("learningGoalId") Long learningGoalId);
 
     @Query("""
             SELECT lectureUnit
@@ -51,5 +51,9 @@ public interface LectureUnitRepository extends JpaRepository<LectureUnit, Long> 
 
     default LectureUnit findByIdWithLearningGoalsBidirectionalElseThrow(long lectureUnitId) {
         return findByIdWithLearningGoalsBidirectional(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
+    }
+
+    default LectureUnit findByIdWithLearningGoalsElseThrow(long lectureUnitId) {
+        return findByIdWithLearningGoals(lectureUnitId).orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnitId));
     }
 }

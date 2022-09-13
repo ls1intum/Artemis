@@ -12,14 +12,18 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.LearningGoal;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnitCompletion;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.LectureUnitCompletionRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 
 @Service
 public class LectureUnitService {
+
+    private final LectureUnitRepository lectureUnitRepository;
 
     private final LectureRepository lectureRepository;
 
@@ -27,7 +31,9 @@ public class LectureUnitService {
 
     private final LectureUnitCompletionRepository lectureUnitCompletionRepository;
 
-    public LectureUnitService(LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository, LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+    public LectureUnitService(LectureUnitRepository lectureUnitRepository, LectureRepository lectureRepository, LearningGoalRepository learningGoalRepository,
+            LectureUnitCompletionRepository lectureUnitCompletionRepository) {
+        this.lectureUnitRepository = lectureUnitRepository;
         this.lectureRepository = lectureRepository;
         this.learningGoalRepository = learningGoalRepository;
         this.lectureUnitCompletionRepository = lectureUnitCompletionRepository;
@@ -76,22 +82,26 @@ public class LectureUnitService {
      * @param lectureUnit lecture unit to delete
      */
     @Transactional // ok because of delete
-    public void removeLectureUnit(LectureUnit lectureUnit) {
-        if (Objects.isNull(lectureUnit)) {
-            return;
-        }
-        // update associated learning goals
-        Set<LearningGoal> learningGoals = lectureUnit.getLearningGoals();
-        learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
-            learningGoal.getLectureUnits().remove(lectureUnit);
-            return learningGoal;
-        }).toList());
+    public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
+        LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithLearningGoalsElseThrow(lectureUnit.getId());
 
-        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnit.getLecture().getId());
+        System.out.println(lectureUnitToDelete);
+
+        if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
+            // update associated learning goals
+            Set<LearningGoal> learningGoals = lectureUnitToDelete.getLearningGoals();
+            learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
+                learningGoal = learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
+                learningGoal.getLectureUnits().remove(lectureUnitToDelete);
+                return learningGoal;
+            }).toList());
+        }
+
+        Lecture lecture = lectureRepository.findByIdWithLectureUnitsElseThrow(lectureUnitToDelete.getLecture().getId());
         // Creating a new list of lecture units without the one we want to remove
         List<LectureUnit> lectureUnitsUpdated = new ArrayList<>();
         for (LectureUnit unit : lecture.getLectureUnits()) {
-            if (Objects.nonNull(unit) && !unit.getId().equals(lectureUnit.getId())) {
+            if (Objects.nonNull(unit) && !unit.getId().equals(lectureUnitToDelete.getId())) {
                 lectureUnitsUpdated.add(unit);
             }
         }

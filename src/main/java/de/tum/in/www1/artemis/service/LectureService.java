@@ -2,15 +2,16 @@ package de.tum.in.www1.artemis.service;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.*;
-import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
+import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -24,10 +25,14 @@ public class LectureService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository) {
+    private final LectureUnitRepository lectureUnitRepository;
+
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository,
+            LectureUnitRepository lectureUnitRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.learningGoalRepository = learningGoalRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -97,15 +102,16 @@ public class LectureService {
         Lecture lectureToDelete = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture.getId());
 
         // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
-        List<LectureUnit> lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
-        // update associated learning goals
-        for (LectureUnit lectureUnit : lectureUnits) {
-            Set<LearningGoal> learningGoals = lectureUnit.getLearningGoals();
-            learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
-                learningGoal.getLectureUnits().remove(lectureUnit);
-                return learningGoal;
-            }).toList());
-        }
+        var lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
+
+        // Remove the lecture units from their connected learning goals
+        var learningGoals = lectureUnits.stream().flatMap(lectureUnit -> lectureUnit.getLearningGoals().stream()).collect(Collectors.toSet());
+        learningGoalRepository.saveAll(learningGoals.stream().map(learningGoal -> {
+            learningGoal = learningGoalRepository.findByIdWithLectureUnitsElseThrow(learningGoal.getId());
+            lectureUnits.forEach(learningGoal.getLectureUnits()::remove);
+            return learningGoal;
+        }).toList());
+
         lectureRepository.deleteById(lectureToDelete.getId());
     }
 

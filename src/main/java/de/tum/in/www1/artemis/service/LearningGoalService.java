@@ -29,6 +29,8 @@ public class LearningGoalService {
 
     private final LearningGoalRepository learningGoalRepository;
 
+    private final LectureUnitRepository lectureUnitRepository;
+
     private final StudentParticipationRepository studentParticipationRepository;
 
     private final ExerciseRepository exerciseRepository;
@@ -43,10 +45,11 @@ public class LearningGoalService {
 
     private final AuthorizationCheckService authCheckService;
 
-    public LearningGoalService(LearningGoalRepository learningGoalRepository, StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository,
-            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authCheckService) {
+    public LearningGoalService(LearningGoalRepository learningGoalRepository, LectureUnitRepository lectureUnitRepository,
+            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, StudentScoreRepository studentScoreRepository,
+            TeamScoreRepository teamScoreRepository, CourseRepository courseRepository, UserRepository userRepository, AuthorizationCheckService authCheckService) {
         this.learningGoalRepository = learningGoalRepository;
+        this.lectureUnitRepository = lectureUnitRepository;
         this.exerciseRepository = exerciseRepository;
         this.studentParticipationRepository = studentParticipationRepository;
         this.studentScoreRepository = studentScoreRepository;
@@ -286,9 +289,11 @@ public class LearningGoalService {
         individualLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 0.0;
         individualLearningGoalProgress.pointsAchievedByStudentInLearningGoal = 0.0;
 
+        var lectureUnits = lectureUnitRepository.findAllByLearningGoalId(learningGoal.getId());
         // The progress will be calculated from a subset of the connected lecture units (currently only from released exerciseUnits)
-        Set<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents)
+        Set<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = lectureUnits.stream().filter(LectureUnit::isVisibleToStudents)
                 .filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> (ExerciseUnit) lectureUnit).collect(Collectors.toSet());
+
         Set<IndividualLectureUnitProgress> progressInExerciseUnits = this.calculateExerciseUnitsProgress(exerciseUnitsUsableForProgressCalculation, user, useParticipantScoreTable);
 
         // Calculate the progress in lecture units (0 = not completed and 100 = completed for now)
@@ -331,8 +336,9 @@ public class LearningGoalService {
         courseLearningGoalProgress.totalPointsAchievableByStudentsInLearningGoal = 0.0;
         courseLearningGoalProgress.averagePointsAchievedByStudentInLearningGoal = 0.0;
 
+        var lectureUnits = lectureUnitRepository.findAllByLearningGoalId(learningGoal.getId());
         // The progress will be calculated from a subset of the connected lecture units (currently only from released exerciseUnits)
-        List<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = learningGoal.getLectureUnits().parallelStream().filter(LectureUnit::isVisibleToStudents)
+        List<ExerciseUnit> exerciseUnitsUsableForProgressCalculation = lectureUnits.parallelStream().filter(LectureUnit::isVisibleToStudents)
                 .filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> (ExerciseUnit) lectureUnit).toList();
         Set<CourseLectureUnitProgress> progressInExerciseUnits = this.calculateExerciseUnitsProgressForCourse(exerciseUnitsUsableForProgressCalculation, useParticipantScoreTable);
 
