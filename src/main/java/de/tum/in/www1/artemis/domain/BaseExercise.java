@@ -32,7 +32,7 @@ public abstract class BaseExercise extends DomainObject {
     private Double maxPoints;
 
     @Column(name = "bonus_points")
-    private Double bonusPoints;
+    private Double bonusPoints = 0.0;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "assessment_type")
@@ -60,8 +60,8 @@ public abstract class BaseExercise extends DomainObject {
     private DifficultyLevel difficulty;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "mode")
-    private ExerciseMode mode;
+    @Column(name = "mode", columnDefinition = "varchar(255) default 'INDIVIDUAL'", nullable = false)
+    private ExerciseMode mode = ExerciseMode.INDIVIDUAL;
 
     public String getTitle() {
         return title;
