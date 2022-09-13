@@ -79,7 +79,7 @@ describe('Plagiarism Header Component', () => {
 
         tick();
 
-        expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalled();
+        expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
     }));
 

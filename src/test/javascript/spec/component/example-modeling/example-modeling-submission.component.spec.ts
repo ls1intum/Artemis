@@ -174,7 +174,7 @@ describe('Example Modeling Submission Component', () => {
         tick(1);
 
         // This service request should also start after the previous one ends.
-        expect(modelingAssessmentServiceSpy).toHaveBeenCalledTimes(0);
+        expect(modelingAssessmentServiceSpy).not.toHaveBeenCalled();
         tick(1);
 
         // THEN

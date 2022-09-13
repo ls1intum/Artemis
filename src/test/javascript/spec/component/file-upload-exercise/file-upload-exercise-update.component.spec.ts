@@ -51,7 +51,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 route.data = of({ fileUploadExercise });
             });
 
-            it('Should call create service on save for new entity', fakeAsync(() => {
+            it('should call create service on save for new entity', fakeAsync(() => {
                 // GIVEN
                 comp.ngOnInit();
 
@@ -78,7 +78,7 @@ describe('FileUploadExercise Management Update Component', () => {
                 route.data = of({ fileUploadExercise });
             });
 
-            it('Should call update service on save for existing entity', fakeAsync(() => {
+            it('should call update service on save for existing entity', fakeAsync(() => {
                 // GIVEN
                 const entity = { ...fileUploadExercise };
                 jest.spyOn(service, 'update').mockReturnValue(of(new HttpResponse({ body: entity })));
@@ -103,7 +103,7 @@ describe('FileUploadExercise Management Update Component', () => {
             route.data = of({ fileUploadExercise });
         });
 
-        it('Should be in exam mode', fakeAsync(() => {
+        it('should be in exam mode', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async
@@ -121,7 +121,7 @@ describe('FileUploadExercise Management Update Component', () => {
             route.data = of({ fileUploadExercise });
         });
 
-        it('Should not be in exam mode', fakeAsync(() => {
+        it('should not be in exam mode', fakeAsync(() => {
             // WHEN
             comp.ngOnInit();
             tick(); // simulate async

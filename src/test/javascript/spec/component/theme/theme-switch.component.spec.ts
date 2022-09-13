@@ -39,7 +39,7 @@ describe('ThemeSwitchComponent', () => {
 
         tick(1200);
 
-        expect(component.popover.open).toHaveBeenCalled();
+        expect(component.popover.open).toHaveBeenCalledOnce();
         expect(component.showInitialHints).toBeTrue();
 
         component.closePopover();
@@ -98,6 +98,6 @@ describe('ThemeSwitchComponent', () => {
 
         tick(250);
 
-        expect(component.popover.open).toHaveBeenCalled();
+        expect(component.popover.open).toHaveBeenCalledOnce();
     }
 });

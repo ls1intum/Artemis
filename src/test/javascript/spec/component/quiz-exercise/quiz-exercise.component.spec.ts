@@ -64,7 +64,7 @@ describe('QuizExercise Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call loadExercises on init', () => {
+    it('should call loadExercises on init', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'findForCourse').mockReturnValue(
@@ -84,7 +84,7 @@ describe('QuizExercise Management Component', () => {
         expect(comp.quizExercises[0]).toEqual(quizExercise);
     });
 
-    it('Should reset quiz', () => {
+    it('should reset quiz', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(exerciseService, 'reset').mockReturnValue(
             of(
@@ -102,7 +102,7 @@ describe('QuizExercise Management Component', () => {
         expect(exerciseService.reset).toHaveBeenCalledOnce();
     });
 
-    it('Should open modal', () => {
+    it('should open modal', () => {
         const mockReturnValue = { result: Promise.resolve({ id: 456 } as QuizExercise) } as NgbModalRef;
         jest.spyOn(modalService, 'open').mockReturnValue(mockReturnValue);
 
@@ -111,7 +111,7 @@ describe('QuizExercise Management Component', () => {
         expect(modalService.open).toHaveBeenCalledOnce();
     });
 
-    it('Should open quiz for practice', () => {
+    it('should open quiz for practice', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'openForPractice').mockReturnValue(
             of(
@@ -128,7 +128,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.openForPractice).toHaveBeenCalledOnce();
     });
 
-    it('Should not open quiz for practice on error', () => {
+    it('should not open quiz for practice on error', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'find').mockReturnValue(
             of(
@@ -150,7 +150,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.find).toHaveBeenCalledOnce();
     });
 
-    it('Should start quiz', () => {
+    it('should start quiz', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'start').mockReturnValue(
             of(
@@ -167,7 +167,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.start).toHaveBeenCalledOnce();
     });
 
-    it('Should not start quiz on error', () => {
+    it('should not start quiz on error', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'find').mockReturnValue(
             of(
@@ -189,7 +189,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.find).toHaveBeenCalledOnce();
     });
 
-    it('Should end quiz', () => {
+    it('should end quiz', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'end').mockReturnValue(
             of(
@@ -206,7 +206,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.end).toHaveBeenCalledOnce();
     });
 
-    it('Should add quiz batch', () => {
+    it('should add quiz batch', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'addBatch').mockReturnValue(
             of(
@@ -223,7 +223,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.addBatch).toHaveBeenCalledOnce();
     });
 
-    it('Should start quiz batch', () => {
+    it('should start quiz batch', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'startBatch').mockReturnValue(
             of(
@@ -240,7 +240,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.startBatch).toHaveBeenCalledOnce();
     });
 
-    it('Should make quiz visible', () => {
+    it('should make quiz visible', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'setVisible').mockReturnValue(
             of(
@@ -257,7 +257,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.setVisible).toHaveBeenCalledOnce();
     });
 
-    it('Should not make quiz visible on error', () => {
+    it('should not make quiz visible on error', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'find').mockReturnValue(
             of(
@@ -279,7 +279,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.find).toHaveBeenCalledOnce();
     });
 
-    it('Should delete quiz', () => {
+    it('should delete quiz', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'delete').mockReturnValue(
             of(
@@ -296,7 +296,7 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.delete).toHaveBeenCalledOnce();
     });
 
-    it('Should export quiz', () => {
+    it('should export quiz', () => {
         const headers = new HttpHeaders().append('link', 'link;link');
         jest.spyOn(quizExerciseService, 'find').mockReturnValue(
             of(
@@ -316,22 +316,22 @@ describe('QuizExercise Management Component', () => {
         expect(quizExerciseService.exportQuiz).toHaveBeenCalledOnce();
     });
 
-    it('Should return quiz is over', () => {
+    it('should return quiz is over', () => {
         quizExercise.quizEnded = true;
         expect(comp.quizIsOver(quizExercise)).toBeTrue();
     });
 
-    it('Should return quiz is not over', () => {
+    it('should return quiz is not over', () => {
         quizExercise.quizEnded = false;
         expect(comp.quizIsOver(quizExercise)).toBeFalse();
     });
 
-    it('Should return quiz id', () => {
+    it('should return quiz id', () => {
         expect(comp.trackId(0, quizExercise)).toBe(456);
     });
 
     describe('QuizExercise Search Exercises', () => {
-        it('Should show all exercises', () => {
+        it('should show all exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Quiz', '', 'quiz');
 
@@ -340,7 +340,7 @@ describe('QuizExercise Management Component', () => {
             expect(comp.filteredQuizExercises).toHaveLength(1);
         });
 
-        it('Should show no exercises', () => {
+        it('should show no exercises', () => {
             // WHEN
             comp.exerciseFilter = new ExerciseFilter('Prog', '', 'all');
 

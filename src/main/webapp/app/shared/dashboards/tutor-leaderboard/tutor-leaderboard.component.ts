@@ -17,7 +17,6 @@ export class TutorLeaderboardComponent implements OnInit {
     @Input() public exercise?: Exercise;
     @Input() public exam?: Exam;
 
-    isAtLeastInstructor = false;
     isExerciseDashboard = false;
     isExamMode = false;
     sortPredicate = 'points';
@@ -33,13 +32,9 @@ export class TutorLeaderboardComponent implements OnInit {
      * Life cycle hook called by Angular to indicate that Angular is done creating the component
      */
     ngOnInit(): void {
-        if (this.course) {
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.course);
-        }
         if (this.exercise && this.exercise.course) {
             this.course = this.exercise.course;
             this.isExerciseDashboard = true;
-            this.isAtLeastInstructor = this.accountService.isAtLeastInstructorInCourse(this.exercise.course);
         }
         this.isExamMode = !!this.exam;
         this.sortRows();
