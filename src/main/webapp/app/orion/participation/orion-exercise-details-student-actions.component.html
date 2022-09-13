@@ -4,7 +4,7 @@
     [actionsOnly]="actionsOnly"
     [smallButtons]="smallButtons"
     [showResult]="showResult"
-    [examMode]="examMode"
+    [exerciseOperationMode]="examMode ? ExerciseOperationMode.EXAM : ExerciseOperationMode.PRACTICE"
 >
     <ng-template #overrideCloneOnlineEditorButton>
         <jhi-ide-button

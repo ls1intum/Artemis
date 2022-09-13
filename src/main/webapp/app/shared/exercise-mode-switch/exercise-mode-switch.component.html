@@ -1,0 +1,14 @@
+<div class="form-check form-switch" *ngIf="practiceModeAvailable">
+    <input
+        mdbCheckbox
+        [id]="'switch-practice-' + exerciseID"
+        class="form-check-input"
+        type="checkbox"
+        [checked]="practiceMode"
+        (click)="togglePracticeMode(!practiceMode)"
+        *ngIf="practiceModeAvailable"
+    />
+    <label [id]="'switch-practice-label-' + exerciseID" class="form-check-label" [for]="'switch-practice-' + exerciseID" *ngIf="practiceModeAvailable">
+        {{ practiceMode ? 'Disable Practice Mode' : 'Enable Practice Mode' }}
+    </label>
+</div>

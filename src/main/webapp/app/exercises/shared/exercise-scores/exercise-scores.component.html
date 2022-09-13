@@ -1,4 +1,11 @@
 <div *ngIf="exercise">
+    <jhi-exercise-mode-switch
+        [exerciseID]="exercise.id?.toString() ?? ''"
+        [practiceModeAvailable]="isPracticeModeAvailable()"
+        [practiceMode]="isInPracticeMode()"
+        (onTogglePracticeMode)="togglePracticeMode(!isInPracticeMode())"
+    >
+    </jhi-exercise-mode-switch>
     <h2>
         <span *ngIf="exercise.course">{{ exercise.course?.title }} - {{ exercise.title }}</span>
         <span *ngIf="exercise.exerciseGroup">{{ exercise.exerciseGroup?.exam?.title }} - {{ exercise.title }}</span>

@@ -198,6 +198,15 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
 };
 
 /**
+ * The start practice button should be available for programming exercises when
+ * - there is a due date
+ * - now is after the due date
+ */
+export const isStartPracticeAvailable = (exercise: ProgrammingExercise): boolean => {
+    return exercise.dueDate != undefined || dayjs().isAfter(dayjs(exercise.dueDate!));
+};
+
+/**
  * Handles the evaluation of participation status for quiz exercises.
  *
  * @param exercise
