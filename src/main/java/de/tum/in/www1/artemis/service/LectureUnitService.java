@@ -85,8 +85,6 @@ public class LectureUnitService {
     public void removeLectureUnit(@NotNull LectureUnit lectureUnit) {
         LectureUnit lectureUnitToDelete = lectureUnitRepository.findByIdWithLearningGoalsElseThrow(lectureUnit.getId());
 
-        System.out.println(lectureUnitToDelete);
-
         if (!(lectureUnitToDelete instanceof ExerciseUnit)) {
             // update associated learning goals
             Set<LearningGoal> learningGoals = lectureUnitToDelete.getLearningGoals();

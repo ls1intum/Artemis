@@ -6,8 +6,6 @@ import java.util.Set;
 
 import javax.persistence.*;
 import javax.persistence.Entity;
-import javax.persistence.NamedQueries;
-import javax.persistence.NamedQuery;
 
 import org.hibernate.Hibernate;
 import org.hibernate.annotations.*;
@@ -21,14 +19,12 @@ import de.tum.in.www1.artemis.domain.LearningGoal;
 @Entity
 @DiscriminatorValue("E")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-@NamedQueries({ @NamedQuery(name = "loadExerciseWithLearningGoals", query = "SELECT e FROM Exercise e LEFT JOIN FETCH e.learningGoals WHERE e.id = :exerciseId") })
 public class ExerciseUnit extends LectureUnit {
 
     // Note: Name, release date and learning goals will always be taken from associated exercise
     @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "exercise_id")
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @Loader(namedQuery = "loadExerciseWithLearningGoals")
     private Exercise exercise;
 
     public Exercise getExercise() {
@@ -72,5 +68,16 @@ public class ExerciseUnit extends LectureUnit {
     @Override
     public void setLearningGoals(Set<LearningGoal> learningGoals) {
         // Should be set in associated exercise
+    }
+
+    /**
+     * Ensure that we do not accidentally persist values taken from the corresponding exercise
+     */
+    @PrePersist
+    @PreUpdate
+    public void prePersistOrUpdate() {
+        this.name = null;
+        this.releaseDate = null;
+        this.learningGoals = new HashSet<>();
     }
 }

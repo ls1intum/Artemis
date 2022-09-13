@@ -98,6 +98,11 @@ public class LearningGoal extends DomainObject {
         this.lectureUnits = lectureUnits;
     }
 
+    /**
+     * Adds the lecture unit to the learning goal (bidirectional)
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #addExercise(Exercise)})
+     * @param lectureUnit The lecture unit to add
+     */
     public void addLectureUnit(LectureUnit lectureUnit) {
         if (lectureUnit instanceof ExerciseUnit) {
             // The learning goals of ExerciseUnits are taken from the corresponding exercise
@@ -107,6 +112,11 @@ public class LearningGoal extends DomainObject {
         lectureUnit.getLearningGoals().add(this);
     }
 
+    /**
+     * Removes the lecture unit from the learning goal (bidirectional)
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
+     * @param lectureUnit The lecture unit to remove
+     */
     public void removeLectureUnit(LectureUnit lectureUnit) {
         if (lectureUnit instanceof ExerciseUnit) {
             // The learning goals of ExerciseUnits are taken from the corresponding exercise

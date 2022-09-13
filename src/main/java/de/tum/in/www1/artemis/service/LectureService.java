@@ -11,7 +11,6 @@ import org.springframework.transaction.annotation.Transactional;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.LearningGoalRepository;
 import de.tum.in.www1.artemis.repository.LectureRepository;
-import de.tum.in.www1.artemis.repository.LectureUnitRepository;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.util.PageUtil;
@@ -25,14 +24,10 @@ public class LectureService {
 
     private final LearningGoalRepository learningGoalRepository;
 
-    private final LectureUnitRepository lectureUnitRepository;
-
-    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository,
-            LectureUnitRepository lectureUnitRepository) {
+    public LectureService(LectureRepository lectureRepository, AuthorizationCheckService authCheckService, LearningGoalRepository learningGoalRepository) {
         this.lectureRepository = lectureRepository;
         this.authCheckService = authCheckService;
         this.learningGoalRepository = learningGoalRepository;
-        this.lectureUnitRepository = lectureUnitRepository;
     }
 
     /**
@@ -99,7 +94,7 @@ public class LectureService {
      */
     @Transactional // ok
     public void delete(Lecture lecture) {
-        Lecture lectureToDelete = lectureRepository.findByIdWithPostsAndLectureUnitsAndLearningGoalsAndCompletionsElseThrow(lecture.getId());
+        Lecture lectureToDelete = lectureRepository.findByIdElseThrow(lecture.getId());
 
         // Hibernate sometimes adds null into the list of lecture units to keep the order, to prevent a NullPointerException we have to filter them
         var lectureUnits = lectureToDelete.getLectureUnits().stream().filter(Objects::nonNull).toList();
