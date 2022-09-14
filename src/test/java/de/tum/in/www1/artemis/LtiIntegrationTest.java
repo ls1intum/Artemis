@@ -56,7 +56,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &context_id=course-v1%3ATUMx%2BSEECx%2B1T2018\
             &oauth_signature_method=HMAC-SHA1\
             &oauth_timestamp=1572204884\
-            &custom_consumer_instance_name=edx\
             &custom_require_existing_user=false\
             &custom_lookup_user_by_email=true\
             &lis_person_contact_email_primary=anh.montag%40tum.de\
@@ -108,7 +107,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
             &tool_consumer_instance_guid=localhost\
             &tool_consumer_instance_name=New+Site\
             &tool_consumer_instance_description=New+Site\
-            &custom_consumer_instance_name=moodle\
             &custom_lookup_user_by_email=true\
             &launch_presentation_document_target=window\
             &launch_presentation_return_url=http%3A%2F%2Flocalhost%3A81%2Fmod%2Flti%2Freturn.php%3Fcourse%3D3%26launch_container%3D4%26instanceid%3D5%26sesskey%3DBG6zIkjI4p\
@@ -118,7 +116,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @BeforeEach
     void init() {
         /* We mock the following method because we don't have the OAuth secret for edx */
-        doReturn(null).when(ltiService).verifyRequest(any());
+        doReturn(null).when(ltiService).verifyRequest(any(), any());
 
         database.addUsers(1, 1, 0, 1);
 
@@ -195,11 +193,11 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId() + 1, requestBody.getBytes(), HttpStatus.NOT_FOUND, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
-        doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any());
+        doThrow(ArtemisAuthenticationException.class).when(ltiService).handleLaunchRequest(any(), any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.INTERNAL_SERVER_ERROR, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
 
-        doReturn("error").when(ltiService).verifyRequest(any());
+        doReturn("error").when(ltiService).verifyRequest(any(), any());
         request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.UNAUTHORIZED, new HttpHeaders(),
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }

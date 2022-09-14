@@ -1,0 +1,32 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="manuelmanso" id="20220914083000">
+        <createTable tableName="online_course_configuration">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="course_id" type="BIGINT">
+                <constraints nullable="false" />
+            </column>
+            <column name="lti_id" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="lti_key" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="lti_secret" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="user_prefix" type="varchar(255)">
+                <constraints nullable="false" />
+            </column>
+            <column name="original_url" type="varchar(255)">
+                <constraints nullable="true" />
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseColumnNames="course_id" baseTableName="online_course_configuration"
+                                 constraintName="FKjkn43f39191eamelk94a9837" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id"
+                                 referencedTableName="course" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

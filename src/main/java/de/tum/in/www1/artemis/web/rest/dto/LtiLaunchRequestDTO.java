@@ -60,21 +60,11 @@ public class LtiLaunchRequestDTO {
 
     private String tool_consumer_instance_name;
 
-    private String custom_consumer_instance_name;
-
     private Boolean custom_require_existing_user = false;
 
     private Boolean custom_lookup_user_by_email = false;
 
     public LtiLaunchRequestDTO() {
-    }
-
-    public String getCustom_consumer_instance_name() {
-        return custom_consumer_instance_name;
-    }
-
-    public void setCustom_consumer_instance_name(String custom_consumer_instance_name) {
-        this.custom_consumer_instance_name = custom_consumer_instance_name;
     }
 
     public Boolean getCustom_require_existing_user() {
@@ -303,7 +293,6 @@ public class LtiLaunchRequestDTO {
                 + launch_presentation_locale + '\'' + ", custom_component_display_name='" + custom_component_display_name + '\'' + ", launch_presentation_return_url='"
                 + launch_presentation_return_url + '\'' + ", lis_result_sourcedid='" + lis_result_sourcedid + '\'' + ", resource_link_id='" + resource_link_id + '\''
                 + ", user_id='" + user_id + '\'' + ", oauth_nonce=" + oauth_nonce + ", oauth_consumer_key='" + oauth_consumer_key + '\'' + ", oauth_signature='" + oauth_signature
-                + ", custom_consumer_instance_name='" + custom_consumer_instance_name + '\'' + ", custom_require_existing_user=" + custom_require_existing_user
-                + ", custom_lookup_user_by_email='" + custom_lookup_user_by_email + '\'' + '}';
+                + ", custom_require_existing_user=" + custom_require_existing_user + ", custom_lookup_user_by_email='" + custom_lookup_user_by_email + '\'' + '}';
     }
 }

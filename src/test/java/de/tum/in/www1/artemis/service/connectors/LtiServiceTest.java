@@ -17,7 +17,6 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.security.authentication.InternalAuthenticationServiceException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.util.ReflectionTestUtils;
 
 import de.tum.in.www1.artemis.authentication.AuthenticationIntegrationTestHelper;
 import de.tum.in.www1.artemis.domain.*;
@@ -43,6 +42,9 @@ class LtiServiceTest {
     private ResultRepository resultRepository;
 
     @Mock
+    private OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
+    @Mock
     private ArtemisAuthenticationProvider artemisAuthenticationProvider;
 
     @Mock
@@ -53,6 +55,8 @@ class LtiServiceTest {
     private LtiService ltiService;
 
     private LtiLaunchRequestDTO launchRequest;
+
+    private OnlineCourseConfiguration onlineCourseConfiguration;
 
     private User user;
 
@@ -66,9 +70,12 @@ class LtiServiceTest {
     void init() {
         MockitoAnnotations.openMocks(this);
         SecurityContextHolder.clearContext();
-        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, artemisAuthenticationProvider, ltiUserIdRepository);
+        ltiService = new LtiService(userCreationService, userRepository, ltiOutcomeUrlRepository, resultRepository, onlineCourseConfigurationRepository,
+                artemisAuthenticationProvider, ltiUserIdRepository);
         Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
+        onlineCourseConfiguration = new OnlineCourseConfiguration();
+        onlineCourseConfiguration.setCourse(course);
         exercise = new TextExercise();
         exercise.setCourse(course);
         launchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
@@ -84,7 +91,7 @@ class LtiServiceTest {
     @Test
     void handleLaunchRequest_LTILaunchFromEdxStudio() {
         launchRequest.setUser_id("student");
-        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration));
         String expectedMessage = "Invalid username sent by launch request. Please do not launch the exercise from edX studio. Use 'Preview' instead.";
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
@@ -93,9 +100,9 @@ class LtiServiceTest {
     void handleLaunchRequest_NoContactEmail() {
         String expectedMessage = "No email address sent by launch request. Please make sure the user has an accessible email address.";
         launchRequest.setLis_person_contact_email_primary(null);
-        var exceptionNull = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        var exceptionNull = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration));
         launchRequest.setLis_person_contact_email_primary("");
-        var exceptionEmpty = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        var exceptionEmpty = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration));
 
         assertThat(exceptionNull.getMessage()).isEqualTo(expectedMessage);
         assertThat(exceptionEmpty.getMessage()).isEqualTo(expectedMessage);
@@ -106,7 +113,7 @@ class LtiServiceTest {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.of(ltiUserId));
         when(userRepository.getUserWithGroupsAndAuthorities()).thenReturn(user);
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-        ltiService.handleLaunchRequest(launchRequest, exercise);
+        ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -120,7 +127,7 @@ class LtiServiceTest {
         when(artemisAuthenticationProvider.getOrCreateUser(new UsernamePasswordAuthenticationToken(username, ""), null, null, email, true)).thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-        ltiService.handleLaunchRequest(launchRequest, exercise);
+        ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -130,7 +137,6 @@ class LtiServiceTest {
         String firstName = "firstName";
         String lastName = "lastName";
 
-        launchRequest.setCustom_consumer_instance_name("moodle");
         launchRequest.setExt_user_username("username");
         launchRequest.setLis_person_name_given(firstName);
         launchRequest.setLis_person_name_family(lastName);
@@ -144,7 +150,7 @@ class LtiServiceTest {
                 .thenReturn(user);
 
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-        ltiService.handleLaunchRequest(launchRequest, exercise);
+        ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -153,7 +159,7 @@ class LtiServiceTest {
         launchRequest.setCustom_require_existing_user(true);
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
 
-        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise));
+        var exception = assertThrows(InternalAuthenticationServiceException.class, () -> ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration));
         String expectedMessage = "Could not find existing user or create new LTI user.";
         assertThat(exception.getMessage()).isEqualTo(expectedMessage);
     }
@@ -164,7 +170,7 @@ class LtiServiceTest {
         when(ltiUserIdRepository.findByLtiUserId(launchRequest.getUser_id())).thenReturn(Optional.empty());
         SecurityUtils.setAuthorizationObject();
         onSuccessfulAuthenticationSetup(user, ltiUserId);
-        ltiService.handleLaunchRequest(launchRequest, exercise);
+        ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
         onSuccessfulAuthenticationAssertions(user, ltiUserId);
     }
 
@@ -209,27 +215,29 @@ class LtiServiceTest {
 
     @Test
     void verifyRequest_oauthSecretNotSpecified() {
-        ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.empty());
+        onlineCourseConfiguration.setLtiSecret(null);
+
         HttpServletRequest request = mock(HttpServletRequest.class);
-        String message = ltiService.verifyRequest(request);
+        String message = ltiService.verifyRequest(request, onlineCourseConfiguration);
         assertThat("verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration").isEqualTo(message);
     }
 
     @Test
     void verifyRequest_unsuccessfulVerification() {
-        ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.of("secret"));
+        onlineCourseConfiguration.setLtiSecret("secret");
+
         String url = "https://some.url.com";
         MockHttpServletRequest request = new MockHttpServletRequest();
         request.setMethod("GET");
         request.setRequestURI(url);
-        String message = ltiService.verifyRequest(request);
+        String message = ltiService.verifyRequest(request, onlineCourseConfiguration);
         assertThat("LTI signature verification failed with message: Failed to validate: parameter_absent; error: bad_request, launch result: null").isEqualTo(message);
     }
 
     @Test
     void onNewResult() {
-        ReflectionTestUtils.setField(ltiService, "OAUTH_KEY", Optional.of("oauthKey"));
-        ReflectionTestUtils.setField(ltiService, "OAUTH_SECRET", Optional.of("oauthSecret"));
+        onlineCourseConfiguration.setLtiKey("oauthKey");
+        onlineCourseConfiguration.setLtiSecret("oauthSecret");
 
         StudentParticipation participation = new StudentParticipation();
         User user = new User();
@@ -240,6 +248,8 @@ class LtiServiceTest {
         result.setScore(3D);
         ltiOutcomeUrlRepositorySetup(user);
         when(resultRepository.findFirstByParticipationIdOrderByCompletionDateDesc(27L)).thenReturn(Optional.of(result));
+        when(onlineCourseConfigurationRepository.findByCourseIdOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId())).thenReturn(onlineCourseConfiguration);
+
         ltiService.onNewResult(participation);
         verify(resultRepository, times(1)).findFirstByParticipationIdOrderByCompletionDateDesc(27L);
     }

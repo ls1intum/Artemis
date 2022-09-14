@@ -8,7 +8,6 @@ import javax.servlet.http.HttpServletResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,11 +17,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.UriComponentsBuilder;
-import org.thymeleaf.util.StringUtils;
 
 import de.tum.in.www1.artemis.domain.Exercise;
+import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
+import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -31,7 +31,7 @@ import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 import de.tum.in.www1.artemis.web.rest.dto.LtiLaunchRequestDTO;
-import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
 /**
  * Created by Josias Montag on 22.09.16.
@@ -44,30 +44,24 @@ public class LtiResource {
 
     private final Logger log = LoggerFactory.getLogger(LtiResource.class);
 
-    @Value("${artemis.lti.id:#{null}}")
-    private Optional<String> LTI_ID;
-
-    @Value("${artemis.lti.oauth-key:#{null}}")
-    private Optional<String> LTI_OAUTH_KEY;
-
-    @Value("${artemis.lti.oauth-secret:#{null}}")
-    private Optional<String> LTI_OAUTH_SECRET;
-
     private final LtiService ltiService;
 
     private final UserRepository userRepository;
 
     private final ExerciseRepository exerciseRepository;
 
+    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
+
     private final TokenProvider tokenProvider;
 
     private final AuthorizationCheckService authCheckService;
 
-    public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
-            AuthorizationCheckService authCheckService) {
+    public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository,
+            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, TokenProvider tokenProvider, AuthorizationCheckService authCheckService) {
         this.ltiService = ltiService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
+        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.tokenProvider = tokenProvider;
         this.authCheckService = authCheckService;
     }
@@ -87,20 +81,6 @@ public class LtiResource {
 
         log.info("/lti/launch/{} with launch request: {}", exerciseId, launchRequest);
 
-        if (this.LTI_OAUTH_SECRET.isEmpty() || this.LTI_ID.isEmpty() || this.LTI_OAUTH_KEY.isEmpty()) {
-            String message = "LTI not configured on this Artemis server. Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.";
-            log.warn(message);
-            response.sendError(HttpServletResponse.SC_FORBIDDEN, message);
-            return;
-        }
-
-        if (StringUtils.isEmpty(launchRequest.getCustom_consumer_instance_name())) {
-            String message = "LTI launch request must contain non-empty custom parameter 'consumer_instance_name'.";
-            log.warn(message);
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, message);
-            return;
-        }
-
         log.debug("Request header X-Forwarded-Proto: {}", request.getHeader("X-Forwarded-Proto"));
         log.debug("Request header X-Forwarded-For: {}", request.getHeader("X-Forwarded-For"));
 
@@ -109,18 +89,6 @@ public class LtiResource {
                     + "configuration and your Spring configuration (e.g. application.yml) with respect to proxy_set_header X-Forwarded-Proto and forward-headers-strategy: "
                     + "native", request.getRequestURL().toString());
         }
-
-        log.debug("Try to verify LTI Oauth Request");
-
-        // Verify request
-        String error = ltiService.verifyRequest(request);
-        if (error != null) {
-            log.warn("Failed verification for launch request : {}", launchRequest);
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, error + ". Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
-            return;
-        }
-
-        log.debug("Oauth Verification succeeded");
 
         // Check if exercise ID is valid
         Optional<Exercise> optionalExercise = exerciseRepository.findById(exerciseId);
@@ -131,9 +99,22 @@ public class LtiResource {
 
         Exercise exercise = optionalExercise.get();
         log.debug("found exercise {}", exercise.getTitle());
-        // Handle the launch request using LtiService
+
+        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository
+                .findByCourseIdOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+
+        log.debug("Try to verify LTI Oauth Request");
+        // Verify request
+        String error = ltiService.verifyRequest(request, onlineCourseConfiguration);
+        if (error != null) {
+            log.warn("Failed verification for launch request : {}", launchRequest);
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, error + ". Cannot launch exercise " + exerciseId + ". " + "Please contact an admin or try again.");
+            return;
+        }
+        log.debug("Oauth Verification succeeded");
+
         try {
-            ltiService.handleLaunchRequest(launchRequest, exercise);
+            ltiService.handleLaunchRequest(launchRequest, exercise, onlineCourseConfiguration);
         }
         catch (InternalAuthenticationServiceException ex) {
             log.error("Error during LTI launch request of exercise {} for launch request: {}", exercise.getTitle(), launchRequest, ex);
@@ -203,19 +184,20 @@ public class LtiResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        if (LTI_ID.isEmpty() || LTI_OAUTH_KEY.isEmpty() || LTI_OAUTH_SECRET.isEmpty()) {
-            log.warn("LTI configuration is not supported on this Artemis instance, no artemis.lti.id, artemis.lti.oauth-key or artemis.lti.oauth-secret were specified in the yml "
-                    + "configuration");
-            throw new AccessForbiddenException("LTI configuration is not supported on this Artemis instance");
+        Optional<OnlineCourseConfiguration> optionalOcConfiguration = onlineCourseConfigurationRepository
+                .findByCourseId(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        if (optionalOcConfiguration.isEmpty()) {
+            throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
+        OnlineCourseConfiguration ocConfiguration = optionalOcConfiguration.get();
 
         String launchUrl = request.getScheme() + // "https"
                 "://" +                                // "://"
                 request.getServerName() +              // "myhost" // ":"
                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
 
-        String ltiId = LTI_ID.get();
-        String ltiPassport = ltiId + ":" + LTI_OAUTH_KEY.get() + ":" + LTI_OAUTH_SECRET.get();
+        String ltiId = ocConfiguration.getLtiId();
+        String ltiPassport = ltiId + ":" + ocConfiguration.getLtiKey() + ":" + ocConfiguration.getLtiSecret();
         return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ltiId, ltiPassport), HttpStatus.OK);
     }
 }

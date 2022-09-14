@@ -86,7 +86,7 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
         course = database.addCourseWithOneProgrammingExercise();
         programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
-        doReturn(null).when(ltiService).verifyRequest(any());
+        doReturn(null).when(ltiService).verifyRequest(any(), any());
 
         final var userAuthority = new Authority(Role.STUDENT.getAuthority());
         final var instructorAuthority = new Authority(Role.INSTRUCTOR.getAuthority());
