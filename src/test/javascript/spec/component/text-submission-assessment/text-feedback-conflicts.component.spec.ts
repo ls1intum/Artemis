@@ -280,7 +280,7 @@ describe('TextFeedbackConflictsComponent', () => {
             if (textBlockAssessmentCardComponent.textBlockRef === component.leftTextBlockRefs[0]) {
                 jest.spyOn(textBlockAssessmentCardComponent.didSelect, 'emit');
                 textBlockAssessmentCardComponent.select();
-                expect(textBlockAssessmentCardComponent.didSelect.emit).toHaveBeenCalledTimes(0);
+                expect(textBlockAssessmentCardComponent.didSelect.emit).not.toHaveBeenCalled();
             }
         });
 

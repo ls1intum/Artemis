@@ -1,91 +1,99 @@
 {
-    "userManagement": {
-        "batch": {
-            "all": "All",
+    "artemisApp": {
+        "userManagement": {
+            "batch": {
+                "all": "All",
+                "delete": {
+                    "question": "Are you sure you want to permanently delete <strong>{{ title }}</strong> users? This action can NOT be undone!",
+                    "typeNumberToConfirm": "Please type in the number of users to confirm."
+                },
+                "deleted": "Deleted {{ param }} Users"
+            },
+            "filter": {
+                "modal": {
+                    "open": "Filter ({{ num }})",
+                    "title": "Filter User",
+                    "close": "Close"
+                },
+                "authority": {
+                    "title": "Role ({{ num }})",
+                    "tooltip": "Filter the users according to their permissions",
+                    "admin": "Admin",
+                    "instructor": "Instructor",
+                    "editor": "Editor",
+                    "ta": "Tutor",
+                    "user": "Student",
+                    "without": "No Role",
+                    "withoutTooltip": "Select all users without any role"
+                },
+                "origin": {
+                    "title": "Origin ({{ num }})",
+                    "tooltip": "Filters the users based on their administrative location",
+                    "internal": "Internal",
+                    "external": "External"
+                },
+                "registrationNumber": {
+                    "title": "Registration Number ({{ num }})",
+                    "tooltip": "Filter the users based on their registration number",
+                    "with_reg_no": "With registration number",
+                    "without_reg_no": "Without registration number"
+                },
+                "status": {
+                    "title": "Status ({{ num }})",
+                    "tooltip": "Filter the users based on their account status",
+                    "activated": "Activated",
+                    "deactivated": "Deactivated"
+                },
+                "course": {
+                    "title": "Course ({{ num }})",
+                    "tooltip": "Filters the users according to their course affiliation",
+                    "without": "No Course",
+                    "withoutTooltip": "Select all users without any course"
+                },
+                "apply": "Apply",
+                "all": "All",
+                "none": "None"
+            },
+            "home": {
+                "title": "Users",
+                "createLabel": "Create a new user",
+                "createOrEditLabel": "Create or edit a user"
+            },
+            "created": "Created new user with identifier {{ param }}",
+            "updated": "Updated User with identifier {{ param }}",
+            "deleted": "Deleted User with identifier {{ param }}",
             "delete": {
-                "question": "Are you sure you want to permanently delete <strong>{{ title }}</strong> users? This action can NOT be undone!",
-                "typeNumberToConfirm": "Please type in the number of users to confirm."
+                "question": "Are you sure you want to delete user <strong>{{ title }}</strong>?"
             },
-            "deleted": "Deleted {{ param }} Users"
-        },
-        "filter": {
-            "modal": {
-                "open": "Filter ({{ num }})",
-                "title": "Filter User",
-                "close": "Close"
+            "detail": {
+                "title": "User"
             },
-            "authority": {
-                "title": "Role ({{ num }})",
-                "tooltip": "Filter the users according to their permissions",
-                "admin": "Admin",
-                "instructor": "Instructor",
-                "editor": "Editor",
-                "ta": "Tutor",
-                "user": "Student",
-                "without": "No Role",
-                "withoutTooltip": "Select all users without any role"
-            },
-            "origin": {
-                "title": "Origin ({{ num }})",
-                "tooltip": "Filters the users based on their administrative location",
-                "internal": "Internal",
-                "external": "External"
-            },
-            "status": {
-                "title": "Status ({{ num }})",
-                "tooltip": "Filter the users based on their account status",
-                "activated": "Activated",
-                "deactivated": "Deactivated"
-            },
-            "course": {
-                "title": "Course ({{ num }})",
-                "tooltip": "Filters the users according to their course affiliation",
-                "without": "No Course",
-                "withoutTooltip": "Select all users without any course"
-            },
-            "apply": "Apply",
-            "all": "All",
-            "none": "None"
-        },
-        "home": {
-            "title": "Users",
-            "createLabel": "Create a new user",
-            "createOrEditLabel": "Create or edit a user"
-        },
-        "created": "Created new user with identifier {{ param }}",
-        "updated": "Updated User with identifier {{ param }}",
-        "deleted": "Deleted User with identifier {{ param }}",
-        "delete": {
-            "question": "Are you sure you want to delete user <strong>{{ title }}</strong>?"
-        },
-        "detail": {
-            "title": "User"
-        },
-        "login": "Login",
-        "firstName": "First name",
-        "lastName": "Last name",
-        "name": "Name",
-        "randomPassword": "Random password",
-        "keepPassword": "Keep old password",
-        "inputConstraints": "This field must contain {{min}} to {{max}} characters!",
-        "groups": "Groups",
-        "addGroup": "+ Group",
-        "enterGroup": "Enter a group",
-        "organizations": "User organizations",
-        "email": "Email",
-        "registrationNumber": "Registration Number",
-        "activated": "Activated",
-        "deactivated": "Deactivated",
-        "profiles": "Profiles",
-        "langKey": "Language",
-        "createdBy": "Created by",
-        "createdDate": "Created date",
-        "lastModifiedBy": "Modified by",
-        "lastModifiedDate": "Modified date",
-        "searchForUser": "Search for User: ",
-        "search": "Search",
-        "loading": "Loading...",
-        "searchError": "Search term must be empty or contain at least 3 characters.",
-        "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>."
+            "login": "Login",
+            "firstName": "First name",
+            "lastName": "Last name",
+            "name": "Name",
+            "randomPassword": "Random password",
+            "keepPassword": "Keep old password",
+            "inputConstraints": "This field must contain {{min}} to {{max}} characters!",
+            "groups": "Groups",
+            "addGroup": "+ Group",
+            "enterGroup": "Enter a group",
+            "organizations": "User organizations",
+            "email": "Email",
+            "registrationNumber": "Registration Number",
+            "activated": "Activated",
+            "deactivated": "Deactivated",
+            "profiles": "Profiles",
+            "langKey": "Language",
+            "createdBy": "Created by",
+            "createdDate": "Created date",
+            "lastModifiedBy": "Modified by",
+            "lastModifiedDate": "Modified date",
+            "searchForUser": "Search for User: ",
+            "search": "Search",
+            "loading": "Loading...",
+            "searchError": "Search term must be empty or contain at least 3 characters.",
+            "jenkinsChange": "Changing the user's login is not supported for your current setup (Jenkins). You may have to manually update the user's login in Jenkins.\nYou changed the user <i>{{ oldLogin }}</i> to <i>{{ newLogin }}</i>."
+        }
     }
 }

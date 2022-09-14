@@ -7,7 +7,7 @@ import { MockTranslateService, TranslateTestingModule } from '../../helpers/mock
 import { PlagiarismComparison } from 'app/exercises/shared/plagiarism/types/PlagiarismComparison';
 import { ModelingSubmissionElement } from 'app/exercises/shared/plagiarism/types/modeling/ModelingSubmissionElement';
 import { PlagiarismStatus } from 'app/exercises/shared/plagiarism/types/PlagiarismStatus';
-import { Course } from 'app/entities/course.model';
+import { Exercise } from 'app/entities/exercise.model';
 import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagiarism-cases.service';
 import { HttpResponse } from '@angular/common/http';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
@@ -37,7 +37,7 @@ describe('Plagiarism Header Component', () => {
             submissionB: { studentLogin: 'studentB' },
             status: PlagiarismStatus.NONE,
         } as PlagiarismComparison<ModelingSubmissionElement>;
-        comp.course = { id: 1 } as Course;
+        comp.exercise = { course: { id: 1 } } as Exercise;
         comp.splitControlSubject = new Subject<string>();
     });
 
@@ -79,7 +79,7 @@ describe('Plagiarism Header Component', () => {
 
         tick();
 
-        expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalled();
+        expect(updatePlagiarismComparisonStatusStub).toHaveBeenCalledOnce();
         expect(comp.comparison.status).toEqual(PlagiarismStatus.CONFIRMED);
     }));
 

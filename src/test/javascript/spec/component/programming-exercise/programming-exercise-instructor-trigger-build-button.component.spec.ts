@@ -56,7 +56,7 @@ describe('ProgrammingExercise Instructor Trigger Build Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should trigger build', () => {
+    it('should trigger build', () => {
         const mockReturnValue = {
             result: Promise.resolve(),
             componentInstance: {},

@@ -30,6 +30,7 @@ import { TextBlockRef } from 'app/entities/text-block-ref.model';
 import { UnreferencedFeedbackComponent } from 'app/exercises/shared/unreferenced-feedback/unreferenced-feedback.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { DebugElement } from '@angular/core';
+import { ConfirmAutofocusModalComponent } from 'app/shared/components/confirm-autofocus-button.component';
 
 describe('ExampleTextSubmissionComponent', () => {
     let fixture: ComponentFixture<ExampleTextSubmissionComponent>;
@@ -60,6 +61,7 @@ describe('ExampleTextSubmissionComponent', () => {
             imports: [ArtemisTestModule, FormsModule],
             declarations: [
                 ExampleTextSubmissionComponent,
+                MockComponent(ConfirmAutofocusModalComponent),
                 MockComponent(ResizeableContainerComponent),
                 MockComponent(ScoreDisplayComponent),
                 MockComponent(TextAssessmentAreaComponent),
@@ -151,13 +153,16 @@ describe('ExampleTextSubmissionComponent', () => {
 
         // THEN
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
-        expect(exampleSubmissionService.get).toHaveBeenCalledTimes(0);
-        expect(assessmentsService.getExampleResult).toHaveBeenCalledTimes(0);
+        expect(exampleSubmissionService.get).not.toHaveBeenCalled();
+        expect(assessmentsService.getExampleResult).not.toHaveBeenCalled();
         expect(comp.state.constructor.name).toBe('NewState');
     }));
 
     it('should switch state when starting assessment', fakeAsync(() => {
         // GIVEN
+        jest.spyOn(exampleSubmissionService, 'prepareForAssessment').mockReturnValue(httpResponse({}));
+        jest.spyOn(exampleSubmissionService, 'get').mockReturnValue(httpResponse(exampleSubmission));
+
         // @ts-ignore
         activatedRouteSnapshot.paramMap.params = { exerciseId: EXERCISE_ID, exampleSubmissionId: EXAMPLE_SUBMISSION_ID };
         comp.ngOnInit();
@@ -250,7 +255,7 @@ describe('ExampleTextSubmissionComponent', () => {
         // WHEN
         fixture.detectChanges();
         tick();
-        debugElement.query(By.css('#editSampleSolution')).nativeElement.click();
+        comp.editSubmission();
         tick();
 
         // THEN
@@ -302,7 +307,7 @@ describe('ExampleTextSubmissionComponent', () => {
         expect(exerciseService.find).toHaveBeenCalledWith(EXERCISE_ID);
         expect(exampleSubmissionService.get).toHaveBeenCalledWith(EXAMPLE_SUBMISSION_ID);
         expect(assessmentsService.getExampleResult).toHaveBeenCalledWith(EXERCISE_ID, SUBMISSION_ID);
-        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalled();
+        expect(tutorParticipationService.assessExampleSubmission).toHaveBeenCalledOnce();
     }));
 
     it('should not check the assessment when it is invalid', () => {

@@ -53,6 +53,6 @@ describe(`NotificationInterceptor`, () => {
 
         notificationInterceptor.intercept(requestMock, mockHandler).subscribe();
 
-        expect(alertServiceMock.success).toHaveBeenCalledTimes(0);
+        expect(alertServiceMock.success).not.toHaveBeenCalled();
     });
 });

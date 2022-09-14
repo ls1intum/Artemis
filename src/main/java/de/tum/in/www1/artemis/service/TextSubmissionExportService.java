@@ -25,9 +25,9 @@ public class TextSubmissionExportService extends SubmissionExportService {
             }
         }
         else {
-            BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8));
-            writer.write(((TextSubmission) submission).getText());
-            writer.close();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(file, StandardCharsets.UTF_8))) {
+                writer.write(((TextSubmission) submission).getText());
+            }
         }
     }
 
@@ -47,9 +47,9 @@ public class TextSubmissionExportService extends SubmissionExportService {
             submissionExportFile.createNewFile();
         }
 
-        BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile, StandardCharsets.UTF_8));
-        writer.write(submission.getText());
-        writer.close();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(submissionExportFile, StandardCharsets.UTF_8))) {
+            writer.write(submission.getText());
+        }
     }
 
     @Override

@@ -91,7 +91,7 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalled();
+        expect(submitFormSpy).toHaveBeenCalledOnce();
         expect(submitFormEventSpy).toHaveBeenCalledWith({
             formProperties: {
                 name: exampleName,
@@ -132,8 +132,8 @@ describe('AttachmentUnitFormComponent', () => {
         const submitButton = attachmentUnitFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        expect(submitFormSpy).toHaveBeenCalledTimes(0);
-        expect(submitFormEventSpy).toHaveBeenCalledTimes(0);
+        expect(submitFormSpy).not.toHaveBeenCalled();
+        expect(submitFormEventSpy).not.toHaveBeenCalled();
     });
 
     it('calls on file change on changed file', () => {

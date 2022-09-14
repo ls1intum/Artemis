@@ -75,7 +75,7 @@ describe('Exercise Update Warning Service', () => {
 
         expect(loadExerciseSpy).toHaveBeenCalledOnce();
         expect(loadExerciseSpy).toHaveBeenCalledWith(exercise, backupExercise);
-        expect(openSpy).toHaveBeenCalledTimes(0);
+        expect(openSpy).not.toHaveBeenCalled();
     });
 
     it('should loadExercise and open warning model', () => {

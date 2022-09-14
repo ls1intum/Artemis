@@ -136,7 +136,7 @@ describe('TextExercise Import Component', () => {
         expect(comp.searchTerm).toBe(expectedSearchTerm);
 
         // It should wait first before executing search.
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
 
         tick(300);
 
@@ -148,16 +148,16 @@ describe('TextExercise Import Component', () => {
         pagingServiceSpy.mockReturnValue(of({ numberOfPages: 3 } as SearchResult<TextExercise>));
 
         fixture.detectChanges();
-        expect(comp.isCourseFilter).toBe(true);
-        expect(comp.isExamFilter).toBe(true);
+        expect(comp.isCourseFilter).toBeTrue();
+        expect(comp.isExamFilter).toBeTrue();
 
         comp.onCourseFilterChange();
         comp.onExamFilterChange();
         tick();
-        expect(comp.isCourseFilter).toBe(false);
-        expect(comp.isExamFilter).toBe(false);
+        expect(comp.isCourseFilter).toBeFalse();
+        expect(comp.isExamFilter).toBeFalse();
 
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
         tick(300);
 
         const expectedSearchObject = {

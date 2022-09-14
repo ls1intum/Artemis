@@ -89,7 +89,7 @@ public class PostService extends PostingService {
 
         // checks
         if (post.getId() != null) {
-            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new post cannot already have an ID", METIS_POST_ENTITY_NAME, "idExists");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
@@ -137,7 +137,7 @@ public class PostService extends PostingService {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
         // check
         if (post.getId() == null || !Objects.equals(post.getId(), postId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", METIS_POST_ENTITY_NAME, "idNull");
         }
         final Course course = preCheckUserAndCourse(user, courseId);
         mayInteractWithPostElseThrow(post, user, course);
@@ -342,6 +342,7 @@ public class PostService extends PostingService {
      */
     public List<Post> getAllPlagiarismCasePosts(PostContextFilter postContextFilter) {
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+        final Course course = preCheckUserAndCourse(user, postContextFilter.getCourseId());
         final PlagiarismCase plagiarismCase = plagiarismCaseRepository.findByIdElseThrow(postContextFilter.getPlagiarismCaseId());
 
         // checks
@@ -353,6 +354,7 @@ public class PostService extends PostingService {
 
             // protect sample solution, grading instructions, etc.
             plagiarismCasePosts.stream().map(Post::getExercise).filter(Objects::nonNull).forEach(Exercise::filterSensitiveInformation);
+            plagiarismCasePosts.stream().forEach(post -> post.setCourse(course));
 
             return plagiarismCasePosts;
         }
@@ -410,7 +412,7 @@ public class PostService extends PostingService {
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authorizationCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (!exercise.getCourseViaExerciseGroupOrCourseMember().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Exercise", METIS_POST_ENTITY_NAME, "idNull");
         }
     }
 
@@ -426,7 +428,7 @@ public class PostService extends PostingService {
         Lecture lecture = lectureRepository.findByIdElseThrow(lectureId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, lecture.getCourse(), user);
         if (!lecture.getCourse().getId().equals(courseId)) {
-            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("PathVariable courseId doesn't match the courseId of the Lecture", METIS_POST_ENTITY_NAME, "idNull");
         }
     }
 

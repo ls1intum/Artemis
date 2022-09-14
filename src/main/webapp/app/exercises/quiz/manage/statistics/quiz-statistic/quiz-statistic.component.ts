@@ -140,7 +140,7 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
         this.unratedData.push(round(this.unratedAverage / this.maxScore, 2));
 
         // add Text for last label based on the language
-        const lastLabel = this.translateService.instant('showStatistic.quizStatistic.average');
+        const lastLabel = this.translateService.instant('artemisApp.showStatistic.quizStatistic.average');
         this.label.push(lastLabel);
         this.chartLabels = this.label;
         this.ngxColor.domain = this.backgroundColor;
@@ -155,6 +155,6 @@ export class QuizStatisticComponent extends QuizStatistics implements OnInit, On
     loadDataInDiagram(): void {
         this.setData(this.quizExercise.quizPointStatistic!);
         this.pushDataToNgxEntry(this.changeDetector);
-        this.setAxisLabels('showStatistic.quizStatistic.xAxes', 'showStatistic.quizStatistic.yAxes');
+        this.setAxisLabels('artemisApp.showStatistic.quizStatistic.xAxes', 'artemisApp.showStatistic.quizStatistic.yAxes');
     }
 }

@@ -83,7 +83,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> createLecture(@RequestBody Lecture lecture) throws URISyntaxException {
         log.debug("REST request to save Lecture : {}", lecture);
         if (lecture.getId() != null) {
-            throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new lecture cannot already have an ID", ENTITY_NAME, "idExists");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
@@ -103,7 +103,7 @@ public class LectureResource {
     public ResponseEntity<Lecture> updateLecture(@RequestBody Lecture lecture) {
         log.debug("REST request to update Lecture : {}", lecture);
         if (lecture.getId() == null) {
-            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", ENTITY_NAME, "idNull");
         }
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.EDITOR, lecture.getCourse(), null);
 
