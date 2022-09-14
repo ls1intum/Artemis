@@ -7,12 +7,12 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 public class TutorialGroupDateUtil {
 
     /*
-     * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and it will rounded
+     * Note: We can NOT use LocalTime.MIN as the precision is not supported by the database, and thus it will rounded
      */
     public static final LocalTime START_OF_DAY = LocalTime.of(0, 0, 0);
 
     /*
-     * Note: We can NOT use LocalTime.MAX as the precision is not supported by the database, and it will be rounded
+     * Note: We can NOT use LocalTime.MAX as the precision is not supported by the database, and thus it will be rounded
      */
     public static final LocalTime END_OF_DAY = LocalTime.of(23, 59, 59);
 

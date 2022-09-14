@@ -24,7 +24,7 @@ public class TutorialGroupFreePeriodService {
     }
 
     public Set<TutorialGroupFreePeriod> findOverlappingPeriods(Course course, TutorialGroupSession tutorialGroupSession) {
-        return tutorialGroupFreePeriodRepository.getOverlappingPeriodsInCourse(course, tutorialGroupSession.getStart(), tutorialGroupSession.getEnd());
+        return tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, tutorialGroupSession.getStart(), tutorialGroupSession.getEnd());
     }
 
     public void cancelActiveOverlappingSessions(Course course, TutorialGroupFreePeriod tutorialGroupFreePeriod) {

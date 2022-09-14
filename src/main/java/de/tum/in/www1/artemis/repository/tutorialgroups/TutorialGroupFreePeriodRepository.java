@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupFreePeriod;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
 @Repository
@@ -23,10 +22,8 @@ public interface TutorialGroupFreePeriodRepository extends JpaRepository<Tutoria
             FROM TutorialGroupFreePeriod tutorialGroupFreePeriod
             WHERE tutorialGroupFreePeriod.start <= :#{#to_inclusive} AND tutorialGroupFreePeriod.end >= :#{#from_inclusive}
             AND tutorialGroupFreePeriod.tutorialGroupsConfiguration.course = :#{#course}""")
-    Set<TutorialGroupFreePeriod> getOverlappingPeriodsInCourse(@Param("course") Course course, @Param("from_inclusive") ZonedDateTime from_inclusive,
+    Set<TutorialGroupFreePeriod> findOverlappingInSameCourse(@Param("course") Course course, @Param("from_inclusive") ZonedDateTime from_inclusive,
             @Param("to_inclusive") ZonedDateTime to_inclusive);
-
-    Set<TutorialGroupFreePeriod> findAllByTutorialGroupsConfiguration(TutorialGroupsConfiguration tutorialGroupsConfiguration);
 
     default TutorialGroupFreePeriod findByIdElseThrow(Long tutorialGroupFreePeriodId) {
         return findById(tutorialGroupFreePeriodId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupFreePeriod", tutorialGroupFreePeriodId));

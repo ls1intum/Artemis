@@ -67,7 +67,7 @@ export class TutorialGroupFreePeriodsComponent implements OnInit {
     deleteTutorialGroupFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
-            .delete(tutorialGroupFreePeriod.id!)
+            .delete(this.courseId, this.tutorialGroupsConfiguration.id!, tutorialGroupFreePeriod.id!)
             .pipe(finalize(() => (this.isLoading = false)))
             .subscribe({
                 next: () => {

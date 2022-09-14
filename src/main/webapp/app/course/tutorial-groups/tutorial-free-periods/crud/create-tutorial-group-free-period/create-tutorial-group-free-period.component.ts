@@ -48,7 +48,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
 
         this.isLoading = true;
         this.tutorialGroupFreePeriodService
-            .create(this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
+            .create(this.courseId, this.tutorialGroupConfigurationId, this.tutorialGroupFreePeriodToCreate)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

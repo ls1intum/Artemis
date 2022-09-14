@@ -119,7 +119,7 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        var overlappingPeriods = tutorialGroupFreePeriodRepository.getOverlappingPeriodsInCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
+        var overlappingPeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
                 sessionToUpdate.getEnd());
         if (!overlappingPeriods.isEmpty()) {
             sessionToUpdate.setStatus(TutorialGroupSessionStatus.CANCELLED);
@@ -179,7 +179,7 @@ public class TutorialGroupSessionResource {
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         isValidTutorialGroupSession(newSession);
 
-        var overlappingPeriods = tutorialGroupFreePeriodRepository.getOverlappingPeriodsInCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
+        var overlappingPeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
         if (!overlappingPeriods.isEmpty()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
             newSession.setStatusExplanation(overlappingPeriods.stream().findAny().get().getReason());

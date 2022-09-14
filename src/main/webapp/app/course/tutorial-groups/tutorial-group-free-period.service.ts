@@ -3,10 +3,7 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { convertDateFromServer, toISO8601DateString } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-group-session.service';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-configuration.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { TutorialGroupDateUtilsService } from 'app/course/tutorial-groups/util/tutorial-group-date-utils.service';
 
 type EntityResponseType = HttpResponse<TutorialGroupFreePeriod>;
 
@@ -19,23 +16,21 @@ export class TutorialGroupFreePeriodDTO {
 export class TutorialGroupFreePeriodService {
     private resourceURL = SERVER_API_URL + 'api';
 
-    constructor(
-        private httpClient: HttpClient,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
-        private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
-        private tutorialGroupDateUtilsService: TutorialGroupDateUtilsService,
-    ) {}
-    create(tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
+    constructor(private httpClient: HttpClient) {}
+    create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
-            .post<TutorialGroupFreePeriod>(`${this.resourceURL}/tutorial-groups-configurations/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
+            .post<TutorialGroupFreePeriod>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
                 observe: 'response',
             })
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
     }
 
-    delete(tutorialGroupFreePeriodId: number): Observable<HttpResponse<void>> {
-        return this.httpClient.delete<void>(`${this.resourceURL}/tutorial-group-free-periods/${tutorialGroupFreePeriodId}`, { observe: 'response' });
+    delete(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<HttpResponse<void>> {
+        return this.httpClient.delete<void>(
+            `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
+            { observe: 'response' },
+        );
     }
 
     convertTutorialGroupFreePeriodDatesFromServer(tutorialGroupFreePeriod: TutorialGroupFreePeriod): TutorialGroupFreePeriod {
