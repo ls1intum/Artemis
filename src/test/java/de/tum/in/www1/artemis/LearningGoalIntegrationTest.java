@@ -601,7 +601,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         learningGoal.setCourse(course);
         List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
         Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
-        learningGoal.setLectureUnits(connectedLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet()));
+        learningGoal.setLectureUnits(connectedLectureUnits);
 
         var persistedLearningGoal = request.postWithResponseBody("/api/courses/" + idOfCourse + "/goals", learningGoal, LearningGoal.class, HttpStatus.CREATED);
         assertThat(persistedLearningGoal.getId()).isNotNull();

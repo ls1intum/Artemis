@@ -245,18 +245,20 @@ public class LearningGoalResource {
         }
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        Set<LectureUnit> lectureUnitsToConnectWithLearningGoal = getLectureUnitsFromDatabase(learningGoalFromClient.getLectureUnits());
         LearningGoal learningGoalToCreate = new LearningGoal();
         learningGoalToCreate.setTitle(learningGoalFromClient.getTitle());
         learningGoalToCreate.setDescription(learningGoalFromClient.getDescription());
         learningGoalToCreate.setCourse(course);
-        LearningGoal persistedLearningGoal = learningGoalRepository.save(learningGoalToCreate);
-        persistedLearningGoal = this.learningGoalRepository.findByIdWithLectureUnitsAndCompletions(persistedLearningGoal.getId()).orElseThrow();
 
-        for (LectureUnit lectureUnit : lectureUnitsToConnectWithLearningGoal) {
-            persistedLearningGoal.addLectureUnit(lectureUnit);
-        }
-        persistedLearningGoal = learningGoalRepository.save(persistedLearningGoal);
+        // TODO: Move the managing of relations to its own endpoint (likely using a modal in the client)
+        var lectureUnits = getLectureUnitsFromDatabase(learningGoalFromClient.getLectureUnits());
+        var lectureUnitsWithoutExercises = lectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet());
+        var exercises = lectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
+                .collect(Collectors.toSet());
+        learningGoalToCreate.setLectureUnits(lectureUnitsWithoutExercises);
+        learningGoalToCreate.setExercises(exercises);
+
+        var persistedLearningGoal = learningGoalRepository.save(learningGoalToCreate);
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/goals/" + persistedLearningGoal.getId())).body(persistedLearningGoal);
     }
