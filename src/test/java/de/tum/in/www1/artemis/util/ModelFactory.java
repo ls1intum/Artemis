@@ -1264,7 +1264,7 @@ public class ModelFactory {
         tutorialGroup.setTitle(title);
         tutorialGroup.setAdditionalInformation(additionalInformation);
         tutorialGroup.setCapacity(capacity);
-        tutorialGroup.setOnline(isOnline);
+        tutorialGroup.setIsOnline(isOnline);
         tutorialGroup.setLanguage(language);
         tutorialGroup.setCampus(campus);
         return tutorialGroup;
