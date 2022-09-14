@@ -3,7 +3,7 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 import { ConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
 import { finalize, switchMap, take } from 'rxjs/operators';

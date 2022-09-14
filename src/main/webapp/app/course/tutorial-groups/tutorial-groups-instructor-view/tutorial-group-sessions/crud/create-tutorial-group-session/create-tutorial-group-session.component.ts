@@ -2,14 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { onError } from 'app/shared/util/global.utils';
 import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
-import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-group-session.service';
+import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import dayjs from 'dayjs/esm';
 import { combineLatest } from 'rxjs';
 

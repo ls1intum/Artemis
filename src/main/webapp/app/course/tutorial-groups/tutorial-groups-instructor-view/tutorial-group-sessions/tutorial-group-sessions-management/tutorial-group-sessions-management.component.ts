@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { combineLatest } from 'rxjs';
 import { finalize, map, switchMap, take } from 'rxjs/operators';
@@ -11,7 +11,7 @@ import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/t
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 

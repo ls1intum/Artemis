@@ -2,14 +2,14 @@ import { Component, OnInit } from '@angular/core';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { combineLatest, take, switchMap, finalize, Subject } from 'rxjs';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
 import { faTimes } from '@fortawesome/free-solid-svg-icons';
-import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-group-free-period.service';
+import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',

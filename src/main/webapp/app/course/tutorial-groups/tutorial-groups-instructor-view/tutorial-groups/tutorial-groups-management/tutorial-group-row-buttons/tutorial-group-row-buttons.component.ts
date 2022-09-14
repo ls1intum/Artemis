@@ -3,7 +3,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { faWrench, faUsers, faTimes, faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { Subject } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 
 @Component({
     selector: 'jhi-tutorial-group-row-buttons',

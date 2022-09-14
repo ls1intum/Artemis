@@ -19,7 +19,7 @@ import { CourseManagementDetailViewDto } from 'app/course/manage/course-manageme
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { EntityTitleService, EntityType } from 'app/shared/layouts/navbar/entity-title.service';
 import { convertDateFromClient } from 'app/utils/date.utils';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 
 export type EntityResponseType = HttpResponse<Course>;
 export type EntityArrayResponseType = HttpResponse<Course[]>;

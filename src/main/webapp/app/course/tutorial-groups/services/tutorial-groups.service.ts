@@ -5,9 +5,9 @@ import { Observable } from 'rxjs';
 import { StudentDTO } from 'app/entities/student-dto.model';
 import { convertDateFromServer } from 'app/utils/date.utils';
 import { map } from 'rxjs/operators';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-group-session.service';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups-configuration.service';
+import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 
 type EntityResponseType = HttpResponse<TutorialGroup>;
 type EntityArrayResponseType = HttpResponse<TutorialGroup[]>;

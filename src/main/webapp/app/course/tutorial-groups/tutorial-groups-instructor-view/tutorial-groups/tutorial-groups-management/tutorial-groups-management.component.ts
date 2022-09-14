@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { ActivatedRoute, Router } from '@angular/router';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/services/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { map, finalize } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
