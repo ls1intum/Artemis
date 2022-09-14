@@ -5,7 +5,7 @@
         <sql>
             INSERT INTO learning_goal_exercise (learning_goal_id, exercise_id)
             SELECT lg.learning_goal_id, lu.exercise_id FROM learning_goal_lecture_unit lg
-            LEFT JOIN lecture_unit lu ON lu.id = lg.lecture_unit_id
+            JOIN lecture_unit lu ON lu.id = lg.lecture_unit_id
             WHERE lu.discriminator = "E";
         </sql>
     </changeSet>
