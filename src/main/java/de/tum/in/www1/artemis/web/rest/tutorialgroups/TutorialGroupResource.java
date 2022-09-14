@@ -301,7 +301,7 @@ public class TutorialGroupResource {
         originalTutorialGroup.setTeachingAssistant(sourceTutorialGroup.getTeachingAssistant());
         originalTutorialGroup.setAdditionalInformation(sourceTutorialGroup.getAdditionalInformation());
         originalTutorialGroup.setCapacity(sourceTutorialGroup.getCapacity());
-        originalTutorialGroup.setOnline(sourceTutorialGroup.getOnline());
+        originalTutorialGroup.setIsOnline(sourceTutorialGroup.getIsOnline());
         originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
         originalTutorialGroup.setCampus(sourceTutorialGroup.getCampus());
     }
