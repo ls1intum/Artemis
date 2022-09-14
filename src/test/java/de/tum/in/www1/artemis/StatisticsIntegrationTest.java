@@ -184,17 +184,17 @@ class StatisticsIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         parameters.add("courseId", "" + courseId);
         CourseManagementStatisticsDTO result = request.get("/api/management/statistics/course-statistics", HttpStatus.OK, CourseManagementStatisticsDTO.class, parameters);
 
-        assertThat(result.getAverageScoreOfCourse()).isEqualTo(57.5);
-        assertThat(result.getAverageScoresOfExercises()).hasSize(2);
+        assertThat(result.averageScoreOfCourse()).isEqualTo(57.5);
+        assertThat(result.averageScoresOfExercises()).hasSize(2);
 
         // take the second entry as the results are getting sorted for release dates
-        var firstTextExerciseStatistics = result.getAverageScoresOfExercises().get(1);
+        var firstTextExerciseStatistics = result.averageScoresOfExercises().get(1);
         assertThat(firstTextExerciseStatistics.getAverageScore()).isEqualTo(75.0);
         assertThat(firstTextExerciseStatistics.getExerciseId()).isEqualTo(laterTextExerciseId);
         assertThat(firstTextExerciseStatistics.getExerciseName()).isEqualTo(laterTextExercise.getTitle());
 
         // take the first entry as the results are getting sorted for release dates
-        var secondTextExerciseStatistics = result.getAverageScoresOfExercises().get(0);
+        var secondTextExerciseStatistics = result.averageScoresOfExercises().get(0);
         assertThat(secondTextExerciseStatistics.getAverageScore()).isEqualTo(40.0);
         assertThat(secondTextExerciseStatistics.getExerciseId()).isEqualTo(earlierTextExerciseId);
         assertThat(secondTextExerciseStatistics.getExerciseName()).isEqualTo(earlierTextExercise.getTitle());

@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.web.rest.plagiarism;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,6 +22,7 @@ import de.tum.in.www1.artemis.service.plagiarism.PlagiarismCaseService;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
+import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
 
 /**
  * REST controller for managing Plagiarism Cases.
@@ -26,6 +30,8 @@ import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 @RestController
 @RequestMapping("api/")
 public class PlagiarismCaseResource {
+
+    private static final String ENTITY_NAME = "plagiarismCase";
 
     private final CourseRepository courseRepository;
 
@@ -63,6 +69,31 @@ public class PlagiarismCaseResource {
             throw new AccessForbiddenException("Only instructors of this course have access to its plagiarism cases.");
         }
         var plagiarismCases = plagiarismCaseRepository.findByCourseIdWithPlagiarismSubmissionsAndComparison(courseId);
+        return getPlagiarismCasesResponseEntity(plagiarismCases);
+    }
+
+    /**
+     * Retrieves all plagiarism cases related to an exam for the instructor view.
+     *
+     * @param courseId the course id to which the exam belongs
+     * @param examId the id of the exam
+     * @return all plagiarism cases of the course
+     */
+    @GetMapping("courses/{courseId}/exams/{examId}/plagiarism-cases/for-instructor")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesForExamForInstructor(@PathVariable long courseId, @PathVariable long examId) {
+        log.debug("REST request to get all plagiarism cases for instructor in exam with id: {}", examId);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
+
+        var plagiarismCases = plagiarismCaseRepository.findByExamIdWithPlagiarismSubmissionsAndComparison(examId);
+        if (!plagiarismCases.isEmpty()) {
+            var plagiarismCase = plagiarismCases.get(0);
+            var exam = plagiarismCase.getExercise().getExerciseGroup().getExam();
+            if (!exam.getCourse().getId().equals(courseId)) {
+                throw new ConflictException("Exam with id " + exam.getId() + " is not related to the given course id " + courseId, ENTITY_NAME, "courseMismatch");
+            }
+        }
         return getPlagiarismCasesResponseEntity(plagiarismCases);
     }
 
@@ -145,6 +176,38 @@ public class PlagiarismCaseResource {
         }
         // in all other cases the response is empty
         return ResponseEntity.ok(null);
+    }
+
+    /**
+     * Retrieves plagiarismCases related to given exercise ids for the student for the exercises where the plagiarism comparison was confirmed and the student was notified
+     *
+     * @param courseId the id of the course
+     * @param exerciseIds the ids of the exercises
+     * @return a list of plagiarism case id and verdict values for the exercises only for the exercises where the comparison was confirmed and the student was notified
+     */
+    @GetMapping("courses/{courseId}/plagiarism-cases")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<Map<Long, PlagiarismCaseInfoDTO>> getPlagiarismCasesForExercisesForStudent(@PathVariable long courseId,
+            @RequestParam(name = "exerciseId") Set<Long> exerciseIds) {
+        log.debug("REST request to all plagiarism cases for student and exercises with ids: {}", exerciseIds);
+        Course course = courseRepository.findByIdElseThrow(courseId);
+        var user = userRepository.getUserWithGroupsAndAuthorities();
+        authenticationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, user);
+
+        List<PlagiarismCase> plagiarismCasePerExerciseList = plagiarismCaseRepository.findByStudentIdAndExerciseIdsWithPost(user.getId(), exerciseIds);
+        for (PlagiarismCase plagiarismCase : plagiarismCasePerExerciseList) {
+            var plagiarismCaseCourse = plagiarismCase.getExercise().getCourseViaExerciseGroupOrCourseMember();
+            if (!plagiarismCaseCourse.getId().equals(courseId)) {
+                throw new ConflictException("Plagiarism case with id " + plagiarismCase.getId() + " is not related to the given course id " + courseId, ENTITY_NAME,
+                        "courseMismatch");
+            }
+        }
+        Map<Long, PlagiarismCaseInfoDTO> plagiarismCaseInfoDTOs = plagiarismCasePerExerciseList.stream()
+                // the following line is already checked in the SQL statement, but we want to ensure it 100%
+                .filter(plagiarismCase -> plagiarismCase.getPost() != null).collect(Collectors.toMap(plagiarismCase -> plagiarismCase.getExercise().getId(),
+                        plagiarismCase -> new PlagiarismCaseInfoDTO(plagiarismCase.getId(), plagiarismCase.getVerdict())));
+
+        return ResponseEntity.ok(plagiarismCaseInfoDTOs);
     }
 
     private ResponseEntity<List<PlagiarismCase>> getPlagiarismCasesResponseEntity(List<PlagiarismCase> plagiarismCases) {

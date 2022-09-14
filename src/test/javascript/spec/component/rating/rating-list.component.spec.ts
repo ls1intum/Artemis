@@ -64,6 +64,6 @@ describe('RatingListComponent', () => {
         const rating = { id: 1, result: { id: 1, participation: { id: 1, exercise: { id: 1, type: ExerciseType.TEXT } as Exercise } as Participation } as Result } as Rating;
         const routerNavigateSpy = jest.spyOn(router, 'navigate').mockImplementation(() => lastValueFrom(of(true)));
         component.openResult(rating);
-        expect(routerNavigateSpy).toHaveBeenCalled();
+        expect(routerNavigateSpy).toHaveBeenCalledOnce();
     });
 });

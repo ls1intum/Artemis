@@ -261,8 +261,8 @@ public class GitUtilService {
     public void writeEmptyJsonFileToPath(Path path) throws Exception {
         var fileContent = "{}";
         path.toFile().getParentFile().mkdirs();
-        FileWriter writer = new FileWriter(path.toFile(), StandardCharsets.UTF_8);
-        writer.write(fileContent);
-        writer.close();
+        try (FileWriter writer = new FileWriter(path.toFile(), StandardCharsets.UTF_8)) {
+            writer.write(fileContent);
+        }
     }
 }

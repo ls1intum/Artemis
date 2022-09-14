@@ -105,7 +105,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.ngOnDestroy();
         tick(500);
         expect(div.children).toHaveLength(0);
-        expect(clearInterval).toHaveBeenCalledTimes(1);
+        expect(clearInterval).toHaveBeenCalledOnce();
         expect(clearInterval).toHaveBeenCalledWith(fixture.componentInstance.autoSaveInterval);
     }));
 
@@ -137,7 +137,7 @@ describe('ApollonDiagramDetail Component', () => {
         fixture.componentInstance.downloadSelection().then(() => {
             tick(500);
             // last task when downloading file
-            expect(window.URL.revokeObjectURL).toHaveBeenCalled();
+            expect(window.URL.revokeObjectURL).toHaveBeenCalledOnce();
         });
     }));
 
@@ -156,7 +156,7 @@ describe('ApollonDiagramDetail Component', () => {
         // test
         fixture.componentInstance.saveDiagram();
         tick(500);
-        expect(updateStub).toHaveBeenCalled();
+        expect(updateStub).toHaveBeenCalledOnce();
         flush();
         // clear the set time interval
         fixture.componentInstance.ngOnDestroy();
@@ -181,7 +181,7 @@ describe('ApollonDiagramDetail Component', () => {
 
         // test
         fixture.componentInstance.generateExercise().then(() => {
-            expect(successSpy).toHaveBeenCalled();
+            expect(successSpy).toHaveBeenCalledOnce();
         });
         tick(500);
         flush();

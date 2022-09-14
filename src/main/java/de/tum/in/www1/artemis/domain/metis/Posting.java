@@ -4,6 +4,7 @@ import java.time.ZonedDateTime;
 import java.util.Set;
 
 import javax.persistence.*;
+import javax.validation.constraints.Size;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
@@ -36,13 +37,14 @@ public abstract class Posting extends DomainObject {
     @Column(name = "creation_date", updatable = false)
     private ZonedDateTime creationDate = ZonedDateTime.now();
 
-    @Lob
-    @Column(name = "content")
+    // TODO: in the future we should allow longer posts with more than 1000 characters
+    @Size(max = 1000)
+    @Column(name = "content", length = 1000)
     private String content;
 
     // To be used as soon as more advanced strategies for post similarity comparisons are developed
-    @Lob
-    @Column(name = "tokenized_content")
+    @Size(max = 1000)
+    @Column(name = "tokenized_content", length = 1000)
     private String tokenizedContent;
 
     @Transient
@@ -98,5 +100,6 @@ public abstract class Posting extends DomainObject {
 
     public abstract void removeReaction(Reaction reaction);
 
+    @Transient
     public abstract Course getCoursePostingBelongsTo();
 }

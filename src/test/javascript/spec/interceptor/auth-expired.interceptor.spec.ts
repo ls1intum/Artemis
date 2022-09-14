@@ -63,8 +63,8 @@ describe(`AuthExpiredInterceptor`, () => {
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
         expect(tokenSpy).toHaveBeenCalledOnce();
-        expect(loginServiceMock.logout).toHaveBeenCalledTimes(0);
-        expect(stateStorageServiceMock.storeUrl).toHaveBeenCalledTimes(0);
+        expect(loginServiceMock.logout).not.toHaveBeenCalled();
+        expect(stateStorageServiceMock.storeUrl).not.toHaveBeenCalled();
     });
 
     it('should ignore if the error is anything other than 401', () => {
@@ -75,8 +75,8 @@ describe(`AuthExpiredInterceptor`, () => {
 
         authInterceptor.intercept({} as HttpRequest<any>, mockHandler).subscribe();
 
-        expect(tokenSpy).toHaveBeenCalledTimes(0);
-        expect(loginServiceMock.logout).toHaveBeenCalledTimes(0);
-        expect(stateStorageServiceMock.storeUrl).toHaveBeenCalledTimes(0);
+        expect(tokenSpy).not.toHaveBeenCalled();
+        expect(loginServiceMock.logout).not.toHaveBeenCalled();
+        expect(stateStorageServiceMock.storeUrl).not.toHaveBeenCalled();
     });
 });

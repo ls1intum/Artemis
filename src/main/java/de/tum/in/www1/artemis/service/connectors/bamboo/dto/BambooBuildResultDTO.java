@@ -25,10 +25,6 @@ public class BambooBuildResultDTO {
         return logEntries;
     }
 
-    public void setLogEntries(BambooBuildLogEntriesDTO logEntries) {
-        this.logEntries = logEntries;
-    }
-
     public BambooBuildResultDTO() {
     }
 
@@ -50,10 +46,6 @@ public class BambooBuildResultDTO {
 
         public List<BambooBuildLogEntryDTO> getLogEntry() {
             return logEntry;
-        }
-
-        public void setLogEntry(List<BambooBuildLogEntryDTO> logEntry) {
-            this.logEntry = logEntry;
         }
     }
 
@@ -98,10 +90,6 @@ public class BambooBuildResultDTO {
 
         public String getUnstyledLog() {
             return unstyledLog;
-        }
-
-        public void setUnstyledLog(String unstyledLog) {
-            this.unstyledLog = unstyledLog;
         }
     }
 

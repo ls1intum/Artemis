@@ -216,14 +216,14 @@ public class RepositoryService {
      * @throws IllegalArgumentException if the new filename is not allowed (e.g. contains '..' or '/../' or '.git')
      */
     public void renameFile(Repository repository, FileMove fileMove) throws FileNotFoundException, FileAlreadyExistsException, IllegalArgumentException {
-        Optional<File> existingFile = gitService.getFileByName(repository, fileMove.getCurrentFilePath());
+        Optional<File> existingFile = gitService.getFileByName(repository, fileMove.currentFilePath());
         if (existingFile.isEmpty()) {
             throw new FileNotFoundException();
         }
         if (!repository.isValidFile(existingFile.get())) {
             throw new IllegalArgumentException();
         }
-        File newFile = new File(existingFile.get().toPath().getParent().resolve(fileMove.getNewFilename()), repository);
+        File newFile = new File(existingFile.get().toPath().getParent().resolve(fileMove.newFilename()), repository);
         if (!repository.isValidFile(newFile)) {
             throw new IllegalArgumentException();
         }

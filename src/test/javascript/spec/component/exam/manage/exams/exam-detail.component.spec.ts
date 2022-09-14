@@ -29,6 +29,8 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MockAccountService } from '../../../../helpers/mocks/service/mock-account.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ArtemisDurationFromSecondsPipe } from 'app/shared/pipes/artemis-duration-from-seconds.pipe';
+import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
+import { MockWebsocketService } from '../../../../helpers/mocks/service/mock-websocket.service';
 
 @Component({
     template: '',
@@ -93,6 +95,7 @@ describe('ExamDetailComponent', () => {
                     safeHtmlForMarkdown: () => exampleHTML,
                 }),
                 MockProvider(AlertService),
+                { provide: JhiWebsocketService, useClass: MockWebsocketService },
             ],
             schemas: [],
         })
@@ -206,7 +209,7 @@ describe('ExamDetailComponent', () => {
         expect(JSON.stringify(route)).toEqual(JSON.stringify(['/course-management', exam.course!.id, 'exams', exam.id, 'edit']));
     });
 
-    it('Should reset an exam when reset exam is called', () => {
+    it('should reset an exam when reset exam is called', () => {
         const alertService = TestBed.inject(AlertService);
 
         // GIVEN

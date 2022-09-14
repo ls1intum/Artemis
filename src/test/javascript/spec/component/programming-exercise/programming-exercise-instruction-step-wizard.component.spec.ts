@@ -31,7 +31,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
 
     afterEach(() => {});
 
-    it('Should load the expected number of steps according to the provided tests', () => {
+    it('should load the expected number of steps according to the provided tests', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
@@ -56,7 +56,7 @@ describe('ProgrammingExerciseInstructionStepWizardComponent', () => {
         expect(steps[1].query(By.css('.text-success'))).not.toBeNull();
     });
 
-    it('Should not show any icons for empty tasks list', () => {
+    it('should not show any icons for empty tasks list', () => {
         const result = {
             id: 1,
             completionDate: dayjs('2019-01-06T22:15:29.203+02:00'),
