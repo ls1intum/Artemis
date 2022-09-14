@@ -94,7 +94,7 @@ describe('Notification Popup Component', () => {
                 jest.spyOn(notificationPopupComponent, 'navigateToTarget').mockReturnValue();
                 const button = notificationPopupComponentFixture.debugElement.query(By.css('.notification-popup-container > div button'));
                 button.nativeElement.click();
-                expect(notificationPopupComponent.removeNotification).toHaveBeenCalled();
+                expect(notificationPopupComponent.removeNotification).toHaveBeenCalledTimes(2);
                 expect(notificationPopupComponent.notifications).toBeEmpty();
             });
 

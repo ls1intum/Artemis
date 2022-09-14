@@ -29,6 +29,6 @@ describe('TranslateDirective Tests', () => {
 
         fixture.detectChanges();
 
-        expect(spy).toHaveBeenCalled();
+        expect(spy).toHaveBeenCalledOnce();
     });
 });

@@ -92,7 +92,7 @@ describe('Course Management Detail Component', () => {
         expect(CourseGroupComponent).not.toBeNull();
     });
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         it('should load all course group users', () => {
             const getUsersStub = jest.spyOn(courseService, 'getAllUsersInCourseGroup').mockReturnValue(of(new HttpResponse({ body: [courseGroupUser] })));
             fixture.detectChanges();
