@@ -119,11 +119,11 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        var overlappingPeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
+        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
                 sessionToUpdate.getEnd());
-        if (!overlappingPeriods.isEmpty()) {
+        if (overlappingPeriod.isPresent()) {
             sessionToUpdate.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            sessionToUpdate.setStatusExplanation(overlappingPeriods.stream().findAny().get().getReason());
+            sessionToUpdate.setStatusExplanation(overlappingPeriod.get().getReason());
         }
         else {
             sessionToUpdate.setStatus(TutorialGroupSessionStatus.ACTIVE);
@@ -179,10 +179,10 @@ public class TutorialGroupSessionResource {
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
         isValidTutorialGroupSession(newSession);
 
-        var overlappingPeriods = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
-        if (!overlappingPeriods.isEmpty()) {
+        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
+        if (overlappingPeriod.isPresent()) {
             newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
-            newSession.setStatusExplanation(overlappingPeriods.stream().findAny().get().getReason());
+            newSession.setStatusExplanation(overlappingPeriod.get().getReason());
         }
         else {
             newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
@@ -209,7 +209,7 @@ public class TutorialGroupSessionResource {
             @RequestBody StatusDTO statusDTO) throws URISyntaxException {
         log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkEntityIdMatchesPathIds(sessionToCancel, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        checkEntityIdMatchesPathIds(sessionToCancel, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.of(sessionId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToCancel.getTutorialGroup().getCourse(), null);
         sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
         if (statusDTO != null && statusDTO.status_explanation() != null && statusDTO.status_explanation().trim().length() > 0) {
@@ -233,7 +233,7 @@ public class TutorialGroupSessionResource {
     public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
         log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
         var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        checkEntityIdMatchesPathIds(sessionToActivate, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId), Optional.ofNullable(sessionId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToActivate.getTutorialGroup().getCourse(), null);
         sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
         sessionToActivate.setStatusExplanation(null);

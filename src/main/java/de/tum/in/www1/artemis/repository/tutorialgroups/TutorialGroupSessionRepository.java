@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -47,10 +48,10 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     Set<TutorialGroupSession> findAllActiveBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
     @Query("""
-            SELECT tutorialGroupSession
-            FROM TutorialGroupSession tutorialGroupSession
-            WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
-            AND tutorialGroupSession.status = de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus.CANCELLED
+                SELECT tutorialGroupSession
+                FROM TutorialGroupSession tutorialGroupSession
+                WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
+                AND tutorialGroupSession.status = de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus.CANCELLED
             AND tutorialGroupSession.tutorialGroup.course = :#{#course}""")
     Set<TutorialGroupSession> findAllCancelledBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);
 
@@ -61,5 +62,9 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     @Modifying
     @Transactional
     void deleteByTutorialGroup_Course(Course course);
+
+    @Modifying
+    @Transactional
+    void deleteByTutorialGroupSchedule(TutorialGroupSchedule tutorialGroupSchedule);
 
 }

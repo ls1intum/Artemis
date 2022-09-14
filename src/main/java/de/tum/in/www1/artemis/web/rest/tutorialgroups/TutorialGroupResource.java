@@ -139,7 +139,7 @@ public class TutorialGroupResource {
     public ResponseEntity<TutorialGroup> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupId) {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         // prevent circular to json conversion
         if (tutorialGroup.getTutorialGroupSchedule() != null) {
             tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
@@ -186,7 +186,6 @@ public class TutorialGroupResource {
         if (tutorialGroup.getId() != null) {
             throw new BadRequestException("A new tutorial group cannot already have an ID");
         }
-
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
@@ -195,16 +194,18 @@ public class TutorialGroupResource {
         }
 
         tutorialGroup.setCourse(course);
-
         trimStringFields(tutorialGroup);
         checkTitleIsUnique(tutorialGroup);
 
+        // persist first without schedule
         TutorialGroupSchedule tutorialGroupSchedule = tutorialGroup.getTutorialGroupSchedule();
         tutorialGroup.setTutorialGroupSchedule(null);
         TutorialGroup persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroup);
 
+        // persist the schedule and generate the sessions
         if (tutorialGroupSchedule != null) {
-            tutorialGroupScheduleService.save(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
+            tutorialGroupScheduleService.saveAndGenerateScheduledSessions(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
+            persistedTutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
         }
 
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
@@ -224,7 +225,7 @@ public class TutorialGroupResource {
         log.info("REST request to delete a TutorialGroup: {} of course: {}", tutorialGroupId, courseId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         tutorialGroupRepository.deleteById(tutorialGroupFromDatabase.getId());
         return ResponseEntity.noContent().build();
     }
@@ -246,7 +247,7 @@ public class TutorialGroupResource {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
         trimStringFields(tutorialGroup);
@@ -256,19 +257,8 @@ public class TutorialGroupResource {
         overrideValues(tutorialGroup, tutorialGroupFromDatabase);
         var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
 
-        var currentlyHasSchedule = updatedTutorialGroup.getTutorialGroupSchedule() != null;
-        var shouldHaveSchedule = tutorialGroup.getTutorialGroupSchedule() != null;
-
-        if (currentlyHasSchedule && !shouldHaveSchedule) {
-            tutorialGroupScheduleService.delete(updatedTutorialGroup.getTutorialGroupSchedule());
-        }
-        else if (!currentlyHasSchedule && shouldHaveSchedule) {
-            tutorialGroupScheduleService.save(updatedTutorialGroup.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup, tutorialGroup.getTutorialGroupSchedule());
-        }
-        else if (currentlyHasSchedule && shouldHaveSchedule && !updatedTutorialGroup.getTutorialGroupSchedule().sameSchedule(tutorialGroup.getTutorialGroupSchedule())) {
-            tutorialGroupScheduleService.update(updatedTutorialGroup.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup.getTutorialGroupSchedule(),
-                    tutorialGroup.getTutorialGroupSchedule());
-        }
+        tutorialGroupScheduleService.updateSchedule(tutorialGroup.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup,
+                Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()), Optional.ofNullable(tutorialGroup.getTutorialGroupSchedule()));
 
         return ResponseEntity.ok(updatedTutorialGroup);
     }
@@ -288,7 +278,7 @@ public class TutorialGroupResource {
         log.debug("REST request to deregister {} student from tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
 
         User studentToDeregister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         tutorialGroupService.deregisterStudent(studentToDeregister, tutorialGroupFromDatabase, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
@@ -310,7 +300,7 @@ public class TutorialGroupResource {
         log.debug("REST request to register {} student to tutorial group : {}", studentLogin, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         User userToRegister = userRepository.getUserWithGroupsAndAuthorities(studentLogin);
         if (!userToRegister.getGroups().contains(tutorialGroupFromDatabase.getCourse().getStudentGroupName())) {
             throw new BadRequestAlertException("The user is not a student of the course", ENTITY_NAME, "userNotPartOfCourse");
@@ -336,7 +326,7 @@ public class TutorialGroupResource {
         log.debug("REST request to register {} to tutorial group {}", studentDtos, tutorialGroupId);
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
-        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         Set<StudentDTO> notFoundStudentDtos = tutorialGroupService.registerMultipleStudents(tutorialGroupFromDatabase, studentDtos,
                 TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
         return ResponseEntity.ok().body(notFoundStudentDtos);

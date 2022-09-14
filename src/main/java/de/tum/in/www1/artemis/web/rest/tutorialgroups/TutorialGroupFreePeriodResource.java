@@ -75,7 +75,7 @@ public class TutorialGroupFreePeriodResource {
         newTutorialGroupFreePeriod.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, START_OF_DAY, tutorialGroupsConfiguration));
         newTutorialGroupFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, END_OF_DAY, tutorialGroupsConfiguration));
 
-        checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.of(courseId), Optional.of(tutorialGroupsConfigurationId));
+        checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         isValidTutorialGroupPeriod(newTutorialGroupFreePeriod);
         var persistedTutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
 
@@ -100,7 +100,7 @@ public class TutorialGroupFreePeriodResource {
             throws URISyntaxException {
         log.debug("REST request to delete TutorialGroupFreePeriod: {}", tutorialGroupFreePeriodId);
         TutorialGroupFreePeriod tutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
-        checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.of(courseId), Optional.of(tutorialGroupsConfigurationId));
+        checkEntityIdMatchesPathIds(tutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
         tutorialGroupFreePeriodRepository.delete(tutorialGroupFreePeriod);
         tutorialGroupFreePeriodService.activateCancelledOverlappingSessions(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(), tutorialGroupFreePeriod);
@@ -128,14 +128,13 @@ public class TutorialGroupFreePeriodResource {
         if (tutorialGroupFreePeriod.getStart().isAfter(tutorialGroupFreePeriod.getEnd())) {
             throw new BadRequestAlertException("The start date must be before the end date", ENTITY_NAME, "invalidDateRange");
         }
-        this.checkForOverlapWithOtherFreePeriods(tutorialGroupFreePeriod);
+        this.checkForOverlapWithPeriod(tutorialGroupFreePeriod);
     }
 
-    private void checkForOverlapWithOtherFreePeriods(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
-        var overlappingSessions = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
-                tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd()).stream()
-                .filter(overlappingPeriod -> !overlappingPeriod.getId().equals(tutorialGroupFreePeriod.getId())).toList();
-        if (!overlappingSessions.isEmpty()) {
+    private void checkForOverlapWithPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
+        var overlappingPeriod = tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(tutorialGroupFreePeriod.getTutorialGroupsConfiguration().getCourse(),
+                tutorialGroupFreePeriod.getStart(), tutorialGroupFreePeriod.getEnd());
+        if (overlappingPeriod.isPresent() && !overlappingPeriod.get().getId().equals(tutorialGroupFreePeriod.getId())) {
             throw new BadRequestAlertException("The given tutorial group free period overlaps with another tutorial group free period in the same course", ENTITY_NAME,
                     "overlapping");
         }

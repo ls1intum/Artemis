@@ -39,4 +39,18 @@ public class TutorialGroupDateUtil {
         return interpretInTimeZoneOfConfiguration(localDateTime.toLocalDate(), localDateTime.toLocalTime(), tutorialGroupsConfiguration);
     }
 
+    /**
+     * Get the first date of the week day from the given start date
+     *
+     * @param start   the start date to start the search from
+     * @param weekDay the week day to search for
+     * @return date of the first occurrence of the week day from the given start date
+     */
+    public static LocalDate getFirstDateOfWeekDay(LocalDate start, Integer weekDay) {
+        while (start.getDayOfWeek().getValue() != weekDay) {
+            start = start.plusDays(1);
+        }
+        return start;
+    }
+
 }

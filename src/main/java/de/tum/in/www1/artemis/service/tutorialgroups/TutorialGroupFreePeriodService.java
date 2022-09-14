@@ -1,6 +1,6 @@
 package de.tum.in.www1.artemis.service.tutorialgroups;
 
-import java.util.Set;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -23,7 +23,7 @@ public class TutorialGroupFreePeriodService {
         this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
     }
 
-    public Set<TutorialGroupFreePeriod> findOverlappingPeriods(Course course, TutorialGroupSession tutorialGroupSession) {
+    public Optional<TutorialGroupFreePeriod> findOverlappingPeriod(Course course, TutorialGroupSession tutorialGroupSession) {
         return tutorialGroupFreePeriodRepository.findOverlappingInSameCourse(course, tutorialGroupSession.getStart(), tutorialGroupSession.getEnd());
     }
 

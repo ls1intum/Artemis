@@ -61,7 +61,7 @@ public class TutorialGroupsConfigurationResource {
     public ResponseEntity<TutorialGroupsConfiguration> getOneOfCourse(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId) {
         log.debug("REST request to get tutorial groups configuration: {} of course: {}", tutorialGroupsConfigurationId, courseId);
         var configuration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
-        checkEntityIdMatchesPathIds(configuration, Optional.of(courseId), Optional.of(tutorialGroupsConfigurationId));
+        checkEntityIdMatchesPathIds(configuration, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configuration.getCourse(), null);
         return ResponseEntity.ok().body(configuration);
     }
@@ -111,7 +111,7 @@ public class TutorialGroupsConfigurationResource {
         }
         isValidTutorialGroupConfiguration(updatedTutorialGroupConfiguration);
         var configurationFromDatabase = this.tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(updatedTutorialGroupConfiguration.getId());
-        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupsConfigurationId));
+        checkEntityIdMatchesPathIds(configurationFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, configurationFromDatabase.getCourse(), null);
 
         var timeZoneChanged = !configurationFromDatabase.getTimeZone().equals(updatedTutorialGroupConfiguration.getTimeZone());
