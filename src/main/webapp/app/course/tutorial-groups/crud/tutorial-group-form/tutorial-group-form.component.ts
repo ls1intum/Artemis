@@ -10,6 +10,7 @@ import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -65,6 +66,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     campusFocus$ = new Subject<string>();
     campusClick$ = new Subject<string>();
 
+    // icons
+    faSave = faSave;
+
     constructor(
         private fb: FormBuilder,
         private courseManagementService: CourseManagementService,
@@ -78,10 +82,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
 
     get teachingAssistantControl() {
         return this.form.get('teachingAssistant');
-    }
-
-    get additionalInformationControl() {
-        return this.form.get('additionalInformation');
     }
 
     get campusControl() {
