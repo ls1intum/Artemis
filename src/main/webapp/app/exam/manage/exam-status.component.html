@@ -1,6 +1,6 @@
-<div class="exam-status-wrapper" [ngClass]="isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
+<div class="exam-status-wrapper" [ngClass]="course?.isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
     <!-- 1. Exam preparation -->
-    <ng-container *ngIf="isAtLeastInstructor">
+    <ng-container *ngIf="course?.isAtLeastInstructor">
         <div class="status-step">
             <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
             <div class="d-flex justify-content-center header-icon">
@@ -81,7 +81,7 @@
             <div class="text-center mb-1" *ngIf="examConductionState === examConductionStateEnum.ERROR">
                 <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'conductionSuspended' | artemisTranslate }}</h6>
             </div>
-            <ol *ngIf="isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR">
+            <ol *ngIf="course?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR">
                 <li>
                     <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam.workingTime! | artemisDurationFromSeconds: true }} </span>
                 </li>

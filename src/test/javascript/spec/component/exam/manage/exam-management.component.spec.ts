@@ -215,7 +215,7 @@ describe('Exam Management Component', () => {
         comp.openImportModal();
         tick();
 
-        expect(modalService.open).toHaveBeenCalled();
-        expect(router.navigate).toHaveBeenCalled();
+        expect(modalService.open).toHaveBeenCalledOnce();
+        expect(router.navigate).toHaveBeenCalledOnce();
     }));
 });

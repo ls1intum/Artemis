@@ -71,7 +71,7 @@ describe('Text Submission Viewer Component', () => {
             plagiarismSubmission: { currentValue: { submissionId: 2 } } as SimpleChange,
         });
 
-        expect(repositoryService.getRepositoryContent).toHaveBeenCalled();
+        expect(repositoryService.getRepositoryContent).toHaveBeenCalledOnce();
         expect(comp.isProgrammingExercise).toBeTrue();
     });
 
@@ -143,7 +143,7 @@ describe('Text Submission Viewer Component', () => {
 
         comp.handleFileSelect(fileName);
 
-        expect(repositoryService.getFile).toHaveBeenCalledTimes(0);
+        expect(repositoryService.getFile).not.toHaveBeenCalled();
         expect(comp.currentFile).toEqual(fileName);
     });
 

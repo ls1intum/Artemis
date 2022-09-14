@@ -118,9 +118,9 @@ describe('Exam Import Component', () => {
         component.targetCourseId = undefined;
         component.performImportOfExerciseGroups();
 
-        expect(importSpy).toHaveBeenCalledTimes(0);
-        expect(alertSpy).toHaveBeenCalledTimes(0);
-        expect(modalSpy).toHaveBeenCalledTimes(0);
+        expect(importSpy).not.toHaveBeenCalled();
+        expect(alertSpy).not.toHaveBeenCalled();
+        expect(modalSpy).not.toHaveBeenCalled();
     });
 
     it('should  perform input of exercise groups successfully', () => {
@@ -143,7 +143,7 @@ describe('Exam Import Component', () => {
         component.performImportOfExerciseGroups();
         expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
-        expect(alertSpy).toHaveBeenCalledTimes(0);
+        expect(alertSpy).not.toHaveBeenCalled();
         expect(modalSpy).toHaveBeenCalledOnce();
         expect(modalSpy).toHaveBeenCalledWith([exerciseGroup1]);
     });
@@ -170,9 +170,9 @@ describe('Exam Import Component', () => {
         component.targetExamId = 3;
         fixture.detectChanges();
         component.performImportOfExerciseGroups();
-        expect(importSpy).toHaveBeenCalledTimes(0);
+        expect(importSpy).not.toHaveBeenCalled();
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledTimes(0);
+        expect(modalSpy).not.toHaveBeenCalled();
     });
 
     it('should perform import of exercise groups AND correctly process conflict exception from server', () => {
@@ -194,7 +194,7 @@ describe('Exam Import Component', () => {
         expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
         expect(alertSpy).toHaveBeenCalledOnce();
         expect(alertSpy).toHaveBeenCalledWith('artemisApp.examManagement.exerciseGroup.importModal.invalidKey', { number: 2 });
-        expect(modalSpy).toHaveBeenCalledTimes(0);
+        expect(modalSpy).not.toHaveBeenCalled();
     });
 
     it('should perform import of exercise groups AND correctly process arbitrary exception from server', () => {
@@ -214,7 +214,7 @@ describe('Exam Import Component', () => {
         expect(importSpy).toHaveBeenCalledOnce();
         expect(importSpy).toHaveBeenCalledWith(1, 2, [exerciseGroup1]);
         expect(alertSpy).toHaveBeenCalledOnce();
-        expect(modalSpy).toHaveBeenCalledTimes(0);
+        expect(modalSpy).not.toHaveBeenCalled();
     });
 
     it('should initialize the subjects', () => {
@@ -313,7 +313,7 @@ describe('Exam Import Component', () => {
         expect(component.searchTerm).toBe(expectedSearchTerm);
 
         // It should wait first before executing search.
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
 
         tick(300);
 
