@@ -125,19 +125,9 @@ public class BitbucketRequestMockProvider {
      * @param pushDate The expected push date for the commit
      */
     public void mockGetPushDate(String projectKey, String commitHash, ZonedDateTime pushDate) throws JsonProcessingException {
-        final var refChangeDTO = new BitbucketChangeActivitiesDTO.ValuesDTO.RefChangeDTO();
-        refChangeDTO.setRefId("refs/heads/main");
-        refChangeDTO.setFromHash("7".repeat(40));
-        refChangeDTO.setToHash(commitHash);
-        final var valuesDTO = new BitbucketChangeActivitiesDTO.ValuesDTO();
-        valuesDTO.setId(42L);
-        valuesDTO.setCreatedDate(pushDate.toInstant().toEpochMilli());
-        valuesDTO.setTrigger("push");
-        valuesDTO.setRefChange(refChangeDTO);
-
-        final var changeActivitiesDTO = new BitbucketChangeActivitiesDTO();
-        changeActivitiesDTO.setValues(List.of(valuesDTO));
-        changeActivitiesDTO.setLastPage(true);
+        final var refChangeDTO = new BitbucketChangeActivitiesDTO.RefChangeDTO("7".repeat(40), commitHash, "refs/heads/main");
+        final var valuesDTO = new BitbucketChangeActivitiesDTO.ValuesDTO(42L, pushDate.toInstant().toEpochMilli(), refChangeDTO, "push");
+        final var changeActivitiesDTO = new BitbucketChangeActivitiesDTO(null, null, null, true, List.of(valuesDTO));
         ObjectMapper objectMapper = new ObjectMapper();
         mockServer
                 .expect(ExpectedCount.once(),
@@ -177,7 +167,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockCreateRepository(ProgrammingExercise exercise, String repositoryName) throws URISyntaxException, IOException {
         final var projectKey = exercise.getProjectKey();
-        final var body = new BitbucketRepositoryDTO(repositoryName);
+        final var body = new BitbucketRepositoryDTO(repositoryName, null);
         final var createRepoPath = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(projectKey).path("/repos");
 
         mockServer.expect(requestTo(createRepoPath.build().toUri())).andExpect(method(HttpMethod.POST)).andExpect(content().json(mapper.writeValueAsString(body)))
@@ -186,10 +176,7 @@ public class BitbucketRequestMockProvider {
 
     public void mockAddWebHooks(ProgrammingExercise exercise) throws IOException {
         final var projectKey = exercise.getProjectKey();
-        final var searchResult = new BitbucketSearchDTO<BitbucketWebHookDTO>();
-        searchResult.setSize(0);
-        searchResult.setSearchResults(new ArrayList<>());
-
+        final var searchResult = new BitbucketSearchDTO<BitbucketWebHookDTO>(0, new ArrayList<>());
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/webhooks")))
                 .andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(searchResult)).contentType(MediaType.APPLICATION_JSON));
         mockServer.expect(ExpectedCount.manyTimes(), requestTo(matchesPattern(bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/webhooks")))
@@ -376,8 +363,7 @@ public class BitbucketRequestMockProvider {
      */
     public void mockProjectKeyExists(ProgrammingExercise exercise) throws URISyntaxException, JsonProcessingException {
         final var existsUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
-        var existingProject = new BitbucketProjectDTO(exercise.getProjectKey());
-        existingProject.setName("existingProject");
+        var existingProject = new BitbucketProjectDTO(exercise.getProjectKey(), "existingProject");
         mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).contentType(MediaType.APPLICATION_JSON).body(mapper.writeValueAsString(existingProject)));
     }
@@ -394,11 +380,8 @@ public class BitbucketRequestMockProvider {
         final var existsUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects/").pathSegment(exercise.getProjectKey()).build().toUri();
         final var uniqueUri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").queryParam("name", exercise.getProjectName()).build()
                 .toUri();
-        final var searchResults = new BitbucketSearchDTO<BitbucketProjectDTO>();
-        final var foundProject = new BitbucketProjectDTO();
-        foundProject.setName(exercise.getProjectName() + (exists ? "" : "abc"));
-        searchResults.setSearchResults(List.of(foundProject));
-        searchResults.setSize(1);
+        final var foundProject = new BitbucketProjectDTO(null, exercise.getProjectName() + (exists ? "" : "abc"));
+        final var searchResults = new BitbucketSearchDTO<BitbucketProjectDTO>(1, List.of(foundProject));
 
         mockServer.expect(requestTo(existsUri)).andExpect(method(HttpMethod.GET)).andRespond(withStatus(HttpStatus.NOT_FOUND));
         mockServer.expect(requestTo(uniqueUri)).andExpect(method(HttpMethod.GET))
@@ -408,9 +391,7 @@ public class BitbucketRequestMockProvider {
     public void mockGetExistingWebhooks(String projectKey, String repositoryName) throws URISyntaxException, JsonProcessingException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
-        final var searchResult = new BitbucketSearchDTO<BitbucketWebHookDTO>();
-        searchResult.setSize(0);
-        searchResult.setSearchResults(new ArrayList<>());
+        final var searchResult = new BitbucketSearchDTO<BitbucketWebHookDTO>(0, new ArrayList<>());
 
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.GET))
                 .andRespond(withStatus(HttpStatus.OK).body(mapper.writeValueAsString(searchResult)).contentType(MediaType.APPLICATION_JSON));
@@ -419,7 +400,7 @@ public class BitbucketRequestMockProvider {
     public void mockAddWebhook(String projectKey, String repositoryName, String url) throws JsonProcessingException, URISyntaxException {
         final var uri = UriComponentsBuilder.fromUri(bitbucketServerUrl.toURI()).path("/rest/api/latest/projects").pathSegment(projectKey).path("repos").pathSegment(repositoryName)
                 .path("webhooks").build().toUri();
-        final var body = new BitbucketWebHookDTO("Artemis WebHook", url, List.of("repo:refs_changed"));
+        final var body = new BitbucketWebHookDTO(null, "Artemis WebHook", url, List.of("repo:refs_changed"));
         mockServer.expect(requestTo(uri)).andExpect(method(HttpMethod.POST)).andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(content().json(mapper.writeValueAsString(body))).andRespond(withStatus(HttpStatus.OK));
     }
@@ -457,8 +438,7 @@ public class BitbucketRequestMockProvider {
     }
 
     private void mockGetDefaultBranch(String defaultBranch, String projectKey, ExpectedCount expectedCount) throws BitbucketException, IOException {
-        var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch);
-        mockResponse.setDisplayId(defaultBranch);
+        var mockResponse = new BitbucketDefaultBranchDTO("refs/heads/" + defaultBranch, defaultBranch, null, null);
         var getDefaultBranchPattern = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/.*/default-branch";
 
         mockServer.expect(expectedCount, requestTo(matchesPattern(getDefaultBranchPattern))).andExpect(method(HttpMethod.GET))

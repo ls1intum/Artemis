@@ -89,6 +89,6 @@ describe('ThemeSwitchComponent', () => {
 
         tick(250);
 
-        expect(component.popover.open).toHaveBeenCalled();
+        expect(component.popover.open).toHaveBeenCalledOnce();
     }
 });

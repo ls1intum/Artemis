@@ -94,7 +94,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should open git-diff', () => {
+    it('should open git-diff', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
@@ -107,7 +107,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         expect(modalService.open).toHaveBeenCalledWith(GitDiffReportModalComponent, { size: 'xl' });
     });
 
-    describe('OnInit for course exercise', () => {
+    describe('onInit for course exercise', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
 
@@ -116,7 +116,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('Should not be in exam mode', () => {
+        it('should not be in exam mode', () => {
             // WHEN
             comp.ngOnInit();
 
@@ -133,7 +133,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         });
     });
 
-    describe('OnInit for exam exercise', () => {
+    describe('onInit for exam exercise', () => {
         const exam = { id: 4, course: { id: 6 } as Course } as Exam;
         const exerciseGroup = { id: 9, exam };
         const programmingExercise = new ProgrammingExercise(undefined, undefined);
@@ -145,7 +145,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             route.data = of({ programmingExercise });
         });
 
-        it('Should be in exam mode', () => {
+        it('should be in exam mode', () => {
             // WHEN
             comp.ngOnInit();
 
@@ -159,7 +159,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         });
     });
 
-    it('Should create structural solution entries', () => {
+    it('should create structural solution entries', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;
@@ -177,7 +177,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         });
     });
 
-    it('Should create behavioral solution entries', () => {
+    it('should create behavioral solution entries', () => {
         const programmingExercise = new ProgrammingExercise(new Course(), undefined);
         programmingExercise.id = 123;
         comp.programmingExercise = programmingExercise;

@@ -39,7 +39,7 @@ describe('ExerciseHint Management Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call load all on init with exerciseId from route', () => {
+    it('should call load all on init with exerciseId from route', () => {
         // GIVEN
         const headers = new HttpHeaders().append('link', 'link;link');
         const hint = new ExerciseHint();

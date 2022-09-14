@@ -146,7 +146,7 @@ describe('NavbarComponent', () => {
         component.changeLanguage('elvish');
 
         expect(useSpy).toHaveBeenCalledWith('elvish');
-        expect(languageChangeSpy).toHaveBeenCalledTimes(0);
+        expect(languageChangeSpy).not.toHaveBeenCalled();
     });
 
     it('should not build breadcrumbs for students', () => {

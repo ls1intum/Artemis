@@ -91,8 +91,8 @@ describe('Exam Navigation Bar Component', () => {
 
         comp.triggerExamAboutToEnd();
 
-        expect(comp.saveExercise).toHaveBeenCalled();
-        expect(comp.examAboutToEnd.emit).toHaveBeenCalled();
+        expect(comp.saveExercise).toHaveBeenCalledOnce();
+        expect(comp.examAboutToEnd.emit).toHaveBeenCalledOnce();
     });
 
     it('should change the exercise', () => {
@@ -107,7 +107,7 @@ describe('Exam Navigation Bar Component', () => {
         comp.changePage(false, exerciseIndex, force);
 
         expect(comp.exerciseIndex).toEqual(exerciseIndex);
-        expect(comp.onPageChanged.emit).toHaveBeenCalled();
+        expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
         expect(comp.setExerciseButtonStatus).toHaveBeenCalledWith(exerciseIndex);
     });
 
@@ -151,7 +151,7 @@ describe('Exam Navigation Bar Component', () => {
 
         comp.saveExercise(changeExercise);
 
-        expect(comp.changePage).toHaveBeenCalled();
+        expect(comp.changePage).toHaveBeenCalledOnce();
     });
 
     it('save the exercise without changeExercise', () => {
@@ -168,7 +168,7 @@ describe('Exam Navigation Bar Component', () => {
 
         comp.handInEarly();
 
-        expect(comp.onExamHandInEarly.emit).toHaveBeenCalled();
+        expect(comp.onExamHandInEarly.emit).toHaveBeenCalledOnce();
     });
 
     it('should set the exercise button status for undefined submission', () => {
@@ -244,6 +244,6 @@ describe('Exam Navigation Bar Component', () => {
         const updatedExerciseId = 2;
         jest.spyOn(comp, 'changeExerciseById');
         examExerciseIdForNavigationSourceMock.next(updatedExerciseId);
-        expect(comp.changeExerciseById).toHaveBeenCalled();
+        expect(comp.changeExerciseById).toHaveBeenCalledOnce();
     });
 });

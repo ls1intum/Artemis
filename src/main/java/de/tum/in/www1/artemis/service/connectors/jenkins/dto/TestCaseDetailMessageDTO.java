@@ -6,36 +6,10 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class TestCaseDetailMessageDTO {
+public record TestCaseDetailMessageDTO(String message, String type, String messageWithStackTrace) {
 
-    private String message;
-
-    private String type;
-
-    private String messageWithStackTrace;
-
-    public String getMessage() {
-        return message;
-    }
-
-    public void setMessage(String message) {
-        this.message = message;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
-    }
-
-    public String getMessageWithStackTrace() {
-        return messageWithStackTrace;
-    }
-
-    public void setMessageWithStackTrace(String messageWithStackTrace) {
-        this.messageWithStackTrace = messageWithStackTrace;
+    public TestCaseDetailMessageDTO(String message) {
+        this(message, null, null);
     }
 
     @JsonIgnore

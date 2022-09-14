@@ -59,7 +59,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
 
         fingerprintInterceptor.intercept(requestMock, mockHandler);
 
-        expect(cloneSpy).toHaveBeenCalledTimes(0);
+        expect(cloneSpy).not.toHaveBeenCalled();
         expect(mockHandler.handle).toHaveBeenCalledOnce();
         expect(mockHandler.handle).toHaveBeenCalledWith(requestMock);
     });
@@ -73,7 +73,7 @@ describe(`BrowserFingerprintInterceptor`, () => {
 
         fingerprintInterceptor.intercept(requestMock, mockHandler);
 
-        expect(cloneSpy).toHaveBeenCalledTimes(0);
+        expect(cloneSpy).not.toHaveBeenCalled();
         expect(mockHandler.handle).toHaveBeenCalledOnce();
         expect(mockHandler.handle).toHaveBeenCalledWith(requestMock);
     });

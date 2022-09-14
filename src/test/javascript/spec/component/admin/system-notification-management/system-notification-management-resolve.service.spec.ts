@@ -33,6 +33,6 @@ describe('SystemNotificationManagementResolveService', () => {
         const result = systemNotificationManagementResolve.resolve({ params: { id: undefined } } as any as ActivatedRouteSnapshot);
         expect(result).not.toBe(toReturn);
         expect(result).toBeInstanceOf(SystemNotification);
-        expect(spy).toHaveBeenCalledTimes(0);
+        expect(spy).not.toHaveBeenCalled();
     });
 });
