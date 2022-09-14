@@ -151,7 +151,7 @@ describe('ExerciseScoresExportButtonComponent', () => {
         fixture.detectChanges();
 
         // THEN
-        expect(getResultsStub).toHaveBeenCalled();
+        expect(getResultsStub).toHaveBeenCalledOnce();
         expect(exportCSVStub).not.toHaveBeenCalled();
     });
 

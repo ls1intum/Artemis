@@ -522,8 +522,8 @@ describe('GuidedTourService', () => {
             });
             it('backStep should just return if currentTour is not defined', () => {
                 guidedTourService.backStep();
-                expect(currentDotSubjectSpy).toHaveBeenCalledTimes(0);
-                expect(resetSpy).toHaveBeenCalledTimes(0);
+                expect(currentDotSubjectSpy).not.toHaveBeenCalled();
+                expect(resetSpy).not.toHaveBeenCalled();
             });
             it('backStep should reset tour if currentTour is defined', () => {
                 guidedTourService.currentTour = tour;
@@ -533,8 +533,8 @@ describe('GuidedTourService', () => {
             });
             it('nextStep should just return if currentTour is not defined', () => {
                 guidedTourService.nextStep();
-                expect(currentDotSubjectSpy).toHaveBeenCalledTimes(0);
-                expect(resetSpy).toHaveBeenCalledTimes(0);
+                expect(currentDotSubjectSpy).not.toHaveBeenCalled();
+                expect(resetSpy).not.toHaveBeenCalled();
             });
             it('nextStep should reset return if currentTour is defined', () => {
                 guidedTourService.currentTour = tour;
@@ -587,12 +587,12 @@ describe('GuidedTourService', () => {
                 const userInteractionEvent = UserInteractionEvent.WAIT_FOR_SELECTOR;
                 guidedTourService.enableUserInteraction({} as any, userInteractionEvent);
                 expect(handleWaitForSelectorEventSpy).toHaveBeenCalledOnce();
-                expect(querySelectorSpy).toHaveBeenCalledTimes(0);
+                expect(querySelectorSpy).not.toHaveBeenCalled();
             }));
             it('should enableUserInteraction with UserInteractionEvent.CLICK', fakeAsync(() => {
                 const userInteractionEvent = UserInteractionEvent.CLICK;
                 guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
-                expect(querySelectorSpy).toHaveBeenCalledTimes(0);
+                expect(querySelectorSpy).not.toHaveBeenCalled();
             }));
             it('should enableUserInteraction with UserInteractionEvent.ACE_EDITOR', fakeAsync(() => {
                 const userInteractionEvent = UserInteractionEvent.ACE_EDITOR;
@@ -611,7 +611,7 @@ describe('GuidedTourService', () => {
                 const userInteractionEvent = UserInteractionEvent.ASSESS_SUBMISSION;
                 guidedTourService.enableUserInteraction(htmlTarget, userInteractionEvent);
                 expect(isAssessmentCorrectSpy).toHaveBeenCalledOnce();
-                expect(querySelectorSpy).toHaveBeenCalledTimes(0);
+                expect(querySelectorSpy).not.toHaveBeenCalled();
             }));
         });
 
@@ -645,7 +645,7 @@ describe('GuidedTourService', () => {
                 it('should return undefined if exercise.course is undefined', fakeAsync(() => {
                     const inputExercise = {} as Exercise;
                     expect(guidedTourService.enableTourForExercise(inputExercise, tour, true)).toBeUndefined();
-                    expect(enableTourSpy).toHaveBeenCalledTimes(0);
+                    expect(enableTourSpy).not.toHaveBeenCalled();
                 }));
                 it('should return undefined if guidedTour mapping is undefined', fakeAsync(() => {
                     guidedTourService.guidedTourMapping = undefined;
@@ -655,18 +655,18 @@ describe('GuidedTourService', () => {
             it('should enableTourForExercise for text exercise', fakeAsync(() => {
                 expect(guidedTourService.enableTourForExercise(exerciseText, tour, true)).toEqual(exerciseText);
                 expect(enableTourSpy).toHaveBeenCalledOnce();
-                expect(startTourSpy).toHaveBeenCalledTimes(0);
+                expect(startTourSpy).not.toHaveBeenCalled();
             }));
             it('should enableTourForExercise for programming exercise', fakeAsync(() => {
                 expect(guidedTourService.enableTourForExercise(exerciseProgramming, tour, true)).toEqual(exerciseProgramming);
                 expect(enableTourSpy).toHaveBeenCalledOnce();
-                expect(startTourSpy).toHaveBeenCalledTimes(0);
+                expect(startTourSpy).not.toHaveBeenCalled();
             }));
             it('should enableTourForExercise for text exercise with init set to false', fakeAsync(() => {
                 guidedTourService.guidedTourSettings = guidedTourSettings;
                 expect(guidedTourService.enableTourForExercise(exerciseText, tour, false)).toEqual(exerciseText);
                 expect(enableTourSpy).toHaveBeenCalledOnce();
-                expect(startTourSpy).toHaveBeenCalledTimes(0);
+                expect(startTourSpy).not.toHaveBeenCalled();
             }));
         });
 
@@ -708,19 +708,19 @@ describe('GuidedTourService', () => {
                 guidedTourService.currentTour = tourWithAssessmentTourSteps;
                 guidedTourService.updateAssessmentResult(3, 3);
                 tick(0);
-                expect(enableNextStepSpy).toHaveBeenCalledTimes(0);
+                expect(enableNextStepSpy).not.toHaveBeenCalled();
             }));
             it('should updateAssessmentResult and not enableNextStepClick as score not correct', fakeAsync(() => {
                 guidedTourService.currentTour = tourWithAssessmentTourSteps;
                 guidedTourService.updateAssessmentResult(2, 1);
                 tick(0);
-                expect(enableNextStepSpy).toHaveBeenCalledTimes(0);
+                expect(enableNextStepSpy).not.toHaveBeenCalled();
             }));
             it('should not updateAssessmentResult as there is no assessmentTask', fakeAsync(() => {
                 guidedTourService.currentTour = tour;
                 guidedTourService.updateAssessmentResult(2, 1);
                 tick(0);
-                expect(enableNextStepSpy).toHaveBeenCalledTimes(0);
+                expect(enableNextStepSpy).not.toHaveBeenCalled();
             }));
             it('should not updateAssessmentResult as the totalScore is 0', fakeAsync(() => {
                 guidedTourService.currentTour = tourWithAssessmentTourStep;

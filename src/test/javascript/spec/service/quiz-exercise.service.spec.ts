@@ -201,7 +201,7 @@ describe('QuizExercise Service', () => {
         service.exportQuiz(questions, exportAll, filename);
 
         if (count === 0) {
-            expect(spy).toHaveBeenCalledTimes(0);
+            expect(spy).not.toHaveBeenCalled();
         } else {
             expect(spy).toHaveBeenCalledOnce();
             const [blob, file] = spy.mock.calls[0];

@@ -18,9 +18,9 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Long> {
 
     @Query("""
-                SELECT tutorialGroup.title
-                FROM TutorialGroup tutorialGroup
-                WHERE tutorialGroup.id = :tutorialGroupId
+            SELECT tutorialGroup.title
+            FROM TutorialGroup tutorialGroup
+            WHERE tutorialGroup.id = :tutorialGroupId
             """)
     @Cacheable(cacheNames = "tutorialGroupTitle", key = "#tutorialGroupId", unless = "#result == null")
     Optional<String> getTutorialGroupTitle(@Param("tutorialGroupId") Long tutorialGroupId);
@@ -42,15 +42,15 @@ public interface TutorialGroupRepository extends JpaRepository<TutorialGroup, Lo
 
     @Query("""
             SELECT tutorialGroup
-                FROM TutorialGroup tutorialGroup
-                LEFT JOIN FETCH tutorialGroup.teachingAssistant
-                LEFT JOIN FETCH tutorialGroup.registrations
-                WHERE tutorialGroup.course.id = :#{#courseId}
-                ORDER BY tutorialGroup.title""")
+            FROM TutorialGroup tutorialGroup
+            LEFT JOIN FETCH tutorialGroup.teachingAssistant
+            LEFT JOIN FETCH tutorialGroup.registrations
+            WHERE tutorialGroup.course.id = :#{#courseId}
+            ORDER BY tutorialGroup.title""")
     Set<TutorialGroup> findAllByCourseIdWithTeachingAssistantAndRegistrations(@Param("courseId") Long courseId);
 
     @Query("""
-                SELECT tutorialGroup
+            SELECT tutorialGroup
             FROM TutorialGroup tutorialGroup
             LEFT JOIN FETCH tutorialGroup.teachingAssistant
             LEFT JOIN FETCH tutorialGroup.registrations
