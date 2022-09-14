@@ -17,6 +17,38 @@ public class TutorialGroupDateUtil {
     public static final LocalTime END_OF_DAY = LocalTime.of(23, 59, 59);
 
     /**
+     * Check if a string follows the ISO 8601 format for date
+     *
+     * @param dateString the string to check
+     * @return true if the string follows the ISO 8601 format for date
+     */
+    public static boolean isIso8601DateString(String dateString) {
+        try {
+            LocalDate.parse(dateString);
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if a string follows the ISO 8601 format for time
+     *
+     * @param timeString the string to check
+     * @return true if the string follows the ISO 8601 format for time
+     */
+    public static boolean isIso8601TimeString(String timeString) {
+        try {
+            LocalTime.parse(timeString);
+            return true;
+        }
+        catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
      * Convert a LocalDate and LocalTime to a ZonedDateTime by interpreting them in the time zone of the TutorialGroupsConfiguration
      *
      * @param localDate                   date to convert

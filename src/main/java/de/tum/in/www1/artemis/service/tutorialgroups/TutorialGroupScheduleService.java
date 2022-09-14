@@ -50,9 +50,9 @@ public class TutorialGroupScheduleService {
 
         // generate first session in the period (starting point of generation for other sessions)
         ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(tutorialGroupSchedule.getValidFromInclusive(), tutorialGroupSchedule.getDayOfWeek()),
-                tutorialGroupSchedule.getStartTime(), timeZone);
+                LocalTime.parse(tutorialGroupSchedule.getStartTime()), timeZone);
         ZonedDateTime sessionEnd = ZonedDateTime.of(getFirstDateOfWeekDay(tutorialGroupSchedule.getValidFromInclusive(), tutorialGroupSchedule.getDayOfWeek()),
-                tutorialGroupSchedule.getEndTime(), timeZone);
+                LocalTime.parse(tutorialGroupSchedule.getEndTime()), timeZone);
 
         while (sessionEnd.isBefore(periodEnd) || sessionEnd.isEqual(periodEnd)) {
             TutorialGroupSession session = generateScheduledSession(tutorialGroupsConfiguration, tutorialGroupSchedule, sessionStart, sessionEnd);

@@ -1,7 +1,8 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
+
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -30,11 +31,17 @@ public class TutorialGroupSchedule extends DomainObject {
     @Column(name = "day_of_week")
     private Integer dayOfWeek;
 
+    /**
+     * Note: String to prevent Hibernate from converting it to UTC
+     */
     @Column(name = "start_time")
-    private LocalTime startTime;
+    private String startTime;
 
+    /**
+     * Note: String to prevent Hibernate from converting it to UTC
+     */
     @Column(name = "end_time")
-    private LocalTime endTime;
+    private String endTime;
 
     @Column(name = "repetition_frequency")
     private Integer repetitionFrequency;
@@ -94,20 +101,30 @@ public class TutorialGroupSchedule extends DomainObject {
         this.dayOfWeek = dayOfWeek;
     }
 
-    public LocalTime getStartTime() {
+    public String getStartTime() {
         return startTime;
     }
 
-    public void setStartTime(LocalTime startTime) {
-        this.startTime = startTime;
+    public void setStartTime(String startTime) {
+        if (isIso8601TimeString(startTime)) {
+            this.startTime = startTime;
+        }
+        else {
+            throw new IllegalArgumentException("Start time must be in ISO 8601 format (HH:mm:ss)");
+        }
     }
 
-    public LocalTime getEndTime() {
+    public String getEndTime() {
         return endTime;
     }
 
-    public void setEndTime(LocalTime endTime) {
-        this.endTime = endTime;
+    public void setEndTime(String endTime) {
+        if (isIso8601TimeString(endTime)) {
+            this.endTime = endTime;
+        }
+        else {
+            throw new IllegalArgumentException("End time must be in ISO 8601 format (HH:mm:ss)");
+        }
     }
 
     public Integer getRepetitionFrequency() {
