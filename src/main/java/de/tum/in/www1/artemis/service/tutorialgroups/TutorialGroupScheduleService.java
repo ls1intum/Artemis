@@ -46,12 +46,12 @@ public class TutorialGroupScheduleService {
     public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
         ZoneId timeZone = ZoneId.of(tutorialGroupsConfiguration.getTimeZone());
         List<TutorialGroupSession> sessions = new ArrayList<>();
-        ZonedDateTime periodEnd = ZonedDateTime.of(tutorialGroupSchedule.getValidToInclusive(), TutorialGroupDateUtil.END_OF_DAY, timeZone);
+        ZonedDateTime periodEnd = ZonedDateTime.of(LocalDate.parse(tutorialGroupSchedule.getValidToInclusive()), TutorialGroupDateUtil.END_OF_DAY, timeZone);
 
         // generate first session in the period (starting point of generation for other sessions)
-        ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(tutorialGroupSchedule.getValidFromInclusive(), tutorialGroupSchedule.getDayOfWeek()),
+        ZonedDateTime sessionStart = ZonedDateTime.of(getFirstDateOfWeekDay(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), tutorialGroupSchedule.getDayOfWeek()),
                 LocalTime.parse(tutorialGroupSchedule.getStartTime()), timeZone);
-        ZonedDateTime sessionEnd = ZonedDateTime.of(getFirstDateOfWeekDay(tutorialGroupSchedule.getValidFromInclusive(), tutorialGroupSchedule.getDayOfWeek()),
+        ZonedDateTime sessionEnd = ZonedDateTime.of(getFirstDateOfWeekDay(LocalDate.parse(tutorialGroupSchedule.getValidFromInclusive()), tutorialGroupSchedule.getDayOfWeek()),
                 LocalTime.parse(tutorialGroupSchedule.getEndTime()), timeZone);
 
         while (sessionEnd.isBefore(periodEnd) || sessionEnd.isEqual(periodEnd)) {

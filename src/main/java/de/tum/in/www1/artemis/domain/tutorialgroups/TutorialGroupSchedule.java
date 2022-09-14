@@ -1,8 +1,8 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601TimeString;
 
-import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -47,16 +47,16 @@ public class TutorialGroupSchedule extends DomainObject {
     private Integer repetitionFrequency;
 
     /**
-     * Note: Just a date in the format YYYY-MM-DD is stored in the database
+     * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "valid_from_inclusive")
-    private LocalDate validFromInclusive;
+    private String validFromInclusive;
 
     /**
-     * Note: Just a date in the format YYYY-MM-DD is stored in the database
+     * Note: String to prevent Hibernate from converting it to UTC
      */
     @Column(name = "valid_to_inclusive")
-    private LocalDate validToInclusive;
+    private String validToInclusive;
 
     @Column(name = "location")
     @Size(max = 2000)
@@ -135,20 +135,30 @@ public class TutorialGroupSchedule extends DomainObject {
         this.repetitionFrequency = repetitionFrequency;
     }
 
-    public LocalDate getValidFromInclusive() {
+    public String getValidFromInclusive() {
         return validFromInclusive;
     }
 
-    public void setValidFromInclusive(LocalDate validFromInclusive) {
-        this.validFromInclusive = validFromInclusive;
+    public void setValidFromInclusive(String validFromInclusive) {
+        if (isIso8601DateString(validFromInclusive)) {
+            this.validFromInclusive = validFromInclusive;
+        }
+        else {
+            throw new IllegalArgumentException("ValidFromInclusive must be in ISO 8601 format (yyyy-MM-dd)");
+        }
     }
 
-    public LocalDate getValidToInclusive() {
+    public String getValidToInclusive() {
         return validToInclusive;
     }
 
-    public void setValidToInclusive(LocalDate validToInclusive) {
-        this.validToInclusive = validToInclusive;
+    public void setValidToInclusive(String validToInclusive) {
+        if (isIso8601DateString(validToInclusive)) {
+            this.validToInclusive = validToInclusive;
+        }
+        else {
+            throw new IllegalArgumentException("ValidToInclusive must be in ISO 8601 format (yyyy-MM-dd)");
+        }
     }
 
     public String getLocation() {
