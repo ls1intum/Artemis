@@ -590,7 +590,7 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
             assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionDatabase.getPoints());
             assertThat(question.getPoints()).as("Question scores are correct").isEqualTo(questionServer.getPoints());
         }
-        return quizExerciseServer;
+        return quizExerciseDatabase; // TODO: @sleiss: Check if this is fine
     }
 
     private QuizExercise createQuizOnServerForExam() throws Exception {
@@ -1767,7 +1767,9 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         quizExercise.setCourse(course1);  // remove line
 
         quizExercise = quizExerciseService.save(quizExercise);
-        teamRepository.save(quizExercise, new Team());
+        var team = new Team();
+        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        teamRepository.save(quizExercise, team);
 
         QuizExercise changedQuiz = quizExerciseRepository.findOneWithQuestionsAndStatistics(quizExercise.getId());
         assertThat(changedQuiz).isNotNull();

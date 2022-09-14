@@ -23,8 +23,8 @@ import de.tum.in.www1.artemis.domain.Course;
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class AnswerPost extends Posting {
 
-    @Column(name = "resolves_post")
-    private Boolean resolvesPost;
+    @Column(name = "resolves_post", columnDefinition = "boolean default false")
+    private Boolean resolvesPost = false;
 
     @OneToMany(mappedBy = "answerPost", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.EAGER)
     private Set<Reaction> reactions = new HashSet<>();
