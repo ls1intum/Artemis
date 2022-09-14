@@ -39,7 +39,7 @@ public class Complaint extends DomainObject {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "complaint_type")
-    private ComplaintType complaintType;
+    private ComplaintType complaintType = ComplaintType.COMPLAINT;
 
     // TODO: delete in the next major release
     @Deprecated

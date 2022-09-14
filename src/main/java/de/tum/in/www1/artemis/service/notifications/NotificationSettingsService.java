@@ -228,7 +228,7 @@ public class NotificationSettingsService {
      * @param userNotificationSettings are the notification settings retrieved from the DB for the current user
      * @return the updated and correct notification settings
      */
-    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings) {
+    public Set<NotificationSetting> checkLoadedNotificationSettingsForCorrectness(Set<NotificationSetting> userNotificationSettings, User user) {
         if (userNotificationSettings.isEmpty()) {
             return DEFAULT_NOTIFICATION_SETTINGS;
         }
@@ -243,6 +243,8 @@ public class NotificationSettingsService {
                     updatedDefaultNotificationSettings.add(userNotificationSetting);
                 }
             }));
+
+            updatedDefaultNotificationSettings.forEach(userNotificationSetting -> userNotificationSetting.setUser(user));
             // update DB to fix inconsistencies and avoid redundant future merges
             // first remove all settings of the current user in the DB
             notificationSettingRepository.deleteAll(userNotificationSettings);

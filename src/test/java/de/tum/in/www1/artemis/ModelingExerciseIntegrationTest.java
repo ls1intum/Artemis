@@ -7,6 +7,7 @@ import static org.mockito.Mockito.verify;
 import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.function.Function;
 
 import org.junit.jupiter.api.AfterEach;
@@ -662,7 +663,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         sourceExercise.setCourse(course1);
 
         sourceExercise = modelingExerciseRepository.save(sourceExercise);
-        teamRepository.save(sourceExercise, new Team());
+        var team = new Team();
+        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        teamRepository.save(sourceExercise, team);
 
         var exerciseToBeImported = ModelFactory.generateModelingExercise(now.minusDays(1), now.minusHours(2), now.minusHours(1), DiagramType.ClassDiagram, course2);
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);

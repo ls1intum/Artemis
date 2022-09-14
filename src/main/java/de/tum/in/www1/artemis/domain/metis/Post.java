@@ -64,8 +64,8 @@ public class Post extends Posting {
     private CourseWideContext courseWideContext;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "display_priority")
-    private DisplayPriority displayPriority;
+    @Column(name = "display_priority", columnDefinition = "varchar(25) default 'NONE'")
+    private DisplayPriority displayPriority = DisplayPriority.NONE;
 
     @OneToOne
     @JoinColumn(name = "plagiarism_case_id")

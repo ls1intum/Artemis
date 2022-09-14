@@ -131,7 +131,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_empty() {
         Set<NotificationSetting> testSet = new HashSet<>();
-        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
         assertThat(testSet).as("The default notification settings should be returned").isEqualTo(DEFAULT_NOTIFICATION_SETTINGS);
     }
 
@@ -142,7 +142,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     void testCheckLoadedNotificationSettingsForCorrectness_incomplete() {
         Set<NotificationSetting> testSet = new HashSet<>();
         testSet.add(completeNotificationSettingA);
-        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
         assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS)
                 .as("The loaded settings should contain the set of test settings").contains(completeNotificationSettingA);
     }
@@ -153,7 +153,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
     @Test
     void testCheckLoadedNotificationSettingsForCorrectness_correct() {
         Set<NotificationSetting> testSet = new HashSet<>(DEFAULT_NOTIFICATION_SETTINGS);
-        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet);
+        testSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(testSet, student1);
         assertThat(testSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS);
     }
 
@@ -170,7 +170,7 @@ class NotificationSettingsServiceTest extends AbstractSpringIntegrationBambooBit
         assertThat(outdatedSet.size()).as("Prior to checking the settings for correctness the outdated additional setting should be present")
                 .isNotEqualTo(DEFAULT_NOTIFICATION_SETTINGS.size());
 
-        Set<NotificationSetting> resultingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(outdatedSet);
+        Set<NotificationSetting> resultingSet = notificationSettingsService.checkLoadedNotificationSettingsForCorrectness(outdatedSet, student1);
 
         assertThat(resultingSet).as("The number of loaded Settings should be equals to the number of default settings").hasSameSizeAs(DEFAULT_NOTIFICATION_SETTINGS)
                 .as("The outdated setting should have been removed").doesNotContain(outdatedSetting);

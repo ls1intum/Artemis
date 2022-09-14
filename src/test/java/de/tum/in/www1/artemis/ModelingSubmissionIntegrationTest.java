@@ -436,6 +436,7 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         submissionA.setSubmissionId(submission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
         PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(classExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
         post.setAuthor(userRepo.getUserByLoginElseThrow("instructor1"));

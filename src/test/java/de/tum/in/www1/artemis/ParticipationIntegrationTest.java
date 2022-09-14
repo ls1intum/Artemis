@@ -5,10 +5,7 @@ import static org.mockito.Mockito.*;
 
 import java.net.URI;
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -712,10 +709,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         var student = database.getUserByLogin("student1");
 
-        var team = new Team();
-        team.addStudents(student);
-        team.setExercise(exercise);
-        team = teamRepository.save(team);
+        var team = createTeamForExercise(student, exercise);
 
         var teams = new HashSet<Team>();
         teams.add(team);
@@ -822,6 +816,7 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     private Team createTeamForExercise(User student, Exercise exercise) {
         var team = new Team();
+        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
         team.addStudents(student);
         team.setExercise(exercise);
         return teamRepository.save(team);
