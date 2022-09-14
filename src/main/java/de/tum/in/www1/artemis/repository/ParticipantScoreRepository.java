@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.repository;
 
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
+import java.time.Instant;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -43,6 +44,16 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     List<ParticipantScore> findAll();
 
     List<ParticipantScore> findAllByExercise(Exercise exercise);
+
+    @Query("""
+                SELECT p
+                FROM ParticipantScore p
+                LEFT JOIN FETCH p.lastResult
+                LEFT JOIN FETCH p.lastRatedResult
+                WHERE p.lastResult.id = :resultId
+                OR p.lastRatedResult.id = :resultId
+            """)
+    Optional<ParticipantScore> findByResultIdWithEagerResults(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT p
@@ -101,6 +112,12 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
         this.removeAllByLastResultId(resultId);
         this.removeAllByLastRatedResultId(resultId);
     }
+
+    @Query("""
+            SELECT MAX(ps.lastModifiedDate) as latestModifiedDate
+            FROM ParticipantScore ps
+            """)
+    Optional<Instant> getLatestModifiedDate();
 
     @Query("""
                     SELECT new de.tum.in.www1.artemis.web.rest.dto.ExerciseScoresAggregatedInformation(p.exercise.id, AVG(p.lastRatedScore), MAX(p.lastRatedScore))

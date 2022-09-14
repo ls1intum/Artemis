@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 
 @Service
+@Deprecated(forRemoval = true)
 public class ScoreService {
 
     private final StudentScoreRepository studentScoreRepository;
@@ -286,7 +287,6 @@ public class ScoreService {
         }
         // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
-
     }
 
     /**
@@ -311,7 +311,6 @@ public class ScoreService {
         }
         // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));
-
     }
 
     private void setLastAttributes(ParticipantScore associatedParticipantScore, Result newLastResult, Exercise exercise) {

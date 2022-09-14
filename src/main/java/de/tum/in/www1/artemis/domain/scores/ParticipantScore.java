@@ -1,11 +1,15 @@
 package de.tum.in.www1.artemis.domain.scores;
 
+import java.time.Instant;
+
 import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.hibernate.annotations.DiscriminatorOptions;
+import org.springframework.data.annotation.LastModifiedDate;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -56,6 +60,11 @@ public abstract class ParticipantScore extends DomainObject {
 
     @Column(name = "last_rated_points")
     private Double lastRatedPoints;
+
+    @LastModifiedDate
+    @Column(name = "last_modified_date")
+    @JsonIgnore
+    private Instant lastModifiedDate = Instant.now();
 
     public Exercise getExercise() {
         return exercise;
@@ -111,5 +120,9 @@ public abstract class ParticipantScore extends DomainObject {
 
     public void setLastRatedPoints(Double lastRatedPoints) {
         this.lastRatedPoints = lastRatedPoints;
+    }
+
+    public Instant getLastModifiedDate() {
+        return lastModifiedDate;
     }
 }

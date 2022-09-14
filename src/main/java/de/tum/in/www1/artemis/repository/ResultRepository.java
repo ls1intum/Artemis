@@ -89,6 +89,15 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r FROM Result r
+            LEFT JOIN FETCH r.participation p
+            LEFT JOIN FETCH p.submissions s
+            LEFT JOIN FETCH p.exercise e
+            WHERE r.id = :resultId
+            """)
+    Optional<Result> findByIdWithEagerParticipationAndSubmissionsAndExercise(@Param("resultId") Long resultId);
+
+    @Query("""
+            SELECT r FROM Result r
             LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)
@@ -287,7 +296,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            FROM Exercise e
+            JOIN e.studentParticipations p
+            JOIN p.submissions s
+            JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.student.id = :studentId
                 AND r.score IS NOT NULL
@@ -300,7 +312,10 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r
-            FROM Exercise e JOIN e.studentParticipations p JOIN p.submissions s JOIN s.results r
+            FROM Exercise e
+            JOIN e.studentParticipations p
+            JOIN p.submissions s
+            JOIN s.results r
             WHERE e.id = :exerciseId
                 AND p.team.id = :teamId
                 AND r.score IS NOT NULL
@@ -310,6 +325,8 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
             ORDER BY p.id DESC, s.id DESC, r.id DESC
             """)
     List<Result> getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
+
+    List<Result> findByCompletionDateGreaterThanEqual(ZonedDateTime completionDate);
 
     /**
      * Checks if a result for the given participation exists.
