@@ -255,7 +255,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
             currentValue: { ...comp.exercise, problemStatement: newProblemStatement },
             firstChange: false,
         });
-        expect(updateMarkdownStub).toHaveBeenCalled();
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
     });
 
@@ -277,7 +277,7 @@ describe('ProgrammingExerciseInstructionComponent', () => {
         comp.isInitial = false;
         triggerChanges(comp, { property: 'exercise', currentValue: { ...comp.exercise, problemStatement: newProblemStatement }, firstChange: false });
         expect(comp.markdownExtensions).toHaveLength(2);
-        expect(updateMarkdownStub).toHaveBeenCalled();
+        expect(updateMarkdownStub).toHaveBeenCalledOnce();
         expect(loadInitialResult).not.toHaveBeenCalled();
     });
 

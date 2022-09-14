@@ -2,7 +2,6 @@ import { HttpResponse } from '@angular/common/http';
 import { ChangeDetectorRef, EventEmitter, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, Router } from '@angular/router';
-import { expect as jestExpect } from '@jest/globals';
 import { NgbDate, NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { TranslateService } from '@ngx-translate/core';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
@@ -182,7 +181,7 @@ describe('QuizExercise Management Detail Component', () => {
         modalService = fixture.debugElement.injector.get(NgbModal);
     };
 
-    describe('OnInit', () => {
+    describe('onInit', () => {
         let quizExerciseServiceStub: jest.SpyInstance;
         let courseManagementServiceStub: jest.SpyInstance;
         let exerciseGroupServiceStub: jest.SpyInstance;
@@ -200,7 +199,7 @@ describe('QuizExercise Management Detail Component', () => {
         describe('without exam id', () => {
             beforeEach(waitForAsync(configureTestBed));
             beforeEach(configureFixtureAndServices);
-            it('Should call courseExerciseService.find and quizExerciseService.find', () => {
+            it('should call courseExerciseService.find and quizExerciseService.find', () => {
                 // GIVEN
                 configureStubs();
                 // WHEN
@@ -208,10 +207,10 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(quizExerciseServiceStub).toHaveBeenCalled();
-                expect(courseManagementServiceStub).toHaveBeenCalled();
+                expect(quizExerciseServiceStub).toHaveBeenCalledOnce();
+                expect(courseManagementServiceStub).toHaveBeenCalledOnce();
                 expect(exerciseGroupServiceStub).not.toHaveBeenCalled();
-                expect(initStub).toHaveBeenCalled();
+                expect(initStub).toHaveBeenCalledOnce();
             });
 
             afterEach(() => {
@@ -229,10 +228,10 @@ describe('QuizExercise Management Detail Component', () => {
                 configureStubs();
                 comp.course = course;
                 comp.ngOnInit();
-                expect(quizExerciseServiceStub).toHaveBeenCalled();
-                expect(courseManagementServiceStub).toHaveBeenCalled();
-                expect(exerciseGroupServiceStub).toHaveBeenCalled();
-                expect(initStub).toHaveBeenCalled();
+                expect(quizExerciseServiceStub).toHaveBeenCalledOnce();
+                expect(courseManagementServiceStub).toHaveBeenCalledOnce();
+                expect(exerciseGroupServiceStub).toHaveBeenCalledOnce();
+                expect(initStub).toHaveBeenCalledOnce();
             });
 
             afterEach(() => {
@@ -249,9 +248,9 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.course = course;
                 comp.ngOnInit();
                 expect(quizExerciseServiceStub).not.toHaveBeenCalled();
-                expect(courseManagementServiceStub).toHaveBeenCalled();
-                expect(exerciseGroupServiceStub).toHaveBeenCalled();
-                expect(initStub).toHaveBeenCalled();
+                expect(courseManagementServiceStub).toHaveBeenCalledOnce();
+                expect(exerciseGroupServiceStub).toHaveBeenCalledOnce();
+                expect(initStub).toHaveBeenCalledOnce();
             });
 
             afterEach(() => {
@@ -268,9 +267,9 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.course = course;
                 comp.ngOnInit();
                 expect(quizExerciseServiceStub).not.toHaveBeenCalled();
-                expect(courseManagementServiceStub).toHaveBeenCalled();
+                expect(courseManagementServiceStub).toHaveBeenCalledOnce();
                 expect(exerciseGroupServiceStub).not.toHaveBeenCalled();
-                expect(initStub).toHaveBeenCalled();
+                expect(initStub).toHaveBeenCalledOnce();
             });
 
             afterEach(() => {
@@ -446,7 +445,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should call on error if course service fails', () => {
                 courseServiceStub.mockReturnValue(throwError(() => ({ status: 404 })));
                 comp.init();
-                expect(alertServiceStub).toHaveBeenCalled();
+                expect(alertServiceStub).toHaveBeenCalledOnce();
             });
         });
 
@@ -457,7 +456,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise = quizExercise;
             });
 
-            it('Should update duration and quizExercise.duration with same values', () => {
+            it('should update duration and quizExercise.duration with same values', () => {
                 comp.duration = { minutes: 15, seconds: 30 };
                 comp.onDurationChange();
 
@@ -466,7 +465,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(durationAsSeconds).toEqual(comp.quizExercise.duration);
             });
 
-            it('Should increase minutes when reaching 60 seconds', () => {
+            it('should increase minutes when reaching 60 seconds', () => {
                 comp.duration = { minutes: 0, seconds: 60 };
                 comp.onDurationChange();
 
@@ -474,7 +473,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.duration.seconds).toBe(0);
             });
 
-            it('Should decrease minutes when reaching -1 seconds', () => {
+            it('should decrease minutes when reaching -1 seconds', () => {
                 comp.duration = { minutes: 1, seconds: -1 };
                 comp.onDurationChange();
 
@@ -482,7 +481,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.duration.seconds).toBe(59);
             });
 
-            it('Should set duration to due date release date difference', () => {
+            it('should set duration to due date release date difference', () => {
                 comp.isExamMode = true;
                 comp.quizExercise.releaseDate = dayjs();
                 comp.quizExercise.dueDate = dayjs().add(1530, 's');
@@ -498,15 +497,15 @@ describe('QuizExercise Management Detail Component', () => {
                 const initStub = jest.spyOn(comp, 'init').mockImplementation();
 
                 comp.ngOnChanges({ course: change });
-                expect(initStub).toHaveBeenCalled();
+                expect(initStub).toHaveBeenCalledOnce();
                 initStub.mockClear();
 
                 comp.ngOnChanges({ quizExercise: change });
-                expect(initStub).toHaveBeenCalled();
+                expect(initStub).toHaveBeenCalledOnce();
                 initStub.mockClear();
 
                 comp.ngOnChanges({ course: change, quizExercise: change });
-                expect(initStub).toHaveBeenCalled();
+                expect(initStub).toHaveBeenCalledOnce();
                 initStub.mockClear();
 
                 comp.ngOnChanges({});
@@ -652,21 +651,21 @@ describe('QuizExercise Management Detail Component', () => {
             it('should set quiz exercise to entity when adding MC question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addMultipleChoiceQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalled();
+                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
                 expect(comp.quizExercise).toEqual(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding Dnd question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addDragAndDropQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalled();
+                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
                 expect(comp.quizExercise).toEqual(quizExercise);
             });
 
             it('should set quiz exercise to entity when adding SA question', () => {
                 expect(comp.quizExercise).toBeUndefined();
                 comp.addShortAnswerQuestion();
-                expect(initializeNewQuizExerciseStub).toHaveBeenCalled();
+                expect(initializeNewQuizExerciseStub).toHaveBeenCalledOnce();
                 expect(comp.quizExercise).toEqual(quizExercise);
             });
         });
@@ -704,7 +703,7 @@ describe('QuizExercise Management Detail Component', () => {
                 const cacheValidationStub = jest.spyOn(comp, 'cacheValidation').mockImplementation();
                 comp.addExistingQuestions();
                 expect(verifyAndImportQuestionsStub).toHaveBeenCalledWith([exportedQuestion]);
-                expect(cacheValidationStub).toHaveBeenCalled();
+                expect(cacheValidationStub).toHaveBeenCalledOnce();
                 expect(comp.showExistingQuestions).toBeFalse();
                 expect(comp.showExistingQuestionsFromCourse).toBeTrue();
                 expect(comp.selectedCourseId).toBeUndefined();
@@ -793,7 +792,7 @@ describe('QuizExercise Management Detail Component', () => {
                     let alertServiceStub: jest.SpyInstance;
                     alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onCourseSelect();
-                    expect(alertServiceStub).toHaveBeenCalled();
+                    expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
 
                 afterAll(() => {
@@ -840,7 +839,7 @@ describe('QuizExercise Management Detail Component', () => {
                     let alertServiceStub: jest.SpyInstance;
                     alertServiceStub = jest.spyOn(alertService, 'error');
                     comp.onExamSelect();
-                    expect(alertServiceStub).toHaveBeenCalled();
+                    expect(alertServiceStub).toHaveBeenCalledOnce();
                 });
 
                 afterAll(() => {
@@ -888,7 +887,7 @@ describe('QuizExercise Management Detail Component', () => {
             it('should replace quiz questions with copy of it', () => {
                 const cacheValidationStub = jest.spyOn(comp, 'cacheValidation');
                 comp.onQuestionUpdated();
-                expect(cacheValidationStub).toHaveBeenCalled();
+                expect(cacheValidationStub).toHaveBeenCalledOnce();
                 expect(comp.quizExercise.quizQuestions).toEqual(Array.from(comp.quizExercise.quizQuestions!));
             });
         });
@@ -913,7 +912,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.setImportFile(ev);
                 expect(comp.importFile).toEqual(file);
                 expect(comp.importFileName).toBe('testFileName');
-                expect(changeDetectorDetectChangesStub).toHaveBeenCalled();
+                expect(changeDetectorDetectChangesStub).toHaveBeenCalledOnce();
             });
 
             it('should import MC question', async () => {
@@ -1229,9 +1228,9 @@ describe('QuizExercise Management Detail Component', () => {
                 let alertServiceStub: jest.SpyInstance;
                 alertServiceStub = jest.spyOn(alertService, 'error');
                 saveQuizWithPendingChangesCache();
-                expect(alertServiceStub).toHaveBeenCalled();
+                expect(alertServiceStub).toHaveBeenCalledOnce();
                 expect(comp.isSaving).toBeFalse();
-                jestExpect(console.error).toHaveBeenCalled();
+                expect(console.error).toHaveBeenCalledOnce();
             };
 
             beforeEach(() => {
@@ -1252,7 +1251,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise.id = undefined;
                 saveQuizWithPendingChangesCache();
                 expect(exerciseStub).toHaveBeenCalledWith(comp.quizExercise);
-                expect(quizExerciseServiceCreateStub).toHaveBeenCalled();
+                expect(quizExerciseServiceCreateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).not.toHaveBeenCalled();
             });
 
@@ -1270,7 +1269,7 @@ describe('QuizExercise Management Detail Component', () => {
                 saveQuizWithPendingChangesCache();
                 expect(exerciseStub).toHaveBeenCalledWith(comp.quizExercise);
                 expect(quizExerciseServiceCreateStub).not.toHaveBeenCalled();
-                expect(quizExerciseServiceUpdateStub).toHaveBeenCalled();
+                expect(quizExerciseServiceUpdateStub).toHaveBeenCalledOnce();
                 expect(quizExerciseServiceUpdateStub).toHaveBeenCalledWith(comp.quizExercise, {});
             });
 
@@ -1426,10 +1425,10 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.showExistingQuestions = false;
                 const setQuestionsFromCourseSpy = jest.spyOn(comp, 'setExistingQuestionSourceToCourse');
                 comp.showHideExistingQuestions();
-                expect(courseManagementServiceStub).toHaveBeenCalled();
-                expect(examManagementServiceStub).toHaveBeenCalled();
+                expect(courseManagementServiceStub).toHaveBeenCalledOnce();
+                expect(examManagementServiceStub).toHaveBeenCalledOnce();
                 expect(comp.showExistingQuestions).toBeTrue();
-                expect(setQuestionsFromCourseSpy).toHaveBeenCalled();
+                expect(setQuestionsFromCourseSpy).toHaveBeenCalledOnce();
             });
 
             it('should not call getAll if there are courses', () => {
@@ -1437,7 +1436,7 @@ describe('QuizExercise Management Detail Component', () => {
                 comp.quizExercise = quizExercise;
                 comp.showHideExistingQuestions();
                 expect(courseManagementServiceStub).not.toHaveBeenCalled();
-                expect(examManagementServiceStub).toHaveBeenCalled();
+                expect(examManagementServiceStub).toHaveBeenCalledOnce();
             });
 
             it('should initialize quizExercise if it is not', () => {
@@ -1469,7 +1468,7 @@ describe('QuizExercise Management Detail Component', () => {
                 expect(comp.showExistingQuestionsFromCourse).toBeFalse();
                 expect(comp.showExistingQuestionsFromFile).toBeFalse();
                 expect(comp.showExistingQuestionsFromExam).toBeTrue();
-                expect(getElementStub).toHaveBeenCalled();
+                expect(getElementStub).toHaveBeenCalledTimes(3);
                 expect(control.value).toBe('');
             });
         });
@@ -1529,19 +1528,19 @@ describe('QuizExercise Management Detail Component', () => {
             it('should call verify and import questions with right json', async () => {
                 expect(control.value).toBe('test');
                 await comp.importQuiz();
-                jestExpect(readAsText).toHaveBeenCalledWith(fakeFile);
-                expect(generateFileReaderStub).toHaveBeenCalled();
+                expect(readAsText).toHaveBeenCalledWith(fakeFile);
+                expect(generateFileReaderStub).toHaveBeenCalledOnce();
                 comp.onFileLoadImport(reader);
                 expect(verifyStub).toHaveBeenCalledWith(questions);
                 expect(comp.importFile).toBeUndefined();
-                expect(getElementStub).toHaveBeenCalled();
+                expect(getElementStub).toHaveBeenCalledTimes(4);
                 expect(control.value).toBe('');
             });
 
             it('should not call any functions without import file', async () => {
                 comp.importFile = undefined;
                 await comp.importQuiz();
-                jestExpect(readAsText).toHaveBeenCalledTimes(0);
+                expect(readAsText).not.toHaveBeenCalled();
                 expect(generateFileReaderStub).not.toHaveBeenCalled();
                 expect(comp.importFile).toBeUndefined();
             });
@@ -1555,7 +1554,7 @@ describe('QuizExercise Management Detail Component', () => {
                 });
                 await comp.importQuiz();
                 comp.onFileLoadImport(reader);
-                jestExpect(alertFunction).toHaveBeenCalled();
+                expect(alertFunction).toHaveBeenCalledOnce();
                 window.alert = alert;
             });
         });
@@ -1585,9 +1584,9 @@ describe('QuizExercise Management Detail Component', () => {
                 answerOption1.invalid = true;
                 comp.verifyAndImportQuestions([multiQuestion]);
                 expect(addQuestionsSpy).not.toHaveBeenCalled();
-                expect(modalServiceStub).toHaveBeenCalled();
+                expect(modalServiceStub).toHaveBeenCalledOnce();
                 shouldImportEmitter.emit();
-                expect(addQuestionsSpy).toHaveBeenCalled();
+                expect(addQuestionsSpy).toHaveBeenCalledOnce();
             });
         });
 

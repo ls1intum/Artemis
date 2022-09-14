@@ -196,7 +196,7 @@ describe('EditAttachmentUnitComponent', () => {
         };
 
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
-        expect(uploadFileSpy).toHaveBeenCalledTimes(0);
+        expect(uploadFileSpy).not.toHaveBeenCalled();
     });
 
     it('should set file file upload error on form', fakeAsync(() => {
@@ -226,7 +226,7 @@ describe('EditAttachmentUnitComponent', () => {
         attachmentUnitFormStubComponent.formSubmitted.emit(formData);
         editAttachmentUnitComponentFixture.whenStable().then(() => {
             expect(attachmentUnitFormStubComponent.errorMessage).toBe('some error');
-            expect(performUpdateSpy).toHaveBeenCalledTimes(0);
+            expect(performUpdateSpy).not.toHaveBeenCalled();
             performUpdateSpy.mockRestore();
         });
     }));

@@ -22,14 +22,14 @@ describe('Assessment progress label test', () => {
                 comp = fixture.componentInstance;
             });
     });
-    it('Should show no submission when the array is empty', () => {
+    it('should show no submission when the array is empty', () => {
         comp.submissions = [];
         comp.ngOnChanges();
 
         expect(comp.numberAssessedSubmissions).toBe(0);
     });
 
-    it('Should ignore no assessed submissions', () => {
+    it('should ignore no assessed submissions', () => {
         const result = { id: 44, rated: false } as Result;
         const submission = { id: 77, results: [result] } as Submission;
 
@@ -39,7 +39,7 @@ describe('Assessment progress label test', () => {
         expect(comp.numberAssessedSubmissions).toBe(0);
     });
 
-    it('Should ignore automatic assessment submissions', () => {
+    it('should ignore automatic assessment submissions', () => {
         const result = { id: 44, rated: true, assessmentType: AssessmentType.AUTOMATIC } as Result;
         const submission = { id: 77, results: [result] } as Submission;
 
@@ -49,7 +49,7 @@ describe('Assessment progress label test', () => {
         expect(comp.numberAssessedSubmissions).toBe(0);
     });
 
-    it('Should count the manual submissions', () => {
+    it('should count the manual submissions', () => {
         const result = { id: 44, rated: true, assessmentType: AssessmentType.MANUAL, completionDate: dayjs() } as Result;
         const submission = { id: 77, results: [result] } as Submission;
 

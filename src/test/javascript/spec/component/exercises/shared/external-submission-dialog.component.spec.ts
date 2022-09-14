@@ -79,7 +79,7 @@ describe('External Submission Dialog', () => {
         expect(result.feedbacks).toSatisfyAll((feedback) => feedback.type === FeedbackType.MANUAL);
         expect(createMock).toHaveBeenCalledOnce();
         expect(createMock).toHaveBeenCalledWith(component.exercise, component.student, result);
-        expect(activeModal.close).toHaveBeenCalledTimes(0);
+        expect(activeModal.close).not.toHaveBeenCalled();
 
         subject.next(new HttpResponse<Result>({ body: result }));
 

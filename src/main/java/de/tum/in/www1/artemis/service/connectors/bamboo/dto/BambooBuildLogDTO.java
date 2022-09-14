@@ -7,35 +7,5 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public class BambooBuildLogDTO {
-
-    private ZonedDateTime date;
-
-    private String log;
-
-    private String unstyledLog;
-
-    public ZonedDateTime getDate() {
-        return date;
-    }
-
-    public void setDate(ZonedDateTime date) {
-        this.date = date;
-    }
-
-    public String getLog() {
-        return log;
-    }
-
-    public void setLog(String log) {
-        this.log = log;
-    }
-
-    public String getUnstyledLog() {
-        return unstyledLog;
-    }
-
-    public void setUnstyledLog(String unstyledLog) {
-        this.unstyledLog = unstyledLog;
-    }
+public record BambooBuildLogDTO(ZonedDateTime date, String log, String unstyledLog) {
 }

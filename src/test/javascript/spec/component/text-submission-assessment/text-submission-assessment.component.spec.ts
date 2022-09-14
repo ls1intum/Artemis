@@ -233,7 +233,7 @@ describe('TextSubmissionAssessmentComponent', () => {
             [component.textBlockRefs[0].feedback!, textBlockRef.feedback!],
             [component.textBlockRefs[0].block!, textBlockRef.block!],
         );
-        expect(handleFeedbackStub).toHaveBeenCalled();
+        expect(handleFeedbackStub).toHaveBeenCalledOnce();
     });
 
     it('should display error when saving but assessment invalid', () => {
@@ -280,7 +280,7 @@ describe('TextSubmissionAssessmentComponent', () => {
         // would be called on receive of event
         const complaintResponse = new ComplaintResponse();
         component.updateAssessmentAfterComplaint(complaintResponse);
-        expect(updateAssessmentAfterComplaintStub).toHaveBeenCalled();
+        expect(updateAssessmentAfterComplaintStub).toHaveBeenCalledOnce();
     });
 
     it('should submit the assessment with correct parameters', () => {
