@@ -166,7 +166,7 @@ describe('MetricsModalThreadsComponent', () => {
             comp.dismiss();
 
             // THEN
-            expect(dismissSpy).toHaveBeenCalled();
+            expect(dismissSpy).toHaveBeenCalledOnce();
         });
     });
 });

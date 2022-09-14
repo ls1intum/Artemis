@@ -62,7 +62,7 @@ describe('QuizExercise Re-evaluate Warning Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should initialize quiz exercise', () => {
+    it('should initialize quiz exercise', () => {
         comp.ngOnInit();
         expect(comp.backUpQuiz).toEqual(quizExercise);
     });

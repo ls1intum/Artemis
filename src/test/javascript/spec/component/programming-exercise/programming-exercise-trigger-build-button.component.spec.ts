@@ -122,7 +122,7 @@ describe('TriggerBuildButtonSpec', () => {
         // Click the button to start a build.
         triggerButton.click();
         expect(triggerFailedBuildSpy).toHaveBeenCalledOnce();
-        expect(triggerBuildSpy).toHaveBeenCalledTimes(0);
+        expect(triggerBuildSpy).not.toHaveBeenCalled();
 
         // After some time the created submission comes through the websocket, button is disabled until the build is done.
         getLatestPendingSubmissionSubject.next({
