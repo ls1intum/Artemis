@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.tutorialgroups;
 
-import java.time.LocalDate;
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.isIso8601DateString;
+
 import java.util.HashSet;
 import java.util.Set;
 
@@ -32,13 +33,19 @@ public class TutorialGroupsConfiguration extends DomainObject {
     @NotEmpty
     private String timeZone;
 
+    /**
+     * Note: String to prevent Hibernate from converting it to UTC
+     */
     @Column(name = "tutorial_period_start_inclusive")
     @NotNull
-    private LocalDate tutorialPeriodStartInclusive;
+    private String tutorialPeriodStartInclusive;
 
+    /**
+     * Note: String to prevent Hibernate from converting it to UTC
+     */
     @Column(name = "tutorial_period_end_inclusive")
     @NotNull
-    private LocalDate tutorialPeriodEndInclusive;
+    private String tutorialPeriodEndInclusive;
 
     @OneToMany(mappedBy = "tutorialGroupsConfiguration", fetch = FetchType.EAGER, cascade = CascadeType.REMOVE, orphanRemoval = true)
     @JsonIgnoreProperties(value = "tutorialGroupsConfiguration", allowSetters = true)
@@ -60,32 +67,33 @@ public class TutorialGroupsConfiguration extends DomainObject {
         this.timeZone = timeZone;
     }
 
-    public LocalDate getTutorialPeriodStartInclusive() {
+    public String getTutorialPeriodStartInclusive() {
         return tutorialPeriodStartInclusive;
     }
 
-    public void setTutorialPeriodStartInclusive(LocalDate tutorialPeriodStartInclusive) {
-        this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
+    public void setTutorialPeriodStartInclusive(String tutorialPeriodStartInclusive) {
+        if (isIso8601DateString(tutorialPeriodStartInclusive)) {
+            this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
+        }
+        else {
+            throw new IllegalArgumentException("tutorialPeriodStartInclusive must be in ISO 8601 format (yyyy-MM-dd)");
+        }
     }
 
-    public LocalDate getTutorialPeriodEndInclusive() {
+    public String getTutorialPeriodEndInclusive() {
         return tutorialPeriodEndInclusive;
     }
 
-    public void setTutorialPeriodEndInclusive(LocalDate tutorialPeriodEndInclusive) {
-        this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
+    public void setTutorialPeriodEndInclusive(String tutorialPeriodEndInclusive) {
+        if (isIso8601DateString(tutorialPeriodEndInclusive)) {
+            this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
+        }
+        else {
+            throw new IllegalArgumentException("tutorialPeriodEndInclusive must be in ISO 8601 format (yyyy-MM-dd)");
+        }
     }
 
     public TutorialGroupsConfiguration() {
-    }
-
-    public TutorialGroupsConfiguration(Course course, String timeZone, LocalDate tutorialPeriodStartInclusive, LocalDate tutorialPeriodEndInclusive,
-            Set<TutorialGroupFreePeriod> tutorialGroupFreePeriods) {
-        this.course = course;
-        this.timeZone = timeZone;
-        this.tutorialPeriodStartInclusive = tutorialPeriodStartInclusive;
-        this.tutorialPeriodEndInclusive = tutorialPeriodEndInclusive;
-        this.tutorialGroupFreePeriods = tutorialGroupFreePeriods;
     }
 
     public Set<TutorialGroupFreePeriod> getTutorialGroupFreePeriods() {

@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Optional;
 
@@ -130,7 +131,7 @@ public class TutorialGroupsConfigurationResource {
         if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive() == null || tutorialGroupsConfiguration.getTutorialPeriodEndInclusive() == null) {
             throw new BadRequestException("Tutorial period start and end must be set");
         }
-        if (tutorialGroupsConfiguration.getTutorialPeriodStartInclusive().isAfter(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive())) {
+        if (LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodStartInclusive()).isAfter(LocalDate.parse(tutorialGroupsConfiguration.getTutorialPeriodEndInclusive()))) {
             throw new BadRequestException("Tutorial period start must be before tutorial period end");
         }
         try {

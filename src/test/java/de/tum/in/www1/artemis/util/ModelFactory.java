@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 import javax.validation.constraints.NotNull;
@@ -1272,8 +1273,8 @@ public class ModelFactory {
     public static TutorialGroupsConfiguration generateTutorialGroupsConfiguration(String timeZone, LocalDate start, LocalDate end) {
         TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
         tutorialGroupsConfiguration.setTimeZone(timeZone);
-        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start);
-        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end);
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(start.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(end.format(DateTimeFormatter.ISO_LOCAL_DATE));
         return tutorialGroupsConfiguration;
     }
 }
