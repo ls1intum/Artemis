@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupFreePeriodRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
@@ -42,13 +43,17 @@ public class TutorialGroupSessionResource {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
+    private final TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
+
     private final AuthorizationCheckService authorizationCheckService;
 
     public TutorialGroupSessionResource(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
-            TutorialGroupRepository tutorialGroupRepository, AuthorizationCheckService authorizationCheckService) {
+            TutorialGroupRepository tutorialGroupRepository, TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository,
+            AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
+        this.tutorialGroupFreePeriodRepository = tutorialGroupFreePeriodRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -114,6 +119,17 @@ public class TutorialGroupSessionResource {
             sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
+        var overlappingPeriods = tutorialGroupFreePeriodRepository.getOverlappingPeriodsInCourse(sessionToUpdate.getTutorialGroup().getCourse(), sessionToUpdate.getStart(),
+                sessionToUpdate.getEnd());
+        if (!overlappingPeriods.isEmpty()) {
+            sessionToUpdate.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            sessionToUpdate.setStatusExplanation(overlappingPeriods.stream().findAny().get().getReason());
+        }
+        else {
+            sessionToUpdate.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            sessionToUpdate.setStatusExplanation(null);
+        }
+
         TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
         return ResponseEntity.ok(result);
@@ -161,9 +177,17 @@ public class TutorialGroupSessionResource {
         TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(tutorialGroup.getCourse().getTutorialGroupsConfiguration());
         newSession.setTutorialGroup(tutorialGroup);
         checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
-        newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
         isValidTutorialGroupSession(newSession);
 
+        var overlappingPeriods = tutorialGroupFreePeriodRepository.getOverlappingPeriodsInCourse(tutorialGroup.getCourse(), newSession.getStart(), newSession.getEnd());
+        if (!overlappingPeriods.isEmpty()) {
+            newSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+            newSession.setStatusExplanation(overlappingPeriods.stream().findAny().get().getReason());
+        }
+        else {
+            newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+            newSession.setStatusExplanation(null);
+        }
         tutorialGroupSessionRepository.save(newSession);
 
         return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId())).body(newSession);
