@@ -137,8 +137,8 @@
             <jhi-schedule-form *ngIf="configureSchedule" #scheduleForm [parentFormGroup]="form" [course]="course"></jhi-schedule-form>
             <div class="row mt-2">
                 <div class="col-12">
-                    <button id="submitButton" class="btn btn-primary" type="submit" [disabled]="!isSubmitPossible">
-                        <span>{{ (isEditMode ? 'global.generic.edit' : 'global.generic.create') | artemisTranslate }}</span>
+                    <button type="submit" id="submitButton" [disabled]="!isSubmitPossible" class="btn btn-primary">
+                        <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </div>
             </div>

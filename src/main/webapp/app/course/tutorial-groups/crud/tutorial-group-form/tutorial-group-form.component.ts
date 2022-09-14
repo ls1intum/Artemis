@@ -5,13 +5,14 @@ import { Course, CourseGroup, Language } from 'app/entities/course.model';
 import { User } from 'app/core/user/user.model';
 import { onError } from 'app/shared/util/global.utils';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { catchError, concat, finalize, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
+import { catchError, concat, finalize, forkJoin, map, merge, Observable, of, OperatorFunction, Subject } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { ScheduleFormComponent, ScheduleFormData } from 'app/course/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
 import _ from 'lodash';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
+import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 export interface TutorialGroupFormData {
     title?: string;
@@ -71,6 +72,9 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     configureSchedule = true;
     @ViewChild('scheduleForm') scheduleFormComponent: ScheduleFormComponent;
     existingScheduleFormDate: ScheduleFormData | undefined;
+
+    // icons
+    faSave = faSave;
 
     constructor(
         private fb: FormBuilder,
@@ -213,24 +217,38 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     private getTeachingAssistantsInCourse() {
-        this.teachingAssistantsAreLoading = true;
-        return concat(
-            of([]), // default items
-            this.courseManagementService.getAllUsersInCourseGroup(this.course.id!, CourseGroup.TUTORS).pipe(
+        const generateUserObservable = (group: CourseGroup) => {
+            return this.courseManagementService.getAllUsersInCourseGroup(this.courseId, group).pipe(
                 catchError((res: HttpErrorResponse) => {
                     onError(this.alertService, res);
                     return of([]);
                 }),
                 map((res: HttpResponse<User[]>) => res.body!),
-                map((user: User[]) => {
-                    return user.map((u) => this.createUserWithLabel(u));
+            );
+        };
+
+        type result = {
+            tutors: User[];
+            instructors: User[];
+            editors: User[];
+        };
+
+        return concat(
+            of([]), // default items
+            forkJoin({
+                tutors: generateUserObservable(CourseGroup.TUTORS),
+                instructors: generateUserObservable(CourseGroup.INSTRUCTORS),
+                editors: generateUserObservable(CourseGroup.EDITORS),
+            }).pipe(
+                map((res: result) => {
+                    return [...res.tutors, ...res.instructors, ...res.editors];
                 }),
                 finalize(() => {
                     this.teachingAssistantsAreLoading = false;
                 }),
             ),
-        ).subscribe((users: UserWithLabel[]) => {
-            this.teachingAssistants = users;
+        ).subscribe((users: User[]) => {
+            this.teachingAssistants = users.map((user) => this.createUserWithLabel(user));
         });
     }
 

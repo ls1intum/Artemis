@@ -136,11 +136,11 @@ public class TutorialGroup extends DomainObject {
         this.capacity = capacity;
     }
 
-    public Boolean getOnline() {
+    public Boolean getIsOnline() {
         return isOnline;
     }
 
-    public void setOnline(Boolean online) {
+    public void setIsOnline(Boolean online) {
         isOnline = online;
     }
 
