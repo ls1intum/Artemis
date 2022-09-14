@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.domain;
 import static de.tum.in.www1.artemis.config.Constants.SIZE_OF_UNSIGNED_TINYINT;
 import static de.tum.in.www1.artemis.service.util.RoundingUtil.*;
 
+import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -11,6 +12,7 @@ import javax.persistence.*;
 
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
+import org.springframework.data.annotation.LastModifiedDate;
 
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.base.Strings;
@@ -112,6 +114,11 @@ public class Result extends DomainObject {
     @Column(name = "code_issue_count")
     private Integer codeIssueCount = 0;
 
+    @LastModifiedDate
+    @Column(name = "last_modified_date")
+    @JsonIgnore
+    private Instant lastModifiedDate = Instant.now();
+
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database
     // at this point of time but the required test case name would be lost, otherwise.
@@ -152,6 +159,10 @@ public class Result extends DomainObject {
     public Result score(Double score) {
         this.score = score;
         return this;
+    }
+
+    public Instant getLastModifiedDate() {
+        return lastModifiedDate;
     }
 
     /**
