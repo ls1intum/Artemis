@@ -28,12 +28,13 @@ public class TutorialGroupService {
     /**
      * Deregister a student from a tutorial group.
      *
-     * @param student       The student to deregister.
-     * @param tutorialGroup The tutorial group to deregister from.
+     * @param student          The student to deregister.
+     * @param tutorialGroup    The tutorial group to deregister from.
+     * @param registrationType The type of registration.
      */
-    public void deregisterStudent(User student, TutorialGroup tutorialGroup) {
-        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudent(tutorialGroup,
-                student);
+    public void deregisterStudent(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType) {
+        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
+                student, registrationType);
         if (existingRegistration.isEmpty()) {
             return; // No registration found, nothing to do.
         }
@@ -43,42 +44,44 @@ public class TutorialGroupService {
     /**
      * Register a student to a tutorial group.
      *
-     * @param student       The student to register.
-     * @param tutorialGroup The tutorial group to register to.
+     * @param student          The student to register.
+     * @param tutorialGroup    The tutorial group to register to.
+     * @param registrationType The type of registration.
      */
-    public void registerStudent(User student, TutorialGroup tutorialGroup) {
-        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudent(tutorialGroup,
-                student);
+    public void registerStudent(User student, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType) {
+        Optional<TutorialGroupRegistration> existingRegistration = tutorialGroupRegistrationRepository.findTutorialGroupRegistrationByTutorialGroupAndStudentAndType(tutorialGroup,
+                student, registrationType);
         if (existingRegistration.isPresent()) {
             return; // Registration already exists, nothing to do.
         }
-        TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION);
+        TutorialGroupRegistration newRegistration = new TutorialGroupRegistration(student, tutorialGroup, registrationType);
         tutorialGroupRegistrationRepository.save(newRegistration);
     }
 
-    private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup) {
-        Set<User> registeredStudents = tutorialGroupRegistrationRepository.findAllByTutorialGroup(tutorialGroup).stream().map(TutorialGroupRegistration::getStudent)
-                .collect(Collectors.toSet());
+    private void registerMultipleStudentsToTutorialGroup(Set<User> students, TutorialGroup tutorialGroup, TutorialGroupRegistrationType registrationType) {
+        Set<User> registeredStudents = tutorialGroupRegistrationRepository.findAllByTutorialGroupAndType(tutorialGroup, registrationType).stream()
+                .map(TutorialGroupRegistration::getStudent).collect(Collectors.toSet());
         Set<User> studentsToRegister = students.stream().filter(student -> !registeredStudents.contains(student)).collect(Collectors.toSet());
-        Set<TutorialGroupRegistration> newRegistrations = studentsToRegister.stream()
-                .map(student -> new TutorialGroupRegistration(student, tutorialGroup, TutorialGroupRegistrationType.INSTRUCTOR_REGISTRATION)).collect(Collectors.toSet());
+        Set<TutorialGroupRegistration> newRegistrations = studentsToRegister.stream().map(student -> new TutorialGroupRegistration(student, tutorialGroup, registrationType))
+                .collect(Collectors.toSet());
         tutorialGroupRegistrationRepository.saveAll(newRegistrations);
     }
 
     /**
      * Register multiple students to a tutorial group.
      *
-     * @param tutorialGroup the tutorial group to register the students for
-     * @param studentDTOs   The students to register.
+     * @param tutorialGroup    the tutorial group to register the students for
+     * @param studentDTOs      The students to register.
+     * @param registrationType The type of registration.
      * @return The students that could not be found and thus not registered.
      */
-    public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs) {
+    public Set<StudentDTO> registerMultipleStudents(TutorialGroup tutorialGroup, Set<StudentDTO> studentDTOs, TutorialGroupRegistrationType registrationType) {
         Set<User> foundStudents = new HashSet<>();
         Set<StudentDTO> notFoundStudentDTOs = new HashSet<>();
         for (var studentDto : studentDTOs) {
             findStudent(studentDto, tutorialGroup.getCourse().getStudentGroupName()).ifPresentOrElse(foundStudents::add, () -> notFoundStudentDTOs.add(studentDto));
         }
-        registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup);
+        registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType);
         return notFoundStudentDTOs;
     }
 
