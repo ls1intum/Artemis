@@ -9,7 +9,7 @@ import { catchError, concat, finalize, forkJoin, map, merge, Observable, of, Ope
 import { AlertService } from 'app/core/util/alert.service';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 
 export interface TutorialGroupFormData {

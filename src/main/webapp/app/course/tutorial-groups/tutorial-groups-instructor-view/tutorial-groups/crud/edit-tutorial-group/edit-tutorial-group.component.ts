@@ -5,7 +5,7 @@ import { TutorialGroupFormData } from '../tutorial-group-form/tutorial-group-for
 import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
 import { finalize, switchMap, take } from 'rxjs/operators';
-import { TutorialGroupsService } from 'app/course/tutorial-groups/tutorial-groups.service';
+import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 
