@@ -6,6 +6,7 @@ import { weekDays } from 'app/course/tutorial-groups/shared/weekdays';
 import { Course } from 'app/entities/course.model';
 import _ from 'lodash';
 import dayjs from 'dayjs/esm';
+import { dayOfWeekZeroSundayToZeroMonday } from 'app/utils/date.utils';
 
 export interface ScheduleFormData {
     dayOfWeek?: number;
@@ -109,12 +110,12 @@ export class ScheduleFormComponent implements OnInit {
             const end = dayjs(period[1]);
 
             // find the first day of the week
-            while (start.day() + 1 !== dayOfWeek) {
+            while (dayOfWeekZeroSundayToZeroMonday(start.day()) + 1 !== dayOfWeek) {
                 start = start.add(1, 'day');
             }
 
             // add sessions
-            while (start.isBefore(end)) {
+            while (start.isBefore(end) || start.isSame(end)) {
                 sessions.push(start);
                 start = start.add(repetitionFrequency, 'week');
             }

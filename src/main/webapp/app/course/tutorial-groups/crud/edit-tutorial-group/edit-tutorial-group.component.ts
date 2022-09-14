@@ -83,35 +83,37 @@ export class EditTutorialGroupComponent implements OnInit {
 
     updateTutorialGroup(formData: TutorialGroupFormData) {
         const { title, teachingAssistant, additionalInformation, capacity, isOnline, language, campus, schedule } = formData;
-        this.tutorialGroup.title = title;
-        this.tutorialGroup.teachingAssistant = teachingAssistant;
-        this.tutorialGroup.additionalInformation = additionalInformation;
-        this.tutorialGroup.capacity = capacity;
-        this.tutorialGroup.isOnline = isOnline;
-        this.tutorialGroup.language = language;
-        this.tutorialGroup.campus = campus;
-
+        const updatedTutorialGroup = new TutorialGroup();
+        updatedTutorialGroup.id = this.tutorialGroup.id;
+        updatedTutorialGroup.title = title;
+        updatedTutorialGroup.teachingAssistant = teachingAssistant;
+        updatedTutorialGroup.additionalInformation = additionalInformation;
+        updatedTutorialGroup.capacity = capacity;
+        updatedTutorialGroup.isOnline = isOnline;
+        updatedTutorialGroup.language = language;
+        updatedTutorialGroup.campus = campus;
         if (schedule) {
-            if (!this.tutorialGroup.tutorialGroupSchedule) {
-                this.tutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
+            updatedTutorialGroup.tutorialGroupSchedule = new TutorialGroupSchedule();
+            if (this.tutorialGroup.tutorialGroupSchedule) {
+                updatedTutorialGroup.tutorialGroupSchedule.id = this.tutorialGroup.tutorialGroupSchedule.id;
             }
             const { endTime, startTime, dayOfWeek, repetitionFrequency, period, location } = schedule;
             if (period && period.length === 2) {
-                this.tutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs(period[0]);
-                this.tutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs(period[1]);
+                updatedTutorialGroup.tutorialGroupSchedule.validFromInclusive = dayjs(period[0]);
+                updatedTutorialGroup.tutorialGroupSchedule.validToInclusive = dayjs(period[1]);
             }
-            this.tutorialGroup.tutorialGroupSchedule.dayOfWeek = dayOfWeek;
-            this.tutorialGroup.tutorialGroupSchedule.startTime = startTime;
-            this.tutorialGroup.tutorialGroupSchedule.endTime = endTime;
-            this.tutorialGroup.tutorialGroupSchedule.repetitionFrequency = repetitionFrequency;
-            this.tutorialGroup.tutorialGroupSchedule.location = location;
+            updatedTutorialGroup.tutorialGroupSchedule.dayOfWeek = dayOfWeek;
+            updatedTutorialGroup.tutorialGroupSchedule.startTime = startTime;
+            updatedTutorialGroup.tutorialGroupSchedule.endTime = endTime;
+            updatedTutorialGroup.tutorialGroupSchedule.repetitionFrequency = repetitionFrequency;
+            updatedTutorialGroup.tutorialGroupSchedule.location = location;
         } else {
-            this.tutorialGroup.tutorialGroupSchedule = undefined;
+            updatedTutorialGroup.tutorialGroupSchedule = undefined;
         }
 
         this.isLoading = true;
         this.tutorialGroupService
-            .update(this.courseId, this.tutorialGroupId, this.tutorialGroup)
+            .update(this.courseId, this.tutorialGroupId, updatedTutorialGroup)
             .pipe(
                 finalize(() => {
                     this.isLoading = false;

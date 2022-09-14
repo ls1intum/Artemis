@@ -87,10 +87,6 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         return this.form.get('teachingAssistant');
     }
 
-    get additionalInformationControl() {
-        return this.form.get('additionalInformation');
-    }
-
     get campusControl() {
         return this.form.get('campus');
     }
@@ -108,7 +104,18 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     get isSubmitPossible() {
-        return !this.form.invalid;
+        if (this.configureSchedule) {
+            return !this.form.invalid;
+        } else {
+            return !(
+                this.titleControl!.invalid &&
+                this.teachingAssistantControl!.invalid &&
+                this.capacityControl!.invalid &&
+                this.isOnlineControl!.invalid &&
+                this.languageControl!.invalid &&
+                this.campusControl!.invalid
+            );
+        }
     }
 
     get scheduleChanged() {

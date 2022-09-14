@@ -63,3 +63,11 @@ export function toISO8601DateTimeString(date: Date | undefined | null) {
         return date;
     }
 }
+
+/**
+ * Converts dayOfWeek sunday(0) to saturday(6) to dayOfWeek monday(0) to sunday(6)
+ * @param dayOfWeekZeroSunday dayOfWeek sunday(0) to saturday(6)
+ */
+export function dayOfWeekZeroSundayToZeroMonday(dayOfWeekZeroSunday: number): number {
+    return (dayOfWeekZeroSunday + 6) % 7;
+}

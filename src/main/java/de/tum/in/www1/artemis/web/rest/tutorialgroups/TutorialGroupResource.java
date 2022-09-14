@@ -10,6 +10,7 @@ import java.util.Set;
 import javax.validation.Valid;
 import javax.ws.rs.BadRequestException;
 
+import org.hibernate.Hibernate;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -123,6 +124,10 @@ public class TutorialGroupResource {
         // ToDo: Optimization Idea: Do not send all registered student information but just the number in a DTO
         var tutorialGroups = tutorialGroupRepository.findAllByCourseIdWithTeachingAssistantAndRegistrations(courseId);
 
+        for (var tutorialGroup : tutorialGroups) {
+            this.preventCircularJsonConversion(tutorialGroup);
+        }
+
         return ResponseEntity.ok(new ArrayList<>(tutorialGroups));
     }
 
@@ -140,13 +145,7 @@ public class TutorialGroupResource {
         log.debug("REST request to get tutorial group: {} of course: {}", tutorialGroupId, courseId);
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
         checkEntityIdMatchesPathIds(tutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
-        // prevent circular to json conversion
-        if (tutorialGroup.getTutorialGroupSchedule() != null) {
-            tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
-        }
-        if (tutorialGroup.getTutorialGroupSessions() != null) {
-            tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> tutorialGroupSession.setTutorialGroup(null));
-        }
+        this.preventCircularJsonConversion(tutorialGroup);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
         return ResponseEntity.ok().body(tutorialGroup);
     }
@@ -208,6 +207,8 @@ public class TutorialGroupResource {
             persistedTutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
         }
 
+        this.preventCircularJsonConversion(persistedTutorialGroup);
+
         return ResponseEntity.created(new URI("/api/courses/" + courseId + "/tutorial-groups/" + persistedTutorialGroup.getId())).body(persistedTutorialGroup);
     }
 
@@ -233,34 +234,36 @@ public class TutorialGroupResource {
     /**
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId : Updates an existing tutorial group
      *
-     * @param courseId        the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId the id of the tutorial group to update
-     * @param tutorialGroup   group the tutorial group to update
+     * @param courseId             the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId      the id of the tutorial group to update
+     * @param updatedTutorialGroup group the tutorial group to update
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @RequestBody @Valid TutorialGroup tutorialGroup) {
-        log.debug("REST request to update TutorialGroup : {}", tutorialGroup);
-        if (tutorialGroup.getId() == null) {
+    public ResponseEntity<TutorialGroup> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @RequestBody @Valid TutorialGroup updatedTutorialGroup) {
+        log.debug("REST request to update TutorialGroup : {}", updatedTutorialGroup);
+        if (updatedTutorialGroup.getId() == null) {
             throw new BadRequestException("A tutorial group cannot be updated without an id");
         }
         var tutorialGroupFromDatabase = this.tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-        checkEntityIdMatchesPathIds(tutorialGroup, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
+        checkEntityIdMatchesPathIds(tutorialGroupFromDatabase, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupFromDatabase.getCourse(), null);
 
-        trimStringFields(tutorialGroup);
-        if (!tutorialGroupFromDatabase.getTitle().equals(tutorialGroup.getTitle())) {
-            checkTitleIsUnique(tutorialGroup);
+        trimStringFields(updatedTutorialGroup);
+        if (!tutorialGroupFromDatabase.getTitle().equals(updatedTutorialGroup.getTitle())) {
+            checkTitleIsUnique(updatedTutorialGroup);
         }
-        overrideValues(tutorialGroup, tutorialGroupFromDatabase);
-        var updatedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
+        overrideValues(updatedTutorialGroup, tutorialGroupFromDatabase);
+        var persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
 
-        tutorialGroupScheduleService.updateSchedule(tutorialGroup.getCourse().getTutorialGroupsConfiguration(), updatedTutorialGroup,
-                Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()), Optional.ofNullable(tutorialGroup.getTutorialGroupSchedule()));
+        tutorialGroupScheduleService.updateSchedule(tutorialGroupFromDatabase.getCourse().getTutorialGroupsConfiguration(), persistedTutorialGroup,
+                Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()), Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
 
-        return ResponseEntity.ok(updatedTutorialGroup);
+        this.preventCircularJsonConversion(persistedTutorialGroup);
+
+        return ResponseEntity.ok(persistedTutorialGroup);
     }
 
     /**
@@ -358,6 +361,16 @@ public class TutorialGroupResource {
         originalTutorialGroup.setOnline(sourceTutorialGroup.getOnline());
         originalTutorialGroup.setLanguage(sourceTutorialGroup.getLanguage());
         originalTutorialGroup.setCampus(sourceTutorialGroup.getCampus());
+    }
+
+    private void preventCircularJsonConversion(TutorialGroup tutorialGroup) {
+        // prevent circular to json conversion
+        if (Hibernate.isInitialized(tutorialGroup.getTutorialGroupSchedule()) && tutorialGroup.getTutorialGroupSchedule() != null) {
+            tutorialGroup.getTutorialGroupSchedule().setTutorialGroup(null);
+        }
+        if (Hibernate.isInitialized(tutorialGroup.getTutorialGroupSessions()) && tutorialGroup.getTutorialGroupSessions() != null) {
+            tutorialGroup.getTutorialGroupSessions().forEach(tutorialGroupSession -> tutorialGroupSession.setTutorialGroup(null));
+        }
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroup tutorialGroup, Optional<Long> courseId, Optional<Long> tutorialGroupId) {
