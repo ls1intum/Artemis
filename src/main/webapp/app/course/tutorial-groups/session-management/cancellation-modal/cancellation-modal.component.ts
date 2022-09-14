@@ -17,6 +17,12 @@ export class CancellationModalComponent implements OnInit {
     form: FormGroup;
 
     @Input()
+    courseId: number;
+
+    @Input()
+    tutorialGroupId: number;
+
+    @Input()
     tutorialGroupSession: TutorialGroupSession;
     @Input()
     refreshCallback: () => void;
@@ -62,7 +68,7 @@ export class CancellationModalComponent implements OnInit {
     }
 
     cancelSession(): void {
-        this.tutorialGroupSessionService.cancel(this.tutorialGroupSession.id!, this.reasonControl?.value).subscribe({
+        this.tutorialGroupSessionService.cancel(this.courseId, this.tutorialGroupId, this.tutorialGroupSession.id!, this.reasonControl?.value).subscribe({
             next: () => {
                 this.activeModal.close('confirmed');
             },
@@ -74,7 +80,7 @@ export class CancellationModalComponent implements OnInit {
     }
 
     activateSession(): void {
-        this.tutorialGroupSessionService.activate(this.tutorialGroupSession.id!).subscribe({
+        this.tutorialGroupSessionService.activate(this.courseId, this.tutorialGroupId, this.tutorialGroupSession.id!).subscribe({
             next: () => {
                 this.activeModal.close('confirmed');
             },

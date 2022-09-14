@@ -44,6 +44,9 @@ export class TutorialGroupSessionRowButtonsComponent {
     openCancellationModal(session: TutorialGroupSession): void {
         const modalRef = this.modalService.open(CancellationModalComponent);
         modalRef.componentInstance.tutorialGroupSession = session;
+        modalRef.componentInstance.courseId = this.courseId;
+        modalRef.componentInstance.tutorialGroupId = this.tutorialGroupId;
+
         modalRef.result.then((result) => {
             if (result === 'confirmed') {
                 this.cancelOrActivatePressed.emit();

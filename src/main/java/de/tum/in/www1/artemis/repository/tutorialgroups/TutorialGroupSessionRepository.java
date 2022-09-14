@@ -11,6 +11,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -18,7 +19,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGroupSession, Long> {
 
     @Query("""
-            SELECT tutorialGroupSession
+                SELECT tutorialGroupSession
             FROM TutorialGroupSession tutorialGroupSession LEFT JOIN tutorialGroupSession.tutorialGroupSchedule tutorialGroupSchedule
             WHERE tutorialGroupSession.tutorialGroup.course = :#{#course}""")
     Set<TutorialGroupSession> findAllOfCourse(@Param("course") Course course);
@@ -28,6 +29,14 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
             FROM TutorialGroupSession tutorialGroupSession
             WHERE tutorialGroupSession.tutorialGroup.id = :#{#tutorialGroupId}""")
     Set<TutorialGroupSession> findAllByTutorialGroupId(@Param("tutorialGroupId") Long tutorialGroupId);
+
+    @Query("""
+            SELECT tutorialGroupSession
+            FROM TutorialGroupSession tutorialGroupSession
+            WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
+            AND tutorialGroupSession.tutorialGroup = :#{#tutorialGroup}""")
+    Set<TutorialGroupSession> findOverlappingInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
+            @Param("end") ZonedDateTime end);
 
     @Query("""
             SELECT tutorialGroupSession

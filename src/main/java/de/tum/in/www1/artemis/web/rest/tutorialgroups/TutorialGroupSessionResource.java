@@ -12,7 +12,6 @@ import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -20,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
-import de.tum.in.www1.artemis.repository.CourseRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
@@ -35,9 +32,6 @@ import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 @RequestMapping("/api")
 public class TutorialGroupSessionResource {
 
-    @Value("${jhipster.clientApp.name}")
-    private String applicationName;
-
     private static final String ENTITY_NAME = "tutorialGroupSession";
 
     private final Logger log = LoggerFactory.getLogger(TutorialGroupSession.class);
@@ -48,20 +42,13 @@ public class TutorialGroupSessionResource {
 
     private final TutorialGroupRepository tutorialGroupRepository;
 
-    private final CourseRepository courseRepository;
-
-    private final UserRepository userRepository;
-
     private final AuthorizationCheckService authorizationCheckService;
 
     public TutorialGroupSessionResource(TutorialGroupSessionRepository tutorialGroupSessionRepository, TutorialGroupScheduleRepository tutorialGroupScheduleRepository,
-            TutorialGroupRepository tutorialGroupRepository, CourseRepository courseRepository, UserRepository userRepository,
-            AuthorizationCheckService authorizationCheckService) {
+            TutorialGroupRepository tutorialGroupRepository, AuthorizationCheckService authorizationCheckService) {
         this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
         this.tutorialGroupScheduleRepository = tutorialGroupScheduleRepository;
         this.tutorialGroupRepository = tutorialGroupRepository;
-        this.courseRepository = courseRepository;
-        this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
     }
 
@@ -96,9 +83,9 @@ public class TutorialGroupSessionResource {
      * PUT /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId : Updates an existing tutorial group session
      *
      * @param courseId                the id of the course to which the tutorial group belongs to
-     * @param tutorialGroupId         the id of the tutorial group to update
+     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
      * @param sessionId               the id of the session to update
-     * @param tutorialGroupSessionDTO the tutorial group session to update
+     * @param tutorialGroupSessionDTO DTO containing the updated tutorial group session
      * @return the ResponseEntity with status 200 (OK) and with body the updated tutorial group session
      */
     @PutMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}")
@@ -108,26 +95,26 @@ public class TutorialGroupSessionResource {
             @RequestBody TutorialGroupSessionDTO tutorialGroupSessionDTO) {
         log.debug("REST request to update session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
 
-        var sessionFromDatabase = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
-        checkEntityIdMatchesPathIds(sessionFromDatabase, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionFromDatabase.getTutorialGroup().getCourse(), null);
+        var sessionToUpdate = this.tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkEntityIdMatchesPathIds(sessionToUpdate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToUpdate.getTutorialGroup().getCourse(), null);
 
-        sessionFromDatabase.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupSessionDTO.date, tutorialGroupSessionDTO.startTime,
-                sessionFromDatabase.getTutorialGroup().getCourse().getTutorialGroupsConfiguration()));
-        sessionFromDatabase.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupSessionDTO.date, tutorialGroupSessionDTO.endTime,
-                sessionFromDatabase.getTutorialGroup().getCourse().getTutorialGroupsConfiguration()));
-        sessionFromDatabase.setLocation(tutorialGroupSessionDTO.location);
-        // ToDo: Handle overlap case
+        var updatedSession = tutorialGroupSessionDTO.toEntity(sessionToUpdate.getTutorialGroup().getCourse().getTutorialGroupsConfiguration());
+        sessionToUpdate.setStart(updatedSession.getStart());
+        sessionToUpdate.setEnd(updatedSession.getEnd());
+        sessionToUpdate.setLocation(updatedSession.getLocation());
+
+        isValidTutorialGroupSession(sessionToUpdate);
 
         // if the session belongs to a schedule we have to cut the connection to mark that it does not follow the schedule anymore
-        if (sessionFromDatabase.getTutorialGroupSchedule() != null) {
-            var scheduleFromDatabase = tutorialGroupScheduleRepository.findByIdWithSessionsElseThrow(sessionFromDatabase.getTutorialGroupSchedule().getId());
-            scheduleFromDatabase.getTutorialGroupSessions().remove(sessionFromDatabase);
-            tutorialGroupScheduleRepository.save(scheduleFromDatabase);
-            sessionFromDatabase.setTutorialGroupSchedule(null);
+        if (sessionToUpdate.getTutorialGroupSchedule() != null) {
+            var schedule = tutorialGroupScheduleRepository.findByIdWithSessionsElseThrow(sessionToUpdate.getTutorialGroupSchedule().getId());
+            schedule.getTutorialGroupSessions().remove(sessionToUpdate);
+            tutorialGroupScheduleRepository.save(schedule);
+            sessionToUpdate.setTutorialGroupSchedule(null);
         }
 
-        TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionFromDatabase);
+        TutorialGroupSession result = tutorialGroupSessionRepository.save(sessionToUpdate);
 
         return ResponseEntity.ok(result);
     }
@@ -153,67 +140,81 @@ public class TutorialGroupSessionResource {
     }
 
     /**
-     * POST /tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions : creates a new tutorial group session.
      *
-     * @param tutorialGroupSessionDTO the tutorial group that should be created
-     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group
+     * @param courseId                the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId         the id of the tutorial group to which the session belongs to
+     * @param tutorialGroupSessionDTO DTO containing the new tutorial group session
+     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group session
      */
-    @PostMapping("/tutorial-groups/{tutorialGroupId}/tutorial-group-sessions")
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long tutorialGroupId, @RequestBody TutorialGroupSessionDTO tutorialGroupSessionDTO) throws URISyntaxException {
+    public ResponseEntity<TutorialGroupSession> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupId,
+            @RequestBody TutorialGroupSessionDTO tutorialGroupSessionDTO) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupSession: {} for tutorial group: {}", tutorialGroupSessionDTO, tutorialGroupId);
         var tutorialGroup = tutorialGroupRepository.findByIdWithSessionsElseThrow(tutorialGroupId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
         if (tutorialGroup.getCourse().getTutorialGroupsConfiguration() == null) {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
-        // ToDo: Check for overlapping sessions
-        TutorialGroupSession tutorialGroupSession = convert(tutorialGroupSessionDTO, tutorialGroup.getCourse().getTutorialGroupsConfiguration());
-        tutorialGroupSession.setTutorialGroup(tutorialGroup);
-        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        TutorialGroupSession newSession = tutorialGroupSessionDTO.toEntity(tutorialGroup.getCourse().getTutorialGroupsConfiguration());
+        newSession.setTutorialGroup(tutorialGroup);
+        checkEntityIdMatchesPathIds(newSession, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.empty());
+        newSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        isValidTutorialGroupSession(newSession);
 
-        tutorialGroupSessionRepository.save(tutorialGroupSession);
+        tutorialGroupSessionRepository.save(newSession);
 
-        return ResponseEntity.created(new URI("")).body(tutorialGroupSession);
+        return ResponseEntity.created(URI.create("/api/courses/" + courseId + "/tutorial-groups/" + tutorialGroupId + "/sessions/" + newSession.getId())).body(newSession);
     }
 
-    @PostMapping("/tutorial-group-sessions/{tutorialGroupSessionId}/cancel")
+    /**
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/cancel : cancel a tutorial group session.
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId the id of the tutorial group to which the session belongs to
+     * @param sessionId       the id of the session to cancel
+     * @param statusDTO       DTO containing the explanation for the cancellation
+     * @return ResponseEntity with status 200 (OK) and in the body the cancelled tutorial group session
+     */
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/cancel")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long tutorialGroupSessionId, @RequestBody StatusDTO statusDTO) throws URISyntaxException {
-
-        log.debug("REST request to cancel TutorialGroupSession: {}", tutorialGroupSessionId);
-        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(tutorialGroupSessionId);
-
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupSession.getTutorialGroup().getCourse(), null);
-
-        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.CANCELLED);
+    public ResponseEntity<TutorialGroupSession> cancel(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId,
+            @RequestBody StatusDTO statusDTO) throws URISyntaxException {
+        log.debug("REST request to cancel session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
+        var sessionToCancel = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkEntityIdMatchesPathIds(sessionToCancel, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToCancel.getTutorialGroup().getCourse(), null);
+        sessionToCancel.setStatus(TutorialGroupSessionStatus.CANCELLED);
         if (statusDTO != null && statusDTO.status_explanation() != null && statusDTO.status_explanation().trim().length() > 0) {
-            tutorialGroupSession.setStatusExplanation(statusDTO.status_explanation().trim());
+            sessionToCancel.setStatusExplanation(statusDTO.status_explanation().trim());
         }
-        tutorialGroupSessionRepository.save(tutorialGroupSession);
-
-        return ResponseEntity.ok().body(tutorialGroupSession);
+        tutorialGroupSessionRepository.save(sessionToCancel);
+        return ResponseEntity.ok().body(sessionToCancel);
     }
 
-    @PostMapping("/tutorial-group-sessions/{tutorialGroupSessionId}/activate")
+    /**
+     * POST /courses/:courseId/tutorial-groups/:tutorialGroupId/sessions/:sessionId/activate : activate a tutorial group session.
+     *
+     * @param courseId        the id of the course to which the tutorial group belongs to
+     * @param tutorialGroupId the id of the tutorial group to which the session belongs to
+     * @param sessionId       the id of the session to activate
+     * @return ResponseEntity with status 200 (OK) and in the body the activated tutorial group session
+     */
+    @PostMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions/{sessionId}/activate")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long tutorialGroupSessionId) throws URISyntaxException {
-        log.debug("REST request to cancel TutorialGroupSession: {}", tutorialGroupSessionId);
-        var tutorialGroupSession = tutorialGroupSessionRepository.findByIdElseThrow(tutorialGroupSessionId);
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroupSession.getTutorialGroup().getCourse(), null);
-
-        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
-        tutorialGroupSession.setStatusExplanation(null);
-
-        tutorialGroupSessionRepository.save(tutorialGroupSession);
-
-        return ResponseEntity.ok().body(tutorialGroupSession);
-    }
-
-    public record StatusDTO(String status_explanation) {
+    public ResponseEntity<TutorialGroupSession> activate(@PathVariable Long courseId, @PathVariable Long tutorialGroupId, @PathVariable Long sessionId) throws URISyntaxException {
+        log.debug("REST request to activate session: {} of tutorial group: {} of course {}", sessionId, tutorialGroupId, courseId);
+        var sessionToActivate = tutorialGroupSessionRepository.findByIdElseThrow(sessionId);
+        checkEntityIdMatchesPathIds(sessionToActivate, Optional.of(courseId), Optional.of(tutorialGroupId), Optional.of(sessionId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, sessionToActivate.getTutorialGroup().getCourse(), null);
+        sessionToActivate.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        sessionToActivate.setStatusExplanation(null);
+        tutorialGroupSessionRepository.save(sessionToActivate);
+        return ResponseEntity.ok().body(sessionToActivate);
     }
 
     private void checkEntityIdMatchesPathIds(TutorialGroupSession tutorialGroupSession, Optional<Long> courseId, Optional<Long> tutorialGroupId, Optional<Long> sessionId) {
@@ -235,18 +236,43 @@ public class TutorialGroupSessionResource {
         });
     }
 
-    private TutorialGroupSession convert(TutorialGroupSessionDTO tutorialGroupSessionDTO, TutorialGroupsConfiguration tutorialGroupsConfiguration) {
-        TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
-        tutorialGroupSession.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupSessionDTO.date, tutorialGroupSessionDTO.startTime, tutorialGroupsConfiguration));
-        tutorialGroupSession.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupSessionDTO.date, tutorialGroupSessionDTO.endTime, tutorialGroupsConfiguration));
-        tutorialGroupSession.setLocation(tutorialGroupSessionDTO.location);
-        return tutorialGroupSession;
+    private void isValidTutorialGroupSession(TutorialGroupSession tutorialGroupSession) {
+        if (tutorialGroupSession.getStart() == null || tutorialGroupSession.getEnd() == null) {
+            throw new BadRequestException("Tutorial session start and end must be set");
+        }
+        if (tutorialGroupSession.getStart().isAfter(tutorialGroupSession.getEnd())) {
+            throw new BadRequestException("Tutorial session start must be before tutorial period end");
+        }
+        this.checkForOverlapWithOtherSessions(tutorialGroupSession);
+    }
+
+    private void checkForOverlapWithOtherSessions(TutorialGroupSession session) {
+        var overlappingSessions = tutorialGroupSessionRepository.findOverlappingInSameTutorialGroup(session.getTutorialGroup(), session.getStart(), session.getEnd()).stream()
+                .filter(overlappingSession -> !overlappingSession.getId().equals(session.getId())).toList();
+        if (!overlappingSessions.isEmpty()) {
+            throw new BadRequestAlertException("The given session overlaps with another session in the same tutorial group", ENTITY_NAME, "overlapping");
+        }
     }
 
     /**
-     * Used because we want to interpret the dates in the time zone of the tutorial groups configuration
+     * DTO used to send the status explanation when i.g. cancelling a tutorial group session
      */
-    record TutorialGroupSessionDTO(LocalDate date, LocalTime startTime, LocalTime endTime, String location) {
+    private record StatusDTO(String status_explanation) {
+    }
+
+    /**
+     * DTO used because we want to interpret the dates in the time zone of the tutorial groups configuration
+     */
+    private record TutorialGroupSessionDTO(LocalDate date, LocalTime startTime, LocalTime endTime, String location) {
+
+        public TutorialGroupSession toEntity(TutorialGroupsConfiguration tutorialGroupsConfiguration) {
+            TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
+            tutorialGroupSession.setStart(interpretInTimeZoneOfConfiguration(date, startTime, tutorialGroupsConfiguration));
+            tutorialGroupSession.setEnd(interpretInTimeZoneOfConfiguration(date, endTime, tutorialGroupsConfiguration));
+            tutorialGroupSession.setLocation(location);
+            return tutorialGroupSession;
+        }
+
     }
 
 }
