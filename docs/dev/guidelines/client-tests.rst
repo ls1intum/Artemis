@@ -210,7 +210,7 @@ Some guidelines:
             fixture.detectChanges();
 
             expect(saveExerciseWithoutReevaluationSpy).toHaveBeenCalledOnce();
-            expect(emitSpy).toHaveBeenCalled();
+            expect(emitSpy).toHaveBeenCalledOnce();
         });
 
 6. Do not remove the template during tests by making use of ``overrideTemplate()``. The template is a crucial part of a component and should not be removed during test. Do not do this:

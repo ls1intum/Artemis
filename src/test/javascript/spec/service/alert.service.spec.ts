@@ -179,7 +179,7 @@ describe('Alert Service Test', () => {
         );
     });
 
-    it('Should display an alert on status 0', () => {
+    it('should display an alert on status 0', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 0 } });
         // THEN
@@ -187,14 +187,14 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Server not reachable');
     });
 
-    it('Should not display an alert on status 404', () => {
+    it('should not display an alert on status 404', () => {
         // GIVEN
         eventManager.broadcast({ name: 'artemisApp.httpError', content: { status: 404 } });
         // THEN
         expect(service.get()).toHaveLength(0);
     });
 
-    it('Should display an alert on status 400 for generic error and use the error title', () => {
+    it('should display an alert on status 400 for generic error and use the error title', () => {
         // GIVEN
         const response = new HttpErrorResponse({
             url: 'http://localhost:8080/api/foos',
@@ -215,7 +215,7 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Bad Request: This is a default text from the server exception');
     });
 
-    it('Should not display an alert on status 400 for errors without message', () => {
+    it('should not display an alert on status 400 for errors without message', () => {
         // GIVEN
         const response = new HttpErrorResponse({
             url: 'http://localhost:8080/api/foos',
@@ -228,7 +228,7 @@ describe('Alert Service Test', () => {
         expect(service.get()).toHaveLength(0);
     });
 
-    it('Should display an alert on status 400 for invalid parameters', () => {
+    it('should display an alert on status 400 for invalid parameters', () => {
         // GIVEN
         const response = new HttpErrorResponse({
             url: 'http://localhost:8080/api/foos',
@@ -250,7 +250,7 @@ describe('Alert Service Test', () => {
         expect(service.get()[0].message).toBe('Error on field &#34;artemisApp.foo.minField&#34;');
     });
 
-    it('Should display an alert on status 400 for error headers', () => {
+    it('should display an alert on status 400 for error headers', () => {
         // GIVEN
         const response = new HttpErrorResponse({
             url: 'http://localhost:8080/api/foos',

@@ -74,7 +74,7 @@ describe('SettingsComponent', () => {
             tick();
 
             // THEN
-            expect(service.identity).toHaveBeenCalled();
+            expect(service.identity).toHaveBeenCalledOnce();
             expect(service.save).toHaveBeenCalledWith(accountValues);
             expect(service.authenticate).toHaveBeenCalledWith(accountValues);
             expect(comp.settingsForm.value).toEqual(settingsFormValues);

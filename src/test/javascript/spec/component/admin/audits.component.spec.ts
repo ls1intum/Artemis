@@ -118,8 +118,8 @@ describe('AuditsComponent', () => {
         });
     });
 
-    describe('OnInit', () => {
-        it('Should call load all on init', () => {
+    describe('onInit', () => {
+        it('should call load all on init', () => {
             // GIVEN
             const headers = new HttpHeaders().append('X-Total-Count', '1');
             const audit = new Audit({ remoteAddress: '127.0.0.1', sessionId: '123' }, 'user', '20140101', 'AUTHENTICATION_SUCCESS');
@@ -136,7 +136,7 @@ describe('AuditsComponent', () => {
             comp.ngOnInit();
 
             // THEN
-            expect(service.query).toHaveBeenCalled();
+            expect(service.query).toHaveBeenCalledOnce();
             expect(comp.audits).toEqual(expect.objectContaining([audit]));
             expect(comp.totalItems).toBe(1);
         });
@@ -147,7 +147,7 @@ describe('AuditsComponent', () => {
             jest.spyOn(service, 'query').mockReturnValue(of(new HttpResponse<Audit[]>()));
         });
 
-        it('Should sort only by id asc', () => {
+        it('should sort only by id asc', () => {
             // GIVEN
             mockActivatedRoute.setParameters({
                 sort: 'id,desc',
@@ -164,7 +164,7 @@ describe('AuditsComponent', () => {
             );
         });
 
-        it('Should sort by timestamp asc then by id', () => {
+        it('should sort by timestamp asc then by id', () => {
             // GIVEN
             mockActivatedRoute.setParameters({
                 sort: 'timestamp,asc',
