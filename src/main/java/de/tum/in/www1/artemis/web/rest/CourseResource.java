@@ -133,6 +133,7 @@ public class CourseResource {
         course.validateRegistrationConfirmationMessage();
         course.validateComplaintsAndRequestMoreFeedbackConfig();
         course.validateOnlineCourseAndRegistrationEnabled();
+        course.validateOnlineCourseConfiguration();
         course.validateAccuracyOfScores();
         if (!course.isValidStartAndEndDate()) {
             throw new BadRequestAlertException("For Courses, the start date has to be before the end date", Course.ENTITY_NAME, "invalidCourseStartDate", true);
@@ -218,6 +219,7 @@ public class CourseResource {
         updatedCourse.validateRegistrationConfirmationMessage();
         updatedCourse.validateComplaintsAndRequestMoreFeedbackConfig();
         updatedCourse.validateOnlineCourseAndRegistrationEnabled();
+        updatedCourse.validateOnlineCourseConfiguration();
         updatedCourse.validateShortName();
         updatedCourse.validateAccuracyOfScores();
         if (!updatedCourse.isValidStartAndEndDate()) {

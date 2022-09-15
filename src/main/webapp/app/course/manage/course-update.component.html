@@ -362,6 +362,31 @@
                         ngbTooltip="{{ 'artemisApp.course.onlineCourse.description' | artemisTranslate }}"
                     ></fa-icon>
                 </div>
+
+                <div *ngIf="isOnlineCourse()">
+                    <form [formGroup]="onlineCourseConfigurationForm">
+                        <h4 class="modal-title" id="onlineCourseConfigurationTitle" jhiTranslate="artemisApp.course.onlineCourseConfiguration.title">
+                            Online Course Configuration
+                        </h4>
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.ltiId" for="field_ltiId">LTI ID</label>
+                            <input required type="text" class="form-control" name="ltiKey" id="field_ltiId" formControlName="ltiId" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.ltiKey" for="field_ltiKey">LTI Key</label>
+                            <input required type="text" class="form-control" name="ltiKey" id="field_ltiKey" formControlName="ltiKey" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.ltiSecret" for="field_ltiSecret">LTI Secret</label>
+                            <input required type="text" class="form-control" name="ltiSecret" id="field_ltiSecret" formControlName="ltiSecret" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.userPrefix" for="field_userPrefix">User Prefix</label>
+                            <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
+                        </div>
+                    </form>
+                </div>
+
                 <div class="form-check" *ngIf="!this.course.onlineCourse">
                     <input
                         type="checkbox"
@@ -413,7 +438,12 @@
                     <ng-container *ngTemplateOutlet="saveButtonTpl"></ng-container>
                 </span>
                 <ng-template #saveButtonTpl>
-                    <button type="submit" id="save-entity" [disabled]="courseForm.invalid || isSaving || !isValidConfiguration" class="btn btn-primary ms-2">
+                    <button
+                        type="submit"
+                        id="save-entity"
+                        [disabled]="courseForm.invalid || (isOnlineCourse() && onlineCourseConfigurationForm.invalid) || isSaving || !isValidConfiguration"
+                        class="btn btn-primary ms-2"
+                    >
                         <fa-icon [icon]="faSave"></fa-icon>&nbsp;<span jhiTranslate="entity.action.save">Save</span>
                     </button>
                 </ng-template>

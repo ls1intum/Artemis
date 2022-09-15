@@ -10,6 +10,7 @@ import { LearningGoal } from 'app/entities/learningGoal.model';
 import { Organization } from 'app/entities/organization.model';
 import { Post } from 'app/entities/metis/post.model';
 import { ProgrammingLanguage } from 'app/entities/programming-exercise.model';
+import { OnlineCourseConfiguration } from 'app/entities/online-course-configuration.model';
 
 export class Course implements BaseEntity {
     public id?: number;
@@ -58,6 +59,8 @@ export class Course implements BaseEntity {
     public exams?: Exam[];
     public tutorGroups?: TutorGroup[];
     public organizations?: Organization[];
+
+    public onlineCourseConfiguration?: OnlineCourseConfiguration;
 
     // helper attributes
     public isAtLeastTutor?: boolean;

@@ -103,6 +103,9 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
+    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private OnlineCourseConfiguration onlineCourseConfiguration;
+
     @Column(name = "max_complaints")
     @JsonView(QuizView.Before.class)
     private Integer maxComplaints;
@@ -341,6 +344,14 @@ public class Course extends DomainObject {
 
     public void setOnlineCourse(Boolean onlineCourse) {
         this.onlineCourse = onlineCourse;
+    }
+
+    public OnlineCourseConfiguration getOnlineCourseConfiguration() {
+        return onlineCourseConfiguration;
+    }
+
+    public void setOnlineCourseConfiguration(OnlineCourseConfiguration onlineCourseConfiguration) {
+        this.onlineCourseConfiguration = onlineCourseConfiguration;
     }
 
     public Integer getMaxComplaints() {
@@ -663,6 +674,15 @@ public class Course extends DomainObject {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
                     true);
+        }
+    }
+
+    public void validateOnlineCourseConfiguration() {
+        if (isOnlineCourse()) {
+            if (getOnlineCourseConfiguration() == null) {
+                throw new BadRequestAlertException("Configuration must exist for online courses", ENTITY_NAME, "onlineCourseConfigurationMissing", true);
+            }
+            getOnlineCourseConfiguration().setCourse(this);
         }
     }
 

@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import { FormControl, FormGroup, ValidatorFn, Validators, AbstractControl } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
@@ -36,6 +36,7 @@ export class CourseUpdateComponent implements OnInit {
     @ViewChild(ColorSelectorComponent, { static: false }) colorSelector: ColorSelectorComponent;
     readonly ARTEMIS_DEFAULT_COLOR = ARTEMIS_DEFAULT_COLOR;
     courseForm: FormGroup;
+    onlineCourseConfigurationForm: FormGroup;
     course: Course;
     isSaving: boolean;
     courseImageFile?: Blob | File;
@@ -120,6 +121,15 @@ export class CourseUpdateComponent implements OnInit {
                     }
                 }
             }
+        });
+
+        this.onlineCourseConfigurationForm = new FormGroup({
+            id: new FormControl(this.course.onlineCourseConfiguration?.id),
+            course: new FormControl(this.course),
+            ltiId: new FormControl(this.course.onlineCourseConfiguration?.ltiId),
+            ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
+            ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
+            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [this.noSpacesValidator] }),
         });
 
         this.courseForm = new FormGroup(
@@ -207,10 +217,14 @@ export class CourseUpdateComponent implements OnInit {
         if (this.courseForm.controls['organizations'] !== undefined) {
             this.courseForm.controls['organizations'].setValue(this.courseOrganizations);
         }
+
+        const course = this.courseForm.getRawValue();
+        course.onlineCourseConfiguration = this.isOnlineCourse() ? this.onlineCourseConfigurationForm.getRawValue() : null;
+
         if (this.course.id !== undefined) {
-            this.subscribeToSaveResponse(this.courseService.update(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseService.update(course));
         } else {
-            this.subscribeToSaveResponse(this.courseService.create(this.courseForm.getRawValue()));
+            this.subscribeToSaveResponse(this.courseService.create(course));
         }
     }
 
@@ -459,6 +473,13 @@ export class CourseUpdateComponent implements OnInit {
     }
 
     /**
+     * Auxiliary method checking if online course is currently true
+     */
+    isOnlineCourse(): boolean {
+        return this.courseForm.controls['onlineCourse'].value === true;
+    }
+
+    /**
      * Returns whether the dates are valid or not
      * @return true if the dats are valid
      */
@@ -481,6 +502,11 @@ export class CourseUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         return this.isValidDate;
+    }
+
+    noSpacesValidator(control: FormControl) {
+        const hasSpaces = (control.value || '').indexOf(' ') >= 0;
+        return hasSpaces ? { hasSpaces: true } : null;
     }
 }
 
