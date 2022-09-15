@@ -245,7 +245,8 @@ public class ParticipationResource {
 
         var currentDate = ZonedDateTime.now();
 
-        if (participation.getIndividualDueDate().isBefore(currentDate)) {
+        var participationIndividualDueDate = participation.getIndividualDueDate();
+        if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
             throw new IllegalArgumentException("Request has already been sent");
         }
 
