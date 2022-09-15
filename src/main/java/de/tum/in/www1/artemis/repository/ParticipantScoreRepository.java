@@ -9,6 +9,7 @@ import javax.validation.constraints.NotNull;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -28,9 +29,33 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     void removeAllByExerciseId(Long exerciseId);
 
-    void removeAllByLastResultId(Long lastResultId);
+    @Transactional
+    @Modifying
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastResult = NULL, p.lastPoints = NULL, p.lastScore = NULL
+            WHERE p.lastResult.id = :lastResultId
+            """)
+    // Do not update last modified date
+    void clearLastResultByResultId(@Param("lastResultId") Long lastResultId);
 
-    void removeAllByLastRatedResultId(Long lastResultId);
+    @Transactional
+    @Modifying
+    @Query("""
+            UPDATE ParticipantScore p
+            SET p.lastRatedResult = NULL, p.lastRatedPoints = NULL, p.lastRatedScore = NULL
+            WHERE p.lastRatedResult.id = :lastResultId
+            """)
+    // Do not update last modified date
+    void clearLastRatedResultByResultId(@Param("lastResultId") Long lastResultId);
+
+    @Query("""
+            SELECT p FROM ParticipantScore p
+            LEFT JOIN FETCH p.exercise
+            WHERE p.lastResult IS NULL
+            OR p.lastRatedResult IS NULL
+            """)
+    List<ParticipantScore> findAllOutdatedWithExercise();
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
@@ -48,12 +73,11 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     @Query("""
                 SELECT p
                 FROM ParticipantScore p
-                LEFT JOIN FETCH p.lastResult
-                LEFT JOIN FETCH p.lastRatedResult
+                LEFT JOIN FETCH p.exercise
                 WHERE p.lastResult.id = :resultId
                 OR p.lastRatedResult.id = :resultId
             """)
-    Optional<ParticipantScore> findByResultIdWithEagerResults(@Param("resultId") Long resultId);
+    Optional<ParticipantScore> findByResultIdWithExercise(@Param("resultId") Long resultId);
 
     @Query("""
             SELECT p
@@ -102,15 +126,26 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             """)
     Double findAverageScoreForExercise(@Param("exerciseId") Long exerciseId);
 
+    /**
+     * Delete all participant scores for a given exercise.
+     * Note: Only call this method when the exercise is about to be deleted. Otherwise, use {@link #clearAllByResultId(Long)}.
+     * @param exerciseId the exercise id for which to remove all participant scores
+     */
     @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
     default void deleteAllByExerciseIdTransactional(Long exerciseId) {
+        // When the exercise is deleted, we can safely remove all corresponding participant scores
         this.removeAllByExerciseId(exerciseId);
     }
 
-    @Transactional(propagation = Propagation.REQUIRES_NEW) // ok because of delete
-    default void deleteAllByResultIdTransactional(Long resultId) {
-        this.removeAllByLastResultId(resultId);
-        this.removeAllByLastRatedResultId(resultId);
+    /**
+     * Safely removes the result from all participant scores by setting it to null.
+     * The scheduler will later evaluate and delete the participant score if no older result exists.
+     * @see de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService
+     * @param resultId the id of the result to be removed
+     */
+    default void clearAllByResultId(Long resultId) {
+        this.clearLastResultByResultId(resultId);
+        this.clearLastRatedResultByResultId(resultId);
     }
 
     @Query("""

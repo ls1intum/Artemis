@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.scheduled;
 
-import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifiedByCourseSettings;
-
 import java.time.Instant;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
@@ -28,9 +26,17 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
 import de.tum.in.www1.artemis.security.SecurityUtils;
+import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
 /**
  * Scheduled service for the calculation of the participant scores.
+ * Note: Only active on the main instance with "scheduling" profile.
+ * <p>
+ * The approach is two-sided, to make the participant scores eventually consistent within seconds without overloading the database.
+ * Using a listener on the {@link Result} entity, changes are detected and forwarded (via the broker if not on the main instance) to this service.
+ * This method is fast, but not 100% reliable. Therefore, a cron job regularly checks for invalid participant scores and updates them.
+ * In all cases, using asynchronous scheduled tasks speeds up all requests that modify results.
+ * @see de.tum.in.www1.artemis.service.listeners.ResultListener
  */
 @Service
 @Profile("scheduling")
@@ -55,16 +61,22 @@ public class ParticipantScoreSchedulerService {
         this.resultRepository = resultRepository;
     }
 
+    /**
+     * Schedule all outdated participant scores when the service is started.
+     */
     @PostConstruct
     public void startSchedule() {
         try {
-            scheduleOutdatedParticipantScores();
+            scheduleResultsToProgress();
         }
         catch (Exception e) {
             logger.error("Failed to start ParticipantScoreScheduler", e);
         }
     }
 
+    /**
+     * Before shutdown, cancel all running or scheduled tasks.
+     */
     @PreDestroy
     public void stopSchedule() {
         // Stop all running tasks, we will reschedule them on startup again
@@ -74,20 +86,44 @@ public class ParticipantScoreSchedulerService {
         scheduledParticipantScores.clear();
     }
 
-    @Scheduled(cron = "0 0 * * * *")
-    protected void scheduleOutdatedParticipantScores() {
+    /**
+     * Every minute, query for modified results and run a task to update the participant scores.
+     * We schedule all results that were created/updated since the last run of the cron job.
+     * In the runner, we check if the participant score was modified after the result, then we can skip it.
+     * (That means the listener did its job. This cron is just for extra safety.)
+     */
+    @Scheduled(cron = "0 * * * * *")
+    protected void scheduleResultsToProgress() {
         SecurityUtils.setAuthorizationObject();
 
         // Find all results that were added after the last run (on startup: last time we modified a participant score)
         var latestRun = lastSchedulingRun.orElseGet(() -> participantScoreRepository.getLatestModifiedDate().orElse(Instant.now()));
         // Update last run time before we continue with time-consuming operations
         lastSchedulingRun = Optional.of(Instant.now());
+
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
             scheduleTask(result.getId());
         });
     }
 
+    /**
+     * Every hour, query for outdated participant scores (where one of the results is null) and update them.
+     * This can only happen if a result was deleted, but the participant score was not updated.
+     * (Possibly, the main instance with the scheduler was down at that time.)
+     */
+    @Scheduled(cron = "0 0 * * * *")
+    protected void scheduleOutdatedParticipantScores() {
+        SecurityUtils.setAuthorizationObject();
+
+        var participantScoresToProcess = participantScoreRepository.findAllOutdatedWithExercise();
+        participantScoresToProcess.forEach(this::updateParticipantScore);
+    }
+
+    /**
+     * Schedule a task to update the participant score for the given result.
+     * @param resultId the id of the result that was created/updated/deleted
+     */
     public void scheduleTask(Long resultId) {
         if (scheduledParticipantScores.containsKey(resultId)) {
             // We already have a scheduled task for this result
@@ -100,25 +136,34 @@ public class ParticipantScoreSchedulerService {
         logger.info("Schedule task for {} at {}.", resultId, schedulingTime);
     }
 
+    /**
+     * Execute the task to update the participant score for the given result.
+     * @param resultId the id of the result that was created/updated/deleted
+     */
     private void executeTask(Long resultId) {
         scheduledParticipantScores.remove(resultId);
         logger.info("Processing {} at {}.", resultId, ZonedDateTime.now());
 
         SecurityUtils.setAuthorizationObject();
 
-        var result = resultRepository.findByIdWithEagerParticipationAndSubmissionsAndExercise(resultId).orElse(null);
-        var participantScore = participantScoreRepository.findByResultIdWithEagerResults(resultId);
+        var result = resultRepository.findById(resultId).orElse(null);
+        var participantScore = participantScoreRepository.findByResultIdWithExercise(resultId);
 
         if (result == null) {
             // The result was deleted, we need to check if we have a participant score for it
-            participantScore.ifPresent(score -> {
-                updateParticipantScore(resultId, score);
-            });
+            participantScore.ifPresent(this::updateParticipantScore);
             return;
         }
 
         if (!(result.getParticipation() instanceof StudentParticipation participation)) {
             // We are only interested in student participations
+            return;
+        }
+
+        if (participantScore.isPresent() && participantScore.get().getLastModifiedDate().isAfter(result.getLastModifiedDate())) {
+            // Both the result & participant score exist and the participant score was modified after the result
+            // Ergo: We already processed it, nothing to do!
+            logger.debug("Participant score for result {} was already updated. Skipping.", resultId);
             return;
         }
 
@@ -138,24 +183,28 @@ public class ParticipantScoreSchedulerService {
             }
         });
 
-        updateParticipantScore(resultId, score);
+        updateParticipantScore(score);
     }
 
-    private void updateParticipantScore(Long resultId, ParticipantScore participantScore) {
-        if (participantScore.getLastRatedResult() == null || participantScore.getLastRatedResult().getId().equals(resultId)) {
-            var lastRatedResult = getNewLastRatedResultForParticipantScore(participantScore).orElse(null);
-            setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
-        }
-        if (participantScore.getLastResult() == null || participantScore.getLastResult().getId().equals(resultId)) {
-            var lastResult = getNewLastResultForParticipantScore(participantScore).orElse(null);
-            setLastAttributes(participantScore, lastResult, participantScore.getExercise());
-        }
+    /**
+     * Updates the given participant score by fetching the last (rated) results from the database.
+     * If both no result and no rated result is found, the participant score is deleted.
+     * @param participantScore The participant score to update (with the exercise and user/team set)
+     */
+    private void updateParticipantScore(ParticipantScore participantScore) {
+        var lastRatedResult = getLastRatedResultForParticipantScore(participantScore).orElse(null);
+        setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
+
+        var lastResult = getLastResultForParticipantScore(participantScore).orElse(null);
+        setLastAttributes(participantScore, lastResult, participantScore.getExercise());
 
         // Persist the changes or delete the participant score if it is not needed anymore
         if (participantScore.getLastRatedResult() == null && participantScore.getLastResult() == null) {
+            logger.debug("Delete participant score {}.", participantScore.getId());
             participantScoreRepository.delete(participantScore);
         }
         else {
+            logger.debug("Update participant score {}.", participantScore.getId());
             participantScoreRepository.save(participantScore);
         }
     }
@@ -167,7 +216,7 @@ public class ParticipantScoreSchedulerService {
      * @param participantScore participant score
      * @return optional of new result
      */
-    private Optional<Result> getNewLastResultForParticipantScore(ParticipantScore participantScore) {
+    private Optional<Result> getLastResultForParticipantScore(ParticipantScore participantScore) {
         List<Result> resultOrdered;
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
@@ -191,7 +240,7 @@ public class ParticipantScoreSchedulerService {
      * @param participantScore participant score
      * @return optional of new result
      */
-    private Optional<Result> getNewLastRatedResultForParticipantScore(ParticipantScore participantScore) {
+    private Optional<Result> getLastRatedResultForParticipantScore(ParticipantScore participantScore) {
         List<Result> ratedResultsOrdered;
         if (participantScore.getClass().equals(StudentScore.class)) {
             StudentScore studentScore = (StudentScore) participantScore;
@@ -220,8 +269,8 @@ public class ParticipantScoreSchedulerService {
         }
         else {
             associatedParticipantScore.setLastScore(newLastResult.getScore());
-            associatedParticipantScore.setLastPoints(
-                    roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember()));
+            associatedParticipantScore.setLastPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastResult.getScore() * 0.01 * exercise.getMaxPoints(),
+                    exercise.getCourseViaExerciseGroupOrCourseMember()));
         }
     }
 
@@ -236,8 +285,8 @@ public class ParticipantScoreSchedulerService {
         }
         else {
             associatedParticipantScore.setLastRatedScore(newLastRatedResult.getScore());
-            associatedParticipantScore.setLastRatedPoints(
-                    roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(), exercise.getCourseViaExerciseGroupOrCourseMember()));
+            associatedParticipantScore.setLastRatedPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(),
+                    exercise.getCourseViaExerciseGroupOrCourseMember()));
         }
     }
 }

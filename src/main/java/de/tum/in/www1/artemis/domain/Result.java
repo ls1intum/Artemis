@@ -13,6 +13,7 @@ import javax.persistence.*;
 import org.hibernate.annotations.Cache;
 import org.hibernate.annotations.CacheConcurrencyStrategy;
 import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import com.fasterxml.jackson.annotation.*;
 import com.google.common.base.Strings;
@@ -33,7 +34,7 @@ import de.tum.in.www1.artemis.service.listeners.ResultListener;
  */
 @Entity
 @Table(name = "result")
-@EntityListeners(ResultListener.class)
+@EntityListeners({ AuditingEntityListener.class, ResultListener.class })
 @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 public class Result extends DomainObject {

@@ -656,7 +656,7 @@ public class ParticipationService {
             coverageReportRepository.deleteBySubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
-        resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
+        resultsToBeDeleted.forEach(result -> participantScoreRepository.clearAllByResultId(result.getId()));
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
         participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
