@@ -54,19 +54,6 @@ export class ExerciseDetailsStudentActionsComponent {
 
     constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 
-    // TODO: this is duplicate code from submission-result-status.component.ts
-    //       can we refactor this into a function for participation.service.ts?
-    /**
-     * If a student participation is supplied explicitly, use that one.
-     * Otherwise, use the first student participation on the exercise.
-     */
-    getParticipation() {
-        if (this.studentParticipation) {
-            return this.studentParticipation;
-        }
-        return this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0 ? this.exercise.studentParticipations[0] : undefined;
-    }
-
     /**
      * check if practiceMode is available
      * @return {boolean}
@@ -100,15 +87,22 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     isManualFeedbackRequestsAllowed(): boolean {
-        const participation = this.getParticipation();
+        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
 
-        // TODO: duplicate code UpdatingResultComponent:ngOnChanges
         const showUngradedResults = true;
-
         const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
 
-        // Checking booleans for true because they could be undefined
-        return latestResult?.score !== undefined && latestResult.score >= 100 && this.exercise.allowManualFeedbackRequests === true;
+        const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
+        const exerciseSettingAllowed = this.exercise.allowManualFeedbackRequests ?? false;
+
+        return [allHiddenTestsPassed, exerciseSettingAllowed].reduce((a, b) => a && b);
+    }
+
+    // TODO: setting [disabled] on the angular component doesn't seem to work
+    isManualFeedbackRequestAlreadySent(): boolean {
+        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
+        // return (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
+        return false;
     }
 
     /**
