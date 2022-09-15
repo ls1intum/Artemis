@@ -101,8 +101,7 @@ export class ExerciseDetailsStudentActionsComponent {
     // TODO: setting [disabled] on the angular component doesn't seem to work
     isManualFeedbackRequestAlreadySent(): boolean {
         const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
-        // return (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
-        return false;
+        return (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
     }
 
     /**
