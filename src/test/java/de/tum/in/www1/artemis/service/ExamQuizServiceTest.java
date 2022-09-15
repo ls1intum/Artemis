@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -83,7 +82,9 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exerciseGroup.addExercise(quizExercise);
 
         // Add an instructor who is not in the course
-        userRepository.save(ModelFactory.generateActivatedUser("instructor6"));
+        if (!database.userExistsWithLogin("instructor6")) {
+            database.addUser("instructor6");
+        }
     }
 
     @AfterEach

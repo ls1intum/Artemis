@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -71,9 +70,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor42"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor42"));
+        database.addUser("student42");
+        database.addUser("tutor42");
+        database.addUser("instructor42");
     }
 
     @AfterEach

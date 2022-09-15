@@ -9,7 +9,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -22,8 +21,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         database.addUsers(8, 5, 1, 1);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+        database.addUser("tutor6");
+        database.addUser("instructor2");
     }
 
     @AfterEach

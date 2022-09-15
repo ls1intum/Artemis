@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.lecture.VideoUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.VideoUnitRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -44,9 +43,9 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         this.videoUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        userRepository.save(ModelFactory.generateActivatedUser("student42"));
-        userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
-        userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+        database.addUser("student42");
+        database.addUser("tutor42");
+        database.addUser("instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {

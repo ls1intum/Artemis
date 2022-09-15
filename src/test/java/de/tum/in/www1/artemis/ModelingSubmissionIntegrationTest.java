@@ -129,9 +129,9 @@ class ModelingSubmissionIntegrationTest extends AbstractSpringIntegrationBambooB
         textExercise = (TextExercise) new ArrayList<>(course2.getExercises()).get(0);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student4"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+        database.addUser("student4");
+        database.addUser("tutor2");
+        database.addUser("instructor2");
     }
 
     @AfterEach

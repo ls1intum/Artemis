@@ -41,8 +41,8 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
     @BeforeEach
     void initTestCase() {
         database.addUsers(1, 1, 0, 1);
-        userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+        database.addUser("tutor2");
+        database.addUser("instructor2");
 
         apollonDiagram = ModelFactory.generateApollonDiagram(DiagramType.ActivityDiagram, "activityDiagram1");
 

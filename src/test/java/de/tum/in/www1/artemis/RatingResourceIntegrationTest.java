@@ -57,7 +57,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         rating.setRating(2);
 
         // add instructor of other course
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+        database.addUser("instructor2");
     }
 
     @AfterEach

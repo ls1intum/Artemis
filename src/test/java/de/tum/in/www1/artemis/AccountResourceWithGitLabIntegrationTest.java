@@ -6,6 +6,7 @@ import static org.mockito.Mockito.*;
 import java.util.Optional;
 
 import org.gitlab4j.api.UserApi;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -108,7 +109,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @Test
     void testFailureWhenTryingToDeleteActivatedUser() throws Exception {
         // create activated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cde");
         user.setFirstName("Old Firstname");
         user = userRepo.save(user);
 
@@ -136,7 +137,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldNotRegisterUserIfCannotCreateInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cdf");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -164,7 +165,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldRegisterUserIfCanCreateAndDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cdg");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -183,7 +184,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldAbortRegistrationAndFailIfCannotDeactivateAccountInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cdh");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -202,7 +203,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cdi");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -228,7 +229,7 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldThrowErrorIfCannotActivateUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = ModelFactory.generateActivatedUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cdj");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 
@@ -255,14 +256,9 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldBlockRegistrationIfUnactivatedUserWithSameLogin() throws Exception {
         // Create existing non activated user
-        User user = ModelFactory.generateActivatedUser("userLogin");
-        user.setEmail("existingUser@mytum.de");
-        user.setActivated(false);
-        userRepo.save(user);
+        createAndSaveUser("userLogin", "userLogin@mytum.de");
 
-        User newUser = ModelFactory.generateActivatedUser("userLogin");
-        newUser.setActivated(false);
-        newUser.setEmail("newUser@mytum.de");
+        User newUser = createUser("userLogin", "newUser@mytum.de");
 
         // Register the user
         ManagedUserVM userVM = new ManagedUserVM(newUser);
@@ -275,14 +271,8 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldBlockRegistrationIfUnactivatedUserWithSameEmail() throws Exception {
-        User user = ModelFactory.generateActivatedUser("existingLogin");
-        user.setEmail("existingUser@mytum.de");
-        user.setActivated(false);
-        userRepo.save(user);
-
-        User newUser = ModelFactory.generateActivatedUser("newLogin");
-        newUser.setActivated(false);
-        newUser.setEmail("existingUser@mytum.de");
+        createAndSaveUser("existingLogin", "existingUser@mytum.de");
+        User newUser = createUser("newLogin", "existingUser@mytum.de");
 
         // Register the user
         ManagedUserVM userVM = new ManagedUserVM(newUser);
@@ -292,16 +282,28 @@ class AccountResourceWithGitLabIntegrationTest extends AbstractSpringIntegration
         request.postWithoutLocation("/api/register", userVM, HttpStatus.BAD_REQUEST, null);
     }
 
+    @NotNull
+    private static User createUser(String newLogin, String email) {
+        User newUser = ModelFactory.generateActivatedUser(newLogin);
+        newUser.setActivated(false);
+        newUser.setEmail(email);
+        return newUser;
+    }
+
+    private void createAndSaveUser(String login, String email) {
+        if (!database.userExistsWithLogin(login)) {
+            User user = ModelFactory.generateActivatedUser(login);
+            user.setEmail(email);
+            user.setActivated(false);
+            userRepo.save(user);
+        }
+    }
+
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testShouldFailRegistrationIfActivatedUserWithSameEmail() throws Exception {
-        User user = ModelFactory.generateActivatedUser("existingLogin");
-        user.setEmail("existingUser@mytum.de");
-        userRepo.save(user);
-
-        User newUser = ModelFactory.generateActivatedUser("newLogin");
-        newUser.setActivated(false);
-        newUser.setEmail("existingUser@mytum.de");
+        createAndSaveUser("existingLogin2", "existingUser2@mytum.de");
+        User newUser = createUser("newLogin", "existingUser@mytum.de");
 
         // Register the user
         ManagedUserVM userVM = new ManagedUserVM(newUser);

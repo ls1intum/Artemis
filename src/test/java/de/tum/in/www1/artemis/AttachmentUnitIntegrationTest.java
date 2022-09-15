@@ -48,9 +48,9 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         this.attachmentUnit.setDescription("Lorem Ipsum");
 
         // Add users that are not in the course
-        userRepository.save(ModelFactory.generateActivatedUser("student42"));
-        userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
-        userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+        database.addUser("student42");
+        database.addUser("tutor42");
+        database.addUser("instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {

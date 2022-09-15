@@ -17,7 +17,6 @@ import de.tum.in.www1.artemis.domain.lecture.TextUnit;
 import de.tum.in.www1.artemis.repository.LectureRepository;
 import de.tum.in.www1.artemis.repository.TextUnitRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -43,10 +42,10 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
-        userRepository.save(ModelFactory.generateActivatedUser("student42"));
-        userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
-        userRepository.save(ModelFactory.generateActivatedUser("editor42"));
-        userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+        database.addUser("student42");
+        database.addUser("tutor42");
+        database.addUser("editor42");
+        database.addUser("instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {

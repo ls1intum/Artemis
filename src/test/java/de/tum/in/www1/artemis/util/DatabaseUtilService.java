@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -297,7 +298,7 @@ public class DatabaseUtilService {
     private Optional<String> tutorialGroupInstructors;
 
     public void resetDatabase() {
-        databaseCleanupService.clearDatabase();
+        // TODO Delete
     }
 
     // TODO: this should probably be moved into another service
@@ -316,6 +317,164 @@ public class DatabaseUtilService {
     }
 
     /**
+     * Generate users that have registration numbers
+     *
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param groups groups that the users will be added
+     * @param authorities authorities that the users will have
+     * @param amount amount of users to generate
+     * @param registrationNumberPrefix prefix that will be added in front of every user
+     * @return users that were generated
+     */
+    public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
+        List<User> generatedUsers = generateActivatedUsers(loginPrefix, groups, authorities, amount);
+        for (int i = 0; i < amount; i++) {
+            generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
+        }
+        return generatedUsers;
+    }
+
+    public List<User> generateActivatedUsers(String loginPrefix, String[] groups, Set<Authority> authorities, int amount) {
+        return generateActivatedUsers(loginPrefix, USER_PASSWORD, groups, authorities, amount);
+    }
+
+    public List<User> generateActivatedUsers(String loginPrefix, String commonPasswordHash, String[] groups, Set<Authority> authorities, int amount) {
+        List<User> generatedUsers = new ArrayList<>();
+        for (int i = 1; i <= amount; i++) {
+            var login = loginPrefix + i;
+            if (!userExistsWithLogin(login)) {
+                User user = ModelFactory.generateActivatedUser(login, commonPasswordHash);
+                if (groups != null) {
+                    user.setGroups(Set.of(groups));
+                    user.setAuthorities(authorities);
+                }
+                generatedUsers.add(user);
+            }
+        }
+        return generatedUsers;
+    }
+
+    /**
+     * Generate a team
+     *
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param loginPrefix prefix that will be added in front of every user's login
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @param creatorLogin login of user that creates the teams
+     * @param registrationPrefix prefix that will be added in front of every student's registration number
+     * @return team that was generated
+     */
+    public Team generateTeamForExercise(Exercise exercise, String name, String shortName, String loginPrefix, int numberOfStudents, User owner, String creatorLogin,
+            String registrationPrefix) {
+        List<User> students = generateActivatedUsersWithRegistrationNumber(shortName + loginPrefix, new String[] { "tumuser", "testgroup" },
+                Set.of(new Authority(Role.STUDENT.getAuthority())), numberOfStudents, shortName + registrationPrefix);
+
+        Team team = new Team();
+        team.setName(name);
+        team.setShortName(shortName);
+        team.setExercise(exercise);
+        team.setStudents(new HashSet<>(students));
+        if (owner != null) {
+            team.setOwner(owner);
+        }
+        if (creatorLogin != null) {
+            team.setCreatedBy(creatorLogin);
+            team.setLastModifiedBy(creatorLogin);
+        }
+        return team;
+    }
+
+    /**
+     * Generate a team
+     *
+     * @param exercise exercise of the team
+     * @param name name of the team
+     * @param shortName short name of the team
+     * @param numberOfStudents amount of users to generate for team as students
+     * @param owner owner of the team generally a tutor
+     * @return team that was generated
+     */
+    public Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
+        return generateTeamForExercise(exercise, name, shortName, "student", numberOfStudents, owner, null, "R");
+    }
+
+    /**
+     * Generate teams
+     *
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
+     * @return teams that were generated
+     */
+    public List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
+        return generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, creatorLogin, "R");
+    }
+
+    /**
+     * Generate teams
+     *
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
+     * @param registrationPrefix prefix that will be added in front of every student's registration number
+     * @return teams that were generated
+     */
+    public List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
+            String registrationPrefix) {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 1; i <= numberOfTeams; i++) {
+            int numberOfStudents = new Random().nextInt(4) + 1; // range: 1-4 students
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, numberOfStudents, owner, creatorLogin, registrationPrefix));
+        }
+        return teams;
+    }
+
+    /**
+     * Generate teams
+     *
+     * @param exercise exercise of the teams
+     * @param shortNamePrefix prefix that will be added in front of every team's short name
+     * @param loginPrefix prefix that will be added in front of every student's login
+     * @param numberOfTeams amount of teams to generate
+     * @param owner owner of the teams generally a tutor
+     * @param creatorLogin login of user that created the teams
+     * @param registrationPrefix prefix that will be added in front of every student's registration number
+     * @param teamSize size of each individual team
+     * @return teams that were generated
+     */
+    public List<Team> generateTeamsForExerciseFixedTeamSize(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin,
+            String registrationPrefix, int teamSize) {
+        List<Team> teams = new ArrayList<>();
+        for (int i = 1; i <= numberOfTeams; i++) {
+            teams.add(generateTeamForExercise(exercise, "Team " + i, shortNamePrefix + i, loginPrefix, teamSize, owner, creatorLogin, registrationPrefix));
+        }
+        return teams;
+    }
+
+    public User addUser(String login, String hashedPassword) {
+        if (!userExistsWithLogin(login)) {
+            return userRepo.save(ModelFactory.generateActivatedUser(login, hashedPassword));
+        }
+        return getUserByLogin(login);
+    }
+
+    public User addUser(String login) {
+        if (!userExistsWithLogin(login)) {
+            return userRepo.save(ModelFactory.generateActivatedUser(login));
+        }
+        return getUserByLogin(login);
+    }
+
+    /**
      * Adds the provided number of students and tutors into the user repository. Students login is a concatenation of the prefix "student" and a number counting from 1 to
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
@@ -327,39 +486,42 @@ public class DatabaseUtilService {
      */
     public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
 
-        authorityRepository.saveAll(adminAuthorities);
+        if (authorityRepository.count() == 0) {
+            authorityRepository.saveAll(adminAuthorities);
+        }
 
-        List<User> students = ModelFactory.generateActivatedUsers("student", passwordService.hashPassword(ModelFactory.USER_PASSWORD), new String[] { "tumuser", "testgroup" },
-                studentAuthorities, numberOfStudents);
-        List<User> tutors = ModelFactory.generateActivatedUsers("tutor", passwordService.hashPassword(ModelFactory.USER_PASSWORD), new String[] { "tutor", "testgroup" },
-                tutorAuthorities, numberOfTutors);
-        List<User> editors = ModelFactory.generateActivatedUsers("editor", passwordService.hashPassword(ModelFactory.USER_PASSWORD), new String[] { "editor", "testgroup" },
-                editorAuthorities, numberOfEditors);
-        List<User> instructors = ModelFactory.generateActivatedUsers("instructor", passwordService.hashPassword(ModelFactory.USER_PASSWORD),
-                new String[] { "instructor", "testgroup" }, instructorAuthorities, numberOfInstructors);
-        User admin = ModelFactory.generateActivatedUser("admin", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        admin.setGroups(Set.of("admin"));
-        admin.setAuthorities(adminAuthorities);
+        var students = generateActivatedUsers("student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup" }, studentAuthorities,
+                numberOfStudents);
+        var tutors = generateActivatedUsers("tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
+        var editors = generateActivatedUsers("editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
+        var instructors = generateActivatedUsers("instructor", passwordService.hashPassword(USER_PASSWORD), new String[] { "instructor", "testgroup" }, instructorAuthorities,
+                numberOfInstructors);
+
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);
         usersToAdd.addAll(tutors);
         usersToAdd.addAll(editors);
         usersToAdd.addAll(instructors);
-        usersToAdd.add(admin);
-        userRepo.saveAll(usersToAdd);
-        assertThat(userRepo.findAll()).as("all users are created").hasSizeGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
-        assertThat(userRepo.findAll()).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
 
-        final var users = new ArrayList<>(students);
-        users.addAll(tutors);
-        users.addAll(editors);
-        users.addAll(instructors);
-        users.add(admin);
-        return users;
+        if (!userExistsWithLogin("admin")) {
+            User admin = ModelFactory.generateActivatedUser("admin", passwordService.hashPassword(USER_PASSWORD));
+            admin.setGroups(Set.of("admin"));
+            admin.setAuthorities(adminAuthorities);
+            usersToAdd.add(admin);
+        }
+
+        if (usersToAdd.size() > 0) {
+            userRepo.saveAll(usersToAdd);
+        }
+        var allUsers = userRepo.findAll();
+        assertThat(allUsers).as("all users are created").hasSizeGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
+        // assertThat(allUsers).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
+
+        return allUsers;
     }
 
     public List<Team> addTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner) {
-        List<Team> teams = ModelFactory.generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
+        List<Team> teams = generateTeamsForExercise(exercise, shortNamePrefix, loginPrefix, numberOfTeams, owner, null);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         return teamRepo.saveAll(teams);
     }
@@ -373,7 +535,7 @@ public class DatabaseUtilService {
     }
 
     public List<Team> addTeamsForExerciseFixedTeamSize(Exercise exercise, int numberOfTeams, User owner, int noOfStudentsPerTeam) {
-        List<Team> teams = ModelFactory.generateTeamsForExerciseFixedTeamSize(exercise, "team", "student", numberOfTeams, owner, null, "R", noOfStudentsPerTeam);
+        List<Team> teams = generateTeamsForExerciseFixedTeamSize(exercise, "team", "student", numberOfTeams, owner, null, "R", noOfStudentsPerTeam);
         userRepo.saveAll(teams.stream().map(Team::getStudents).flatMap(Collection::stream).toList());
         return teamRepo.saveAll(teams);
     }
@@ -408,28 +570,28 @@ public class DatabaseUtilService {
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
-        var instructor = ModelFactory.generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1).get(0);
+        var instructor = generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1).get(0);
         instructor = userRepo.save(instructor);
 
         assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
     }
 
     public void addEditor(final String editorGroup, final String editorName) {
-        var instructor = ModelFactory.generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
+        var instructor = generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
         instructor = userRepo.save(instructor);
 
         assertThat(instructor.getId()).as("Editor has been created").isNotNull();
     }
 
     public void addTeachingAssistant(final String taGroup, final String taName) {
-        var ta = ModelFactory.generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
+        var ta = generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
         ta = userRepo.save(ta);
 
         assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
     }
 
     public void addStudent(final String studentGroup, final String studentName) {
-        var instructor = ModelFactory.generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
+        var instructor = generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
         instructor = userRepo.save(instructor);
 
         assertThat(instructor.getId()).as("Student has been created").isNotNull();
@@ -1221,14 +1383,12 @@ public class DatabaseUtilService {
 
     public Exam addExam(Course course) {
         Exam exam = ModelFactory.generateExam(course);
-        examRepository.save(exam);
-        return exam;
+        return examRepository.save(exam);
     }
 
     public Exam addTestExam(Course course) {
         Exam exam = ModelFactory.generateTestExam(course);
-        examRepository.save(exam);
-        return exam;
+        return examRepository.save(exam);
     }
 
     public Exam addTestExamWithRegisteredUser(Course course, User user) {
@@ -3192,6 +3352,10 @@ public class DatabaseUtilService {
 
     public User getUserByLogin(String login) {
         return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+    }
+
+    public boolean userExistsWithLogin(String login) {
+        return userRepo.findOneByLogin(login).isPresent();
     }
 
     public void updateExerciseDueDate(long exerciseId, ZonedDateTime newDueDate) {

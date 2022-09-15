@@ -120,9 +120,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         this.database.addUsers(5, 10, 0, 10);
 
         // Add users that are not in the course
-        userRepository.save(ModelFactory.generateActivatedUser("student42"));
-        userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
-        userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+        database.addUser("student42");
+        database.addUser("tutor42");
+        database.addUser("instructor42");
 
         // creating course
         Course course = this.database.createCourse();

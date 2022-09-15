@@ -18,7 +18,6 @@ import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.Lecture;
 import de.tum.in.www1.artemis.domain.lecture.*;
 import de.tum.in.www1.artemis.repository.*;
-import de.tum.in.www1.artemis.util.ModelFactory;
 
 class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -75,9 +74,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         this.lecture1 = course1.getLectures().stream().findFirst().get();
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("student42"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor42"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor42"));
+        database.addUser("student42");
+        database.addUser("tutor42");
+        database.addUser("instructor42");
 
         this.textUnit = database.createTextUnit();
         this.textUnit2 = database.createTextUnit();

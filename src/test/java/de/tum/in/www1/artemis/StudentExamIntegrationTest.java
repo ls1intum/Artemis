@@ -50,7 +50,6 @@ import de.tum.in.www1.artemis.service.exam.ExamQuizService;
 import de.tum.in.www1.artemis.service.exam.StudentExamService;
 import de.tum.in.www1.artemis.util.ExamPrepareExercisesTestUtil;
 import de.tum.in.www1.artemis.util.LocalRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StudentExamWithGradeDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -161,7 +160,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExamForTestExam2.setSubmissionDate(ZonedDateTime.now().minusMinutes(65));
         studentExamRepository.save(studentExamForTestExam2);
 
-        userRepository.save(ModelFactory.generateActivatedUser("student42"));
+        database.addUser("student42");
 
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);

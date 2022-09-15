@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.quiz.QuizExercise;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.ExerciseService;
 import de.tum.in.www1.artemis.util.FileUtils;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
 import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 
@@ -62,9 +61,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         database.addUsers(10, 5, 0, 1);
 
         // Add users that are not in exercise/course
-        userRepository.save(ModelFactory.generateActivatedUser("student11"));
-        userRepository.save(ModelFactory.generateActivatedUser("tutor6"));
-        userRepository.save(ModelFactory.generateActivatedUser("instructor2"));
+        database.addUser("student11");
+        database.addUser("tutor6");
+        database.addUser("instructor2");
     }
 
     @AfterEach

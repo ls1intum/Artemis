@@ -77,8 +77,9 @@ class ModelingExerciseIntegrationTest extends AbstractSpringIntegrationBambooBit
         classExercise = (ModelingExercise) course.getExercises().iterator().next();
 
         // Add users that are not in course
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
-        userRepo.save(ModelFactory.generateActivatedUser("tutor2"));
+        database.addUser("instructor2");
+        database.addUser("tutor2");
+
     }
 
     @AfterEach

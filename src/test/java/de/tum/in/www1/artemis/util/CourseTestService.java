@@ -137,8 +137,8 @@ public class CourseTestService {
         database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
 
         // Add users that are not in the course
-        userRepo.save(ModelFactory.generateActivatedUser("tutor6"));
-        userRepo.save(ModelFactory.generateActivatedUser("instructor2"));
+        database.addUser("tutor6");
+        database.addUser("instructor2");
     }
 
     public void tearDown() {

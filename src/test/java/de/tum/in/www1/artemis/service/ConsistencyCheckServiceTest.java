@@ -16,7 +16,6 @@ import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.dto.ConsistencyErrorDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.RequestUtilService;
 
 /**
@@ -46,7 +45,7 @@ public class ConsistencyCheckServiceTest {
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
         course = database.addCourseWithOneProgrammingExercise();
-        User user = userRepository.save(ModelFactory.generateActivatedUser("instructor1"));
+        User user = database.addUser("instructor1");
         Set<String> groups = new HashSet<>();
         groups.add(course.getInstructorGroupName());
         user.setGroups(groups);

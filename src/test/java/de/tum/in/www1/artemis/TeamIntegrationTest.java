@@ -420,7 +420,7 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "student1", roles = "USER")
     void testTeamOperationsAsStudent() throws Exception {
         Team existingTeam = database.addTeamForExercise(exercise, tutor);
-        Team unsavedTeam = ModelFactory.generateTeamForExercise(exercise, "Team Unsaved", "teamUnsaved", 2, tutor);
+        Team unsavedTeam = database.generateTeamForExercise(exercise, "Team Unsaved", "teamUnsaved", 2, tutor);
 
         // Create team
         request.postWithResponseBody(resourceUrl(), unsavedTeam, Team.class, HttpStatus.FORBIDDEN);
