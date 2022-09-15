@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.repository;
 
+import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -40,9 +42,8 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
      * @param dependenciesDownloadedCount the number of dependencies downloaded during the build, or null (if it is not exposed through the logs)
      * @return the already persisted BuildLogStatisticsEntry
      */
-    default BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, BuildLogStatisticsEntry.BuildJobPartDuration agentSetupDuration,
-            BuildLogStatisticsEntry.BuildJobPartDuration testDuration, BuildLogStatisticsEntry.BuildJobPartDuration scaDuration,
-            BuildLogStatisticsEntry.BuildJobPartDuration totalJobDuration, Integer dependenciesDownloadedCount) {
+    default BuildLogStatisticsEntry saveBuildLogStatisticsEntry(ProgrammingSubmission programmingSubmission, BuildJobPartDuration agentSetupDuration,
+            BuildJobPartDuration testDuration, BuildJobPartDuration scaDuration, BuildJobPartDuration totalJobDuration, Integer dependenciesDownloadedCount) {
 
         BuildLogStatisticsEntry buildLogStatisticsEntry = new BuildLogStatisticsEntry(programmingSubmission, agentSetupDuration.durationInSeconds(),
                 testDuration.durationInSeconds(), scaDuration.durationInSeconds(), totalJobDuration.durationInSeconds(), dependenciesDownloadedCount);
