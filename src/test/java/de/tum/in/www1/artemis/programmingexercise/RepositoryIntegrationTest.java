@@ -367,6 +367,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         plagiarismComparison.setSubmissionB(plagiarismSubmissionB);
 
         PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(programmingExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
 
         Post post = new Post();

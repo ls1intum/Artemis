@@ -151,7 +151,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submission = textExerciseResult.getSubmission();
         textExerciseResult.setAssessor(tutor1);
         resultRepository.save(textExerciseResult);
-        this.database.addComplaintToSubmission(submission, student1.getLogin(), null);
+        this.database.addComplaintToSubmission(submission, student1.getLogin(), null); // TODO: sleiss: type=null contradicts the non-null requirement of the database!
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(submission.getId()).orElseThrow();
         textExerciseComplaint = this.complaintRepository.findByIdWithEagerAssessor(textExerciseComplaint.getId()).orElseThrow();
 

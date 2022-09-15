@@ -675,7 +675,9 @@ public class ProgrammingExerciseTestService {
         sourceExercise.setTeamAssignmentConfig(teamAssignmentConfig);
         sourceExercise.setCourse(sourceExercise.getCourseViaExerciseGroupOrCourseMember());
         programmingExerciseRepository.save(sourceExercise);
-        teamRepository.save(sourceExercise, new Team());
+        var team = new Team();
+        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        teamRepository.save(sourceExercise, team);
         database.loadProgrammingExerciseWithEagerReferences(sourceExercise);
 
         ProgrammingExercise exerciseToBeImported = ModelFactory.generateToBeImportedProgrammingExercise("ImportTitle", "imported", sourceExercise, database.addEmptyCourse());

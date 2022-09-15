@@ -896,7 +896,9 @@ class TextExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         sourceExercise.setCourse(course1);
 
         sourceExercise = textExerciseRepository.save(sourceExercise);
-        teamRepository.save(sourceExercise, new Team());
+        var team = new Team();
+        team.setShortName("t" + UUID.randomUUID().toString().substring(0, 3));
+        teamRepository.save(sourceExercise, team);
 
         var exerciseToBeImported = new TextExercise();
         exerciseToBeImported.setMode(ExerciseMode.INDIVIDUAL);

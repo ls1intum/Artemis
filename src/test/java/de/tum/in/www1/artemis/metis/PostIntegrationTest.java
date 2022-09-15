@@ -236,7 +236,9 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         Post postToSave = createPostWithoutContext();
         postToSave.setCourse(course);
 
-        final PlagiarismCase plagiarismCase = plagiarismCaseRepository.save(new PlagiarismCase());
+        var plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(existingExercisePosts.get(0).getExercise());
+        plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         postToSave.setPlagiarismCase(plagiarismCase);
 
         request.postWithResponseBody("/api/courses/" + courseId + "/posts", postToSave, Post.class, HttpStatus.CREATED);

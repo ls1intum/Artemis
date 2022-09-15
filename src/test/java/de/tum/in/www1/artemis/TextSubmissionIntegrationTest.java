@@ -137,6 +137,7 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         submissionA.setSubmissionId(this.textSubmission.getId());
         plagiarismComparison.setSubmissionA(submissionA);
         PlagiarismCase plagiarismCase = new PlagiarismCase();
+        plagiarismCase.setExercise(finishedTextExercise);
         plagiarismCase = plagiarismCaseRepository.save(plagiarismCase);
         Post post = new Post();
         post.setAuthor(userRepository.getUserByLoginElseThrow("instructor1"));

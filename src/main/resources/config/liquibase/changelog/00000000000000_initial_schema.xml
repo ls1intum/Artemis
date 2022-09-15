@@ -989,7 +989,7 @@
                 <constraints nullable="false"/>
             </column>
             <column defaultValueNumeric="1.0" name="weight" type="DOUBLE"/>
-            <column name="active" type="boolean">
+            <column defaultValueBoolean="false" name="active" type="boolean">
                 <constraints nullable="false"/>
             </column>
             <column name="exercise_id" type="BIGINT"/>

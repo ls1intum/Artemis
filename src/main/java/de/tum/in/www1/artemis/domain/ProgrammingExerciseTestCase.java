@@ -33,8 +33,8 @@ public class ProgrammingExerciseTestCase extends DomainObject {
     @Column(name = "weight")
     private Double weight;
 
-    @Column(name = "active")
-    private Boolean active;
+    @Column(name = "active", columnDefinition = "boolean DEFAULT false")
+    private Boolean active = false;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "visibility")
