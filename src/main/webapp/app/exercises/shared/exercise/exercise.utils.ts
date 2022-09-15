@@ -203,7 +203,7 @@ export const isStartExerciseAvailable = (exercise: ProgrammingExercise): boolean
  * - now is after the due date
  */
 export const isStartPracticeAvailable = (exercise: ProgrammingExercise): boolean => {
-    return exercise.dueDate != undefined || dayjs().isAfter(dayjs(exercise.dueDate!));
+    return exercise.dueDate != undefined && dayjs().isAfter(exercise.dueDate!);
 };
 
 /**

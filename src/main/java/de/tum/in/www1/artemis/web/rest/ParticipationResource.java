@@ -218,7 +218,7 @@ public class ParticipationResource {
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
         }
-        if (exercise.getDueDate() == null || exercise.getDueDate().isAfter(now())) {
+        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())) {
             throw new AccessForbiddenException("The practice mode cannot be started before the due date");
         }
 

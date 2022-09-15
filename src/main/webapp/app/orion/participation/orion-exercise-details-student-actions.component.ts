@@ -7,7 +7,6 @@ import { ExerciseView, OrionState } from 'app/shared/orion/orion';
 import { OrionConnectorService } from 'app/shared/orion/orion-connector.service';
 import { OrionBuildAndTestService } from 'app/shared/orion/orion-build-and-test.service';
 import { Exercise } from 'app/entities/exercise.model';
-import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 
 @Component({
     selector: 'jhi-orion-exercise-details-student-actions',
@@ -16,7 +15,6 @@ import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 })
 export class OrionExerciseDetailsStudentActionsComponent implements OnInit {
     readonly ExerciseView = ExerciseView;
-    readonly ExerciseOperationMode = ExerciseOperationMode;
     orionState: OrionState;
     FeatureToggle = FeatureToggle;
 

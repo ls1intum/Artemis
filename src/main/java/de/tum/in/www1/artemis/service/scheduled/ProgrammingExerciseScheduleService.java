@@ -109,10 +109,15 @@ public class ProgrammingExerciseScheduleService implements IExerciseScheduleServ
             List<ProgrammingExercise> exercisesToBeScheduled = programmingExerciseRepository.findAllToBeScheduled(ZonedDateTime.now());
             exercisesToBeScheduled.forEach(this::scheduleExercise);
 
+            List<ProgrammingExercise> programmingExercisesWithTestsAfterDueDateButNoRebuild = programmingExerciseRepository
+                    .findAllByDueDateAfterDateWithTestsAfterDueDateWithoutBuildStudentSubmissionsDate(ZonedDateTime.now());
+            programmingExercisesWithTestsAfterDueDateButNoRebuild.forEach(this::scheduleExercise);
+
             List<ProgrammingExercise> programmingExercisesWithExam = programmingExerciseRepository.findAllWithEagerExamByExamEndDateAfterDate(ZonedDateTime.now());
             programmingExercisesWithExam.forEach(this::scheduleExamExercise);
 
             log.info("Scheduled {} programming exercises.", exercisesToBeScheduled.size());
+            log.info("Scheduled {} programming exercises for a score update after due date.", programmingExercisesWithTestsAfterDueDateButNoRebuild.size());
             log.info("Scheduled {} exam programming exercises.", programmingExercisesWithExam.size());
         }
         catch (Exception e) {

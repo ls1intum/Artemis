@@ -12,7 +12,6 @@ import { Exercise, ExerciseType, getIcon, getIconTooltip, IncludedInOverallScore
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
 import { getExerciseDueDate, participationStatus } from 'app/exercises/shared/exercise/exercise.utils';
 import { ExerciseCategory } from 'app/entities/exercise-category.model';
-import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 
 @Component({
     selector: 'jhi-course-exercise-row',
@@ -43,8 +42,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     dueDate?: dayjs.Dayjs;
 
     participationUpdateListener: Subscription;
-
-    exerciseOperationMode: ExerciseOperationMode = ExerciseOperationMode.EXERCISE;
 
     constructor(
         private accountService: AccountService,
@@ -97,29 +94,6 @@ export class CourseExerciseRowComponent implements OnInit, OnDestroy, OnChanges 
     ngOnDestroy() {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
-        }
-    }
-
-    public isInExamMode(): boolean {
-        switch (this.exerciseOperationMode) {
-            case ExerciseOperationMode.EXAM:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public togglePracticeMode(toggle: boolean): void {
-        if (this.isInExamMode() && !!this.exercise) {
-            switch (this.exercise.type) {
-                case ExerciseType.QUIZ:
-                case ExerciseType.PROGRAMMING:
-                    this.exerciseOperationMode = toggle ? ExerciseOperationMode.PRACTICE : ExerciseOperationMode.EXERCISE;
-                    this.ngOnInit();
-                    break;
-                default:
-                    break;
-            }
         }
     }
 

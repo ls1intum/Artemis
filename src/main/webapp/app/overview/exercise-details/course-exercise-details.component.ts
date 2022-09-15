@@ -51,7 +51,6 @@ import { ExerciseHintService } from 'app/exercises/shared/exercise-hint/shared/e
 import { ExerciseHint } from 'app/entities/hestia/exercise-hint.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { PlagiarismCaseInfo } from 'app/exercises/shared/plagiarism/types/PlagiarismCaseInfo';
-import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 
 const MAX_RESULT_HISTORY_LENGTH = 5;
 
@@ -90,7 +89,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public gradingCriteria: GradingCriterion[];
     private discussionComponent?: DiscussionSectionComponent;
     baseResource: string;
-    // TODO: isExamExercise is unused
     isExamExercise: boolean;
     hasSubmissionPolicy: boolean;
     submissionPolicy: SubmissionPolicy;
@@ -103,8 +101,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public exampleSolution?: SafeHtml;
     public exampleSolutionUML?: UMLModel;
     public isProgrammingExerciseExampleSolutionPublished = false;
-
-    public exerciseOperationMode: ExerciseOperationMode = ExerciseOperationMode.EXERCISE;
 
     // extension points, see shared/extension-point
     @ContentChild('overrideStudentActions') overrideStudentActions: TemplateRef<any>;
@@ -184,49 +180,6 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         }
         if (this.submissionSubscription) {
             this.submissionSubscription.unsubscribe();
-        }
-    }
-
-    public isInExamMode(): boolean {
-        switch (this.exerciseOperationMode) {
-            case ExerciseOperationMode.EXAM:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public isPracticeModeAvailable(): boolean {
-        if (!this.isInExamMode() && !!this.exercise) {
-            switch (this.exercise.type) {
-                case ExerciseType.QUIZ:
-                    const quizExercise: QuizExercise = this.exercise as QuizExercise;
-                    return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
-                case ExerciseType.PROGRAMMING:
-                    const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                    const x = dayjs().isAfter(dayjs(programmingExercise.dueDate));
-                    return x;
-                default:
-                    return false;
-            }
-        } else {
-            return false;
-        }
-    }
-
-    public isInPracticeMode(): boolean {
-        switch (this.exerciseOperationMode) {
-            case ExerciseOperationMode.PRACTICE:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public togglePracticeMode(toggle: boolean): void {
-        if (this.isPracticeModeAvailable()) {
-            this.exerciseOperationMode = toggle ? ExerciseOperationMode.PRACTICE : ExerciseOperationMode.EXERCISE;
-            this.loadExercise();
         }
     }
 

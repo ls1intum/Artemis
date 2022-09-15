@@ -10,13 +10,6 @@
     <jhi-assessment-filters (filterChange)="applyChartFilter($event)" [submissions]="submissions" [resetFilter]="resetFilter"></jhi-assessment-filters>
     <jhi-assessment-warning [exercise]="exercise" [submissions]="filteredSubmissions"></jhi-assessment-warning>
     <jhi-assessment-progress-label *ngIf="submissions && exercise.assessmentType !== AssessmentType.AUTOMATIC" [submissions]="submissions"></jhi-assessment-progress-label>
-    <jhi-exercise-mode-switch
-        [exerciseID]="exercise.id?.toString() ?? ''"
-        [practiceModeAvailable]="isPracticeModeAvailable()"
-        [practiceMode]="isInPracticeMode()"
-        (onTogglePracticeMode)="togglePracticeMode(!isInPracticeMode())"
-    >
-    </jhi-exercise-mode-switch>
     <span *ngIf="submissions?.length" class="table-responsive">
         <table class="table table-striped exercise-table">
             <thead>

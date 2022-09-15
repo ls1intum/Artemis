@@ -132,6 +132,8 @@ export class ExerciseService {
     getExerciseDetails(exerciseId: number): Observable<EntityResponseType> {
         return this.http.get<Exercise>(`${this.resourceUrl}/${exerciseId}/details`, { observe: 'response' }).pipe(
             map((res: EntityResponseType) => {
+                this.processExerciseEntityResponse(res);
+
                 if (res.body) {
                     // insert an empty list to avoid additional calls in case the list is empty on the server (because then it would be undefined in the client)
                     if (res.body.posts === undefined) {

@@ -7,7 +7,7 @@
         <!-- ngIf offline-ide clone button -->
         <jhi-exercise-details-student-actions
             *ngIf="exercise.allowOfflineIde"
-            [exerciseOperationMode]="ExerciseOperationMode.EXAM"
+            [examMode]="true"
             [exercise]="exercise"
             [courseId]="courseId"
             [showResult]="true"

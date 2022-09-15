@@ -27,7 +27,6 @@ import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/share
 import { faCodeBranch, faDownload, faFolderOpen, faListAlt, faSync } from '@fortawesome/free-solid-svg-icons';
 import { faFileCode } from '@fortawesome/free-regular-svg-icons';
 import { Range } from 'app/shared/util/utils';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 /**
  * Filter properties for a result
@@ -85,8 +84,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     isAdmin = false;
 
-    public practiceMode = false;
-
     // Icons
     faDownload = faDownload;
     faSync = faSync;
@@ -139,30 +136,6 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
         });
     }
 
-    public isPracticeModeAvailable(): boolean {
-        switch (this.exercise.type) {
-            case ExerciseType.QUIZ:
-                const quizExercise: QuizExercise = this.exercise as QuizExercise;
-                return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
-            case ExerciseType.PROGRAMMING:
-                const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                return dayjs().isAfter(dayjs(programmingExercise.dueDate));
-            default:
-                return false;
-        }
-    }
-
-    public isInPracticeMode(): boolean {
-        return this.practiceMode;
-    }
-
-    public togglePracticeMode(toggle: boolean): void {
-        if (this.isPracticeModeAvailable()) {
-            this.practiceMode = toggle;
-            this.ngOnInit();
-        }
-    }
-
     getExerciseParticipationsLink(participationId: number): string[] {
         return !!this.exercise.exerciseGroup
             ? [
@@ -190,7 +163,7 @@ export class ExerciseScoresComponent implements OnInit, OnDestroy {
 
     private handleNewResults(results: HttpResponse<Result[]>) {
         this.results = results.body || [];
-        this.filteredResults = this.filterByScoreRange(this.results.filter((result) => result.participation!['testRun'] === this.practiceMode));
+        this.filteredResults = this.filterByScoreRange(this.results);
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             this.profileService.getProfileInfo().subscribe((profileInfo) => {
                 setBuildPlanUrlForProgrammingParticipations(

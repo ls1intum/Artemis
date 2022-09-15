@@ -23,96 +23,48 @@ import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
     styleUrls: ['../course-overview.scss'],
     providers: [SourceTreeService],
 })
-export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
-    // <editor-fold desc="Non-Input/Output Attributes">
-    // <editor-fold desc="Loaded Attributes (constant)">
-    // <editor-fold desc="Namespaces">
-    public readonly dayjs = dayjs;
-    // </editor-fold>
+export class ExerciseDetailsStudentActionsComponent {
+    readonly FeatureToggle = FeatureToggle;
+    readonly ExerciseType = ExerciseType;
+    readonly ParticipationStatus = ParticipationStatus;
 
-    // <editor-fold desc="Enums">
-    public readonly ExerciseType = ExerciseType;
-    public readonly ParticipationStatus = ParticipationStatus;
-    // TODO: Purpose of FeatureToggle ?
-    public readonly FeatureToggle = FeatureToggle;
-    // </editor-fold>
-
-    // <editor-fold desc="Icons">
-    public readonly faFolderOpen = faFolderOpen;
-    public readonly faUsers = faUsers;
-    public readonly faEye = faEye;
-    public readonly faPlayCircle = faPlayCircle;
-    public readonly faSignal = faSignal;
-    public readonly faRedo = faRedo;
-    public readonly faExternalLinkAlt = faExternalLinkAlt;
-    // </editor-fold>
-    // </editor-fold>
-    // </editor-fold>
-
-    // <editor-fold desc="Input Attributes">
-    // <editor-fold desc="Constant Inputs">
-    // TODO: Purpose of equalColumns and smallColumns ?
     @Input() @HostBinding('class.col') equalColumns = true;
     @Input() @HostBinding('class.col-auto') smallColumns = false;
-    @Input() readonly courseId: number;
-    @Input() readonly exercise: Exercise;
-    @Input() readonly actionsOnly: boolean;
-    @Input() readonly smallButtons: boolean;
-    @Input() readonly showResult: boolean;
-    // </editor-fold>
 
-    // <editor-fold desc="Variable Inputs">
-    @Input() exerciseOperationMode: ExerciseOperationMode;
-    // </editor-fold>
-    // </editor-fold>
-
-    // <editor-fold desc="Output Attributes">
-    @Output() readonly onTogglePracticeMode: EventEmitter<boolean> = new EventEmitter();
-    // </editor-fold>
+    @Input() exercise: Exercise;
+    @Input() courseId: number;
+    @Input() actionsOnly: boolean;
+    @Input() smallButtons: boolean;
+    @Input() showResult: boolean;
+    @Input() examMode: boolean;
 
     // extension points, see shared/extension-point
-    // TODO: Purpose of overrideCloneOnlineEditorButton ?
-    @ContentChild('overrideCloneOnlineEditorButton') readonly overrideCloneOnlineEditorButton: TemplateRef<any>;
+    @ContentChild('overrideCloneOnlineEditorButton') overrideCloneOnlineEditorButton: TemplateRef<any>;
 
-    // <editor-fold desc="Constructor">
-    constructor(
-        private alertService: AlertService,
-        private courseExerciseService: CourseExerciseService,
-        private httpClient: HttpClient,
-        private router: Router,
-        private activatedRoute: ActivatedRoute,
-    ) {}
-    // </editor-fold>
+    // Icons
+    faFolderOpen = faFolderOpen;
+    faUsers = faUsers;
+    faEye = faEye;
+    faPlayCircle = faPlayCircle;
+    faSignal = faSignal;
+    faRedo = faRedo;
+    faExternalLinkAlt = faExternalLinkAlt;
 
-    // <editor-fold desc="Lifetime related methods">
-    public ngAfterViewInit(): void {
-        // console.log(this);
-    }
-    // </editor-fold>
+    constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
 
-    // <editor-fold desc="Exercise related methods">
-    // <editor-fold desc="General methods">
-    public isInExamMode(): boolean {
-        switch (this.exerciseOperationMode) {
-            case ExerciseOperationMode.EXAM:
-                return true;
-            default:
-                return false;
-        }
-    }
     /**
      * check if practiceMode is available
      * @return {boolean}
      */
     public isPracticeModeAvailable(): boolean {
-        if (!this.isInExamMode() && !!this.exercise) {
+        if (!this.examMode && !!this.exercise) {
             switch (this.exercise.type) {
                 case ExerciseType.QUIZ:
-                    const quizExercise: QuizExercise = this.exercise as QuizExercise;
+                    const quizExercise = this.exercise as QuizExercise;
                     return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
                 case ExerciseType.PROGRAMMING:
                     const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                    return dayjs().isAfter(dayjs(programmingExercise.dueDate));
+                    return dayjs().isAfter(programmingExercise.dueDate);
                 default:
                     return false;
             }
@@ -121,62 +73,34 @@ export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
         }
     }
 
-    public isInPracticeMode(): boolean {
-        switch (this.exerciseOperationMode) {
-            case ExerciseOperationMode.PRACTICE:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    public togglePracticeMode(toggle: boolean): void {
-        if (this.isPracticeModeAvailable()) {
-            this.onTogglePracticeMode.emit(toggle);
-        }
+    /**
+     * see exercise.utils -> isStartExerciseAvailable
+     */
+    isStartExerciseAvailable(): boolean {
+        return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
-     * Wrapper for using participationStatus() in the template
-     *
-     * @return {ParticipationStatus}
+     * check if onlineEditor is allowed
+     * @return {boolean}
      */
-    public participationStatusWrapper(): ParticipationStatus {
-        return participationStatus(this.exercise);
-    }
-    // </editor-fold>
-
-    // <editor-fold desc="Team related methods">
-    public canViewTeam(): boolean {
-        return this.participationStatusWrapper() !== ParticipationStatus.NO_TEAM_ASSIGNED && !!this.exercise.teamMode;
+    isOnlineEditorAllowed() {
+        return (this.exercise as ProgrammingExercise).allowOnlineEditor;
     }
 
-    public viewTeam(): Promise<boolean> {
-        const participations: StudentParticipation[] | undefined = this.exercise.studentParticipations;
-        const assignedTeamId: number | undefined = participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
-        return this.router.navigate(['/courses', this.courseId, 'exercises', this.exercise.id, 'teams', assignedTeamId]);
+    /**
+     * check if offline IDE is allowed
+     * @return {boolean}
+     */
+    isOfflineIdeAllowed() {
+        return (this.exercise as ProgrammingExercise).allowOfflineIde;
     }
-    // </editor-fold>
 
-    // <editor-fold desc="Exercise related methods">
-    public getStudentParticipationExercise(): StudentParticipation | null {
-        if (!!this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            return this.exercise.studentParticipations[0];
-        } else {
-            return null;
+    startExercise() {
+        if (this.exercise.type === ExerciseType.QUIZ) {
+            // Start the quiz
+            return this.router.navigate(['/courses', this.courseId, 'quiz-exercises', this.exercise.id, 'live']);
         }
-    }
-
-    public canStartExercise(): boolean {
-        switch (this.exercise.type) {
-            case ExerciseType.PROGRAMMING:
-                return this.participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable(this.exercise as ProgrammingExercise);
-            default:
-                return this.participationStatusWrapper() === ParticipationStatus.UNINITIALIZED;
-        }
-    }
-
-    public startExercise(): void {
         this.exercise.loading = true;
         this.courseExerciseService
             .startExercise(this.exercise.id!)
@@ -185,6 +109,7 @@ export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
                 next: (participation) => {
                     if (participation) {
                         this.exercise.studentParticipations = [participation];
+                        this.exercise.participationStatus = participationStatus(this.exercise);
                         this.exercise.participationStatus = this.participationStatusWrapper();
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
@@ -199,86 +124,6 @@ export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
                     this.alertService.warning('artemisApp.exercise.startError');
                 },
             });
-    }
-
-    public canOpenExercise(): boolean {
-        const studentParticipationExercise: StudentParticipation | null = this.getStudentParticipationExercise();
-        if (studentParticipationExercise !== null) {
-            return studentParticipationExercise.initializationState === 'INITIALIZED';
-        } else {
-            return false;
-        }
-    }
-
-    public canViewSubmissions(): boolean {
-        const studentParticipationExercise: StudentParticipation | null = this.getStudentParticipationExercise();
-        if (studentParticipationExercise !== null) {
-            return (
-                studentParticipationExercise.initializationState === 'FINISHED' &&
-                (!studentParticipationExercise.results || studentParticipationExercise.results.length === 0 || !this.showResult)
-            );
-        } else {
-            return false;
-        }
-    }
-
-    public canViewResults(): boolean {
-        const studentParticipationExercise: StudentParticipation | null = this.getStudentParticipationExercise();
-        if (studentParticipationExercise !== null) {
-            return (
-                studentParticipationExercise.initializationState === 'FINISHED' &&
-                !!studentParticipationExercise.results &&
-                studentParticipationExercise.results.length > 0 &&
-                this.showResult
-            );
-        } else {
-            return false;
-        }
-    }
-
-    public proceedExercise(): Promise<boolean> {
-        let exerciseType: String;
-        switch (this.exercise.type) {
-            case ExerciseType.QUIZ:
-                exerciseType = 'quiz-exercises';
-                return this.router.navigate(['/courses', this.courseId, exerciseType, this.exercise.id, 'live']);
-            case ExerciseType.MODELING:
-                exerciseType = 'modeling-exercises';
-                break;
-            case ExerciseType.TEXT:
-                exerciseType = 'text-exercises';
-                break;
-            case ExerciseType.FILE_UPLOAD:
-                exerciseType = 'file-upload-exercises';
-                break;
-            default:
-                throw new Error(`proceedExercise is not supported yet for '${this.exercise.type}'!`);
-        }
-        // @ts-ignore
-        return this.router.navigate(['/courses', this.courseId, exerciseType, this.exercise.id, 'participate', this.exercise.studentParticipations[0].id]);
-    }
-
-    public showStatistics(): Promise<boolean> {
-        return this.router.navigate(['/course-management', this.courseId, 'quiz-exercises', this.exercise.id, 'quiz-point-statistic']);
-    }
-    // </editor-fold>
-
-    // <editor-fold desc="Practice related methods">
-    public getStudentParticipationPractice(): StudentParticipation | null {
-        if (!!this.exercise.studentParticipations && this.exercise.studentParticipations.length > 0) {
-            return this.exercise.studentParticipations[1];
-        } else {
-            return null;
-        }
-    }
-
-    public canStartPractice(): boolean {
-        switch (this.exercise.type) {
-            case ExerciseType.PROGRAMMING:
-                return this.participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartPracticeAvailable(this.exercise as ProgrammingExercise);
-            default:
-                return this.participationStatusWrapper() === ParticipationStatus.UNINITIALIZED;
-        }
     }
 
     public startPractice(): void {
@@ -306,48 +151,10 @@ export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
             });
     }
 
-    public canOpenPractice(): boolean {
-        const studentParticipationPractice: StudentParticipation | null = this.getStudentParticipationPractice();
-        if (studentParticipationPractice !== null) {
-            return studentParticipationPractice.initializationState === 'INITIALIZED';
-        } else {
-            return false;
-        }
-    }
-
-    public canViewPracticeResults(): boolean {
-        const studentParticipationPractice: StudentParticipation | null = this.getStudentParticipationPractice();
-        if (studentParticipationPractice !== null) {
-            return (
-                studentParticipationPractice.initializationState === 'FINISHED' &&
-                !!studentParticipationPractice.results &&
-                studentParticipationPractice.results.length > 0 &&
-                this.showResult
-            );
-        } else {
-            return false;
-        }
-    }
-
-    public proceedPractice(): Promise<boolean> {
-        let exerciseType: String;
-        switch (this.exercise.type) {
-            case ExerciseType.QUIZ:
-                exerciseType = 'quiz-exercises';
-                return this.router.navigate(['/courses', this.courseId, exerciseType, this.exercise.id, 'practice']);
-            default:
-                throw new Error(`proceedPractice is not supported yet for '${this.exercise.type}'!`);
-        }
-    }
-    // </editor-fold>
-    // </editor-fold>
-
-    // <editor-fold desc="Programming related methods">
-
     /**
      * resume the programming exercise
      */
-    public resumeProgrammingExercise(): void {
+    resumeProgrammingExercise() {
         this.exercise.loading = true;
         this.courseExerciseService
             .resumeProgrammingExercise(this.exercise.id!)
@@ -369,6 +176,15 @@ export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
     }
 
     /**
+     * Wrapper for using participationStatus() in the template
+     *
+     * @return {ParticipationStatus}
+     */
+    participationStatusWrapper(): ParticipationStatus {
+        return participationStatus(this.exercise);
+    }
+
+    /**
      * Display the 'open code editor' or 'clone repo' buttons if
      * - the participation is initialized (build plan exists, no clean up happened), or
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
@@ -383,43 +199,34 @@ export class ExerciseDetailsStudentActionsComponent implements AfterViewInit {
     }
 
     /**
-     * check if onlineEditor is allowed
-     * @return {boolean}
+     * Returns the id of the team that the student is assigned to (only applicable to team-based exercises)
+     *
+     * @return {assignedTeamId}
      */
-    public isOnlineEditorAllowed(): boolean {
-        // noinspection PointlessBooleanExpressionJS
-        return !!(this.exercise as ProgrammingExercise).allowOnlineEditor && this.exerciseOperationMode !== ExerciseOperationMode.EXAM;
+    get assignedTeamId(): number | undefined {
+        const participations = this.exercise.studentParticipations;
+        return participations && participations.length > 0 ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
     }
 
-    public openOnlineEditor(): Promise<boolean> {
-        return this.router.navigate(['/courses', this.courseId, 'programming-exercises', this.exercise.id, 'code-editor', this.exercise.studentParticipations![0].id]);
-    }
-
-    /**
-     * check if offline IDE is allowed
-     * @return {boolean}
-     */
-    public isOfflineIdeAllowed(): boolean {
-        // noinspection PointlessBooleanExpressionJS
-        return !!(this.exercise as ProgrammingExercise).allowOfflineIde;
-    }
-
-    public repositoryUrl(participation: Participation): string | undefined {
+    repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
         return programmingParticipation.repositoryUrl;
     }
 
-    public publishBuildPlanUrl(): boolean | undefined {
+    publishBuildPlanUrl() {
         return (this.exercise as ProgrammingExercise).publishBuildPlanUrl;
     }
 
-    public buildPlanUrl(participation: StudentParticipation): string | undefined {
+    buildPlanUrl(participation: StudentParticipation) {
         return (participation as ProgrammingExerciseStudentParticipation).buildPlanUrl;
     }
 
-    public buildPlanActive(): boolean {
-        return !!this.exercise?.studentParticipations?.length && this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE;
+    buildPlanActive() {
+        return (
+            !!this.exercise &&
+            this.exercise.studentParticipations &&
+            this.exercise.studentParticipations.length > 0 &&
+            this.exercise.studentParticipations[0].initializationState !== InitializationState.INACTIVE
+        );
     }
-
-    // </editor-fold>
 }

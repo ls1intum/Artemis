@@ -1,12 +1,5 @@
 <div>
     <div class="d-flex flex-wrap">
-        <jhi-exercise-mode-switch
-            [exerciseID]="exercise.id?.toString() ?? ''"
-            [practiceModeAvailable]="isPracticeModeAvailable()"
-            [practiceMode]="isInPracticeMode()"
-            (onTogglePracticeMode)="togglePracticeMode(!isInPracticeMode())"
-        >
-        </jhi-exercise-mode-switch>
         <div class="mr-auto flex-fill">
             <h2>
                 <span>{{ exercise?.title }} - </span>{{ filteredParticipationsSize }} <span jhiTranslate="artemisApp.participation.home.title">Participations</span>

@@ -23,7 +23,6 @@ import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { setBuildPlanUrlForProgrammingParticipations } from 'app/exercises/shared/participation/participation.utils';
 import { faCircleNotch, faEraser, faFilePowerpoint, faTimes } from '@fortawesome/free-solid-svg-icons';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 
 enum FilterProp {
     ALL = 'all',
@@ -68,8 +67,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
 
     isSaving: boolean;
 
-    public practiceMode = false;
-
     // Icons
     faTimes = faTimes;
     faCircleNotch = faCircleNotch;
@@ -111,30 +108,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
         }
     }
 
-    public isPracticeModeAvailable(): boolean {
-        switch (this.exercise.type) {
-            case ExerciseType.QUIZ:
-                const quizExercise: QuizExercise = this.exercise as QuizExercise;
-                return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
-            case ExerciseType.PROGRAMMING:
-                const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                return dayjs().isAfter(dayjs(programmingExercise.dueDate));
-            default:
-                return false;
-        }
-    }
-
-    public isInPracticeMode(): boolean {
-        return this.practiceMode;
-    }
-
-    public togglePracticeMode(toggle: boolean): void {
-        if (this.isPracticeModeAvailable()) {
-            this.practiceMode = toggle;
-            this.ngOnInit();
-        }
-    }
-
     private loadExercise(exerciseId: number) {
         this.isLoading = true;
         this.hasLoadedPendingSubmissions = false;
@@ -153,14 +126,6 @@ export class ParticipationComponent implements OnInit, OnDestroy {
     private loadParticipations(exerciseId: number) {
         this.participationService.findAllParticipationsByExercise(exerciseId, true).subscribe((participationsResponse) => {
             this.participations = participationsResponse.body!;
-            switch (this.exercise.type) {
-                case ExerciseType.QUIZ:
-                case ExerciseType.PROGRAMMING:
-                    this.participations = this.participations.filter((participation) => participation!['testRun'] === this.practiceMode);
-                    break;
-                default:
-                    break;
-            }
             if (this.exercise.type === ExerciseType.PROGRAMMING) {
                 const programmingExercise = this.exercise as ProgrammingExercise;
                 if (programmingExercise.projectKey) {

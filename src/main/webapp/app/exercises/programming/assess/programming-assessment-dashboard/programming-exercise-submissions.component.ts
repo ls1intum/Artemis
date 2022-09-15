@@ -20,6 +20,7 @@ import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
 import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
 import dayjs from 'dayjs/esm';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',
@@ -41,7 +42,6 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
     newManualResultAllowed: boolean;
     automaticType = AssessmentType.AUTOMATIC;
     private cancelConfirmationText: string;
-    public practiceMode = false;
 
     // Icons
     faSort = faSort;
@@ -98,30 +98,6 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
             });
     }
 
-    public isPracticeModeAvailable(): boolean {
-        switch (this.exercise.type) {
-            case ExerciseType.QUIZ:
-                const quizExercise: QuizExercise = this.exercise as QuizExercise;
-                return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
-            case ExerciseType.PROGRAMMING:
-                const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                return dayjs().isAfter(dayjs(programmingExercise.dueDate));
-            default:
-                return false;
-        }
-    }
-
-    public isInPracticeMode(): boolean {
-        return this.practiceMode;
-    }
-
-    public togglePracticeMode(toggle: boolean): void {
-        if (this.isPracticeModeAvailable()) {
-            this.practiceMode = toggle;
-            this.ngOnInit();
-        }
-    }
-
     public sortRows() {
         this.sortService.sortByProperty(this.submissions, this.predicate, this.reverse);
     }
@@ -146,22 +122,13 @@ export class ProgrammingExerciseSubmissionsComponent extends AbstractAssessmentD
             )
             .subscribe((submissions: ProgrammingSubmission[]) => {
                 this.submissions = submissions;
-                switch (this.exercise.type) {
-                    case ExerciseType.QUIZ:
-                    case ExerciseType.PROGRAMMING:
-                        this.filteredSubmissions = submissions.filter((submission) => submission.participation!['testRun'] === this.practiceMode);
-                        break;
-                    default:
-                        this.filteredSubmissions = submissions;
-                        break;
-                }
-                this.filteredSubmissions = submissions.filter((submission) => submission.participation!['testRun'] === this.practiceMode);
+                this.filteredSubmissions = submissions;
                 this.filteredSubmissions.forEach((sub) => {
                     if (sub.results?.length) {
                         sub.results = sub.results.filter((r) => r.assessmentType !== AssessmentType.AUTOMATIC);
                     }
                 });
-                this.applyChartFilter(this.filteredSubmissions);
+                this.applyChartFilter(submissions);
                 this.busy = false;
             });
     }

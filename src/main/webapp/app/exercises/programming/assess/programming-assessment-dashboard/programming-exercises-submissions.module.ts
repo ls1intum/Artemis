@@ -10,7 +10,6 @@ import { ArtemisResultModule } from 'app/exercises/shared/result/result.module';
 import { ArtemisAssessmentSharedModule } from 'app/assessment/assessment-shared.module';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
 import { ArtemisAssessmentProgressLabelModule } from 'app/exercises/shared/assessment-progress-label/assessment-progress-label.module';
-import { ExerciseModeSwitchModule } from 'app/shared/exercise-mode-switch/exercise-mode-switch.module';
 
 @NgModule({
     imports: [
@@ -24,7 +23,6 @@ import { ExerciseModeSwitchModule } from 'app/shared/exercise-mode-switch/exerci
         ArtemisAssessmentSharedModule,
         SubmissionResultStatusModule,
         ArtemisAssessmentProgressLabelModule,
-        ExerciseModeSwitchModule,
     ],
     declarations: [ProgrammingExerciseSubmissionsComponent],
 })

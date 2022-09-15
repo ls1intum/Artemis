@@ -15,7 +15,6 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
 import { SubmissionExportDialogComponent } from 'app/exercises/shared/submission-export/submission-export-dialog.component';
 import { ExerciseScoresExportButtonComponent } from 'app/exercises/shared/exercise-scores/exercise-scores-export-button.component';
 import { SubmissionResultStatusModule } from 'app/overview/submission-result-status.module';
-import { ExerciseModeSwitchModule } from 'app/shared/exercise-mode-switch/exercise-mode-switch.module';
 
 @NgModule({
     imports: [
@@ -30,7 +29,6 @@ import { ExerciseModeSwitchModule } from 'app/shared/exercise-mode-switch/exerci
         FeatureToggleModule,
         ArtemisSharedComponentModule,
         SubmissionResultStatusModule,
-        ExerciseModeSwitchModule,
     ],
     declarations: [ExerciseScoresComponent, SubmissionExportButtonComponent, SubmissionExportDialogComponent, ExerciseScoresExportButtonComponent],
     exports: [SubmissionExportButtonComponent, ExerciseScoresExportButtonComponent],

@@ -10,9 +10,7 @@
             *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult != undefined }"
             [courseId]="courseId"
             [exercise]="exercise"
-            [exerciseOperationMode]="exerciseOperationMode"
             [showResult]="showResults && latestRatedResult != undefined"
-            (onTogglePracticeMode)="togglePracticeMode($event)"
         >
         </jhi-exercise-details-student-actions>
         <a
