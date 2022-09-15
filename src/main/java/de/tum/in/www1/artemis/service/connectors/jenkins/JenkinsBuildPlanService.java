@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
-import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -156,7 +154,7 @@ public class JenkinsBuildPlanService {
         String projectKey = programmingExercise.getProjectKey();
         String planKey = participation.getBuildPlanId();
         String templateRepoUrl = programmingExercise.getTemplateRepositoryUrl();
-        updateBuildPlanRepositories(projectKey, planKey, ASSIGNMENT_REPO_NAME, participation.getRepositoryUrl(), templateRepoUrl);
+        updateBuildPlanRepositories(projectKey, planKey, participation.getRepositoryUrl(), templateRepoUrl);
         enablePlan(projectKey, planKey);
 
         // Students currently always have access to the build plan in Jenkins
@@ -167,11 +165,10 @@ public class JenkinsBuildPlanService {
      *
      * @param buildProjectKey the project key of the programming exercise
      * @param buildPlanKey the build plan id of the participation
-     * @param ciRepoName the name of the repo
      * @param newRepoUrl the repository url that will replace the old url
      * @param existingRepoUrl the old repository url that will be replaced
      */
-    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String ciRepoName, String newRepoUrl, String existingRepoUrl) {
+    public void updateBuildPlanRepositories(String buildProjectKey, String buildPlanKey, String newRepoUrl, String existingRepoUrl) {
         newRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(newRepoUrl);
         existingRepoUrl = jenkinsInternalUrlService.toInternalVcsUrl(existingRepoUrl);
 
@@ -183,9 +180,7 @@ public class JenkinsBuildPlanService {
             JenkinsBuildPlanUtils.replaceScriptParameters(jobConfig, repoUrl, existingRepoUrl);
         }
         catch (IllegalArgumentException e) {
-            log.debug("Pipeline Script not found");
-            log.info("Falling back to old Jenkins setup replacement for build xml");
-            JenkinsBuildPlanUtils.replaceRemoteURLs(jobConfig, repoUrl, ciRepoName);
+            log.error("Pipeline Script not found", e);
         }
 
         final var errorMessage = "Error trying to configure build plan in Jenkins " + buildPlanKey;

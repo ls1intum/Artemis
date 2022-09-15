@@ -383,6 +383,14 @@ $code-editor-file-browser-input-color: white;
 $code-editor-diff-newline-background: rgba(46, 160, 67, 0.22);
 $code-editor-gutter-newline-background: rgba(46, 160, 67, 0.6);
 
+// Git-Diff Viewer
+$git-diff-viewer-added-line-background: rgba(63, 185, 80, 0.15);
+$git-diff-viewer-added-line-gutter-background: rgba(63, 185, 80, 0.3);
+$git-diff-viewer-removed-line-background: rgba(248, 81, 73, 0.15);
+$git-diff-viewer-removed-line-gutter-background: rgba(248, 81, 73, 0.3);
+$git-diff-viewer-placeholder-line-background: rgba(100, 100, 100, 0.15);
+$git-diff-viewer-placeholder-line-gutter-background: rgba(100, 100, 100, 0.2);
+
 // Overview variables
 $overview-border-color: $border-color;
 $overview-light-border-color: darken($overview-border-color, 5%);

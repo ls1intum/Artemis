@@ -4,7 +4,7 @@ import { PlagiarismCasesService } from 'app/course/plagiarism-cases/shared/plagi
 import { ActivatedRoute } from '@angular/router';
 import { TranslateService } from '@ngx-translate/core';
 import { HttpResponse } from '@angular/common/http';
-import { getExerciseUrlSegment, getIcon } from 'app/entities/exercise.model';
+import { getExerciseUrlSegment, getCourseFromExercise, getIcon } from 'app/entities/exercise.model';
 import { PlagiarismVerdict } from 'app/exercises/shared/plagiarism/types/PlagiarismVerdict';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { PageType } from 'app/shared/metis/metis.util';
@@ -61,7 +61,7 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
 
                 this.verdictMessage = this.plagiarismCase.verdictMessage ?? '';
                 this.verdictPointDeduction = this.plagiarismCase.verdictPointDeduction ?? 0;
-                this.metisService.setCourse(this.plagiarismCase.exercise!.course!);
+                this.metisService.setCourse(getCourseFromExercise(this.plagiarismCase.exercise!)!);
                 this.metisService.setPageType(this.pageType);
                 this.metisService.getFilteredPosts({
                     plagiarismCaseId: this.plagiarismCase!.id,
@@ -183,7 +183,11 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
     createEmptyPost(): void {
         const studentName = abbreviateString(this.plagiarismCase.student?.name ?? '', 70);
         const exerciseTitle = abbreviateString(this.plagiarismCase.exercise?.title ?? '', 70);
-        const courseTitle = abbreviateString(this.plagiarismCase.exercise?.course?.title ?? '', 70);
+        const belongsToExam = !!this.plagiarismCase.exercise?.exerciseGroup;
+        const courseOrExamTitle = abbreviateString(
+            (belongsToExam ? this.plagiarismCase.exercise?.exerciseGroup?.exam?.title : this.plagiarismCase.exercise?.course?.title) ?? '',
+            70,
+        );
 
         this.createdPost = this.metisService.createEmptyPostForContext(undefined, undefined, undefined, this.plagiarismCase);
         // Note the limit of 1.000 characters for the post's content
@@ -193,7 +197,8 @@ export class PlagiarismCaseInstructorDetailViewComponent implements OnInit, OnDe
         this.createdPost.content = this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.body', {
             student: studentName,
             exercise: exerciseTitle,
-            course: courseTitle,
+            inCourseOrExam: this.translateService.instant('artemisApp.plagiarism.plagiarismCases.notification.' + (belongsToExam ? 'inExam' : 'inCourse')),
+            courseOrExam: courseOrExamTitle,
             cocLink: 'https://www.in.tum.de/fileadmin/w00bws/in/2.Fur_Studierende/Pruefungen_und_Formalitaeten/1.Gute_studentische_Praxis/englisch/leitfaden-en_2016Jun22.pdf',
             aspoLink: 'https://www.tum.de/studium/im-studium/das-studium-organisieren/satzungen-ordnungen#statute;t:Allgemeine%20Prüfungs-%20und%20Studienordnung;sort:106;page:1',
         });
