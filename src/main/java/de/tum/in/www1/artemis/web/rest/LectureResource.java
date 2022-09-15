@@ -270,6 +270,8 @@ public class LectureResource {
                 Exercise exercise = ((ExerciseUnit) lectureUnit).getExercise();
                 // we replace the exercise with one that contains all the information needed for correct display
                 exercisesWithAllInformationNeeded.stream().filter(exercise::equals).findAny().ifPresent(((ExerciseUnit) lectureUnit)::setExercise);
+                // re-add the learning goals already loaded with the exercise unit
+                ((ExerciseUnit) lectureUnit).getExercise().setLearningGoals(exercise.getLearningGoals());
             }
         }).collect(Collectors.toCollection(ArrayList::new));
 
