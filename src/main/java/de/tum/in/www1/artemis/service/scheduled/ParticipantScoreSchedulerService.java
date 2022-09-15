@@ -123,6 +123,7 @@ public class ParticipantScoreSchedulerService {
     /**
      * Schedule a task to update the participant score for the given result.
      * @param resultId the id of the result that was created/updated/deleted
+     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleResult(Long) 
      */
     public void scheduleTask(Long resultId) {
         if (scheduledParticipantScores.containsKey(resultId)) {

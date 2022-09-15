@@ -90,15 +90,6 @@ public interface ResultRepository extends JpaRepository<Result, Long> {
 
     @Query("""
             SELECT r FROM Result r
-            LEFT JOIN FETCH r.participation p
-            LEFT JOIN FETCH p.submissions s
-            LEFT JOIN FETCH p.exercise e
-            WHERE r.id = :resultId
-            """)
-    Optional<Result> findByIdWithEagerParticipationAndSubmissionsAndExercise(@Param("resultId") Long resultId);
-
-    @Query("""
-            SELECT r FROM Result r
             LEFT JOIN FETCH r.feedbacks
             WHERE r.id = :resultId
             """)

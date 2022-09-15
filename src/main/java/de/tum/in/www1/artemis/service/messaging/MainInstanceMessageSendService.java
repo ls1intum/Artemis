@@ -9,7 +9,7 @@ import de.tum.in.www1.artemis.service.feature.FeatureToggle;
 /**
  * This service is only present on a node that runs the 'scheduling' profile.
  * As this node can handle all the processing without interaction with another node, everything is handled locally (without Hazelcast).
- * You do not need to go through the broker, as this class is only active on the main instance
+ * Important: There is no need to go through the broker, as this class is only active on the main instance!
  */
 @Service
 @Profile("scheduling")
