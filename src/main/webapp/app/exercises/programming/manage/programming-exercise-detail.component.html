@@ -585,7 +585,11 @@
                                                 : '-'
                                         }}
                                     </td>
-                                    <td>{{ programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') : '-' }}</td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-'
+                                        }}
+                                    </td>
                                     <td>
                                         {{
                                             programmingExercise.buildLogStatistics.totalJobDuration
