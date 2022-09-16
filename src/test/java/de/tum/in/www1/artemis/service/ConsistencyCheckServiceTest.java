@@ -45,7 +45,7 @@ public class ConsistencyCheckServiceTest {
     public void setup(MockDelegate mockDelegate) throws Exception {
         this.mockDelegate = mockDelegate;
         course = database.addCourseWithOneProgrammingExercise();
-        User user = database.addUser("instructor1");
+        User user = database.createAndSaveUser("instructor1");
         Set<String> groups = new HashSet<>();
         groups.add(course.getInstructorGroupName());
         user.setGroups(groups);

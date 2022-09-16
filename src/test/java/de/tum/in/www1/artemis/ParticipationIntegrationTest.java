@@ -89,9 +89,9 @@ class ParticipationIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         database.addUsers(2, 2, 0, 2);
 
         // Add users that are not in the course/exercise
-        database.addUser("student3");
-        database.addUser("tutor3");
-        database.addUser("instructor3");
+        database.createAndSaveUser("student3");
+        database.createAndSaveUser("tutor3");
+        database.createAndSaveUser("instructor3");
 
         course = database.addCourseWithModelingAndTextExercise();
         for (Exercise exercise : course.getExercises()) {

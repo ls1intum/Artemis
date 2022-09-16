@@ -43,9 +43,9 @@ class VideoUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         this.videoUnit.setSource("oHg5SJYRHA0");
 
         // Add users that are not in the course
-        database.addUser("student42");
-        database.addUser("tutor42");
-        database.addUser("instructor42");
+        database.createAndSaveUser("student42");
+        database.createAndSaveUser("tutor42");
+        database.createAndSaveUser("instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {

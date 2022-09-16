@@ -70,9 +70,9 @@ class ExerciseUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         this.modelingExercise = modelingExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
 
         // Add users that are not in the course
-        database.addUser("student42");
-        database.addUser("tutor42");
-        database.addUser("instructor42");
+        database.createAndSaveUser("student42");
+        database.createAndSaveUser("tutor42");
+        database.createAndSaveUser("instructor42");
     }
 
     @AfterEach

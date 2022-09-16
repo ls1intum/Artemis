@@ -83,7 +83,7 @@ class ExamQuizServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         // Add an instructor who is not in the course
         if (!database.userExistsWithLogin("instructor6")) {
-            database.addUser("instructor6");
+            database.createAndSaveUser("instructor6");
         }
     }
 

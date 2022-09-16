@@ -53,9 +53,9 @@ class LectureIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJir
         this.lecture1 = this.course1.getLectures().stream().findFirst().get();
         this.textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
         // Add users that are not in the course
-        database.addUser("student42");
-        database.addUser("tutor42");
-        database.addUser("instructor42");
+        database.createAndSaveUser("student42");
+        database.createAndSaveUser("tutor42");
+        database.createAndSaveUser("instructor42");
 
         // Setting up a lecture with various kinds of content
         ExerciseUnit exerciseUnit = database.createExerciseUnit(textExercise);

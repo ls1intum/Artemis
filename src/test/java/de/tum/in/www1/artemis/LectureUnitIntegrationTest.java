@@ -74,9 +74,9 @@ class LectureUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         this.lecture1 = course1.getLectures().stream().findFirst().get();
 
         // Add users that are not in the course
-        database.addUser("student42");
-        database.addUser("tutor42");
-        database.addUser("instructor42");
+        database.createAndSaveUser("student42");
+        database.createAndSaveUser("tutor42");
+        database.createAndSaveUser("instructor42");
 
         this.textUnit = database.createTextUnit();
         this.textUnit2 = database.createTextUnit();

@@ -160,7 +160,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         studentExamForTestExam2.setSubmissionDate(ZonedDateTime.now().minusMinutes(65));
         studentExamRepository.save(studentExamForTestExam2);
 
-        database.addUser("student42");
+        database.createAndSaveUser("student42");
 
         // TODO: all parts using programmingExerciseTestService should also be provided for Gitlab+Jenkins
         programmingExerciseTestService.setup(this, versionControlService, continuousIntegrationService);

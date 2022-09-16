@@ -159,9 +159,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         users = database.addUsers(numberOfStudents, 5, 0, 1);
         // Add users that are not in the course
-        database.addUser("student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        database.addUser("tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
-        database.addUser("instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
+        database.createAndSaveUser("student42", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
+        database.createAndSaveUser("tutor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
+        database.createAndSaveUser("instructor6", passwordService.hashPassword(ModelFactory.USER_PASSWORD));
 
         course1 = database.addEmptyCourse();
         course2 = database.addEmptyCourse();

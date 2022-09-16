@@ -42,10 +42,10 @@ class TextUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         this.textUnit.setContent("This is a Test");
 
         // Add users that are not in the course
-        database.addUser("student42");
-        database.addUser("tutor42");
-        database.addUser("editor42");
-        database.addUser("instructor42");
+        database.createAndSaveUser("student42");
+        database.createAndSaveUser("tutor42");
+        database.createAndSaveUser("editor42");
+        database.createAndSaveUser("instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {

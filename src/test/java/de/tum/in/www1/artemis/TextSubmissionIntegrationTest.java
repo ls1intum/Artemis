@@ -95,8 +95,8 @@ class TextSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         notSubmittedTextSubmission = ModelFactory.generateTextSubmission("example text 2", Language.ENGLISH, false);
 
         // Add users that are not in exercise/course
-        database.addUser("tutor2");
-        database.addUser("student3");
+        database.createAndSaveUser("tutor2");
+        database.createAndSaveUser("student3");
     }
 
     @AfterEach

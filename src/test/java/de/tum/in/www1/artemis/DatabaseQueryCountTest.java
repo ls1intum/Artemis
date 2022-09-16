@@ -21,8 +21,8 @@ class DatabaseQueryCountTest extends AbstractSpringIntegrationBambooBitbucketJir
         database.addUsers(8, 5, 1, 1);
 
         // Add users that are not in the course
-        database.addUser("tutor6");
-        database.addUser("instructor2");
+        database.createAndSaveUser("tutor6");
+        database.createAndSaveUser("instructor2");
     }
 
     @AfterEach

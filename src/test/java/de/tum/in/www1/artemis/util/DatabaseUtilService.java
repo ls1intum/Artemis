@@ -460,14 +460,21 @@ public class DatabaseUtilService {
         return teams;
     }
 
-    public User addUser(String login, String hashedPassword) {
+    public User createUser(String login) {
+        if (!userExistsWithLogin(login)) {
+            return ModelFactory.generateActivatedUser(login);
+        }
+        return getUserByLogin(login);
+    }
+
+    public User createAndSaveUser(String login, String hashedPassword) {
         if (!userExistsWithLogin(login)) {
             return userRepo.save(ModelFactory.generateActivatedUser(login, hashedPassword));
         }
         return getUserByLogin(login);
     }
 
-    public User addUser(String login) {
+    public User createAndSaveUser(String login) {
         if (!userExistsWithLogin(login)) {
             return userRepo.save(ModelFactory.generateActivatedUser(login));
         }
