@@ -82,6 +82,7 @@
         "exerciseIdMismatch": "The exercise ids do not match.",
         "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement.",
         "systemNotificationNeedsBothDates": "Both notification date and expiration date must be set.",
-        "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date."
+        "systemNotificationNeedsNotificationBeforeExpiration": "The expiration date must be after the notification date.",
+        "ltiNotSupported": "LTI is not supported on this Artemis instance"
     }
 }
