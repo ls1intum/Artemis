@@ -23,6 +23,6 @@ describe('SecondCorrectionEnableButtonComponent', () => {
     it('test call', () => {
         const emitStub = jest.spyOn(comp.ngModelChange, 'emit');
         comp.triggerSecondCorrectionButton();
-        expect(emitStub).toHaveBeenCalled();
+        expect(emitStub).toHaveBeenCalledOnce();
     });
 });

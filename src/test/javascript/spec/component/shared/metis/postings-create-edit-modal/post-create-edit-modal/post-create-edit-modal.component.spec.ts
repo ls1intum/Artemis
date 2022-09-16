@@ -195,6 +195,6 @@ describe('PostCreateEditModalComponent', () => {
         });
 
         component.open();
-        expect(modalServiceOpenMock).toHaveBeenCalled();
+        expect(modalServiceOpenMock).toHaveBeenCalledOnce();
     });
 });

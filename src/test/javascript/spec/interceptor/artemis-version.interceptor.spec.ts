@@ -60,7 +60,7 @@ describe(`ArtemisVersionInterceptor`, () => {
         const sub = new Subject<boolean>();
         new ArtemisVersionInterceptor({ isStable: sub.asObservable() } as any as ApplicationRef, swUpdate as any as SwUpdate, serverDateService, alertService, {} as any as Window);
         sub.next(false);
-        expect(checkForUpdateSpy).toHaveBeenCalledTimes(0);
+        expect(checkForUpdateSpy).not.toHaveBeenCalled();
         tick(30000);
         expect(checkForUpdateSpy).toHaveBeenCalledOnce();
         discardPeriodicTasks();

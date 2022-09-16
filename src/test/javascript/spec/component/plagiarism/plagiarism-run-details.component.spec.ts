@@ -47,7 +47,7 @@ describe('Plagiarism Run Details', () => {
             plagiarismResult: { currentValue: plagiarismResult } as SimpleChange,
         });
 
-        expect(comp.updateChartDataSet).toHaveBeenCalled();
+        expect(comp.updateChartDataSet).toHaveBeenCalledOnce();
         for (let i = 0; i < 10; i++) {
             expect(comp.ngxData[i].value).toBe(plagiarismResult.similarityDistribution[i]);
         }
