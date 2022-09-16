@@ -579,16 +579,18 @@ public class DatabaseUtilService {
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
-        Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        // always use the lecture with the smallest ID, otherwise tests related to search might fail (in a flaky way)
-        Lecture lecture1 = course1.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        VideoUnit videoUnit = createVideoUnit();
-        TextUnit textUnit = createTextUnit();
-        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
-        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
-        return courses;
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            for (int i = 0; i < lectures.size(); i++) {
+                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().get();
+                VideoUnit videoUnit = createVideoUnit();
+                TextUnit textUnit = createTextUnit();
+                AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
+                ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+            }
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
