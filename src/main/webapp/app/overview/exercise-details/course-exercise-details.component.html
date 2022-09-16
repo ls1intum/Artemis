@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="studentParticipation" [submissionPolicy]="submissionPolicy">
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="ratedStudentParticipation" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -22,7 +22,7 @@
         </a>
         <jhi-submission-result-status
             [exercise]="exercise"
-            [studentParticipation]="studentParticipation"
+            [studentParticipation]="ratedStudentParticipation"
             updatingResultClass="me-2"
             [showGradedBadge]="true"
             [triggerLastGraded]="false"
@@ -141,10 +141,7 @@
                     <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"></jhi-result-history>
                 </div>
             </div>
-            <div
-                class="row justify-content-between"
-                *ngIf="showResults && !latestRatedResult?.rated && studentParticipation?.results && studentParticipation!.results!.length === 1"
-            >
+            <div class="row justify-content-between" *ngIf="showResults && !latestRatedResult?.rated && sortedHistoryResult?.length === 1">
                 <div class="col">
                     <h4>
                         <span class="badge w-100 bg-info">
@@ -155,16 +152,14 @@
                 <div class="col text-start">
                     <jhi-result
                         [exercise]="exercise"
-                        [result]="studentParticipation!.results![0]"
-                        [participation]="studentParticipation!"
+                        [result]="sortedHistoryResult![0]"
+                        [participation]="ratedStudentParticipation!"
                         [showUngradedResults]="true"
                         [short]="true"
                     ></jhi-result>
                 </div>
                 <div class="col text-start d-none d-md-flex">
-                    <h6 [ngbTooltip]="studentParticipation!.results![0].completionDate | artemisDate">
-                        ({{ studentParticipation!.results![0].completionDate! | artemisTimeAgo }})
-                    </h6>
+                    <h6 [ngbTooltip]="sortedHistoryResult![0].completionDate | artemisDate">({{ sortedHistoryResult![0].completionDate! | artemisTimeAgo }})</h6>
                 </div>
             </div>
             <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showMoreResults && showResults">
@@ -174,7 +169,7 @@
             </div>
             <div class="row" *ngIf="showMoreResults && showResults">
                 <div class="col-12 col-md-12">
-                    <div *ngFor="let result of studentParticipation?.results">
+                    <div *ngFor="let result of sortedHistoryResult">
                         <div class="row justify-content-between">
                             <div class="col">
                                 <h4>
@@ -191,7 +186,7 @@
                                 <jhi-result
                                     [exercise]="exercise"
                                     [result]="result"
-                                    [participation]="exercise.studentParticipations![0]"
+                                    [participation]="ratedStudentParticipation!"
                                     [showUngradedResults]="true"
                                     [short]="true"
                                 ></jhi-result>
@@ -201,12 +196,12 @@
                             </div>
                         </div>
                     </div>
-                    <div class="no-results" *ngIf="!studentParticipation || !studentParticipation.results">
+                    <div class="no-results" *ngIf="!sortedHistoryResult">
                         {{ 'artemisApp.courseOverview.exerciseDetails.noResults' | artemisTranslate }}
                     </div>
                 </div>
             </div>
-            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && studentParticipation?.results && studentParticipation!.results!.length > 1">
+            <div class="row mb-2 mt-2 align-items-baseline" *ngIf="showResults && sortedHistoryResult.length > 1">
                 <div class="col-auto">
                     <a class="text-primary" (click)="showMoreResults = !showMoreResults">{{
                         showMoreResults
@@ -248,7 +243,7 @@
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
-                    !!studentParticipation &&
+                    !!ratedStudentParticipation &&
                     !!latestRatedResult &&
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
                         latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
@@ -256,7 +251,7 @@
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"
-                [participation]="studentParticipation!"
+                [participation]="ratedStudentParticipation!"
                 [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
             </jhi-complaint-student-view>
@@ -264,7 +259,7 @@
                 class="row"
                 *ngIf="
                     exercise?.type === PROGRAMMING &&
-                    studentParticipation &&
+                    ratedStudentParticipation &&
                     latestRatedResult &&
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
