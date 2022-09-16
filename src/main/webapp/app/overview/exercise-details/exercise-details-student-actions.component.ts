@@ -93,7 +93,7 @@ export class ExerciseDetailsStudentActionsComponent {
         const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
 
         const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
-        const exerciseSettingAllowed = this.exercise.allowManualFeedbackRequests ?? false;
+        const exerciseSettingAllowed = this.exercise.allowManualFeedbackRequests;
 
         return [allHiddenTestsPassed, exerciseSettingAllowed].reduce((a, b) => a && b);
     }
