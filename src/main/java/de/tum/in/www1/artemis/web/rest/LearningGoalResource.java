@@ -29,7 +29,6 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
 import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.errors.ConflictException;
-import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
 @RestController
@@ -197,7 +196,7 @@ public class LearningGoalResource {
         if (learningGoal.getId() == null) {
             throw new BadRequestException();
         }
-        var existingLearningGoal = this.learningGoalRepository.findById(learningGoal.getId()).orElseThrow();
+        var existingLearningGoal = this.learningGoalRepository.findByIdElseThrow(learningGoal.getId());
         if (existingLearningGoal.getCourse() == null || !existingLearningGoal.getCourse().getId().equals(courseId)) {
             throw new BadRequestException();
         }
@@ -239,7 +238,7 @@ public class LearningGoalResource {
         if (learningGoalFromClient.getId() != null || learningGoalFromClient.getTitle() == null) {
             throw new BadRequestException();
         }
-        Course course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow(() -> new EntityNotFoundException("Course", courseId));
+        Course course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
         if (course.getLearningGoals().stream().map(LearningGoal::getTitle).anyMatch(title -> title.equals(learningGoalFromClient.getTitle()))) {
             throw new BadRequestException();
         }
@@ -308,8 +307,8 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<LearningGoal> addPrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to add a prerequisite: {}", learningGoalId);
-        var course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow();
-        var learningGoal = learningGoalRepository.findByIdWithConsecutiveCourses(learningGoalId).orElseThrow();
+        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
+        var learningGoal = learningGoalRepository.findByIdWithConsecutiveCoursesElseThrow(learningGoalId);
 
         if (learningGoal.getCourse().getId().equals(courseId)) {
             throw new ConflictException("The learning goal of a course can not be a prerequisite to the same course", "LearningGoal", "learningGoalCycle");
@@ -330,7 +329,7 @@ public class LearningGoalResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     public ResponseEntity<Void> removePrerequisite(@PathVariable Long learningGoalId, @PathVariable Long courseId) {
         log.info("REST request to remove a prerequisite: {}", learningGoalId);
-        var course = courseRepository.findWithEagerLearningGoalsById(courseId).orElseThrow();
+        var course = courseRepository.findWithEagerLearningGoalsByIdElseThrow(courseId);
         var learningGoal = findPrerequisite(Role.INSTRUCTOR, learningGoalId, courseId);
         course.removePrerequisite(learningGoal);
         courseRepository.save(course);
@@ -344,8 +343,7 @@ public class LearningGoalResource {
                 if (lectureUnit.getId() == null) {
                     throw new BadRequestAlertException("The lecture unit does not have an ID", "LectureUnit", "noId");
                 }
-                var lectureUnitFromDb = lectureUnitRepository.findByIdWithLearningGoals(lectureUnit.getId())
-                        .orElseThrow(() -> new EntityNotFoundException("LectureUnit", lectureUnit.getId()));
+                var lectureUnitFromDb = lectureUnitRepository.findByIdWithLearningGoalsElseThrow(lectureUnit.getId());
                 lectureUnitsFromDatabase.add(lectureUnitFromDb);
             }
         }
