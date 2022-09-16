@@ -128,7 +128,8 @@ public class ProgrammingExerciseGitDiffReportService {
     public ProgrammingExerciseGitDiffReport getReportOfExercise(ProgrammingExercise programmingExercise) {
         var reports = programmingExerciseGitDiffReportRepository.findByProgrammingExerciseId(programmingExercise.getId());
         if (reports.isEmpty()) {
-            return null;
+            // Try to generate the report if it doesn't exist yet
+            return updateReport(programmingExercise);;
         }
         else if (reports.size() == 1) {
             return reports.get(0);
