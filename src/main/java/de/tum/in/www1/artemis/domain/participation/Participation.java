@@ -133,12 +133,6 @@ public abstract class Participation extends DomainObject implements Participatio
         return individualDueDate;
     }
 
-    // TODO: this seems to be dead code
-    public Participation individualDueDate(ZonedDateTime individualDueDate) {
-        this.individualDueDate = individualDueDate;
-        return this;
-    }
-
     public void setIndividualDueDate(ZonedDateTime individualDueDate) {
         this.individualDueDate = individualDueDate;
     }

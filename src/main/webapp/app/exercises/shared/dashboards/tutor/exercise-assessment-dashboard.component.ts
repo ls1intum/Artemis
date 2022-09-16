@@ -468,28 +468,16 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             // TODO: This could be one generic endpoint.
             switch (this.exercise.type) {
                 case ExerciseType.TEXT:
-                    submissionsObservable = this.textSubmissionService.getTextSubmissionsForExerciseByCorrectionRound(this.exerciseId, { assessedByTutor: true }, correctionRound);
+                    submissionsObservable = this.textSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.MODELING:
-                    submissionsObservable = this.modelingSubmissionService.getModelingSubmissionsForExerciseByCorrectionRound(
-                        this.exerciseId,
-                        { assessedByTutor: true },
-                        correctionRound,
-                    );
+                    submissionsObservable = this.modelingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.FILE_UPLOAD:
-                    submissionsObservable = this.fileUploadSubmissionService.getFileUploadSubmissionsForExerciseByCorrectionRound(
-                        this.exerciseId,
-                        { assessedByTutor: true },
-                        correctionRound,
-                    );
+                    submissionsObservable = this.fileUploadSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
                 case ExerciseType.PROGRAMMING:
-                    submissionsObservable = this.programmingSubmissionService.getProgrammingSubmissionsForExerciseByCorrectionRound(
-                        this.exerciseId,
-                        { assessedByTutor: true },
-                        correctionRound,
-                    );
+                    submissionsObservable = this.programmingSubmissionService.getSubmissions(this.exerciseId, { assessedByTutor: true }, correctionRound);
                     break;
             }
         }
@@ -562,21 +550,13 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         let submissionObservable: Observable<Submission> = of();
         switch (this.exercise.type) {
             case ExerciseType.TEXT:
-                submissionObservable = this.textSubmissionService.getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exerciseId, 'head', correctionRound);
+                submissionObservable = this.textSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, 'head', correctionRound);
                 break;
             case ExerciseType.MODELING:
-                submissionObservable = this.modelingSubmissionService.getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
-                    this.exerciseId,
-                    undefined,
-                    correctionRound,
-                );
+                submissionObservable = this.modelingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
             case ExerciseType.FILE_UPLOAD:
-                submissionObservable = this.fileUploadSubmissionService.getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment(
-                    this.exerciseId,
-                    undefined,
-                    correctionRound,
-                );
+                submissionObservable = this.fileUploadSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
             case ExerciseType.PROGRAMMING:
                 submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);

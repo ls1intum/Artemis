@@ -560,11 +560,7 @@ export class ProgrammingSubmissionService implements IProgrammingSubmissionServi
      * @param req request parameters
      * @param correctionRound for which to get the Submissions
      */
-    getProgrammingSubmissionsForExerciseByCorrectionRound(
-        exerciseId: number,
-        req: { submittedOnly?: boolean; assessedByTutor?: boolean },
-        correctionRound = 0,
-    ): Observable<HttpResponse<ProgrammingSubmission[]>> {
+    getSubmissions(exerciseId: number, req: { submittedOnly?: boolean; assessedByTutor?: boolean }, correctionRound = 0): Observable<HttpResponse<ProgrammingSubmission[]>> {
         const url = `api/exercises/${exerciseId}/programming-submissions`;
         let params = createRequestOption(req);
         if (correctionRound !== 0) {
