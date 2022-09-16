@@ -54,6 +54,10 @@ import {
     EXAM_OVERALL_SCORE_KEY,
     REGISTRATION_NUMBER_KEY,
     USERNAME_KEY,
+    BONUS_GRADE_KEY,
+    FINAL_GRADE_KEY,
+    PLAGIARISM_VERDICT_KEY,
+    PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY,
 } from 'app/shared/export/export-constants';
 
 export enum MedianType {
@@ -81,6 +85,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
 
     dataLabelFormatting = this.formatDataLabel.bind(this);
     scores: number[];
+    gradesWithBonus: string[];
     lastCalculatedMedianType: MedianType;
     highlightedValue: number | undefined;
 
@@ -108,6 +113,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     gradingScaleExists = false;
     gradingScale?: GradingScale;
     isBonus?: boolean;
+    hasBonus?: boolean;
+    hasPlagiarismVerdicts?: boolean;
+    hasPlagiarismVerdictsInBonusSource?: boolean;
     hasSecondCorrectionAndStarted: boolean;
     hasNumericGrades: boolean;
 
@@ -137,6 +145,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     ) {}
 
     ngOnInit() {
+        window['comp'] = this; // TODO: Ata Remove
         this.route.params.subscribe((params) => {
             const getExamScoresObservable = this.examService.getExamScores(params['courseId'], params['examId']);
             // alternative exam scores calculation using participant scores table
@@ -181,11 +190,16 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScaleExists = true;
                         this.gradingScale = gradingScaleResponse.body!;
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
+                        this.hasBonus = !!this.studentResults?.[0]?.gradeWithBonus; // TODO: Ata Maybe use .some()
                         this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
                         this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
                     // Only try to calculate statistics if the exam has exercise groups and student results
                     if (this.studentResults && this.exerciseGroups) {
+                        this.hasPlagiarismVerdicts = this.studentResults.some((studentResult) => studentResult.mostSeverePlagiarismVerdict);
+                        this.hasPlagiarismVerdictsInBonusSource =
+                            this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus!.mostSeverePlagiarismVerdict);
+
                         // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
                         this.calculateFilterDependentStatistics();
@@ -283,6 +297,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     private calculateFilterDependentStatistics() {
         this.noOfExamsFiltered = 0;
         const scoresToVisualize: number[] = [];
+        const gradesWithBonusToVisualize: string[] = [];
 
         // Create data structures holding the statistics for all exercise groups and exercises
         const groupIdToGroupResults = new Map<number, AggregatedExerciseGroupResult>();
@@ -304,6 +319,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                 continue;
             }
             scoresToVisualize.push(studentResult.overallScoreAchieved ?? 0);
+            if (this.hasBonus) {
+                gradesWithBonusToVisualize.push(studentResult.gradeWithBonus!.finalGrade?.toString() ?? '');
+            }
             this.noOfExamsFiltered++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
                 continue;
@@ -339,6 +357,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         const exerciseGroupResults = Array.from(groupIdToGroupResults.values());
         this.calculateExerciseGroupStatistics(exerciseGroupResults);
         this.scores = [...scoresToVisualize];
+        this.gradesWithBonus = gradesWithBonusToVisualize;
     }
 
     /**
@@ -674,10 +693,22 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         headers.push(EXAM_OVERALL_SCORE_KEY);
         if (this.gradingScaleExists) {
             headers.push(this.isBonus ? BONUS_KEY : GRADE_KEY);
+            if (this.hasBonus) {
+                headers.push(BONUS_GRADE_KEY);
+                headers.push(FINAL_GRADE_KEY);
+            }
         }
         headers.push(EXAM_SUBMITTED);
         if (this.gradingScaleExists && !this.isBonus) {
             headers.push(EXAM_PASSED);
+        }
+
+        if (this.hasPlagiarismVerdicts) {
+            headers.push(PLAGIARISM_VERDICT_KEY);
+        }
+
+        if (this.hasPlagiarismVerdictsInBonusSource) {
+            headers.push(PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY);
         }
 
         return headers;
@@ -723,15 +754,23 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         rowData.setPoints(EXAM_OVERALL_POINTS_KEY, studentResult.overallPointsAchieved);
         rowData.setScore(EXAM_OVERALL_SCORE_KEY, studentResult.overallScoreAchieved);
         if (this.gradingScaleExists) {
-            if (this.isBonus) {
-                rowData.set(BONUS_KEY, studentResult.overallGrade);
-            } else {
-                rowData.set(GRADE_KEY, studentResult.overallGrade);
+            rowData.set(this.isBonus ? BONUS_KEY : GRADE_KEY, studentResult.overallGrade);
+            if (this.hasBonus) {
+                rowData.set(BONUS_GRADE_KEY, studentResult.gradeWithBonus!.bonusGrade);
+                rowData.set(FINAL_GRADE_KEY, studentResult.gradeWithBonus!.finalGrade);
             }
         }
         rowData.set(EXAM_SUBMITTED, studentResult.submitted ? 'yes' : 'no');
         if (this.gradingScaleExists && !this.isBonus) {
             rowData.set(EXAM_PASSED, studentResult.hasPassed ? 'yes' : 'no');
+        }
+
+        if (this.hasPlagiarismVerdicts) {
+            rowData.set(PLAGIARISM_VERDICT_KEY, studentResult.mostSeverePlagiarismVerdict);
+        }
+
+        if (this.hasPlagiarismVerdictsInBonusSource) {
+            rowData.set(PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY, studentResult.gradeWithBonus!.mostSeverePlagiarismVerdict);
         }
         return rowData.build();
     }

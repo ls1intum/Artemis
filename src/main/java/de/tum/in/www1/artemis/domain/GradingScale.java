@@ -122,6 +122,21 @@ public class GradingScale extends DomainObject {
     }
 
     /**
+     * Gets the title for the given grading scale from the related course or exam
+     *
+     * @return title of the exam or course related to this grading scale
+     */
+    @JsonIgnore
+    public String getTitle() {
+        if (this.getCourse() != null) {
+            return this.getCourse().getTitle();
+        }
+        else {
+            return this.getExam().getTitle();
+        }
+    }
+
+    /**
      * Gets the course of the grading scale either via the exam or directly.
      *
      * @return a Course related to this grading scale

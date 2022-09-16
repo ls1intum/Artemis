@@ -126,6 +126,8 @@ public interface StudentExamRepository extends JpaRepository<StudentExam, Long> 
             """)
     Optional<StudentExam> findByExamIdAndUserId(@Param("examId") long examId, @Param("userId") long userId);
 
+    boolean existsByExam_CourseIdAndExamIdAndUserId(@Param("courseId") long courseId, @Param("examId") long examId, @Param("userId") long userId);
+
     @Query("""
             SELECT DISTINCT se FROM StudentExam se
             LEFT JOIN FETCH se.exercises e

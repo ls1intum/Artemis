@@ -19,3 +19,7 @@ export const POINTS_KEY = 'Points';
 export const SCORE_KEY = 'Score';
 export const GRADE_KEY = 'Grades';
 export const BONUS_KEY = 'Bonus Points';
+export const BONUS_GRADE_KEY = 'Bonus Grades';
+export const FINAL_GRADE_KEY = 'Final Grades';
+export const PLAGIARISM_VERDICT_KEY = 'Plagiarism Verdicts';
+export const PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY = 'Plagiarism Verdicts in Bonus Course/Exam';

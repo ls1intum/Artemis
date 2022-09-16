@@ -476,7 +476,7 @@ public class ExamResource {
         long start = System.currentTimeMillis();
         log.info("REST request to get score for exam : {}", examId);
         examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
+        ExamScoresDTO examScoresDTO = examService.calculateExamScoresForExport(examId); // TODO: Ata Change to calculateExamScores
         log.info("get scores for exam {} took {}ms", examId, System.currentTimeMillis() - start);
         return ResponseEntity.ok(examScoresDTO);
     }

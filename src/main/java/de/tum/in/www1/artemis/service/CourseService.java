@@ -47,10 +47,7 @@ import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.service.exam.ExamService;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 import de.tum.in.www1.artemis.service.user.UserService;
-import de.tum.in.www1.artemis.web.rest.dto.CourseManagementDetailViewDTO;
-import de.tum.in.www1.artemis.web.rest.dto.DueDateStat;
-import de.tum.in.www1.artemis.web.rest.dto.StatsForDashboardDTO;
-import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
+import de.tum.in.www1.artemis.web.rest.dto.*;
 import de.tum.in.www1.artemis.web.rest.errors.AccessForbiddenException;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 
@@ -856,4 +853,10 @@ public class CourseService {
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
     }
+
+    // TODO: Ata Implement?
+    public Map<Long, ScoreDTO> calculateCourseScore(long courseId, Collection<Long> studentIds) {
+        return studentIds.stream().collect(Collectors.toMap(studentId -> studentId, studentId -> new ScoreDTO(studentId, "", 150.0, 75.0, 200.0)));
+    }
+
 }
