@@ -577,10 +577,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                     if (this.unassessedSubmissionByRound) {
                         this.unassessedSubmissionByRound.delete(correctionRound);
                     }
-                } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
+                } else if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
-                    this.onError(error?.error?.detail || error.message);
+                    this.onError(error.error?.detail || error.message);
                 }
             },
         });
