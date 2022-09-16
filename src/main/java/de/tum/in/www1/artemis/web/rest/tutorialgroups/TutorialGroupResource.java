@@ -203,7 +203,7 @@ public class TutorialGroupResource {
 
         // persist the schedule and generate the sessions
         if (tutorialGroupSchedule != null) {
-            tutorialGroupScheduleService.saveAndGenerateScheduledSessions(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
+            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
             persistedTutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
         }
 

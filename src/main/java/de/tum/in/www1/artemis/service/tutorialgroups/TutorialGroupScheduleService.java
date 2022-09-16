@@ -35,7 +35,7 @@ public class TutorialGroupScheduleService {
         this.tutorialGroupFreePeriodService = tutorialGroupFreePeriodService;
     }
 
-    public void saveAndGenerateScheduledSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup,
+    public void saveScheduleAndGenerateScheduledSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup,
             TutorialGroupSchedule tutorialGroupSchedule) {
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
         TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
@@ -87,21 +87,25 @@ public class TutorialGroupScheduleService {
 
     public void updateSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, Optional<TutorialGroupSchedule> oldSchedule,
             Optional<TutorialGroupSchedule> newSchedule) {
-        if (oldSchedule.isPresent() && newSchedule.isPresent()) { // update existing schedule
-            var schedule = oldSchedule.get();
-            tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(schedule);
-            overrideValues(newSchedule.get(), schedule);
-            saveAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, schedule);
+        if (oldSchedule.isPresent() && newSchedule.isPresent()) { // update existing schedule -> delete all scheduled sessions and recreate using the new schedule
+            updateAllSessionsToNewSchedule(tutorialGroupsConfiguration, tutorialGroup, oldSchedule.get(), newSchedule.get());
         }
         else if (oldSchedule.isPresent()) { // old schedule present but not new schedule -> delete old schedule
             tutorialGroupScheduleRepository.delete(oldSchedule.get());
         }
         else if (newSchedule.isPresent()) { // new schedule present but not old schedule -> create new schedule
-            saveAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, newSchedule.get());
+            saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, newSchedule.get());
         }
     }
 
-    private static void overrideValues(TutorialGroupSchedule sourceSchedule, TutorialGroupSchedule originalSchedule) {
+    private void updateAllSessionsToNewSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule oldSchedule,
+            TutorialGroupSchedule newSchedule) {
+        tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(oldSchedule);
+        overrideScheduleProperties(newSchedule, oldSchedule);
+        saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, oldSchedule);
+    }
+
+    private static void overrideScheduleProperties(TutorialGroupSchedule sourceSchedule, TutorialGroupSchedule originalSchedule) {
         originalSchedule.setLocation(sourceSchedule.getLocation());
         originalSchedule.setDayOfWeek(sourceSchedule.getDayOfWeek());
         originalSchedule.setStartTime(sourceSchedule.getStartTime());
