@@ -197,7 +197,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     }
 
     private loadRandomSubmission(exerciseId: number): Observable<ProgrammingSubmission> {
-        return this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(exerciseId, true, this.correctionRound);
+        return this.programmingSubmissionService.getSubmissionWithoutAssessment(exerciseId, true, this.correctionRound);
     }
 
     private loadSubmission(submissionId: number): Observable<ProgrammingSubmission> {
@@ -340,7 +340,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
     nextSubmission() {
         this.loadingParticipation = true;
         this.submission = undefined;
-        this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
+        this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exercise.id!, true, this.correctionRound).subscribe({
             next: (response: ProgrammingSubmission) => {
                 this.loadingParticipation = false;
 

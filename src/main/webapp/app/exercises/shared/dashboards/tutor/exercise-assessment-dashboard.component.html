@@ -339,14 +339,7 @@
                         class="table-responsive"
                         *ngIf="tutorParticipationStatus === TRAINED || exercise.isAtLeastInstructor || tutorParticipationStatus === COMPLETED || isTestRun"
                     >
-                        <table
-                            class="table exercise-table"
-                            *ngIf="
-                                (unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id || submissionsByCorrectionRound.get(correctionRound)?.length) &&
-                                    !exercise.allowComplaintsForAutomaticAssessments;
-                                else noSubmissions
-                            "
-                        >
+                        <table class="table exercise-table" *ngIf="submissionsToCorrectExist(correctionRound); else noSubmissions">
                             <thead>
                                 <tr jhiSort [(predicate)]="sortPredicates[0]" [(ascending)]="reverseOrders[0]" (sortChange)="sortSubmissionRows(correctionRound)">
                                     <th>#</th>

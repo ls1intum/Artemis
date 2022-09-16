@@ -579,11 +579,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 );
                 break;
             case ExerciseType.PROGRAMMING:
-                submissionObservable = this.programmingSubmissionService.getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment(
-                    this.exerciseId,
-                    undefined,
-                    correctionRound,
-                );
+                submissionObservable = this.programmingSubmissionService.getSubmissionWithoutAssessment(this.exerciseId, undefined, correctionRound);
                 break;
         }
 
@@ -608,6 +604,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 }
             },
         });
+    }
+
+    /**
+     * Whether there are unassessed submissions to be graded per correction round
+     * @param correctionRound Round to check for unassessed submissions
+     */
+    submissionsToCorrectExist(correctionRound: number): boolean {
+        // TODO: booleans based on falsyness defy typescripts intention
+        const correctionRoundExists = !!this.unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id;
+
+        // TODO: this variable name seems to be wrong, as it only returns assessed submissions
+        const submissionsExist = !!this.submissionsByCorrectionRound.get(correctionRound)?.length;
+
+        // TODO: comment explaining !this.exercise.allowComplaintsForAutomaticAssessments;
+        return (correctionRoundExists || submissionsExist) && !this.exercise.allowComplaintsForAutomaticAssessments;
     }
 
     /**
