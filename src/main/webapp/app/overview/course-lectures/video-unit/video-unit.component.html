@@ -1,7 +1,7 @@
 <div class="row align-items-center mb-2 mt-2">
     <div class="card unit-card">
         <div class="card-header unit-card-header row align-content-center justify-content-between" (click)="handleCollapse($event)">
-            <div class="col-auto row align-content-center">
+            <div class="col-auto row align-content-center flex-shrink-1">
                 <h5 class="m-0 fw-medium">
                     <fa-icon class="me-2" [icon]="faVideo" [ngbTooltip]="'artemisApp.videoUnit.tooltip' | artemisTranslate"> </fa-icon>
                     {{ videoUnit?.name ? videoUnit.name : '' }}
@@ -14,7 +14,7 @@
                     </span>
                 </h5>
             </div>
-            <div class="col-auto" *ngIf="!isPresentationMode && videoUnit.visibleToStudents">
+            <div class="col-auto d-flex align-items-center gap-3 pe-0" *ngIf="!isPresentationMode && videoUnit.visibleToStudents">
                 <fa-icon
                     *ngIf="videoUnit.completed; else uncompleted"
                     class="text-success"

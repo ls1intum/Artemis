@@ -59,6 +59,6 @@ describe('ApollonDiagramCreateForm Component', () => {
         // test
         fixture.componentInstance.save();
         tick();
-        expect(ngbModalSpy).toHaveBeenCalledTimes(1);
+        expect(ngbModalSpy).toHaveBeenCalledOnce();
     }));
 });

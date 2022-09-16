@@ -18,12 +18,11 @@ import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.builders.WebSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter;
 import org.springframework.web.filter.CorsFilter;
@@ -33,11 +32,10 @@ import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.jwt.JWTConfigurer;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 
-// @formatter:off
 @EnableWebSecurity
 @EnableGlobalMethodSecurity(prePostEnabled = true, securedEnabled = true)
 @Import(SecurityProblemSupport.class)
-public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
+public class SecurityConfiguration {
 
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
 
@@ -104,31 +102,8 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
         return roleHierarchy;
     }
 
-    @Override
-    public void configure(WebSecurity web) {
-        // @formatter:off
-        web.ignoring()
-            .antMatchers(HttpMethod.OPTIONS, "/**")
-            .antMatchers("/app/**/*.{js,html}")
-            .antMatchers("/i18n/**")
-            .antMatchers("/content/**")
-            .antMatchers("/api-docs/**")
-            .antMatchers("/api.html")
-            .antMatchers("/test/**");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*");
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*");
-        web.ignoring()
-            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH);
-        web.ignoring()
-            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*");
-    }
-
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
+    @Bean
+    protected SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         // @formatter:off
         http
             .csrf()
@@ -140,7 +115,7 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .headers()
             .contentSecurityPolicy("script-src 'self' 'unsafe-inline' 'unsafe-eval'")
             // TODO: investigate exactly whether the following works in our setup or not
-//            .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
+            // .contentSecurityPolicy("default-src 'self'; connect-src: 'self' 'https://sentry.io' 'ws:' 'wss:'; frame-src * data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src * data:; font-src 'self' data:")
         .and()
             .referrerPolicy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN)
         .and()
@@ -157,6 +132,10 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
         .and()
             .authorizeRequests()
+            .antMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+        .and()
+            // api
+            .authorizeRequests()
             .antMatchers("/api/register").permitAll()
             .antMatchers("/api/activate").permitAll()
             .antMatchers("/api/authenticate").permitAll()
@@ -167,17 +146,40 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
             .antMatchers("/api/files/attachments/attachment-unit/**").permitAll()
             .antMatchers("/api/files/file-upload-exercises/**").permitAll()
             .antMatchers("/api/files/markdown/**").permitAll()
+            .antMatchers(HttpMethod.GET, SYSTEM_NOTIFICATIONS_RESOURCE_PATH_ACTIVE_API_PATH).permitAll()
+            .antMatchers(HttpMethod.POST, NEW_RESULT_RESOURCE_API_PATH).permitAll()
+            .antMatchers(HttpMethod.POST, PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + "*").permitAll()
+            .antMatchers(HttpMethod.POST, TEST_CASE_CHANGED_API_PATH + "*").permitAll()
+            .antMatchers(HttpMethod.POST, ATHENE_RESULT_API_PATH + "*").permitAll()
             .antMatchers("/api/**").authenticated()
+        .and()
+            // websocket
+            .authorizeRequests()
             .antMatchers("/websocket/tracker").hasAuthority(Role.ADMIN.getAuthority())
             .antMatchers("/websocket/**").permitAll()
+        .and()
+            // management
+            .authorizeRequests()
             .antMatchers("/management/health").permitAll()
             .antMatchers("/management/info").permitAll()
             // Only allow the configured IP address to access the prometheus endpoint, or allow 127.0.0.1 if none is specified
             .antMatchers("/management/prometheus/**").hasIpAddress(monitoringIpAddress.orElse("127.0.0.1"))
             .antMatchers("/management/**").hasAuthority(Role.ADMIN.getAuthority())
+        .and()
+            // others
+            .authorizeRequests()
             .antMatchers("/time").permitAll()
+            .antMatchers("/app/**/*.{js,html}").permitAll()
+            .antMatchers("/i18n/**").permitAll()
+            .antMatchers("/content/**").permitAll()
+            .antMatchers("/test/**").permitAll()
+            .antMatchers("/api.html").permitAll()
+            .antMatchers("/api-docs/**").permitAll()
         .and()
             .apply(securityConfigurerAdapter());
+        // @formatter:on
+
+        return http.build();
     }
 
     private JWTConfigurer securityConfigurerAdapter() {
