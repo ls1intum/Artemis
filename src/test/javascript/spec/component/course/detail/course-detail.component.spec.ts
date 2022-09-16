@@ -104,7 +104,7 @@ describe('Course Management Detail Component', () => {
         jest.restoreAllMocks();
     });
 
-    it('Should call registerChangeInCourses on init', () => {
+    it('should call registerChangeInCourses on init', () => {
         const registerSpy = jest.spyOn(component, 'registerChangeInCourses');
 
         fixture.detectChanges();
@@ -117,7 +117,7 @@ describe('Course Management Detail Component', () => {
     it('should destroy event subscriber onDestroy', () => {
         const destroySpy = jest.spyOn(eventManager, 'destroy');
         component.ngOnDestroy();
-        expect(destroySpy).toHaveBeenCalled();
+        expect(destroySpy).toHaveBeenCalledOnce();
     });
 
     it('should broadcast course modification on delete', () => {
