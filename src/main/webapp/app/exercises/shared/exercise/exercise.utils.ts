@@ -13,6 +13,7 @@ import { map, mergeMap, mergeWith, takeUntil } from 'rxjs/operators';
 import { ExerciseUpdateWarningComponent } from 'app/exercises/shared/exercise-update-warning/exercise-update-warning.component';
 import { hasResults } from 'app/exercises/shared/participation/participation.utils';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 export enum EditType {
     IMPORT,
@@ -148,9 +149,17 @@ export const hasStudentParticipations = (exercise: Exercise) => {
  * Handles the evaluation of participation status.
  *
  * @param exercise
+ * @param testRun if specified, filters the student participations according to this flag
  * @return {ParticipationStatus}
  */
-export const participationStatus = (exercise: Exercise): ParticipationStatus => {
+export const participationStatus = (exercise: Exercise, testRun?: boolean): ParticipationStatus => {
+    let studentParticipation: StudentParticipation | undefined;
+    if (testRun === undefined) {
+        studentParticipation = exercise.studentParticipations?.[0];
+    } else {
+        studentParticipation = exercise.studentParticipations?.filter((participation: StudentParticipation) => participation.testRun === testRun)[0];
+    }
+
     // For team exercises check whether the student has been assigned to a team yet
     if (exercise.teamMode && exercise.studentAssignedTeamIdComputed && !exercise.studentAssignedTeamId) {
         return ParticipationStatus.NO_TEAM_ASSIGNED;
@@ -162,7 +171,7 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     }
 
     // Evaluate the participation status for modeling, text and file upload exercises if the exercise has participations.
-    if (exercise.type && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && hasStudentParticipations(exercise)) {
+    if (exercise.type && [ExerciseType.MODELING, ExerciseType.TEXT, ExerciseType.FILE_UPLOAD].includes(exercise.type) && studentParticipation) {
         return participationStatusForModelingTextFileUploadExercise(exercise);
     }
 
@@ -175,13 +184,13 @@ export const participationStatus = (exercise: Exercise): ParticipationStatus => 
     ];
 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
-    if (!hasStudentParticipations(exercise) || programmingExerciseStates.includes(exercise.studentParticipations![0].initializationState!)) {
+    if (!studentParticipation || programmingExerciseStates.includes(studentParticipation.initializationState!)) {
         if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise)) {
             return ParticipationStatus.EXERCISE_MISSED;
         } else {
             return ParticipationStatus.UNINITIALIZED;
         }
-    } else if (exercise.studentParticipations![0].initializationState === InitializationState.INITIALIZED) {
+    } else if (studentParticipation.initializationState === InitializationState.INITIALIZED) {
         return ParticipationStatus.INITIALIZED;
     }
     return ParticipationStatus.INACTIVE;

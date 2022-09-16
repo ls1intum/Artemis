@@ -83,7 +83,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private submissionSubscription: Subscription;
-    studentParticipation?: StudentParticipation;
+    studentParticipations: StudentParticipation[];
+    ratedStudentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
@@ -171,9 +172,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
-            if (this.studentParticipation) {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(this.studentParticipation!.id!, this.exercise!);
-            }
+            this.studentParticipations.forEach((participation) => {
+                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
+            });
         }
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
@@ -185,8 +186,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
 
     loadExercise() {
         this.exercise = undefined;
-        this.studentParticipation = this.participationWebsocketService.getParticipationForExercise(this.exerciseId, this.isInPracticeMode());
-        this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.studentParticipation?.results);
+        this.studentParticipations = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
+        this.ratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+        this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.ratedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
             this.getLatestRatedResult();
@@ -209,8 +211,9 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         if (this.exercise.type === ExerciseType.PROGRAMMING) {
             const programmingExercise = this.exercise as ProgrammingExercise;
             const isAfterDateForComplaint =
-                (!this.exercise.dueDate || hasExerciseDueDatePassed(this.exercise, this.studentParticipation)) &&
-                (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate));
+                !this.exercise.dueDate ||
+                (hasExerciseDueDatePassed(this.exercise, this.ratedStudentParticipation) &&
+                    (!programmingExercise.buildAndTestStudentSubmissionsAfterDueDate || now.isAfter(programmingExercise.buildAndTestStudentSubmissionsAfterDueDate)));
 
             this.allowComplaintsForAutomaticAssessments = !!programmingExercise.allowComplaintsForAutomaticAssessments && isAfterDateForComplaint;
             if (this.exercise?.studentParticipations && programmingExercise.projectKey) {
@@ -230,7 +233,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.subscribeToTeamAssignmentUpdates();
 
         // Subscribe for late programming submissions to show the student a success message
-        if (this.exercise.type === ExerciseType.PROGRAMMING && hasExerciseDueDatePassed(this.exercise, this.studentParticipation!)) {
+        if (this.exercise.type === ExerciseType.PROGRAMMING && hasExerciseDueDatePassed(this.exercise, this.ratedStudentParticipation)) {
             this.subscribeForNewSubmissions();
         }
 
@@ -283,8 +286,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         const filteredParticipations = participations.filter((participation: StudentParticipation) => {
             const personal = participation.student?.id === this.currentUser.id;
             const team = participation.team?.students?.map((s) => s.id).includes(this.currentUser.id);
-            const practiceParticipation = (participation.testRun && this.isInPracticeMode()) || (!participation.testRun && !this.isInPracticeMode());
-            return (personal || team) && practiceParticipation;
+            return personal || team;
         });
         filteredParticipations.forEach((participation: Participation) => {
             if (participation.results) {
@@ -307,11 +309,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     sortResults() {
-        if (this.studentParticipation && this.studentParticipation.results) {
-            this.studentParticipation.results = this.studentParticipation.results.sort(this.resultSortFunction);
-            const sortedResultLength = this.studentParticipation.results.length;
+        this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
+        const sortedResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+        if (sortedResults) {
+            const sortedResultLength = sortedResults.length;
             const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
-            this.sortedHistoryResult = this.studentParticipation.results.slice(startingElement, sortedResultLength);
+            this.sortedHistoryResult = sortedResults.slice(startingElement, sortedResultLength);
         }
     }
 
@@ -325,15 +328,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         // if there are new student participation(s) from the server, we need to update this.studentParticipation
         if (this.exercise) {
             if (this.exercise.studentParticipations?.length) {
-                this.studentParticipation = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+                this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
+                this.ratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
                 this.sortResults();
                 // Add exercise to studentParticipation, as the result component is dependent on its existence.
-                if (this.studentParticipation && this.studentParticipation.exercise == undefined) {
-                    this.studentParticipation.exercise = this.exercise;
-                }
-            } else if (this.studentParticipation) {
+                this.studentParticipations.filter((participation) => participation.exercise === undefined).forEach((participation) => (participation.exercise = this.exercise));
+            } else if (this.studentParticipations.length) {
                 // otherwise we make sure that the student participation in exercise is correct
-                this.exercise.studentParticipations = [this.studentParticipation];
+                this.exercise.studentParticipations = this.studentParticipations;
             }
         }
     }
@@ -352,12 +354,13 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             }
         }
         this.participationUpdateListener = this.participationWebsocketService.subscribeForParticipationChanges().subscribe((changedParticipation: StudentParticipation) => {
-            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id && changedParticipation.testRun === this.isInPracticeMode()) {
+            if (changedParticipation && this.exercise && changedParticipation.exercise?.id === this.exercise.id) {
                 // Notify student about late submission result
                 if (
                     changedParticipation.exercise?.dueDate &&
                     hasExerciseDueDatePassed(changedParticipation.exercise!, changedParticipation) &&
-                    changedParticipation.results?.length! > this.studentParticipation?.results?.length!
+                    changedParticipation.results?.length! >
+                        this.participationService.getSpecificStudentParticipation(this.studentParticipations, changedParticipation.testRun)?.results?.length!
                 ) {
                     this.alertService.success('artemisApp.exercise.lateSubmissionResultReceived');
                 }
@@ -406,16 +409,16 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * Subscribe for incoming (late) submissions to show a message if the student submitted after the due date.
      */
     subscribeForNewSubmissions() {
-        if (this.studentParticipation) {
+        this.studentParticipations.forEach((participation) => {
             this.submissionSubscription = this.submissionService
-                .getLatestPendingSubmissionByParticipationId(this.studentParticipation!.id!, this.exercise?.id!, true)
+                .getLatestPendingSubmissionByParticipationId(participation!.id!, this.exercise?.id!, true)
                 .subscribe(({ submission }) => {
                     // Notify about received late submission
-                    if (submission && getExerciseDueDate(this.exercise!, this.studentParticipation)?.isBefore(submission.submissionDate)) {
+                    if (submission && !participation.testRun && getExerciseDueDate(this.exercise!, participation)?.isBefore(submission.submissionDate)) {
                         this.alertService.success('artemisApp.exercise.lateSubmissionReceived');
                     }
                 });
-        }
+        });
     }
 
     exerciseRatedBadge(result: Result): string {
@@ -423,10 +426,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        if (!this.studentParticipation || !this.studentParticipation.results) {
+        if (!this.studentParticipations.length || !this.sortedHistoryResult.length) {
             return false;
         }
-        return this.studentParticipation.results.length > MAX_RESULT_HISTORY_LENGTH;
+        return this.sortedHistoryResult.length > MAX_RESULT_HISTORY_LENGTH;
     }
 
     get showResults(): boolean {
@@ -437,10 +440,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasResults(): boolean {
-        if (!this.studentParticipation || !this.studentParticipation.results) {
+        if (!this.studentParticipations.length || !this.sortedHistoryResult.length) {
             return false;
         }
-        return this.studentParticipation.results.length > 0;
+        return this.sortedHistoryResult.length > 0;
     }
 
     /**
@@ -448,10 +451,10 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
      * For other exercise types it returns a rated result.
      */
     getLatestRatedResult() {
-        if (!this.studentParticipation?.submissions || !this.studentParticipation!.submissions![0] || !this.hasResults) {
+        if (!this.ratedStudentParticipation?.submissions?.[0] || !this.hasResults) {
             return;
         }
-        this.complaintService.findBySubmissionId(this.studentParticipation!.submissions![0].id!).subscribe({
+        this.complaintService.findBySubmissionId(this.ratedStudentParticipation!.submissions![0].id!).subscribe({
             next: (res) => {
                 if (!res.body) {
                     return;
@@ -464,14 +467,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         });
 
         if (this.exercise!.type === ExerciseType.MODELING || this.exercise!.type === ExerciseType.TEXT) {
-            return this.studentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
+            return this.ratedStudentParticipation?.results?.find((result: Result) => !!result.completionDate) || undefined;
         }
 
-        const ratedResults = this.studentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
+        const ratedResults = this.ratedStudentParticipation?.results?.filter((result: Result) => result.rated).sort(this.resultSortFunction);
         if (ratedResults) {
             const latestResult = ratedResults.last();
             if (latestResult) {
-                latestResult.participation = this.studentParticipation;
+                latestResult.participation = this.ratedStudentParticipation;
             }
             this.latestRatedResult = latestResult;
         }

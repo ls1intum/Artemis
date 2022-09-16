@@ -183,7 +183,6 @@
             [hideLabelMobile]="true"
             [routerLink]="['/courses', courseId, 'exercises', exercise.id, 'teams', assignedTeamId]"
         ></button>
-        <!-- TODO: [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises" ? -->
         <button
             [id]="'start-exercise-' + exercise.id"
             class="start-exercise"
@@ -194,7 +193,7 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
+            *ngIf="participationStatusWrapper(false) === ParticipationStatus.UNINITIALIZED && isStartExerciseAvailable()"
             (click)="startExercise()"
         ></button>
         <button
@@ -207,7 +206,7 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.UNINITIALIZED && isStartPracticeAvailable(this.exercise as ProgrammingExercise)"
+            *ngIf="participationStatusWrapper(true) === ParticipationStatus.UNINITIALIZED && isStartPracticeAvailable()"
             (click)="startPractice()"
         ></button>
 
@@ -248,7 +247,7 @@
             [buttonLoading]="!!exercise.loading"
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
-            *ngIf="participationStatusWrapper() === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
+            *ngIf="participationStatusWrapper(false) === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
             (click)="resumeProgrammingExercise()"
         ></button>
         <a

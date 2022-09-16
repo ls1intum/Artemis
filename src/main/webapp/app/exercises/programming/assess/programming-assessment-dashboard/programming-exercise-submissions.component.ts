@@ -18,9 +18,6 @@ import { getLinkToSubmissionAssessment } from 'app/utils/navigation.utils';
 import { map } from 'rxjs/operators';
 import { faBan, faEdit, faFolderOpen, faSort } from '@fortawesome/free-solid-svg-icons';
 import { AbstractAssessmentDashboard } from 'app/exercises/shared/dashboards/tutor/abstract-assessment-dashboard';
-import { QuizExercise } from 'app/entities/quiz/quiz-exercise.model';
-import dayjs from 'dayjs/esm';
-import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 @Component({
     templateUrl: './programming-exercise-submissions.component.html',

@@ -11,7 +11,6 @@ import { ArtemisExerciseScoresModule } from 'app/exercises/shared/exercise-score
 import { ArtemisParticipationRoutingModule } from 'app/exercises/shared/participation/participation-routing.module';
 import { ArtemisTeamParticipeModule } from 'app/exercises/shared/team/team-participate/team-participate.module';
 import { FormDateTimePickerModule } from 'app/shared/date-time-picker/date-time-picker.module';
-import { ExerciseModeSwitchModule } from 'app/shared/exercise-mode-switch/exercise-mode-switch.module';
 
 @NgModule({
     imports: [
@@ -25,7 +24,6 @@ import { ExerciseModeSwitchModule } from 'app/shared/exercise-mode-switch/exerci
         FeatureToggleModule,
         ArtemisTeamParticipeModule,
         FormDateTimePickerModule,
-        ExerciseModeSwitchModule,
     ],
     declarations: [ParticipationComponent],
 })

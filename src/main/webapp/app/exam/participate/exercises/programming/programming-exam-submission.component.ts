@@ -17,7 +17,6 @@ import {
     CodeEditorRepositoryFileService,
     CodeEditorRepositoryService,
 } from 'app/exercises/programming/shared/code-editor/service/code-editor-repository.service';
-import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 
 @Component({
     selector: 'jhi-programming-submission-exam',
@@ -64,8 +63,6 @@ export class ProgrammingExamSubmissionComponent extends ExamSubmissionComponent 
     isSaving: boolean;
     readonly ButtonType = ButtonType;
     readonly ButtonSize = ButtonSize;
-
-    readonly ExerciseOperationMode = ExerciseOperationMode;
 
     constructor(private domainService: DomainService, changeDetectorReference: ChangeDetectorRef) {
         super(changeDetectorReference);

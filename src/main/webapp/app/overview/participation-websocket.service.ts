@@ -15,7 +15,7 @@ const EXERCISE_PARTICIPATION_TOPIC = (exerciseId: number) => `/topic/exercise/${
 
 export interface IParticipationWebsocketService {
     addParticipation: (participation: Participation, exercise?: Exercise) => void;
-    getParticipationForExercise: (exerciseId: number, testRun: boolean) => StudentParticipation | undefined;
+    getParticipationForExercise: (exerciseId: number) => StudentParticipation[] | undefined;
     subscribeForParticipationChanges: () => BehaviorSubject<Participation | undefined>;
     subscribeForLatestResultOfParticipation: (participationId: number, personal: boolean, exerciseId?: number) => BehaviorSubject<Result | undefined>;
     unsubscribeForLatestResultOfParticipation: (participationId: number, exercise: Exercise) => void;
@@ -128,19 +128,17 @@ export class ParticipationWebsocketService implements IParticipationWebsocketSer
      * Returns the student participation for the given exercise. The participation objects include the exercise data and all results.
      *
      * @param exerciseId ID of the exercise that the participations belong to.
-     * @return the cached student participation for the exercise or undefined
+     * @return the cached student participations separated between testRun and normal participation for the exercise or an empty array
      */
-    public getParticipationForExercise(exerciseId: number, testRun: boolean) {
+    public getParticipationForExercise(exerciseId: number): StudentParticipation[] {
         const participationsForExercise = [...this.cachedParticipations.values()].filter((participation) => {
-            return participation.exercise?.id === exerciseId && participation.testRun === testRun;
+            return participation.exercise?.id === exerciseId;
         });
-        if (participationsForExercise?.length === 1) {
-            return participationsForExercise[0];
-        }
-        if (participationsForExercise?.length > 1) {
+        if (participationsForExercise?.length) {
             return this.participationService.mergeStudentParticipations(participationsForExercise);
+        } else {
+            return [];
         }
-        return undefined;
     }
 
     /**

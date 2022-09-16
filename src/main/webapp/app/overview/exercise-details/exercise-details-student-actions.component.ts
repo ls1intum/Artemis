@@ -1,5 +1,5 @@
-import { AfterViewInit, Component, ContentChild, EventEmitter, HostBinding, Input, Output, TemplateRef } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Component, ContentChild, HostBinding, Input, TemplateRef } from '@angular/core';
+import { Router } from '@angular/router';
 import { AlertService } from 'app/core/util/alert.service';
 import { HttpClient } from '@angular/common/http';
 import { SourceTreeService } from 'app/exercises/programming/shared/service/sourceTree.service';
@@ -15,7 +15,6 @@ import { finalize } from 'rxjs/operators';
 import { faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
-import { ExerciseOperationMode } from 'app/ExerciseOperationMode';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -78,6 +77,13 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     isStartExerciseAvailable(): boolean {
         return isStartExerciseAvailable(this.exercise as ProgrammingExercise);
+    }
+
+    /**
+     * see exercise.utils -> isStartExerciseAvailable
+     */
+    isStartPracticeAvailable(): boolean {
+        return isStartPracticeAvailable(this.exercise as ProgrammingExercise);
     }
 
     /**
@@ -180,8 +186,8 @@ export class ExerciseDetailsStudentActionsComponent {
      *
      * @return {ParticipationStatus}
      */
-    participationStatusWrapper(): ParticipationStatus {
-        return participationStatus(this.exercise);
+    participationStatusWrapper(testRun?: boolean): ParticipationStatus {
+        return participationStatus(this.exercise, testRun);
     }
 
     /**
