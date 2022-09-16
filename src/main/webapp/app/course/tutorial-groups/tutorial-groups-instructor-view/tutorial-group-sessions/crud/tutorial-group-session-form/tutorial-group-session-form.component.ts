@@ -55,7 +55,6 @@ export interface TutorialGroupSessionFormData {
 @Component({
     selector: 'jhi-tutorial-group-session-form',
     templateUrl: './tutorial-group-session-form.component.html',
-    styleUrls: ['./tutorial-group-session-form.component.scss'],
     providers: [{ provide: NgbTimeAdapter, useClass: NgbTimeStringAdapter }],
 })
 export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {

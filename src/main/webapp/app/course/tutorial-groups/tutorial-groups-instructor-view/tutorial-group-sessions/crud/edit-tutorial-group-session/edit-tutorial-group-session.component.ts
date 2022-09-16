@@ -15,7 +15,6 @@ import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutoria
 @Component({
     selector: 'jhi-edit-tutorial-group-session',
     templateUrl: './edit-tutorial-group-session.component.html',
-    styleUrls: ['./edit-tutorial-group-session.component.scss'],
 })
 export class EditTutorialGroupSessionComponent implements OnInit {
     isLoading = false;

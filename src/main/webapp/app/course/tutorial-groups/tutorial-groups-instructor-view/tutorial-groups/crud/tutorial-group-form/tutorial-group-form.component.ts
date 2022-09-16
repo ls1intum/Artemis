@@ -13,7 +13,7 @@ import {
     ScheduleFormComponent,
     ScheduleFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
-import _ from 'lodash';
+import { isEqual } from 'lodash-es';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { faSave } from '@fortawesome/free-solid-svg-icons';
 
@@ -126,7 +126,7 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
     }
 
     get scheduleChanged() {
-        return this.isEditMode && (!_.isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate) || this.configureSchedule !== !!this.existingScheduleFormDate);
+        return this.isEditMode && (!isEqual({ ...this.form.value.schedule }, this.existingScheduleFormDate) || this.configureSchedule !== !!this.existingScheduleFormDate);
     }
 
     ngOnInit(): void {

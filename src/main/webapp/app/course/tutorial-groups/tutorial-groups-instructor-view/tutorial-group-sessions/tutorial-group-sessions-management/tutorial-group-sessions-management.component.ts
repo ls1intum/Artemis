@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
@@ -18,9 +18,6 @@ import dayjs from 'dayjs/esm';
 @Component({
     selector: 'jhi-session-management',
     templateUrl: './tutorial-group-sessions-management.component.html',
-    styleUrls: ['./tutorial-group-sessions-management.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush,
-    encapsulation: ViewEncapsulation.None,
 })
 export class TutorialGroupSessionsManagement implements OnInit {
     isLoading = false;

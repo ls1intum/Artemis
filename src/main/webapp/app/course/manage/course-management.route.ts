@@ -17,7 +17,6 @@ import { isOrion } from 'app/shared/orion/orion';
 import { OrionCourseManagementExercisesComponent } from 'app/orion/management/orion-course-management-exercises.component';
 import { CourseManagementResolve } from 'app/course/manage/course-management-resolve.service';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
-import { ArtemisTutorialGroupsInstructorViewModule } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/artemis-tutorial-groups-instructor-view.module';
 
 export const courseManagementState: Routes = [
     {
@@ -75,7 +74,7 @@ export const courseManagementState: Routes = [
             course: CourseManagementResolve,
         },
         loadChildren: () =>
-            import('app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-instructor-view.module').then((m) => ArtemisTutorialGroupsInstructorViewModule),
+            import('app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-instructor-view.module').then((m) => m.ArtemisTutorialGroupsInstructorViewModule),
     },
     {
         path: ':courseId/plagiarism-cases',

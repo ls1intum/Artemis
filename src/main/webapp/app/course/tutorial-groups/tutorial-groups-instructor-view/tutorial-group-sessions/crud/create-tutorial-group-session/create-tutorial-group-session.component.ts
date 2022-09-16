@@ -10,13 +10,11 @@ import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { TutorialGroupSessionFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/tutorial-group-session-form/tutorial-group-session-form.component';
 import { TutorialGroupSessionDTO, TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import dayjs from 'dayjs/esm';
 import { combineLatest } from 'rxjs';
 
 @Component({
     selector: 'jhi-create-tutorial-group-session',
     templateUrl: './create-tutorial-group-session.component.html',
-    styleUrls: ['./create-tutorial-group-session.component.scss'],
 })
 export class CreateTutorialGroupSessionComponent implements OnInit {
     tutorialGroupSessionToCreate: TutorialGroupSessionDTO = new TutorialGroupSessionDTO();
@@ -80,11 +78,5 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
-    }
-
-    private createUTC(date: Date, time: string): dayjs.Dayjs {
-        const hours = time.split(':')[0];
-        const minutes = time.split(':')[1];
-        return dayjs(date).tz(this.tutorialGroup.course!.tutorialGroupsConfiguration?.timeZone).set({ hour: hours, minute: minutes }).utc();
     }
 }

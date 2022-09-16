@@ -10,7 +10,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 @Component({
     selector: 'jhi-tutorial-group-session-row-buttons-component',
     templateUrl: './tutorial-group-session-row-buttons.component.html',
-    styleUrls: ['./tutorial-group-session-row-buttons.component.scss'],
 })
 export class TutorialGroupSessionRowButtonsComponent {
     @Input() courseId: number;

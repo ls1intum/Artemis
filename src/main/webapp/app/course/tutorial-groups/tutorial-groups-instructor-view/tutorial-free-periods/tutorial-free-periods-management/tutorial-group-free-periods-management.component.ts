@@ -14,7 +14,6 @@ import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/servi
 @Component({
     selector: 'jhi-tutorial-free-periods',
     templateUrl: './tutorial-group-free-periods-management.component.html',
-    styleUrls: ['./tutorial-group-free-periods-management.component.scss'],
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
     isLoading = false;

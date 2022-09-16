@@ -10,7 +10,6 @@ export interface TutorialGroupFreePeriodFormData {
 @Component({
     selector: 'jhi-tutorial-free-day-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
-    styleUrls: ['./tutorial-group-free-period-form.component.scss'],
 })
 export class TutorialGroupFreePeriodForm implements OnInit, OnChanges {
     @Input()

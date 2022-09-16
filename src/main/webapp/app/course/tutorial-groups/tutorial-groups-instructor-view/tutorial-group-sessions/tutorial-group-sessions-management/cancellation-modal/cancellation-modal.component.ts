@@ -10,7 +10,6 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 @Component({
     selector: 'jhi-cancellation-modal',
     templateUrl: './cancellation-modal.component.html',
-    styleUrls: ['./cancellation-modal.component.scss'],
 })
 export class CancellationModalComponent implements OnInit {
     tutorialGroupSessionStatus = TutorialGroupSessionStatus;
