@@ -13,6 +13,7 @@ import { TutorialGroupSessionsManagement } from 'app/course/tutorial-groups/tuto
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
+import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 
 /**
  * parent 'course-management/:courseId/tutorial-groups-management'
@@ -60,6 +61,15 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.createTutorialGroup.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: 'configuration/:tutorialGroupsConfigurationId/tutorial-free-days/:tutorialGroupFreePeriodId/edit',
+        component: EditTutorialGroupFreePeriodComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.editTutorialFreeDay.title',
         },
         canActivate: [UserRouteAccessService],
     },

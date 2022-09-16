@@ -17,12 +17,40 @@ export class TutorialGroupFreePeriodService {
     private resourceURL = SERVER_API_URL + 'api';
 
     constructor(private httpClient: HttpClient) {}
+
+    getOneOfConfiguration(courseId: number, tutorialGroupsConfigurationId: number, tutorialGroupFreePeriodId: number): Observable<EntityResponseType> {
+        return this.httpClient
+            .get<TutorialGroupFreePeriod>(
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupsConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
+                { observe: 'response' },
+            )
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
+    }
+
     create(courseId: number, tutorialGroupConfigurationId: number, tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO): Observable<EntityResponseType> {
         const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
         return this.httpClient
             .post<TutorialGroupFreePeriod>(`${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods`, copy, {
                 observe: 'response',
             })
+            .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
+    }
+
+    update(
+        courseId: number,
+        tutorialGroupConfigurationId: number,
+        tutorialGroupFreePeriodId: number,
+        tutorialGroupFreePeriodDTO: TutorialGroupFreePeriodDTO,
+    ): Observable<EntityResponseType> {
+        const copy = this.convertTutorialGroupFreePeriodDatesFromClient(tutorialGroupFreePeriodDTO);
+        return this.httpClient
+            .put<TutorialGroupFreePeriod>(
+                `${this.resourceURL}/courses/${courseId}/tutorial-groups-configuration/${tutorialGroupConfigurationId}/tutorial-free-periods/${tutorialGroupFreePeriodId}`,
+                copy,
+                {
+                    observe: 'response',
+                },
+            )
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupFreePeriodResponseDatesFromServer(res)));
     }
 

@@ -8,12 +8,13 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { faTimes } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTimes } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 
 @Component({
     selector: 'jhi-tutorial-free-periods',
     templateUrl: './tutorial-group-free-periods-management.component.html',
+    styles: ['./tutorial-group-free-periods-management.component.scss'],
 })
 export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
     isLoading = false;
@@ -21,6 +22,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
     tutorialGroupFreePeriods: TutorialGroupFreePeriod[] = [];
     courseId: number;
     faTimes = faTimes;
+    faPlus = faPlus;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -38,7 +40,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
         this.loadAll();
     }
 
-    private loadAll() {
+    loadAll() {
         this.isLoading = true;
         combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.paramMap])
             .pipe(
@@ -60,19 +62,6 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
                     }
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
-    }
-
-    deleteTutorialGroupFreePeriod(tutorialGroupFreePeriod: TutorialGroupFreePeriod) {
-        this.isLoading = true;
-        this.tutorialGroupFreePeriodService
-            .delete(this.courseId, this.tutorialGroupsConfiguration.id!, tutorialGroupFreePeriod.id!)
-            .pipe(finalize(() => (this.isLoading = false)))
-            .subscribe({
-                next: () => {
-                    this.loadAll();
-                },
-                error: (error: HttpErrorResponse) => this.dialogErrorSource.next(error.message),
             });
     }
 }

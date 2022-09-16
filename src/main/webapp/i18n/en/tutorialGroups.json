@@ -26,6 +26,9 @@
             "title": "Activate cancelled session",
             "question": "Do you really want to activate the cancelled session {{label}}?"
         },
+        "editTutorialFreeDay": {
+            "title": "Edit Tutorial Free Day"
+        },
         "tutorialFreeDays": {
             "title": "Add Tutorial Free Days",
             "noReason": "No reason given",
@@ -40,10 +43,6 @@
             "create": {
                 "title": "Add Tutorial Free Day",
                 "button": "Add Tutorial Free Day"
-            },
-            "deleteButton": {
-                "question": "Are you sure that you want to delete the Tutorial Group Free Day on {{ title }}?",
-                "typeNameToConfirm": "Please enter the date of the tutorial group free day to confirm."
             }
         },
         "createConfiguration": {
@@ -102,6 +101,18 @@
         },
         "registeredStudents": {
             "title": "Registered Students"
+        },
+        "manageTutorialFreeDays": {
+            "title": "Manage Tutorial Free Days",
+            "createButton": "Create Tutorial Free Day",
+            "columns": {
+                "id": "ID",
+                "date": "Date",
+                "reason": "Reason"
+            },
+            "deleteButton": {
+                "question": "Are you sure that you want to delete the Tutorial Group Free Period on {{ title }}?"
+            }
         },
         "manageSessions": {
             "title": "Manage Sessions",

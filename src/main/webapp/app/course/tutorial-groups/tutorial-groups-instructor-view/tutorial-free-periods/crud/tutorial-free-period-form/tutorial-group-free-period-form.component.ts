@@ -8,7 +8,7 @@ export interface TutorialGroupFreePeriodFormData {
     reason?: string;
 }
 @Component({
-    selector: 'jhi-tutorial-free-day-form',
+    selector: 'jhi-tutorial-free-period-form',
     templateUrl: './tutorial-group-free-period-form.component.html',
 })
 export class TutorialGroupFreePeriodForm implements OnInit, OnChanges {

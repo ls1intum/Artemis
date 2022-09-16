@@ -1,0 +1,29 @@
+<div class="btn-group flex-btn-group-container">
+    <!-- Edit -->
+    <a
+        [routerLink]="[
+            '/course-management',
+            courseId,
+            'tutorial-groups-management',
+            'configuration',
+            tutorialGroupConfiguration.id!,
+            'tutorial-free-days',
+            tutorialFreePeriod.id!,
+            'edit'
+        ]"
+        class="btn btn-warning btn-sm me-1"
+    >
+        <fa-icon [icon]="faWrench"></fa-icon>
+        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+    </a>
+    <!-- Delete -->
+    <button
+        jhiDeleteButton
+        entityTitle="{{ tutorialFreePeriod.start | artemisDate: 'long-date':false:tutorialGroupConfiguration.timeZone }}"
+        deleteQuestion="artemisApp.manageTutorialFreeDays.deleteButton.question"
+        (delete)="deleteTutorialFreePeriod()"
+        [dialogError]="dialogError$"
+    >
+        <fa-icon [icon]="faTimes"></fa-icon>
+    </button>
+</div>

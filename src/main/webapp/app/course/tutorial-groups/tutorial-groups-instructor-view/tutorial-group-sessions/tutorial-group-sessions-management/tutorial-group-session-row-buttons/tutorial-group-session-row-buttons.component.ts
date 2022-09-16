@@ -26,7 +26,6 @@ export class TutorialGroupSessionRowButtonsComponent {
     faWrench = faWrench;
     faUsers = faUsers;
     faTimes = faTimes;
-    faCalendar = faCalendarAlt;
 
     constructor(private tutorialGroupSessionService: TutorialGroupSessionService, private modalService: NgbModal) {}
 

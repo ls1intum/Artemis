@@ -27,6 +27,8 @@ import { OwlDateTimeModule } from '@danielmoncada/angular-datetime-picker';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module';
 import { NgModule } from '@angular/core';
+import { TutorialGroupFreePeriodRowButtonsComponent } from './tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-period-row-buttons/tutorial-group-free-period-row-buttons.component';
+import { EditTutorialGroupFreePeriodComponent } from './tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 
 @NgModule({
     imports: [
@@ -58,6 +60,8 @@ import { NgModule } from '@angular/core';
         CreateTutorialGroupFreePeriodComponent,
         EditTutorialGroupSessionComponent,
         TutorialGroupSessionRowButtonsComponent,
+        TutorialGroupFreePeriodRowButtonsComponent,
+        EditTutorialGroupFreePeriodComponent,
     ],
 })
 export class ArtemisTutorialGroupsInstructorViewModule {}

@@ -95,7 +95,7 @@ public class TutorialGroupsConfigurationResource {
     }
 
     /**
-     * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId : Updates an existing tutorial groups configuration.
+     * PUT /courses/:courseId/tutorial-groups-configurations/:tutorialGroupsConfigurationId :Upups configuration.
      *
      * @param courseId                          the id of the course to which the tutorial groups configuration belongs
      * @param updatedTutorialGroupConfiguration the configuration to update

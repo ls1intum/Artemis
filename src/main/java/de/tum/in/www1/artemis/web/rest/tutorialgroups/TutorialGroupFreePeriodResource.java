@@ -50,6 +50,64 @@ public class TutorialGroupFreePeriodResource {
     }
 
     /**
+     * GET /courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : gets the tutorial group free period with the specified id.
+     *
+     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
+     * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period belongs
+     * @param tutorialGroupFreePeriodId     the id of the tutorial group free period to get
+     * @return ResponseEntity with status 200 (OK) and with body the tutorial group free period
+     */
+    @GetMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<TutorialGroupFreePeriod> getOneOfConfiguration(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+            @PathVariable Long tutorialGroupFreePeriodId) {
+        log.debug("REST request to get tutorial group free period: {} of tutorial group configuration {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
+                courseId);
+        var freePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
+        checkEntityIdMatchesPathIds(freePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, freePeriod.getTutorialGroupsConfiguration().getCourse(), null);
+        return ResponseEntity.ok(freePeriod);
+    }
+
+    /**
+     * PUT courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods/:tutorialGroupFreePeriodId : Updates an existing tutorial free period
+     *
+     * @param courseId                      the id of the course to which the tutorial groups configuration belongs
+     * @param tutorialGroupsConfigurationId the id of the tutorial groups configuration to which the tutorial group free period should be added
+     * @param tutorialGroupFreePeriod       tutorial group free period that should be created
+     * @return ResponseEntity with status 201 (Created) and in the body the new tutorial group free period
+     */
+    @PutMapping("/courses/{courseId}/tutorial-groups-configuration/{tutorialGroupsConfigurationId}/tutorial-free-periods/{tutorialGroupFreePeriodId}")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<TutorialGroupFreePeriod> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
+            @PathVariable Long tutorialGroupFreePeriodId, @RequestBody TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
+        log.debug("REST request to update TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
+                courseId);
+        var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
+        checkEntityIdMatchesPathIds(existingFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
+
+        TutorialGroupFreePeriod updatedFreePeriod = new TutorialGroupFreePeriod();
+        updatedFreePeriod.setId(existingFreePeriod.getId());
+        updatedFreePeriod.setTutorialGroupsConfiguration(existingFreePeriod.getTutorialGroupsConfiguration());
+        updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason);
+        updatedFreePeriod.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, START_OF_DAY, existingFreePeriod.getTutorialGroupsConfiguration()));
+        updatedFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, END_OF_DAY, existingFreePeriod.getTutorialGroupsConfiguration()));
+        isValidTutorialGroupPeriod(updatedFreePeriod);
+
+        // activate previously cancelled sessions
+        tutorialGroupFreePeriodService.activateCancelledOverlappingSessions(existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), existingFreePeriod);
+        // update free period
+        updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
+        // cancel now overlapping sessions
+        tutorialGroupFreePeriodService.cancelActiveOverlappingSessions(updatedFreePeriod.getTutorialGroupsConfiguration().getCourse(), updatedFreePeriod);
+
+        return ResponseEntity.ok(updatedFreePeriod);
+    }
+
+    /**
      * POST courses/:courseId/tutorial-groups-configuration/:tutorialGroupsConfigurationId/tutorial-free-periods : creates a new tutorial group free period
      *
      * @param courseId                      the id of the course to which the tutorial groups configuration belongs
@@ -77,6 +135,7 @@ public class TutorialGroupFreePeriodResource {
 
         checkEntityIdMatchesPathIds(newTutorialGroupFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         isValidTutorialGroupPeriod(newTutorialGroupFreePeriod);
+        trimStringFields(newTutorialGroupFreePeriod);
         var persistedTutorialGroupFreePeriod = tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
 
         tutorialGroupFreePeriodService.cancelActiveOverlappingSessions(tutorialGroupsConfiguration.getCourse(), persistedTutorialGroupFreePeriod);
@@ -137,6 +196,12 @@ public class TutorialGroupFreePeriodResource {
         if (overlappingPeriod.isPresent() && !overlappingPeriod.get().getId().equals(tutorialGroupFreePeriod.getId())) {
             throw new BadRequestAlertException("The given tutorial group free period overlaps with another tutorial group free period in the same course", ENTITY_NAME,
                     "overlapping");
+        }
+    }
+
+    private void trimStringFields(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
+        if (tutorialGroupFreePeriod.getReason() != null) {
+            tutorialGroupFreePeriod.setReason(tutorialGroupFreePeriod.getReason().trim());
         }
     }
 

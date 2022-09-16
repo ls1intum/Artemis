@@ -1,43 +1,65 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div *ngIf="tutorialGroupsConfiguration">
-        <div class="row">
-            <div class="col-12">
-                <!-- Create Tutorial Group Free Period -->
-                <a
-                    [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'configuration', tutorialGroupsConfiguration.id, 'tutorial-free-days', 'create']"
-                    class="btn btn-primary btn-sm me-1"
-                >
-                    <span class="d-none d-md-inline">{{ 'artemisApp.tutorialFreeDays.create.button' | artemisTranslate }}</span>
-                </a>
+    <div class="row" *ngIf="tutorialGroupsConfiguration && tutorialGroupFreePeriods">
+        <div class="col-12">
+            <div class="d-flex justify-content-between">
+                <h4>{{ 'artemisApp.manageTutorialFreeDays.title' | artemisTranslate }}</h4>
+                <div>
+                    <a
+                        class="btn btn-primary"
+                        [routerLink]="[
+                            '/course-management',
+                            courseId,
+                            'tutorial-groups-management',
+                            'configuration',
+                            tutorialGroupsConfiguration.id,
+                            'tutorial-free-days',
+                            'create'
+                        ]"
+                    >
+                        <fa-icon [icon]="faPlus"></fa-icon>
+                        <span>{{ 'artemisApp.manageTutorialFreeDays.createButton' | artemisTranslate }}</span>
+                    </a>
+                </div>
             </div>
         </div>
-        <div class="row">
-            <div class="col-12">
-                <ngb-accordion type="info" [closeOthers]="true">
-                    <ngb-panel cardClass="my-2" *ngFor="let freePeriod of tutorialGroupFreePeriods" id="day-{{ freePeriod.id }}">
-                        <ng-template ngbPanelHeader let-opened="opened">
-                            <div class="accordion-button custom-header justify-content-between" [class.collapsed]="!opened">
-                                <button ngbPanelToggle class="p-0 btn btn-link container-fluid text-start ps-0">{{ freePeriod.start! | artemisDate: 'long-date' }}</button>
-                                <div>
-                                    <button
-                                        jhiDeleteButton
-                                        [entityTitle]="freePeriod.start! | artemisDate: 'long-date'"
-                                        deleteQuestion="artemisApp.tutorialFreeDays.deleteButton.question"
-                                        deleteConfirmationText="artemisApp.tutorialFreeDays.deleteButton.typeNameToConfirm"
-                                        (delete)="deleteTutorialGroupFreePeriod(freePeriod)"
-                                        [dialogError]="dialogError$"
-                                    >
-                                        <fa-icon [icon]="faTimes"></fa-icon>
-                                    </button>
-                                </div>
-                            </div>
-                        </ng-template>
-                        <ng-template ngbPanelContent>
-                            {{ freePeriod.reason ? freePeriod.reason : ('artemisApp.tutorialFreeDays.noReason' | artemisTranslate) }}
-                        </ng-template>
-                    </ngb-panel>
-                </ngb-accordion>
+        <div class="col-12 mb-2">
+            <div class="alert alert-info">
+                {{ 'artemisApp.manageSessions.timeZone' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
             </div>
+        </div>
+        <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">{{ 'artemisApp.manageTutorialFreeDays.columns.id' | artemisTranslate }}</th>
+                        <th scope="col">{{ 'artemisApp.manageTutorialFreeDays.columns.date' | artemisTranslate }}</th>
+                        <th scope="col">{{ 'artemisApp.manageTutorialFreeDays.columns.reason' | artemisTranslate }}</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr *ngFor="let freePeriod of tutorialGroupFreePeriods">
+                        <td>
+                            {{ freePeriod.id }}
+                        </td>
+                        <!-- Only support for one day right now, so only show "start" date -->
+                        <td>
+                            {{ freePeriod.start | artemisDate: 'long-date':false:tutorialGroupsConfiguration.timeZone }}
+                        </td>
+                        <td>
+                            <span class="d-inline-block text-truncate long-text"> {{ freePeriod.reason }} </span>
+                        </td>
+                        <td>
+                            <jhi-tutorial-group-free-period-row-buttons
+                                [courseId]="courseId"
+                                [tutorialGroupConfiguration]="tutorialGroupsConfiguration"
+                                [tutorialFreePeriod]="freePeriod"
+                                (tutorialFreePeriodDeleted)="loadAll()"
+                            >
+                            </jhi-tutorial-group-free-period-row-buttons>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </jhi-loading-indicator-container>
