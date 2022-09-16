@@ -3,6 +3,14 @@
         <div *ngIf="tutorialGroup" class="col-12">
             <h2>{{ tutorialGroup.title }}</h2>
             <hr />
+            <div>
+                <jhi-tutorial-group-row-buttons
+                    [courseId]="tutorialGroup.course!.id!"
+                    [tutorialGroup]="tutorialGroup"
+                    (tutorialGroupDeleted)="onTutorialGroupDeleted()"
+                ></jhi-tutorial-group-row-buttons>
+            </div>
+            <hr />
             <h3>{{ 'artemisApp.tutorialGroupDetail.title' | artemisTranslate }}:</h3>
             <dl class="row-md jh-entity-details markdown-preview">
                 <!-- Course -->

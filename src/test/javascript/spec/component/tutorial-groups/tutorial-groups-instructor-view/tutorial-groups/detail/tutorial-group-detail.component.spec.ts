@@ -12,6 +12,8 @@ import { of } from 'rxjs';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
+import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
+import { Course } from 'app/entities/course.model';
 
 describe('TutorialGroupDetailComponent', () => {
     let tutorialGroupDetailComponentFixture: ComponentFixture<TutorialGroupDetailComponent>;
@@ -19,7 +21,13 @@ describe('TutorialGroupDetailComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupDetailComponent, LoadingIndicatorContainerStubComponent, MockPipe(ArtemisTranslatePipe), MockRouterLinkDirective],
+            declarations: [
+                TutorialGroupDetailComponent,
+                TutorialGroupRowButtonsStubComponent,
+                LoadingIndicatorContainerStubComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockRouterLinkDirective,
+            ],
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
@@ -74,6 +82,8 @@ describe('TutorialGroupDetailComponent', () => {
         const tutorialGroupOfResponse = new TutorialGroup();
         tutorialGroupOfResponse.id = 1;
         tutorialGroupOfResponse.title = 'test';
+        tutorialGroupOfResponse.course = new Course();
+        tutorialGroupOfResponse.course.id = 2;
 
         const response: HttpResponse<TutorialGroup> = new HttpResponse({
             body: tutorialGroupOfResponse,

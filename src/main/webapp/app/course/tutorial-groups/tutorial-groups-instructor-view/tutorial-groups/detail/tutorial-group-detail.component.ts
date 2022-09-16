@@ -53,4 +53,8 @@ export class TutorialGroupDetailComponent implements OnInit {
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
     }
+
+    onTutorialGroupDeleted() {
+        this.router.navigate(['..'], { relativeTo: this.activatedRoute });
+    }
 }
