@@ -450,7 +450,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
-    public Optional<ProgrammingSubmission> getRandomProgrammingSubmissionEligibleForNewAssessment(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
+    public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
         var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
@@ -479,8 +479,8 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
-    public ProgrammingSubmission lockAndGetProgrammingSubmissionWithoutResult(ProgrammingExercise exercise, int correctionRound) {
-        ProgrammingSubmission programmingSubmission = getRandomProgrammingSubmissionEligibleForNewAssessment(exercise, exercise.isExamExercise(), correctionRound)
+    public ProgrammingSubmission lockAndGetResultlessSubmission(ProgrammingExercise exercise, int correctionRound) {
+        ProgrammingSubmission programmingSubmission = getRandomAssessableSubmission(exercise, exercise.isExamExercise(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
         return (ProgrammingSubmission) newManualResult.getSubmission();

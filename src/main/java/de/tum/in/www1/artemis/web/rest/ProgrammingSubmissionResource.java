@@ -248,7 +248,6 @@ public class ProgrammingSubmissionResource {
     /**
      * Trigger the CI of the provided participations of the given exercise.
      * The build result will become rated regardless of the due date as the submission type is INSTRUCTOR.
-     *
      * Note: If a participationId does not belong to the exercise, it will be ignored!
      *
      * @param exerciseId to identify the programming exercise.
@@ -277,7 +276,6 @@ public class ProgrammingSubmissionResource {
 
     /**
      * POST /programming-exercises/test-cases-changed/:exerciseId : informs Artemis about changed test cases for the "exerciseId" programmingExercise.
-     *
      * Problem with legacy programming exercises:
      * The repositories (solution, template, student) are built automatically when a commit is pushed into the test repository.
      * We have removed this trigger for newly created exercises, but can't remove it from legacy ones.
@@ -432,10 +430,14 @@ public class ProgrammingSubmissionResource {
     public ResponseEntity<ProgrammingSubmission> getProgrammingSubmissionWithoutAssessment(@PathVariable Long exerciseId,
             @RequestParam(value = "lock", defaultValue = "false") boolean lockSubmission, @RequestParam(value = "correction-round", defaultValue = "0") int correctionRound) {
         log.debug("REST request to get a programming submission without assessment");
+
         final ProgrammingExercise programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
+
         List<GradingCriterion> gradingCriteria = gradingCriterionRepository.findByExerciseIdWithEagerGradingCriteria(exerciseId);
         programmingExercise.setGradingCriteria(gradingCriteria);
+
         final User user = userRepository.getUserWithGroupsAndAuthorities();
+
         if (!authCheckService.isAtLeastTeachingAssistantForExercise(programmingExercise, user)) {
             throw new AccessForbiddenException();
         }
@@ -449,12 +451,11 @@ public class ProgrammingSubmissionResource {
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetProgrammingSubmissionWithoutResult(programmingExercise, correctionRound);
+            programmingSubmission = programmingSubmissionService.lockAndGetResultlessSubmission(programmingExercise, correctionRound);
         }
         else {
             // TODO: in this case, we should simply return an empty response instead of not found, because this is an expected state and not an error state
-            programmingSubmission = programmingSubmissionService
-                    .getRandomProgrammingSubmissionEligibleForNewAssessment(programmingExercise, programmingExercise.isExamExercise(), correctionRound)
+            programmingSubmission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound)
                     .orElseThrow(() -> new EntityNotFoundException("No more programming submissions without assessment"));
         }
 
