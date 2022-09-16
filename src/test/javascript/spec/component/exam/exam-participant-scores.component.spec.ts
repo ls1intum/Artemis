@@ -119,9 +119,9 @@ describe('ExamParticipantScores', () => {
         expect(component.participantScoresAverage).toEqual([participantScoreAverageDTO]);
         expect(component.avgScore).toBe(99);
         expect(component.avgRatedScore).toBe(99);
-        expect(findAllOfExamStub).toHaveBeenCalled();
-        expect(findAverageOfExamPerParticipantStub).toHaveBeenCalled();
-        expect(findAverageOfExamStub).toHaveBeenCalled();
-        expect(findGradingScaleForExamStub).toHaveBeenCalled();
+        expect(findAllOfExamStub).toHaveBeenCalledOnce();
+        expect(findAverageOfExamPerParticipantStub).toHaveBeenCalledOnce();
+        expect(findAverageOfExamStub).toHaveBeenCalledTimes(2);
+        expect(findGradingScaleForExamStub).toHaveBeenCalledOnce();
     });
 });

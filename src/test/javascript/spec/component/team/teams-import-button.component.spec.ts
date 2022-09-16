@@ -57,7 +57,7 @@ describe('TeamsImportButtonComponent', () => {
         it('should open teams import dialog when called', fakeAsync(() => {
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
-            expect(modalServiceStub).toHaveBeenCalled();
+            expect(modalServiceStub).toHaveBeenCalledOnce();
             expect(componentInstance.exercise).toEqual(mockExercise);
             expect(componentInstance.teams).toEqual(mockTeams);
             tick(100);

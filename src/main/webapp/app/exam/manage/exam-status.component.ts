@@ -5,6 +5,7 @@ import { ExamChecklistService } from 'app/exam/manage/exams/exam-checklist-compo
 import { ExamChecklist } from 'app/entities/exam-checklist.model';
 import dayjs from 'dayjs/esm';
 import { round } from 'app/shared/util/utils';
+import { Course } from 'app/entities/course.model';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 
 export enum ExamReviewState {
@@ -29,9 +30,8 @@ export enum ExamConductionState {
 export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     @Input()
     public exam: Exam;
-
     @Input()
-    public isAtLeastInstructor: boolean;
+    public course?: Course;
 
     examChecklist: ExamChecklist;
     numberOfGeneratedStudentExams: number;
@@ -85,7 +85,7 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
             this.numberOfGeneratedStudentExams = this.examChecklist.numberOfGeneratedStudentExams ?? 0;
             this.isTestExam = this.exam.testExam!;
 
-            if (this.isAtLeastInstructor) {
+            if (this.course?.isAtLeastInstructor) {
                 // Step 1:
                 this.setExamPreparation();
             }
@@ -166,9 +166,9 @@ export class ExamStatusComponent implements OnChanges, OnInit, OnDestroy {
     private setConductionState(): void {
         // In case the exercise configuration is wrong, but the (Test)Exam already started, students are not able to start a test eam or real exam
         // The ERROR-State should only be visible to Instructors, as editors & TAs have no access to the required data to determine if the preparation is finished
-        if (this.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
+        if (this.course?.isAtLeastInstructor && this.examAlreadyStarted() && !this.mandatoryPreparationFinished) {
             this.examConductionState = ExamConductionState.ERROR;
-        } else if (this.examAlreadyEnded() && (!this.isAtLeastInstructor || this.examPreparationFinished)) {
+        } else if (this.examAlreadyEnded() && ((this.course && !this.course.isAtLeastInstructor) || this.examPreparationFinished)) {
             this.examConductionState = ExamConductionState.FINISHED;
         } else if (this.examAlreadyStarted() && !this.examAlreadyEnded()) {
             this.examConductionState = ExamConductionState.RUNNING;

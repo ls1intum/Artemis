@@ -108,7 +108,7 @@ describe('TextUnitFormComponent', () => {
         tick();
 
         textUnitFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalled();
+            expect(submitFormSpy).toHaveBeenCalledOnce();
             expect(submitFormEventSpy).toHaveBeenCalledWith({
                 name: 'Test',
                 releaseDate: null,
