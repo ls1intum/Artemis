@@ -275,7 +275,7 @@ describe('AssessmentHeaderComponent', () => {
 
         component.toggleHighlightDifferences();
 
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
         expect(component.highlightDifferences).toBeTrue();
     });
 
@@ -285,7 +285,7 @@ describe('AssessmentHeaderComponent', () => {
 
         component.toggleHighlightDifferences();
 
-        expect(component.highlightDifferencesChange.emit).toHaveBeenCalled();
+        expect(component.highlightDifferencesChange.emit).toHaveBeenCalledTimes(2);
         expect(component.highlightDifferences).toBeFalse();
     });
 
@@ -306,7 +306,7 @@ describe('AssessmentHeaderComponent', () => {
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendAssessNextEventToAnalytics();
         fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
+        expect(sendAssessmentEvent).not.toHaveBeenCalled();
     });
 
     it('should send assessment event on submit button click when exercise set to Text', () => {
@@ -326,7 +326,7 @@ describe('AssessmentHeaderComponent', () => {
         const sendAssessmentEvent = jest.spyOn<any, any>(component.textAssessmentAnalytics, 'sendAssessmentEvent');
         component.sendSubmitAssessmentEventToAnalytics();
         fixture.detectChanges();
-        expect(sendAssessmentEvent).toHaveBeenCalledTimes(0);
+        expect(sendAssessmentEvent).not.toHaveBeenCalled();
     });
 
     it('should save assessment on control and s', () => {

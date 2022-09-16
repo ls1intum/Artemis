@@ -39,7 +39,7 @@ describe('Language Helper', () => {
 
         const languageChangeSpy = jest.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
         expect(service.determinePreferredLanguage()).toBe('de');
-        expect(languageChangeSpy).toHaveBeenCalled();
+        expect(languageChangeSpy).toHaveBeenCalledOnce();
     }));
 
     it('determinePreferredLanguage should return english if no other language matches', inject([JhiLanguageHelper], (service: JhiLanguageHelper) => {
@@ -49,6 +49,6 @@ describe('Language Helper', () => {
 
         const languageChangeSpy = jest.spyOn(service, 'getNavigatorReference').mockReturnValue(navigator);
         expect(service.determinePreferredLanguage()).toBe('en');
-        expect(languageChangeSpy).toHaveBeenCalled();
+        expect(languageChangeSpy).toHaveBeenCalledOnce();
     }));
 });
