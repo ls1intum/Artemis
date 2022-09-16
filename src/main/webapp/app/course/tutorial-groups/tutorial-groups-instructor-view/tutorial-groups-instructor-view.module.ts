@@ -11,6 +11,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
+import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-group-detail.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule],
@@ -21,6 +22,7 @@ import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
         EditTutorialGroupComponent,
         TutorialGroupRowButtonsComponent,
         RegisteredStudentsComponent,
+        TutorialGroupDetailComponent,
     ],
 })
 export class ArtemisTutorialGroupsInstructorViewModule {}

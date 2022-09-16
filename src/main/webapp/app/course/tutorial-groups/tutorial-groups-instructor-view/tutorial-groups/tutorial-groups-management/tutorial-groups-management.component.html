@@ -56,7 +56,9 @@
                     </thead>
                     <tbody>
                         <tr *ngFor="let tutorialGroup of tutorialGroups; trackBy: trackId" id="tutorial-group-row-{{ tutorialGroup.id }}">
-                            <td>{{ tutorialGroup.id }}</td>
+                            <td>
+                                <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id]">{{ tutorialGroup.id }}</a>
+                            </td>
                             <td>
                                 <span class="d-inline-block text-truncate title"> {{ tutorialGroup.title }} </span>
                             </td>

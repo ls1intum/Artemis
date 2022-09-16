@@ -20,7 +20,8 @@
                 "online": "Online",
                 "offline": "Offline",
                 "language": "Sprache",
-                "campus": "Campus"
+                "campus": "Campus",
+                "additionalInformation": "Zusätzliche Informationen"
             },
             "deleteButton": {
                 "question": "Bist du sicher, dass du die Übungsgruppe mit dem Titel {{ title }} löschen möchtest?",
@@ -35,6 +36,14 @@
         },
         "registeredStudents": {
             "title": "Registrierte Studenten"
+        },
+        "tutorialGroupDetail": {
+            "title": "Übungsgruppe Details",
+            "course": "Kurs",
+            "teachingAssistantNotSet": "Kein Tutor gesetzt",
+            "capacityNotSet": "Keine Kapazität gesetzt",
+            "campusNotSet": "Kein Campus gesetzt",
+            "additionalInformationNotSet": "Keine zusätzlichen Informationen gesetzt"
         },
         "tutorialGroupForm": {
             "titleInput": {

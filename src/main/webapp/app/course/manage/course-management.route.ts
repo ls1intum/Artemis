@@ -21,6 +21,7 @@ import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutoria
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
+import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-detail.component';
 
 export const courseManagementState: Routes = [
     {
@@ -209,6 +210,15 @@ export const courseManagementState: Routes = [
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
                             pageTitle: 'artemisApp.registeredStudents.title',
+                        },
+                        canActivate: [UserRouteAccessService],
+                    },
+                    {
+                        path: ':tutorialGroupId',
+                        component: TutorialGroupDetailComponent,
+                        data: {
+                            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+                            pageTitle: 'artemisApp.tutorialGroupDetail.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },

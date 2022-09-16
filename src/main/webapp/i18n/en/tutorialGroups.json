@@ -20,7 +20,8 @@
                 "online": "Online",
                 "offline": "Offline",
                 "language": "Language",
-                "campus": "Campus"
+                "campus": "Campus",
+                "additionalInformation": "Additional Information"
             },
             "deleteButton": {
                 "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
@@ -35,6 +36,14 @@
         },
         "registeredStudents": {
             "title": "Registered Students"
+        },
+        "tutorialGroupDetail": {
+            "title": "Tutorial Group Detail",
+            "course": "Course",
+            "teachingAssistantNotSet": "Tutor not set",
+            "capacityNotSet": "Capacity not set",
+            "campusNotSet": "Campus not set",
+            "additionalInformationNotSet": "No additional Information set"
         },
         "tutorialGroupForm": {
             "titleInput": {
