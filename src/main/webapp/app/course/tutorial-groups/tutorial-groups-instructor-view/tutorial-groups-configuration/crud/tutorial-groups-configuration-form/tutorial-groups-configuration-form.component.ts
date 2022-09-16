@@ -4,18 +4,10 @@ import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
 import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { merge, Observable, OperatorFunction, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
-import timezones from 'timezones-list';
-
-interface TimeZone {
-    label: string;
-    tzCode: string;
-    name: string;
-    utc: string;
-}
 
 export interface ConfigurationFormData {
     period?: Date[];
-    timeZone?: TimeZone;
+    timeZone?: string;
 }
 
 @Component({
@@ -31,7 +23,8 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     @Input() isEditMode = false;
     @Output() formSubmitted: EventEmitter<ConfigurationFormData> = new EventEmitter<ConfigurationFormData>();
 
-    originalTimeZone?: TimeZone;
+    originalTimeZone?: string;
+    timeZones: string[] = [];
 
     @ViewChild('timeZoneInput') tzTypeAhead: NgbTypeahead;
     tzFocus$ = new Subject<string>();
@@ -59,6 +52,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
     }
 
     ngOnInit(): void {
+        this.timeZones = (Intl as any).supportedValuesOf('timeZone');
         this.initializeForm();
     }
     ngOnChanges(): void {
@@ -68,16 +62,16 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         }
     }
 
-    tzResultFormatter = (timeZone: TimeZone) => timeZone.name;
-    tzInputFormatter = (timeZone: TimeZone) => timeZone.tzCode;
+    tzResultFormatter = (timeZone: string) => timeZone;
+    tzInputFormatter = (timeZone: string) => timeZone;
 
-    tzSearch: OperatorFunction<string, readonly TimeZone[]> = (text$: Observable<string>) => {
+    tzSearch: OperatorFunction<string, readonly string[]> = (text$: Observable<string>) => {
         const debouncedText$ = text$.pipe(debounceTime(200), distinctUntilChanged());
         const clicksWithClosedPopup$ = this.tzClick$.pipe(filter(() => !this.tzTypeAhead.isPopupOpen()));
         const inputFocus$ = this.tzFocus$;
 
         return merge(debouncedText$, inputFocus$, clicksWithClosedPopup$).pipe(
-            map((term) => (term.length < 3 ? [] : timezones.filter((tz) => tz.name.toLowerCase().indexOf(term.toLowerCase()) > -1))),
+            map((term) => (term.length < 3 ? [] : this.timeZones.filter((tz) => tz.toLowerCase().indexOf(term.toLowerCase()) > -1))),
         );
     };
 
@@ -92,15 +86,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         }
 
         this.form = this.fb.group({
-            timeZone: [
-                {
-                    label: 'Europe/Berlin (GMT+01:00)',
-                    tzCode: 'Europe/Berlin',
-                    name: '(GMT+01:00) Berlin, Hamburg, Munich, Köln, Frankfurt am Main',
-                    utc: '+01:00',
-                },
-                [Validators.required],
-            ],
+            timeZone: ['Europe/Berlin', [Validators.required]],
             period: [undefined, Validators.required],
         });
     }

@@ -64,7 +64,6 @@
         "smoothscroll-polyfill": "0.4.4",
         "sockjs-client": "1.6.1",
         "split.js": "1.6.5",
-        "timezones-list": "^3.0.1",
         "ts-cacheable": "1.0.6",
         "tslib": "2.4.0",
         "uuid": "9.0.0",

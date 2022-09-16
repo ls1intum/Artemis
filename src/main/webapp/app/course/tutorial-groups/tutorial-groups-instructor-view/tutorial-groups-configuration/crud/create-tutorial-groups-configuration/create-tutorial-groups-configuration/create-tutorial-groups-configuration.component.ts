@@ -33,7 +33,7 @@ export class CreateTutorialGroupsConfigurationComponent implements OnInit {
 
     createTutorialsGroupConfiguration(formData: ConfigurationFormData) {
         const { timeZone, period } = formData;
-        this.newTutorialGroupsConfiguration.timeZone = timeZone?.tzCode!;
+        this.newTutorialGroupsConfiguration.timeZone = timeZone ? timeZone : 'Europe/Berlin';
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
             .create(this.newTutorialGroupsConfiguration, this.courseId, period ?? [])

@@ -7,7 +7,6 @@ import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/s
 import { onError } from 'app/shared/util/global.utils';
 import { combineLatest } from 'rxjs';
 import { finalize, switchMap, take } from 'rxjs/operators';
-import timezones from 'timezones-list';
 import { HttpErrorResponse } from '@angular/common/http';
 
 @Component({
@@ -45,7 +44,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
                     if (tutorialGroupsConfigurationResult.body) {
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         this.formData = {
-                            timeZone: timezones.find((tz) => tz.tzCode === this.tutorialGroupsConfiguration.timeZone)!,
+                            timeZone: this.tutorialGroupsConfiguration.timeZone,
                             period: [
                                 this.tutorialGroupsConfiguration.tutorialPeriodStartInclusive!.toDate(),
                                 this.tutorialGroupsConfiguration.tutorialPeriodEndInclusive!.toDate(),
@@ -59,7 +58,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
 
     updateTutorialGroupsConfiguration(formData: ConfigurationFormData) {
         const { timeZone, period } = formData;
-        this.tutorialGroupsConfiguration.timeZone = timeZone?.tzCode!;
+        this.tutorialGroupsConfiguration.timeZone = timeZone!;
 
         this.isLoading = true;
         this.tutorialGroupsConfigurationService
