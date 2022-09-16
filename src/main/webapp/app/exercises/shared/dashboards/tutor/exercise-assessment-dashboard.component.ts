@@ -86,8 +86,8 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
     feedbackRequestEnabled = false;
     tutorAssessmentPercentage = 0;
     tutorParticipationStatus: TutorParticipationStatus;
-    submissionsByCorrectionRound: Map<number, Submission[]> = new Map<number, Submission[]>();
-    unassessedSubmissionByCorrectionRound?: Map<number, Submission> = new Map<number, Submission>();
+    assessedSubmissionsByRound: Map<number, Submission[]> = new Map<number, Submission[]>();
+    unassessedSubmissionByRound?: Map<number, Submission> = new Map<number, Submission>();
     exampleSubmissionsToReview: ExampleSubmission[] = [];
     exampleSubmissionsToAssess: ExampleSubmission[] = [];
     exampleSubmissionsCompletedByTutor: ExampleSubmission[] = [];
@@ -196,7 +196,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
         this.exerciseId = Number(this.route.snapshot.paramMap.get('exerciseId'));
         this.courseId = Number(this.route.snapshot.paramMap.get('courseId'));
         this.isTestRun = this.router.url.indexOf('test-assessment-dashboard') >= 0;
-        this.unassessedSubmissionByCorrectionRound = new Map<number, Submission>();
+        this.unassessedSubmissionByRound = new Map<number, Submission>();
 
         if (this.route.snapshot.paramMap.has('examId')) {
             this.examId = Number(this.route.snapshot.paramMap.get('examId'));
@@ -500,7 +500,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                         return submission;
                     });
 
-                this.submissionsByCorrectionRound.set(correctionRound, sub);
+                this.assessedSubmissionsByRound.set(correctionRound, sub);
                 this.sortSubmissionRows(correctionRound);
             });
     }
@@ -567,15 +567,15 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
             next: (submission: Submission) => {
                 if (submission) {
                     setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    this.unassessedSubmissionByCorrectionRound!.set(correctionRound, submission);
+                    this.unassessedSubmissionByRound!.set(correctionRound, submission);
                 }
                 this.submissionLockLimitReached = false;
             },
             error: (error: HttpErrorResponse) => {
                 if (error.status === 404) {
                     // there are no unassessed submission, nothing we have to worry about
-                    if (this.unassessedSubmissionByCorrectionRound) {
-                        this.unassessedSubmissionByCorrectionRound.delete(correctionRound);
+                    if (this.unassessedSubmissionByRound) {
+                        this.unassessedSubmissionByRound.delete(correctionRound);
                     }
                 } else if (error.error && error.error.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
@@ -592,10 +592,10 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      */
     submissionsToCorrectExist(correctionRound: number): boolean {
         // TODO: booleans based on falsyness defy typescripts intention
-        const correctionRoundExists = !!this.unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id;
+        const correctionRoundExists = !!this.unassessedSubmissionByRound?.get(correctionRound)?.id;
 
         // TODO: this variable name seems to be wrong, as it only returns assessed submissions
-        const submissionsExist = !!this.submissionsByCorrectionRound.get(correctionRound)?.length;
+        const submissionsExist = !!this.assessedSubmissionsByRound.get(correctionRound)?.length;
 
         // TODO: comment explaining !this.exercise.allowComplaintsForAutomaticAssessments;
         return (correctionRoundExists || submissionsExist) && !this.exercise.allowComplaintsForAutomaticAssessments;
@@ -795,7 +795,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
     sortSubmissionRows(correctionRound: number) {
         this.sortService.sortByProperty(
-            this.submissionsByCorrectionRound.get(correctionRound)!,
+            this.assessedSubmissionsByRound.get(correctionRound)!,
             this.sortPredicates[0].replace('correctionRound', correctionRound + ''),
             this.reverseOrders[0],
         );

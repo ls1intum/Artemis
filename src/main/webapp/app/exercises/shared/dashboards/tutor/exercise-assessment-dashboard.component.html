@@ -359,13 +359,13 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <ng-container *ngIf="unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id && !exercise.teamMode && !isTestRun">
+                                <ng-container *ngIf="unassessedSubmissionByRound?.get(correctionRound)?.id && !exercise.teamMode && !isTestRun">
                                     <tr>
                                         <td></td>
-                                        <td>{{ unassessedSubmissionByCorrectionRound!.get(correctionRound)!.submissionDate | artemisDate }}</td>
+                                        <td>{{ unassessedSubmissionByRound!.get(correctionRound)!.submissionDate | artemisDate }}</td>
                                         <td></td>
                                         <td *ngIf="exercise.type === ExerciseType.TEXT">
-                                            <jhi-language-table-cell [submission]="unassessedSubmissionByCorrectionRound!.get(correctionRound)!"></jhi-language-table-cell>
+                                            <jhi-language-table-cell [submission]="unassessedSubmissionByRound!.get(correctionRound)!"></jhi-language-table-cell>
                                         </td>
                                         <td>
                                             <a
@@ -388,7 +388,7 @@
                                         </td>
                                     </tr>
                                 </ng-container>
-                                <tr *ngFor="let submission of submissionsByCorrectionRound.get(correctionRound); let i = index">
+                                <tr *ngFor="let submission of assessedSubmissionsByRound.get(correctionRound); let i = index">
                                     <td>{{ i + 1 }}</td>
                                     <td>{{ submission.submissionDate | artemisDate }}</td>
                                     <td>
@@ -444,7 +444,7 @@
                         <ng-container
                             *ngIf="
                                 isExamMode &&
-                                (!unassessedSubmissionByCorrectionRound?.get(correctionRound)?.id || exercise.teamMode || isTestRun) &&
+                                (!unassessedSubmissionByRound?.get(correctionRound)?.id || exercise.teamMode || isTestRun) &&
                                 numberOfSubmissions.inTime != roundState.inTime
                             "
                         >

@@ -396,10 +396,10 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)).toEqual(modelingSubmission);
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(0)?.latestResult).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound?.get(0)).toEqual(modelingSubmission);
+        expect(comp.unassessedSubmissionByRound?.get(0)?.latestResult).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeFalse();
-        expect(comp.submissionsByCorrectionRound?.get(0)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(0)).toHaveLength(0);
     });
 
     it('should not set unassessedSubmission if lock limit is reached', () => {
@@ -412,9 +412,9 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(1, modelingExercise.id, undefined, 0);
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenNthCalledWith(2, modelingExercise.id, undefined, 1);
 
-        expect(comp.unassessedSubmissionByCorrectionRound?.get(1)).toBeUndefined();
+        expect(comp.unassessedSubmissionByRound?.get(1)).toBeUndefined();
         expect(comp.submissionLockLimitReached).toBeTrue();
-        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
     it('should handle generic error', () => {
@@ -446,16 +446,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toBe(8);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
-        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
     it('should  set assessed Submission and latest result', () => {
         comp.loadAll();
 
         expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.submissionsByCorrectionRound?.get(1)![0]);
-        expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).toEqual(result2);
+        expect(comp.assessedSubmissionsByRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
+        expect(comp.assessedSubmissionsByRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.assessedSubmissionsByRound?.get(1)![0]);
+        expect(comp.assessedSubmissionsByRound?.get(1)![0]?.latestResult).toEqual(result2);
     });
 
     it('should set exam and stats properties', () => {
