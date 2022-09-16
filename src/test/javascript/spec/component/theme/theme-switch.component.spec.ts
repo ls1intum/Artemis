@@ -30,23 +30,11 @@ describe('ThemeSwitchComponent', () => {
 
     afterEach(() => jest.restoreAllMocks());
 
-    it('oninit: subscribe, open popover after 1200ms', fakeAsync(() => {
+    it('oninit: subscribe to theme service', fakeAsync(() => {
         const subscribeSpy = jest.spyOn(themeService, 'getCurrentThemeObservable');
 
         component.ngOnInit();
         expect(subscribeSpy).toHaveBeenCalledOnce();
-        expect(component.popover.open).not.toHaveBeenCalled();
-
-        tick(1200);
-
-        expect(component.popover.open).toHaveBeenCalledOnce();
-        expect(component.showInitialHints).toBeTrue();
-
-        component.closePopover();
-
-        tick(200);
-
-        expect(component.showInitialHints).toBeFalse();
     }));
 
     it('theme toggles correctly', fakeAsync(() => {
@@ -78,17 +66,20 @@ describe('ThemeSwitchComponent', () => {
         flush();
     }));
 
-    it('enableNow button works correctly', fakeAsync(() => {
-        component.ngOnInit();
-        component.enableNow();
+    it('opens and closes the popover', fakeAsync(() => {
+        component.openPopover();
+        expect(component.popover.open).toHaveBeenCalledOnce();
+        component.closePopover();
         expect(component.popover.close).toHaveBeenCalledOnce();
-        expect(component.openPopupAfterNextChange).toBeTrue();
+    }));
 
-        tick(200);
-
-        expectSwitchToDark();
-
-        flush();
+    it('closes on mouse leave after 200ms', fakeAsync(() => {
+        component.openPopover();
+        expect(component.popover.open).toHaveBeenCalledOnce();
+        component.mouseLeave();
+        expect(component.popover.close).not.toHaveBeenCalled();
+        tick(250);
+        expect(component.popover.close).toHaveBeenCalledOnce();
     }));
 
     function expectSwitchToDark() {
