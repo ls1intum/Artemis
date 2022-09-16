@@ -25,11 +25,11 @@ public class LearningGoal extends DomainObject {
     private String description;
 
     /**
-     * The type of learning goal according to Bloom's taxonomy.
+     * The type of learning goal according to Bloom's revised taxonomy.
      * @see <a href="https://en.wikipedia.org/wiki/Bloom%27s_taxonomy">Wikipedia</a>
      */
     @Column(name = "taxonomy")
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = LearningGoalTaxonomy.TaxonomyConverter.class)
     private LearningGoalTaxonomy taxonomy;
 
     @ManyToOne

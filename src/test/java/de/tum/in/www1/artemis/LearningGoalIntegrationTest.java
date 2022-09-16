@@ -420,6 +420,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         relation.setType(LearningGoalRelation.RelationType.EXTENDS);
         learningGoalRelationRepository.save(relation);
 
+        // Should return bad request, as the learning goal still has relations
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
     }
 
@@ -464,7 +465,7 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    public void gLearningGoalRelations() throws Exception {
+    public void getLearningGoalRelations() throws Exception {
         LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
         Course course = courseRepository.findByIdElseThrow(idOfCourse);
         LearningGoal otherLearningGoal = database.createLearningGoal(course);
