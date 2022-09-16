@@ -20,6 +20,9 @@ public class ResultListener {
 
     private InstanceMessageSendService instanceMessageSendService;
 
+    /**
+     * Empty constructor for Spring.
+     */
     public ResultListener() {
     }
 

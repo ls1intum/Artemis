@@ -123,7 +123,7 @@ public class ParticipantScoreSchedulerService {
     /**
      * Schedule a task to update the participant score for the given result.
      * @param resultId the id of the result that was created/updated/deleted
-     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleResult(Long) 
+     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleResult(Long)
      */
     public void scheduleTask(Long resultId) {
         if (scheduledParticipantScores.containsKey(resultId)) {
@@ -190,7 +190,7 @@ public class ParticipantScoreSchedulerService {
     /**
      * Updates the given participant score by fetching the last (rated) results from the database.
      * If both no result and no rated result is found, the participant score is deleted.
-     * @param participantScore The participant score to update (with the exercise and user/team set)
+     * @param participantScore The participant score to update (with the exercise eager loaded)
      */
     private void updateParticipantScore(ParticipantScore participantScore) {
         var lastRatedResult = getLastRatedResultForParticipantScore(participantScore).orElse(null);
