@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
@@ -37,6 +38,9 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     CourseRepository courseRepository;
+
+    @Autowired
+    TutorialGroupRepository tutorialGroupRepository;
 
     @Autowired
     TutorialGroupSessionRepository tutorialGroupSessionRepository;
@@ -147,6 +151,37 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
         assertSessionStructure(fourthSession, tutorialGroup.getTutorialGroupSchedule(), tutorialGroup, getUTCZonedDate(2022, 8, 16, 9), getUTCZonedDate(2022, 8, 16, 10),
                 TutorialGroupSessionStatus.ACTIVE, null);
 
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void deleteScheduleOfTutorialGroup_shouldDeleteAllScheduledSessionsButKeepIndividualSessions() throws Exception {
+        TutorialGroup tutorialGroup = createTutorialGroupWithMondaySchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 8));
+        tutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.CREATED);
+
+        databaseUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), ZonedDateTime.of(2022, 8, 5, 10, 0, 0, 0, ZoneId.of("UTC")),
+                ZonedDateTime.of(2022, 8, 5, 11, 0, 0, 0, ZoneId.of("UTC")));
+
+        tutorialGroup.setTutorialGroupSchedule(null);
+        tutorialGroup = request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class,
+                HttpStatus.OK);
+        assertThat(tutorialGroupSessionRepository.findAll()).hasSize(1);
+        assertThat(tutorialGroupScheduleRepository.findAll()).isEmpty();
+        var sessions = getSessionAscending(tutorialGroup);
+
+        assertSessionStructure(sessions.get(0), null, tutorialGroup, getUTCZonedDate(2022, 8, 5, 10), getUTCZonedDate(2022, 8, 5, 11), TutorialGroupSessionStatus.ACTIVE, null);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void deleteTutorialGroupWithSchedule_shouldDeleteScheduleAndSessions() throws Exception {
+        TutorialGroup tutorialGroup = createTutorialGroupWithMondaySchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 8));
+        tutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.CREATED);
+
+        request.delete("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroup.getId(), HttpStatus.NO_CONTENT);
+        assertThat(tutorialGroupSessionRepository.findAll()).isEmpty();
+        assertThat(tutorialGroupScheduleRepository.findAll()).isEmpty();
+        assertThat(tutorialGroupRepository.findAll()).isEmpty();
     }
 
     private TutorialGroup createAndSaveTutorialGroupWithoutSchedule() {
