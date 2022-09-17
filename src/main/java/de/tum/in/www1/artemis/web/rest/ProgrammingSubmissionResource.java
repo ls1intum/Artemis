@@ -449,20 +449,26 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
-        final ProgrammingSubmission programmingSubmission;
-        if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetRandomAssessableSubmission(programmingExercise, correctionRound);
+        final ProgrammingSubmission submission;
+        if (programmingExercise.isManualFeedbackRequestAllowed()) {
+            submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {
-            // TODO: in this case, we should simply return an empty response instead of not found, because this is an expected state and not an error state
-            programmingSubmission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound)
-                    .orElseThrow(() -> new EntityNotFoundException("No more programming submissions without assessment"));
+            submission = programmingSubmissionService.getRandomAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
 
-        programmingSubmission.getParticipation().setExercise(programmingExercise);
-        programmingSubmissionService.hideDetails(programmingSubmission, user);
-        // remove automatic results before sending to client
-        programmingSubmission.setResults(programmingSubmission.getManualResults());
-        return ResponseEntity.ok(programmingSubmission);
+        if (lockSubmission) {
+            // NOTE: in the function before, the return value of this was used in order to update submission to return.getSubmission():
+            programmingSubmissionService.lockSubmission(submission, correctionRound);
+        }
+
+        if (Objects.nonNull(submission)) {
+            submission.getParticipation().setExercise(programmingExercise);
+            programmingSubmissionService.hideDetails(submission, user);
+            // remove automatic results before sending to client
+            submission.setResults(submission.getManualResults());
+        }
+
+        return ResponseEntity.ok(submission);
     }
 }
