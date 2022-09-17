@@ -29,6 +29,7 @@ plugins {
     id "com.gorylenko.gradle-git-properties" version "2.4.1"
     id "info.solidsoft.pitest" version "1.9.0"
     id "org.owasp.dependencycheck" version "7.1.2"
+    id "com.adarshr.test-logger" version "3.2.0"
 }
 
 group = "de.tum.in.www1.artemis"
@@ -287,7 +288,6 @@ dependencies {
     testImplementation "org.mockito:mockito-core:${mockito_version}"
     testImplementation "org.mockito:mockito-inline:${mockito_version}"
     testImplementation "org.mockito:mockito-junit-jupiter:${mockito_version}"
-    testImplementation "com.h2database:h2:1.4.200"
     testImplementation "org.awaitility:awaitility:4.2.0"
     testImplementation "org.apache.maven.shared:maven-invoker:3.2.0"
     testImplementation "org.gradle:gradle-tooling-api:7.3"
