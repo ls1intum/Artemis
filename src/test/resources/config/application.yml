@@ -43,7 +43,6 @@ spring:
         name: Artemis
     datasource:
         type: com.zaxxer.hikari.HikariDataSource
-        url: jdbc:h2:mem:Artemis;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE
         name:
         username:
         password:
@@ -59,7 +58,7 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQLDialect
+        database-platform: org.hibernate.dialect.PostgreSQL10Dialect
         database: POSTGRESQL
         open-in-view: false
         show-sql: false
@@ -90,7 +89,6 @@ spring:
     liquibase:
         contexts: tests
         enabled: true
-        driver-class-name: org.postgresql.Driver
     mail:
         host: localhost
     main:
@@ -134,6 +132,17 @@ spring:
             addresses: ""
     hazelcast:
         interface: "127.0.0.1"
+
+zonky:
+    test:
+        database:
+            type: MYSQL  # Alternatives: MYSQL / POSTGRES
+            postgres:
+                docker:
+                    image: "postgres:14.5-alpine"
+            mysql:
+                docker:
+                    image: "mysql:8.0.30"
 
 server:
     port: 8080
