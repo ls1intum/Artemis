@@ -19,6 +19,7 @@ plugins {
     id "idea"
     id "jacoco"
     id "org.springframework.boot" version "${spring_boot_version}"
+    id "io.spring.dependency-management" version "1.0.13.RELEASE"
     id "com.google.cloud.tools.jib" version "3.3.0"
     id "com.github.node-gradle.node" version "3.4.0"
     id "com.diffplug.spotless" version "6.10.0"
@@ -292,10 +293,18 @@ dependencies {
     testImplementation "org.gradle:gradle-tooling-api:7.3"
     testImplementation "org.apache.maven.surefire:surefire-report-parser:3.0.0-M7"
     testImplementation "com.opencsv:opencsv:5.7.0"
-    testImplementation "io.zonky.test:embedded-database-spring-test:2.1.1"
+    testImplementation "io.zonky.test:embedded-database-spring-test:2.1.2"
+
+    implementation enforcedPlatform("io.zonky.test.postgres:embedded-postgres-binaries-bom:14.5.0")
 
     // Lightweight JSON library needed for the internals of the MockRestServiceServer
     testImplementation "org.json:json:20220320"
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "io.zonky.test.postgres:embedded-postgres-binaries-bom:14.5.0"
+    }
 }
 
 task cleanResources(type: Delete) {
