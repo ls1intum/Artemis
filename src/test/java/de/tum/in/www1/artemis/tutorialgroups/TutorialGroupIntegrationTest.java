@@ -108,6 +108,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
                 HttpStatus.FORBIDDEN);
         request.postListWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/register-multiple", new HashSet<>(),
                 StudentDTO.class, HttpStatus.FORBIDDEN);
+        request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups" + "/campus-values", HttpStatus.FORBIDDEN, String.class);
     }
 
     @Test
@@ -139,6 +140,13 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
     void getTitle_asUser_shouldReturnTitle() throws Exception {
         var tutorialGroupTitle = request.get("/api/tutorial-groups/" + exampleOneTutorialGroupId + "/title", HttpStatus.OK, String.class);
         assertThat(tutorialGroupTitle).isEqualTo("ExampleTitle1");
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void getUniqueCampusValues_asInstructor_shouldReturnUniqueCampusValues() throws Exception {
+        var campusValues = request.getList("/api/courses/" + exampleCourseId + "/tutorial-groups" + "/campus-values", HttpStatus.OK, String.class);
+        assertThat(campusValues).containsExactlyInAnyOrder("LoremIpsum1", "LoremIpsum2");
     }
 
     @Test

@@ -25,7 +25,6 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -56,18 +55,14 @@ public class TutorialGroupResource {
 
     private final TutorialGroupScheduleService tutorialGroupScheduleService;
 
-    private final TutorialGroupSessionRepository tutorialGroupSessionRepository;
-
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupScheduleService tutorialGroupScheduleService,
-            TutorialGroupSessionRepository tutorialGroupSessionRepository) {
+            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupScheduleService tutorialGroupScheduleService) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupScheduleService = tutorialGroupScheduleService;
-        this.tutorialGroupSessionRepository = tutorialGroupSessionRepository;
     }
 
     /**
