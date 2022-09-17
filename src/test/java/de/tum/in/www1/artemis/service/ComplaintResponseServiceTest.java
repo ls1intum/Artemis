@@ -9,7 +9,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
@@ -17,10 +16,8 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
 import de.tum.in.www1.artemis.repository.ComplaintRepository;
 import de.tum.in.www1.artemis.repository.ResultRepository;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
-@AutoConfigureTestDatabase
 class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
@@ -33,12 +30,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     private ComplaintRepository complaintRepository;
 
     @Autowired
-    private TextExerciseRepository textExerciseRepository;
-
-    @Autowired
     private ResultRepository resultRepository;
-
-    private Course course;
 
     private TextExercise textExercise;
 
@@ -59,26 +51,26 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
     @BeforeEach
     void initTestCase() throws Exception {
         this.database.addUsers(2, 2, 0, 1);
-        this.course = this.database.createCourse();
+        Course course = this.database.createCourse();
 
         this.student1 = this.database.getUserByLogin("student1");
-        this.student1.setGroups(Set.of(this.course.getStudentGroupName()));
+        this.student1.setGroups(Set.of(course.getStudentGroupName()));
         userRepository.save(this.student1);
 
         this.student2 = this.database.getUserByLogin("student2");
-        this.student2.setGroups(Set.of(this.course.getStudentGroupName()));
+        this.student2.setGroups(Set.of(course.getStudentGroupName()));
         userRepository.save(this.student2);
 
         this.tutor1 = this.database.getUserByLogin("tutor1");
-        this.tutor1.setGroups(Set.of(this.course.getTeachingAssistantGroupName()));
+        this.tutor1.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(this.tutor1);
 
         this.tutor2 = this.database.getUserByLogin("tutor2");
-        this.tutor2.setGroups(Set.of(this.course.getTeachingAssistantGroupName()));
+        this.tutor2.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepository.save(this.tutor2);
 
         this.instructor = this.database.getUserByLogin("instructor1");
-        this.instructor.setGroups(Set.of(this.course.getInstructorGroupName()));
+        this.instructor.setGroups(Set.of(course.getInstructorGroupName()));
         userRepository.save(this.instructor);
 
         this.textExercise = this.database.createIndividualTextExercise(course, null, null, null);
@@ -151,7 +143,7 @@ class ComplaintResponseServiceTest extends AbstractSpringIntegrationBambooBitbuc
         Submission submission = textExerciseResult.getSubmission();
         textExerciseResult.setAssessor(tutor1);
         resultRepository.save(textExerciseResult);
-        this.database.addComplaintToSubmission(submission, student1.getLogin(), null); // TODO: sleiss: type=null contradicts the non-null requirement of the database!
+        this.database.addComplaintToSubmission(submission, student1.getLogin(), ComplaintType.COMPLAINT);
         Complaint textExerciseComplaint = this.complaintRepository.findByResultSubmissionId(submission.getId()).orElseThrow();
         textExerciseComplaint = this.complaintRepository.findByIdWithEagerAssessor(textExerciseComplaint.getId()).orElseThrow();
 

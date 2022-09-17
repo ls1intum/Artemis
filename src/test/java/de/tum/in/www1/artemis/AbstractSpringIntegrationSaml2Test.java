@@ -1,7 +1,5 @@
 package de.tum.in.www1.artemis;
 
-import static io.zonky.test.db.AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES;
-import static io.zonky.test.db.AutoConfigureEmbeddedDatabase.Replace.NONE;
 import static org.mockito.Mockito.*;
 import static tech.jhipster.config.JHipsterConstants.SPRING_PROFILE_TEST;
 
@@ -40,7 +38,7 @@ import io.zonky.test.db.AutoConfigureEmbeddedDatabase;
         "artemis.athene.base64-secret=YWVuaXF1YWRpNWNlaXJpNmFlbTZkb283dXphaVF1b29oM3J1MWNoYWlyNHRoZWUzb2huZ2FpM211bGVlM0VpcAo=" })
 @AutoConfigureMockMvc
 @RunWith(SpringRunner.class)
-@AutoConfigureEmbeddedDatabase(type = POSTGRES, replace = NONE)
+@AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES, refresh = AutoConfigureEmbeddedDatabase.RefreshMode.AFTER_CLASS)
 // NOTE: we use a common set of active profiles to reduce the number of application launches during testing. This significantly saves time and memory!
 
 @ActiveProfiles({ SPRING_PROFILE_TEST, "artemis", "saml2" })

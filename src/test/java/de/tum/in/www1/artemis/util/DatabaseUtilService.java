@@ -577,10 +577,14 @@ public class DatabaseUtilService {
     }
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
-        var instructor = generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1).get(0);
-        instructor = userRepo.save(instructor);
-
-        assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
+        if (!userExistsWithLogin(instructorName)) {
+            var instructors = generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
+            if (!instructors.isEmpty()) {
+                var instructor = instructors.get(0);
+                instructor = userRepo.save(instructor);
+                assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
+            }
+        }
     }
 
     public void addEditor(final String editorGroup, final String editorName) {
