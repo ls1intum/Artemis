@@ -565,19 +565,21 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
 
         submissionObservable.subscribe({
             next: (submission: Submission) => {
-                if (submission) {
-                    setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
-                    this.unassessedSubmissionByRound!.set(correctionRound, submission);
-                }
-                this.submissionLockLimitReached = false;
-            },
-            error: (error: HttpErrorResponse) => {
-                if (error.status === 404) {
+                if (!submission) {
                     // there are no unassessed submission, nothing we have to worry about
+                    // Delete this correction round, as we are done with all
                     if (this.unassessedSubmissionByRound) {
                         this.unassessedSubmissionByRound.delete(correctionRound);
                     }
-                } else if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
+                }
+
+                setLatestSubmissionResult(submission, getLatestSubmissionResult(submission));
+                this.unassessedSubmissionByRound!.set(correctionRound, submission);
+
+                this.submissionLockLimitReached = false;
+            },
+            error: (error: HttpErrorResponse) => {
+                if (error.error?.errorKey === 'lockedSubmissionsLimitReached') {
                     this.submissionLockLimitReached = true;
                 } else {
                     this.onError(error.error?.detail || error.message);
