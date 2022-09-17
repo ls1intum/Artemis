@@ -451,7 +451,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
      */
     public Optional<ProgrammingSubmission> getRandomAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(programmingExercise, examMode, correctionRound);
+        var submissionWithoutResult = super.getRandomAssessableSubmission(programmingExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
             return Optional.of(programmingSubmission);
@@ -479,7 +479,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      * @param correctionRound - the correction round we want our submission to have results for
      * @return a locked programming submission that needs an assessment
      */
-    public ProgrammingSubmission lockAndGetResultlessSubmission(ProgrammingExercise exercise, int correctionRound) {
+    public ProgrammingSubmission lockAndGetRandomAssessableSubmission(ProgrammingExercise exercise, int correctionRound) {
         ProgrammingSubmission programmingSubmission = getRandomAssessableSubmission(exercise, exercise.isExamExercise(), correctionRound)
                 .orElseThrow(() -> new EntityNotFoundException("Programming submission for exercise " + exercise.getId() + " could not be found"));
         Result newManualResult = lockSubmission(programmingSubmission, correctionRound);
@@ -498,7 +498,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
      */
     @Override
     // TODO: why do we override this method and why do we not try to reuse the method in the super class?
-    protected Result lockSubmission(Submission submission, int correctionRound) {
+    public Result lockSubmission(Submission submission, int correctionRound) {
         Optional<Result> optionalExistingResult;
         if (correctionRound == 0 && submission.getLatestResult() != null && AssessmentType.AUTOMATIC == submission.getLatestResult().getAssessmentType()) {
             optionalExistingResult = Optional.of(submission.getLatestResult());
@@ -514,12 +514,13 @@ public class ProgrammingSubmissionService extends SubmissionService {
             optionalExistingResult = Optional.ofNullable(submission.getResultForCorrectionRound(correctionRound - 1));
         }
 
-        // Create a new result (manual result) and try to reuse the existing submission with the latest commit hash
+        // Create a new manual result and try to reuse the existing submission with the latest commit hash
         ProgrammingSubmission existingSubmission = getOrCreateSubmissionWithLastCommitHashForParticipation((ProgrammingExerciseStudentParticipation) submission.getParticipation(),
                 SubmissionType.MANUAL);
         Result newResult = saveNewEmptyResult(existingSubmission);
         newResult.setAssessor(userRepository.getUser());
         newResult.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
+
         // Copy automatic feedbacks into the manual result
         List<Feedback> automaticFeedbacks = new ArrayList<>();
         if (optionalExistingResult.isPresent()) {
@@ -539,6 +540,7 @@ public class ProgrammingSubmissionService extends SubmissionService {
         newResult = resultRepository.save(newResult);
         newResult.setAssessor(assessor);
         log.debug("Assessment locked with result id: {} for assessor: {}", newResult.getId(), newResult.getAssessor().getName());
+
         // Make sure that submission is set back after saving
         newResult.setSubmission(existingSubmission);
         return newResult;

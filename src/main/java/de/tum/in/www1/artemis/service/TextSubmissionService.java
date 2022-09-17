@@ -144,7 +144,7 @@ public class TextSubmissionService extends SubmissionService {
         if (textExercise.isAutomaticAssessmentEnabled() && textAssessmentQueueService.isPresent() && !skipAssessmentQueue && correctionRound == 0) {
             return textAssessmentQueueService.get().getProposedTextSubmission(textExercise);
         }
-        var submissionWithoutResult = super.getRandomSubmissionEligibleForNewAssessment(textExercise, examMode, correctionRound);
+        var submissionWithoutResult = super.getRandomAssessableSubmission(textExercise, examMode, correctionRound);
         if (submissionWithoutResult.isPresent()) {
             TextSubmission textSubmission = (TextSubmission) submissionWithoutResult.get();
             return Optional.of(textSubmission);

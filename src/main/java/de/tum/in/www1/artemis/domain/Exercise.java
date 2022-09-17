@@ -186,7 +186,7 @@ public abstract class Exercise extends BaseExercise implements Completable {
         return this.getStudentParticipations().stream().filter((participation) -> participation.getStudents().contains(user)).map(Participation::getInitializationDate).findFirst();
     }
 
-    public boolean getAllowManualFeedbackRequests() {
+    public boolean isManualFeedbackRequestAllowed() {
         return allowManualFeedbackRequests;
     }
 

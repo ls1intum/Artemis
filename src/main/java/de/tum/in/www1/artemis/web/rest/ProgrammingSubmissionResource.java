@@ -451,7 +451,7 @@ public class ProgrammingSubmissionResource {
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         final ProgrammingSubmission programmingSubmission;
         if (lockSubmission) {
-            programmingSubmission = programmingSubmissionService.lockAndGetResultlessSubmission(programmingExercise, correctionRound);
+            programmingSubmission = programmingSubmissionService.lockAndGetRandomAssessableSubmission(programmingExercise, correctionRound);
         }
         else {
             // TODO: in this case, we should simply return an empty response instead of not found, because this is an expected state and not an error state
