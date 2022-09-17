@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -60,9 +61,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.modeling.ModelingPlagiarismResul
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextPlagiarismResult;
 import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.SubmissionPolicy;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ExerciseHintRepository;
@@ -72,9 +71,7 @@ import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismResultRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
-import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.*;
 import de.tum.in.www1.artemis.service.user.PasswordService;
@@ -299,6 +296,12 @@ public class DatabaseUtilService {
 
     @Autowired
     private TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+
+    @Autowired
+    private TutorialGroupFreePeriodRepository tutorialGroupFreePeriodRepository;
+
+    @Autowired
+    private TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
@@ -4167,6 +4170,32 @@ public class DatabaseUtilService {
             assertThat(reaction.getUser().getLogin()).isNull();
             assertThat(reaction.getUser().getRegistrationNumber()).isNull();
         }
+    }
+
+    public TutorialGroupSession createIndividualTutorialGroupSession(Long tutorialGroupId, ZonedDateTime start, ZonedDateTime end) {
+        var tutorialGroup = tutorialGroupRepository.findByIdElseThrow(tutorialGroupId);
+
+        TutorialGroupSession tutorialGroupSession = new TutorialGroupSession();
+        tutorialGroupSession.setStart(start);
+        tutorialGroupSession.setEnd(end);
+        tutorialGroupSession.setTutorialGroup(tutorialGroup);
+        tutorialGroupSession.setLocation("LoremIpsum");
+        tutorialGroupSession.setStatus(TutorialGroupSessionStatus.ACTIVE);
+        tutorialGroupSession = tutorialGroupSessionRepository.save(tutorialGroupSession);
+        return tutorialGroupSession;
+    }
+
+    public TutorialGroupFreePeriod createTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
+        var tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
+
+        TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();
+        newTutorialGroupFreePeriod.setTutorialGroupsConfiguration(tutorialGroupsConfiguration);
+        newTutorialGroupFreePeriod.setReason(reason);
+
+        newTutorialGroupFreePeriod.setStart(interpretInTimeZoneOfConfiguration(date, START_OF_DAY, tutorialGroupsConfiguration));
+        newTutorialGroupFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(date, END_OF_DAY, tutorialGroupsConfiguration));
+
+        return tutorialGroupFreePeriodRepository.save(newTutorialGroupFreePeriod);
     }
 
     public TutorialGroup createTutorialGroup(Long courseId, String title, String additionalInformation, Integer capacity, Boolean isOnline, String campus, Language language,
