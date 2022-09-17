@@ -2674,11 +2674,12 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @WithMockUser(username = "student1", roles = "USER")
     void testCheckRegistrationOrRegisterStudentToTestExam_successfulRegistration() {
         Exam testExam = ModelFactory.generateTestExam(course1);
-        testExam.addRegisteredUser(users.get(0));
+        var student1 = database.getUserByLogin("student1");
+        testExam.addRegisteredUser(student1);
         testExam = examRepository.save(testExam);
-        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), users.get(0));
-        Exam testExamReladed = examRepository.findByIdWithRegisteredUsersElseThrow(testExam.getId());
-        assertTrue(testExamReladed.getRegisteredUsers().contains(users.get(0)));
+        examRegistrationService.checkRegistrationOrRegisterStudentToTestExam(course1, testExam.getId(), student1);
+        Exam testExamReloaded = examRepository.findByIdWithRegisteredUsersElseThrow(testExam.getId());
+        assertTrue(testExamReloaded.getRegisteredUsers().contains(student1));
     }
 
     // ExamResource - getStudentExamForTestExamForStart
@@ -2754,9 +2755,14 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     public void testGetAllExamsOnPage_WithExercises_instructor_successful() throws Exception {
-        final PageableSearchDTO<String> search = database.configureSearch("");
+        var newExam = database.addExam(course1);
+        var searchTerm = "A very distinct title that should only ever exist once in the database";
+        newExam.setTitle(searchTerm);
+        examRepository.save(newExam);
+        final PageableSearchDTO<String> search = database.configureSearch(searchTerm);
         final var result = request.get("/api/exams?withExercises=true", HttpStatus.OK, SearchResultPageDTO.class, database.searchMapping(search));
         assertThat(result.getResultsOnPage()).hasSize(1);
+        assertThat(result.getResultsOnPage()).containsExactly(newExam);
     }
 
     @Test

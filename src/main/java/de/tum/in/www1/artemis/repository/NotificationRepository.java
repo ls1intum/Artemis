@@ -21,7 +21,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
     @Query("""
             SELECT notification FROM Notification notification LEFT JOIN notification.course LEFT JOIN notification.recipient
             WHERE notification.notificationDate IS NOT NULL
-                AND (cast(:#{#hideUntil} as date) IS NULL OR notification.notificationDate > :#{#hideUntil})
+                AND (cast(:hideUntil as timestamp ) IS NULL OR notification.notificationDate > :hideUntil)
                 AND (
                     (type(notification) = GroupNotification
                         AND ((notification.course.instructorGroupName IN :#{#currentGroups} AND notification.type = 'INSTRUCTOR')

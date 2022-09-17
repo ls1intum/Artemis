@@ -3383,7 +3383,7 @@ public class DatabaseUtilService {
     }
 
     public User getUserByLogin(String login) {
-        return userRepo.findOneWithAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+        return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public boolean userExistsWithLogin(String login) {
