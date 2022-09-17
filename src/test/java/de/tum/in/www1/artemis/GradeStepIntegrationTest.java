@@ -19,7 +19,6 @@ import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradeStepRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
-import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.GradeDTO;
 import de.tum.in.www1.artemis.web.rest.dto.GradeStepsDTO;
 
@@ -55,7 +54,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         database.addUsers(1, 0, 0, 1);
 
         // Student not belonging to any course
-        User student = ModelFactory.generateActivatedUser("student2");
+        User student = database.createUser("student2");
         userRepository.save(student);
 
         course = database.addEmptyCourse();

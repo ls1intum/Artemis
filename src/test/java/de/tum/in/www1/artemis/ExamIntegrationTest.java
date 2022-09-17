@@ -281,7 +281,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         bitbucketRequestMockProvider.mockUpdateUserDetails(student5.getLogin(), student5.getEmail(), student5.getName());
         bitbucketRequestMockProvider.mockAddUserToGroups();
 
-        var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
+        var student99 = database.createUser("student99");     // not registered for the course
         student99.setRegistrationNumber(registrationNumber99);
         userRepo.save(student99);
         bitbucketRequestMockProvider.mockUpdateUserDetails(student99.getLogin(), student99.getEmail(), student99.getName());
@@ -1392,7 +1392,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         instructor.setGroups(Collections.singleton("instructor"));
         userRepo.save(instructor);
 
-        var student99 = ModelFactory.generateActivatedUser("student99");     // not registered for the course
+        var student99 = database.createUser("student99");     // not registered for the course
         student99.setRegistrationNumber("1234");
         userRepo.save(student99);
         student99 = userRepo.findOneWithGroupsAndAuthoritiesByLogin("student99").get();

@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZonedDateTime;
 import java.util.List;
@@ -15,7 +14,6 @@ import java.util.zip.ZipFile;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.MockedStatic;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
@@ -54,8 +52,6 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     private FileUploadSubmission fileUploadSubmission2;
 
     private FileUploadSubmission fileUploadSubmission3;
-
-    private final long NOT_EXISTING_EXERCISE_ID = 5489218954L;
 
     @BeforeEach
     void initTestCase() {
@@ -182,6 +178,7 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     void testWrongExerciseId_asInstructor() throws Exception {
         baseExportOptions.setExportAllParticipants(false);
         baseExportOptions.setParticipantIdentifierList("nonexistentstudent");
+        long NOT_EXISTING_EXERCISE_ID = 5489218954L;
         request.post("/api/text-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
         request.post("/api/modeling-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
         request.post("/api/file-upload-exercises/" + NOT_EXISTING_EXERCISE_ID + "/export-submissions", baseExportOptions, HttpStatus.NOT_FOUND);
@@ -213,26 +210,23 @@ class SubmissionExportIntegrationTest extends AbstractSpringIntegrationBambooBit
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testExportAll_IOException() throws Exception {
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
         request.postWithResponseBodyFile("/api/file-upload-exercises/" + fileUploadExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
         // the following line resets the mock and prevents it from disturbing any other tests
-        mockedFiles.close();
+
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testExportTextExerciseSubmission_IOException() throws Exception {
-        MockedStatic<Files> mockedFiles = mockStatic(Files.class);
-        mockedFiles.when(() -> Files.newOutputStream(any(), any())).thenThrow(IOException.class);
+        doThrow(IOException.class).when(zipFileService).createZipFile(any(), any(), any());
         request.postWithResponseBodyFile("/api/text-exercises/" + textExercise.getId() + "/export-submissions", baseExportOptions, HttpStatus.BAD_REQUEST);
-        mockedFiles.close();
     }
 
     private void assertZipContains(File file, Submission... submissions) {
         try (ZipFile zip = new ZipFile(file)) {
-            for (Submission s : submissions) {
-                assertThat(zip.getEntry(getSubmissionFileName(s))).isNotNull();
+            for (Submission submission : submissions) {
+                assertThat(zip.getEntry(getSubmissionFileName(submission))).isNotNull();
             }
         }
         catch (IOException e) {

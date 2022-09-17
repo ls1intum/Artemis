@@ -467,12 +467,12 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         // Create instructor in the course
-        User user = ModelFactory.generateActivatedUser("instructor11");
+        User user = database.createUser("instructor11");
         user.setGroups(Set.of("new-instructor-group"));
         userRepo.save(user);
 
         // Create teaching assisstant in the course
-        user = ModelFactory.generateActivatedUser("teaching-assisstant11");
+        user = database.createUser("teaching-assisstant11");
         user.setGroups(Set.of("new-ta-group"));
         userRepo.save(user);
 
@@ -1000,7 +1000,7 @@ public class CourseTestService {
 
     // Test
     public void testRegisterForCourse() throws Exception {
-        User student = ModelFactory.generateActivatedUser("ab12cde");
+        User student = database.createUser("ab12cde");
         userRepo.save(student);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -1028,7 +1028,7 @@ public class CourseTestService {
 
     // Test
     public void testRegisterForCourse_notMeetsDate() throws Exception {
-        User student = ModelFactory.generateActivatedUser("ab12cde");
+        User student = database.createUser("ab12cde");
         userRepo.save(student);
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
@@ -1605,10 +1605,8 @@ public class CourseTestService {
         userRepo.save(instructor);
 
         // Get two students
-        var student = ModelFactory.generateActivatedUser("user1");
-        userRepo.save(student);
-        var student2 = ModelFactory.generateActivatedUser("user2");
-        userRepo.save(student2);
+        var student = database.createAndSaveUser("user1");
+        var student2 = database.createAndSaveUser("user2");
 
         // Add a team exercise which was just released but not due
         var releaseDate = ZonedDateTime.now().minusDays(4);
@@ -1763,8 +1761,8 @@ public class CourseTestService {
 
         course.setStartDate(now.plusWeeks(3));
 
-        var student1 = ModelFactory.generateActivatedUser("user1");
-        var student2 = ModelFactory.generateActivatedUser("user2");
+        var student1 = database.createAndSaveUser("user1");
+        var student2 = database.createAndSaveUser("user2");
         // Fetch and update an instructor
         var instructor1 = database.getUserByLogin("instructor1");
         var instructor2 = database.getUserByLogin("instructor2");
@@ -1775,8 +1773,6 @@ public class CourseTestService {
 
         userRepo.save(instructor1);
         userRepo.save(instructor2);
-        userRepo.save(student1);
-        userRepo.save(student2);
 
         courseRepo.save(course);
 
@@ -1809,8 +1805,8 @@ public class CourseTestService {
          */
         course2.setStartDate(now.minusWeeks(2));
 
-        var student1 = ModelFactory.generateActivatedUser("user1");
-        var student2 = ModelFactory.generateActivatedUser("user2");
+        var student1 = database.createAndSaveUser("user1");
+        var student2 = database.createAndSaveUser("user2");
         // Fetch and update an instructor
         var instructor = database.getUserByLogin("instructor1");
         var groups = new HashSet<String>();
@@ -1818,8 +1814,6 @@ public class CourseTestService {
         instructor.setGroups(groups);
 
         userRepo.save(instructor);
-        userRepo.save(student1);
-        userRepo.save(student2);
 
         var releaseDate = now.minusDays(7);
         var dueDate = now.minusDays(2);

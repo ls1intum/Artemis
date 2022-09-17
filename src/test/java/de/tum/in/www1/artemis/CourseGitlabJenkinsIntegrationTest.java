@@ -206,15 +206,15 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course.setTeachingAssistantGroupName("new-ta-group");
 
         // Create editor in the course
-        User user = ModelFactory.generateActivatedUser("new-editor");
+        User user = database.createUser("new-editor");
         user.setGroups(Set.of("new-editor-group"));
         userRepo.save(user);
 
-        user = ModelFactory.generateActivatedUser("new-ta");
+        user = database.createUser("new-ta");
         user.setGroups(Set.of("new-ta-group"));
         userRepo.save(user);
 
-        user = ModelFactory.generateActivatedUser("new-instructor");
+        user = database.createUser("new-instructor");
         user.setGroups(Set.of("new-instructor-group"));
         userRepo.save(user);
 
@@ -234,9 +234,9 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course.setInstructorGroupName("new-instructor-group");
 
         // Create editor in the course
-        User user = ModelFactory.generateActivatedUser("new-editor");
+        User user = database.createUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        userRepo.save(user);
+        user = userRepo.save(user);
 
         gitlabRequestMockProvider.mockGetUserId(user.getLogin(), true, true);
         request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
@@ -249,9 +249,9 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course.setInstructorGroupName("new-instructor-group");
 
         // Create editor in the course
-        User user = ModelFactory.generateActivatedUser("new-editor");
+        User user = database.createUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
-        userRepo.save(user);
+        user = userRepo.save(user);
 
         gitlabRequestMockProvider.mockFailOnGetUserById(user.getLogin());
         request.putWithResponseBody("/api/courses", course, Course.class, HttpStatus.INTERNAL_SERVER_ERROR);
