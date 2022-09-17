@@ -294,16 +294,16 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.exerciseId = modelingExercise.id!;
 
-                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
+                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissionWithoutAssessment');
                 modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
 
-                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
+                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissionWithoutAssessment');
                 textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
 
+                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
                 fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
-                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
 
-                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
+                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissionWithoutAssessment');
                 programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
 
                 textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));

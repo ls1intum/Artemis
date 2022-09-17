@@ -110,10 +110,7 @@ describe('FileUploadAssessmentComponent', () => {
                 complaintService = TestBed.inject(ComplaintService);
                 alertService = TestBed.inject(AlertService);
                 submissionService = TestBed.inject(SubmissionService);
-                getFileUploadSubmissionForExerciseWithoutAssessmentStub = jest.spyOn(
-                    fileUploadSubmissionService,
-                    'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment',
-                );
+                getFileUploadSubmissionForExerciseWithoutAssessmentStub = jest.spyOn(fileUploadSubmissionService, 'getSubmissionWithoutAssessment');
                 jest.spyOn(accountService, 'isAtLeastInstructorInCourse').mockReturnValue(false);
                 navigateByUrlStub = jest.spyOn(router, 'navigateByUrl');
                 fixture.ngZone!.run(() => {

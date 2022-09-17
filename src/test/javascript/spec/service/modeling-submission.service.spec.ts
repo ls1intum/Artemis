@@ -92,7 +92,7 @@ describe('ModelingSubmission Service', () => {
         tick();
     }));
 
-    it('should getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment', fakeAsync(() => {
+    it('should getSubmissionWithoutAssessment', fakeAsync(() => {
         const { exerciseId, returnedFromService, correctionRound } = getDefaultValues();
         service
             .getSubmissionWithoutAssessment(exerciseId, true, correctionRound)
