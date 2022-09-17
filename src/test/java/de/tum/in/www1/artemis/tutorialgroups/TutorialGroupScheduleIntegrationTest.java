@@ -23,6 +23,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 
@@ -39,6 +40,9 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
 
     @Autowired
     TutorialGroupSessionRepository tutorialGroupSessionRepository;
+
+    @Autowired
+    TutorialGroupScheduleRepository tutorialGroupScheduleRepository;
 
     Long exampleCourseId;
 
@@ -63,7 +67,7 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void saveTutorialGroupWithSchedule_periodCoversDSTChange_shouldHandleDaylightSavingTimeSwitchCorrectly() throws Exception {
+    void createNewTutorialGroupWithSchedule_periodCoversDSTChange_shouldHandleDaylightSavingTimeSwitchCorrectly() throws Exception {
         var newTutorialGroup = createTutorialGroupWithMondaySchedule(LocalDate.of(2020, 3, 23), LocalDate.of(2020, 3, 30));
 
         var persistedTutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", newTutorialGroup, TutorialGroup.class,
@@ -74,16 +78,16 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
         var sessions = getSessionAscending(persistedTutorialGroup);
         var standardTimeSession = sessions.get(0);
         var daylightSavingsTimeSession = sessions.get(1);
-        assertScheduledSessionStructure(standardTimeSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2020, 3, 23, 10),
+        assertSessionStructure(standardTimeSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2020, 3, 23, 10),
                 getUTCZonedDate(2020, 3, 23, 11), TutorialGroupSessionStatus.ACTIVE, null);
-        assertScheduledSessionStructure(daylightSavingsTimeSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2020, 3, 30, 9),
+        assertSessionStructure(daylightSavingsTimeSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2020, 3, 30, 9),
                 getUTCZonedDate(2020, 3, 30, 10), TutorialGroupSessionStatus.ACTIVE, null);
 
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void saveTutorialGroupWithSchedule_sessionFallsOnTutorialGroupFreeDay_shouldSetSessionCancelled() throws Exception {
+    void createNewTutorialGroupWithSchedule_sessionFallsOnTutorialGroupFreeDay_shouldSetSessionCancelled() throws Exception {
         databaseUtilService.createTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 8), "Holiday");
 
         var newTutorialGroup = createTutorialGroupWithMondaySchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 8));
@@ -95,22 +99,54 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
         var sessions = getSessionAscending(persistedTutorialGroup);
         var normalSession = sessions.get(0);
         var holidaySession = sessions.get(1);
-        assertScheduledSessionStructure(normalSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2022, 8, 1, 9),
+        assertSessionStructure(normalSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2022, 8, 1, 9),
                 getUTCZonedDate(2022, 8, 1, 10), TutorialGroupSessionStatus.ACTIVE, null);
-        assertScheduledSessionStructure(holidaySession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2022, 8, 8, 9),
+        assertSessionStructure(holidaySession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup, getUTCZonedDate(2022, 8, 8, 9),
                 getUTCZonedDate(2022, 8, 8, 10), TutorialGroupSessionStatus.CANCELLED, "Holiday");
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
-    void updateTutorialGroup_scheduledSessionFallsOnAlreadyExistingSession_shouldReturnBadRequest() throws Exception {
+    void addScheduleToTutorialGroupWithoutSchedule_scheduledSessionFallsOnAlreadyExistingSession_shouldReturnBadRequest() throws Exception {
         TutorialGroup tutorialGroup = createAndSaveTutorialGroupWithoutSchedule();
         databaseUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), ZonedDateTime.of(2022, 8, 1, 10, 0, 0, 0, ZoneId.of("UTC")),
                 ZonedDateTime.of(2022, 8, 1, 11, 0, 0, 0, ZoneId.of("UTC")));
 
-        tutorialGroup.setTutorialGroupSchedule(createMondaySchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 8)));
+        tutorialGroup.setTutorialGroupSchedule(createSchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 8), 1));
 
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class, HttpStatus.BAD_REQUEST);
+        assertThat(tutorialGroupSessionRepository.findAll()).hasSize(1);
+        assertThat(tutorialGroupScheduleRepository.findAll()).isEmpty();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void modifyScheduleOfTutorialGroup_shouldRecreateScheduledSessionsButKeepIndividualSessions() throws Exception {
+        TutorialGroup tutorialGroup = createTutorialGroupWithMondaySchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 8));
+        tutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", tutorialGroup, TutorialGroup.class, HttpStatus.CREATED);
+
+        databaseUtilService.createIndividualTutorialGroupSession(tutorialGroup.getId(), ZonedDateTime.of(2022, 8, 5, 10, 0, 0, 0, ZoneId.of("UTC")),
+                ZonedDateTime.of(2022, 8, 5, 11, 0, 0, 0, ZoneId.of("UTC")));
+
+        tutorialGroup.setTutorialGroupSchedule(createSchedule(LocalDate.of(2022, 8, 1), LocalDate.of(2022, 8, 17), 2));
+        tutorialGroup = request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + tutorialGroup.getId(), tutorialGroup, TutorialGroup.class,
+                HttpStatus.OK);
+        assertThat(tutorialGroupSessionRepository.findAll()).hasSize(4);
+        assertThat(tutorialGroupScheduleRepository.findAll()).hasSize(1);
+        var sessions = getSessionAscending(tutorialGroup);
+        var firstSession = sessions.get(0);
+        var secondSession = sessions.get(1);
+        var thirdSession = sessions.get(2);
+        var fourthSession = sessions.get(3);
+
+        assertSessionStructure(firstSession, tutorialGroup.getTutorialGroupSchedule(), tutorialGroup, getUTCZonedDate(2022, 8, 2, 9), getUTCZonedDate(2022, 8, 2, 10),
+                TutorialGroupSessionStatus.ACTIVE, null);
+        assertSessionStructure(secondSession, null, tutorialGroup, getUTCZonedDate(2022, 8, 5, 10), getUTCZonedDate(2022, 8, 5, 11), TutorialGroupSessionStatus.ACTIVE, null);
+        assertSessionStructure(thirdSession, tutorialGroup.getTutorialGroupSchedule(), tutorialGroup, getUTCZonedDate(2022, 8, 9, 9), getUTCZonedDate(2022, 8, 9, 10),
+                TutorialGroupSessionStatus.ACTIVE, null);
+        assertSessionStructure(fourthSession, tutorialGroup.getTutorialGroupSchedule(), tutorialGroup, getUTCZonedDate(2022, 8, 16, 9), getUTCZonedDate(2022, 8, 16, 10),
+                TutorialGroupSessionStatus.ACTIVE, null);
+
     }
 
     private TutorialGroup createAndSaveTutorialGroupWithoutSchedule() {
@@ -125,14 +161,14 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
         newTutorialGroup.setTitle("NewTitle");
         newTutorialGroup.setTeachingAssistant(userRepository.findOneByLogin("tutor1").get());
 
-        newTutorialGroup.setTutorialGroupSchedule(createMondaySchedule(validFromInclusive, validToInclusive));
+        newTutorialGroup.setTutorialGroupSchedule(createSchedule(validFromInclusive, validToInclusive, 1));
 
         return newTutorialGroup;
     }
 
-    private TutorialGroupSchedule createMondaySchedule(LocalDate validFromInclusive, LocalDate validToInclusive) {
+    private TutorialGroupSchedule createSchedule(LocalDate validFromInclusive, LocalDate validToInclusive, Integer weekday) {
         TutorialGroupSchedule newTutorialGroupSchedule = new TutorialGroupSchedule();
-        newTutorialGroupSchedule.setDayOfWeek(1); // Monday
+        newTutorialGroupSchedule.setDayOfWeek(weekday); // Monday
         newTutorialGroupSchedule.setStartTime(LocalTime.of(12, 0, 0).toString());
         newTutorialGroupSchedule.setEndTime(LocalTime.of(13, 0, 0).toString());
         // monday before dst
@@ -162,13 +198,19 @@ public class TutorialGroupScheduleIntegrationTest extends AbstractSpringIntegrat
         return ZonedDateTime.of(year, month, dayOfMonth, hour, 0, 0, 0, ZoneId.of("UTC"));
     }
 
-    private static void assertScheduledSessionStructure(TutorialGroupSession session, TutorialGroupSchedule schedule, TutorialGroup tutorialGroup, ZonedDateTime start,
-            ZonedDateTime end, TutorialGroupSessionStatus status, String status_explanation) {
+    private static void assertSessionStructure(TutorialGroupSession session, TutorialGroupSchedule schedule, TutorialGroup tutorialGroup, ZonedDateTime start, ZonedDateTime end,
+            TutorialGroupSessionStatus status, String status_explanation) {
         assertThat(session.getStart()).isEqualTo(start);
         assertThat(session.getEnd()).isEqualTo(end);
         assertThat(session.getTutorialGroup().getId()).isEqualTo(tutorialGroup.getId());
-        assertThat(session.getTutorialGroupSchedule().getId()).isEqualTo(schedule.getId());
-        assertThat(session.getLocation()).isEqualTo(schedule.getLocation());
+
+        if (schedule != null) {
+            assertThat(session.getLocation()).isEqualTo(schedule.getLocation());
+            assertThat(session.getTutorialGroupSchedule().getId()).isEqualTo(schedule.getId());
+        }
+        else {
+            assertThat(session.getTutorialGroupSchedule()).isNull();
+        }
         assertThat(session.getStatus()).isEqualTo(status);
         assertThat(session.getStatusExplanation()).isEqualTo(status_explanation);
     }
