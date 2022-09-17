@@ -156,7 +156,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
         const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
 
-        return !allHiddenTestsPassed && requestAlreadySent;
+        return !allHiddenTestsPassed || requestAlreadySent;
     }
 
     requestFeedback() {
