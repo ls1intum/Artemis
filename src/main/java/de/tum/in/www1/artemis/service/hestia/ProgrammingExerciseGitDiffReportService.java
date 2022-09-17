@@ -152,7 +152,8 @@ public class ProgrammingExerciseGitDiffReportService {
         var report = this.getReportOfExercise(programmingExercise);
         if (report == null) {
             return updateReport(programmingExercise);
-        } else {
+        } 
+        else {
             return report;
         }
     }
