@@ -398,6 +398,9 @@ public class RequestUtilService {
             }
             return null;
         }
+        if (res.getResponse().getContentType() == null) {
+            return null;
+        }
         if (responseType == String.class) {
             return (T) contentAsString;
         }

@@ -449,7 +449,7 @@ public class ProgrammingSubmissionResource {
         programmingSubmissionService.checkSubmissionLockLimit(programmingExercise.getCourseViaExerciseGroupOrCourseMember().getId());
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
-        final ProgrammingSubmission submission;
+        ProgrammingSubmission submission;
         if (programmingExercise.isManualFeedbackRequestAllowed()) {
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
@@ -458,8 +458,8 @@ public class ProgrammingSubmissionResource {
         }
 
         if (lockSubmission) {
-            // NOTE: in the function before, the return value of this was used in order to update submission to return.getSubmission():
-            programmingSubmissionService.lockSubmission(submission, correctionRound);
+            Result lockedResult = programmingSubmissionService.lockSubmission(submission, correctionRound);
+            submission = (ProgrammingSubmission) lockedResult.getSubmission();
         }
 
         if (Objects.nonNull(submission)) {
@@ -469,6 +469,6 @@ public class ProgrammingSubmissionResource {
             submission.setResults(submission.getManualResults());
         }
 
-        return ResponseEntity.ok(submission);
+        return ResponseEntity.ok().body(submission);
     }
 }
