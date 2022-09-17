@@ -119,10 +119,10 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
     it('should get Submissions', fakeAsync(() => {
         // test getSubmissions
         const exerciseServiceFindMock = jest.spyOn(exerciseService, 'find');
-        const getProgrammingSubmissionsForExerciseByCorrectionRoundStub = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
+        const getSubmissionsStub = jest.spyOn(programmingSubmissionService, 'getSubmissions');
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
         exerciseServiceFindMock.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
-        getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [programmingSubmission1] })));
+        getSubmissionsStub.mockReturnValue(of(new HttpResponse({ body: [programmingSubmission1] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
         jest.spyOn<any, any>(component, 'getSubmissions');
 
@@ -131,8 +131,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         tick(500);
         // check
         expect(component['getSubmissions']).toHaveBeenCalled();
-        expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalled();
-        expect(getProgrammingSubmissionsForExerciseByCorrectionRoundStub).toHaveBeenCalledWith(programmingExercise2.id, { submittedOnly: true });
+        expect(getSubmissionsStub).toHaveBeenCalled();
+        expect(getSubmissionsStub).toHaveBeenCalledWith(programmingExercise2.id, { submittedOnly: true });
         expect(exerciseServiceFindMock).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component.submissions).toEqual([programmingSubmission1]);
         expect(component.filteredSubmissions).toEqual([programmingSubmission1]);
@@ -140,11 +140,11 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
     it('should not get Submissions', fakeAsync(() => {
         const exerciseServiceFind = jest.spyOn(exerciseService, 'find');
-        const getProgrammingSubmissionsForExerciseByCorrectionRoundStub = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
+        const getSubmissionsStub = jest.spyOn(programmingSubmissionService, 'getSubmissions');
         const isAtLeastInstructorInCourseStub = jest.spyOn(accountService, 'isAtLeastInstructorInCourse');
 
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise1 })));
-        getProgrammingSubmissionsForExerciseByCorrectionRoundStub.mockReturnValue(of(new HttpResponse({ body: [] })));
+        getSubmissionsStub.mockReturnValue(of(new HttpResponse({ body: [] })));
         isAtLeastInstructorInCourseStub.mockReturnValue(true);
         // findExerciseStub.mockReturnValue(of(new HttpResponse({ body: fileUploadExercise, headers: new HttpHeaders() })));
         exerciseServiceFind.mockReturnValue(of(new HttpResponse({ body: programmingExercise2, headers: new HttpHeaders() })));

@@ -294,17 +294,17 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
                 comp.exerciseId = modelingExercise.id!;
 
-                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getModelingSubmissionsForExerciseByCorrectionRound');
+                modelingSubmissionStubWithoutAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
+                modelingSubmissionStubWithAssessment = jest.spyOn(modelingSubmissionService, 'getSubmissions');
 
-                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getTextSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getTextSubmissionsForExerciseByCorrectionRound');
+                textSubmissionStubWithoutAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
+                textSubmissionStubWithAssessment = jest.spyOn(textSubmissionService, 'getSubmissions');
 
-                fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionsForExerciseByCorrectionRound');
-                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getFileUploadSubmissionForExerciseForCorrectionRoundWithoutAssessment');
+                fileUploadSubmissionStubWithAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
+                fileUploadSubmissionStubWithoutAssessment = jest.spyOn(fileUploadSubmissionService, 'getSubmissions');
 
-                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionForExerciseForCorrectionRoundWithoutAssessment');
-                programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getProgrammingSubmissionsForExerciseByCorrectionRound');
+                programmingSubmissionStubWithoutAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
+                programmingSubmissionStubWithAssessment = jest.spyOn(programmingSubmissionService, 'getSubmissions');
 
                 textSubmissionStubWithoutAssessment.mockReturnValue(of(textSubmission));
                 textSubmissionStubWithAssessment.mockReturnValue(of(textSubmissionAssessed));
@@ -587,7 +587,13 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         });
 
         function initComponent() {
-            comp.exercise = { type: fakeExerciseType, numberOfAssessmentsOfCorrectionRounds: [], studentAssignedTeamIdComputed: false, secondCorrectionEnabled: false };
+            comp.exercise = {
+                allowManualFeedbackRequests: false,
+                type: fakeExerciseType,
+                numberOfAssessmentsOfCorrectionRounds: [],
+                studentAssignedTeamIdComputed: false,
+                secondCorrectionEnabled: false,
+            };
             comp.courseId = fakeCourseId;
             comp.exerciseId = fakeExerciseId;
             comp.examId = fakeExamId;
