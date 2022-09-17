@@ -228,7 +228,7 @@
                     class="btn btn-primary"
                     [class.btn-sm]="smallButtons"
                     *ngIf="isManualFeedbackRequestsAllowed()"
-                    [disabled]="isManualFeedbackRequestAlreadySent()"
+                    [disabled]="isFeedbackRequestButtonDisabled()"
                     [id]="'request-feedback-' + exercise.id"
                     (click)="requestFeedback()"
                 >
