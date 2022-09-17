@@ -86,24 +86,6 @@ export class ExerciseDetailsStudentActionsComponent {
         return (this.exercise as ProgrammingExercise).allowOfflineIde;
     }
 
-    isManualFeedbackRequestsAllowed(): boolean {
-        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
-
-        const showUngradedResults = true;
-        const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
-
-        const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
-        const exerciseSettingAllowed = this.exercise.allowManualFeedbackRequests;
-
-        return [allHiddenTestsPassed, exerciseSettingAllowed].reduce((a, b) => a && b);
-    }
-
-    // TODO: setting [disabled] on the angular component doesn't seem to work
-    isManualFeedbackRequestAlreadySent(): boolean {
-        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
-        return (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
-    }
-
     /**
      * start the exercise
      */
@@ -159,6 +141,23 @@ export class ExerciseDetailsStudentActionsComponent {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
                 },
             });
+    }
+
+    isManualFeedbackRequestsAllowed(): boolean {
+        console.log(this.exercise);
+        return this.exercise.allowManualFeedbackRequests;
+    }
+
+    isFeedbackRequestButtonDisabled(): boolean {
+        const participation = this.studentParticipation ?? (this.exercise.studentParticipations && this.exercise.studentParticipations.first());
+
+        const showUngradedResults = true;
+        const latestResult = participation?.results && participation.results.find(({ rated }) => showUngradedResults || rated === true);
+        const allHiddenTestsPassed = latestResult?.score !== undefined && latestResult.score >= 100;
+
+        const requestAlreadySent = (participation?.individualDueDate && participation.individualDueDate.isBefore(Date.now())) ?? false;
+
+        return !allHiddenTestsPassed && requestAlreadySent;
     }
 
     requestFeedback() {
