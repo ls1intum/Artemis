@@ -58,8 +58,8 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.PostgreSQL10Dialect
-        database: POSTGRESQL
+        database-platform: org.hibernate.dialect.MySQL8Dialect # Alternatives org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
+        database: MYSQL        # Alternatives POSTGRESQL / MYSQL
         open-in-view: false
         show-sql: false
         hibernate:
