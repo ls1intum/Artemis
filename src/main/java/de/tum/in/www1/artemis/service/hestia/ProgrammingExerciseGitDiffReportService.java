@@ -150,7 +150,12 @@ public class ProgrammingExerciseGitDiffReportService {
      */
     public ProgrammingExerciseGitDiffReport getOrCreateReportOfExercise(ProgrammingExercise programmingExercise) {
         var report = this.getReportOfExercise(programmingExercise);
-        return Objects.requireNonNullElseGet(report, () -> updateReport(programmingExercise));
+        if (report == null) {
+            return updateReport(programmingExercise);
+        }
+        else {
+            return report;
+        }
     }
 
     /**
