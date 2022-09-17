@@ -2,8 +2,9 @@ package de.tum.in.www1.artemis.tutorialgroups;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.time.LocalDate;
+import java.time.*;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 
@@ -19,12 +20,16 @@ import com.google.common.collect.ImmutableSet;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
+import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
 import de.tum.in.www1.artemis.util.ModelFactory;
@@ -42,6 +47,9 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
     @Autowired
     TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
+
+    @Autowired
+    TutorialGroupSessionRepository tutorialGroupSessionRepository;
 
     @Autowired
     private DatabaseUtilService databaseUtilService;
@@ -71,7 +79,7 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var course = this.database.createCourse();
         exampleCourseId = course.getId();
 
-        databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, "Europe/Berlin", LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1));
+        databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, "Europe/Bucharest", LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1));
 
         exampleOneTutorialGroupId = databaseUtilService
                 .createTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH, userRepository.findOneByLogin("tutor1").get(),
@@ -297,6 +305,51 @@ class TutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsAndSessions(exampleOneTutorialGroupId).get();
         assertThat(tutorialGroup.getRegistrations().stream().map(TutorialGroupRegistration::getStudent)).contains(student6);
         assertThat(notFoundStudents).containsExactly(studentNotInCourse);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void saveTutorialGroupWithSchedule_shouldHandleDaylightSavingTimeSwitchCorrectly() throws Exception {
+        TutorialGroup newTutorialGroup = createNewTutorialGroup();
+        TutorialGroupSchedule newTutorialGroupSchedule = new TutorialGroupSchedule();
+        newTutorialGroupSchedule.setDayOfWeek(1); // Monday
+        newTutorialGroupSchedule.setStartTime(LocalTime.of(12, 0, 0).toString());
+        newTutorialGroupSchedule.setEndTime(LocalTime.of(13, 0, 0).toString());
+        // monday before dst
+        newTutorialGroupSchedule.setValidFromInclusive(LocalDate.of(2020, 3, 23).toString());
+        // monday after dst
+        newTutorialGroupSchedule.setValidToInclusive(LocalDate.of(2020, 3, 30).toString());
+        newTutorialGroupSchedule.setLocation("LoremIpsum");
+        // every week
+        newTutorialGroupSchedule.setRepetitionFrequency(1);
+        newTutorialGroup.setTutorialGroupSchedule(newTutorialGroupSchedule);
+
+        var persistedTutorialGroup = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups", newTutorialGroup, TutorialGroup.class,
+                HttpStatus.CREATED);
+        assertThat(persistedTutorialGroup.getId()).isNotNull();
+        assertThat(persistedTutorialGroup.getTutorialGroupSchedule()).isNotNull();
+        assertThat(persistedTutorialGroup.getTutorialGroupSchedule().sameSchedule(newTutorialGroupSchedule)).isTrue();
+
+        var sessions = new ArrayList<>(tutorialGroupSessionRepository.findAllByTutorialGroupId(persistedTutorialGroup.getId()).stream().toList());
+        sessions.sort(Comparator.comparing(TutorialGroupSession::getStart));
+        assertThat(sessions).hasSize(2);
+        var standardTimeSession = sessions.get(0);
+        var daylightSavingsTimeSession = sessions.get(1);
+        assertScheduledSessionStructure(standardTimeSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup,
+                ZonedDateTime.of(2020, 3, 23, 10, 0, 0, 0, ZoneId.of("UTC")), ZonedDateTime.of(2020, 3, 23, 11, 0, 0, 0, ZoneId.of("UTC")));
+        assertScheduledSessionStructure(daylightSavingsTimeSession, persistedTutorialGroup.getTutorialGroupSchedule(), persistedTutorialGroup,
+                ZonedDateTime.of(2020, 3, 30, 9, 0, 0, 0, ZoneId.of("UTC")), ZonedDateTime.of(2020, 3, 30, 10, 0, 0, 0, ZoneId.of("UTC")));
+    }
+
+    private static void assertScheduledSessionStructure(TutorialGroupSession session, TutorialGroupSchedule schedule, TutorialGroup tutorialGroup, ZonedDateTime start,
+            ZonedDateTime end) {
+        assertThat(session.getStart()).isEqualTo(start);
+        assertThat(session.getEnd()).isEqualTo(end);
+        assertThat(session.getTutorialGroup().getId()).isEqualTo(tutorialGroup.getId());
+        assertThat(session.getTutorialGroupSchedule().getId()).isEqualTo(schedule.getId());
+        assertThat(session.getLocation()).isEqualTo(schedule.getLocation());
+        assertThat(session.getStatus()).isEqualTo(TutorialGroupSessionStatus.ACTIVE);
+        assertThat(session.getStatusExplanation()).isNull();
     }
 
 }

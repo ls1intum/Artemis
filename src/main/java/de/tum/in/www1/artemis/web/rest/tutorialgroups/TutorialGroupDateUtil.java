@@ -75,10 +75,13 @@ public class TutorialGroupDateUtil {
      * Get the first date of the week day from the given start date
      *
      * @param start   the start date to start the search from
-     * @param weekDay the week day to search for
+     * @param weekDay the week day to search for (1-7)
      * @return date of the first occurrence of the week day from the given start date
      */
     public static LocalDate getFirstDateOfWeekDay(LocalDate start, Integer weekDay) {
+        if (weekDay < 1 || weekDay > 7) {
+            throw new IllegalArgumentException("Week day must be in range 1-7");
+        }
         while (start.getDayOfWeek().getValue() != weekDay) {
             start = start.plusDays(1);
         }
