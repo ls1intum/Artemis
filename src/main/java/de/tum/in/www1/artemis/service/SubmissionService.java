@@ -199,9 +199,8 @@ public class SubmissionService {
     public Optional<Submission> getNextAssessableSubmission(Exercise exercise, boolean examMode, int correctionRound) {
         var assessableSubmissions = getAssessableSubmissions(exercise, examMode, correctionRound);
 
-        assessableSubmissions.sort(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
-
-        return assessableSubmissions.stream().findFirst();
+        return assessableSubmissions.stream().filter(a -> Objects.nonNull(a.getParticipation().getIndividualDueDate()))
+                .min(Comparator.comparing(a -> a.getParticipation().getIndividualDueDate()));
     }
 
     /**
