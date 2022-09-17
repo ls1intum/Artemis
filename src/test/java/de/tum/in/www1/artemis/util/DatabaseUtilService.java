@@ -606,24 +606,27 @@ public class DatabaseUtilService {
     }
 
     public void addEditor(final String editorGroup, final String editorName) {
-        var instructor = generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
-        instructor = userRepo.save(instructor);
-
-        assertThat(instructor.getId()).as("Editor has been created").isNotNull();
+        if (!userExistsWithLogin(editorName)) {
+            var editor = generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
+            editor = userRepo.save(editor);
+            assertThat(editor.getId()).as("Editor has been created").isNotNull();
+        }
     }
 
     public void addTeachingAssistant(final String taGroup, final String taName) {
-        var ta = generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
-        ta = userRepo.save(ta);
-
-        assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+        if (!userExistsWithLogin(taName)) {
+            var ta = generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
+            ta = userRepo.save(ta);
+            assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+        }
     }
 
     public void addStudent(final String studentGroup, final String studentName) {
-        var instructor = generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
-        instructor = userRepo.save(instructor);
-
-        assertThat(instructor.getId()).as("Student has been created").isNotNull();
+        if (!userExistsWithLogin(studentName)) {
+            var student = generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
+            student = userRepo.save(student);
+            assertThat(student.getId()).as("Student has been created").isNotNull();
+        }
     }
 
     public Lecture createCourseWithLecture(boolean saveLecture) {
@@ -2571,7 +2574,7 @@ public class DatabaseUtilService {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
         addTestCasesToProgrammingExercise(programmingExercise);
-        return courseRepo.findById(course.getId()).get();
+        return courseRepo.findByIdWithExercisesAndLecturesElseThrow(course.getId());
     }
 
     /**
