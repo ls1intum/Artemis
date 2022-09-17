@@ -20,6 +20,8 @@ import java.util.stream.Collectors;
 
 import javax.validation.constraints.NotNull;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -78,6 +80,8 @@ import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
  */
 @Service
 public class DatabaseUtilService {
+
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private static final ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(1);
 
@@ -284,21 +288,35 @@ public class DatabaseUtilService {
     @Autowired
     private PasswordService passwordService;
 
+    @Autowired
+    private CourseService courseService;
+
     @Value("${info.guided-tour.course-group-students:#{null}}")
     private Optional<String> tutorialGroupStudents;
 
     @Value("${info.guided-tour.course-group-tutors:#{null}}")
     private Optional<String> tutorialGroupTutors;
 
-    // TODO: Research what we have to do here
     @Value("${info.guided-tour.course-group-editors:#{null}}")
     private Optional<String> tutorialGroupEditors;
 
     @Value("${info.guided-tour.course-group-instructors:#{null}}")
     private Optional<String> tutorialGroupInstructors;
 
+    /**
+     * This should be as fast as possible to avoid that the test time increases significantly, therefore we only delete the most important entities
+     */
     public void resetDatabase() {
-        // TODO Delete
+        // The following code might be helpful, but is too slow and would add 500ms execution time to each test case
+        // long start = System.currentTimeMillis();
+        // var courses = courseRepo.findAll();
+        // for (var simpleCourse : courses) {
+        // Course course = courseRepo.findByIdWithExercisesAndLecturesAndLectureUnitsAndLearningGoalsElseThrow(simpleCourse.getId());
+        // courseService.delete(course);
+        // }
+        // userRepo.deleteAll();
+        // long duration = System.currentTimeMillis() - start;
+        // log.info("Reset database took " + duration + " ms");
     }
 
     // TODO: this should probably be moved into another service
@@ -328,7 +346,7 @@ public class DatabaseUtilService {
      */
     public List<User> generateActivatedUsersWithRegistrationNumber(String loginPrefix, String[] groups, Set<Authority> authorities, int amount, String registrationNumberPrefix) {
         List<User> generatedUsers = generateActivatedUsers(loginPrefix, groups, authorities, amount);
-        for (int i = 0; i < amount; i++) {
+        for (int i = 0; i < generatedUsers.size(); i++) {
             generatedUsers.get(i).setRegistrationNumber(registrationNumberPrefix + "R" + i);
         }
         return generatedUsers;

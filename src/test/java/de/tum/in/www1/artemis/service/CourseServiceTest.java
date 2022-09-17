@@ -153,7 +153,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetOverviewAsAdmin() {
         // Minimal testcase: Admins always see all courses
         // Add two courses, one not active
-        database.addEmptyCourse();
+        var course = database.addEmptyCourse();
         var inactiveCourse = database.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
         courseRepository.save(inactiveCourse);
@@ -162,10 +162,11 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         database.addUsers(0, 0, 0, 0);
 
         var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses).hasSize(2);
+        assertThat(courses).contains(inactiveCourse, course);
 
         courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses).hasSize(1);
+        assertThat(courses).contains(course);
+        assertThat(courses).doesNotContain(inactiveCourse);
     }
 
     @Test
@@ -173,7 +174,7 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void testGetOverviewAsInstructor() {
         // Testcase: Instructors see their courses
         // Add three courses, containing one not active and one not belonging to the instructor
-        database.addEmptyCourse();
+        var course = database.addEmptyCourse();
         var inactiveCourse = database.createCourse();
         inactiveCourse.setEndDate(ZonedDateTime.now().minusDays(7));
         inactiveCourse.setInstructorGroupName("test-instructors");
@@ -189,11 +190,17 @@ class CourseServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
         instructor.setGroups(groups);
         userRepository.save(instructor);
 
+        // TODO: investigate why this test fails
+
         var courses = courseService.getAllCoursesForManagementOverview(false);
-        assertThat(courses).hasSize(2);
+        assertThat(courses).contains(instructorsCourse);
+        assertThat(courses).contains(inactiveCourse);
+        assertThat(courses).doesNotContain(course);
 
         courses = courseService.getAllCoursesForManagementOverview(true);
-        assertThat(courses).hasSize(1);
+        assertThat(courses).contains(instructorsCourse);
+        assertThat(courses).doesNotContain(inactiveCourse);
+        assertThat(courses).doesNotContain(course);
     }
 
     @Test
