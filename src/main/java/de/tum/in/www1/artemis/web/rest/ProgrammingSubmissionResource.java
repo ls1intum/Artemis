@@ -450,7 +450,7 @@ public class ProgrammingSubmissionResource {
 
         // TODO Check if submission has newly created manual result for this and endpoint and endpoint above
         ProgrammingSubmission submission;
-        if (programmingExercise.isManualFeedbackRequestAllowed()) {
+        if (programmingExercise.getAllowManualFeedbackRequests()) {
             submission = programmingSubmissionService.getNextAssessableSubmission(programmingExercise, programmingExercise.isExamExercise(), correctionRound).orElse(null);
         }
         else {
