@@ -155,9 +155,9 @@ export const hasStudentParticipations = (exercise: Exercise) => {
 export const participationStatus = (exercise: Exercise, testRun?: boolean): ParticipationStatus => {
     let studentParticipation: StudentParticipation | undefined;
     if (testRun === undefined) {
-        studentParticipation = exercise.studentParticipations?.[0];
+        studentParticipation = exercise.studentParticipations?.first();
     } else {
-        studentParticipation = exercise.studentParticipations?.filter((participation: StudentParticipation) => participation.testRun === testRun)[0];
+        studentParticipation = exercise.studentParticipations?.filter((participation: StudentParticipation) => participation.testRun === testRun).first();
     }
 
     // For team exercises check whether the student has been assigned to a team yet
@@ -185,7 +185,7 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
 
     // The following evaluations are relevant for programming exercises in general and for modeling, text and file upload exercises that don't have participations.
     if (!studentParticipation || programmingExerciseStates.includes(studentParticipation.initializationState!)) {
-        if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise)) {
+        if (exercise.type === ExerciseType.PROGRAMMING && !isStartExerciseAvailable(exercise as ProgrammingExercise) && !testRun) {
             return ParticipationStatus.EXERCISE_MISSED;
         } else {
             return ParticipationStatus.UNINITIALIZED;

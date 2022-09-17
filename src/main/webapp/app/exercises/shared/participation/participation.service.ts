@@ -168,22 +168,18 @@ export class ParticipationService {
                     this.mergeResultsAndSubmissions(combinedParticipation, nonTestRunParticipations);
                     mergedParticipations.push(combinedParticipation);
                 }
-                if (nonTestRunParticipations.length) {
+                if (testRunParticipations.length) {
                     const combinedParticipationTestRun = new StudentParticipation();
                     this.mergeResultsAndSubmissions(combinedParticipationTestRun, testRunParticipations);
                     mergedParticipations.push(combinedParticipationTestRun);
                 }
             } else if (participations[0].type === ParticipationType.PROGRAMMING) {
                 if (nonTestRunParticipations.length) {
-                    const combinedParticipation = this.mergeProgrammingParticipations(
-                        participations.filter((participation: StudentParticipation) => participation.testRun === false) as ProgrammingExerciseStudentParticipation[],
-                    );
+                    const combinedParticipation = this.mergeProgrammingParticipations(nonTestRunParticipations as ProgrammingExerciseStudentParticipation[]);
                     mergedParticipations.push(combinedParticipation);
                 }
-                if (nonTestRunParticipations.length) {
-                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(
-                        participations.filter((participation: StudentParticipation) => participation.testRun === true) as ProgrammingExerciseStudentParticipation[],
-                    );
+                if (testRunParticipations.length) {
+                    const combinedParticipationTestRun = this.mergeProgrammingParticipations(testRunParticipations as ProgrammingExerciseStudentParticipation[]);
                     mergedParticipations.push(combinedParticipationTestRun);
                 }
             }

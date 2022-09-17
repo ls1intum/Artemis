@@ -221,7 +221,8 @@ public class ExerciseHintService {
     }
 
     private List<Submission> getSubmissionsForStudent(ProgrammingExercise exercise, User student) {
-        var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdWithEagerSubmissionsResultsFeedbacksElseThrow(exercise.getId(), student.getId());
+        var studentParticipation = studentParticipationRepository.findByExerciseIdAndStudentIdAndTestRunWithEagerSubmissionsResultsFeedbacksElseThrow(exercise.getId(),
+                student.getId(), false);
         return studentParticipation.getSubmissions().stream().sorted(Comparator.reverseOrder()).toList();
     }
 

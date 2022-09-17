@@ -233,6 +233,7 @@ public class ParticipationService {
             throw new IllegalStateException();
         }
 
+        finalizeRatedParticipation(exercise, participant);
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
@@ -254,6 +255,14 @@ public class ParticipationService {
         participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true);
 
         return studentParticipationRepository.saveAndFlush(participation);
+    }
+
+    private void finalizeRatedParticipation(Exercise exercise, Participant participant) {
+        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
+        optionalStudentParticipation.ifPresent(participation -> {
+            participation.setInitializationState(FINISHED);
+            participationRepository.save(participation);
+        });
     }
 
     /**
@@ -453,7 +462,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findOneByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
     /**
@@ -499,7 +508,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerResultsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerResultsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
     public StudentParticipation findOneByExerciseAndStudentLoginAnyStateWithEagerResultsElseThrow(Exercise exercise, String username) {
@@ -519,7 +528,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLogin(exercise.getId(), username);
+        return studentParticipationRepository.findWithEagerLegalSubmissionsByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
     }
 
     /**

@@ -387,12 +387,7 @@ public class ParticipationResource {
         boolean examMode = exercise.isExamExercise();
         List<StudentParticipation> participations;
         if (withLatestResult) {
-            if (examMode) {
-                participations = studentParticipationRepository.findByExerciseIdWithLatestResultIgnoreTestRunSubmissions(exerciseId);
-            }
-            else {
-                participations = studentParticipationRepository.findByExerciseIdWithLatestResult(exerciseId);
-            }
+            participations = studentParticipationRepository.findByExerciseIdAndTestRunWithLatestResult(exerciseId, false);
         }
         else {
             participations = studentParticipationRepository.findByExerciseId(exerciseId);
