@@ -23,8 +23,7 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
 import de.tum.in.www1.artemis.domain.scores.TeamScore;
-import de.tum.in.www1.artemis.repository.ParticipantScoreRepository;
-import de.tum.in.www1.artemis.repository.ResultRepository;
+import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.util.RoundingUtil;
 
@@ -46,19 +45,33 @@ public class ParticipantScoreSchedulerService {
 
     private final TaskScheduler scheduler;
 
-    private final Map<Long, ScheduledFuture<?>> scheduledParticipantScores = new HashMap<>();
+    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
 
-    private Optional<Instant> lastSchedulingRun = Optional.empty();
+    private Optional<Instant> lastScheduledRun = Optional.empty();
 
     private final ParticipantScoreRepository participantScoreRepository;
+
+    private final StudentScoreRepository studentScoreRepository;
+
+    private final TeamScoreRepository teamScoreRepository;
+
+    private final ParticipationRepository participationRepository;
 
     private final ResultRepository resultRepository;
 
     public ParticipantScoreSchedulerService(@Qualifier("taskScheduler") TaskScheduler scheduler, ParticipantScoreRepository participantScoreRepository,
+            StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipationRepository participationRepository,
             ResultRepository resultRepository) {
         this.scheduler = scheduler;
         this.participantScoreRepository = participantScoreRepository;
+        this.studentScoreRepository = studentScoreRepository;
+        this.teamScoreRepository = teamScoreRepository;
+        this.participationRepository = participationRepository;
         this.resultRepository = resultRepository;
+    }
+
+    public Map<Long, ScheduledFuture<?>> getScheduledTasks() {
+        return scheduledTasks;
     }
 
     /**
@@ -67,7 +80,7 @@ public class ParticipantScoreSchedulerService {
     @PostConstruct
     public void startSchedule() {
         try {
-            scheduleResultsToProgress();
+            scheduleParticipationsToProgress();
         }
         catch (Exception e) {
             logger.error("Failed to start ParticipantScoreScheduler", e);
@@ -80,10 +93,10 @@ public class ParticipantScoreSchedulerService {
     @PreDestroy
     public void stopSchedule() {
         // Stop all running tasks, we will reschedule them on startup again
-        scheduledParticipantScores.values().forEach(future -> {
+        scheduledTasks.values().forEach(future -> {
             future.cancel(true);
         });
-        scheduledParticipantScores.clear();
+        scheduledTasks.clear();
     }
 
     /**
@@ -93,17 +106,17 @@ public class ParticipantScoreSchedulerService {
      * (That means the listener did its job. This cron is just for extra safety.)
      */
     @Scheduled(cron = "0 * * * * *")
-    protected void scheduleResultsToProgress() {
+    protected void scheduleParticipationsToProgress() {
         SecurityUtils.setAuthorizationObject();
 
         // Find all results that were added after the last run (on startup: last time we modified a participant score)
-        var latestRun = lastSchedulingRun.orElseGet(() -> participantScoreRepository.getLatestModifiedDate().orElse(Instant.now()));
+        var latestRun = lastScheduledRun.orElseGet(() -> participantScoreRepository.getLatestModifiedDate().orElse(Instant.now()));
         // Update last run time before we continue with time-consuming operations
-        lastSchedulingRun = Optional.of(Instant.now());
+        lastScheduledRun = Optional.of(Instant.now());
 
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
-            scheduleTask(result.getId());
+            scheduleTask(result.getParticipation().getId());
         });
     }
 
@@ -113,7 +126,7 @@ public class ParticipantScoreSchedulerService {
      * (Possibly, the main instance with the scheduler was down at that time.)
      */
     @Scheduled(cron = "0 0 * * * *")
-    protected void scheduleOutdatedParticipantScores() {
+    protected void cleanupOutdatedParticipantScores() {
         SecurityUtils.setAuthorizationObject();
 
         var participantScoresToProcess = participantScoreRepository.findAllOutdatedWithExercise();
@@ -122,69 +135,72 @@ public class ParticipantScoreSchedulerService {
 
     /**
      * Schedule a task to update the participant score for the given result.
-     * @param resultId the id of the result that was created/updated/deleted
+     * @param participationId the id of the result that was created/updated/deleted
      * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleResult(Long)
      */
-    public void scheduleTask(Long resultId) {
-        if (scheduledParticipantScores.containsKey(resultId)) {
+    public void scheduleTask(Long participationId) {
+        if (scheduledTasks.containsKey(participationId)) {
             // We already have a scheduled task for this result
             return;
         }
 
-        var schedulingTime = ZonedDateTime.now().plus(1, ChronoUnit.SECONDS);
-        var future = scheduler.schedule(() -> this.executeTask(resultId), schedulingTime.toInstant());
-        scheduledParticipantScores.put(resultId, future);
-        logger.info("Schedule task for {} at {}.", resultId, schedulingTime);
+        var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
+        var future = scheduler.schedule(() -> this.executeTask(participationId), schedulingTime.toInstant());
+        scheduledTasks.put(participationId, future);
+        logger.info("Schedule task for participation {} at {}.", participationId, schedulingTime);
     }
 
     /**
      * Execute the task to update the participant score for the given result.
-     * @param resultId the id of the result that was created/updated/deleted
+     * @param participationId the id of the result that was created/updated/deleted
      */
-    private void executeTask(Long resultId) {
-        scheduledParticipantScores.remove(resultId);
-        logger.info("Processing {} at {}.", resultId, ZonedDateTime.now());
+    private void executeTask(Long participationId) {
+        logger.debug("Processing participation {} to update participant scores.", participationId);
+        try {
+            SecurityUtils.setAuthorizationObject();
 
-        SecurityUtils.setAuthorizationObject();
+            var participation = participationRepository.findById(participationId).orElse(null);
 
-        var result = resultRepository.findById(resultId).orElse(null);
-        var participantScore = participantScoreRepository.findByResultIdWithExercise(resultId);
+            if (!(participation instanceof StudentParticipation studentParticipation)) {
+                logger.warn("Participation {} not found or not a student participation.", participationId);
+                return;
+            }
 
-        if (result == null) {
-            // The result was deleted, we need to check if we have a participant score for it
-            participantScore.ifPresent(this::updateParticipantScore);
-            return;
-        }
-
-        if (!(result.getParticipation() instanceof StudentParticipation participation)) {
-            // We are only interested in student participations
-            return;
-        }
-
-        if (participantScore.isPresent() && participantScore.get().getLastModifiedDate().isAfter(result.getLastModifiedDate())) {
-            // Both the result & participant score exist and the participant score was modified after the result
-            // Ergo: We already processed it, nothing to do!
-            logger.debug("Participant score for result {} was already updated. Skipping.", resultId);
-            return;
-        }
-
-        // The result was updated or created, we need to create or update the associated participant score
-        var score = participantScore.orElseGet(() -> {
-            if (participation.getExercise().isTeamMode()) {
-                var teamScore = new TeamScore();
-                teamScore.setTeam(participation.getTeam().get());
-                teamScore.setExercise(participation.getExercise());
-                return teamScore;
+            Optional<ParticipantScore> participantScore;
+            if (studentParticipation.getExercise().isTeamMode()) {
+                participantScore = teamScoreRepository.findTeamScoreByExerciseAndTeam(studentParticipation.getExercise(), studentParticipation.getTeam().get()).map(score -> score);
             }
             else {
-                var studentScore = new StudentScore();
-                studentScore.setUser(participation.getStudent().get());
-                studentScore.setExercise(participation.getExercise());
-                return studentScore;
+                participantScore = studentScoreRepository.findStudentScoreByExerciseAndUser(studentParticipation.getExercise(), studentParticipation.getStudent().get())
+                        .map(score -> score);
             }
-        });
 
-        updateParticipantScore(score);
+            logger.debug(String.valueOf(participantScore));
+
+            // The result was updated or created, we need to create or update the associated participant score
+            var score = participantScore.orElseGet(() -> {
+                if (studentParticipation.getExercise().isTeamMode()) {
+                    var teamScore = new TeamScore();
+                    teamScore.setTeam(studentParticipation.getTeam().get());
+                    teamScore.setExercise(studentParticipation.getExercise());
+                    return teamScore;
+                }
+                else {
+                    var studentScore = new StudentScore();
+                    studentScore.setUser(studentParticipation.getStudent().get());
+                    studentScore.setExercise(studentParticipation.getExercise());
+                    return studentScore;
+                }
+            });
+
+            updateParticipantScore(score);
+        }
+        catch (Exception e) {
+            logger.error("Exception while processing participation {} for participant scores: {}", participationId, e);
+        }
+        finally {
+            scheduledTasks.remove(participationId);
+        }
     }
 
     /**
@@ -201,12 +217,13 @@ public class ParticipantScoreSchedulerService {
 
         // Persist the changes or delete the participant score if it is not needed anymore
         if (participantScore.getLastRatedResult() == null && participantScore.getLastResult() == null) {
-            logger.debug("Delete participant score {}.", participantScore.getId());
             participantScoreRepository.delete(participantScore);
+            logger.debug("Deleted participant score {}.", participantScore.getId());
         }
         else {
-            logger.debug("Update participant score {}.", participantScore.getId());
-            participantScoreRepository.save(participantScore);
+            participantScore = participantScoreRepository.save(participantScore);
+            logger.debug("Updated participant score {}.", participantScore.getId());
+            logger.debug(String.valueOf(participantScore));
         }
     }
 
@@ -219,16 +236,17 @@ public class ParticipantScoreSchedulerService {
      */
     private Optional<Result> getLastResultForParticipantScore(ParticipantScore participantScore) {
         List<Result> resultOrdered;
-        if (participantScore.getClass().equals(StudentScore.class)) {
-            StudentScore studentScore = (StudentScore) participantScore;
+        if (participantScore instanceof StudentScore studentScore) {
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .toList();
         }
-        else {
-            TeamScore teamScore = (TeamScore) participantScore;
+        else if (participantScore instanceof TeamScore teamScore) {
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream().toList();
+        }
+        else {
+            return Optional.empty();
         }
         // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
         return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
@@ -243,17 +261,18 @@ public class ParticipantScoreSchedulerService {
      */
     private Optional<Result> getLastRatedResultForParticipantScore(ParticipantScore participantScore) {
         List<Result> ratedResultsOrdered;
-        if (participantScore.getClass().equals(StudentScore.class)) {
-            StudentScore studentScore = (StudentScore) participantScore;
+        if (participantScore instanceof StudentScore studentScore) {
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
                     .toList();
         }
-        else {
-            TeamScore teamScore = (TeamScore) participantScore;
+        else if (participantScore instanceof TeamScore teamScore) {
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
                     .toList();
+        }
+        else {
+            return Optional.empty();
         }
         // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
         return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));

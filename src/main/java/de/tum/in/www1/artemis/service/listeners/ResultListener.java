@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
 
 /**
@@ -40,6 +41,8 @@ public class ResultListener {
     @PostUpdate
     @PostRemove
     public void updateParticipantScore(Result result) {
-        instanceMessageSendService.sendResultSchedule(result.getId());
+        if (result.getParticipation() instanceof StudentParticipation participation) {
+            instanceMessageSendService.sendResultSchedule(participation.getId());
+        }
     }
 }

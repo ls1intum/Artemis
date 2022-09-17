@@ -63,6 +63,8 @@ public class ParticipationService {
 
     private final UrlService urlService;
 
+    private final ResultService resultService;
+
     private final CoverageReportRepository coverageReportRepository;
 
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
@@ -70,7 +72,7 @@ public class ParticipationService {
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, ParticipationRepository participationRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
-            ParticipantScoreRepository participantScoreRepository, UrlService urlService, CoverageReportRepository coverageReportRepository) {
+            ParticipantScoreRepository participantScoreRepository, UrlService urlService, ResultService resultService, CoverageReportRepository coverageReportRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -87,6 +89,7 @@ public class ParticipationService {
         this.ratingRepository = ratingRepository;
         this.participantScoreRepository = participantScoreRepository;
         this.urlService = urlService;
+        this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
     }
 
@@ -656,10 +659,9 @@ public class ParticipationService {
             coverageReportRepository.deleteBySubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
-        resultsToBeDeleted.forEach(result -> participantScoreRepository.clearAllByResultId(result.getId()));
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
-        participation.getResults().forEach(result -> resultRepository.deleteById(result.getId()));
+        participation.getResults().forEach(result -> resultService.deleteResult(result.getId()));
     }
 
     /**
