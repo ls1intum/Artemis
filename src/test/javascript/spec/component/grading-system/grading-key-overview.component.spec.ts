@@ -17,6 +17,7 @@ import { GradeStepBoundsPipe } from 'app/shared/pipes/grade-step-bounds.pipe';
 import { MockLocalStorageService } from '../../helpers/mocks/service/mock-local-storage.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { ThemeService } from 'app/core/theme/theme.service';
+import { BonusService } from 'app/grading-system/bonus/bonus.service';
 
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
@@ -52,7 +53,7 @@ describe('GradeKeyOverviewComponent', () => {
 
     beforeEach(() => {
         route = {
-            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params },
+            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params, data: {} },
             parent: {
                 snapshot: { params: {} },
                 parent: {
@@ -77,6 +78,7 @@ describe('GradeKeyOverviewComponent', () => {
                 { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
+                MockProvider(BonusService),
                 MockProvider(ArtemisNavigationUtilService),
                 { provide: LocalStorageService, useClass: MockLocalStorageService },
             ],
