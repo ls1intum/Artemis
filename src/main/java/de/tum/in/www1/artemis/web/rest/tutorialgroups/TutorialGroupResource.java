@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
-import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
@@ -148,26 +147,6 @@ public class TutorialGroupResource {
         this.preventCircularJsonConversion(tutorialGroup);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
         return ResponseEntity.ok().body(tutorialGroup);
-    }
-
-    /**
-     * GET /courses/:courseId/tutorial-groups/:tutorialGroupId/tutorial-group : gets the sessions of the tutorial group with the specified id.
-     *
-     * @param tutorialGroupId the id of the tutorial group to retrieve the sessions for
-     * @param courseId        the id of the course to which the tutorial group belongs
-     * @return ResponseEntity with status 200 (OK) and with body the sessions of the tutorial group
-     */
-    @GetMapping("/courses/{courseId}/tutorial-groups/{tutorialGroupId}/sessions")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<Set<TutorialGroupSession>> getSessions(@PathVariable Long tutorialGroupId, @PathVariable Long courseId) {
-        log.debug("REST request to get the sessions of tutorial group: {} of course: {}", tutorialGroupId, courseId);
-
-        var tutorialGroup = tutorialGroupRepository.findByIdWithTeachingAssistantAndRegistrationsElseThrow(tutorialGroupId);
-
-        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, tutorialGroup.getCourse(), null);
-
-        return ResponseEntity.ok().body(tutorialGroupSessionRepository.findAllByTutorialGroupId(tutorialGroupId));
     }
 
     /**

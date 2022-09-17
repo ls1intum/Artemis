@@ -57,12 +57,6 @@ export class TutorialGroupSessionService {
             .pipe(map((res: EntityResponseType) => this.convertTutorialGroupSessionResponseDatesFromServer(res)));
     }
 
-    getSessions(courseId: number, tutorialGroupId: number): Observable<EntityArrayResponseType> {
-        return this.httpClient
-            .get<TutorialGroupSession[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions`, { observe: 'response' })
-            .pipe(map((res: EntityArrayResponseType) => this.convertTutorialGroupSessionsResponseArrayDatesFromServer(res)));
-    }
-
     delete(courseId: number, tutorialGroupId: number, sessionId: number): Observable<HttpResponse<void>> {
         return this.httpClient.delete<void>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/${tutorialGroupId}/sessions/${sessionId}`, { observe: 'response' });
     }
