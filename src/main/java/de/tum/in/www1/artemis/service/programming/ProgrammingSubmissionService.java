@@ -441,6 +441,26 @@ public class ProgrammingSubmissionService extends SubmissionService {
     }
 
     /**
+     * Return the next submission ordered by individual due date of its participation
+     * without a manual result.
+     * No manual result means that no user has started an assessment for the corresponding submission yet.
+     * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
+     *
+     * @param programmingExercise the exercise for which we want to retrieve a submission without manual result
+     * @param correctionRound     - the correction round we want our submission to have results for
+     * @param examMode            flag to determine if test runs should be removed. This should be set to true for exam exercises
+     * @return a programmingSubmission without any manual result or an empty Optional if no submission without manual result could be found
+     */
+    public Optional<ProgrammingSubmission> getNextAssessableSubmission(ProgrammingExercise programmingExercise, boolean examMode, int correctionRound) {
+        var submissionWithoutResult = super.getNextAssessableSubmission(programmingExercise, examMode, correctionRound);
+        if (submissionWithoutResult.isPresent()) {
+            ProgrammingSubmission programmingSubmission = (ProgrammingSubmission) submissionWithoutResult.get();
+            return Optional.of(programmingSubmission);
+        }
+        return Optional.empty();
+    }
+
+    /**
      * Given an exercise id, find a random programming submission for that exercise which still doesn't have any manual result. No manual result means that no user has started an
      * assessment for the corresponding submission yet.
      * For exam exercises we should also remove the test run participations as these should not be graded by the tutors.
