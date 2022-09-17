@@ -122,9 +122,9 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @BeforeEach
     void setup() throws Exception {
         database.addUsers(2, 1, 1, 1);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");
 
@@ -140,8 +140,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         Files.createDirectory(folderPath).toFile();
 
         var localRepoUrl = new GitUtilService.MockFileRepositoryUrl(studentRepository.localRepoFile);
-        database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
-        participation = (ProgrammingExerciseStudentParticipation) studentParticipationRepository.findAll().get(0);
+        participation = database.addStudentParticipationForProgrammingExerciseForLocalRepo(programmingExercise, "student1", localRepoUrl.getURI());
         programmingExercise.setTestRepositoryUrl(localRepoUrl.toString());
 
         // Create template repo

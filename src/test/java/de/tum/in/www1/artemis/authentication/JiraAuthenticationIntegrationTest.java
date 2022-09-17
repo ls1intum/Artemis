@@ -84,7 +84,9 @@ class JiraAuthenticationIntegrationTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void setUp() {
         course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 

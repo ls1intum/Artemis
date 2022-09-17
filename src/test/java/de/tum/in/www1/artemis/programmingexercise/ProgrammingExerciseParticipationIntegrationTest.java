@@ -58,8 +58,9 @@ class ProgrammingExerciseParticipationIntegrationTest extends AbstractSpringInte
     @BeforeEach
     void initTestCase() {
         database.addUsers(3, 2, 0, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
     }
 
     @AfterEach

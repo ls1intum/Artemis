@@ -80,8 +80,10 @@ class ProgrammingAssessmentIntegrationTest extends AbstractSpringIntegrationBamb
     @BeforeEach
     void initTestCase() {
         database.addUsers(3, 2, 0, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+
         programmingExercise.setAssessmentType(AssessmentType.SEMI_AUTOMATIC);
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusDays(1));
         database.addMaxScoreAndBonusPointsToExercise(programmingExercise);

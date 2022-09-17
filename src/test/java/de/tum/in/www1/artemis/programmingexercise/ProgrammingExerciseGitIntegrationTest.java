@@ -48,8 +48,10 @@ class ProgrammingExerciseGitIntegrationTest extends AbstractSpringIntegrationBam
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(3, 2, 0, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
 

@@ -19,6 +19,7 @@ import com.offbytwo.jenkins.model.JobWithDetails;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.domain.BuildLogEntry;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
@@ -52,7 +53,9 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetLatestBuildLogsFails() throws Exception {
-        var programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        var programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 
         var submission = new ProgrammingSubmission();

@@ -872,8 +872,7 @@ public class ProgrammingExerciseTestService {
 
     // TEST
     void startProgrammingExercise_correctInitializationState() throws Exception {
-        var user = userRepo.findOneByLogin(studentLogin).orElseThrow();
-        user.setLogin("edx_student1");
+        var user = database.createAndSaveUser("edx_student1");
         user.setInternal(true);
         user = userRepo.save(user);
 

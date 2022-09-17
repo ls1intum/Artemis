@@ -95,8 +95,10 @@ class InternalAuthenticationIntegrationTest extends AbstractSpringIntegrationJen
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
 
         database.addUsers(1, 0, 0, 0);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        var course = database.addCourseWithOneProgrammingExercise();
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
+
         ltiLaunchRequest = AuthenticationIntegrationTestHelper.setupDefaultLtiLaunchRequest();
         doReturn(null).when(ltiService).verifyRequest(any());
 

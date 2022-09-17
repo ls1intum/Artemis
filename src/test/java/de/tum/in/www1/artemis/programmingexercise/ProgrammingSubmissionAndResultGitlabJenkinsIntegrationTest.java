@@ -74,13 +74,15 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         gitlabRequestMockProvider.enableMockingOfRequests();
 
         database.addUsers(3, 2, 0, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
+        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
+
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
-        exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(0);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
     }
 
     @AfterEach
@@ -95,8 +97,10 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldReceiveBuildLogsOnNewStudentParticipationResult() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        var exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
@@ -124,8 +128,10 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldParseLegacyBuildLogsWhenPipelineLogsNotPresent() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        var exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, true);
 
@@ -146,8 +152,10 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldReturnBadRequestWhenPlanKeyDoesntExist(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet
@@ -212,8 +220,10 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
 
@@ -235,8 +245,10 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldNotReceiveBuildLogsOnStudentParticipationWithoutSubmissionNorResult(ProgrammingLanguage programmingLanguage, boolean enableStaticCodeAnalysis) throws Exception {
         // Precondition: Database has participation without result and a programming
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
+        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
         // Call programming-exercises/new-result which do not include build log entries yet

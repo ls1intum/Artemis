@@ -1,9 +1,11 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
@@ -34,6 +36,9 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Autowired
     private ExerciseRepository exerciseRepository;
+
+    @Autowired
+    private ExamRepository examRepository;
 
     @Autowired
     private ParticipationRepository participationRepository;
@@ -110,7 +115,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         var user = database.getUserByLogin("student1");
         Course course = database.createCourseWithExamAndExerciseGroupAndExercises(user);
         course = courseRepository.findByIdWithEagerExercisesElseThrow(course.getId());
-        TextExercise textExercise = (TextExercise) exerciseRepository.findAll().stream().filter(e -> e instanceof TextExercise).findFirst().get();
+        var exam = examRepository.findByCourseId(course.getId()).get(0);
+        var textExercise = examRepository.findAllExercisesByExamId(exam.getId()).stream().filter(ex -> ex instanceof TextExercise).findFirst().get();
         StatsForDashboardDTO statsForDashboardDTO = request.get("/api/exercises/" + textExercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.OK,
                 StatsForDashboardDTO.class);
         assertThat(statsForDashboardDTO.getNumberOfSubmissions().inTime()).isZero();
@@ -128,22 +134,22 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @WithMockUser(username = "student1", roles = "USER")
     void testFilterOutExercisesThatUserShouldNotSee() throws Exception {
         assertThrows(EntityNotFoundException.class, () -> exerciseService.findOneWithDetailsForStudents(Long.MAX_VALUE, database.getUserByLogin("student1")));
-        database.createCoursesWithExercisesAndLectures(false);
-        var exercises = exerciseRepository.findAll();
+        var course = database.createCoursesWithExercisesAndLectures(false).get(0); // the course with exercises
+        var exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         var student = userRepository.getUserWithGroupsAndAuthorities("student1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(Set.of(), student)).isEmpty();
-        exercises.get(0).setReleaseDate(ZonedDateTime.now().plusDays(1));
-        exerciseRepository.save(exercises.get(0));
-        exercises = exerciseRepository.findAll();
+        var exercise = exercises.iterator().next();
+        exercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        exerciseRepository.save(exercise);
+        exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).hasSize(exercises.size() - 1);
 
         var tutor = userRepository.getUserWithGroupsAndAuthorities("tutor1");
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), tutor)).hasSize(exercises.size());
 
-        Course onlineCourse = exercises.get(0).getCourseViaExerciseGroupOrCourseMember();
-        onlineCourse.setOnlineCourse(true);
-        courseRepository.save(onlineCourse);
-        exercises = exerciseRepository.findAll();
+        course.setOnlineCourse(true);
+        courseRepository.save(course);
+        exercises = exerciseRepository.findByCourseIdWithCategories(course.getId());
         assertThat(exerciseService.filterOutExercisesThatUserShouldNotSee(new HashSet<>(exercises), student)).isEmpty();
 
         database.createCoursesWithExercisesAndLectures(false);
@@ -245,13 +251,19 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void testGetUpcomingExercises() throws Exception {
+        var now = ZonedDateTime.now().truncatedTo(ChronoUnit.DAYS);
         List<Exercise> exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
-        assertThat(exercises).isEmpty();
+        for (var exercise : exercises) {
+            assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
+        }
+        var size = exercises.size();
 
         // Test for exercise with upcoming due date.
         Course course = database.addCourseWithOneProgrammingExercise();
+        var exercise = course.getExercises().iterator().next();
+        assertThat(exercise.getDueDate()).isAfterOrEqualTo(now);
         exercises = request.getList("/api/exercises/upcoming", HttpStatus.OK, Exercise.class);
-        assertThat(exercises).hasSize(1).contains(course.getExercises().stream().findFirst().get());
+        assertThat(exercises).hasSize(size + 1).contains(exercise);
     }
 
     @Test
@@ -466,22 +478,21 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
     void testGetExerciseForAssessmentDashboard_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_programmingExerciseWithAutomaticAssessment() throws Exception {
-        database.addCourseWithOneProgrammingExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
+        var exercise = database.addCourseWithOneProgrammingExercise().getExercises().iterator().next();
+        request.get("/api/exercises/" + exercise.getId() + "/for-assessment-dashboard", HttpStatus.BAD_REQUEST, Exercise.class);
     }
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetExerciseForAssessmentDashboard_exerciseWithTutorParticipation() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        var exercise = exerciseRepository.findAll().get(0);
+        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
         var tutorParticipation = new TutorParticipation().tutor(database.getUserByLogin("tutor1")).assessedExercise(exercise)
                 .status(TutorParticipationStatus.REVIEWED_INSTRUCTIONS);
         tutorParticipationRepo.save(tutorParticipation);
@@ -540,8 +551,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "tutor6", roles = "TA")
     void testGetStatsForExerciseAssessmentDashboard_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.get("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
+        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        request.get("/api/exercises/" + exercise.getId() + "/stats-for-assessment-dashboard", HttpStatus.FORBIDDEN, Exercise.class);
     }
 
     @Test
@@ -553,16 +564,16 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
                 request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.OK);
                 assertThat(exercise.getStudentParticipations()).as("Student participations have been deleted").isEmpty();
                 assertThat(exercise.getTutorParticipations()).as("Tutor participations have been deleted").isEmpty();
+                assertThat(participationRepository.findWithIndividualDueDateByExerciseId(exercise.getId())).isEmpty();
             }
         }
-        assertThat(participationRepository.findAll()).isEmpty();
     }
 
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     void testResetExercise_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/reset", HttpStatus.FORBIDDEN);
+        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        request.delete("/api/exercises/" + exercise.getId() + "/reset", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -593,8 +604,8 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
     @Test
     @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
     void testCleanupExercise_forbidden() throws Exception {
-        database.addCourseWithOneReleasedTextExercise();
-        request.delete("/api/exercises/" + exerciseRepository.findAll().get(0).getId() + "/cleanup", HttpStatus.FORBIDDEN);
+        var exercise = database.addCourseWithOneReleasedTextExercise().getExercises().iterator().next();
+        request.delete("/api/exercises/" + exercise.getId() + "/cleanup", HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -678,7 +689,7 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         participationRepository.save(studentParticipation3);
 
         ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
-        assertThat(latestDueDate).isEqualToIgnoringNanos(studentParticipation3.getIndividualDueDate());
+        assertThat(latestDueDate).isCloseTo(studentParticipation3.getIndividualDueDate(), within(1, ChronoUnit.SECONDS));
     }
 
     @Test
@@ -690,6 +701,6 @@ class ExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         database.createAndSaveParticipationForExercise(exercise, "student2");
 
         ZonedDateTime latestDueDate = request.get("/api/exercises/" + exercise.getId() + "/latest-due-date", HttpStatus.OK, ZonedDateTime.class);
-        assertThat(latestDueDate).isEqualToIgnoringNanos(exercise.getDueDate());
+        assertThat(latestDueDate).isCloseTo(exercise.getDueDate(), within(1, ChronoUnit.SECONDS));
     }
 }

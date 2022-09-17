@@ -2432,6 +2432,8 @@ public class DatabaseUtilService {
         programmingExercise.setShortName(shortName);
         programmingExercise.generateAndSetProjectKey();
         programmingExercise.setReleaseDate(ZonedDateTime.now().plusDays(1));
+        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
+        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().plusDays(5));
         programmingExercise.setBonusPoints(0D);
         programmingExercise.setPublishBuildPlanUrl(false);
@@ -2467,8 +2469,6 @@ public class DatabaseUtilService {
         else {
             programmingExercise.setPackageName("de.test");
         }
-        programmingExercise.setDueDate(ZonedDateTime.now().plusDays(2));
-        programmingExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(3));
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
@@ -2526,7 +2526,7 @@ public class DatabaseUtilService {
         }
     }
 
-    public void addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
+    public Course addCourseWithOneProgrammingExerciseAndSpecificTestCases() {
         Course course = addCourseWithOneProgrammingExercise();
         ProgrammingExercise programmingExercise = findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
 
@@ -2543,6 +2543,7 @@ public class DatabaseUtilService {
         assertThat(tests).as("test case is initialized").hasSize(3);
 
         courseRepo.findById(course.getId()).get();
+        return course;
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {

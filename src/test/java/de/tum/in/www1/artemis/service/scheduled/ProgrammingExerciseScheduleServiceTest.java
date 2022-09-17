@@ -70,13 +70,14 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         doReturn(ObjectId.fromString("fffb09455885349da6e19d3ad7fd9c3404c5a0df")).when(gitService).getLastCommitHash(any());
 
         database.addUsers(3, 2, 0, 2);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student3");
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipations().get(0);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
     }
 
     @AfterEach
