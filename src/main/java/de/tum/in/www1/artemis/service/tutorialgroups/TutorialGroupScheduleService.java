@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUt
 
 import java.time.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupScheduleRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupSessionRepository;
 import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.errors.ScheduleOverlapsWithSessionException;
 
 @Service
 public class TutorialGroupScheduleService {
@@ -37,10 +39,31 @@ public class TutorialGroupScheduleService {
 
     public void saveScheduleAndGenerateScheduledSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup,
             TutorialGroupSchedule tutorialGroupSchedule) {
+        // Generate Sessions
+        var individualSessions = generateSessions(tutorialGroupsConfiguration, tutorialGroupSchedule);
+        // check for overlap with existing individual sessions
+        var overlappingIndividualSessions = new HashSet<TutorialGroupSession>();
+        for (var individualSession : individualSessions) {
+            var overlappingSession = tutorialGroupSessionRepository.findOverlappingIndividualSessionsInSameTutorialGroup(tutorialGroup, individualSession.getStart(),
+                    individualSession.getEnd());
+            if (!overlappingSession.isEmpty()) {
+                overlappingIndividualSessions.addAll(overlappingSession);
+            }
+        }
+        if (!overlappingIndividualSessions.isEmpty()) {
+            throw new ScheduleOverlapsWithSessionException(overlappingIndividualSessions, ZoneId.of(tutorialGroupsConfiguration.getTimeZone()));
+        }
         tutorialGroupSchedule.setTutorialGroup(tutorialGroup);
+        if (tutorialGroupSchedule.getId() != null) {
+            tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(tutorialGroupSchedule);
+        }
+
         TutorialGroupSchedule savedSchedule = tutorialGroupScheduleRepository.save(tutorialGroupSchedule);
-        var individualSessions = generateSessions(tutorialGroupsConfiguration, savedSchedule);
-        tutorialGroupSessionRepository.saveAllAndFlush(individualSessions);
+        for (var individualSession : individualSessions) {
+            individualSession.setTutorialGroupSchedule(savedSchedule);
+            individualSession.setTutorialGroup(savedSchedule.getTutorialGroup());
+        }
+        tutorialGroupSessionRepository.saveAll(individualSessions);
     }
 
     public List<TutorialGroupSession> generateSessions(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroupSchedule tutorialGroupSchedule) {
@@ -100,7 +123,6 @@ public class TutorialGroupScheduleService {
 
     private void updateAllSessionsToNewSchedule(TutorialGroupsConfiguration tutorialGroupsConfiguration, TutorialGroup tutorialGroup, TutorialGroupSchedule oldSchedule,
             TutorialGroupSchedule newSchedule) {
-        tutorialGroupSessionRepository.deleteByTutorialGroupSchedule(oldSchedule);
         overrideScheduleProperties(newSchedule, oldSchedule);
         saveScheduleAndGenerateScheduledSessions(tutorialGroupsConfiguration, tutorialGroup, oldSchedule);
     }

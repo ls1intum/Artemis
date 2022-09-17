@@ -1,5 +1,8 @@
 {
     "artemisApp": {
+        "errors": {
+            "scheduleOverlapsWithSession": "Der Zeitraum überlappt mit den folgenden Terminen der Übungsgruppe: {{ sessions }}"
+        },
         "tutorialGroup": {
             "deleted": "Übungsgruppe gelöscht"
         },

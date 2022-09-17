@@ -1,5 +1,8 @@
 {
     "artemisApp": {
+        "errors": {
+            "scheduleOverlapsWithSession": "The schedule overlaps with the following sessions: {{ sessions }}"
+        },
         "tutorialGroup": {
             "deleted": "Tutorial group deleted"
         },

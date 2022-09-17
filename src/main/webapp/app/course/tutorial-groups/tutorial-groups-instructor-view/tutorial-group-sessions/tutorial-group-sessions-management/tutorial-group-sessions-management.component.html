@@ -1,5 +1,5 @@
 <jhi-loading-indicator-container [isLoading]="isLoading">
-    <div class="row" *ngIf="tutorialGroup && upcomingSessions">
+    <div class="row" *ngIf="tutorialGroup && (upcomingSessions || pastSessions)">
         <div class="col-12">
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.manageSessions.title' | artemisTranslate }}</h4>
@@ -21,7 +21,7 @@
                 {{ 'artemisApp.manageSessions.timeZone' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
             </div>
         </div>
-        <div class="table-responsive" *ngIf="upcomingSessions && upcomingSessions.length > 0">
+        <div class="table-responsive">
             <table class="table table-bordered">
                 <thead>
                     <tr>
@@ -32,7 +32,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let session of pastSessions" [class]="determineRowClass(session)">
+                    <tr *ngFor="let session of upcomingSessions" [class]="determineRowClass(session)">
                         <td>
                             {{ session.start | artemisDate: 'short-date':false:this.tutorialGroupsConfiguration.timeZone }}
                             {{ session.start | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }} -
@@ -53,7 +53,7 @@
                     <tr class="table-dark text-center">
                         <td colspan="4">UPCOMING ↑ PAST ↓</td>
                     </tr>
-                    <tr *ngFor="let session of upcomingSessions" [class]="determineRowClass(session)">
+                    <tr *ngFor="let session of pastSessions" [class]="determineRowClass(session)">
                         <td>
                             {{ session.start | artemisDate: 'short-date':false:this.tutorialGroupsConfiguration.timeZone }}
                             {{ session.start | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }} -

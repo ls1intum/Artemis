@@ -43,6 +43,15 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
             SELECT tutorialGroupSession
             FROM TutorialGroupSession tutorialGroupSession
             WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
+            AND tutorialGroupSession.tutorialGroupSchedule IS NULL
+            AND tutorialGroupSession.tutorialGroup = :#{#tutorialGroup}""")
+    Set<TutorialGroupSession> findOverlappingIndividualSessionsInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
+            @Param("end") ZonedDateTime end);
+
+    @Query("""
+            SELECT tutorialGroupSession
+            FROM TutorialGroupSession tutorialGroupSession
+            WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
             AND tutorialGroupSession.status = de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus.ACTIVE
                 AND tutorialGroupSession.tutorialGroup.course = :#{#course}""")
     Set<TutorialGroupSession> findAllActiveBetween(@Param("course") Course course, @Param("start") ZonedDateTime start, @Param("end") ZonedDateTime end);

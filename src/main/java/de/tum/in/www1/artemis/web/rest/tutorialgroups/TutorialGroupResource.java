@@ -39,7 +39,7 @@ import de.tum.in.www1.artemis.web.rest.errors.EntityNotFoundException;
 @RequestMapping("/api")
 public class TutorialGroupResource {
 
-    private static final String ENTITY_NAME = "tutorialGroup";
+    public static final String ENTITY_NAME = "tutorialGroup";
 
     private final Logger log = LoggerFactory.getLogger(TutorialGroupResource.class);
 

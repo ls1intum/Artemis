@@ -122,7 +122,18 @@ export class EditTutorialGroupComponent implements OnInit {
                 }),
             )
             .subscribe({
-                error: (res: HttpErrorResponse) => onError(this.alertService, res),
+                error: (res: HttpErrorResponse) => this.onError(res),
             });
+    }
+
+    onError(httpErrorResponse: HttpErrorResponse) {
+        const error = httpErrorResponse.error;
+        if (error && error.errorKey && error.errorKey === 'scheduleOverlapsWithSession') {
+            this.alertService.error(error.message, error.params);
+        } else {
+            this.alertService.error('error.unexpectedError', {
+                error: httpErrorResponse.message,
+            });
+        }
     }
 }
