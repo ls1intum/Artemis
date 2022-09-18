@@ -4185,7 +4185,7 @@ public class DatabaseUtilService {
         return tutorialGroupSession;
     }
 
-    public TutorialGroupFreePeriod createTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
+    public TutorialGroupFreePeriod addTutorialGroupFreeDay(Long tutorialGroupsConfigurationId, LocalDate date, String reason) {
         var tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository.findByIdWithEagerTutorialGroupFreePeriodsElseThrow(tutorialGroupsConfigurationId);
 
         TutorialGroupFreePeriod newTutorialGroupFreePeriod = new TutorialGroupFreePeriod();

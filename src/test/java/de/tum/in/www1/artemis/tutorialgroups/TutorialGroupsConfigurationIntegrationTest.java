@@ -138,7 +138,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractSpringIn
                 HttpStatus.CREATED);
         databaseUtilService.createIndividualTutorialGroupSession(persistedTutorialGroup.getId(), ZonedDateTime.of(2022, 8, 1, 10, 0, 0, 0, ZoneId.of("UTC")),
                 ZonedDateTime.of(2022, 8, 1, 11, 0, 0, 0, ZoneId.of("UTC"))).getId();
-        databaseUtilService.createTutorialGroupFreeDay(configuration.getId(), LocalDate.of(2022, 8, 8), "Holiday");
+        databaseUtilService.addTutorialGroupFreeDay(configuration.getId(), LocalDate.of(2022, 8, 8), "Holiday");
 
         var sessions = getSessionAscending(persistedTutorialGroup);
         assertThat(sessions).hasSize(3);
@@ -179,7 +179,7 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractSpringIn
                 HttpStatus.CREATED);
         databaseUtilService.createIndividualTutorialGroupSession(persistedTutorialGroup.getId(), ZonedDateTime.of(2022, 8, 1, 10, 0, 0, 0, ZoneId.of("UTC")),
                 ZonedDateTime.of(2022, 8, 1, 11, 0, 0, 0, ZoneId.of("UTC"))).getId();
-        databaseUtilService.createTutorialGroupFreeDay(configuration.getId(), LocalDate.of(2022, 8, 8), "Holiday");
+        databaseUtilService.addTutorialGroupFreeDay(configuration.getId(), LocalDate.of(2022, 8, 8), "Holiday");
 
         var sessions = getSessionAscending(persistedTutorialGroup);
         assertThat(sessions).hasSize(3);

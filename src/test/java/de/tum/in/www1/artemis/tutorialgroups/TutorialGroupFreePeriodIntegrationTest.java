@@ -129,7 +129,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void getOneOfConfiguration_asInstructor_shouldReturnTutorialGroupFreePeriod() throws Exception {
-        var freePeriod = databaseUtilService.createTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 1), "Holiday");
+        var freePeriod = databaseUtilService.addTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 1), "Holiday");
         var freePeriodFromRequest = request.get(
                 "/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/" + exampleConfigurationId + "/tutorial-free-periods/" + freePeriod.getId(), HttpStatus.OK,
                 TutorialGroupFreePeriod.class);
@@ -179,7 +179,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void create_overlapsWithExistingFreePeriod_shouldReturnBadRequest() throws Exception {
-        databaseUtilService.createTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 1), "Holiday");
+        databaseUtilService.addTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 1), "Holiday");
         var dto = createTutorialGroupFreePeriodDTO(LocalDate.of(2022, 8, 1), "Holiday");
         request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/" + exampleConfigurationId + "/tutorial-free-periods", dto,
                 TutorialGroupFreePeriod.class, HttpStatus.BAD_REQUEST);
@@ -217,8 +217,8 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void update_overlapsWithExistingFreePeriod_shouldReturnBadRequest() throws Exception {
-        var periodId = databaseUtilService.createTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 1), "Holiday");
-        databaseUtilService.createTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 2), "Another Holiday");
+        var periodId = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 1), "Holiday");
+        databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 2), "Another Holiday");
 
         var dto = createTutorialGroupFreePeriodDTO(LocalDate.of(2022, 8, 2), "Holiday");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/" + exampleConfigurationId + "/tutorial-free-periods/" + periodId, dto,
@@ -228,7 +228,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractSpringIntegr
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void update_justReasonChange_shouldUpdateFreePeriodReason() throws Exception {
-        var periodId = databaseUtilService.createTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 1), "Holiday").getId();
+        var periodId = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, LocalDate.of(2022, 8, 1), "Holiday").getId();
         var dto = createTutorialGroupFreePeriodDTO(LocalDate.of(2022, 8, 1), "Another Holiday   ");
         request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/" + exampleConfigurationId + "/tutorial-free-periods/" + periodId, dto,
                 TutorialGroupFreePeriod.class, HttpStatus.OK);

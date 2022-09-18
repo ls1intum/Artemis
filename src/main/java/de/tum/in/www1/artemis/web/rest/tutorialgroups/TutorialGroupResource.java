@@ -22,9 +22,11 @@ import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupsConfigurationRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
@@ -55,14 +57,18 @@ public class TutorialGroupResource {
 
     private final TutorialGroupScheduleService tutorialGroupScheduleService;
 
+    private final TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository;
+
     public TutorialGroupResource(AuthorizationCheckService authorizationCheckService, UserRepository userRepository, CourseRepository courseRepository,
-            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupScheduleService tutorialGroupScheduleService) {
+            TutorialGroupService tutorialGroupService, TutorialGroupRepository tutorialGroupRepository, TutorialGroupScheduleService tutorialGroupScheduleService,
+            TutorialGroupsConfigurationRepository tutorialGroupsConfigurationRepository) {
         this.tutorialGroupService = tutorialGroupService;
         this.courseRepository = courseRepository;
         this.userRepository = userRepository;
         this.authorizationCheckService = authorizationCheckService;
         this.tutorialGroupRepository = tutorialGroupRepository;
         this.tutorialGroupScheduleService = tutorialGroupScheduleService;
+        this.tutorialGroupsConfigurationRepository = tutorialGroupsConfigurationRepository;
     }
 
     /**
@@ -162,9 +168,11 @@ public class TutorialGroupResource {
         var course = courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
 
-        if (course.getTutorialGroupsConfiguration() == null) {
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
+        if (configurationOptional.isEmpty()) {
             throw new BadRequestException("The course has no tutorial groups configuration");
         }
+        var configuration = configurationOptional.get();
 
         tutorialGroup.setCourse(course);
         trimStringFields(tutorialGroup);
@@ -177,7 +185,7 @@ public class TutorialGroupResource {
 
         // persist the schedule and generate the sessions
         if (tutorialGroupSchedule != null) {
-            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(course.getTutorialGroupsConfiguration(), persistedTutorialGroup, tutorialGroupSchedule);
+            tutorialGroupScheduleService.saveScheduleAndGenerateScheduledSessions(configuration, persistedTutorialGroup, tutorialGroupSchedule);
             persistedTutorialGroup.setTutorialGroupSchedule(tutorialGroupSchedule);
         }
 
@@ -232,8 +240,14 @@ public class TutorialGroupResource {
         overrideValues(updatedTutorialGroup, tutorialGroupFromDatabase);
         var persistedTutorialGroup = tutorialGroupRepository.save(tutorialGroupFromDatabase);
 
-        tutorialGroupScheduleService.updateSchedule(tutorialGroupFromDatabase.getCourse().getTutorialGroupsConfiguration(), persistedTutorialGroup,
-                Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()), Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+        var configuration = configurationOptional.get();
+
+        tutorialGroupScheduleService.updateSchedule(configuration, persistedTutorialGroup, Optional.ofNullable(persistedTutorialGroup.getTutorialGroupSchedule()),
+                Optional.ofNullable(updatedTutorialGroup.getTutorialGroupSchedule()));
 
         this.preventCircularJsonConversion(persistedTutorialGroup);
 

@@ -158,7 +158,7 @@ public class TutorialGroupSessionIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void createNewSession_onTutorialGroupFreeDay_shouldCreateAsCancelled() throws Exception {
-        databaseUtilService.createTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 1), "Holiday");
+        databaseUtilService.addTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 1), "Holiday");
         var dto = createSessionDTO(LocalDate.of(2022, 8, 1), LocalTime.of(10, 0), LocalTime.of(12, 0), "Room 303");
         var sessionId = request.postWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/sessions", dto,
                 TutorialGroupSession.class, HttpStatus.CREATED).getId();
@@ -256,7 +256,7 @@ public class TutorialGroupSessionIntegrationTest extends AbstractSpringIntegrati
     void updateSession_nowOnTutorialGroupFreeDay_shouldUpdateAsCancelled() throws Exception {
         var session = databaseUtilService.createIndividualTutorialGroupSession(exampleOneTutorialGroupId, ZonedDateTime.of(2022, 8, 1, 10, 0, 0, 0, ZoneId.of("Europe/Bucharest")),
                 ZonedDateTime.of(2022, 8, 1, 11, 0, 0, 0, ZoneId.of("Europe/Bucharest")));
-        databaseUtilService.createTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 10), "Holiday");
+        databaseUtilService.addTutorialGroupFreeDay(exampleOneTutorialGroupId, LocalDate.of(2022, 8, 10), "Holiday");
         var dto = createSessionDTO(LocalDate.of(2022, 8, 10), LocalTime.of(5, 0), LocalTime.of(20, 0), "Zoom");
         var updatedSessionId = request.putWithResponseBody("/api/courses/" + exampleCourseId + "/tutorial-groups/" + exampleOneTutorialGroupId + "/sessions/" + session.getId(),
                 dto, TutorialGroupSession.class, HttpStatus.OK).getId();
