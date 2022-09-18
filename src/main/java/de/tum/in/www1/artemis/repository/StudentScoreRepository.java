@@ -24,7 +24,7 @@ public interface StudentScoreRepository extends JpaRepository<StudentScore, Long
     void deleteAllByUser(User user);
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "exercise", "lastResult", "lastRatedResult" })
-    Optional<StudentScore> findStudentScoreByExerciseAndUser(Exercise exercise, User user);
+    Optional<StudentScore> findByExercise_IdAndUser_Id(Long exerciseId, Long userId);
 
     @EntityGraph(type = LOAD, attributePaths = { "user", "exercise", "lastResult", "lastRatedResult" })
     List<StudentScore> findAllByExerciseIn(Set<Exercise> exercises, Pageable pageable);

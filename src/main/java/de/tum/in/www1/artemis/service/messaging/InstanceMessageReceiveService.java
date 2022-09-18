@@ -132,9 +132,9 @@ public class InstanceMessageReceiveService {
             SecurityUtils.setAuthorizationObject();
             processScheduleExamMonitoringCancel(message.getMessageObject());
         });
-        hazelcastInstance.<Long>getTopic("participant-score-schedule").addMessageListener(message -> {
+        hazelcastInstance.<Long[]>getTopic("participant-score-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleResult(message.getMessageObject());
+            processScheduleResult(message.getMessageObject()[0], message.getMessageObject()[1]);
         });
     }
 
@@ -235,8 +235,8 @@ public class InstanceMessageReceiveService {
         examMonitoringScheduleService.cancelExamMonitoringTask(examId);
     }
 
-    public void processScheduleResult(Long participationId) {
+    public void processScheduleResult(Long exerciseId, Long participantId) {
         // log.info("Received schedule participant score update for result {}", resultId);
-        participantScoreSchedulerService.scheduleTask(participationId);
+        participantScoreSchedulerService.scheduleTask(exerciseId, participantId);
     }
 }

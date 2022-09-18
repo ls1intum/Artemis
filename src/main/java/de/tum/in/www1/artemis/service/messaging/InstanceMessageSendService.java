@@ -106,5 +106,5 @@ public interface InstanceMessageSendService {
      * Send a message to the main server that schedules to process the result for the participant scores
      * @param resultId the id of the result that was created, updated, or removed
      */
-    void sendResultSchedule(Long participationId);
+    void sendResultSchedule(Long exerciseId, Long participantId);
 }

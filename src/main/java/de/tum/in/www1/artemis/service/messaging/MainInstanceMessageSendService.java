@@ -103,7 +103,7 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
     }
 
     @Override
-    public void sendResultSchedule(Long participationId) {
-        instanceMessageReceiveService.processScheduleResult(participationId);
+    public void sendResultSchedule(Long exerciseId, Long participantId) {
+        instanceMessageReceiveService.processScheduleResult(exerciseId, participantId);
     }
 }

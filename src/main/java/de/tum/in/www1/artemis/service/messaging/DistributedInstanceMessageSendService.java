@@ -130,12 +130,12 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendResultSchedule(Long participationId) {
+    public void sendResultSchedule(Long exerciseId, Long participantId) {
         // log.info("Sending schedule participant score update for result {} to broker.", resultId);
-        sendMessageDelayed("participant-score-schedule", participationId);
+        sendMessageDelayed("participant-score-schedule", exerciseId, participantId);
     }
 
-    private void sendMessageDelayed(String destination, Long payload) {
+    private void sendMessageDelayed(String destination, Long... payload) {
         exec.schedule(() -> hazelcastInstance.getTopic(destination).publish(payload), 1, TimeUnit.SECONDS);
     }
 }

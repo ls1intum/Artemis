@@ -4,6 +4,7 @@ import static de.tum.in.www1.artemis.domain.enumeration.InitializationState.*;
 
 import java.time.ZonedDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -628,9 +629,9 @@ public class ParticipationService {
             gitService.deleteLocalRepository(repositoryUrl);
         }
 
-        complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
-        complaintRepository.deleteByResult_Participation_Id(participationId);
-        ratingRepository.deleteByResult_Participation_Id(participationId);
+        // complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
+        // complaintRepository.deleteByResult_Participation_Id(participationId);
+        // ratingRepository.deleteByResult_Participation_Id(participationId);
 
         deleteResultsAndSubmissionsOfParticipation(participationId);
 
@@ -651,17 +652,16 @@ public class ParticipationService {
         var participation = participationRepository.findByIdWithResultsAndSubmissionsResults(participationId)
                 .orElseThrow(() -> new EntityNotFoundException("Participation", participationId));
         Set<Submission> submissions = participation.getSubmissions();
-        List<Result> resultsToBeDeleted = new ArrayList<>();
-
+        ArrayList<Result> resultsToBeDeleted = submissions.stream().flatMap(submission -> submission.getResults().stream()).collect(Collectors.toCollection(ArrayList::new));
+        resultsToBeDeleted.addAll(participation.getResults());
+        resultsToBeDeleted.forEach(result -> resultService.deleteResult(result.getId()));
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
-            resultsToBeDeleted.addAll(submission.getResults());
             coverageReportRepository.deleteBySubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
         // The results that are only connected to a participation are also deleted
         resultsToBeDeleted.forEach(participation::removeResult);
-        participation.getResults().forEach(result -> resultService.deleteResult(result.getId()));
     }
 
     /**

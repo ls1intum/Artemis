@@ -26,7 +26,7 @@ public class LearningGoal extends DomainObject {
 
     @ManyToOne
     @JoinColumn(name = "course_id")
-    @JsonIgnoreProperties("learningGoals")
+    @JsonIgnoreProperties({ "learningGoals", "prerequisites" })
     private Course course;
 
     @ManyToMany

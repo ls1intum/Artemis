@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.Team;
+import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.scores.ParticipantScore;
 import de.tum.in.www1.artemis.domain.scores.StudentScore;
@@ -45,7 +48,7 @@ public class ParticipantScoreSchedulerService {
 
     private final TaskScheduler scheduler;
 
-    private final Map<Long, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
+    private final Map<ParticipantScoreId, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
@@ -57,20 +60,29 @@ public class ParticipantScoreSchedulerService {
 
     private final ParticipationRepository participationRepository;
 
+    private final ExerciseRepository exerciseRepository;
+
     private final ResultRepository resultRepository;
+
+    private final UserRepository userRepository;
+
+    private final TeamRepository teamRepository;
 
     public ParticipantScoreSchedulerService(@Qualifier("taskScheduler") TaskScheduler scheduler, ParticipantScoreRepository participantScoreRepository,
             StudentScoreRepository studentScoreRepository, TeamScoreRepository teamScoreRepository, ParticipationRepository participationRepository,
-            ResultRepository resultRepository) {
+            ExerciseRepository exerciseRepository, ResultRepository resultRepository, UserRepository userRepository, TeamRepository teamRepository) {
         this.scheduler = scheduler;
         this.participantScoreRepository = participantScoreRepository;
         this.studentScoreRepository = studentScoreRepository;
         this.teamScoreRepository = teamScoreRepository;
         this.participationRepository = participationRepository;
+        this.exerciseRepository = exerciseRepository;
         this.resultRepository = resultRepository;
+        this.userRepository = userRepository;
+        this.teamRepository = teamRepository;
     }
 
-    public Map<Long, ScheduledFuture<?>> getScheduledTasks() {
+    public Map<ParticipantScoreId, ScheduledFuture<?>> getScheduledTasks() {
         return scheduledTasks;
     }
 
@@ -107,6 +119,7 @@ public class ParticipantScoreSchedulerService {
      */
     @Scheduled(cron = "0 * * * * *")
     protected void scheduleParticipationsToProgress() {
+        logger.debug("Schedule participations to process...");
         SecurityUtils.setAuthorizationObject();
 
         // Find all results that were added after the last run (on startup: last time we modified a participant score)
@@ -116,7 +129,9 @@ public class ParticipantScoreSchedulerService {
 
         var resultsToProcess = resultRepository.findAllByLastModifiedDateAfter(latestRun);
         resultsToProcess.forEach(result -> {
-            scheduleTask(result.getParticipation().getId());
+            if (result.getParticipation() instanceof StudentParticipation studentParticipation) {
+                scheduleTask(result.getParticipation().getExercise().getId(), studentParticipation.getParticipant().getId());
+            }
         });
     }
 
@@ -127,6 +142,7 @@ public class ParticipantScoreSchedulerService {
      */
     @Scheduled(cron = "0 0 * * * *")
     protected void cleanupOutdatedParticipantScores() {
+        logger.debug("Cleanup outdated participant scores...");
         SecurityUtils.setAuthorizationObject();
 
         var participantScoresToProcess = participantScoreRepository.findAllOutdatedWithExercise();
@@ -138,68 +154,67 @@ public class ParticipantScoreSchedulerService {
      * @param participationId the id of the result that was created/updated/deleted
      * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleResult(Long)
      */
-    public void scheduleTask(Long participationId) {
-        if (scheduledTasks.containsKey(participationId)) {
+    public void scheduleTask(Long exerciseId, Long participantId) {
+        var id = new ParticipantScoreId(exerciseId, participantId);
+        if (scheduledTasks.containsKey(id)) {
             // We already have a scheduled task for this result
             return;
         }
 
         var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
-        var future = scheduler.schedule(() -> this.executeTask(participationId), schedulingTime.toInstant());
-        scheduledTasks.put(participationId, future);
-        logger.info("Schedule task for participation {} at {}.", participationId, schedulingTime);
+        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId), schedulingTime.toInstant());
+        scheduledTasks.put(id, future);
+        logger.info("Schedule task for participation {} at {}.", exerciseId, schedulingTime);
     }
 
     /**
      * Execute the task to update the participant score for the given result.
      * @param participationId the id of the result that was created/updated/deleted
      */
-    private void executeTask(Long participationId) {
-        logger.debug("Processing participation {} to update participant scores.", participationId);
+    private void executeTask(Long exerciseId, Long participantId) {
+        logger.debug("Processing exercise {} to update participant scores.", exerciseId);
         try {
             SecurityUtils.setAuthorizationObject();
 
-            var participation = participationRepository.findById(participationId).orElse(null);
+            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
 
-            if (!(participation instanceof StudentParticipation studentParticipation)) {
-                logger.warn("Participation {} not found or not a student participation.", participationId);
-                return;
-            }
-
+            Participant participant;
             Optional<ParticipantScore> participantScore;
-            if (studentParticipation.getExercise().isTeamMode()) {
-                participantScore = teamScoreRepository.findTeamScoreByExerciseAndTeam(studentParticipation.getExercise(), studentParticipation.getTeam().get()).map(score -> score);
+            if (exercise.isTeamMode()) {
+                participant = teamRepository.findByIdElseThrow(participantId);
+                participantScore = teamScoreRepository.findByExercise_IdAndTeam_Id(exerciseId, participantId).map(score -> score);
             }
             else {
-                participantScore = studentScoreRepository.findStudentScoreByExerciseAndUser(studentParticipation.getExercise(), studentParticipation.getStudent().get())
-                        .map(score -> score);
+                participant = userRepository.findByIdElseThrow(participantId);
+                participantScore = studentScoreRepository.findByExercise_IdAndUser_Id(exerciseId, participantId).map(score -> score);
             }
-
-            logger.debug(String.valueOf(participantScore));
 
             // The result was updated or created, we need to create or update the associated participant score
             var score = participantScore.orElseGet(() -> {
-                if (studentParticipation.getExercise().isTeamMode()) {
+                if (participant instanceof Team team) {
                     var teamScore = new TeamScore();
-                    teamScore.setTeam(studentParticipation.getTeam().get());
-                    teamScore.setExercise(studentParticipation.getExercise());
+                    teamScore.setTeam(team);
+                    teamScore.setExercise(exercise);
                     return teamScore;
                 }
-                else {
+                else if (participant instanceof User user) {
                     var studentScore = new StudentScore();
-                    studentScore.setUser(studentParticipation.getStudent().get());
-                    studentScore.setExercise(studentParticipation.getExercise());
+                    studentScore.setUser(user);
+                    studentScore.setExercise(exercise);
                     return studentScore;
+                }
+                else {
+                    return null;
                 }
             });
 
             updateParticipantScore(score);
         }
         catch (Exception e) {
-            logger.error("Exception while processing participation {} for participant scores: {}", participationId, e);
+            logger.error("Exception while processing participation {} for participant scores: {}", exerciseId, e);
         }
         finally {
-            scheduledTasks.remove(participationId);
+            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId));
         }
     }
 
@@ -308,5 +323,8 @@ public class ParticipantScoreSchedulerService {
             associatedParticipantScore.setLastRatedPoints(RoundingUtil.roundScoreSpecifiedByCourseSettings(newLastRatedResult.getScore() * 0.01 * exercise.getMaxPoints(),
                     exercise.getCourseViaExerciseGroupOrCourseMember()));
         }
+    }
+
+    public record ParticipantScoreId(Long exerciseId, Long participantId) {
     }
 }
