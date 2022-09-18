@@ -327,6 +327,7 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
                 // 1. We don't want to assess submissions before the exercise due date
                 // 2. The assessment for team exercises is not started from the tutor exercise dashboard but from the team pages
                 // 3. Don't handle test run submissions here
+                // TODO: check for earliest individual due date
                 if ((!this.exercise.dueDate || this.exercise.dueDate.isBefore(dayjs())) && !this.exercise.teamMode && !this.isTestRun) {
                     this.getSubmissionWithoutAssessmentForAllCorrectionRounds();
                 }

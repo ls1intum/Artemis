@@ -443,6 +443,7 @@ public class ProgrammingSubmissionResource {
         }
 
         // Check if tutors can start assessing the students submission
+        // TODO: check for earliest individual due date
         programmingSubmissionService.checkIfExerciseDueDateIsReached(programmingExercise);
 
         // Check if the limit of simultaneously locked submissions has been reached
