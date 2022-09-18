@@ -273,15 +273,7 @@ export class ModelingAssessmentEditorComponent implements OnInit {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(
-            this.modelingExercise?.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.result,
-            this.complaint,
-            this.modelingExercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.modelingExercise);
     }
 
     private handleErrorResponse(error: HttpErrorResponse): void {

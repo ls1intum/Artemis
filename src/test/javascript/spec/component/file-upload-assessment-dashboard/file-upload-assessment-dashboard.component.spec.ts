@@ -156,7 +156,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(findExerciseStub).toHaveBeenCalled();
+        expect(findExerciseStub).toHaveBeenCalledOnce();
         expect(getFileUploadSubmissionStub).toHaveBeenCalledWith(fileUploadExercise2.id, { submittedOnly: true });
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);
@@ -183,7 +183,7 @@ describe('FileUploadAssessmentDashboardComponent', () => {
 
         // check
         expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(fileUploadSubmission2.id);
-        expect(windowSpy).toHaveBeenCalled();
+        expect(windowSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sortRows', () => {

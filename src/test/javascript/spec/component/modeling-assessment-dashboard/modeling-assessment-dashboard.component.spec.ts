@@ -108,10 +108,10 @@ describe('ModelingAssessmentDashboardComponent', () => {
         component.ngOnInit();
 
         // check
-        expect(getSubmissionsSpy).toHaveBeenCalled();
-        expect(registerChangeInResultsSpy).toHaveBeenCalled();
-        expect(courseFindSpy).toHaveBeenCalled();
-        expect(exerciseFindSpy).toHaveBeenCalled();
+        expect(getSubmissionsSpy).toHaveBeenCalledOnce();
+        expect(registerChangeInResultsSpy).toHaveBeenCalledOnce();
+        expect(courseFindSpy).toHaveBeenCalledTimes(2);
+        expect(exerciseFindSpy).toHaveBeenCalledTimes(2);
         expect(component.course).toEqual(course);
         expect(component.exercise).toEqual(modelingExercise);
     });
@@ -151,8 +151,8 @@ describe('ModelingAssessmentDashboardComponent', () => {
 
         // check
         expect(modelAssServiceCancelAssSpy).toHaveBeenCalledWith(modelingSubmission.id);
-        expect(windowSpy).toHaveBeenCalled();
-        expect(getSubmissionsSpy).toHaveBeenCalled();
+        expect(windowSpy).toHaveBeenCalledOnce();
+        expect(getSubmissionsSpy).toHaveBeenCalledOnce();
     }));
 
     it('should sortRows', () => {
@@ -176,7 +176,7 @@ describe('ModelingAssessmentDashboardComponent', () => {
         component.ngOnDestroy();
 
         // check
-        expect(paramSubSpy).toHaveBeenCalled();
+        expect(paramSubSpy).toHaveBeenCalledOnce();
     });
 
     describe('shouldGetAssessmentLink', () => {

@@ -480,15 +480,7 @@ export class CodeEditorTutorAssessmentContainerComponent implements OnInit, OnDe
      * Defines whether the inline feedback should be read only or not
      */
     readOnly() {
-        return !isAllowedToModifyFeedback(
-            this.exercise.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.manualResult,
-            this.complaint,
-            this.exercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.manualResult, this.complaint, this.exercise);
     }
 
     private handleSaveOrSubmitSuccessWithAlert(response: HttpResponse<Result>, translationKey: string): void {

@@ -1,5 +1,6 @@
 package de.tum.in.www1.artemis.programmingexercise;
 
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static org.mockito.Mockito.doReturn;
 
 import java.time.ZonedDateTime;
@@ -21,6 +22,7 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.TestConstants;
 
@@ -99,5 +101,33 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
         var notification = ModelFactory.generateTestResultDTO(null, Constants.ASSIGNMENT_REPO_NAME, null, ProgrammingLanguage.JAVA, true, List.of("test1", "test2", "test4"),
                 List.of(), new ArrayList<>(), new ArrayList<>(), null);
         programmingExerciseResultTestService.shouldGenerateNewManualResultIfManualAssessmentExists(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldIgnoreResultOnOtherBranches() {
+        var commit = new CommitDTO("abc123", "slug", "other");
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldIgnoreResultIfNotOnDefaultBranch(notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnDefaultBranch() {
+        var commit = new CommitDTO("abc123", "slug", DEFAULT_BRANCH);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(defaultBranch, notification);
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void shouldCreateResultOnCustomDefaultBranch() {
+        final var customDefaultBranch = "dummy";
+        var commit = new CommitDTO("abc123", "slug", customDefaultBranch);
+        var notification = ModelFactory.generateTestResultDTO(null, Constants.SOLUTION_REPO_NAME, null, ProgrammingLanguage.JAVA, false, List.of(), List.of(), List.of(),
+                List.of(commit), null);
+        programmingExerciseResultTestService.shouldCreateResultOnCustomDefaultBranch(customDefaultBranch, notification);
     }
 }

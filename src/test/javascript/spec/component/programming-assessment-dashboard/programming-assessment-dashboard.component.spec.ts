@@ -130,8 +130,8 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
         component.ngOnInit();
         tick(500);
         // check
-        expect(component['getSubmissions']).toHaveBeenCalled();
-        expect(getSubmissionsStub).toHaveBeenCalled();
+        expect(component['getSubmissions']).toHaveBeenCalledOnce();
+        expect(getSubmissionsStub).toHaveBeenCalledOnce();
         expect(getSubmissionsStub).toHaveBeenCalledWith(programmingExercise2.id, { submittedOnly: true });
         expect(exerciseServiceFindMock).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component.submissions).toEqual([programmingSubmission1]);
@@ -156,7 +156,7 @@ describe('ProgrammingAssessmentDashboardComponent', () => {
 
         tick(100);
         // check
-        expect(component['getSubmissions']).toHaveBeenCalled();
+        expect(component['getSubmissions']).toHaveBeenCalledOnce();
         expect(exerciseServiceFind).toHaveBeenCalledWith(programmingExercise2.id);
         expect(component.submissions).toEqual([]);
         expect(component.filteredSubmissions).toEqual([]);

@@ -221,10 +221,6 @@
             },
             "isUsedForTutorial": "Tutor needs to review",
             "action": "Action"
-        },
-        "exerciseLtiConfiguration": {
-            "lti": "LTI",
-            "configurationForExercise": "LTI configuration for exercise {{ title }}"
         }
     }
 }

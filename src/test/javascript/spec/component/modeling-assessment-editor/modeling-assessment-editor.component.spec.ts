@@ -159,7 +159,7 @@ describe('ModelingAssessmentEditorComponent', () => {
             expect(component.isLoading).toBeFalse();
             expect(component.complaint).toEqual(complaint);
             modelingSubmissionSpy.mockRestore();
-            expect(handleFeedbackSpy).toHaveBeenCalled();
+            expect(handleFeedbackSpy).toHaveBeenCalledOnce();
         }));
 
         it('wrongly call ngOnInit and throw exception', fakeAsync(() => {
