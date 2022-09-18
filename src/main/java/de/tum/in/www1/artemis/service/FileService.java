@@ -7,7 +7,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.Paths;
 import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.concurrent.*;
@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
+import javax.validation.constraints.NotNull;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -33,6 +34,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
+import org.springframework.web.multipart.MultipartFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.ibm.icu.text.CharsetDetector;
@@ -40,6 +42,8 @@ import com.ibm.icu.text.CharsetDetector;
 import de.tum.in.www1.artemis.config.Constants;
 import de.tum.in.www1.artemis.domain.FileUploadSubmission;
 import de.tum.in.www1.artemis.exception.FilePathParsingException;
+import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.errors.InternalServerErrorException;
 
 @Service
 public class FileService implements DisposableBean {
@@ -49,6 +53,25 @@ public class FileService implements DisposableBean {
     private final Map<Path, ScheduledFuture<?>> futures = new ConcurrentHashMap<>();
 
     private final ScheduledExecutorService executor = Executors.newScheduledThreadPool(Runtime.getRuntime().availableProcessors());
+
+    /**
+     * The list of file extensions that are allowed to be uploaded in a Markdown editor.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private final Set<String> allowedMarkdownFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf");
+
+    /**
+     * The global list of file extensions that are allowed to be uploaded.
+     * Extensions must be lower-case without leading dots.
+     * NOTE: Has to be kept in sync with the client-side definitions in file-extensions.constants.ts
+     */
+    private final Set<String> allowedFileExtensions = Set.of("png", "jpg", "jpeg", "gif", "svg", "pdf", "zip", "tar", "txt", "rtf", "md", "htm", "html", "json", "doc", "docx",
+            "csv", "xls", "xlsx", "ppt", "pptx", "pages", "pages-tef", "numbers", "key", "odt", "ods", "odp", "odg", "odc", "odi", "odf");
+
+    public static final String MARKDOWN_FILE_SUBPATH = "/api/files/markdown/";
+
+    public static final String DEFAULT_FILE_SUBPATH = "/api/files/temp/";
 
     /**
      * Filenames for which the template filename differs from the filename it should have in the repository.
@@ -62,8 +85,7 @@ public class FileService implements DisposableBean {
         Map.entry("Fast.file", "Fastfile"),
         Map.entry("App.file", "Appfile"),
         Map.entry("Scan.file", "Scanfile"),
-        Map.entry("gradlew.file", "gradlew")
-    );
+        Map.entry("gradlew.file", "gradlew"));
     // @formatter:on
 
     /**
@@ -99,6 +121,90 @@ public class FileService implements DisposableBean {
     public void resetOnPath(String path) {
         log.info("Invalidate files cache for {}", path);
         // Intentionally blank
+    }
+
+    /**
+     * Helper method which handles the file creation for both normal file uploads and for markdown
+     *
+     * @param file         The file to be uploaded with a maximum file size set in resources/config/application.yml
+     * @param keepFileName specifies if original file name should be kept
+     * @param markdown     boolean which is set to true, when we are uploading a file within the markdown editor
+     * @return The path of the file
+     */
+    @NotNull
+    public String handleSaveFile(MultipartFile file, boolean keepFileName, boolean markdown) {
+        // check for file type
+        String filename = file.getOriginalFilename();
+        if (filename == null) {
+            throw new IllegalArgumentException("Filename cannot be null");
+        }
+
+        // sanitize the filename and replace all invalid characters with with an underscore
+        filename = filename.replaceAll("[^a-zA-Z\\d\\.\\-]", "_");
+
+        // Check the allowed file extensions
+        final String fileExtension = FilenameUtils.getExtension(filename);
+        final Set<String> allowedExtensions = markdown ? allowedMarkdownFileExtensions : allowedFileExtensions;
+
+        if (allowedExtensions.stream().noneMatch(fileExtension::equalsIgnoreCase)) {
+            throw new BadRequestAlertException("Unsupported file type! Allowed file types: " + String.join(", ", allowedExtensions), "file", null, true);
+        }
+
+        final String filePath = markdown ? FilePathService.getMarkdownFilePath() : FilePathService.getTempFilePath();
+        final String fileNameAddition = markdown ? "Markdown_" : "Temp_";
+        final StringBuilder responsePath = new StringBuilder(markdown ? MARKDOWN_FILE_SUBPATH : DEFAULT_FILE_SUBPATH);
+
+        try {
+            File newFile = createNewFile(filePath, filename, fileNameAddition, fileExtension, keepFileName);
+            responsePath.append(newFile.toPath().getFileName());
+
+            // copy contents of uploaded file into newly created file
+            Files.copy(file.getInputStream(), newFile.toPath(), REPLACE_EXISTING);
+
+            return responsePath.toString();
+        }
+        catch (IOException e) {
+            log.error("Could not save file {}", filename, e);
+            throw new InternalServerErrorException("Could not create file");
+        }
+    }
+
+    /**
+     * Creates a new file from given contents
+     * @param filePath the path to save the file to excluding the filename
+     * @param filename the filename of the file to save
+     * @param fileNameAddition the addition to the filename to make sure it is unique
+     * @param fileExtension the extension of the file to save
+     * @param keepFileName specifies if original file name should be kept
+     * @return the created file
+     */
+    private File createNewFile(String filePath, String filename, String fileNameAddition, String fileExtension, boolean keepFileName) throws IOException {
+        try {
+            Files.createDirectories(Paths.get(filePath));
+        }
+        catch (IOException e) {
+            log.error("Could not create directory: {}", filePath);
+            throw e;
+        }
+        boolean fileCreated;
+        File newFile;
+        String newFilename = filename;
+        do {
+            if (!keepFileName) {
+                // append a timestamp and some randomness to the filename to avoid conflicts
+                newFilename = fileNameAddition + ZonedDateTime.now().toString().substring(0, 23).replaceAll(":|\\.", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
+                        + fileExtension;
+            }
+
+            newFile = Path.of(filePath, newFilename).toFile();
+            if (keepFileName && newFile.exists()) {
+                Files.delete(newFile.toPath());
+            }
+            fileCreated = newFile.createNewFile();
+        }
+        while (!fileCreated);
+
+        return newFile;
     }
 
     /**
@@ -258,7 +364,7 @@ public class FileService implements DisposableBean {
 
         // check for known path to convert
         if (actualPath.contains(FilePathService.getTempFilePath())) {
-            return "/api/files/temp/" + filename;
+            return DEFAULT_FILE_SUBPATH + filename;
         }
         if (actualPath.contains(FilePathService.getDragAndDropBackgroundFilePath())) {
             return "/api/files/drag-and-drop/backgrounds/" + id + "/" + filename;
@@ -335,13 +441,12 @@ public class FileService implements DisposableBean {
         // create the file (retry if filename already exists)
         boolean fileCreated;
         File newFile;
-        String filename;
+        String filename = originalFilename;
         do {
             if (keepFileName) {
-                if (originalFilename.contains("/api/files/temp/")) {
-                    originalFilename = originalFilename.replace("/api/files/temp/", "");
+                if (filename.contains(DEFAULT_FILE_SUBPATH)) {
+                    filename = filename.replace(DEFAULT_FILE_SUBPATH, "");
                 }
-                filename = originalFilename;
             }
             else {
                 filename = filenameBase + ZonedDateTime.now().toString().substring(0, 23).replaceAll("[:.]", "-") + "_" + UUID.randomUUID().toString().substring(0, 8) + "."
@@ -351,7 +456,7 @@ public class FileService implements DisposableBean {
 
             newFile = new File(path);
             if (keepFileName && newFile.exists()) {
-                newFile.delete();
+                Files.delete(newFile.toPath());
             }
             fileCreated = newFile.createNewFile();
         }
@@ -389,7 +494,7 @@ public class FileService implements DisposableBean {
                 Files.createDirectories(parentFolder.toPath());
             }
 
-            Files.copy(resource.getInputStream(), copyPath, StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(resource.getInputStream(), copyPath, REPLACE_EXISTING);
             // make gradlew executable
             if (targetFilePath.endsWith("gradlew")) {
                 copyPath.toFile().setExecutable(true);
