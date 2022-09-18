@@ -65,6 +65,14 @@ public interface ParticipationRepository extends JpaRepository<Participation, Lo
     Optional<ZonedDateTime> findLatestIndividualDueDate(@Param("exerciseId") Long exerciseId);
 
     @Query("""
+            SELECT min(p.individualDueDate)
+            FROM Participation p
+            WHERE p.exercise.id = :#{#exerciseId}
+                AND p.individualDueDate IS NOT null
+            """)
+    Optional<ZonedDateTime> findEarliestIndividualDueDate(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
             SELECT p
             FROM Participation p
             WHERE p.exercise.id = :#{#exerciseId}
