@@ -13,6 +13,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.google.common.collect.ImmutableSet;
+
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
@@ -57,6 +59,8 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
 
     Long exampleConfigurationId;
 
+    Long idOfTutorialGroupWithoutSchedule;
+
     String exampleTimeZone = "Europe/Bucharest";
 
     Integer defaultSessionStartHour = 10;
@@ -85,12 +89,26 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
         exampleCourseId = course.getId();
 
         exampleConfigurationId = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
+
+        idOfTutorialGroupWithoutSchedule = databaseUtilService
+                .createTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH, userRepository.findOneByLogin("tutor1").get(),
+                        ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
+                                userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get()))
+                .getId();
     }
 
     // === Paths ===
     @NotNull
     String getTutorialGroupsPath() {
         return "/api/courses/" + exampleCourseId + "/tutorial-groups/";
+    }
+
+    String getSessionsPathOfDefaultTutorialGroup() {
+        return this.getTutorialGroupsPath() + idOfTutorialGroupWithoutSchedule + "/sessions/";
+    }
+
+    String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
+        return this.getTutorialGroupsPath() + tutorialGroupId + "/sessions/";
     }
 
     // === UTILS ===
@@ -150,6 +168,11 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
     void assertIndividualSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId) {
         this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date),
                 "LoremIpsum", TutorialGroupSessionStatus.ACTIVE, null);
+    }
+
+    void assertIndividualSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, String statusExplanation) {
+        this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.empty(), tutorialGroupId, getExampleSessionStartOnDate(date), getExampleSessionEndOnDate(date),
+                "LoremIpsum", TutorialGroupSessionStatus.CANCELLED, statusExplanation);
     }
 
     void assertScheduledSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, TutorialGroupSchedule schedule) {
