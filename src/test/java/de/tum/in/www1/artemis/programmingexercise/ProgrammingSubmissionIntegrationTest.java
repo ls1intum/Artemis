@@ -755,13 +755,12 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
 
         String url = "/api/exercises/" + exercise.getId() + "/programming-submission-without-assessment";
 
-        ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
-
         if (isIndividualDueDateInFuture) {
             // the submission should not be returned as the due date is in the future
-            assertThat(storedSubmission).isNull();
+            request.get(url, HttpStatus.FORBIDDEN, String.class);
         }
         else {
+            ProgrammingSubmission storedSubmission = request.get(url, HttpStatus.OK, ProgrammingSubmission.class);
             assertThat(storedSubmission.getId()).isEqualTo(submission.getId());
         }
     }
