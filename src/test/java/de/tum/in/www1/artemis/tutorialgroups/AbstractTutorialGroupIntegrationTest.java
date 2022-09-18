@@ -21,6 +21,7 @@ import de.tum.in.www1.artemis.domain.enumeration.TutorialGroupSessionStatus;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSchedule;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupSession;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupsConfiguration;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
@@ -75,6 +76,8 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
 
     LocalDate fourthAugustMonday = LocalDate.of(2022, 8, 22);
 
+    LocalDate firstSeptemberMonday = LocalDate.of(2022, 9, 5);
+
     @AfterEach
     void resetDatabase() {
         database.resetDatabase();
@@ -102,8 +105,12 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
         return "/api/courses/" + exampleCourseId + "/tutorial-groups/";
     }
 
+    String getTutorialGroupsConfigurationPath() {
+        return "/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/";
+    }
+
     String getTutorialGroupFreePeriodsPath() {
-        return "/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/" + exampleConfigurationId + "/tutorial-free-periods/";
+        return this.getTutorialGroupsConfigurationPath() + exampleConfigurationId + "/tutorial-free-periods/";
     }
 
     String getSessionsPathOfDefaultTutorialGroup() {
@@ -117,6 +124,15 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
     // === UTILS ===
     TutorialGroupSession buildAndSaveExampleIndividualTutorialGroupSession(Long tutorialGroupId, LocalDate localDate) {
         return databaseUtilService.createIndividualTutorialGroupSession(tutorialGroupId, getExampleSessionStartOnDate(localDate), getExampleSessionEndOnDate(localDate));
+    }
+
+    TutorialGroupsConfiguration buildExampleConfiguration() {
+        TutorialGroupsConfiguration tutorialGroupsConfiguration = new TutorialGroupsConfiguration();
+        tutorialGroupsConfiguration.setCourse(courseRepository.findById(exampleCourseId).get());
+        tutorialGroupsConfiguration.setTutorialPeriodStartInclusive(firstAugustMonday.toString());
+        tutorialGroupsConfiguration.setTutorialPeriodEndInclusive(firstSeptemberMonday.toString());
+        tutorialGroupsConfiguration.setTimeZone(exampleTimeZone);
+        return tutorialGroupsConfiguration;
     }
 
     TutorialGroupSchedule buildExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive) {
@@ -176,6 +192,10 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
         return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of(this.exampleTimeZone));
     }
 
+    ZonedDateTime getDateTimeInBerlinTimeZone(LocalDate date, int hour) {
+        return ZonedDateTime.of(date.getYear(), date.getMonthValue(), date.getDayOfMonth(), hour, 0, 0, 0, ZoneId.of("Europe/Berlin"));
+    }
+
     // === ASSERTIONS ===
 
     void assertIndividualSessionIsActiveOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId) {
@@ -215,6 +235,13 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
         assertThat(tutorialGroupSessionToCheck.getLocation()).isEqualTo(expectedLocation);
         assertThat(tutorialGroupSessionToCheck.getStatus()).isEqualTo(expectedStatus);
         assertThat(tutorialGroupSessionToCheck.getStatusExplanation()).isEqualTo(expectedStatusExplanation);
+    }
+
+    void assertConfigurationStructure(TutorialGroupsConfiguration configuration, LocalDate expectedPeriodStart, LocalDate expectedPeriodEnd, String expectedTimeZone) {
+        assertThat(configuration.getCourse().getId()).isEqualTo(exampleCourseId);
+        assertThat(LocalDate.parse(configuration.getTutorialPeriodStartInclusive())).isEqualTo(expectedPeriodStart);
+        assertThat(LocalDate.parse(configuration.getTutorialPeriodEndInclusive())).isEqualTo(expectedPeriodEnd);
+        assertThat(configuration.getTimeZone()).isEqualTo(expectedTimeZone);
     }
 
 }
