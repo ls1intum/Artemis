@@ -398,9 +398,6 @@ public class RequestUtilService {
             }
             return null;
         }
-        if (res.getResponse().getContentType() == null) {
-            return null;
-        }
         if (responseType == String.class) {
             return (T) contentAsString;
         }
@@ -412,6 +409,9 @@ public class RequestUtilService {
         }
         if (responseType == Void.class && contentAsString.isEmpty()) {
             return (T) "";
+        }
+        if (res.getResponse().getContentType() == null) {
+            return null;
         }
         return mapper.readValue(contentAsString, responseType);
     }
