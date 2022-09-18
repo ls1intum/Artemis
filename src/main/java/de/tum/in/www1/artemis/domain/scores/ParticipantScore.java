@@ -135,4 +135,11 @@ public abstract class ParticipantScore extends DomainObject {
     public Instant getLastModifiedDate() {
         return lastModifiedDate;
     }
+
+    @Override
+    public String toString() {
+        return "ParticipantScore{" + "exercise=" + exercise.getId() + ", lastResult=" + lastResult.getId() + ", lastScore=" + lastScore + ", lastPoints=" + lastPoints
+                + ", lastRatedResult=" + lastRatedResult.getId() + ", lastRatedScore=" + lastRatedScore + ", lastRatedPoints=" + lastRatedPoints + ", lastModifiedDate="
+                + lastModifiedDate + '}';
+    }
 }

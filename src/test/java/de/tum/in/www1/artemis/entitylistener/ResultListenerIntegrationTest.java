@@ -68,6 +68,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @AfterEach
     void resetDatabase() {
+        service.shutdown();
         database.resetDatabase();
     }
 

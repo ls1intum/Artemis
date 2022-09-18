@@ -104,6 +104,6 @@ public class MainInstanceMessageSendService implements InstanceMessageSendServic
 
     @Override
     public void sendResultSchedule(Long exerciseId, Long participantId) {
-        instanceMessageReceiveService.processScheduleResult(exerciseId, participantId);
+        instanceMessageReceiveService.processScheduleParticipantScore(exerciseId, participantId);
     }
 }

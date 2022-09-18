@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Propagation;
-import org.springframework.transaction.annotation.Transactional;
 
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
@@ -46,7 +44,6 @@ public class ResultListener {
     @PostPersist
     @PostUpdate
     @PreRemove
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void updateParticipantScore(Result result) {
         logger.debug("ResultListener.updateParticipantScore");
         if (result.getParticipation() instanceof StudentParticipation participation) {

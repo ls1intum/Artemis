@@ -48,7 +48,7 @@ public class ParticipantScoreSchedulerService {
 
     private final TaskScheduler scheduler;
 
-    private final Map<ParticipantScoreId, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
+    private final Map<Integer, ScheduledFuture<?>> scheduledTasks = new HashMap<>();
 
     private Optional<Instant> lastScheduledRun = Optional.empty();
 
@@ -82,7 +82,7 @@ public class ParticipantScoreSchedulerService {
         this.teamRepository = teamRepository;
     }
 
-    public Map<ParticipantScoreId, ScheduledFuture<?>> getScheduledTasks() {
+    public Map<Integer, ScheduledFuture<?>> getScheduledTasks() {
         return scheduledTasks;
     }
 
@@ -90,7 +90,7 @@ public class ParticipantScoreSchedulerService {
      * Schedule all outdated participant scores when the service is started.
      */
     @PostConstruct
-    public void startSchedule() {
+    public void startup() {
         try {
             scheduleParticipationsToProgress();
         }
@@ -103,7 +103,7 @@ public class ParticipantScoreSchedulerService {
      * Before shutdown, cancel all running or scheduled tasks.
      */
     @PreDestroy
-    public void stopSchedule() {
+    public void shutdown() {
         // Stop all running tasks, we will reschedule them on startup again
         scheduledTasks.values().forEach(future -> {
             future.cancel(true);
@@ -150,33 +150,41 @@ public class ParticipantScoreSchedulerService {
     }
 
     /**
-     * Schedule a task to update the participant score for the given result.
-     * @param participationId the id of the result that was created/updated/deleted
-     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleResult(Long)
+     * Schedule a task to update the participant score for the given combination of exercise and participant.
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant (user or team, determined by the exercise)
+     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleParticipantScore(Long, Long)
      */
     public void scheduleTask(Long exerciseId, Long participantId) {
         var id = new ParticipantScoreId(exerciseId, participantId);
-        if (scheduledTasks.containsKey(id)) {
+        if (scheduledTasks.containsKey(id.hashCode())) {
             // We already have a scheduled task for this result
             return;
         }
 
         var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
         var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId), schedulingTime.toInstant());
-        scheduledTasks.put(id, future);
+        scheduledTasks.put(id.hashCode(), future);
         logger.info("Schedule task for participation {} at {}.", exerciseId, schedulingTime);
     }
 
     /**
-     * Execute the task to update the participant score for the given result.
-     * @param participationId the id of the result that was created/updated/deleted
+     * Execute the task to update the participant score for the given combination of exercise and participant.
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant (user or team, determined by the exercise)
      */
     private void executeTask(Long exerciseId, Long participantId) {
-        logger.debug("Processing exercise {} to update participant scores.", exerciseId);
+        logger.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
 
-            var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
+            var exercise = exerciseRepository.findById(exerciseId).orElse(null);
+
+            if (exercise == null) {
+                logger.debug("Exercise {} no longer exists, deleting participant score.", exerciseId);
+                participantScoreRepository.deleteAllByExerciseIdTransactional(exerciseId);
+                return;
+            }
 
             Participant participant;
             Optional<ParticipantScore> participantScore;
@@ -211,10 +219,10 @@ public class ParticipantScoreSchedulerService {
             updateParticipantScore(score);
         }
         catch (Exception e) {
-            logger.error("Exception while processing participation {} for participant scores: {}", exerciseId, e);
+            logger.error("Exception while processing participation {} for participant scores:", exerciseId, e);
         }
         finally {
-            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId));
+            scheduledTasks.remove(new ParticipantScoreId(exerciseId, participantId).hashCode());
         }
     }
 
@@ -325,6 +333,11 @@ public class ParticipantScoreSchedulerService {
         }
     }
 
+    /**
+     * Each participant score can be uniquely identified by the combination of exercise id and participant id.
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant (user or team, depending on the exercise's setting)
+     */
     public record ParticipantScoreId(Long exerciseId, Long participantId) {
     }
 }
