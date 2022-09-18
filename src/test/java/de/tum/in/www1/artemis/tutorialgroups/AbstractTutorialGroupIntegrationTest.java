@@ -8,10 +8,10 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -98,9 +98,12 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     // === Paths ===
-    @NotNull
     String getTutorialGroupsPath() {
         return "/api/courses/" + exampleCourseId + "/tutorial-groups/";
+    }
+
+    String getTutorialGroupFreePeriodsPath() {
+        return "/api/courses/" + exampleCourseId + "/tutorial-groups-configuration/" + exampleConfigurationId + "/tutorial-free-periods/";
     }
 
     String getSessionsPathOfDefaultTutorialGroup() {
@@ -142,6 +145,16 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
 
         newTutorialGroup.setTutorialGroupSchedule(this.buildExampleSchedule(validFromInclusive, validToInclusive));
 
+        return newTutorialGroup;
+    }
+
+    TutorialGroup setUpTutorialGroupWithSchedule() throws Exception {
+        var newTutorialGroup = this.buildTutorialGroupWithExampleSchedule(firstAugustMonday, secondAugustMonday);
+        var scheduleToCreate = newTutorialGroup.getTutorialGroupSchedule();
+        var persistedTutorialGroupId = request.postWithResponseBody(getTutorialGroupsPath(), newTutorialGroup, TutorialGroup.class, HttpStatus.CREATED).getId();
+
+        newTutorialGroup = tutorialGroupRepository.findByIdElseThrow(persistedTutorialGroupId);
+        this.assertTutorialGroupPersistedWithSchedule(newTutorialGroup, scheduleToCreate);
         return newTutorialGroup;
     }
 
