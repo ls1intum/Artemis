@@ -144,7 +144,7 @@ export class ExerciseDetailsStudentActionsComponent {
     }
 
     isManualFeedbackRequestsAllowed(): boolean {
-        return this.exercise.allowManualFeedbackRequests;
+        return this.exercise.allowManualFeedbackRequests ?? false;
     }
 
     isFeedbackRequestButtonDisabled(): boolean {
