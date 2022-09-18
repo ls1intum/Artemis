@@ -446,7 +446,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
         expect(comp.numberOfAssessmentsOfCorrectionRounds[1].inTime).toBe(8);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[0].inTime).toBe(2);
         expect(comp.numberOfLockedAssessmentByOtherTutorsOfCorrectionRound[1].inTime).toBe(7);
-        expect(comp.submissionsByCorrectionRound?.get(1)).toHaveLength(0);
+        expect(comp.assessedSubmissionsByRound?.get(1)).toHaveLength(0);
     });
 
     it('should  set assessed Submission and latest result', () => {
