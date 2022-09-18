@@ -180,6 +180,7 @@ public class TutorialGroupFreePeriodResource {
         });
     }
 
+    // ToDo: Should Actually Check DTO
     private void isValidTutorialGroupPeriod(TutorialGroupFreePeriod tutorialGroupFreePeriod) {
         if (tutorialGroupFreePeriod.getStart() == null || tutorialGroupFreePeriod.getEnd() == null) {
             throw new BadRequestAlertException("The start or end date of the tutorial group free period is null", ENTITY_NAME, "nullDate");

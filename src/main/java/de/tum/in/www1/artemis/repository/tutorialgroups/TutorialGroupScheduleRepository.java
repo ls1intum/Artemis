@@ -25,6 +25,8 @@ public interface TutorialGroupScheduleRepository extends JpaRepository<TutorialG
 
     Set<TutorialGroupSchedule> getAllByTutorialGroup_Course(Course course);
 
+    Optional<TutorialGroupSchedule> findByTutorialGroup_Id(Long tutorialGroupId);
+
     default TutorialGroupSchedule findByIdWithSessionsElseThrow(long tutorialGroupScheduleId) {
         return findByIdWithSessions(tutorialGroupScheduleId).orElseThrow(() -> new EntityNotFoundException("TutorialGroupSchedule", tutorialGroupScheduleId));
     }

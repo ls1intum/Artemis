@@ -34,6 +34,12 @@ public interface TutorialGroupSessionRepository extends JpaRepository<TutorialGr
     @Query("""
             SELECT tutorialGroupSession
             FROM TutorialGroupSession tutorialGroupSession
+            WHERE tutorialGroupSession.tutorialGroupSchedule.id = :#{#tutorialGroupScheduleId}""")
+    Set<TutorialGroupSession> findAllByScheduleId(@Param("tutorialGroupScheduleId") Long tutorialGroupScheduleId);
+
+    @Query("""
+            SELECT tutorialGroupSession
+            FROM TutorialGroupSession tutorialGroupSession
             WHERE tutorialGroupSession.start <= :#{#end} AND tutorialGroupSession.end >= :#{#start}
             AND tutorialGroupSession.tutorialGroup = :#{#tutorialGroup}""")
     Set<TutorialGroupSession> findOverlappingInSameTutorialGroup(@Param("tutorialGroup") TutorialGroup tutorialGroup, @Param("start") ZonedDateTime start,
