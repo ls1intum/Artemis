@@ -7,6 +7,9 @@ import java.net.URISyntaxException;
 import java.time.*;
 import java.util.Optional;
 
+import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
@@ -82,7 +85,7 @@ public class TutorialGroupFreePeriodResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> update(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
-            @PathVariable Long tutorialGroupFreePeriodId, @RequestBody TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
+            @PathVariable Long tutorialGroupFreePeriodId, @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to update TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriodId, tutorialGroupsConfigurationId,
                 courseId);
         var existingFreePeriod = tutorialGroupFreePeriodRepository.findByIdElseThrow(tutorialGroupFreePeriodId);
@@ -119,7 +122,7 @@ public class TutorialGroupFreePeriodResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<TutorialGroupFreePeriod> create(@PathVariable Long courseId, @PathVariable Long tutorialGroupsConfigurationId,
-            @RequestBody TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
+            @RequestBody @Valid TutorialGroupFreePeriodDTO tutorialGroupFreePeriod) throws URISyntaxException {
         log.debug("REST request to create TutorialGroupFreePeriod: {} for tutorial group configuration: {} of course: {}", tutorialGroupFreePeriod, tutorialGroupsConfigurationId,
                 courseId);
         TutorialGroupsConfiguration tutorialGroupsConfiguration = tutorialGroupsConfigurationRepository
@@ -212,6 +215,6 @@ public class TutorialGroupFreePeriodResource {
      * @param date
      * @param reason
      */
-    record TutorialGroupFreePeriodDTO(LocalDate date, String reason) {
+    public record TutorialGroupFreePeriodDTO(@NotNull LocalDate date, String reason) {
     }
 }
