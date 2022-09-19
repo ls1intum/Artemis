@@ -164,38 +164,39 @@ public class CourseScoreCalculationService {
         if (participation == null) {
             return null;
         }
-        var results = participation.getResults();
+        var resultsSet = participation.getResults();
         Result chosenResult;
 
-        if (results != null) {
-            var resultsArray = new ArrayList<>(results);
+        if (resultsSet != null) {
 
-            if (resultsArray.size() <= 0) {
+            if (resultsSet.isEmpty()) {
                 chosenResult = new Result();
                 chosenResult.setScore(0.0);
                 return chosenResult;
             }
 
-            var ratedResults = resultsArray.stream().filter(result -> Boolean.TRUE.equals(result.isRated())).toList();
+            var resultsList = new ArrayList<>(resultsSet);
+
+            var ratedResults = resultsList.stream().filter(result -> Boolean.TRUE.equals(result.isRated())).toList();
 
             if (ratedResults.size() == 1) {
                 return ratedResults.get(0);
             }
 
             // sorting in descending order to have the last result at the beginning
-            resultsArray.sort(Comparator.comparing(Result::getCompletionDate).reversed());
+            resultsList.sort(Comparator.comparing(Result::getCompletionDate).reversed());
 
             long gracePeriodInSeconds = 10L;
-            if (dueDate == null || !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsArray.get(0).getCompletionDate())) {
+            if (dueDate == null || !dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {
                 // find the first result that is before the due date
-                chosenResult = resultsArray.get(0);
+                chosenResult = resultsList.get(0);
             }
-            else if (dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsArray.get(0).getCompletionDate())) {
+            else if (dueDate.plusSeconds(gracePeriodInSeconds).isBefore(resultsList.get(0).getCompletionDate())) {
                 chosenResult = new Result();
                 chosenResult.setScore(0.0);
             }
             else {
-                chosenResult = resultsArray.get(resultsArray.size() - 1);
+                chosenResult = resultsList.get(resultsList.size() - 1);
             }
         }
         else {
