@@ -4,7 +4,7 @@
             <!-- timezone -->
             <div class="col-auto">
                 <div *ngIf="timeZoneChanged" class="alert alert-danger" role="alert">
-                    {{ 'artemisApp.createConfiguration.timeZoneInput.changeWarning' | translate }}
+                    {{ 'artemisApp.createConfiguration.timeZoneInput.changeWarning' | artemisTranslate }}
                 </div>
                 <label class="form-label" for="timeZone">{{ 'artemisApp.createConfiguration.timeZoneInput.label' | artemisTranslate }}</label>
                 <input

@@ -5,7 +5,7 @@ import { NgbTypeahead } from '@ng-bootstrap/ng-bootstrap';
 import { merge, Observable, OperatorFunction, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, filter, map } from 'rxjs/operators';
 
-export interface ConfigurationFormData {
+export interface TutorialGroupsConfigurationFormData {
     period?: Date[];
     timeZone?: string;
 }
@@ -16,12 +16,12 @@ export interface ConfigurationFormData {
 })
 export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChanges {
     @Input()
-    formData: ConfigurationFormData = {
+    formData: TutorialGroupsConfigurationFormData = {
         period: undefined,
         timeZone: undefined,
     };
     @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<ConfigurationFormData> = new EventEmitter<ConfigurationFormData>();
+    @Output() formSubmitted: EventEmitter<TutorialGroupsConfigurationFormData> = new EventEmitter<TutorialGroupsConfigurationFormData>();
 
     originalTimeZone?: string;
     timeZones: string[] = [];
@@ -75,7 +75,7 @@ export class TutorialGroupsConfigurationFormComponent implements OnInit, OnChang
         );
     };
 
-    private setFormValues(formData: ConfigurationFormData) {
+    private setFormValues(formData: TutorialGroupsConfigurationFormData) {
         this.originalTimeZone = formData.timeZone;
         this.form.patchValue(formData);
     }

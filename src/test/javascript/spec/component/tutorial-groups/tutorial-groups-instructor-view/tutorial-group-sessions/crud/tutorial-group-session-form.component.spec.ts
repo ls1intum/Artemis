@@ -10,6 +10,7 @@ import {
 import { NgbTimepickerModule } from '@ng-bootstrap/ng-bootstrap';
 import '@angular/localize/init';
 import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 
 describe('TutorialGroupSessionForm', () => {
     let fixture: ComponentFixture<TutorialGroupSessionFormComponent>;
@@ -19,6 +20,9 @@ describe('TutorialGroupSessionForm', () => {
     const validStartTime = '12:00:00';
     const validEndTime = '13:00:00';
     const validLocation = 'Garching';
+
+    let clickSubmit: (expectSubmitEvent: boolean) => void;
+    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -31,6 +35,15 @@ describe('TutorialGroupSessionForm', () => {
                 component = fixture.componentInstance;
                 component.course = course;
                 fixture.detectChanges();
+
+                clickSubmit = generateClickSubmitButton(component, fixture, {
+                    date: validDate,
+                    startTime: validStartTime,
+                    endTime: validEndTime,
+                    location: validLocation,
+                });
+
+                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
             });
     });
 
@@ -94,45 +107,6 @@ describe('TutorialGroupSessionForm', () => {
     }));
 
     // === helper functions ===
-
-    const clickSubmit = (expectSubmitEvent: boolean) => {
-        const submitFormSpy = jest.spyOn(component, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
-
-        const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
-        submitButton.click();
-
-        return fixture.whenStable().then(() => {
-            if (expectSubmitEvent) {
-                expect(submitFormSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledWith({
-                    date: validDate,
-                    startTime: validStartTime,
-                    endTime: validEndTime,
-                    location: validLocation,
-                });
-            } else {
-                expect(submitFormSpy).not.toHaveBeenCalled();
-                expect(submitFormEventSpy).not.toHaveBeenCalled();
-            }
-        });
-    };
-
-    const testFormIsInvalidOnMissingRequiredProperty = (controlName: string) => {
-        setValidFormValues();
-
-        fixture.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
-
-        component.form.get(controlName)!.setValue(undefined);
-        fixture.detectChanges();
-        expect(component.form.invalid).toBeTrue();
-        expect(component.isSubmitPossible).toBeFalse();
-
-        clickSubmit(false);
-    };
 
     const setValidFormValues = () => {
         component.dateControl!.setValue(validDate);

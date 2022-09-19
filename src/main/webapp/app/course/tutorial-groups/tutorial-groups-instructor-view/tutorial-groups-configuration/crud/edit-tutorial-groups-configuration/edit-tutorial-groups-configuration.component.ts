@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
-import { ConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import { TutorialGroupsConfigurationFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
@@ -16,7 +16,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 export class EditTutorialGroupsConfigurationComponent implements OnInit {
     isLoading = false;
     tutorialGroupsConfiguration: TutorialGroupsConfiguration;
-    formData: ConfigurationFormData;
+    formData: TutorialGroupsConfigurationFormData;
     courseId: number;
     tutorialGroupConfigurationId: number;
 
@@ -56,7 +56,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
             });
     }
 
-    updateTutorialGroupsConfiguration(formData: ConfigurationFormData) {
+    updateTutorialGroupsConfiguration(formData: TutorialGroupsConfigurationFormData) {
         const { timeZone, period } = formData;
         this.tutorialGroupsConfiguration.timeZone = timeZone!;
 

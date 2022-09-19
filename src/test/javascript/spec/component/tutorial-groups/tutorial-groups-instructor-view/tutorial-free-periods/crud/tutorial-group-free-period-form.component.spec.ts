@@ -9,6 +9,7 @@ import {
     TutorialGroupFreePeriodFormComponent,
     TutorialGroupFreePeriodFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { generateClickSubmitButton, generateTestFormIsInvalidOnMissingRequiredProperty } from '../../../helpers/tutorialGroupFormsUtils';
 
 describe('TutorialFreePeriodFormComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodFormComponent>;
@@ -16,6 +17,9 @@ describe('TutorialFreePeriodFormComponent', () => {
 
     const validDate = new Date(Date.UTC(2021, 1, 1));
     const validReason = 'Holiday';
+
+    let clickSubmit: (expectSubmitEvent: boolean) => void;
+    let testFormIsInvalidOnMissingRequiredProperty: (controlName: string) => void;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -27,6 +31,13 @@ describe('TutorialFreePeriodFormComponent', () => {
                 fixture = TestBed.createComponent(TutorialGroupFreePeriodFormComponent);
                 component = fixture.componentInstance;
                 fixture.detectChanges();
+
+                clickSubmit = generateClickSubmitButton(component, fixture, {
+                    date: validDate,
+                    reason: validReason,
+                });
+
+                testFormIsInvalidOnMissingRequiredProperty = generateTestFormIsInvalidOnMissingRequiredProperty(component, fixture, setValidFormValues, clickSubmit);
             });
     });
 
@@ -72,43 +83,6 @@ describe('TutorialFreePeriodFormComponent', () => {
     }));
 
     // === helper functions ===
-
-    const clickSubmit = (expectSubmitEvent: boolean) => {
-        const submitFormSpy = jest.spyOn(component, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
-
-        const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
-        submitButton.click();
-
-        return fixture.whenStable().then(() => {
-            if (expectSubmitEvent) {
-                expect(submitFormSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledOnce();
-                expect(submitFormEventSpy).toHaveBeenCalledWith({
-                    date: validDate,
-                    reason: validReason,
-                });
-            } else {
-                expect(submitFormSpy).not.toHaveBeenCalled();
-                expect(submitFormEventSpy).not.toHaveBeenCalled();
-            }
-        });
-    };
-
-    const testFormIsInvalidOnMissingRequiredProperty = (controlName: string) => {
-        setValidFormValues();
-
-        fixture.detectChanges();
-        expect(component.form.valid).toBeTrue();
-        expect(component.isSubmitPossible).toBeTrue();
-
-        component.form.get(controlName)!.setValue(undefined);
-        fixture.detectChanges();
-        expect(component.form.invalid).toBeTrue();
-        expect(component.isSubmitPossible).toBeFalse();
-
-        clickSubmit(false);
-    };
 
     const setValidFormValues = () => {
         component.dateControl!.setValue(validDate);
