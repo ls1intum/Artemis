@@ -159,8 +159,8 @@ export class ParticipationService {
         const mergedParticipations: StudentParticipation[] = [];
 
         if (participations?.length) {
-            const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun === false);
-            const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun === true);
+            const nonTestRunParticipations = participations.filter((participation: StudentParticipation) => !participation.testRun);
+            const testRunParticipations = participations.filter((participation: StudentParticipation) => participation.testRun);
 
             if (participations[0].type === ParticipationType.STUDENT) {
                 if (nonTestRunParticipations.length) {

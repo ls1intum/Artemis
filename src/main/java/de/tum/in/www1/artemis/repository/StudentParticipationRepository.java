@@ -77,10 +77,8 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
             SELECT DISTINCT p FROM StudentParticipation p
             WHERE p.exercise.id = :#{#exerciseId}
                 AND p.student.login = :#{#username}
-                AND p.testRun = :#{#testRun}
             """)
-    Optional<StudentParticipation> findByExerciseIdAndStudentLoginAndTestRun(@Param("exerciseId") Long exerciseId, @Param("username") String username,
-            @Param("testRun") boolean testRun);
+    Optional<StudentParticipation> findByExerciseIdAndStudentLogin(@Param("exerciseId") Long exerciseId, @Param("username") String username);
 
     @Query("""
             SELECT DISTINCT p FROM StudentParticipation p
@@ -162,6 +160,7 @@ public interface StudentParticipationRepository extends JpaRepository<StudentPar
      * If there is no latest result (= no result at all), the participation will still be included in the returned ResultSet, but will have an empty Result array.
      *
      * @param exerciseId Exercise id.
+     * @param testRun flag that determines if the found participations should be testRuns or not
      * @return participations for exercise.
      */
     @Query("""

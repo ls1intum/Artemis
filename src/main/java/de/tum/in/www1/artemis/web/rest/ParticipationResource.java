@@ -233,6 +233,7 @@ public class ParticipationResource {
      * PUT exercises/:exerciseId/resume-programming-participation: resume the participation of the current user in the given programming exercise
      *
      * @param exerciseId of the exercise for which to resume participation
+     * @param participationId of the participation that should be resumed
      * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */

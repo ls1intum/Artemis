@@ -63,7 +63,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     readonly AssessmentType = AssessmentType;
     readonly PlagiarismVerdict = PlagiarismVerdict;
     readonly QuizStatus = QuizStatus;
-    readonly QUIZ_ENDED_STATUS: (QuizStatus | undefined)[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
+    readonly QUIZ_ENDED_STATUS: QuizStatus[] = [QuizStatus.CLOSED, QuizStatus.OPEN_FOR_PRACTICE];
     readonly QUIZ = ExerciseType.QUIZ;
     readonly PROGRAMMING = ExerciseType.PROGRAMMING;
     readonly MODELING = ExerciseType.MODELING;
@@ -78,12 +78,12 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     public latestRatedResult?: Result;
     public complaint?: Complaint;
     public showMoreResults = false;
-    public sortedHistoryResult: Result[]; // might be a subset of the actual results in combinedParticipation.results
+    public sortedHistoryResult: Result[];
     public exerciseCategories: ExerciseCategory[];
     private participationUpdateListener: Subscription;
     private teamAssignmentUpdateListener: Subscription;
     private submissionSubscription: Subscription;
-    studentParticipations: StudentParticipation[];
+    studentParticipations: StudentParticipation[] = [];
     ratedStudentParticipation?: StudentParticipation;
     unratedStudentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
@@ -173,9 +173,11 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     ngOnDestroy() {
         if (this.participationUpdateListener) {
             this.participationUpdateListener.unsubscribe();
-            this.studentParticipations.forEach((participation) => {
-                this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
-            });
+            if (this.studentParticipations) {
+                this.studentParticipations.forEach((participation) => {
+                    this.participationWebsocketService.unsubscribeForLatestResultOfParticipation(participation.id!, this.exercise!);
+                });
+            }
         }
         if (this.teamAssignmentUpdateListener) {
             this.teamAssignmentUpdateListener.unsubscribe();
@@ -311,12 +313,14 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     sortResults() {
-        this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
-        const sortedResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
-        if (sortedResults) {
-            const sortedResultLength = sortedResults.length;
-            const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
-            this.sortedHistoryResult = sortedResults.slice(startingElement, sortedResultLength);
+        if (this.studentParticipations?.length) {
+            this.studentParticipations.forEach((participation) => participation.results?.sort(this.resultSortFunction));
+            const sortedResults = this.studentParticipations.flatMap((participation) => participation.results ?? []).sort(this.resultSortFunction);
+            if (sortedResults) {
+                const sortedResultLength = sortedResults.length;
+                const startingElement = Math.max(sortedResultLength - MAX_RESULT_HISTORY_LENGTH, 0);
+                this.sortedHistoryResult = sortedResults.slice(startingElement, sortedResultLength);
+            }
         }
     }
 
@@ -335,8 +339,8 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
                 this.unratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
                 this.sortResults();
                 // Add exercise to studentParticipation, as the result component is dependent on its existence.
-                this.studentParticipations.filter((participation) => participation.exercise === undefined).forEach((participation) => (participation.exercise = this.exercise));
-            } else if (this.studentParticipations.length) {
+                this.studentParticipations.forEach((participation) => (participation.exercise = this.exercise));
+            } else if (this.studentParticipations?.length) {
                 // otherwise we make sure that the student participation in exercise is correct
                 this.exercise.studentParticipations = this.studentParticipations;
             }
@@ -429,7 +433,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasMoreResults(): boolean {
-        if (!this.studentParticipations.length || !this.sortedHistoryResult.length) {
+        if (!this.studentParticipations?.length || !this.sortedHistoryResult.length) {
             return false;
         }
         return this.sortedHistoryResult.length > MAX_RESULT_HISTORY_LENGTH;
@@ -443,7 +447,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     }
 
     get hasResults(): boolean {
-        if (!this.studentParticipations.length || !this.sortedHistoryResult.length) {
+        if (!this.studentParticipations?.length || !this.sortedHistoryResult.length) {
             return false;
         }
         return this.sortedHistoryResult.length > 0;

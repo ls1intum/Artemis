@@ -462,7 +462,7 @@ public class ParticipationService {
             Optional<Team> optionalTeam = teamRepository.findOneByExerciseIdAndUserLogin(exercise.getId(), username);
             return optionalTeam.flatMap(team -> studentParticipationRepository.findOneByExerciseIdAndTeamId(exercise.getId(), team.getId()));
         }
-        return studentParticipationRepository.findByExerciseIdAndStudentLoginAndTestRun(exercise.getId(), username, false);
+        return studentParticipationRepository.findByExerciseIdAndStudentLogin(exercise.getId(), username);
     }
 
     /**

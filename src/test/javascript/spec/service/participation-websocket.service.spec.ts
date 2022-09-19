@@ -255,10 +255,10 @@ describe('ParticipationWebsocketService', () => {
     });
 
     it('should return the cached participation after adding it', () => {
-        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id!, false)).toBeUndefined();
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id!)).toBeEmpty();
 
         participationWebsocketService.addParticipation(participation);
 
-        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id!, false)).toEqual(participation);
+        expect(participationWebsocketService.getParticipationForExercise(participation.exercise!.id!)).toEqual([participation]);
     });
 });
