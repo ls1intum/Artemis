@@ -29,6 +29,7 @@ import { ArtemisDataTableModule } from 'app/shared/data-table/data-table.module'
 import { NgModule } from '@angular/core';
 import { TutorialGroupFreePeriodRowButtonsComponent } from './tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-period-row-buttons/tutorial-group-free-period-row-buttons.component';
 import { EditTutorialGroupFreePeriodComponent } from './tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
+import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-group-detail.component';
 
 @NgModule({
     imports: [
@@ -47,6 +48,7 @@ import { EditTutorialGroupFreePeriodComponent } from './tutorial-free-periods/cr
         EditTutorialGroupComponent,
         TutorialGroupRowButtonsComponent,
         RegisteredStudentsComponent,
+        TutorialGroupDetailComponent,
         TutorialGroupSessionsManagement,
         ScheduleFormComponent,
         TutorialGroupsConfigurationFormComponent,

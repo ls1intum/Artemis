@@ -1,4 +1,3 @@
-import { Component, Input } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -16,12 +15,8 @@ import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortService } from 'app/shared/service/sort.service';
+import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
 
-@Component({ selector: 'jhi-tutorial-group-row-buttons', template: '' })
-class TutorialGroupRowButtonsStubComponent {
-    @Input() tutorialGroup: TutorialGroup;
-    @Input() courseId: number;
-}
 describe('TutorialGroupsManagementComponent', () => {
     let tutorialGroupsManagementComponentFixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let tutorialGroupsManagementComponent: TutorialGroupsManagementComponent;

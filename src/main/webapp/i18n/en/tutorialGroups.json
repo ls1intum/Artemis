@@ -89,7 +89,8 @@
                     "weekDay": "Weekday",
                     "time": "Time",
                     "periodWarning": "Note: The period you selected differs from the period of the tutorial group configuration!"
-                }
+                },
+                "additionalInformation": "Additional Information"
             },
             "deleteButton": {
                 "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
@@ -148,6 +149,14 @@
             "endInput": {
                 "label": "End of the session"
             }
+        },
+        "tutorialGroupDetail": {
+            "title": "Tutorial Group Detail",
+            "course": "Course",
+            "teachingAssistantNotSet": "Tutor not set",
+            "capacityNotSet": "Capacity not set",
+            "campusNotSet": "Campus not set",
+            "additionalInformationNotSet": "No additional Information set"
         },
         "tutorialGroupForm": {
             "titleInput": {

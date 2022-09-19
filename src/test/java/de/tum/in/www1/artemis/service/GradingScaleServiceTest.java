@@ -72,8 +72,10 @@ class GradingScaleServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @ValueSource(doubles = { -60, -1.3, -0.0002 })
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testMatchPercentageToGradeStepInvalidPercentage(double invalidPercentage) {
+        var savedGradingScale = gradingScaleRepository.save(gradingScale);
+
         BadRequestAlertException exception = assertThrows(BadRequestAlertException.class,
-                () -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, gradingScale.getId()));
+                () -> gradingScaleRepository.matchPercentageToGradeStep(invalidPercentage, savedGradingScale.getId()));
 
         assertThat(exception.getMessage()).isEqualTo("Grade percentages must be greater than 0");
         assertThat(exception.getEntityName()).isEqualTo("gradeStep");

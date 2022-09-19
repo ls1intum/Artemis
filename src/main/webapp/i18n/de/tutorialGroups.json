@@ -71,6 +71,14 @@
             "title": "Plan",
             "timeZoneInfo": "Zeitzone: {{ timeZone }}"
         },
+        "tutorialGroupDetail": {
+            "title": "Übungsgruppe Details",
+            "course": "Kurs",
+            "teachingAssistantNotSet": "Kein Tutor gesetzt",
+            "capacityNotSet": "Keine Kapazität gesetzt",
+            "campusNotSet": "Kein Campus gesetzt",
+            "additionalInformationNotSet": "Keine zusätzlichen Informationen gesetzt"
+        },
         "tutorialGroupForm": {
             "titleInput": {
                 "label": "Titel",

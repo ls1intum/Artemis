@@ -14,6 +14,7 @@ import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
+import { TutorialGroupDetailComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/detail/tutorial-group-detail.component';
 
 /**
  * parent 'course-management/:courseId/tutorial-groups-management'
@@ -124,6 +125,15 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.registeredStudents.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
+        path: ':tutorialGroupId',
+        component: TutorialGroupDetailComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.tutorialGroupDetail.title',
         },
         canActivate: [UserRouteAccessService],
     },

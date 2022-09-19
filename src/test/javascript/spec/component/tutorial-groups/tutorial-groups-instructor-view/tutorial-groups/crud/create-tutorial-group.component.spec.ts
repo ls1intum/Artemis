@@ -1,5 +1,4 @@
 // tslint:disable:max-line-length
-import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
@@ -16,13 +15,7 @@ import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { User } from 'app/core/user/user.model';
 import { Language } from 'app/entities/course.model';
-
-@Component({ selector: 'jhi-tutorial-group-form', template: '' })
-class TutorialGroupFormStubComponent {
-    @Input() courseId: number;
-    @Input() isEditMode = false;
-    @Output() formSubmitted: EventEmitter<TutorialGroupFormData> = new EventEmitter<TutorialGroupFormData>();
-}
+import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 
 describe('CreateTutorialGroupComponent', () => {
     let createTutorialGroupComponentFixture: ComponentFixture<CreateTutorialGroupComponent>;

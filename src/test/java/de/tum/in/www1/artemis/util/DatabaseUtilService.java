@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupDateUtil.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -599,16 +600,18 @@ public class DatabaseUtilService {
 
     public List<Course> createCoursesWithExercisesAndLecturesAndLectureUnits(boolean withParticipations, boolean withFiles) throws Exception {
         List<Course> courses = this.createCoursesWithExercisesAndLectures(withParticipations, withFiles);
-        Course course1 = this.courseRepo.findByIdWithExercisesAndLecturesElseThrow(courses.get(0).getId());
-        // always use the lecture with the smallest ID, otherwise tests related to search might fail (in a flaky way)
-        Lecture lecture1 = course1.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
-        TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course1.getId()).stream().findFirst().get();
-        VideoUnit videoUnit = createVideoUnit();
-        TextUnit textUnit = createTextUnit();
-        AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
-        ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
-        addLectureUnitsToLecture(lecture1, Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit));
-        return courses;
+        return courses.stream().peek(course -> {
+            List<Lecture> lectures = new ArrayList<>(course.getLectures());
+            for (int i = 0; i < lectures.size(); i++) {
+                TextExercise textExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).stream().findFirst().get();
+                VideoUnit videoUnit = createVideoUnit();
+                TextUnit textUnit = createTextUnit();
+                AttachmentUnit attachmentUnit = createAttachmentUnit(withFiles);
+                ExerciseUnit exerciseUnit = createExerciseUnit(textExercise);
+                lectures.set(i, addLectureUnitsToLecture(lectures.get(i), Set.of(videoUnit, textUnit, attachmentUnit, exerciseUnit)));
+            }
+            course.setLectures(new HashSet<>(lectures));
+        }).toList();
     }
 
     public Lecture addLectureUnitsToLecture(Lecture lecture, Set<LectureUnit> lectureUnits) {
@@ -2300,6 +2303,7 @@ public class DatabaseUtilService {
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
     /**
@@ -3960,6 +3964,45 @@ public class DatabaseUtilService {
             gradeStep.setUpperBoundPercentage(intervals[i + 1]);
             gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
             gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+            gradeStep.setIsPassingGrade(i >= firstPassingIndex);
+            gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
+            gradeStep.setGradingScale(gradingScale);
+            gradeSteps.add(gradeStep);
+        }
+        gradingScale.setGradeSteps(gradeSteps);
+        gradingScale.setGradeType(GradeType.GRADE);
+        return gradingScale;
+    }
+
+    public GradingScale generateGradingScaleWithStickyStep(double[] intervalSizes, Optional<String[]> gradeNames, boolean lowerBoundInclusivity, int firstPassingIndex) {
+        // This method has a different signature from the one above to define intervals from sizes to be consistent with
+        // the instructor UI at interval-grading-system.component.ts and client tests at bonus.service.spec.ts.
+
+        int gradeStepCount = intervalSizes.length;
+        if (firstPassingIndex >= gradeStepCount || firstPassingIndex < 0) {
+            fail("Invalid grading scale parameters");
+        }
+        GradingScale gradingScale = new GradingScale();
+        Set<GradeStep> gradeSteps = new LinkedHashSet<>();
+        double currentLowerBoundPercentage = 0.0;
+        for (int i = 0; i < gradeStepCount; i++) {
+            GradeStep gradeStep = new GradeStep();
+            gradeStep.setLowerBoundPercentage(currentLowerBoundPercentage);
+            currentLowerBoundPercentage += intervalSizes[i];
+            gradeStep.setUpperBoundPercentage(currentLowerBoundPercentage);
+            gradeStep.setLowerBoundInclusive(i == 0 || lowerBoundInclusivity);
+            gradeStep.setUpperBoundInclusive(i + 1 == gradeStepCount || !lowerBoundInclusivity);
+
+            // Ensure 100 percent is not a part of the sticky grade step.
+            if (i == gradeStepCount - 2) {
+                gradeStep.setUpperBoundInclusive(true);
+
+            }
+            else if (i == gradeStepCount - 1) {
+                gradeStep.setLowerBoundInclusive(false);
+                gradeStep.setUpperBoundInclusive(true);
+            }
+
             gradeStep.setIsPassingGrade(i >= firstPassingIndex);
             gradeStep.setGradeName(gradeNames.isPresent() ? gradeNames.get()[i] : "Step" + i);
             gradeStep.setGradingScale(gradingScale);
