@@ -236,13 +236,18 @@ public class ParticipationResource {
      * @param principal  current user principal
      * @return ResponseEntity with status 200 (OK) and with updated participation as a body, or with status 500 (Internal Server Error)
      */
-    @PutMapping("exercises/{exerciseId}/resume-programming-participation")
+    @PutMapping("exercises/{exerciseId}/resume-programming-participation/{participationId}")
     @PreAuthorize("hasRole('USER')")
     @FeatureToggle(Feature.ProgrammingExercises)
-    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, Principal principal) {
+    public ResponseEntity<ProgrammingExerciseStudentParticipation> resumeParticipation(@PathVariable Long exerciseId, @PathVariable Long participationId, Principal principal) {
         log.debug("REST request to resume Exercise : {}", exerciseId);
         var programmingExercise = programmingExerciseRepository.findByIdWithTemplateAndSolutionParticipationElseThrow(exerciseId);
-        var participation = programmingExerciseParticipationService.findStudentParticipationByExerciseAndStudentId(programmingExercise, principal.getName());
+        var participation = programmingExerciseStudentParticipationRepository.findByIdElseThrow(participationId);
+
+        if (!participation.isOwnedBy(principal.getName())) {
+            throw new AccessForbiddenException("You are not the user of this participation");
+        }
+
         // explicitly set the exercise here to make sure that the templateParticipation and solutionParticipation are initialized in case they should be used again
         participation.setProgrammingExercise(programmingExercise);
 

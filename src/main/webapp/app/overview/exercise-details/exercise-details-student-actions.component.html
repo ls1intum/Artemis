@@ -253,7 +253,19 @@
             [smallButton]="smallButtons"
             [hideLabelMobile]="false"
             *ngIf="participationStatusWrapper(false) === ParticipationStatus.INACTIVE && isStartExerciseAvailable()"
-            (click)="resumeProgrammingExercise()"
+            (click)="resumeProgrammingExercise(false)"
+        ></button>
+        <button
+            [id]="'resume-practice-exercise-' + exercise.id"
+            jhi-exercise-action-button
+            [buttonIcon]="faPlayCircle"
+            [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+            [buttonLabel]="'artemisApp.exerciseActions.resumeExercisePractice' | artemisTranslate"
+            [buttonLoading]="!!exercise.loading"
+            [smallButton]="smallButtons"
+            [hideLabelMobile]="false"
+            *ngIf="participationStatusWrapper(true) === ParticipationStatus.INACTIVE && isStartPracticeAvailable()"
+            (click)="resumeProgrammingExercise(true)"
         ></button>
         <a
             class="btn btn-primary me-1"

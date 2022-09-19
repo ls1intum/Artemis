@@ -200,11 +200,17 @@ describe('Course Management Service', () => {
             participation,
         );
         service
-            .resumeProgrammingExercise(exerciseId)
+            .resumeProgrammingExercise(exerciseId, participationId)
             .pipe(take(1))
             .subscribe((res) => expect(res).toEqual(expected));
 
-        requestAndExpectDateConversion('PUT', SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation`, returnedFromService, participation.exercise, true);
+        requestAndExpectDateConversion(
+            'PUT',
+            SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation${participationId}`,
+            returnedFromService,
+            participation.exercise,
+            true,
+        );
         expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
         tick();
     }));

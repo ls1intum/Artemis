@@ -15,6 +15,7 @@ import { finalize } from 'rxjs/operators';
 import { faExternalLinkAlt, faEye, faFolderOpen, faPlayCircle, faRedo, faSignal, faUsers } from '@fortawesome/free-solid-svg-icons';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
 import dayjs from 'dayjs/esm';
+import { ParticipationService } from 'app/exercises/shared/participation/participation.service';
 
 @Component({
     selector: 'jhi-exercise-details-student-actions',
@@ -49,7 +50,13 @@ export class ExerciseDetailsStudentActionsComponent {
     faRedo = faRedo;
     faExternalLinkAlt = faExternalLinkAlt;
 
-    constructor(private alertService: AlertService, private courseExerciseService: CourseExerciseService, private httpClient: HttpClient, private router: Router) {}
+    constructor(
+        private alertService: AlertService,
+        private courseExerciseService: CourseExerciseService,
+        private httpClient: HttpClient,
+        private router: Router,
+        private participationService: ParticipationService,
+    ) {}
 
     /**
      * check if practiceMode is available
@@ -63,7 +70,7 @@ export class ExerciseDetailsStudentActionsComponent {
                     return quizExercise.isOpenForPractice! && quizExercise.quizEnded!;
                 case ExerciseType.PROGRAMMING:
                     const programmingExercise: ProgrammingExercise = this.exercise as ProgrammingExercise;
-                    return dayjs().isAfter(programmingExercise.dueDate);
+                    return dayjs().isAfter(programmingExercise.dueDate) && !programmingExercise.teamMode;
                 default:
                     return false;
             }
@@ -160,17 +167,19 @@ export class ExerciseDetailsStudentActionsComponent {
     /**
      * resume the programming exercise
      */
-    resumeProgrammingExercise() {
+    resumeProgrammingExercise(testRun: boolean) {
         this.exercise.loading = true;
+        const participation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations!, testRun);
         this.courseExerciseService
-            .resumeProgrammingExercise(this.exercise.id!)
+            .resumeProgrammingExercise(this.exercise.id!, participation!.id!)
             .pipe(finalize(() => (this.exercise.loading = false)))
             .subscribe({
-                next: (participation: StudentParticipation) => {
-                    if (participation) {
+                next: (resumedParticipation: StudentParticipation) => {
+                    if (resumedParticipation) {
                         // Otherwise the client would think that all results are loaded, but there would not be any (=> no graded result).
-                        participation.results = this.exercise.studentParticipations![0] ? this.exercise.studentParticipations![0].results : [];
-                        this.exercise.studentParticipations = [participation];
+                        resumedParticipation.results = participation ? participation.results : [];
+                        const replacedIndex = this.exercise.studentParticipations!.indexOf(participation!);
+                        this.exercise.studentParticipations![replacedIndex] = resumedParticipation;
                         this.exercise.participationStatus = participationStatus(this.exercise);
                         this.alertService.success('artemisApp.exercise.resumeProgrammingExercise');
                     }

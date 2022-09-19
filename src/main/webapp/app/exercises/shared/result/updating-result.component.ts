@@ -53,10 +53,6 @@ export class UpdatingResultComponent implements OnChanges, OnDestroy {
      * @param changes The hashtable of occurred changes represented as SimpleChanges object.
      */
     ngOnChanges(changes: SimpleChanges) {
-        if (this.showUngradedResults) {
-            console.log(this.participation.results);
-        }
-
         if (hasParticipationChanged(changes)) {
             // Sort participation results by completionDate desc.
             if (this.participation.results) {
