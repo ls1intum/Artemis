@@ -24,7 +24,7 @@ public interface TeamScoreRepository extends JpaRepository<TeamScore, Long> {
 
     void deleteAllByTeam(Team team);
 
-    @EntityGraph(type = LOAD, attributePaths = { "team", "exercise", "lastResult", "lastRatedResult" })
+    @EntityGraph(type = LOAD, attributePaths = { "team", "exercise" })
     Optional<TeamScore> findByExercise_IdAndTeam_Id(@Param("exerciseId") Long exerciseId, @Param("teamId") Long teamId);
 
     @EntityGraph(type = LOAD, attributePaths = { "team", "exercise", "lastResult", "lastRatedResult" })

@@ -118,7 +118,7 @@ public class Result extends DomainObject {
     @LastModifiedDate
     @Column(name = "last_modified_date")
     @JsonIgnore
-    private Instant lastModifiedDate = Instant.now();
+    private Instant lastModifiedDate;
 
     // This attribute is required to forward the coverage file reports after creating the build result. This is required in order to
     // delay referencing the corresponding test cases from the entries because the test cases are not saved in the database

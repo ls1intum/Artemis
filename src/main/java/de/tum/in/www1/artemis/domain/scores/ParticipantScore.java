@@ -74,7 +74,7 @@ public abstract class ParticipantScore extends DomainObject {
     @LastModifiedDate
     @Column(name = "last_modified_date")
     @JsonIgnore
-    private Instant lastModifiedDate = Instant.now();
+    private Instant lastModifiedDate;
 
     public Exercise getExercise() {
         return exercise;

@@ -51,11 +51,10 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     @Query("""
             SELECT p FROM ParticipantScore p
-            LEFT JOIN FETCH p.exercise
             WHERE p.lastResult IS NULL
             OR p.lastRatedResult IS NULL
             """)
-    List<ParticipantScore> findAllOutdatedWithExercise();
+    List<ParticipantScore> findAllOutdated();
 
     @EntityGraph(type = LOAD, attributePaths = { "exercise", "lastResult", "lastRatedResult" })
     Optional<ParticipantScore> findParticipantScoreByLastRatedResult(Result result);
