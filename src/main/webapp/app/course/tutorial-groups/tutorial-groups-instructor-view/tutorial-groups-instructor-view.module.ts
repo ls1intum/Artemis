@@ -1,6 +1,6 @@
 // tslint:disable:max-line-length
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
-import { TutorialGroupFreePeriodForm } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
+import { TutorialGroupFreePeriodFormComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
 import { TutorialGroupSessionsManagement } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { TutorialGroupsConfigurationFormComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
@@ -58,7 +58,7 @@ import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-
         CreateTutorialGroupSessionComponent,
         CancellationModalComponent,
         TutorialGroupFreePeriodsManagementComponent,
-        TutorialGroupFreePeriodForm,
+        TutorialGroupFreePeriodFormComponent,
         CreateTutorialGroupFreePeriodComponent,
         EditTutorialGroupSessionComponent,
         TutorialGroupSessionRowButtonsComponent,
