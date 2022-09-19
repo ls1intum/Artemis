@@ -30,16 +30,17 @@
             [exercise]="exercise"
             [participation]="participation!"
             [class]="updatingResultClass"
+            [showUngradedResults]="showUngradedResults"
             [showGradedBadge]="showGradedBadge"
             [short]="short"
             [personalParticipation]="true"
         ></jhi-updating-result>
     </span>
     <!-- For programming exercises -->
-    <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && exercise.studentParticipations && exercise.studentParticipations.length > 0">
+    <ng-container *ngIf="exercise.type === ExerciseType.PROGRAMMING && participation">
         <jhi-programming-exercise-student-trigger-build-button
             [exercise]="exercise"
-            [participation]="exercise.studentParticipations![0]"
+            [participation]="participation"
             [triggerLastGraded]="triggerLastGraded"
         ></jhi-programming-exercise-student-trigger-build-button>
     </ng-container>

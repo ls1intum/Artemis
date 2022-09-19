@@ -17,21 +17,21 @@ import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
 export class CloneRepoButtonComponent implements OnInit {
     @Input()
     loading = false;
-
     @Input()
     smallButtons: boolean;
-
     @Input()
     repositoryUrl: string;
-
     // Needed because the repository url is different for teams
     @Input()
     isTeamParticipation: boolean;
+    @Input()
+    buttonLabelAddition?: string;
 
     useSsh = false;
     sshKeysUrl: string;
     sshEnabled: boolean;
     sshTemplateUrl: string;
+    buttonLabel = 'artemisApp.exerciseActions.cloneRepository';
     repositoryPassword: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
@@ -69,6 +69,10 @@ export class CloneRepoButtonComponent implements OnInit {
 
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
+
+        if (this.buttonLabelAddition) {
+            this.buttonLabel += this.buttonLabelAddition;
+        }
     }
 
     public setUseSSH(useSsh: boolean): void {

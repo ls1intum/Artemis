@@ -211,7 +211,23 @@ export class ExerciseDetailsStudentActionsComponent {
      */
     get assignedTeamId(): number | undefined {
         const participations = this.exercise.studentParticipations;
-        return participations && participations.length > 0 ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
+        return participations?.length ? participations[0].team?.id : this.exercise.studentAssignedTeamId;
+    }
+
+    codeEditorButtonLable(participation: StudentParticipation) {
+        if ((this.exercise.studentParticipations?.length ?? 0) > 1 || participation.testRun) {
+            return 'artemisApp.exerciseActions.openCodeEditor' + (participation.testRun ? 'Practice' : 'Rated');
+        } else {
+            return 'artemisApp.exerciseActions.openCodeEditor';
+        }
+    }
+
+    cloneButtonLabelAddition(participation: StudentParticipation) {
+        if ((this.exercise.studentParticipations?.length ?? 0) > 1 || participation.testRun) {
+            return participation.testRun ? 'Practice' : 'Rated';
+        } else {
+            return '';
+        }
     }
 
     repositoryUrl(participation: Participation) {

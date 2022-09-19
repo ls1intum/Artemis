@@ -85,6 +85,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
     private submissionSubscription: Subscription;
     studentParticipations: StudentParticipation[];
     ratedStudentParticipation?: StudentParticipation;
+    unratedStudentParticipation?: StudentParticipation;
     isAfterAssessmentDueDate: boolean;
     allowComplaintsForAutomaticAssessments: boolean;
     public gradingCriteria: GradingCriterion[];
@@ -188,6 +189,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
         this.exercise = undefined;
         this.studentParticipations = this.participationWebsocketService.getParticipationForExercise(this.exerciseId);
         this.ratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+        this.unratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
         this.resultWithComplaint = getFirstResultWithComplaintFromResults(this.ratedStudentParticipation?.results);
         this.exerciseService.getExerciseDetails(this.exerciseId).subscribe((exerciseResponse: HttpResponse<Exercise>) => {
             this.handleNewExercise(exerciseResponse.body!);
@@ -330,6 +332,7 @@ export class CourseExerciseDetailsComponent implements OnInit, OnDestroy {
             if (this.exercise.studentParticipations?.length) {
                 this.studentParticipations = this.participationService.mergeStudentParticipations(this.exercise.studentParticipations);
                 this.ratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, false);
+                this.unratedStudentParticipation = this.participationService.getSpecificStudentParticipation(this.studentParticipations, true);
                 this.sortResults();
                 // Add exercise to studentParticipation, as the result component is dependent on its existence.
                 this.studentParticipations.filter((participation) => participation.exercise === undefined).forEach((participation) => (participation.exercise = this.exercise));
