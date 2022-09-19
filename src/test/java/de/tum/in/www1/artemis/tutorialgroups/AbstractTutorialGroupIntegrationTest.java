@@ -10,8 +10,10 @@ import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.test.context.support.WithMockUser;
 
 import com.google.common.collect.ImmutableSet;
 
@@ -26,11 +28,12 @@ import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.*;
 import de.tum.in.www1.artemis.util.DatabaseUtilService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 
 /**
  * Contains useful methods for testing the tutorial groups feature.
  */
-class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+abstract class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     UserRepository userRepository;
@@ -60,7 +63,9 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
 
     Long exampleConfigurationId;
 
-    Long idOfTutorialGroupWithoutSchedule;
+    Long exampleOneTutorialGroupId;
+
+    Long exampleTwoTutorialGroupId;
 
     String exampleTimeZone = "Europe/Bucharest";
 
@@ -88,16 +93,57 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
         // creating the users student1-student10, tutor1-tutor10, editor1-editor10 and instructor1-instructor10
         this.database.addUsers(10, 10, 10, 10);
 
+        // Add users that are not in the course
+        userRepository.save(ModelFactory.generateActivatedUser("student42"));
+        userRepository.save(ModelFactory.generateActivatedUser("tutor42"));
+        userRepository.save(ModelFactory.generateActivatedUser("editor42"));
+        userRepository.save(ModelFactory.generateActivatedUser("instructor42"));
+
         var course = this.database.createCourse();
         exampleCourseId = course.getId();
 
         exampleConfigurationId = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, LocalDate.of(2022, 8, 1), LocalDate.of(2022, 9, 1)).getId();
 
-        idOfTutorialGroupWithoutSchedule = databaseUtilService
+        exampleOneTutorialGroupId = databaseUtilService
                 .createTutorialGroup(exampleCourseId, "ExampleTitle1", "LoremIpsum1", 10, false, "LoremIpsum1", Language.ENGLISH, userRepository.findOneByLogin("tutor1").get(),
                         ImmutableSet.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get(),
                                 userRepository.findOneByLogin("student3").get(), userRepository.findOneByLogin("student4").get(), userRepository.findOneByLogin("student5").get()))
                 .getId();
+
+        exampleTwoTutorialGroupId = databaseUtilService.createTutorialGroup(exampleCourseId, "ExampleTitle2", "LoremIpsum2", 10, true, "LoremIpsum2", Language.GERMAN,
+                userRepository.findOneByLogin("tutor2").get(), ImmutableSet.of(userRepository.findOneByLogin("student6").get(), userRepository.findOneByLogin("student7").get()))
+                .getId();
+
+    }
+
+    // === Abstract Methods ===
+
+    abstract void testJustForInstructorEndpoints() throws Exception;
+
+    // === Common Tests ===
+
+    @Test
+    @WithMockUser(value = "instructor42", roles = "INSTRUCTOR")
+    void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = "tutor1", roles = "TA")
+    void request_asTutor_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void request_asStudent_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
+    }
+
+    @Test
+    @WithMockUser(username = "editor1", roles = "EDITOR")
+    void request_asEditor_shouldReturnForbidden() throws Exception {
+        this.testJustForInstructorEndpoints();
     }
 
     // === Paths ===
@@ -114,7 +160,7 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
     }
 
     String getSessionsPathOfDefaultTutorialGroup() {
-        return this.getTutorialGroupsPath() + idOfTutorialGroupWithoutSchedule + "/sessions/";
+        return this.getTutorialGroupsPath() + exampleOneTutorialGroupId + "/sessions/";
     }
 
     String getSessionsPathOfTutorialGroup(Long tutorialGroupId) {
@@ -150,6 +196,15 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
     TutorialGroup buildAndSaveTutorialGroupWithoutSchedule() {
         return databaseUtilService.createTutorialGroup(exampleCourseId, "LoremIpsum", "LoremIpsum", 10, false, "Garching", Language.ENGLISH,
                 userRepository.findOneByLogin("tutor1").get(), Set.of(userRepository.findOneByLogin("student1").get(), userRepository.findOneByLogin("student2").get()));
+    }
+
+    TutorialGroup buildTutorialGroupWithoutSchedule() {
+        var course = courseRepository.findWithEagerLearningGoalsById(exampleCourseId).get();
+        var tutorialGroup = new TutorialGroup();
+        tutorialGroup.setCourse(course);
+        tutorialGroup.setTitle("NewTitle");
+        tutorialGroup.setTeachingAssistant(userRepository.findOneByLogin("tutor1").get());
+        return tutorialGroup;
     }
 
     TutorialGroup buildTutorialGroupWithExampleSchedule(LocalDate validFromInclusive, LocalDate validToInclusive) {
@@ -213,10 +268,9 @@ class AbstractTutorialGroupIntegrationTest extends AbstractSpringIntegrationBamb
                 getExampleSessionEndOnDate(date), schedule.getLocation(), TutorialGroupSessionStatus.ACTIVE, null);
     }
 
-    void assertScheduledSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, TutorialGroupSchedule schedule,
-            String statusExplanation) {
+    void assertScheduledSessionIsCancelledOnDate(TutorialGroupSession sessionToCheck, LocalDate date, Long tutorialGroupId, TutorialGroupSchedule schedule) {
         this.assertTutorialGroupSessionProperties(sessionToCheck, Optional.of(schedule.getId()), tutorialGroupId, getExampleSessionStartOnDate(date),
-                getExampleSessionEndOnDate(date), schedule.getLocation(), TutorialGroupSessionStatus.CANCELLED, statusExplanation);
+                getExampleSessionEndOnDate(date), schedule.getLocation(), TutorialGroupSessionStatus.CANCELLED, "Holiday");
     }
 
     void assertTutorialGroupPersistedWithSchedule(TutorialGroup tutorialGroupToCheck, TutorialGroupSchedule expectedSchedule) {

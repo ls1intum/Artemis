@@ -12,6 +12,11 @@ import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 
 class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
+    @Override
+    void testJustForInstructorEndpoints() throws Exception {
+
+    }
+
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void createNewTutorialGroupWithSchedule_periodCoversDSTChange_shouldHandleDaylightSavingTimeSwitchCorrectly() throws Exception {
@@ -87,7 +92,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         var holidaySession = sessions.get(1);
 
         this.assertScheduledSessionIsActiveOnDate(normalSession, firstAugustMonday, persistedTutorialGroupId, persistedSchedule);
-        this.assertScheduledSessionIsCancelledOnDate(holidaySession, secondAugustMonday, persistedTutorialGroupId, persistedSchedule, "Holiday");
+        this.assertScheduledSessionIsCancelledOnDate(holidaySession, secondAugustMonday, persistedTutorialGroupId, persistedSchedule);
     }
 
     @Test
@@ -197,4 +202,5 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
         assertThat(tutorialGroupScheduleRepository.findAll()).isEmpty();
         assertThat(tutorialGroupRepository.findAll()).isEmpty();
     }
+
 }
