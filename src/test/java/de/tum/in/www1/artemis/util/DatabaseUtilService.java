@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
+import static de.tum.in.www1.artemis.util.ModelFactory.DEFAULT_BRANCH;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 
@@ -2282,6 +2283,7 @@ public class DatabaseUtilService {
         programmingExercise.setCategories(new HashSet<>(Set.of("cat1", "cat2")));
         programmingExercise.setTestRepositoryUrl("http://nadnasidni.tum/scm/" + programmingExercise.getProjectKey() + "/" + programmingExercise.getProjectKey() + "-tests.git");
         programmingExercise.setShowTestNamesToStudents(false);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
     /**
