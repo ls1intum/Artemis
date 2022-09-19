@@ -1,4 +1,10 @@
-export const weekDays = [
+export type weekDay = {
+    id: string;
+    translationKey: string;
+    value: number;
+};
+
+export const weekDays: weekDay[] = [
     {
         id: 'monday',
         translationKey: 'monday',

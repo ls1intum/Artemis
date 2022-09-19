@@ -1,49 +1,10 @@
-import { Component, EventEmitter, Injectable, Input, OnChanges, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormBuilder, FormGroup, ValidationErrors, Validators } from '@angular/forms';
-import { NgbTimeAdapter, NgbTimeStruct } from '@ng-bootstrap/ng-bootstrap';
-import dayjs from 'dayjs/esm';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { NgbTimeAdapter } from '@ng-bootstrap/ng-bootstrap';
 import { Course } from 'app/entities/course.model';
 import { faCalendarAlt } from '@fortawesome/free-solid-svg-icons';
-
-@Injectable()
-class NgbTimeStringAdapter extends NgbTimeAdapter<string> {
-    fromModel(value: string | null): NgbTimeStruct | null {
-        if (!value) {
-            return null;
-        }
-        const split = value.split(':');
-        return {
-            hour: parseInt(split[0], 10),
-            minute: parseInt(split[1], 10),
-            second: parseInt(split[2], 10),
-        };
-    }
-
-    toModel(time: NgbTimeStruct | null): string | null {
-        return time !== null ? `${pad(time.hour)}:${pad(time.minute)}:${pad(time.second)}` : null;
-    }
-}
-
-const validTimeRange = (control: AbstractControl): ValidationErrors | null => {
-    if (!control.get('startTime')!.value || !control.get('endTime')!.value) {
-        return null;
-    }
-
-    const startTime = control.get('startTime')!.value;
-    const endTime = control.get('endTime')!.value;
-
-    const startComparison = dayjs('1970-01-01 ' + startTime, 'YYYY-MM-DD HH:mm:ss');
-    const endComparison = dayjs('1970-01-01 ' + endTime, 'YYYY-MM-DD HH:mm:ss');
-    if (startComparison.isAfter(endComparison)) {
-        return {
-            invalidTimeRange: true,
-        };
-    } else {
-        return null;
-    }
-};
-
-const pad = (i: number): string => (i < 10 ? `0${i}` : `${i}`);
+import { NgbTimeStringAdapter } from 'app/course/tutorial-groups/shared/ngbTimeStringAdapter';
+import { validTimeRange } from 'app/course/tutorial-groups/shared/timeRangeValidator';
 
 export interface TutorialGroupSessionFormData {
     date?: Date;
@@ -63,6 +24,7 @@ export class TutorialGroupSessionFormComponent implements OnInit, OnChanges {
         date: undefined,
         startTime: undefined,
         endTime: undefined,
+        location: undefined,
     };
 
     @Input() course?: Course;
