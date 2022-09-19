@@ -249,8 +249,11 @@ public class ParticipantScoreSchedulerService {
 
         // Persist the changes or delete the participant score if it is not needed anymore
         if (participantScore.getLastRatedResult() == null && participantScore.getLastResult() == null) {
-            participantScoreRepository.delete(participantScore);
-            logger.debug("Deleted participant score {}.", participantScore.getId());
+            if (participantScore.getId() != null) {
+                // Delete the participant score if it exists in the database
+                participantScoreRepository.delete(participantScore);
+                logger.debug("Deleted participant score {}.", participantScore.getId());
+            }
         }
         else {
             participantScoreRepository.save(participantScore);
