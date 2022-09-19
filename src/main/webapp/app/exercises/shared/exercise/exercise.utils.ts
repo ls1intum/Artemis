@@ -157,7 +157,7 @@ export const participationStatus = (exercise: Exercise, testRun?: boolean): Part
     if (testRun === undefined) {
         studentParticipation = exercise.studentParticipations?.first();
     } else {
-        studentParticipation = exercise.studentParticipations?.filter((participation: StudentParticipation) => participation.testRun === testRun).first();
+        studentParticipation = exercise.studentParticipations?.filter((participation: StudentParticipation) => !!participation.testRun === testRun).first();
     }
 
     // For team exercises check whether the student has been assigned to a team yet

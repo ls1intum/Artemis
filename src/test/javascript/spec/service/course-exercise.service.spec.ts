@@ -206,7 +206,7 @@ describe('Course Management Service', () => {
 
         requestAndExpectDateConversion(
             'PUT',
-            SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation${participationId}`,
+            SERVER_API_URL + `api/exercises/${exerciseId}/resume-programming-participation/${participationId}`,
             returnedFromService,
             participation.exercise,
             true,
