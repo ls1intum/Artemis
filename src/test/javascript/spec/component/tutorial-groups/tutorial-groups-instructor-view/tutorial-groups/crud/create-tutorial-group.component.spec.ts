@@ -16,10 +16,14 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { User } from 'app/core/user/user.model';
 import { Language } from 'app/entities/course.model';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('CreateTutorialGroupComponent', () => {
     let createTutorialGroupComponentFixture: ComponentFixture<CreateTutorialGroupComponent>;
     let createTutorialGroupComponent: CreateTutorialGroupComponent;
+    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
+    let findCourseSpy: jest.SpyInstance;
+    let courseService: CourseManagementService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -28,6 +32,7 @@ describe('CreateTutorialGroupComponent', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
+                MockProvider(CourseManagementService),
                 { provide: Router, useClass: MockRouter },
                 {
                     provide: ActivatedRoute,
@@ -50,6 +55,8 @@ describe('CreateTutorialGroupComponent', () => {
             .then(() => {
                 createTutorialGroupComponentFixture = TestBed.createComponent(CreateTutorialGroupComponent);
                 createTutorialGroupComponent = createTutorialGroupComponentFixture.componentInstance;
+                courseService = TestBed.inject(CourseManagementService);
+                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             });
     });
 
@@ -60,6 +67,8 @@ describe('CreateTutorialGroupComponent', () => {
     it('should initialize', () => {
         createTutorialGroupComponentFixture.detectChanges();
         expect(createTutorialGroupComponent).not.toBeNull();
+        expect(findCourseSpy).toHaveBeenCalledOnce();
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should send POST request upon form submission and navigate', fakeAsync(() => {

@@ -11,8 +11,9 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { CourseGroupMembershipComponent } from 'app/course/manage/course-group-membership/course-group-membership.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
-import { ArtemisTestModule } from '../../../test.module';
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
+import { ArtemisTestModule } from '../../../../test.module';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -48,6 +49,8 @@ describe('Registered Students Component', () => {
     let fixture: ComponentFixture<RegisteredStudentsComponent>;
     let tutorialGroup: TutorialGroup;
     let tutorialGroupService: TutorialGroupsService;
+    let courseService: CourseManagementService;
+    let findCourseSpy: jest.SpyInstance;
     let getTutorialGroupSpy: jest.SpyInstance;
     const course = { id: 123, title: 'Example', isAtLeastInstructor: true };
     const tutorialGroupUserOne = new User(1, 'user1');
@@ -59,6 +62,7 @@ describe('Registered Students Component', () => {
             declarations: [RegisteredStudentsComponent, CourseGroupStubComponent, MockDirective(TranslateDirective)],
             providers: [
                 MockProvider(TutorialGroupsService),
+                MockProvider(CourseManagementService),
                 {
                     provide: ActivatedRoute,
                     useValue: {
@@ -71,9 +75,14 @@ describe('Registered Students Component', () => {
                             },
                         }),
                         parent: {
-                            parent: {
-                                data: of({ course }),
-                            },
+                            paramMap: of({
+                                get: (key: string) => {
+                                    switch (key) {
+                                        case 'courseId':
+                                            return 123;
+                                    }
+                                },
+                            }),
                         },
                     },
                 },
@@ -84,6 +93,7 @@ describe('Registered Students Component', () => {
                 fixture = TestBed.createComponent(RegisteredStudentsComponent);
                 comp = fixture.componentInstance;
                 tutorialGroupService = TestBed.inject(TutorialGroupsService);
+                courseService = TestBed.inject(CourseManagementService);
                 tutorialGroup = new TutorialGroup();
                 tutorialGroup.title = 'Group';
                 tutorialGroup.id = 123;
@@ -101,6 +111,7 @@ describe('Registered Students Component', () => {
 
                 tutorialGroup.registrations = [registrationOne, registrationTwo];
                 getTutorialGroupSpy = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: tutorialGroup })));
+                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             });
     });
 
@@ -119,6 +130,8 @@ describe('Registered Students Component', () => {
             expect(comp.course).toEqual(course);
             expect(comp.tutorialGroup).toEqual(tutorialGroup);
             expect(comp.courseGroup).toEqual(CourseGroup.STUDENTS);
+            expect(findCourseSpy).toHaveBeenCalledOnce();
+            expect(findCourseSpy).toHaveBeenCalledWith(123);
             expect(getTutorialGroupSpy).toHaveBeenCalledOnce();
             expect(getTutorialGroupSpy).toHaveBeenCalledWith(course.id, tutorialGroup.id);
             expect(comp.registeredStudents).toEqual(tutorialGroup.registrations?.map((registration) => registration.student));

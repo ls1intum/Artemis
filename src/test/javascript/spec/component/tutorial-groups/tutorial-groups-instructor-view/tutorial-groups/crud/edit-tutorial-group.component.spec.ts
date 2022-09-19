@@ -10,13 +10,17 @@ import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
-import { LoadingIndicatorContainerStubComponent } from '../../../helpers/stubs/loading-indicator-container-stub.component';
 import { User } from 'app/core/user/user.model';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('EditTutorialGroupComponent', () => {
     let editTutorialGroupComponentFixture: ComponentFixture<EditTutorialGroupComponent>;
     let editTutorialGroupComponent: EditTutorialGroupComponent;
+    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
+    let findCourseSpy: jest.SpyInstance;
+    let courseService: CourseManagementService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -24,6 +28,7 @@ describe('EditTutorialGroupComponent', () => {
             declarations: [EditTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
+                MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
                 {
@@ -38,16 +43,14 @@ describe('EditTutorialGroupComponent', () => {
                             },
                         }),
                         parent: {
-                            parent: {
-                                paramMap: of({
-                                    get: (key: string) => {
-                                        switch (key) {
-                                            case 'courseId':
-                                                return 1;
-                                        }
-                                    },
-                                }),
-                            },
+                            paramMap: of({
+                                get: (key: string) => {
+                                    switch (key) {
+                                        case 'courseId':
+                                            return 1;
+                                    }
+                                },
+                            }),
                         },
                     },
                 },
@@ -57,6 +60,8 @@ describe('EditTutorialGroupComponent', () => {
             .then(() => {
                 editTutorialGroupComponentFixture = TestBed.createComponent(EditTutorialGroupComponent);
                 editTutorialGroupComponent = editTutorialGroupComponentFixture.componentInstance;
+                courseService = TestBed.inject(CourseManagementService);
+                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             });
     });
 
@@ -67,6 +72,8 @@ describe('EditTutorialGroupComponent', () => {
     it('should initialize', () => {
         editTutorialGroupComponentFixture.detectChanges();
         expect(editTutorialGroupComponent).not.toBeNull();
+        expect(findCourseSpy).toHaveBeenCalledOnce();
+        expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
     it('should set form data correctly', () => {
@@ -82,11 +89,13 @@ describe('EditTutorialGroupComponent', () => {
         });
 
         const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
+
+        editTutorialGroupComponentFixture.detectChanges();
+
         const tutorialGroupFormStubComponent: TutorialGroupFormStubComponent = editTutorialGroupComponentFixture.debugElement.query(
             By.directive(TutorialGroupFormStubComponent),
         ).componentInstance;
 
-        editTutorialGroupComponentFixture.detectChanges();
         expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupOfResponse);
         expect(findByIdStub).toHaveBeenCalledWith(1, 1);
         expect(findByIdStub).toHaveBeenCalledOnce();

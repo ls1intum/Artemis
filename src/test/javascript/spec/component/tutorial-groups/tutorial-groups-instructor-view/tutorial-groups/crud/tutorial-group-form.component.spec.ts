@@ -27,6 +27,7 @@ class MarkdownEditorStubComponent {
 describe('TutorialGroupFormComponent', () => {
     let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;
     let tutorialGroupFormComponent: TutorialGroupFormComponent;
+    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -50,6 +51,7 @@ describe('TutorialGroupFormComponent', () => {
             .then(() => {
                 tutorialGroupFormComponentFixture = TestBed.createComponent(TutorialGroupFormComponent);
                 tutorialGroupFormComponent = tutorialGroupFormComponentFixture.componentInstance;
+                tutorialGroupFormComponent.course = course;
             });
     });
 

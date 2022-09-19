@@ -9,17 +9,21 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
-import { LoadingIndicatorContainerStubComponent } from '../../helpers/stubs/loading-indicator-container-stub.component';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { SortDirective } from 'app/shared/sort/sort.directive';
 import { SortByDirective } from 'app/shared/sort/sort-by.directive';
 import { SortService } from 'app/shared/service/sort.service';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
+import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
+import { CourseManagementService } from 'app/course/manage/course-management.service';
 
 describe('TutorialGroupsManagementComponent', () => {
     let tutorialGroupsManagementComponentFixture: ComponentFixture<TutorialGroupsManagementComponent>;
     let tutorialGroupsManagementComponent: TutorialGroupsManagementComponent;
+    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
+    let findCourseSpy: jest.SpyInstance;
+    let courseService: CourseManagementService;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,6 +38,7 @@ describe('TutorialGroupsManagementComponent', () => {
                 MockDirective(SortByDirective),
             ],
             providers: [
+                MockProvider(CourseManagementService),
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 MockProvider(SortService),
@@ -59,6 +64,8 @@ describe('TutorialGroupsManagementComponent', () => {
             .then(() => {
                 tutorialGroupsManagementComponentFixture = TestBed.createComponent(TutorialGroupsManagementComponent);
                 tutorialGroupsManagementComponent = tutorialGroupsManagementComponentFixture.componentInstance;
+                courseService = TestBed.inject(CourseManagementService);
+                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
             });
     });
 
