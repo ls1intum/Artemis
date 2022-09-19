@@ -55,9 +55,10 @@ describe('TutorialGroupSessionForm', () => {
         component.formData = formData;
         component.ngOnChanges();
 
-        expect(component.dateControl?.value).toEqual(formData.date);
-        expect(component.startTimeControl?.value).toEqual(formData.startTime);
-        expect(component.endTimeControl?.value).toBe(formData.endTime);
+        const formControlNames = ['date', 'startTime', 'endTime'];
+        formControlNames.forEach((control) => {
+            expect(component.form.get(control)!.value).toEqual(formData[control]);
+        });
     });
 
     it('should submit valid form', fakeAsync(() => {
@@ -69,7 +70,23 @@ describe('TutorialGroupSessionForm', () => {
         clickSubmit(true);
     }));
 
-    it('should block submit button when form is invalid', fakeAsync(() => {
+    it('should block submit when time range is invalid', fakeAsync(() => {
+        setValidFormValues();
+
+        fixture.detectChanges();
+        expect(component.form.valid).toBeTrue();
+        expect(component.isSubmitPossible).toBeTrue();
+
+        component.endTimeControl!.setValue('11:00:00');
+        component.startTimeControl!.setValue('12:00:00');
+        fixture.detectChanges();
+        expect(component.form.invalid).toBeTrue();
+        expect(component.isSubmitPossible).toBeFalse();
+
+        clickSubmit(false);
+    }));
+
+    it('should block submit when required property is missing', fakeAsync(() => {
         const requiredControlNames = ['startTime', 'endTime', 'date', 'location'];
         for (const controlName of requiredControlNames) {
             testFormIsInvalidOnMissingRequiredProperty(controlName);

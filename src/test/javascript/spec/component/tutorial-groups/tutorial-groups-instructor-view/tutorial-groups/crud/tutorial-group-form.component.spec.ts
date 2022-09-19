@@ -1,4 +1,4 @@
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
@@ -11,11 +11,16 @@ import { AlertService } from 'app/core/util/alert.service';
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { User } from 'app/core/user/user.model';
-import { NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
+import { NgbTimepickerModule, NgbTypeaheadModule } from '@ng-bootstrap/ng-bootstrap';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { EventEmitter, Input, Output } from '@angular/core';
 import { Component } from '@angular/core';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
+import { ScheduleFormComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/schedule-form/schedule-form.component';
+import { OwlDateTimeModule, OwlNativeDateTimeModule } from '@danielmoncada/angular-datetime-picker';
+import '@angular/localize/init';
+import { Language } from 'app/entities/course.model';
+import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 
 @Component({ selector: 'jhi-markdown-editor', template: '' })
 class MarkdownEditorStubComponent {
@@ -25,14 +30,38 @@ class MarkdownEditorStubComponent {
 }
 
 describe('TutorialGroupFormComponent', () => {
-    let tutorialGroupFormComponentFixture: ComponentFixture<TutorialGroupFormComponent>;
-    let tutorialGroupFormComponent: TutorialGroupFormComponent;
+    let fixture: ComponentFixture<TutorialGroupFormComponent>;
+    let component: TutorialGroupFormComponent;
     const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
+    // group
+    const validTitle = 'ExampleTitle';
+    let validTeachingAssistant: User;
+    const validCampus = 'ExampleCampus';
+    const validCapacity = 10;
+    const validIsOnline = true;
+    const validLanguage = Language.GERMAN;
+    const validAdditionalInformation = 'ExampleAdditionalInformation';
+    // schedule
+    const validDayOfWeek = 1;
+    const validStartTime = '10:00';
+    const validEndTime = '11:00';
+    const validRepetitionFrequency = 1;
+    const validPeriodStart = new Date(Date.UTC(2021, 1, 1));
+    const validPeriodEnd = new Date(Date.UTC(2021, 2, 1));
+    const validPeriod = [validPeriodStart, validPeriodEnd];
+    const validLocation = 'ExampleLocation';
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule],
-            declarations: [TutorialGroupFormComponent, MarkdownEditorStubComponent, MockPipe(ArtemisTranslatePipe), MockComponent(FaIconComponent)],
+            imports: [ReactiveFormsModule, FormsModule, NgbTypeaheadModule, NgbTimepickerModule, OwlDateTimeModule, OwlNativeDateTimeModule],
+            declarations: [
+                TutorialGroupFormComponent,
+                ScheduleFormComponent,
+                MarkdownEditorStubComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockPipe(ArtemisDatePipe),
+            ],
             providers: [
                 MockProvider(CourseManagementService, {
                     getAllUsersInCourseGroup: () => {
@@ -49,9 +78,12 @@ describe('TutorialGroupFormComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                tutorialGroupFormComponentFixture = TestBed.createComponent(TutorialGroupFormComponent);
-                tutorialGroupFormComponent = tutorialGroupFormComponentFixture.componentInstance;
-                tutorialGroupFormComponent.course = course;
+                fixture = TestBed.createComponent(TutorialGroupFormComponent);
+                validTeachingAssistant = new User();
+                validTeachingAssistant.login = 'testLogin';
+
+                component = fixture.componentInstance;
+                component.course = course;
             });
     });
 
@@ -59,82 +91,199 @@ describe('TutorialGroupFormComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
-        tutorialGroupFormComponentFixture.detectChanges();
-        expect(tutorialGroupFormComponent).not.toBeNull();
-    });
+    describe('with schedule', function () {
+        beforeEach(() => {
+            component.configureSchedule = true;
+            fixture.detectChanges();
+        });
 
-    it('should not submit a form when title is missing', () => {
-        tutorialGroupFormComponentFixture.detectChanges();
-        tutorialGroupFormComponent.titleControl!.setValue(' ');
+        it('should initialize', () => {
+            fixture.detectChanges();
+            expect(component).not.toBeNull();
+        });
 
-        tutorialGroupFormComponentFixture.detectChanges();
-        expect(tutorialGroupFormComponent.form.invalid).toBeTrue();
+        it('should block submit when required property is missing', fakeAsync(() => {
+            const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
+            const requiredScheduleControlNames = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
 
-        const submitFormSpy = jest.spyOn(tutorialGroupFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(tutorialGroupFormComponent.formSubmitted, 'emit');
+            for (const controlName of requiredGroupControlNames) {
+                testFormIsInvalidOnMissingGroupRequiredProperty(controlName, false);
+            }
+            for (const controlName of requiredScheduleControlNames) {
+                testFormIsInvalidOnMissingGroupRequiredProperty(controlName, true);
+            }
+        }));
 
-        const submitButton = tutorialGroupFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
-        submitButton.click();
+        it('should block submit when time range is invalid', fakeAsync(() => {
+            setValidGroupFormValues();
+            setValidScheduleFormValues();
+            fixture.detectChanges();
+            expect(component.form.valid).toBeTrue();
+            expect(component.isSubmitPossible).toBeTrue();
 
-        return tutorialGroupFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).not.toHaveBeenCalled();
-            expect(submitFormEventSpy).not.toHaveBeenCalled();
+            component.form.get('schedule')!.get('endTime')!.setValue('11:00:00');
+            component.form.get('schedule')!.get('startTime')!.setValue('12:00:00');
+            fixture.detectChanges();
+            expect(component.form.invalid).toBeTrue();
+            expect(component.isSubmitPossible).toBeFalse();
+
+            clickSubmit(false);
+        }));
+
+        it('should correctly set form values in edit mode', () => {
+            component.isEditMode = true;
+            const formData: TutorialGroupFormData = {
+                title: validTitle,
+                teachingAssistant: validTeachingAssistant,
+                additionalInformation: validAdditionalInformation,
+                campus: validCampus,
+                capacity: validCapacity,
+                isOnline: validIsOnline,
+                language: validLanguage,
+                schedule: {
+                    dayOfWeek: validDayOfWeek,
+                    startTime: validStartTime,
+                    endTime: validEndTime,
+                    repetitionFrequency: validRepetitionFrequency,
+                    period: validPeriod,
+                    location: validLocation,
+                },
+            };
+            fixture.detectChanges();
+
+            component.formData = formData;
+            component.ngOnChanges();
+
+            const groupFormControlNames = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
+            for (const controlName of groupFormControlNames) {
+                expect(component.form.get(controlName)!.value).toEqual(formData[controlName]);
+            }
+            expect(component.additionalInformation).toEqual(formData.additionalInformation);
+
+            const scheduleFormControlNames = ['dayOfWeek', 'startTime', 'endTime', 'repetitionFrequency', 'period', 'location'];
+            for (const controlName of scheduleFormControlNames) {
+                expect(component.form.get('schedule')!.get(controlName)!.value).toEqual(formData.schedule![controlName]);
+            }
         });
     });
 
-    it('should submit valid form', () => {
-        tutorialGroupFormComponentFixture.detectChanges();
-        const exampleTeachingAssistant = new User();
-        exampleTeachingAssistant.login = 'testLogin';
+    describe('without schedule', function () {
+        beforeEach(() => {
+            component.configureSchedule = false;
+            fixture.detectChanges();
+        });
 
-        tutorialGroupFormComponent.titleControl!.setValue('example');
-        tutorialGroupFormComponent.capacityControl!.setValue(1);
-        tutorialGroupFormComponent.isOnlineControl?.setValue(true);
-        tutorialGroupFormComponent.teachingAssistantControl!.setValue(exampleTeachingAssistant);
-        tutorialGroupFormComponent.languageControl!.setValue('GERMAN');
-        tutorialGroupFormComponent.campusControl!.setValue('Garching');
+        it('should initialize', () => {
+            fixture.detectChanges();
+            expect(component).not.toBeNull();
+        });
 
-        tutorialGroupFormComponentFixture.detectChanges();
-        expect(tutorialGroupFormComponent.form.valid).toBeTrue();
+        it('should block submit when required property is missing', fakeAsync(() => {
+            const requiredGroupControlNames = ['title', 'teachingAssistant', 'isOnline', 'language'];
+            for (const controlName of requiredGroupControlNames) {
+                testFormIsInvalidOnMissingGroupRequiredProperty(controlName, false);
+            }
+        }));
 
-        const submitFormSpy = jest.spyOn(tutorialGroupFormComponent, 'submitForm');
-        const submitFormEventSpy = jest.spyOn(tutorialGroupFormComponent.formSubmitted, 'emit');
+        it('should correctly set form values in edit mode', () => {
+            component.isEditMode = true;
+            const formData: TutorialGroupFormData = {
+                title: validTitle,
+                teachingAssistant: validTeachingAssistant,
+                additionalInformation: validAdditionalInformation,
+                campus: validCampus,
+                capacity: validCapacity,
+                isOnline: validIsOnline,
+                language: validLanguage,
+                schedule: undefined,
+            };
+            fixture.detectChanges();
 
-        const submitButton = tutorialGroupFormComponentFixture.debugElement.nativeElement.querySelector('#submitButton');
+            component.formData = formData;
+            component.ngOnChanges();
+
+            const formControlNames = ['title', 'teachingAssistant', 'campus', 'capacity', 'isOnline', 'language'];
+            for (const controlName of formControlNames) {
+                expect(component.form.get(controlName)!.value).toEqual(formData[controlName]);
+            }
+            expect(component.additionalInformation).toEqual(formData.additionalInformation);
+        });
+
+        it('should submit valid form', fakeAsync(() => {
+            setValidGroupFormValues();
+            fixture.detectChanges();
+            expect(component.form.valid).toBeTrue();
+            expect(component.isSubmitPossible).toBeTrue();
+
+            clickSubmit(true);
+        }));
+    });
+
+    // === helper functions ===
+
+    const clickSubmit = (expectSubmitEvent: boolean) => {
+        const submitFormSpy = jest.spyOn(component, 'submitForm');
+        const submitFormEventSpy = jest.spyOn(component.formSubmitted, 'emit');
+
+        const submitButton = fixture.debugElement.nativeElement.querySelector('#submitButton');
         submitButton.click();
 
-        return tutorialGroupFormComponentFixture.whenStable().then(() => {
-            expect(submitFormSpy).toHaveBeenCalledOnce();
-            expect(submitFormEventSpy).toHaveBeenCalledWith({
-                title: 'example',
-                teachingAssistant: exampleTeachingAssistant,
-                capacity: 1,
-                isOnline: true,
-                language: 'GERMAN',
-                campus: 'Garching',
-            });
-
-            submitFormSpy.mockRestore();
-            submitFormEventSpy.mockRestore();
+        return fixture.whenStable().then(() => {
+            if (expectSubmitEvent) {
+                expect(submitFormSpy).toHaveBeenCalledOnce();
+                expect(submitFormEventSpy).toHaveBeenCalledOnce();
+                expect(submitFormEventSpy).toHaveBeenCalledWith({
+                    title: validTitle,
+                    teachingAssistant: validTeachingAssistant,
+                    capacity: validCapacity,
+                    isOnline: validIsOnline,
+                    language: validLanguage,
+                    campus: validCampus,
+                });
+            } else {
+                expect(submitFormSpy).not.toHaveBeenCalled();
+                expect(submitFormEventSpy).not.toHaveBeenCalled();
+            }
         });
-    });
+    };
 
-    it('should correctly set form values in edit mode', () => {
-        tutorialGroupFormComponent.isEditMode = true;
-        const exampleTeachingAssistant = new User();
-        exampleTeachingAssistant.login = 'testLogin';
-        const formData: TutorialGroupFormData = {
-            title: 'test',
-            teachingAssistant: exampleTeachingAssistant,
-        };
-        tutorialGroupFormComponentFixture.detectChanges();
+    const testFormIsInvalidOnMissingGroupRequiredProperty = (controlName: string, isScheduleProperty: boolean) => {
+        setValidGroupFormValues();
+        if (component.configureSchedule) {
+            setValidScheduleFormValues();
+        }
 
-        tutorialGroupFormComponent.formData = formData;
-        tutorialGroupFormComponent.ngOnChanges();
+        fixture.detectChanges();
+        expect(component.form.valid).toBeTrue();
+        expect(component.isSubmitPossible).toBeTrue();
 
-        expect(tutorialGroupFormComponent.titleControl?.value).toEqual(formData.title);
-        expect(tutorialGroupFormComponent.teachingAssistantControl?.value.login).toEqual(exampleTeachingAssistant.login);
-        expect(tutorialGroupFormComponent.teachingAssistantControl?.value.label).toBe('(testLogin)');
-    });
+        if (isScheduleProperty) {
+            component.form.get('schedule')!.get(controlName)!.setValue(undefined);
+        } else {
+            component.form.get(controlName)!.setValue(undefined);
+        }
+        fixture.detectChanges();
+        expect(component.form.invalid).toBeTrue();
+        expect(component.isSubmitPossible).toBeFalse();
+
+        clickSubmit(false);
+    };
+
+    const setValidScheduleFormValues = () => {
+        component.form.get('schedule')!.get('dayOfWeek')!.setValue(validDayOfWeek);
+        component.form.get('schedule')!.get('startTime')!.setValue(validStartTime);
+        component.form.get('schedule')!.get('endTime')!.setValue(validEndTime);
+        component.form.get('schedule')!.get('repetitionFrequency')!.setValue(validRepetitionFrequency);
+        component.form.get('schedule')!.get('period')!.setValue(validPeriod);
+        component.form.get('schedule')!.get('location')!.setValue(validLocation);
+    };
+
+    const setValidGroupFormValues = () => {
+        component.titleControl!.setValue(validTitle);
+        component.teachingAssistantControl!.setValue(validTeachingAssistant);
+        component.capacityControl!.setValue(validCapacity);
+        component.isOnlineControl!.setValue(validIsOnline);
+        component.languageControl!.setValue(validLanguage);
+        component.campusControl!.setValue(validCampus);
+    };
 });
