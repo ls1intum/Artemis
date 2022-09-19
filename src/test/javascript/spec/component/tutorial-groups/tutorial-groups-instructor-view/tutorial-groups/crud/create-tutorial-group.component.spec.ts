@@ -2,7 +2,7 @@
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
@@ -17,6 +17,7 @@ import { User } from 'app/core/user/user.model';
 import { Language } from 'app/entities/course.model';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 
 describe('CreateTutorialGroupComponent', () => {
     let createTutorialGroupComponentFixture: ComponentFixture<CreateTutorialGroupComponent>;
@@ -34,21 +35,7 @@ describe('CreateTutorialGroupComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(CourseManagementService),
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        parent: {
-                            paramMap: of({
-                                get: (key: string) => {
-                                    switch (key) {
-                                        case 'courseId':
-                                            return 1;
-                                    }
-                                },
-                            }),
-                        },
-                    },
-                },
+                simpleTwoLayerActivatedRouteProvider(new Map(), new Map([['courseId', course.id]])),
             ],
         })
             .compileComponents()

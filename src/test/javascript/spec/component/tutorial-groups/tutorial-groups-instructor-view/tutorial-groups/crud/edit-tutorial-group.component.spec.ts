@@ -1,7 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
@@ -31,29 +31,7 @@ describe('EditTutorialGroupComponent', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        paramMap: of({
-                            get: (key: string) => {
-                                switch (key) {
-                                    case 'tutorialGroupId':
-                                        return 1;
-                                }
-                            },
-                        }),
-                        parent: {
-                            paramMap: of({
-                                get: (key: string) => {
-                                    switch (key) {
-                                        case 'courseId':
-                                            return 1;
-                                    }
-                                },
-                            }),
-                        },
-                    },
-                },
+                simpleActivatedRouteProvider(new Map([['tutorialGroupId', 1]]), new Map([['courseId', 1]])),
             ],
         })
             .compileComponents()
@@ -152,3 +130,6 @@ describe('EditTutorialGroupComponent', () => {
         navigateSpy.mockRestore();
     });
 });
+function simpleActivatedRouteProvider(arg0: Map<string, number>, arg1: Map<string, number>): any {
+    throw new Error('Function not implemented.');
+}
