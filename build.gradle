@@ -176,6 +176,7 @@ dependencies {
     // https://search.maven.org/artifact/org.eclipse.jgit/org.eclipse.jgit
     implementation "org.eclipse.jgit:org.eclipse.jgit:${jgit_version}"
     implementation "org.eclipse.jgit:org.eclipse.jgit.ssh.apache:${jgit_version}"
+    implementation 'org.eclipse.jgit:org.eclipse.jgit.http.server:6.3.0.202209071007-r'
     // https://search.maven.org/artifact/net.sourceforge.plantuml/plantuml
     implementation "net.sourceforge.plantuml:plantuml:1.2022.7"
     implementation "org.imsglobal:basiclti-util:1.2.0"
