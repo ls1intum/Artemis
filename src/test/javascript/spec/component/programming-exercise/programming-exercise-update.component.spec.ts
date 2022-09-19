@@ -384,6 +384,7 @@ describe('ProgrammingExercise Management Update Component', () => {
                 const newMaxPenalty = 50;
                 const programmingExercise = new ProgrammingExercise(undefined, undefined);
                 programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
+                programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
                 programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
                 programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
                 route.data = of({ programmingExercise });
