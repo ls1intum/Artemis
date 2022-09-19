@@ -66,10 +66,4 @@ public class BonusService {
         return calculateGradeWithBonus(bonus.getBonusToGradingScale().getBonusStrategy(), bonus.getBonusToGradingScale(), achievedPointsOfBonusTo, bonus.getSourceGradingScale(),
                 achievedPointsOfSource, bonus.getWeight());
     }
-
-    // TODO: Ata Implement?
-    // public Map<Long, BonusExampleDTO> calculateGradesWithBonus(Bonus bonus, ){
-    // return null;
-    // }
-
 }

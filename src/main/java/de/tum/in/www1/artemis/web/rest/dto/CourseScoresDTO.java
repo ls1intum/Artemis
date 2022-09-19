@@ -17,7 +17,7 @@ public record CourseScoresDTO(double maxPoints, double reachablePoints, List<Stu
     }
 
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
-        return studentScores.stream()
-                .collect(Collectors.toMap(StudentScore::studentId, studentScore -> new BonusSourceResultDTO(studentScore.absolutePoints(), null /* TODO: Ata */)));
+        return studentScores.stream().collect(
+                Collectors.toMap(StudentScore::studentId, studentScore -> new BonusSourceResultDTO(studentScore.absolutePoints(), studentScore.mostSeverePlagiarismVerdict())));
     }
 }

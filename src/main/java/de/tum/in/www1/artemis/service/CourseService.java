@@ -853,10 +853,4 @@ public class CourseService {
         var mondayInWeekOfEnd = endDate.plusWeeks(1).with(DayOfWeek.MONDAY).withHour(0).withMinute(0).withSecond(0).withNano(0);
         return mondayInWeekOfStart.until(mondayInWeekOfEnd, ChronoUnit.WEEKS);
     }
-
-    // TODO: Ata Implement?
-    public Map<Long, ScoreDTO> calculateCourseScore(long courseId, Collection<Long> studentIds) {
-        return studentIds.stream().collect(Collectors.toMap(studentId -> studentId, studentId -> new ScoreDTO(studentId, "", 150.0, 75.0, 200.0)));
-    }
-
 }
