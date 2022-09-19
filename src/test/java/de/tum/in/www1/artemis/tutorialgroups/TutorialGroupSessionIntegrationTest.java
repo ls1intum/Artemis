@@ -19,7 +19,15 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupSessionResour
 public class TutorialGroupSessionIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
     void testJustForInstructorEndpoints() throws Exception {
-        // Todo
+        var session = this.buildAndSaveExampleIndividualTutorialGroupSession(exampleOneTutorialGroupId, firstAugustMonday);
+        request.get(getSessionsPathOfDefaultTutorialGroup() + session.getId(), HttpStatus.FORBIDDEN, TutorialGroupSession.class);
+        request.postWithResponseBody(getSessionsPathOfDefaultTutorialGroup(), createSessionDTO(firstAugustMonday), TutorialGroupSession.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(getSessionsPathOfTutorialGroup(exampleOneTutorialGroupId) + session.getId(), createSessionDTO(secondAugustMonday), TutorialGroupSession.class,
+                HttpStatus.FORBIDDEN);
+        request.delete(getSessionsPathOfDefaultTutorialGroup() + session.getId(), HttpStatus.FORBIDDEN);
+        request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup() + session.getId() + "/activate", null, HttpStatus.FORBIDDEN, null);
+        request.postWithoutLocation(getSessionsPathOfDefaultTutorialGroup() + session.getId() + "/cancel", new TutorialGroupSessionResource.TutorialGroupStatusDTO("Holiday"),
+                HttpStatus.FORBIDDEN, null);
     }
 
     @Test

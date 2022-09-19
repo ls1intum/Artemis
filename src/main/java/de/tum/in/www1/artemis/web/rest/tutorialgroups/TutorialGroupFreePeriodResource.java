@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,20 +93,26 @@ public class TutorialGroupFreePeriodResource {
         checkEntityIdMatchesPathIds(existingFreePeriod, Optional.ofNullable(courseId), Optional.ofNullable(tutorialGroupsConfigurationId));
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), null);
 
+        Optional<TutorialGroupsConfiguration> configurationOptional = tutorialGroupsConfigurationRepository.findByCourse_Id(courseId);
+        if (configurationOptional.isEmpty()) {
+            throw new BadRequestException("The course has no tutorial groups configuration");
+        }
+        var configuration = configurationOptional.get();
+
         TutorialGroupFreePeriod updatedFreePeriod = new TutorialGroupFreePeriod();
         updatedFreePeriod.setId(existingFreePeriod.getId());
-        updatedFreePeriod.setTutorialGroupsConfiguration(existingFreePeriod.getTutorialGroupsConfiguration());
+        updatedFreePeriod.setTutorialGroupsConfiguration(configuration);
         updatedFreePeriod.setReason(tutorialGroupFreePeriod.reason);
-        updatedFreePeriod.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, START_OF_DAY, existingFreePeriod.getTutorialGroupsConfiguration()));
-        updatedFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, END_OF_DAY, existingFreePeriod.getTutorialGroupsConfiguration()));
+        updatedFreePeriod.setStart(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, START_OF_DAY, configuration));
+        updatedFreePeriod.setEnd(interpretInTimeZoneOfConfiguration(tutorialGroupFreePeriod.date, END_OF_DAY, configuration));
         isValidTutorialGroupPeriod(updatedFreePeriod);
 
         // activate previously cancelled sessions
-        tutorialGroupFreePeriodService.activateCancelledOverlappingSessions(existingFreePeriod.getTutorialGroupsConfiguration().getCourse(), existingFreePeriod);
+        tutorialGroupFreePeriodService.activateCancelledOverlappingSessions(configuration.getCourse(), existingFreePeriod);
         // update free period
         updatedFreePeriod = tutorialGroupFreePeriodRepository.save(updatedFreePeriod);
         // cancel now overlapping sessions
-        tutorialGroupFreePeriodService.cancelActiveOverlappingSessions(updatedFreePeriod.getTutorialGroupsConfiguration().getCourse(), updatedFreePeriod);
+        tutorialGroupFreePeriodService.cancelActiveOverlappingSessions(configuration.getCourse(), updatedFreePeriod);
 
         return ResponseEntity.ok(updatedFreePeriod);
     }

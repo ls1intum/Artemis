@@ -18,35 +18,16 @@ import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupFreePeriodRes
 
 public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGroupIntegrationTest {
 
+    @Override
     void testJustForInstructorEndpoints() throws Exception {
-        // Todo
+        var freePeriod = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
+        request.get(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.FORBIDDEN, TutorialGroupFreePeriod.class);
+        request.postWithResponseBody(getTutorialGroupFreePeriodsPath(), createTutorialGroupFreePeriodDTO(firstAugustMonday, "Holiday"), TutorialGroupFreePeriod.class,
+                HttpStatus.FORBIDDEN);
+        request.putWithResponseBody(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), createTutorialGroupFreePeriodDTO(secondAugustMonday, "Another Holiday"),
+                TutorialGroupFreePeriod.class, HttpStatus.FORBIDDEN);
+        request.delete(getTutorialGroupFreePeriodsPath() + freePeriod.getId(), HttpStatus.FORBIDDEN);
     }
-
-    @Test
-    @WithMockUser(value = "instructor42", roles = "INSTRUCTOR")
-    void request_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
-    }
-
-    @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
-    void request_asTutor_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
-    }
-
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void request_asStudent_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
-    }
-
-    @Test
-    @WithMockUser(username = "editor1", roles = "EDITOR")
-    void request_asEditor_shouldReturnForbidden() throws Exception {
-        this.testJustForInstructorEndpoints();
-    }
-
-    ///
 
     @Test
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
@@ -163,7 +144,7 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGrou
     @WithMockUser(value = "instructor1", roles = "INSTRUCTOR")
     void update_justReasonChange_shouldUpdateFreePeriodReason() throws Exception {
         // given
-        var firstMondayOfAugustFreeDay = databaseUtilService.addTutorialGroupFreeDay(exampleOneTutorialGroupId, firstAugustMonday, "Holiday");
+        var firstMondayOfAugustFreeDay = databaseUtilService.addTutorialGroupFreeDay(exampleConfigurationId, firstAugustMonday, "Holiday");
         var dto = createTutorialGroupFreePeriodDTO(firstAugustMonday, "Another Holiday");
 
         // when
@@ -206,8 +187,8 @@ public class TutorialGroupFreePeriodIntegrationTest extends AbstractTutorialGrou
     }
 
     private void assertTutorialGroupFreePeriodCreatedCorrectlyFromDTO(TutorialGroupFreePeriod freePeriod, TutorialGroupFreePeriodResource.TutorialGroupFreePeriodDTO dto) {
-        assertThat(freePeriod.getStart()).isEqualTo(ZonedDateTime.of(dto.date(), START_OF_DAY, ZoneId.of("Europe/Bucharest")));
-        assertThat(freePeriod.getEnd()).isEqualTo(ZonedDateTime.of(dto.date(), END_OF_DAY, ZoneId.of("Europe/Bucharest")));
+        assertThat(freePeriod.getStart()).isEqualTo(ZonedDateTime.of(dto.date(), START_OF_DAY, ZoneId.of(exampleTimeZone)));
+        assertThat(freePeriod.getEnd()).isEqualTo(ZonedDateTime.of(dto.date(), END_OF_DAY, ZoneId.of(exampleTimeZone)));
         assertThat(freePeriod.getReason()).isEqualTo(dto.reason());
     }
 

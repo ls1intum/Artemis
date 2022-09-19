@@ -14,7 +14,7 @@ class TutorialGroupScheduleIntegrationTest extends AbstractTutorialGroupIntegrat
 
     @Override
     void testJustForInstructorEndpoints() throws Exception {
-
+        // not needed as endpoints already tested in other tests
     }
 
     @Test

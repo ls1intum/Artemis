@@ -19,8 +19,13 @@ public class TutorialGroupsConfigurationIntegrationTest extends AbstractTutorial
         tutorialGroupsConfigurationRepository.deleteAll();
     }
 
+    @Override
     void testJustForInstructorEndpoints() throws Exception {
-        // Todo
+        var configuration = databaseUtilService.createTutorialGroupConfiguration(exampleCourseId, exampleTimeZone, firstAugustMonday, firstSeptemberMonday);
+        request.get(this.getTutorialGroupsConfigurationPath() + configuration.getId(), HttpStatus.FORBIDDEN, TutorialGroupsConfiguration.class);
+        request.putWithResponseBody(getTutorialGroupsConfigurationPath() + configuration.getId(), configuration, TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
+        tutorialGroupsConfigurationRepository.deleteAll();
+        request.postWithResponseBody(getTutorialGroupsConfigurationPath(), buildExampleConfiguration(), TutorialGroupsConfiguration.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
