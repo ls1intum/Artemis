@@ -139,7 +139,7 @@ describe('ModelingExamSubmissionComponent', () => {
         it('should call updateViewFromSubmission', () => {
             const updateViewStub = jest.spyOn(comp, 'updateViewFromSubmission');
             comp.ngOnInit();
-            expect(updateViewStub).toHaveBeenCalled();
+            expect(updateViewStub).toHaveBeenCalledOnce();
         });
     });
 
@@ -188,7 +188,7 @@ describe('ModelingExamSubmissionComponent', () => {
             comp.explanationText = explanationText;
             comp.updateSubmissionFromView();
             expect(comp.studentSubmission.model).toEqual(JSON.stringify(newModel));
-            expect(currentModelStub).toHaveBeenCalled();
+            expect(currentModelStub).toHaveBeenCalledTimes(2);
             expect(comp.studentSubmission.explanationText).toEqual(explanationText);
         });
     });

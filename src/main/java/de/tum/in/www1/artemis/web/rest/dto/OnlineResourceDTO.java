@@ -1,16 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.dto;
 
-public class OnlineResourceDTO {
+import com.fasterxml.jackson.annotation.JsonInclude;
 
-    public String url;
-
-    public String title;
-
-    public String description;
-
-    public OnlineResourceDTO(String url, String title, String description) {
-        this.url = url;
-        this.title = title;
-        this.description = description;
-    }
+@JsonInclude(JsonInclude.Include.NON_EMPTY)
+public record OnlineResourceDTO(String url, String title, String description) {
 }

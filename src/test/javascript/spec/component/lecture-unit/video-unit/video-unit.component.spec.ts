@@ -71,7 +71,7 @@ describe('VideoUnitComponent', () => {
         expect(container).not.toBeNull();
         container.click();
 
-        expect(handleCollapseSpy).toHaveBeenCalled();
+        expect(handleCollapseSpy).toHaveBeenCalledOnce();
         expect(videoUnitComponent.isCollapsed).toBeFalse();
 
         handleCollapseSpy.mockRestore();
@@ -87,7 +87,7 @@ describe('VideoUnitComponent', () => {
                 done();
             });
             videoUnitComponent.handleCollapse(new Event('click'));
-            expect(setTimeout).toHaveBeenCalledTimes(1);
+            expect(setTimeout).toHaveBeenCalledOnce();
             expect(setTimeout).toHaveBeenLastCalledWith(expect.any(Function), 1000 * 60 * 5);
             jest.runAllTimers();
         });

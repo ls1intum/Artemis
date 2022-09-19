@@ -34,10 +34,18 @@
                     <fa-icon [icon]="faSave"></fa-icon>
                     {{ 'artemisApp.exampleSubmission.updateExampleSubmission' | artemisTranslate }}
                 </button>
-                <button *ngSwitchCase="SubmissionButtonStates.EDIT" (click)="editSubmission()" class="btn btn-danger col-auto" id="editSampleSolution">
-                    <fa-icon [icon]="faEdit"></fa-icon>
-                    {{ 'artemisApp.exampleSubmission.editExampleSubmission' | artemisTranslate }}
-                </button>
+
+                <jhi-confirm-button
+                    *ngSwitchCase="SubmissionButtonStates.EDIT"
+                    class="col-auto"
+                    [icon]="faEdit"
+                    id="editSampleSolution"
+                    title="artemisApp.exampleSubmission.editExampleSubmission"
+                    confirmationText="artemisApp.exampleSubmission.editExampleSubmissionConfirmationQuestion"
+                    confirmationTitle="artemisApp.exampleSubmission.editExampleSubmission"
+                    [translateText]="true"
+                    (onConfirm)="editSubmission()"
+                ></jhi-confirm-button>
             </ng-container>
 
             <ng-container [ngSwitch]="state.assessButton">
@@ -97,7 +105,7 @@
         *ngIf="state.ui === UIStates.ASSESSMENT"
         [submission]="submission!"
         [(textBlockRefs)]="textBlockRefs"
-        [readOnly]="readOnly || (!exercise?.isAtLeastEditor && !toComplete)"
+        [readOnly]="readOnly || (!!exercise && !exercise.isAtLeastEditor && !toComplete)"
         (textBlockRefsChange)="validateFeedback()"
         (textBlockRefsAddedRemoved)="recalculateTextBlockRefs()"
     ></jhi-text-assessment-area>

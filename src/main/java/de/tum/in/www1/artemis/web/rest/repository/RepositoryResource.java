@@ -1,5 +1,7 @@
 package de.tum.in.www1.artemis.web.rest.repository;
 
+import static de.tum.in.www1.artemis.web.rest.dto.RepositoryStatusDTOType.*;
+
 import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -191,7 +193,7 @@ public abstract class RepositoryResource {
      * @return ResponseEntity with appropriate status (e.g. ok or forbidden).
      */
     public ResponseEntity<Void> renameFile(Long domainId, FileMove fileMove) {
-        log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.getCurrentFilePath(), fileMove.getNewFilename(), domainId);
+        log.debug("REST request to rename file {} to {} for domainId : {}", fileMove.currentFilePath(), fileMove.newFilename(), domainId);
 
         return executeAndCheckForExceptions(() -> {
             Repository repository = getRepository(domainId, RepositoryActionType.WRITE, true);
@@ -280,7 +282,7 @@ public abstract class RepositoryResource {
             throw new AccessForbiddenException();
         }
 
-        RepositoryStatusDTO repositoryStatus = new RepositoryStatusDTO();
+        RepositoryStatusDTOType repositoryStatus;
         VcsRepositoryUrl repositoryUrl = getRepositoryUrl(domainId);
 
         try {
@@ -294,13 +296,13 @@ public abstract class RepositoryResource {
                 String branch = getOrRetrieveBranchOfDomainObject(domainId);
                 isClean = repositoryService.isClean(repositoryUrl, branch);
             }
-            repositoryStatus.setRepositoryStatus(isClean ? RepositoryStatusDTOType.CLEAN : RepositoryStatusDTOType.UNCOMMITTED_CHANGES);
+            repositoryStatus = isClean ? CLEAN : UNCOMMITTED_CHANGES;
         }
         catch (CheckoutConflictException | WrongRepositoryStateException ex) {
-            repositoryStatus.setRepositoryStatus(RepositoryStatusDTOType.CONFLICT);
+            repositoryStatus = CONFLICT;
         }
 
-        return new ResponseEntity<>(repositoryStatus, HttpStatus.OK);
+        return new ResponseEntity<>(new RepositoryStatusDTO(repositoryStatus), HttpStatus.OK);
     }
 
     /**

@@ -1,6 +1,6 @@
-<div class="exam-status-wrapper" [ngClass]="isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
+<div class="exam-status-wrapper" [ngClass]="course?.isAtLeastInstructor ? 'instructor-view' : 'tutor-view'">
     <!-- 1. Exam preparation -->
-    <ng-container *ngIf="isAtLeastInstructor">
+    <ng-container *ngIf="course?.isAtLeastInstructor">
         <div class="status-step">
             <!-- If all preparation tasks are finished, show a green check as header, show a red cross else -->
             <div class="d-flex justify-content-center header-icon">
@@ -81,7 +81,7 @@
             <div class="text-center mb-1" *ngIf="examConductionState === examConductionStateEnum.ERROR">
                 <h6>{{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'conductionSuspended' | artemisTranslate }}</h6>
             </div>
-            <ol *ngIf="isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR">
+            <ol *ngIf="course?.isAtLeastInstructor && examChecklist && examConductionState !== examConductionStateEnum.ERROR">
                 <li>
                     <span> {{ 'artemisApp.examStatus.conduction.workingTime' | artemisTranslate }}: {{ exam.workingTime! | artemisDurationFromSeconds: true }} </span>
                 </li>
@@ -92,8 +92,8 @@
                     <span>
                         {{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'startedExams' | artemisTranslate }}
                         :
-                        {{ examChecklist.numberOfExamsStarted }}
-                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}
+                        {{ numberOfStarted }}
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((numberOfStarted * 100) / examChecklist.numberOfGeneratedStudentExams!, 1) : 0 }}
                         %)
                     </span>
                 </li>
@@ -101,8 +101,8 @@
                     <span>
                         {{ 'artemisApp.examStatus.conduction.' + (isTestExam ? 'testExam.' : '') + 'submittedExams' | artemisTranslate }}
                         :
-                        {{ examChecklist.numberOfExamsSubmitted }}
-                        ({{ numberOfGeneratedStudentExams > 0 ? round((examChecklist.numberOfExamsSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}
+                        {{ numberOfSubmitted }}
+                        ({{ numberOfGeneratedStudentExams > 0 ? round((numberOfSubmitted * 100) / numberOfGeneratedStudentExams!, 1) : 0 }}
                         %)
                     </span>
                 </li>
@@ -123,7 +123,7 @@
         <div class="status-step-content">
             <h6 class="text-center">{{ 'artemisApp.examStatus.correction.examCorrection' | artemisTranslate }}</h6>
             <ol *ngIf="examChecklist">
-                <div *ngIf="examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && examChecklist.numberOfExamsSubmitted !== 0">
+                <div *ngIf="examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound !== null && numberOfSubmitted !== 0">
                     <li *ngFor="let finishedByCorrectionRound of examChecklist.numberOfTotalExamAssessmentsFinishedByCorrectionRound; let i = index">
                         <span>
                             {{ 'artemisApp.examStatus.correction.correctionRoundProgress' | artemisTranslate: { index: i + 1 } }}

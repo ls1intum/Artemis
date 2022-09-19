@@ -57,7 +57,7 @@ describe('Component Tests', () => {
 
             comp.ngAfterViewInit();
 
-            expect(node.focus).toHaveBeenCalled();
+            expect(node.focus).toHaveBeenCalledOnce();
         });
 
         it('should ensure the two passwords entered match', () => {

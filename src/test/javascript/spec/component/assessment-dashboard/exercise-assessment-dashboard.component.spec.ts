@@ -452,7 +452,7 @@ describe('ExerciseAssessmentDashboardComponent', () => {
     it('should  set assessed Submission and latest result', () => {
         comp.loadAll();
 
-        expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+        expect(modelingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]).toEqual(modelingSubmissionAssessed);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.participation!.submissions![0]).toEqual(comp.submissionsByCorrectionRound?.get(1)![0]);
         expect(comp.submissionsByCorrectionRound?.get(1)![0]?.latestResult).toEqual(result2);
@@ -506,8 +506,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.loadAll();
 
-            expect(fileUploadSubmissionStubWithAssessment).toHaveBeenCalled();
-            expect(fileUploadSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            expect(fileUploadSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
+            expect(fileUploadSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         });
 
         it('textSubmission', () => {
@@ -517,8 +517,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.loadAll();
 
-            expect(textSubmissionStubWithoutAssessment).toHaveBeenCalled();
-            expect(textSubmissionStubWithAssessment).toHaveBeenCalled();
+            expect(textSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
+            expect(textSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
 
             expect(comp.exampleSubmissionsToReview).toHaveLength(1);
             expect(comp.exampleSubmissionsToReview[0]).toEqual(textExercise.exampleSubmissions![0]);
@@ -534,8 +534,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.loadAll();
 
-            expect(programmingSubmissionStubWithAssessment).toHaveBeenCalled();
-            expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            expect(programmingSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
+            expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
         });
 
         it('programmingSubmission with automatic assessment', () => {
@@ -547,8 +547,8 @@ describe('ExerciseAssessmentDashboardComponent', () => {
 
             comp.loadAll();
 
-            expect(programmingSubmissionStubWithAssessment).toHaveBeenCalled();
-            expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalled();
+            expect(programmingSubmissionStubWithAssessment).toHaveBeenCalledTimes(2);
+            expect(programmingSubmissionStubWithoutAssessment).toHaveBeenCalledTimes(2);
 
             expect(translateServiceSpy).toHaveBeenCalledTimes(2);
             expect(translateServiceSpy).toHaveBeenCalledWith('artemisApp.exerciseAssessmentDashboard.numberOfOpenComplaints');
