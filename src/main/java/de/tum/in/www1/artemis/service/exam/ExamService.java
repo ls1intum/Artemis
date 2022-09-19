@@ -472,12 +472,18 @@ public class ExamService {
 
     // TODO: Ata Docs
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
-        if (sourceGradingScale.getCourse() != null) {
-            CourseScoresDTO courseScores = courseScoreCalculationService.calculateCourseScores(sourceGradingScale.getCourse().getId(), studentIds);
-            return courseScores != null ? courseScores.toBonusSourceResultMap() : null;
+        try {
+            if (sourceGradingScale.getCourse() != null) {
+                CourseScoresDTO courseScores = courseScoreCalculationService.calculateCourseScores(sourceGradingScale.getCourse().getId(), studentIds);
+                return courseScores != null ? courseScores.toBonusSourceResultMap() : null;
+            }
+            else {
+                return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
+            }
         }
-        else {
-            return calculateExamScoresAsBonusSource(sourceGradingScale.getExam().getId(), studentIds);
+        catch (AccessForbiddenException e) {
+            // The current user does not have access to the bonus exam or course, so they should see the grade without bonus.
+            return null;
         }
     }
 

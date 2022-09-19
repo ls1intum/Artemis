@@ -86,7 +86,7 @@ public class CourseScoreCalculationService {
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
         double finaLMaxPointsInCourse = maxPointsInCourse; // needed to make the variable effectively final for lambda below
         double finalReachableMaxPointsInCourse = reachableMaxPointsInCourse; // needed to make the variable effectively final for lambda below
-        var studentScores = studentIdToParticipations.entrySet().stream()
+        var studentScores = studentIdToParticipations.entrySet().parallelStream()
                 .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finaLMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
                 .toList();
 
@@ -113,16 +113,13 @@ public class CourseScoreCalculationService {
         int presentationScore = 0;
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
-        // for (var participation : participations.stream().parallel()
-        // .filter(participation -> includeIntoScoreCalculation(participation.getExercise()))
-        // .mapMulti((participation, consumer) -> participation.getStudents()
-        // .forEach(student -> consumer.accept(new ImmutablePair<>(student.getId(), participation))))
-        // .collect(Collectors.groupingByConcurrent(ImmutablePair::left))){
-
         for (StudentParticipation participation : participationsOfStudent) {
             // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
             // if input results are already sorted.
             Exercise exercise = participation.getExercise();
+            if (!includeIntoScoreCalculation(exercise)) {
+                continue;
+            }
             var result = getResultForParticipation(participation, exercise.getDueDate());
             if (result != null && Boolean.TRUE.equals(result.isRated())) {
                 var score = result.getScore();
