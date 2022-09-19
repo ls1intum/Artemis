@@ -197,8 +197,8 @@ export class TutorialGroupFormComponent implements OnInit, OnChanges {
         }
         this.configureSchedule = !!formData.schedule;
         this.existingScheduleFormDate = formData.schedule;
-        this.form.patchValue(formData);
         this.additionalInformation = formData.additionalInformation;
+        this.form.patchValue(formData);
     }
 
     private createUserWithLabel(user: User): UserWithLabel {

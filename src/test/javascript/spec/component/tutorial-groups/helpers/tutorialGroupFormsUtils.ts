@@ -13,10 +13,14 @@ import {
     TutorialGroupsConfigurationFormComponent,
     TutorialGroupsConfigurationFormData,
 } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
+import {
+    TutorialGroupFormComponent,
+    TutorialGroupFormData,
+} from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 
-type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent;
+type SupportedForms = TutorialGroupFreePeriodFormComponent | TutorialGroupSessionFormComponent | TutorialGroupsConfigurationFormComponent | TutorialGroupFormComponent;
 type SupportedFixtures = ComponentFixture<SupportedForms>;
-type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupSessionFormData | TutorialGroupsConfigurationFormData;
+type SupportedFormData = TutorialGroupFreePeriodFormData | TutorialGroupSessionFormData | TutorialGroupsConfigurationFormData | TutorialGroupFormData;
 
 export const generateClickSubmitButton = (component: SupportedForms, fixture: SupportedFixtures, expectedEventFormData?: SupportedFormData) => {
     return (expectSubmitEvent: boolean) => {
@@ -45,14 +49,18 @@ export const generateTestFormIsInvalidOnMissingRequiredProperty = (
     setValidFormValues: () => void,
     clickSubmit: (expectSubmitEvent: boolean) => void,
 ) => {
-    return (controlName: string) => {
+    return (controlName: string, subFormName?: string) => {
         setValidFormValues();
 
         fixture.detectChanges();
         expect(component.form.valid).toBeTrue();
         expect(component.isSubmitPossible).toBeTrue();
 
-        component.form.get(controlName)!.setValue(undefined);
+        if (subFormName) {
+            component.form.get(subFormName)!.get(controlName)!.setValue(null);
+        } else {
+            component.form.get(controlName)!.setValue(undefined);
+        }
         fixture.detectChanges();
         expect(component.form.invalid).toBeTrue();
         expect(component.isSubmitPossible).toBeFalse();
