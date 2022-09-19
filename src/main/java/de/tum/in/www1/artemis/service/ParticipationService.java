@@ -629,10 +629,6 @@ public class ParticipationService {
             gitService.deleteLocalRepository(repositoryUrl);
         }
 
-        // complaintResponseRepository.deleteByComplaint_Result_Participation_Id(participationId);
-        // complaintRepository.deleteByResult_Participation_Id(participationId);
-        // ratingRepository.deleteByResult_Participation_Id(participationId);
-
         deleteResultsAndSubmissionsOfParticipation(participationId);
 
         Exercise exercise = participation.getExercise();

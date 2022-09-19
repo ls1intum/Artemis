@@ -130,8 +130,8 @@ public class DistributedInstanceMessageSendService implements InstanceMessageSen
     }
 
     @Override
-    public void sendResultSchedule(Long exerciseId, Long participantId) {
-        // log.info("Sending schedule participant score update for result {} to broker.", resultId);
+    public void sendParticipantScoreSchedule(Long exerciseId, Long participantId) {
+        log.info("Sending schedule participant score update for exercise {} and participant {}.", exerciseId, participantId);
         sendMessageDelayed("participant-score-schedule", exerciseId, participantId);
     }
 

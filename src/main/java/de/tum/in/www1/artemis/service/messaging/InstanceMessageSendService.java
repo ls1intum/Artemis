@@ -103,8 +103,9 @@ public interface InstanceMessageSendService {
     void sendExamMonitoringScheduleCancel(Long examId);
 
     /**
-     * Send a message to the main server that schedules to process the result for the participant scores
-     * @param resultId the id of the result that was created, updated, or removed
+     * Send a message to the main server that schedules to update the participant score for this exercise/participant
+     * @param exerciseId the id of the exercise
+     * @param participantId the id of the participant
      */
-    void sendResultSchedule(Long exerciseId, Long participantId);
+    void sendParticipantScoreSchedule(Long exerciseId, Long participantId);
 }

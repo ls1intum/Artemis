@@ -295,7 +295,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         assertThat(savedResults).isEmpty();
-        // verify(scoreService, times(1)).removeOrUpdateAssociatedParticipantScore(any(Result.class));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -314,7 +313,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         List<Result> savedResults = resultRepository.findAll();
         assertThat(savedStudentScores).isEmpty();
         assertThat(savedResults).isEmpty();
-        // verify(scoreService, times(1)).removeOrUpdateAssociatedParticipantScore(any(Result.class));
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -424,7 +422,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
             assertParticipantScoreStructure(savedParticipantScore, idOfExercise, participant.getId(), persistedResult.getId(), persistedResult.getScore(), null, null,
                     pointsAchieved, null);
         }
-        // verify(this.scoreService, times(1)).updateOrCreateParticipantScore(any());
         return savedParticipantScore;
     }
 
@@ -459,7 +456,6 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         assertParticipantScoreStructure(updatedParticipantScore, idOfExercise, participant.getId(), expectedLastResultId, expectedLastScore, expectedLastRatedResultId,
                 expectedLastRatedScore, lastPoints, lastRatedPoints);
-        // verify(this.scoreService, times(2)).updateOrCreateParticipantScore(any(Result.class));
     }
 
 }

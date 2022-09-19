@@ -4,8 +4,6 @@ import javax.persistence.PostPersist;
 import javax.persistence.PostUpdate;
 import javax.persistence.PreRemove;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
@@ -20,8 +18,6 @@ import de.tum.in.www1.artemis.service.messaging.InstanceMessageSendService;
  */
 @Component
 public class ResultListener {
-
-    private final Logger logger = LoggerFactory.getLogger(ResultListener.class);
 
     private InstanceMessageSendService instanceMessageSendService;
 
@@ -45,13 +41,8 @@ public class ResultListener {
     @PostUpdate
     @PreRemove
     public void updateParticipantScore(Result result) {
-        logger.debug("ResultListener.updateParticipantScore");
         if (result.getParticipation() instanceof StudentParticipation participation) {
-            logger.debug(participation.getExercise().getId() + " - " + participation.getParticipant().getId());
-            instanceMessageSendService.sendResultSchedule(participation.getExercise().getId(), participation.getParticipant().getId());
-        }
-        else {
-            logger.error("Broken :(");
+            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId());
         }
     }
 }
