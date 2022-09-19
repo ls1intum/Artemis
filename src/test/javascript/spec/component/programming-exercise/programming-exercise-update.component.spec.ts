@@ -376,15 +376,15 @@ describe('ProgrammingExercise Management Update Component', () => {
         });
 
         it.each([
-            [true, 80],
-            [false, undefined],
+            [true, 80, ProjectType.PLAIN_MAVEN],
+            [false, undefined, ProjectType.PLAIN_GRADLE],
         ])(
             'should activate recreate build plans and update template when sca changes',
-            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined) => {
+            fakeAsync((scaActivatedOriginal: boolean, maxPenalty: number | undefined, projectType: ProjectType) => {
                 const newMaxPenalty = 50;
                 const programmingExercise = new ProgrammingExercise(undefined, undefined);
                 programmingExercise.programmingLanguage = ProgrammingLanguage.JAVA;
-                programmingExercise.projectType = ProjectType.PLAIN_MAVEN;
+                programmingExercise.projectType = projectType;
                 programmingExercise.staticCodeAnalysisEnabled = scaActivatedOriginal;
                 programmingExercise.maxStaticCodeAnalysisPenalty = maxPenalty;
                 route.data = of({ programmingExercise });
@@ -404,9 +404,13 @@ describe('ProgrammingExercise Management Update Component', () => {
                 expect(scaCheckbox.checked).toBe(scaActivatedOriginal);
                 expect(!!maxPenaltyInput).toBe(scaActivatedOriginal);
                 expect(recreateBuildPlanCheckbox.checked).toBeFalse();
-                expect(updateTemplateCheckbox.checked).toBeFalse();
                 expect(comp.programmingExercise).toBe(programmingExercise);
                 expect(courseService.find).toHaveBeenCalledWith(courseId);
+
+                // Only available for Maven
+                if (projectType === ProjectType.PLAIN_MAVEN) {
+                    expect(updateTemplateCheckbox.checked).toBeFalse();
+                }
 
                 // Activate SCA and set a max penalty
                 scaCheckbox.click();
