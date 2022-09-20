@@ -18,6 +18,7 @@ import { isResultPreliminary } from 'app/exercises/programming/shared/utils/prog
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { captureException } from '@sentry/browser';
+import { Participation } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -288,5 +289,25 @@ export class ResultService implements IResultService {
         link.setAttribute('download', `${csvFileName}`);
         document.body.appendChild(link); // Required for FF
         link.click();
+    }
+
+    public static evaluateBadgeClass(participation: Participation, result: Result): string {
+        if (participation instanceof StudentParticipation) {
+            const studentParticipation = participation as StudentParticipation;
+            if (studentParticipation.testRun) {
+                return 'bg-secondary';
+            }
+        }
+        return result.rated ? 'bg-success' : 'bg-info';
+    }
+
+    public static evaluateBadgeText(participation: Participation, result: Result): string {
+        if (participation instanceof StudentParticipation) {
+            const studentParticipation = participation as StudentParticipation;
+            if (studentParticipation.testRun) {
+                return 'artemisApp.result.practice';
+            }
+        }
+        return result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded';
     }
 }

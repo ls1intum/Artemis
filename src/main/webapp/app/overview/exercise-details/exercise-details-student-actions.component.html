@@ -215,30 +215,36 @@
             code editor button. We should think about refactoring the clone repo button into an own component -->
             <ng-container *ngIf="shouldDisplayIDEButtons()">
                 <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
-                    <div class="col-auto">
-                        <div *ngFor="let participation of exercise.studentParticipations; let i = index" [class.mt-1]="i > 0">
-                            <button
-                                [id]="'open-exercise-' + exercise.id"
-                                jhi-exercise-action-button
-                                class="me-2"
-                                [buttonIcon]="faFolderOpen"
-                                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-                                [buttonLabel]="codeEditorButtonLable(participation) | artemisTranslate"
-                                [buttonLoading]="!!exercise.loading"
-                                [smallButton]="smallButtons"
-                                [hideLabelMobile]="false"
-                                *ngIf="!examMode && isOnlineEditorAllowed()"
-                                [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', participation.id]"
-                            ></button>
-                            <jhi-clone-repo-button
-                                [loading]="!!exercise.loading"
-                                [smallButtons]="smallButtons"
-                                [repositoryUrl]="repositoryUrl(participation)!"
-                                [isTeamParticipation]="!!participation.team"
-                                [buttonLabelAddition]="cloneButtonLabelAddition(participation)"
-                                *ngIf="isOfflineIdeAllowed()"
-                            >
-                            </jhi-clone-repo-button>
+                    <div class="col row justify-content-start">
+                        <div class="col">
+                            <div *ngFor="let participation of exercise.studentParticipations; let i = index" [class.mt-1]="i > 0" class="row">
+                                <button
+                                    [id]="'open-exercise-' + exercise.id"
+                                    jhi-exercise-action-button
+                                    class="me-2"
+                                    [buttonIcon]="faFolderOpen"
+                                    [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                                    [buttonLabel]="codeEditorButtonLable(participation) | artemisTranslate"
+                                    [buttonLoading]="!!exercise.loading"
+                                    [smallButton]="smallButtons"
+                                    [hideLabelMobile]="false"
+                                    *ngIf="!examMode && isOnlineEditorAllowed()"
+                                    [routerLink]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor', participation.id]"
+                                ></button>
+                            </div>
+                        </div>
+                        <div class="col">
+                            <div *ngFor="let participation of exercise.studentParticipations; let i = index" [class.mt-1]="i > 0" class="row">
+                                <jhi-clone-repo-button
+                                    [loading]="!!exercise.loading"
+                                    [smallButtons]="smallButtons"
+                                    [repositoryUrl]="repositoryUrl(participation)!"
+                                    [isTeamParticipation]="!!participation.team"
+                                    [buttonLabelAddition]="cloneButtonLabelAddition(participation)"
+                                    *ngIf="isOfflineIdeAllowed()"
+                                >
+                                </jhi-clone-repo-button>
+                            </div>
                         </div>
                     </div>
                 </ng-container>
