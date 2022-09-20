@@ -66,7 +66,7 @@ export class EditTutorialGroupsConfigurationComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.router.navigate(['../../..'], { relativeTo: this.activatedRoute });
+                    this.router.navigate(['course-management', this.courseId, 'tutorial-groups-management']);
                 }),
             )
             .subscribe({
