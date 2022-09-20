@@ -1,6 +1,7 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
 import java.time.ZonedDateTime;
+import java.util.Collections;
 import java.util.Set;
 
 import javax.persistence.*;

@@ -1,5 +1,9 @@
 package de.tum.in.www1.artemis.domain.plagiarism;
 
+import java.util.Collection;
+import java.util.Comparator;
+import java.util.Objects;
+
 public enum PlagiarismVerdict {
 
     // Warning: The ordering of the enum values are important, they should be ordered from the most severe to least severe.
@@ -14,7 +18,7 @@ public enum PlagiarismVerdict {
      * @param plagiarismVerdicts an iterable of plagiarism verdicts.
      * @return the most servere verdict for the student or null if there is none
      */
-    public static PlagiarismVerdict findMostSevereVerdict(List<PlagiarismVerdict> plagiarismVerdicts) {
-        return plagiarismVerdicts.stream().min(Comparator.comparing(PlagiarismVerdict::ordinal)).orElse(null);
+    public static PlagiarismVerdict findMostSevereVerdict(Collection<PlagiarismVerdict> plagiarismVerdicts) {
+        return plagiarismVerdicts.stream().filter(Objects::nonNull).min(Comparator.comparing(PlagiarismVerdict::ordinal)).orElse(null);
     }
 }
