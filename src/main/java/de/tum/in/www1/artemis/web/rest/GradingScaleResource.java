@@ -18,9 +18,12 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExamRepository;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.GradingScaleService;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
 import de.tum.in.www1.artemis.web.rest.util.HeaderUtil;
 
@@ -48,13 +51,16 @@ public class GradingScaleResource {
 
     private final AuthorizationCheckService authCheckService;
 
+    private final UserRepository userRepository;
+
     public GradingScaleResource(GradingScaleService gradingScaleService, GradingScaleRepository gradingScaleRepository, CourseRepository courseRepository,
-            ExamRepository examRepository, AuthorizationCheckService authCheckService) {
+            ExamRepository examRepository, AuthorizationCheckService authCheckService, UserRepository userRepository) {
         this.gradingScaleService = gradingScaleService;
         this.gradingScaleRepository = gradingScaleRepository;
         this.courseRepository = courseRepository;
         this.examRepository = examRepository;
         this.authCheckService = authCheckService;
+        this.userRepository = userRepository;
     }
 
     /**
@@ -88,6 +94,21 @@ public class GradingScaleResource {
         Optional<GradingScale> gradingScale = gradingScaleRepository.findByExamId(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         return gradingScale.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.ok(null));
+    }
+
+    /**
+     * Search for all grading scales among the grading scales having grade type BONUS. The search will be done by the
+     * title of the course or exam that is directly associated with that grading scale. If the user does not have ADMIN role,
+     * they can only access the grading scales if they are an instructor in the course related to it. The result is pageable.
+     *
+     * @param search The pageable search containing the page size, page number and query string
+     * @return The desired page, sorted and matching the given query
+     */
+    @GetMapping("/grading-scales")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    public ResponseEntity<SearchResultPageDTO<GradingScale>> getAllGradingScalesInInstructorGroupOnPage(PageableSearchDTO<String> search) {
+        final var user = userRepository.getUserWithGroupsAndAuthorities();
+        return ResponseEntity.ok(gradingScaleService.getAllOnPageWithSize(search, user));
     }
 
     /**
@@ -175,6 +196,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByCourseIdOrElseThrow(courseId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
+        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
         if (!Objects.equals(gradingScale.getCourse().getMaxPoints(), course.getMaxPoints())) {
             course.setMaxPoints(gradingScale.getCourse().getMaxPoints());
             courseRepository.save(course);
@@ -201,6 +223,7 @@ public class GradingScaleResource {
         GradingScale oldGradingScale = gradingScaleRepository.findByExamIdOrElseThrow(examId);
         authCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, course, null);
         gradingScale.setId(oldGradingScale.getId());
+        gradingScale.setBonusFrom(oldGradingScale.getBonusFrom()); // bonusFrom should not be affected by this endpoint.
         if (gradingScale.getExam().getMaxPoints() != exam.getMaxPoints()) {
             exam.setMaxPoints(gradingScale.getExam().getMaxPoints());
             examRepository.save(exam);
