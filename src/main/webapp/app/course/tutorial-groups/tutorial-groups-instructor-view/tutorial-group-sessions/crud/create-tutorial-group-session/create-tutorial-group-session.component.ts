@@ -1,7 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -24,7 +23,6 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
 
     constructor(
         private activatedRoute: ActivatedRoute,
-        private courseManagementService: CourseManagementService,
         private router: Router,
         private tutorialGroupService: TutorialGroupsService,
         private tutorialGroupSessionService: TutorialGroupSessionService,
@@ -57,7 +55,6 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
     createTutorialGroupSession(formData: TutorialGroupSessionFormData) {
         const { date, startTime, endTime, location } = formData;
 
-        // we send it already in utc
         this.tutorialGroupSessionToCreate.date = date;
         this.tutorialGroupSessionToCreate.startTime = startTime;
         this.tutorialGroupSessionToCreate.endTime = endTime;
@@ -74,7 +71,7 @@ export class CreateTutorialGroupSessionComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../../schedule-management'], { relativeTo: this.activatedRoute });
+                    this.router.navigate(['course-management', this.courseId, 'tutorial-groups-management', this.tutorialGroup.id, 'sessions']);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });

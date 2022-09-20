@@ -14,8 +14,8 @@ import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-g
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import dayjs from 'dayjs/esm';
 import { Router } from '@angular/router';
+import { formDataToTutorialGroupSessionDTO, generateExampleTutorialGroupSession, tutorialGroupSessionToTutorialGroupSessionFormData } from './tutorialGroupSessionExampleModels';
 
 describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
@@ -25,6 +25,12 @@ describe('EditTutorialGroupSessionComponent', () => {
     let exampleSession: TutorialGroupSession;
 
     const router = new MockRouter();
+
+    const timeZone = 'Europe/Berlin';
+    const tutorialGroupId = 2;
+    const sessionId = 3;
+    const courseId = 5;
+    const configurationId = 7;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -37,15 +43,15 @@ describe('EditTutorialGroupSessionComponent', () => {
                 { provide: Router, useValue: router },
                 simpleOneLayerActivatedRouteProvider(
                     new Map([
-                        ['tutorialGroupId', 2],
-                        ['sessionId', 3],
+                        ['tutorialGroupId', tutorialGroupId],
+                        ['sessionId', sessionId],
                     ]),
                     {
                         course: {
-                            id: 1,
+                            id: courseId,
                             tutorialGroupsConfiguration: {
-                                id: 1,
-                                timeZone: 'Europe/Berlin',
+                                id: configurationId,
+                                timeZone,
                             },
                         },
                     },
@@ -57,13 +63,7 @@ describe('EditTutorialGroupSessionComponent', () => {
                 fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
                 component = fixture.componentInstance;
                 sessionService = TestBed.inject(TutorialGroupSessionService);
-
-                exampleSession = new TutorialGroupSession();
-                exampleSession.id = 3;
-                // we get utc from the server --> will be converted to time zone of configuration
-                exampleSession.start = dayjs.utc('2021-01-01T10:00:00');
-                exampleSession.end = dayjs.utc('2021-01-01T11:00:00');
-                exampleSession.location = 'Room 1';
+                exampleSession = generateExampleTutorialGroupSession();
 
                 findSessionSpy = jest.spyOn(sessionService, 'getOneOfTutorialGroup').mockReturnValue(of(new HttpResponse({ body: exampleSession })));
             });
@@ -77,7 +77,7 @@ describe('EditTutorialGroupSessionComponent', () => {
         fixture.detectChanges();
         expect(component).not.toBeNull();
         expect(findSessionSpy).toHaveBeenCalledOnce();
-        expect(findSessionSpy).toHaveBeenCalledWith(1, 2, 3);
+        expect(findSessionSpy).toHaveBeenCalledWith(courseId, tutorialGroupId, sessionId);
     });
 
     it('should set form data correctly', () => {
@@ -87,13 +87,9 @@ describe('EditTutorialGroupSessionComponent', () => {
 
         expect(component.session).toEqual(exampleSession);
         expect(findSessionSpy).toHaveBeenCalledOnce();
-        expect(findSessionSpy).toHaveBeenCalledWith(1, 2, 3);
+        expect(findSessionSpy).toHaveBeenCalledWith(courseId, tutorialGroupId, sessionId);
 
-        expect(component.formData.location).toEqual(exampleSession.location);
-        // converted to berlin time
-        expect(component.formData.startTime).toBe('11:00:00');
-        expect(component.formData.endTime).toBe('12:00:00');
-        expect(component.formData.date).toStrictEqual(dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate());
+        expect(component.formData).toEqual(tutorialGroupSessionToTutorialGroupSessionFormData(exampleSession, timeZone));
         expect(formStub.formData).toEqual(component.formData);
     });
 
@@ -115,23 +111,13 @@ describe('EditTutorialGroupSessionComponent', () => {
 
         const sessionForm: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
 
-        const formData = {
-            date: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),
-            startTime: '11:00:00',
-            endTime: '12:00:00',
-            location: 'Changed',
-        };
+        const formData = tutorialGroupSessionToTutorialGroupSessionFormData(changedSession, timeZone);
 
         sessionForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(1, 2, 3, {
-            date: formData.date,
-            startTime: formData.startTime,
-            endTime: formData.endTime,
-            location: formData.location,
-        });
+        expect(updatedStub).toHaveBeenCalledWith(courseId, tutorialGroupId, sessionId, formDataToTutorialGroupSessionDTO(formData));
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'tutorial-groups-management', 2, 'sessions']);
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions']);
     });
 });

@@ -54,7 +54,7 @@ export class EditTutorialGroupSessionComponent implements OnInit {
                     if (session) {
                         this.session = session;
                         this.formData = {
-                            date: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).startOf('day').toDate(),
+                            date: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).toDate(),
                             startTime: session.start?.tz(this.tutorialGroupsConfiguration.timeZone).format('HH:mm:ss'),
                             endTime: session.end?.tz(this.tutorialGroupsConfiguration.timeZone).format('HH:mm:ss'),
                             location: session.location,
