@@ -1,7 +1,7 @@
 <div class="test-schedule-date-content">
     <div class="test-schedule-date-title">
         <span class="text-bold" [jhiTranslate]="label"></span>
-        <jhi-help-icon *ngIf="tooltipText" placement="top" [text]="tooltipText"></jhi-help-icon>
+        <jhi-help-icon *ngIf="tooltipText" placement="auto" [text]="tooltipText"></jhi-help-icon>
     </div>
     <div class="invisible-date-time-picker">
         <input class="form-control" [ngModel]="selectedDate" [min]="min" [max]="max" (ngModelChange)="writeValue($event)" [owlDateTime]="dt" />
