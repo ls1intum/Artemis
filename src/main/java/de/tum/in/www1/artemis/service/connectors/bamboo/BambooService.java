@@ -369,8 +369,7 @@ public class BambooService extends AbstractContinuousIntegrationService {
 
         Integer dependenciesDownloadedCount = null;
 
-        // If the projectType is null, this is an old (Maven-only) exercise
-        if (projectType == null || projectType.isMaven()) {
+        if (ProjectType.isMavenProject(projectType)) {
             // Not supported for GRADLE projects
             dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
         }

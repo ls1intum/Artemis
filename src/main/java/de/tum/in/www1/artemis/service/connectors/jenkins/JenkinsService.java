@@ -183,8 +183,7 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
         ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
         Integer dependenciesDownloadedCount = null;
 
-        // If the projectType is null, this is an old (Maven-only) exercise
-        if (projectType == null || projectType.isMaven()) {
+        if (ProjectType.isMavenProject(projectType)) {
             agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
             testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
             testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
