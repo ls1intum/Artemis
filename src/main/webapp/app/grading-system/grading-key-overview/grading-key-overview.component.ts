@@ -44,7 +44,7 @@ export class GradingKeyOverviewComponent implements OnInit {
     gradeSteps: GradeStep[] = [];
     studentGrade?: string;
     isBonus = false;
-    private forBonus: boolean;
+    forBonus: boolean;
 
     ngOnInit(): void {
         // Note: This component is used in multiple routes, so it can be lazy loaded. Also, courseId and examId can be
