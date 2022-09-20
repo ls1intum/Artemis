@@ -14,14 +14,7 @@ public enum PlagiarismVerdict {
      * @param plagiarismVerdicts an iterable of plagiarism verdicts.
      * @return the most servere verdict for the student or null if there is none
      */
-    public static PlagiarismVerdict findMostSevereVerdict(Iterable<PlagiarismVerdict> plagiarismVerdicts) {
-        for (PlagiarismVerdict maxVerdict : PlagiarismVerdict.values()) {
-            for (PlagiarismVerdict currentVerdict : plagiarismVerdicts) {
-                if (currentVerdict == maxVerdict) {
-                    return currentVerdict;
-                }
-            }
-        }
-        return null;
+    public static PlagiarismVerdict findMostSevereVerdict(List<PlagiarismVerdict> plagiarismVerdicts) {
+        return plagiarismVerdicts.stream().min(Comparator.comparing(PlagiarismVerdict::ordinal)).orElse(null);
     }
 }
