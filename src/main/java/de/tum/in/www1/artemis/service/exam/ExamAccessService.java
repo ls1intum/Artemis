@@ -263,7 +263,7 @@ public class ExamAccessService {
         Course course = courseRepository.findByIdElseThrow(courseId);
         User currentUser = userRepository.getUserWithGroupsAndAuthorities();
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.STUDENT, course, currentUser);
-        if (authorizationCheckService.isInstructorInCourse(course, currentUser)) {
+        if (authorizationCheckService.isAtLeastInstructorInCourse(course, currentUser)) {
             checkExamBelongsToCourseElseThrow(courseId, examId);
         }
         else if (!studentExamRepository.existsByExam_CourseIdAndExamIdAndUserId(courseId, examId, currentUser.getId())) {
