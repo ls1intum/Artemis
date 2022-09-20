@@ -6,7 +6,6 @@ import static java.time.ZonedDateTime.now;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.Principal;
-import java.time.ZonedDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -243,7 +242,7 @@ public class ParticipationResource {
 
         checkAccessPermissionOwner(participation, user);
 
-        var currentDate = ZonedDateTime.now();
+        var currentDate = now();
 
         var participationIndividualDueDate = participation.getIndividualDueDate();
         if (Objects.nonNull(participationIndividualDueDate) && currentDate.isAfter(participationIndividualDueDate)) {
