@@ -81,7 +81,14 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
             )
             .subscribe({
                 next: () => {
-                    this.router.navigate(['../../session-management'], { relativeTo: this.activatedRoute });
+                    this.router.navigate([
+                        'course-management',
+                        this.courseId,
+                        'tutorial-groups-management',
+                        'configuration',
+                        this.tutorialGroupConfigurationId,
+                        'tutorial-free-days',
+                    ]);
                 },
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
             });
