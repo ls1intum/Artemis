@@ -171,6 +171,31 @@ describe('ParticipantScoresDistributionComponent', () => {
         expect(component.ngxColor.domain).toEqual(Array(4).fill(GraphColors.GREY));
     });
 
+    it('should setup default configuration from gradeNames for bonus grades if nonbonus grading scale with bonus exists', () => {
+        component.scores = undefined;
+        component.gradeNames = ['2', '3'];
+        component.gradingScale = gradingScale;
+        expectedColoring = [GraphColors.RED, ...Array(3).fill(GraphColors.GREY)];
+        expectedDistribution = [0, 1, 1, 0];
+        const expectedLabels = ['[0,40) {4}', '[40,60) {3}', '[60,80) {2}', '[80,100] {1}'];
+
+        component.ngOnChanges();
+
+        expect(component.gradingScaleExists).toBeTrue();
+        expect(component.xAxisLabel).toBe('artemisApp.examScores.xAxesartemisApp.examScores.xAxesSuffixNoBonus');
+        expect(component.yAxisLabel).toBe('artemisApp.examScores.yAxes');
+        expect(component.helpIconTooltip).toBe('artemisApp.instructorDashboard.courseScoreChart.gradingScaleExplanationNotBonus');
+        expect(component.ngxColor.domain).toEqual(expectedColoring);
+        expect(component.ngxData.map((data) => data.name)).toEqual(expectedLabels);
+        expect(component.ngxData.map((data) => data.value)).toEqual(expectedDistribution);
+    });
+
+    it('should throw when both scores and gradeNames are not given', () => {
+        component.scores = undefined;
+        component.gradeNames = undefined;
+        expect(() => component.ngOnChanges()).toThrow(Error);
+    });
+
     it('should listen to window resizing', () => {
         const realignChartSpy = jest.spyOn(component, 'realignChart');
 
