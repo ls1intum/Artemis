@@ -104,7 +104,7 @@ describe('QuizExerciseImportComponent', () => {
             const givenSearchTerm = 'givenSearchTerm';
             comp.searchTerm = givenSearchTerm;
             tick(10);
-            expect(searchForExercisesStub).toHaveBeenCalledTimes(0);
+            expect(searchForExercisesStub).not.toHaveBeenCalled();
             tick(290);
             expect(searchForExercisesStub).toHaveBeenCalledWith({ ...state, searchTerm: givenSearchTerm }, true, true);
             expect(comp.searchTerm).toEqual(givenSearchTerm);
@@ -139,7 +139,7 @@ describe('QuizExerciseImportComponent', () => {
         expect(comp.isCourseFilter).toBeFalse();
         expect(comp.isExamFilter).toBeFalse();
 
-        expect(pagingServiceSpy).toHaveBeenCalledTimes(0);
+        expect(pagingServiceSpy).not.toHaveBeenCalled();
         tick(300);
 
         const expectedSearchObject = {

@@ -5,20 +5,28 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.IntStream;
 
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.GradeStep;
 import de.tum.in.www1.artemis.domain.GradingScale;
+import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.GradingScaleRepository;
+import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.rest.errors.BadRequestAlertException;
+import de.tum.in.www1.artemis.web.rest.util.PageUtil;
 
 @Service
 public class GradingScaleService {
 
     private final GradingScaleRepository gradingScaleRepository;
 
-    public GradingScaleService(GradingScaleRepository gradingScaleRepository) {
+    private final AuthorizationCheckService authCheckService;
+
+    public GradingScaleService(GradingScaleRepository gradingScaleRepository, AuthorizationCheckService authCheckService) {
         this.gradingScaleRepository = gradingScaleRepository;
+        this.authCheckService = authCheckService;
     }
 
     /**
@@ -40,6 +48,31 @@ public class GradingScaleService {
         }
         gradingScale.setGradeSteps(gradeSteps);
         return gradingScaleRepository.save(gradingScale);
+    }
+
+    /**
+     * Search for all grading scales fitting a {@link PageableSearchDTO search query} among the grading scales having grade type BONUS.
+     * If the user does not have ADMIN role, they can only access the grading scales if they are an instructor in the course related to it.
+     * The result is paged, meaning that there is only a predefined portion of the result returned to the user, so that the server doesn't
+     * have to send too many results.
+     *
+     * The search term is the title of the course or exam that is directly associated with that grading scale.
+     *
+     * @param search The search query defining the search term and the size of the returned page
+     * @param user   The user for whom to fetch all available grading scales
+     * @return A wrapper object containing a list of all found exercises and the total number of pages
+     */
+    public SearchResultPageDTO<GradingScale> getAllOnPageWithSize(final PageableSearchDTO<String> search, final User user) {
+        final var pageable = PageUtil.createGradingScaleRequest(search);
+        final var searchTerm = search.getSearchTerm();
+        final Page<GradingScale> gradingScalePage;
+        if (authCheckService.isAdmin(user)) {
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamForAdmin(searchTerm, pageable);
+        }
+        else {
+            gradingScalePage = gradingScaleRepository.findWithBonusGradeTypeByTitleInCourseOrExamAndUserHasAccessToCourse(searchTerm, user.getGroups(), pageable);
+        }
+        return new SearchResultPageDTO<>(gradingScalePage.getContent(), gradingScalePage.getTotalPages());
     }
 
     /**

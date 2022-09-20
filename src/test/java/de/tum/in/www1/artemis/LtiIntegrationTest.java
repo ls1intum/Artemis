@@ -176,7 +176,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void exerciseLtiConfiguration_withEmptyConfig() throws Throwable {
         ConfigUtil.testWithChangedConfig(ltiResource, "LTI_OAUTH_KEY", Optional.empty(), () -> {
-            request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
+            request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.BAD_REQUEST, ExerciseLtiConfigurationDTO.class);
         });
     }
 

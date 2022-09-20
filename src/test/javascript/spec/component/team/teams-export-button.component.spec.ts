@@ -46,7 +46,7 @@ describe('TeamsExportButtonComponent', () => {
         it('should call export teams from team service when called', () => {
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
-            expect(exportTeamsStub).toHaveBeenCalled();
+            expect(exportTeamsStub).toHaveBeenCalledOnce();
         });
     });
 });

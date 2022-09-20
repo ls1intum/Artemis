@@ -170,7 +170,7 @@ describe('Course Management Update Component', () => {
     });
 
     describe('save', () => {
-        it('Should call update service on save for existing entity', fakeAsync(() => {
+        it('should call update service on save for existing entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
             entity.id = 123;
@@ -205,7 +205,7 @@ describe('Course Management Update Component', () => {
             expect(comp.isSaving).toBeFalse();
         }));
 
-        it('Should call create service on save for new entity', fakeAsync(() => {
+        it('should call create service on save for new entity', fakeAsync(() => {
             // GIVEN
             const entity = new Course();
             const createStub = jest.spyOn(service, 'create').mockReturnValue(of(new HttpResponse({ body: entity })));

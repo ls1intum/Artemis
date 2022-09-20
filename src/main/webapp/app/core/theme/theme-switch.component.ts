@@ -2,10 +2,7 @@ import { Component, Input, OnInit, ViewChild } from '@angular/core';
 import { NgbPopover } from '@ng-bootstrap/ng-bootstrap';
 import { Theme, ThemeService } from 'app/core/theme/theme.service';
 import { fromEvent } from 'rxjs';
-import { LocalStorageService } from 'ngx-webstorage';
 import { faSync } from '@fortawesome/free-solid-svg-icons';
-
-export const THEME_SWITCH_HAS_SHOWN_INITIAL_KEY = 'artemisApp.theme.hasShownInitialHint';
 
 /**
  * Displays a sun or a moon in the navbar, depending on the current theme.
@@ -28,12 +25,10 @@ export class ThemeSwitchComponent implements OnInit {
     openPopupAfterNextChange = false;
     closeTimeout: any;
 
-    showInitialHints = false;
-
     // Icons
     faSync = faSync;
 
-    constructor(private themeService: ThemeService, private localStorageService: LocalStorageService) {}
+    constructor(private themeService: ThemeService) {}
 
     ngOnInit() {
         // Listen to theme changes to change our own state accordingly
@@ -51,19 +46,10 @@ export class ThemeSwitchComponent implements OnInit {
             this.isSynced = !themeOrUndefined;
         });
 
-        // Show popover if the theme was set based on OS settings
-        setTimeout(() => {
-            if (!this.localStorageService.retrieve(THEME_SWITCH_HAS_SHOWN_INITIAL_KEY)) {
-                this.showInitialHints = true;
-                this.openPopover();
-                this.localStorageService.store(THEME_SWITCH_HAS_SHOWN_INITIAL_KEY, true);
-            }
-        }, 1200);
-
         // Workaround as we can't dynamically change the "autoClose" property on popovers
         fromEvent(window, 'click').subscribe((e) => {
             const popoverContentElement = document.getElementById('theme-switch-popover-content');
-            if (!this.showInitialHints && this.popover.isOpen() && !popoverContentElement?.contains(e.target as Node)) {
+            if (this.popover.isOpen() && !popoverContentElement?.contains(e.target as Node)) {
                 this.closePopover();
             }
         });
@@ -83,7 +69,6 @@ export class ThemeSwitchComponent implements OnInit {
     closePopover() {
         clearTimeout(this.closeTimeout);
         this.popover?.close();
-        setTimeout(() => (this.showInitialHints = false), 200);
     }
 
     mouseLeave() {
@@ -107,15 +92,5 @@ export class ThemeSwitchComponent implements OnInit {
      */
     toggleSynced() {
         this.themeService.applyThemeExplicitly(this.isSynced ? this.themeService.getCurrentTheme() : undefined);
-    }
-
-    /**
-     * Enables dark mode, but fades out the popover before that (made for the "Apply now" button)
-     */
-    enableNow() {
-        this.closePopover();
-        this.openPopupAfterNextChange = true;
-        // Wait until the popover has closed to prevent weird visual jumping issues
-        setTimeout(() => this.themeService.applyThemeExplicitly(Theme.DARK), 200);
     }
 }

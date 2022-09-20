@@ -277,8 +277,8 @@ describe('Detailed Grading System Component', () => {
 
         comp.delete();
 
-        expect(gradingSystemDeleteForCourseSpy).toHaveBeenCalledTimes(0);
-        expect(gradingSystemDeleteForExamSpy).toHaveBeenCalledTimes(0);
+        expect(gradingSystemDeleteForCourseSpy).not.toHaveBeenCalled();
+        expect(gradingSystemDeleteForExamSpy).not.toHaveBeenCalled();
     });
 
     it('should delete grading scale for course', () => {
@@ -762,8 +762,8 @@ describe('Detailed Grading System Component', () => {
 
     it('should export as csv', () => {
         comp.exportGradingStepsToCsv();
-        expect(ExportToCsv).toHaveBeenCalled();
-        expect(generateCsv).toHaveBeenCalled();
+        expect(ExportToCsv).toHaveBeenCalledTimes(2);
+        expect(generateCsv).toHaveBeenCalledTimes(2);
     });
 });
 
