@@ -92,7 +92,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
         else if (team != null) {
             return team.getStudents();
         }
-        return Set.of();
+        return Collections.emptySet();
     }
 
     public Post getPost() {
