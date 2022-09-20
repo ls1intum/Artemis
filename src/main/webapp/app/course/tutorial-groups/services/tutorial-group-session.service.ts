@@ -6,7 +6,6 @@ import { map } from 'rxjs/operators';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 
-type EntityArrayResponseType = HttpResponse<TutorialGroupSession[]>;
 type EntityResponseType = HttpResponse<TutorialGroupSession>;
 
 export class TutorialGroupSessionDTO {
@@ -70,15 +69,6 @@ export class TutorialGroupSessionService {
     private convertTutorialGroupSessionResponseDatesFromServer(res: HttpResponse<TutorialGroupSession>): HttpResponse<TutorialGroupSession> {
         if (res.body) {
             this.convertTutorialGroupSessionDatesFromServer(res.body);
-        }
-        return res;
-    }
-
-    private convertTutorialGroupSessionsResponseArrayDatesFromServer(res: HttpResponse<TutorialGroupSession[]>): HttpResponse<TutorialGroupSession[]> {
-        if (res.body) {
-            res.body.forEach((tutorialGroupSession: TutorialGroupSession) => {
-                this.convertTutorialGroupSessionDatesFromServer(tutorialGroupSession);
-            });
         }
         return res;
     }

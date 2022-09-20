@@ -14,6 +14,7 @@ import { User } from 'app/core/user/user.model';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 
 describe('EditTutorialGroupComponent', () => {
     let editTutorialGroupComponentFixture: ComponentFixture<EditTutorialGroupComponent>;
@@ -31,7 +32,7 @@ describe('EditTutorialGroupComponent', () => {
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
                 { provide: Router, useClass: MockRouter },
-                simpleActivatedRouteProvider(new Map([['tutorialGroupId', 1]]), new Map([['courseId', 1]])),
+                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 1]]), new Map([['courseId', 1]])),
             ],
         })
             .compileComponents()
@@ -130,6 +131,3 @@ describe('EditTutorialGroupComponent', () => {
         navigateSpy.mockRestore();
     });
 });
-function simpleActivatedRouteProvider(arg0: Map<string, number>, arg1: Map<string, number>): any {
-    throw new Error('Function not implemented.');
-}

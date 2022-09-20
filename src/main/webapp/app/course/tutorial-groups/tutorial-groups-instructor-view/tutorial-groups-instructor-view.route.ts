@@ -111,7 +111,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
-        path: ':tutorialGroupId/schedule-management',
+        path: ':tutorialGroupId/sessions',
         component: TutorialGroupSessionsManagement,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],

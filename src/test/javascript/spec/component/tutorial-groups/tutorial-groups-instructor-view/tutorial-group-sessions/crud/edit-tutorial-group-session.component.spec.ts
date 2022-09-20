@@ -1,45 +1,73 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
-import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { HttpResponse } from '@angular/common/http';
-import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { By } from '@angular/platform-browser';
-import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
-import { User } from 'app/core/user/user.model';
-import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
+import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
+import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
+import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import dayjs from 'dayjs/esm';
+import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
-describe('EditTutorialGroupComponent', () => {
-    let editTutorialGroupComponentFixture: ComponentFixture<EditTutorialGroupComponent>;
-    let editTutorialGroupComponent: EditTutorialGroupComponent;
-    const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
-    let findCourseSpy: jest.SpyInstance;
-    let courseService: CourseManagementService;
+describe('EditTutorialGroupSessionComponent', () => {
+    let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;
+    let component: EditTutorialGroupSessionComponent;
+    let sessionService: TutorialGroupSessionService;
+    let findSessionSpy: jest.SpyInstance;
+    let exampleSession: TutorialGroupSession;
+
+    const router = new MockRouter();
+    router.setUrl('');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            imports: [],
-            declarations: [EditTutorialGroupComponent, LoadingIndicatorContainerStubComponent, TutorialGroupFormStubComponent, MockPipe(ArtemisTranslatePipe)],
+            declarations: [EditTutorialGroupSessionComponent, LoadingIndicatorContainerStubComponent, TutorialGroupSessionFormStubComponent, MockPipe(ArtemisTranslatePipe)],
             providers: [
                 MockProvider(TutorialGroupsService),
+                MockProvider(TutorialGroupSessionService),
                 MockProvider(CourseManagementService),
                 MockProvider(AlertService),
-                { provide: Router, useClass: MockRouter },
-                simpleActivatedRouteProvider(new Map([['tutorialGroupId', 1]]), new Map([['courseId', 1]])),
+                { provide: Router, useValue: router },
+                simpleOneLayerActivatedRouteProvider(
+                    new Map([
+                        ['tutorialGroupId', 2],
+                        ['sessionId', 3],
+                    ]),
+                    {
+                        course: {
+                            id: 1,
+                            tutorialGroupsConfiguration: {
+                                id: 1,
+                                timeZone: 'Europe/Berlin',
+                            },
+                        },
+                    },
+                ),
             ],
         })
             .compileComponents()
             .then(() => {
-                editTutorialGroupComponentFixture = TestBed.createComponent(EditTutorialGroupComponent);
-                editTutorialGroupComponent = editTutorialGroupComponentFixture.componentInstance;
-                courseService = TestBed.inject(CourseManagementService);
-                findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+                fixture = TestBed.createComponent(EditTutorialGroupSessionComponent);
+                component = fixture.componentInstance;
+                sessionService = TestBed.inject(TutorialGroupSessionService);
+
+                exampleSession = new TutorialGroupSession();
+                exampleSession.id = 3;
+                // we get utc from the server --> will be converted to time zone of configuration
+                exampleSession.start = dayjs.utc('2021-01-01T10:00:00');
+                exampleSession.end = dayjs.utc('2021-01-01T11:00:00');
+                exampleSession.location = 'Room 1';
+
+                findSessionSpy = jest.spyOn(sessionService, 'getOneOfTutorialGroup').mockReturnValue(of(new HttpResponse({ body: exampleSession })));
             });
     });
 
@@ -48,88 +76,64 @@ describe('EditTutorialGroupComponent', () => {
     });
 
     it('should initialize', () => {
-        editTutorialGroupComponentFixture.detectChanges();
-        expect(editTutorialGroupComponent).not.toBeNull();
-        expect(findCourseSpy).toHaveBeenCalledOnce();
-        expect(findCourseSpy).toHaveBeenCalledWith(1);
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
+        expect(findSessionSpy).toHaveBeenCalledOnce();
+        expect(findSessionSpy).toHaveBeenCalledWith(1, 2, 3);
     });
 
     it('should set form data correctly', () => {
-        const tutorialGroupService = TestBed.inject(TutorialGroupsService);
+        fixture.detectChanges();
 
-        const tutorialGroupOfResponse = new TutorialGroup();
-        tutorialGroupOfResponse.id = 1;
-        tutorialGroupOfResponse.title = 'test';
+        const formStub: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
 
-        const response: HttpResponse<TutorialGroup> = new HttpResponse({
-            body: tutorialGroupOfResponse,
-            status: 200,
-        });
+        expect(component.session).toEqual(exampleSession);
+        expect(findSessionSpy).toHaveBeenCalledOnce();
+        expect(findSessionSpy).toHaveBeenCalledWith(1, 2, 3);
 
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
-
-        editTutorialGroupComponentFixture.detectChanges();
-
-        const tutorialGroupFormStubComponent: TutorialGroupFormStubComponent = editTutorialGroupComponentFixture.debugElement.query(
-            By.directive(TutorialGroupFormStubComponent),
-        ).componentInstance;
-
-        expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupOfResponse);
-        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
-        expect(findByIdStub).toHaveBeenCalledOnce();
-        expect(editTutorialGroupComponent.formData.title).toEqual(tutorialGroupOfResponse.title);
-        expect(tutorialGroupFormStubComponent.formData).toEqual(editTutorialGroupComponent.formData);
+        expect(component.formData.location).toEqual(exampleSession.location);
+        // converted to berlin time
+        expect(component.formData.startTime).toBe('11:00:00');
+        expect(component.formData.endTime).toBe('12:00:00');
+        expect(component.formData.date).toStrictEqual(dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate());
+        expect(formStub.formData).toEqual(component.formData);
     });
 
     it('should send PUT request upon form submission and navigate', () => {
-        const router: Router = TestBed.inject(Router);
-        const tutorialGroupService = TestBed.inject(TutorialGroupsService);
-        const exampleTeachingAssistant = new User();
-        exampleTeachingAssistant.login = 'testLogin';
+        fixture.detectChanges();
 
-        const tutorialGroupInDatabase: TutorialGroup = new TutorialGroup();
-        tutorialGroupInDatabase.id = 1;
-        tutorialGroupInDatabase.title = 'test';
-        tutorialGroupInDatabase.teachingAssistant = exampleTeachingAssistant;
-
-        const findByIdResponse: HttpResponse<TutorialGroup> = new HttpResponse({
-            body: tutorialGroupInDatabase,
-            status: 200,
-        });
-        const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(findByIdResponse));
-
-        editTutorialGroupComponentFixture.detectChanges();
-        expect(findByIdStub).toHaveBeenCalledWith(1, 1);
-        expect(findByIdStub).toHaveBeenCalledOnce();
-        expect(editTutorialGroupComponent.tutorialGroup).toEqual(tutorialGroupInDatabase);
-
-        const changedTutorialGroup: TutorialGroup = {
-            ...tutorialGroupInDatabase,
-            title: 'Changed',
+        const changedSession: TutorialGroupSession = {
+            ...exampleSession,
+            location: 'Changed',
         };
 
-        const updateResponse: HttpResponse<TutorialGroup> = new HttpResponse({
-            body: changedTutorialGroup,
+        const updateResponse: HttpResponse<TutorialGroupSession> = new HttpResponse({
+            body: changedSession,
             status: 200,
         });
 
-        const updatedStub = jest.spyOn(tutorialGroupService, 'update').mockReturnValue(of(updateResponse));
+        const updatedStub = jest.spyOn(sessionService, 'update').mockReturnValue(of(updateResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        const tutorialGroupForm: TutorialGroupFormStubComponent = editTutorialGroupComponentFixture.debugElement.query(
-            By.directive(TutorialGroupFormStubComponent),
-        ).componentInstance;
+        const sessionForm: TutorialGroupSessionFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupSessionFormStubComponent)).componentInstance;
 
-        tutorialGroupForm.formSubmitted.emit({
-            title: changedTutorialGroup.title,
-            teachingAssistant: exampleTeachingAssistant,
-        });
+        const formData = {
+            date: dayjs('2021-01-01T00:00:00').tz('Europe/Berlin').toDate(),
+            startTime: '11:00:00',
+            endTime: '12:00:00',
+            location: 'Changed',
+        };
+
+        sessionForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
+        expect(updatedStub).toHaveBeenCalledWith(1, 2, 3, {
+            date: formData.date,
+            startTime: formData.startTime,
+            endTime: formData.endTime,
+            location: formData.location,
+        });
         expect(navigateSpy).toHaveBeenCalledOnce();
-        navigateSpy.mockRestore();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', 1, 'tutorial-groups-management', 2, 'sessions']);
     });
 });
-function simpleActivatedRouteProvider(arg0: Map<string, number>, arg1: Map<string, number>): any {
-    throw new Error('Function not implemented.');
-}
