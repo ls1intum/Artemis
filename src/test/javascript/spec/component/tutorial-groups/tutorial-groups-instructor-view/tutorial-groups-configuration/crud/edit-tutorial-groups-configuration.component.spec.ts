@@ -8,12 +8,12 @@ import { HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
-import dayjs from 'dayjs/esm';
 import { Router } from '@angular/router';
 import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/edit-tutorial-groups-configuration/edit-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationFormStubComponent } from '../../../stubs/tutorial-groups-configuration-form-sub.component';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
+import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from './tutorialGroupsConfigurationExampleModels';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;
@@ -47,11 +47,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
                 component = fixture.componentInstance;
                 configurationService = TestBed.inject(TutorialGroupsConfigurationService);
 
-                exampleConfiguration = new TutorialGroupsConfiguration();
-                exampleConfiguration.id = configurationId;
-                exampleConfiguration.timeZone = 'Europe/Berlin';
-                exampleConfiguration.tutorialPeriodStartInclusive = dayjs('2021-01-01');
-                exampleConfiguration.tutorialPeriodEndInclusive = dayjs('2021-01-02');
+                exampleConfiguration = generateExampleTutorialGroupsConfiguration();
 
                 findConfigurationSpy = jest.spyOn(configurationService, 'getOneOfCourse').mockReturnValue(of(new HttpResponse({ body: exampleConfiguration })));
             });
@@ -100,10 +96,7 @@ describe('EditTutorialGroupsConfigurationComponent', () => {
 
         const sessionForm: TutorialGroupsConfigurationFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupsConfigurationFormStubComponent)).componentInstance;
 
-        const formData = {
-            timeZone: 'Europe/Belgrade',
-            period: [dayjs('2021-01-01').toDate(), dayjs('2021-01-02').toDate()],
-        };
+        const formData = tutorialsGroupsConfigurationToFormData(changedConfiguration);
 
         sessionForm.formSubmitted.emit(formData);
 

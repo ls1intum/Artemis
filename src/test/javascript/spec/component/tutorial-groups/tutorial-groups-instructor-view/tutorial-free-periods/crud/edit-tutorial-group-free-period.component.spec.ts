@@ -16,6 +16,11 @@ import { EditTutorialGroupFreePeriodComponent } from 'app/course/tutorial-groups
 import { TutorialGroupFreePeriodFormStubComponent } from '../../../stubs/tutorial-group-free-period-form-stub.component';
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
+import {
+    formDataToTutorialGroupFreePeriodDTO,
+    generateExampleTutorialGroupFreePeriod,
+    tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
+} from './tutorialGroupFreePeriodExampleModel';
 
 describe('EditTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupFreePeriodComponent>;
@@ -54,14 +59,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
                 fixture = TestBed.createComponent(EditTutorialGroupFreePeriodComponent);
                 component = fixture.componentInstance;
                 periodService = TestBed.inject(TutorialGroupFreePeriodService);
-
-                examplePeriod = new TutorialGroupFreePeriod();
-                examplePeriod.id = periodId;
-                // we get utc from the server --> will be converted to time zone of configuration
-                examplePeriod.start = dayjs.utc('2021-01-01T00:00:00');
-                examplePeriod.end = dayjs.utc('2021-01-01T23:59:59');
-                examplePeriod.reason = 'Holiday';
-
+                examplePeriod = generateExampleTutorialGroupFreePeriod();
                 findPeriodSpy = jest.spyOn(periodService, 'getOneOfConfiguration').mockReturnValue(of(new HttpResponse({ body: examplePeriod })));
             });
     });
@@ -86,8 +84,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         expect(findPeriodSpy).toHaveBeenCalledOnce();
         expect(findPeriodSpy).toHaveBeenCalledWith(courseId, configurationId, periodId);
 
-        expect(component.formData.reason).toEqual(examplePeriod.reason);
-        expect(component.formData.date).toEqual(examplePeriod.start!.tz('Europe/Berlin').toDate());
+        expect(component.formData).toEqual(tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData(examplePeriod, 'Europe/Berlin'));
         expect(formStub.formData).toEqual(component.formData);
     });
 
@@ -117,10 +114,7 @@ describe('EditTutorialGroupFreePeriodComponent', () => {
         sessionForm.formSubmitted.emit(formData);
 
         expect(updatedStub).toHaveBeenCalledOnce();
-        expect(updatedStub).toHaveBeenCalledWith(courseId, configurationId, periodId, {
-            date: formData.date,
-            reason: formData.reason,
-        });
+        expect(updatedStub).toHaveBeenCalledWith(courseId, configurationId, periodId, formDataToTutorialGroupFreePeriodDTO(formData));
         expect(navigateSpy).toHaveBeenCalledOnce();
         expect(navigateSpy).toHaveBeenCalledWith(['course-management', courseId, 'tutorial-groups-management', 'configuration', configurationId, 'tutorial-free-days']);
     });
