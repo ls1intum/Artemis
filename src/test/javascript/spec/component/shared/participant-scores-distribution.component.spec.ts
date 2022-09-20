@@ -145,9 +145,7 @@ describe('ParticipantScoresDistributionComponent', () => {
     });
 
     it('should setup default configuration if bonus grading scale exists', () => {
-        const bonusGradingScale = gradingScale;
-        bonusGradingScale.gradeType = GradeType.BONUS;
-        component.gradingScale = bonusGradingScale;
+        component.gradingScale = { ...gradingScale, gradeType: GradeType.BONUS };
         component.scoreToHighlight = 13;
         expectedColoring = [GraphColors.LIGHT_BLUE, ...Array(3).fill(GraphColors.GREY)];
         expectedDistribution = [2, 0, 0, 0];
