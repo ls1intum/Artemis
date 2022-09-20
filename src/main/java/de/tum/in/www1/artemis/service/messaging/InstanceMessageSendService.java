@@ -106,6 +106,7 @@ public interface InstanceMessageSendService {
      * Send a message to the main server that schedules to update the participant score for this exercise/participant
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant
+     * @param resultId the id of the result about to be deleted, or null if it was created/updated
      */
-    void sendParticipantScoreSchedule(Long exerciseId, Long participantId);
+    void sendParticipantScoreSchedule(Long exerciseId, Long participantId, Long resultId);
 }

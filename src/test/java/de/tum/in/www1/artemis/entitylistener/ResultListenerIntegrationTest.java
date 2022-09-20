@@ -27,7 +27,6 @@ import de.tum.in.www1.artemis.domain.scores.TeamScore;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.ResultService;
-import de.tum.in.www1.artemis.service.scheduled.ParticipantScoreSchedulerService;
 
 class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
@@ -63,12 +62,8 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private ResultService resultService;
 
-    @Autowired
-    private ParticipantScoreSchedulerService service;
-
     @AfterEach
     void resetDatabase() {
-        service.shutdown();
         database.resetDatabase();
     }
 
@@ -289,7 +284,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         resultService.deleteResult(persistedResult.getId());
 
         // Wait for the scheduler to execute its task
-        await().until(() -> service.getScheduledTasks().isEmpty());
+        await().until(() -> participantScoreSchedulerService.getScheduledTasks().isEmpty());
 
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         List<Result> savedResults = resultRepository.findAll();
@@ -307,7 +302,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         resultService.deleteResult(persistedResult.getId());
 
         // Wait for the scheduler to execute its task
-        await().until(() -> service.getScheduledTasks().isEmpty());
+        await().until(() -> participantScoreSchedulerService.getScheduledTasks().isEmpty());
 
         List<StudentScore> savedStudentScores = studentScoreRepository.findAll();
         List<Result> savedResults = resultRepository.findAll();
@@ -407,7 +402,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         Result persistedResult = database.createParticipationSubmissionAndResult(idOfExercise, participant, 10.0, 10.0, 200, isRatedResult);
 
         // Wait for the scheduler to execute its task
-        await().until(() -> service.getScheduledTasks().isEmpty());
+        await().until(() -> participantScoreSchedulerService.getScheduledTasks().isEmpty());
 
         savedParticipantScores = participantScoreRepository.findAllEagerly();
         assertThat(savedParticipantScores).isNotEmpty();
@@ -439,7 +434,7 @@ class ResultListenerIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
 
         // Wait for the scheduler to execute its task
-        await().pollDelay(Durations.ONE_SECOND).until(() -> service.getScheduledTasks().isEmpty());
+        await().pollDelay(Durations.ONE_SECOND).until(() -> participantScoreSchedulerService.getScheduledTasks().isEmpty());
 
         List<ParticipantScore> savedParticipantScore = participantScoreRepository.findAllEagerly();
         assertThat(savedParticipantScore).isNotEmpty();

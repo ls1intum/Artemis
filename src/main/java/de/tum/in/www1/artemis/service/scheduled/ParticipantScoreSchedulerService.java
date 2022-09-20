@@ -8,6 +8,7 @@ import java.util.concurrent.ScheduledFuture;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import javax.validation.constraints.NotNull;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -129,10 +130,10 @@ public class ParticipantScoreSchedulerService {
         var participantScoresToProcess = participantScoreRepository.findAllOutdated();
         participantScoresToProcess.forEach(participantScore -> {
             if (participantScore instanceof TeamScore teamScore) {
-                scheduleTask(teamScore.getExercise().getId(), teamScore.getTeam().getId());
+                scheduleTask(teamScore.getExercise().getId(), teamScore.getTeam().getId(), Instant.now());
             }
             else if (participantScore instanceof StudentScore studentScore) {
-                scheduleTask(studentScore.getExercise().getId(), studentScore.getUser().getId());
+                scheduleTask(studentScore.getExercise().getId(), studentScore.getUser().getId(), Instant.now());
             }
         });
     }
@@ -141,10 +142,16 @@ public class ParticipantScoreSchedulerService {
      * Schedule a task to update the participant score for the given combination of exercise and participant.
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, determined by the exercise)
-     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleParticipantScore(Long, Long)
+     * @param resultIdToIgnore the id of a result that should be ignored (e.g., as it is about to be deleted)
+     * @see de.tum.in.www1.artemis.service.messaging.InstanceMessageReceiveService#processScheduleParticipantScore(Long, Long, Long)
      */
-    public void scheduleTask(Long exerciseId, Long participantId) {
-        this.scheduleTask(exerciseId, participantId, Instant.now());
+    public void scheduleTask(@NotNull Long exerciseId, @NotNull Long participantId, Long resultIdToIgnore) {
+        if (resultIdToIgnore == null) {
+            scheduleTask(exerciseId, participantId, Instant.now());
+        }
+        else {
+            scheduleTask(exerciseId, participantId, Instant.now(), resultIdToIgnore);
+        }
     }
 
     /**
@@ -152,8 +159,9 @@ public class ParticipantScoreSchedulerService {
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified the last modified date of the result that triggered the update
+     * @param resultIdsToIgnore a list of result ids that should be ignored (e.g., as they are about to be deleted)
      */
-    private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified) {
+    private void scheduleTask(Long exerciseId, Long participantId, Instant resultLastModified, Long... resultIdsToIgnore) {
         var participantScoreId = new ParticipantScoreId(exerciseId, participantId);
         if (scheduledTasks.containsKey(participantScoreId.hashCode())) {
             // We already have a scheduled task for this result
@@ -161,7 +169,7 @@ public class ParticipantScoreSchedulerService {
         }
 
         var schedulingTime = ZonedDateTime.now().plus(500, ChronoUnit.MILLIS);
-        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified), schedulingTime.toInstant());
+        var future = scheduler.schedule(() -> this.executeTask(exerciseId, participantId, resultLastModified, resultIdsToIgnore), schedulingTime.toInstant());
         scheduledTasks.put(participantScoreId.hashCode(), future);
         logger.debug("Schedule task for participation {} at {}.", exerciseId, schedulingTime);
     }
@@ -171,8 +179,9 @@ public class ParticipantScoreSchedulerService {
      * @param exerciseId the id of the exercise
      * @param participantId the id of the participant (user or team, determined by the exercise)
      * @param resultLastModified the last modified date of the result that triggered the update
+     * @param resultIdsToIgnore a list of result ids that should be ignored when updating the participant score
      */
-    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified) {
+    private void executeTask(Long exerciseId, Long participantId, Instant resultLastModified, Long... resultIdsToIgnore) {
         logger.debug("Processing exercise {} and participant {} to update participant scores.", exerciseId, participantId);
         try {
             SecurityUtils.setAuthorizationObject();
@@ -225,7 +234,7 @@ public class ParticipantScoreSchedulerService {
             });
 
             // Now do the heavy lifting and calculate the latest score based on all results for this exercise
-            updateParticipantScore(score);
+            updateParticipantScore(score, resultIdsToIgnore);
         }
         catch (Exception e) {
             logger.error("Exception while processing participation {} for participant scores:", exerciseId, e);
@@ -239,12 +248,13 @@ public class ParticipantScoreSchedulerService {
      * Updates the given participant score by fetching the last (rated) results from the database.
      * If both no result and no rated result is found, the participant score is deleted.
      * @param participantScore The participant score to update (with the exercise eager loaded)
+     * @param resultIdsToIgnore A list of result ids to ignore when calculating the score
      */
-    private void updateParticipantScore(ParticipantScore participantScore) {
-        var lastRatedResult = getLastRatedResultForParticipantScore(participantScore).orElse(null);
+    private void updateParticipantScore(ParticipantScore participantScore, Long[] resultIdsToIgnore) {
+        var lastRatedResult = getLastRatedResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
         setLastRatedAttributes(participantScore, lastRatedResult, participantScore.getExercise());
 
-        var lastResult = getLastResultForParticipantScore(participantScore).orElse(null);
+        var lastResult = getLastResultForParticipantScore(participantScore, resultIdsToIgnore).orElse(null);
         setLastAttributes(participantScore, lastResult, participantScore.getExercise());
 
         // Persist the changes or delete the participant score if it is not needed anymore
@@ -265,51 +275,54 @@ public class ParticipantScoreSchedulerService {
      * Get the result that can replace the currently set last result for a participant score
      *
      * @author Stefan Waldhauser
-     * @param participantScore participant score
+     * @param participantScore the participant score to update (user/team and exercise must be set)
+     * @param resultIdsToIgnore a list of ids to ignore when fetching the last result
      * @return optional of new result
      */
-    private Optional<Result> getLastResultForParticipantScore(ParticipantScore participantScore) {
-        List<Result> resultOrdered;
+    private Optional<Result> getLastResultForParticipantScore(ParticipantScore participantScore, Long[] resultIdsToIgnore) {
+        // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
+        Optional<Result> resultOrdered;
         if (participantScore instanceof StudentScore studentScore) {
             resultOrdered = resultRepository
                     .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .toList();
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else if (participantScore instanceof TeamScore teamScore) {
             resultOrdered = resultRepository
-                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream().toList();
+                    .getResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else {
             return Optional.empty();
         }
-        // the new last result (result with the highest id of submission with the highest id) will be at the beginning of the list
-        return resultOrdered.isEmpty() ? Optional.empty() : Optional.of(resultOrdered.get(0));
+        return resultOrdered;
     }
 
     /**
      * Get the result that can replace the currently set last rated result for a participant score
      *
      * @author Stefan Waldhauser
-     * @param participantScore participant score
+     * @param participantScore the participant score to update (user/team and exercise must be set)
+     * @param resultIdsToIgnore a list of ids to ignore when fetching the last rated result
      * @return optional of new result
      */
-    private Optional<Result> getLastRatedResultForParticipantScore(ParticipantScore participantScore) {
-        List<Result> ratedResultsOrdered;
+    private Optional<Result> getLastRatedResultForParticipantScore(ParticipantScore participantScore, Long[] resultIdsToIgnore) {
+        // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
+        Optional<Result> ratedResultsOrdered;
         if (participantScore instanceof StudentScore studentScore) {
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForStudent(participantScore.getExercise().getId(), studentScore.getUser().getId()).stream()
-                    .toList();
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else if (participantScore instanceof TeamScore teamScore) {
             ratedResultsOrdered = resultRepository
                     .getRatedResultsOrderedByParticipationIdLegalSubmissionIdResultIdDescForTeam(participantScore.getExercise().getId(), teamScore.getTeam().getId()).stream()
-                    .toList();
+                    .filter(result -> Arrays.stream(resultIdsToIgnore).noneMatch(id -> id.equals(result.getId()))).findFirst();
         }
         else {
             return Optional.empty();
         }
-        // the new last rated result (rated result with the highest id of submission with the highest id) will be at the beginning of the list
-        return ratedResultsOrdered.isEmpty() ? Optional.empty() : Optional.of(ratedResultsOrdered.get(0));
+        return ratedResultsOrdered;
     }
 
     /**

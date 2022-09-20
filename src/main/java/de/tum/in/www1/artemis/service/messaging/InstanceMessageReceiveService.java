@@ -134,7 +134,7 @@ public class InstanceMessageReceiveService {
         });
         hazelcastInstance.<Long[]>getTopic("participant-score-schedule").addMessageListener(message -> {
             SecurityUtils.setAuthorizationObject();
-            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1]);
+            processScheduleParticipantScore(message.getMessageObject()[0], message.getMessageObject()[1], message.getMessageObject()[2]);
         });
     }
 
@@ -235,8 +235,8 @@ public class InstanceMessageReceiveService {
         examMonitoringScheduleService.cancelExamMonitoringTask(examId);
     }
 
-    public void processScheduleParticipantScore(Long exerciseId, Long participantId) {
+    public void processScheduleParticipantScore(Long exerciseId, Long participantId, Long resultId) {
         log.info("Received schedule participant score update for exercise {} and participant {}", exerciseId, participantId);
-        participantScoreSchedulerService.scheduleTask(exerciseId, participantId);
+        participantScoreSchedulerService.scheduleTask(exerciseId, participantId, resultId);
     }
 }

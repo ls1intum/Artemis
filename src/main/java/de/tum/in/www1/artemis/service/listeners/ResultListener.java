@@ -33,16 +33,29 @@ public class ResultListener {
     }
 
     /**
-     * This callback method is called after a result is created, updated or deleted.
+     * This callback method is called after a result is created or updated.
      * It will forward the event to the messaging service to process it for the participant scores.
      * @param result the result that was modified
      */
     @PostPersist
     @PostUpdate
-    @PreRemove
-    public void updateParticipantScore(Result result) {
+    public void updateResult(Result result) {
         if (result.getParticipation() instanceof StudentParticipation participation) {
-            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId());
+            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), null);
+        }
+    }
+
+    /**
+     * This callback method is called before a result is deleted.
+     * It will forward the event to the messaging service to process it for the participant scores.
+     * @param result the result that was deleted
+     */
+    @PreRemove
+    public void removeResult(Result result) {
+        // We can not retrieve the participation in a @PostRemove callback, so we use @PreRemove here
+        // Then, we pass the result id to the scheduler to assure it is not used during the calculation of the new score
+        if (result.getParticipation() instanceof StudentParticipation participation) {
+            instanceMessageSendService.sendParticipantScoreSchedule(participation.getExercise().getId(), participation.getParticipant().getId(), result.getId());
         }
     }
 }
