@@ -1,6 +1,6 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Cancel/Activate -->
-    <button type="button" class="btn btn-secondary" (click)="openCancellationModal(tutorialGroupSession)">
+    <button [id]="'cancel-activate-' + tutorialGroupSession.id" type="button" class="btn btn-secondary" (click)="openCancellationModal(tutorialGroupSession)">
         {{
             (tutorialGroupSession.status === tutorialGroupSessionStatus.CANCELLED ? 'artemisApp.manageSessions.activateButton' : 'artemisApp.manageSessions.cancelButton')
                 | artemisTranslate
@@ -8,7 +8,8 @@
     </button>
     <!-- Edit -->
     <a
-        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']"
+        [id]="'edit-' + tutorialGroupSession.id"
+        [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions', tutorialGroupSession.id, 'edit']"
         class="btn btn-warning btn-sm me-1"
     >
         <fa-icon [icon]="faWrench"></fa-icon>
@@ -16,6 +17,7 @@
     </a>
     <!-- Delete -->
     <button
+        [id]="'delete-' + tutorialGroupSession.id"
         jhiDeleteButton
         entityTitle="{{ tutorialGroupSession!.start! | artemisDate: 'short-date' }}  {{ tutorialGroupSession!.start! | artemisDate: 'time' }} - {{
             tutorialGroupSession!.end! | artemisDate: 'time'

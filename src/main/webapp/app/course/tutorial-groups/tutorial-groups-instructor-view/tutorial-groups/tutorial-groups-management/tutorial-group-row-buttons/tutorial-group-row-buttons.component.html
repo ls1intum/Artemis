@@ -1,21 +1,30 @@
 <div class="btn-group flex-btn-group-container">
     <!-- Sessions -->
-    <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions']" class="btn btn-primary btn-sm me-1">
+    <a
+        [id]="'sessions-' + tutorialGroup.id"
+        [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions']"
+        class="btn btn-primary btn-sm me-1"
+    >
         <fa-icon [icon]="faCalendar"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.manageSessions.title">Schedule</span>
     </a>
     <!-- Registered Students -->
-    <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']" class="btn btn-primary btn-sm me-1">
+    <a
+        [id]="'registrations-' + tutorialGroup.id"
+        [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']"
+        class="btn btn-primary btn-sm me-1"
+    >
         <fa-icon [icon]="faUsers"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="artemisApp.registeredStudents.title">Registered Students</span>
     </a>
     <!-- Edit -->
-    <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']" class="btn btn-warning btn-sm me-1">
+    <a [id]="'edit-' + tutorialGroup.id" [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']" class="btn btn-warning btn-sm me-1">
         <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
     </a>
     <!-- Delete -->
     <button
+        [id]="'delete-' + tutorialGroup.id"
         jhiDeleteButton
         [entityTitle]="tutorialGroup.title || ''"
         deleteQuestion="artemisApp.manageTutorialGroups.deleteButton.question"

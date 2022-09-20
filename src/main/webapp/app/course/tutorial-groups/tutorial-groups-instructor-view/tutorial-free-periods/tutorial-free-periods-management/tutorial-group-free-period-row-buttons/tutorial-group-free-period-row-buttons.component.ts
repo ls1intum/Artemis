@@ -3,7 +3,7 @@ import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-gr
 import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/services/tutorial-group-free-period.service';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Subject } from 'rxjs';
-import { faCalendarAlt, faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
+import { faTimes, faUsers, faWrench } from '@fortawesome/free-solid-svg-icons';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 @Component({
@@ -23,7 +23,6 @@ export class TutorialGroupFreePeriodRowButtonsComponent {
     faWrench = faWrench;
     faUsers = faUsers;
     faTimes = faTimes;
-    faCalendar = faCalendarAlt;
 
     constructor(private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService) {}
 
