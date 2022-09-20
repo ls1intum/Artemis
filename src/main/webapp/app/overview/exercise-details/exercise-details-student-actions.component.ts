@@ -225,7 +225,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
     codeEditorButtonLable(participation: StudentParticipation) {
         if ((this.exercise.studentParticipations?.length ?? 0) > 1 || participation.testRun) {
-            return 'artemisApp.exerciseActions.openCodeEditor' + (participation.testRun ? 'Practice' : 'Rated');
+            return 'artemisApp.exerciseActions.openCodeEditor' + (participation.testRun ? 'Practice' : 'Graded');
         } else {
             return 'artemisApp.exerciseActions.openCodeEditor';
         }
@@ -233,7 +233,7 @@ export class ExerciseDetailsStudentActionsComponent {
 
     cloneButtonLabelAddition(participation: StudentParticipation) {
         if ((this.exercise.studentParticipations?.length ?? 0) > 1 || participation.testRun) {
-            return participation.testRun ? 'Practice' : 'Rated';
+            return participation.testRun ? 'Practice' : 'Graded';
         } else {
             return '';
         }
