@@ -42,6 +42,17 @@ public class CourseScoreCalculationService {
         this.plagiarismCaseRepository = plagiarismCaseRepository;
     }
 
+    /**
+     * Calculates max and reachable max points for the given course and the student scores for the given student ids
+     * and takes the effects of related plagiarism verdicts on the grade into account. Implementation is adapted from course-score-calculation.service.ts.
+     * <p>
+     * If there is a single student id in studentIds, the student id will be filtered in the database as an optimization
+     * wherever possible.
+     *
+     * @param courseId   the id of the course to calculate
+     * @param studentIds the id of the students whose scores in the course will be calculated.
+     * @return the max and reachable max points for the given course and the student scores with related plagiarism verdicts for the given student ids
+     */
     public CourseScoresDTO calculateCourseScores(long courseId, Collection<Long> studentIds) {
         Set<Exercise> courseExercises = exerciseRepository.findAllExercisesByCourseId(courseId);
         if (courseExercises.isEmpty()) {
@@ -68,7 +79,9 @@ public class CourseScoreCalculationService {
         if (studentIds.size() == 1) {  // Optimize single student case by filtering in the database.
             Long studentId = studentIds.iterator().next();
             var participations = studentParticipationRepository.findByCourseIdAndStudentIdWithEagerRatedResults(courseId, studentId);
-            studentIdToParticipations.addAll(studentId, participations);
+            if (!participations.isEmpty()) {
+                studentIdToParticipations.addAll(studentId, participations);
+            }
             plagiarismCases = plagiarismCaseRepository.findByCourseIdAndStudentId(courseId, studentId);
         }
         else {
@@ -94,13 +107,15 @@ public class CourseScoreCalculationService {
     }
 
     /**
-     * TODO: Ata
-     * @param studentId
-     * @param participationsOfStudent should be non-empty
-     * @param maxPointsInCourse
-     * @param reachableMaxPointsInCourse
-     * @param plagiarismMapping
-     * @return
+     * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent
+     * and takes the effects of related plagiarism verdicts on the grade into account.
+    
+     * @param studentId the id of the student who has participated in the course exercises
+     * @param participationsOfStudent should be non-empty. The exercise participations of the given student
+     * @param maxPointsInCourse max points in the given course
+     * @param reachableMaxPointsInCourse max points achievable in the given course depending on the due dates of the exercises
+     * @param plagiarismMapping the plagiarism verdicts for the student for the participated exercises
+     * @return a StudentScore instance with the presentation score, relative and absolute points achieved by the given student and the most severe plagiarism verdict
      */
     public CourseScoresDTO.StudentScore calculateCourseScoreForStudent(Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
             double reachableMaxPointsInCourse, PlagiarismMapping plagiarismMapping) {

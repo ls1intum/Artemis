@@ -155,6 +155,9 @@ export class StudentExamDetailComponent implements OnInit {
         studentExam.exercises!.forEach((exercise) => this.initExercise(exercise));
     }
 
+    /**
+     * Gets the correct explanation label for the grade depending on whether it is a bonus or it has bonus.
+     */
     getGradeExplanation() {
         if (this.isBonus) {
             return 'artemisApp.studentExams.bonus';

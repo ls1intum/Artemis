@@ -66,6 +66,7 @@ public class BonusResource {
      *
      * @param courseId the course to which the exam belongs
      * @param examId   the exam to which the bonus belongs
+     * @param includeSourceGradeSteps flag to determine if the GradeSteps for the source grading scale should be included in the response. Default is false.
      * @return ResponseEntity with status 200 (Ok) with body the bonus if it exists and 404 (Not found) otherwise
      */
     @GetMapping("/courses/{courseId}/exams/{examId}/bonus")

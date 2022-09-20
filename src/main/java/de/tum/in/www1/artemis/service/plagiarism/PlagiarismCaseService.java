@@ -166,6 +166,13 @@ public class PlagiarismCaseService {
 
     public record PlagiarismMapping(Map<Long, Map<Long, PlagiarismCase>> studentIdToExerciseIdToPlagiarismCaseMap) {
 
+        /**
+         * Factory method to create a PlagiarismMapping from a PlagiarismCase collection.
+         * Useful for creating PlagiarismMapping from a database repository response.
+         *
+         * @param plagiarismCases a collection of relavant plagiarism cases with student/team ids and exercise ids present
+         * @return a populated PlagiarismMapping instance
+         */
         public static PlagiarismMapping createFromPlagiarismCases(Collection<PlagiarismCase> plagiarismCases) {
             Map<Long, Map<Long, PlagiarismCase>> outerMap = new HashMap<>();
             for (PlagiarismCase plagiarismCase : plagiarismCases) {
