@@ -70,15 +70,6 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     List<ParticipantScore> findAllByExercise(Exercise exercise);
 
     @Query("""
-                SELECT p
-                FROM ParticipantScore p
-                LEFT JOIN FETCH p.exercise
-                WHERE p.lastResult.id = :resultId
-                OR p.lastRatedResult.id = :resultId
-            """)
-    Optional<ParticipantScore> findByResultIdWithExercise(@Param("resultId") Long resultId);
-
-    @Query("""
             SELECT p
             FROM ParticipantScore p LEFT JOIN FETCH p.exercise LEFT JOIN FETCH p.lastResult LEFT JOIN FETCH p.lastRatedResult
             """)
@@ -166,8 +157,8 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
             SELECT new de.tum.in.www1.artemis.domain.statistics.ScoreDistribution(count(p.id), p.lastRatedScore)
             FROM ParticipantScore p
             WHERE p.exercise.id = :exerciseId
-            group by p.id
-            order by p.lastRatedScore asc
+            GROUP BY p.id
+            ORDER BY p.lastRatedScore ASC
             """)
     List<ScoreDistribution> getScoreDistributionForExercise(@Param("exerciseId") Long exerciseId);
 

@@ -1,6 +1,6 @@
 <?xml version="1.1" encoding="UTF-8" standalone="no"?>
 <databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-3.8.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
-    <changeSet author="ge65cer" id="20220913152104">
+    <changeSet author="ge65cer" id="20220913152104-1">
         <comment>Add a column to track the timestamp of the last update for results and participant scores.</comment>
         <addColumn tableName="result">
             <column name="last_modified_date" type="TIMESTAMP"/>
@@ -8,5 +8,47 @@
         <addColumn tableName="participant_score">
             <column name="last_modified_date" type="TIMESTAMP"/>
         </addColumn>
+
+        <createIndex tableName="result" indexName="result_last_modified_date">
+            <column>last_modified_date</column>
+        </createIndex>
+        <createIndex tableName="participant_score" indexName="participant_score_last_modified_date">
+            <column>last_modified_date</column>
+        </createIndex>
+    </changeSet>
+    <changeSet author="ge65cer" id="20220913152104-2">
+        <comment>Fix the constraints to avoid duplicate entries for any user/team and exercise combination.</comment>
+        <!-- Temporarily remove foreign keys -->
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_exercise_id" />
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_last_result_id" />
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_last_rated_result_id" />
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_user_id" />
+        <dropForeignKeyConstraint baseTableName="participant_score" constraintName="fk_participant_score_team_id" />
+
+        <dropUniqueConstraint tableName="participant_score" constraintName="exercise_id" />
+        <dropUniqueConstraint tableName="participant_score" constraintName="exercise_id_2" />
+        <dropUniqueConstraint tableName="participant_score" constraintName="exercise_id_3" />
+        <dropUniqueConstraint tableName="participant_score" constraintName="exercise_id_4" />
+
+        <addUniqueConstraint columnNames="user_id, team_id, exercise_id" constraintName="uc_participant_score" tableName="participant_score" />
+
+        <!-- Re-add foreign keys from above -->
+        <addForeignKeyConstraint baseColumnNames="exercise_id" baseTableName="participant_score"
+                                 constraintName="fk_participant_score_exercise_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="exercise"/>
+        <addForeignKeyConstraint baseColumnNames="last_result_id" baseTableName="participant_score"
+                                 constraintName="fk_participant_score_last_result_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result"/>
+        <addForeignKeyConstraint baseColumnNames="last_rated_result_id" baseTableName="participant_score"
+                                 constraintName="fk_participant_score_last_rated_result_id" deferrable="false"
+                                 initiallyDeferred="false" referencedColumnNames="id" referencedTableName="result"/>
+        <addForeignKeyConstraint baseColumnNames="user_id" baseTableName="participant_score"
+                                 constraintName="fk_participant_score_user_id" deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedColumnNames="id" referencedTableName="jhi_user"/>
+        <addForeignKeyConstraint baseColumnNames="team_id" baseTableName="participant_score"
+                                 constraintName="fk_participant_score_team_id" deferrable="false"
+                                 initiallyDeferred="false"
+                                 referencedColumnNames="id" referencedTableName="team"/>
     </changeSet>
 </databaseChangeLog>
