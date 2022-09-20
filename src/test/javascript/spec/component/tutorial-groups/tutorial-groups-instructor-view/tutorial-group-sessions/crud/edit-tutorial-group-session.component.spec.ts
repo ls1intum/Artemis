@@ -15,7 +15,6 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services
 import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import dayjs from 'dayjs/esm';
-import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 describe('EditTutorialGroupSessionComponent', () => {
@@ -26,7 +25,6 @@ describe('EditTutorialGroupSessionComponent', () => {
     let exampleSession: TutorialGroupSession;
 
     const router = new MockRouter();
-    router.setUrl('');
 
     beforeEach(() => {
         TestBed.configureTestingModule({
