@@ -1,11 +1,15 @@
 import { Injectable } from '@angular/core';
 import { GradingScale } from 'app/entities/grading-scale.model';
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { GradeDTO, GradeStep, GradeStepsDTO } from 'app/entities/grade-step.model';
 import { map } from 'rxjs/operators';
+import { PageableSearch, SearchResult } from 'app/shared/table/pageable-table';
+import { captureException } from '@sentry/angular';
+import { Course } from 'app/entities/course.model';
 
 export type EntityResponseType = HttpResponse<GradingScale>;
+export type EntityArrayResponseType = HttpResponse<GradingScale[]>;
 
 @Injectable({ providedIn: 'root' })
 export class GradingSystemService {
@@ -135,6 +139,26 @@ export class GradingSystemService {
     }
 
     /**
+     * Finds grading scales eligible to be used as a bonus source. Grading Scales should have BONUS Grade Type and should belong to a
+     * course or exam where the current user is an instructor to be eligible. Supports search, sort and pagination.
+     *
+     * @param pageable search, sort and pagination parameters
+     */
+    findWithBonusGradeTypeForInstructor(pageable: PageableSearch): Observable<HttpResponse<SearchResult<GradingScale>>> {
+        const params = new HttpParams()
+            .set('pageSize', String(pageable.pageSize))
+            .set('page', String(pageable.page))
+            .set('sortingOrder', pageable.sortingOrder)
+            .set('searchTerm', pageable.searchTerm)
+            .set('sortedColumn', pageable.sortedColumn);
+
+        return this.http.get<SearchResult<GradingScale>>(`${SERVER_API_URL}api/grading-scales`, {
+            params,
+            observe: 'response',
+        });
+    }
+
+    /**
      * Finds a grade step for course that matches the given percentage
      *
      * @param courseId the course to which the exam belongs
@@ -231,6 +255,19 @@ export class GradingSystemService {
     }
 
     /**
+     * Finds a matching grade step among the given grade steps by calculating percentage
+     * from the given points and max points.
+     * @see findMatchingGradeStep
+     * @param gradeSteps
+     * @param points
+     * @param maxPoints
+     */
+    findMatchingGradeStepByPoints(gradeSteps: GradeStep[], points: number, maxPoints: number) {
+        const percentage = (points / maxPoints) * 100;
+        return this.findMatchingGradeStep(gradeSteps, percentage);
+    }
+
+    /**
      * Returns the max grade from a given grade step set
      *
      * @param gradeSteps the grade step set
@@ -253,5 +290,66 @@ export class GradingSystemService {
             gradeStep.lowerBoundPoints = (maxPoints * gradeStep.lowerBoundPercentage) / 100;
             gradeStep.upperBoundPoints = (maxPoints * gradeStep.upperBoundPercentage) / 100;
         }
+    }
+
+    /**
+     * Determines whether all grade steps have their lower and upper bounds set in absolute points
+     */
+    hasPointsSet(gradeSteps: GradeStep[]): boolean {
+        for (const gradeStep of gradeSteps) {
+            if (gradeStep.lowerBoundPoints == undefined || gradeStep.upperBoundPoints == undefined || gradeStep.upperBoundPoints === 0) {
+                return false;
+            }
+        }
+        return gradeSteps.length !== 0;
+    }
+
+    /**
+     * Gets the course of the given grading scale either via the exam or directly.
+     *
+     * @param gradingScale a grading scale belonging to a course or an exam
+     */
+    getGradingScaleCourse(gradingScale?: GradingScale): Course {
+        return (gradingScale?.exam?.course ?? gradingScale?.course)!;
+    }
+
+    /**
+     * Gets the title of the course or exam related to the given grading scale.
+     *
+     * @param gradingScale a grading scale belonging to a course or an exam
+     */
+    getGradingScaleTitle(gradingScale: GradingScale): string | undefined {
+        return gradingScale?.exam?.title ?? gradingScale?.course?.title;
+    }
+
+    /**
+     * Gets the max points of the given grading scale from the related course or exam.
+     *
+     * @param gradingScale a grading scale belonging to a course or an exam
+     */
+    getGradingScaleMaxPoints(gradingScale?: GradingScale): number {
+        return (gradingScale?.exam?.maxPoints ?? gradingScale?.course?.maxPoints) || 0;
+    }
+
+    /**
+     * Parses the {@link gradeName} as a number in order to use it in grade and bonus calculations.
+     * Accepts both "," and "." as decimal separators.
+     *
+     * Returns undefined on error.
+     *
+     * @param gradeName grade name of a grade step
+     * @return number value corresponding to the {@link gradeName} or undefined if it is not parseable.
+     */
+    getNumericValueForGradeName(gradeName: string | undefined): number | undefined {
+        if (gradeName == undefined) {
+            return undefined;
+        }
+        gradeName = gradeName.replace(',', '.');
+        const numericValue = parseFloat(gradeName);
+        if (isNaN(numericValue)) {
+            captureException(new Error(`Grade name: ${gradeName} cannot be parsed as float`));
+            return undefined;
+        }
+        return numericValue;
     }
 }
