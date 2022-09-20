@@ -15,10 +15,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.domain.Attachment;
-import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.Lecture;
-import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.rest.dto.PageableSearchDTO;
@@ -49,8 +46,8 @@ class LectureServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         editor = users.get(1);
 
         List<Course> courses = database.createCoursesWithExercisesAndLecturesAndLectureUnits(false, false);
-        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.get(0).getId());
-        // always use the lecture with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
+        // always use the lecture and course with the smallest ID, otherwise tests below related to search might fail (in a flaky way)
+        course = courseRepository.findByIdWithLecturesAndLectureUnitsElseThrow(courses.stream().min(Comparator.comparingLong(DomainObject::getId)).get().getId());
         lecture = course.getLectures().stream().min(Comparator.comparing(Lecture::getId)).get();
 
         // Add a custom attachment for filtering tests

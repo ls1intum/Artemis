@@ -2,6 +2,7 @@ package de.tum.in.www1.artemis.programmingexercise;
 
 import static de.tum.in.www1.artemis.config.Constants.NEW_RESULT_RESOURCE_PATH;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -332,7 +333,7 @@ public class ProgrammingExerciseResultTestService {
     }
 
     // Test
-    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException, InterruptedException {
+    public void shouldGenerateTestwiseCoverageFileReports(Object resultNotification) throws GitAPIException {
         // set testwise coverage analysis for programming exercise
         programmingExercise.setTestwiseCoverageEnabled(true);
         programmingExerciseRepository.save(programmingExercise);
@@ -357,6 +358,24 @@ public class ProgrammingExerciseResultTestService {
         // the coverage result attribute is transient in the result and should not be saved to the database
         var resultFromDatabase = resultRepository.findByIdElseThrow(result.getId());
         assertThat(resultFromDatabase.getCoverageFileReportsByTestCaseName()).isNull();
+    }
+
+    // Test
+    public void shouldIgnoreResultIfNotOnDefaultBranch(Object resultNotification) {
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+
+        assertThatThrownBy(() -> gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification)).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    // Test
+    public void shouldCreateResultOnCustomDefaultBranch(String defaultBranch, Object resultNotification) {
+        programmingExercise.setBranch(defaultBranch);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+        solutionParticipation.setProgrammingExercise(programmingExercise);
+        programmingExerciseStudentParticipation.setProgrammingExercise(programmingExercise);
+
+        final var result = gradingService.processNewProgrammingExerciseResult(solutionParticipation, resultNotification);
+        assertThat(result).isPresent();
     }
 
     private int getNumberOfBuildLogs(Object resultNotification) {
