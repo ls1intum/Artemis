@@ -30,7 +30,6 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
-        private tutorialGroupFreePeriodService: TutorialGroupFreePeriodService,
         private tutorialGroupsConfigurationService: TutorialGroupsConfigurationService,
         private alertService: AlertService,
         private sortService: SortService,
@@ -57,7 +56,7 @@ export class TutorialGroupFreePeriodsManagementComponent implements OnInit {
                     if (tutorialGroupsConfigurationResult.body) {
                         this.tutorialGroupsConfiguration = tutorialGroupsConfigurationResult.body;
                         if (this.tutorialGroupsConfiguration.tutorialGroupFreePeriods) {
-                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'date', true);
+                            this.tutorialGroupFreePeriods = this.sortService.sortByProperty(this.tutorialGroupsConfiguration.tutorialGroupFreePeriods, 'start', true);
                         }
                     }
                 },
