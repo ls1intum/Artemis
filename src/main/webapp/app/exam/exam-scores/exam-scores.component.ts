@@ -189,7 +189,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.gradingScaleExists = true;
                         this.gradingScale = gradingScaleResponse.body!;
                         this.isBonus = this.gradingScale!.gradeType === GradeType.BONUS;
-                        this.hasBonus = !!this.studentResults?.[0]?.gradeWithBonus; // TODO: Ata Maybe use .some()
+                        this.hasBonus = !!this.studentResults?.some((studentResult) => studentResult?.gradeWithBonus);
                         this.gradingScale!.gradeSteps = this.gradingSystemService.sortGradeSteps(this.gradingScale!.gradeSteps);
                         this.hasNumericGrades = !this.gradingScale!.gradeSteps.some((step) => isNaN(Number(step.gradeName)));
                     }
