@@ -1,11 +1,10 @@
 // tslint:disable:max-line-length
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { AlertService } from 'app/core/util/alert.service';
 import { Router } from '@angular/router';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { of } from 'rxjs';
-import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
@@ -13,18 +12,20 @@ import { HttpResponse } from '@angular/common/http';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { By } from '@angular/platform-browser';
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
-import { User } from 'app/core/user/user.model';
-import { Language } from 'app/entities/course.model';
 import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-form-stub.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
+import { generateExampleTutorialGroup, tutorialGroupToTutorialGroupFormData } from './tutorialGroupExampleModels';
 
 describe('CreateTutorialGroupComponent', () => {
-    let createTutorialGroupComponentFixture: ComponentFixture<CreateTutorialGroupComponent>;
-    let createTutorialGroupComponent: CreateTutorialGroupComponent;
+    let fixture: ComponentFixture<CreateTutorialGroupComponent>;
+    let component: CreateTutorialGroupComponent;
     const course = { id: 1, title: 'Example', isAtLeastInstructor: true };
     let findCourseSpy: jest.SpyInstance;
     let courseService: CourseManagementService;
+    let tutorialGroupService: TutorialGroupsService;
+
+    const router = new MockRouter();
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -34,16 +35,17 @@ describe('CreateTutorialGroupComponent', () => {
                 MockProvider(TutorialGroupsService),
                 MockProvider(AlertService),
                 MockProvider(CourseManagementService),
-                { provide: Router, useClass: MockRouter },
+                { provide: Router, useValue: router },
                 simpleTwoLayerActivatedRouteProvider(new Map(), new Map([['courseId', course.id]])),
             ],
         })
             .compileComponents()
             .then(() => {
-                createTutorialGroupComponentFixture = TestBed.createComponent(CreateTutorialGroupComponent);
-                createTutorialGroupComponent = createTutorialGroupComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(CreateTutorialGroupComponent);
+                component = fixture.componentInstance;
                 courseService = TestBed.inject(CourseManagementService);
                 findCourseSpy = jest.spyOn(courseService, 'find').mockReturnValue(of(new HttpResponse({ body: course })));
+                tutorialGroupService = TestBed.inject(TutorialGroupsService);
             });
     });
 
@@ -52,57 +54,35 @@ describe('CreateTutorialGroupComponent', () => {
     });
 
     it('should initialize', () => {
-        createTutorialGroupComponentFixture.detectChanges();
-        expect(createTutorialGroupComponent).not.toBeNull();
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
         expect(findCourseSpy).toHaveBeenCalledOnce();
         expect(findCourseSpy).toHaveBeenCalledWith(1);
     });
 
-    it('should send POST request upon form submission and navigate', fakeAsync(() => {
-        const router: Router = TestBed.inject(Router);
-        const tutorialGroupService = TestBed.inject(TutorialGroupsService);
-        const exampleTeachingAssistant = new User();
-        exampleTeachingAssistant.login = 'testLogin';
+    it('should send POST request upon form submission and navigate', () => {
+        fixture.detectChanges();
+        const exampleTutorialGroup = generateExampleTutorialGroup();
+        delete exampleTutorialGroup.id;
+        delete exampleTutorialGroup.tutorialGroupSchedule!.id;
 
-        const formData: TutorialGroupFormData = {
-            title: 'Test',
-            teachingAssistant: exampleTeachingAssistant,
-            language: Language.GERMAN,
-            additionalInformation: 'Test Info',
-            capacity: 1,
-            isOnline: true,
-            campus: 'Garching',
-        };
-
-        const response: HttpResponse<TutorialGroup> = new HttpResponse({
-            body: new TutorialGroup(),
+        const createResponse: HttpResponse<TutorialGroup> = new HttpResponse({
+            body: exampleTutorialGroup,
             status: 201,
         });
 
-        const createStub = jest.spyOn(tutorialGroupService, 'create').mockReturnValue(of(response));
+        const createStub = jest.spyOn(tutorialGroupService, 'create').mockReturnValue(of(createResponse));
         const navigateSpy = jest.spyOn(router, 'navigate');
 
-        createTutorialGroupComponentFixture.detectChanges();
-        tick();
-        const tutorialGroupForm: TutorialGroupFormStubComponent = createTutorialGroupComponentFixture.debugElement.query(
-            By.directive(TutorialGroupFormStubComponent),
-        ).componentInstance;
+        const tutorialGroupForm: TutorialGroupFormStubComponent = fixture.debugElement.query(By.directive(TutorialGroupFormStubComponent)).componentInstance;
+
+        const formData = tutorialGroupToTutorialGroupFormData(exampleTutorialGroup);
+
         tutorialGroupForm.formSubmitted.emit(formData);
 
-        createTutorialGroupComponentFixture.whenStable().then(() => {
-            const tutorialGroupCallArgument: TutorialGroup = createStub.mock.calls[0][0];
-
-            expect(tutorialGroupCallArgument.title).toEqual(formData.title);
-            expect(tutorialGroupCallArgument.teachingAssistant).toEqual(formData.teachingAssistant);
-            expect(tutorialGroupCallArgument.language).toEqual(formData.language);
-            expect(tutorialGroupCallArgument.additionalInformation).toEqual(formData.additionalInformation);
-            expect(tutorialGroupCallArgument.capacity).toEqual(formData.capacity);
-            expect(tutorialGroupCallArgument.isOnline).toEqual(formData.isOnline);
-            expect(tutorialGroupCallArgument.campus).toEqual(formData.campus);
-
-            expect(createStub).toHaveBeenCalledOnce();
-            expect(navigateSpy).toHaveBeenCalledOnce();
-            navigateSpy.mockRestore();
-        });
-    }));
+        expect(createStub).toHaveBeenCalledOnce();
+        expect(createStub).toHaveBeenCalledWith(exampleTutorialGroup, course.id);
+        expect(navigateSpy).toHaveBeenCalledOnce();
+        expect(navigateSpy).toHaveBeenCalledWith(['course-management', course.id, 'tutorial-groups-management']);
+    });
 });
