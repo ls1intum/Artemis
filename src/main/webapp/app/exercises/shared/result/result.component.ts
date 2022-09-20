@@ -26,6 +26,7 @@ import { isModelingOrTextOrFileUpload, isParticipationInDueTime, isProgrammingOr
 import { ResultService } from 'app/exercises/shared/result/result.service';
 import { Feedback } from 'app/entities/feedback.model';
 import { ExerciseService } from 'app/exercises/shared/exercise/exercise.service';
+import { StudentParticipation } from 'app/entities/participation/student-participation.model';
 
 /**
  * Enumeration object representing the possible options that
@@ -103,7 +104,7 @@ export class ResultComponent implements OnInit, OnChanges {
     @Input() short = false;
     @Input() result?: Result;
     @Input() showUngradedResults: boolean;
-    @Input() showGradedBadge = false;
+    @Input() showBadge = false;
     @Input() showTestDetails = false;
     @Input() missingResultInfo = MissingResultInfo.NONE;
     @Input() exercise?: Exercise;
@@ -115,6 +116,8 @@ export class ResultComponent implements OnInit, OnChanges {
     templateStatus: ResultTemplateStatus;
     submission?: Submission;
     onlyShowSuccessfulCompileStatus: boolean;
+    badgeClass: string;
+    badgeText: string;
 
     resultTooltip: string;
 
@@ -191,6 +194,10 @@ export class ResultComponent implements OnInit, OnChanges {
                 this.resultString = this.resultService.getResultString(this.result, this.exercise);
             }
         });
+
+        if (this.showBadge) {
+            this.evaluateBadge();
+        }
     }
 
     /**
@@ -325,6 +332,19 @@ export class ResultComponent implements OnInit, OnChanges {
             }
             return this.translate.instant('artemisApp.result.preliminaryTooltip');
         }
+    }
+
+    evaluateBadge() {
+        if (this.participation instanceof StudentParticipation) {
+            const studentParticipation = this.participation as StudentParticipation;
+            if (studentParticipation.testRun) {
+                this.badgeClass = 'bg-secondary';
+                this.badgeText = 'artemisApp.result.practice';
+                return;
+            }
+        }
+        this.badgeClass = this.result?.rated ? 'bg-success' : 'bg-info';
+        this.badgeText = this.result?.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded';
     }
 
     /**

@@ -58,6 +58,7 @@
             "positive": "Positiv",
             "graded": "Bewertet",
             "notGraded": "Nicht bewertet",
+            "practice": "Übung",
             "preliminary": "vorläufig",
             "preliminaryTooltip": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden.",
             "preliminaryTooltipSemiAutomatic": "Dein Ergebnis ist noch nicht endgültig, weil weitere Tests nach der Einreichungsfrist ausgeführt werden oder eine manuelle Bewertung aussteht.",

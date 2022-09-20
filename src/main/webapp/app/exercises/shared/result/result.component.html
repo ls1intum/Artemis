@@ -32,8 +32,8 @@
                     <span jhiTranslate="artemisApp.editor.downloadBuildResult">Download Build Result</span>
                 </a>
             </span>
-            <span *ngIf="showGradedBadge" class="badge" [ngClass]="{ 'bg-info': !result.rated, 'bg-success': result.rated }" id="result-score-graded">
-                {{ (result.rated ? 'artemisApp.result.graded' : 'artemisApp.result.notGraded') | artemisTranslate | uppercase }}
+            <span *ngIf="showBadge" class="badge" [ngClass]="badgeClass" id="result-score-graded">
+                {{ badgeText | artemisTranslate | uppercase }}
             </span>
         </ng-container>
     </ng-container>

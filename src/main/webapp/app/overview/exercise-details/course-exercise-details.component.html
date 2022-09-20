@@ -7,6 +7,7 @@
     <!-- EXERCISE ACTIONS START -->
     <div class="tab-bar tab-bar-exercise-details ps-2 pe-2 mb-2 justify-content-between">
         <jhi-exercise-details-student-actions
+            class="col"
             *jhiExtensionPoint="overrideStudentActions; context: { courseId: courseId, exercise: exercise, showResult: showResults && latestRatedResult != undefined }"
             [courseId]="courseId"
             [exercise]="exercise"
@@ -15,7 +16,7 @@
         </jhi-exercise-details-student-actions>
         <a
             *ngIf="plagiarismCaseInfo && plagiarismCaseInfo.verdict !== PlagiarismVerdict.NO_PLAGIARISM"
-            class="btn btn-danger btn-sm me-2"
+            class="col-auto btn btn-danger btn-sm me-2"
             [routerLink]="['/courses', courseId, 'plagiarism-cases', plagiarismCaseInfo.id]"
         >
             <span jhiTranslate="artemisApp.plagiarism.plagiarismCases.plagiarismCase">Plagiarism Case</span>
@@ -25,16 +26,17 @@
                 [exercise]="exercise"
                 [studentParticipation]="ratedStudentParticipation"
                 updatingResultClass="me-2"
-                [showGradedBadge]="true"
+                [showBadge]="true"
                 [showUngradedResults]="false"
                 [triggerLastGraded]="false"
+                *ngIf="ratedStudentParticipation"
             >
             </jhi-submission-result-status>
             <jhi-submission-result-status
                 [exercise]="exercise"
                 [studentParticipation]="unratedStudentParticipation"
                 updatingResultClass="me-2"
-                [showGradedBadge]="false"
+                [showBadge]="true"
                 [showUngradedResults]="true"
                 [triggerLastGraded]="false"
                 *ngIf="unratedStudentParticipation"

@@ -58,6 +58,7 @@
             "positive": "Positive",
             "graded": "Graded",
             "notGraded": "Not graded",
+            "practice": "Practice",
             "preliminary": "preliminary",
             "preliminaryTooltip": "Your result is not final yet, because more tests will be executed after the due date",
             "preliminaryTooltipSemiAutomatic": "Your result is not final yet, because more tests will be executed after the due date or a manual assessment will be done.",
