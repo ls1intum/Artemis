@@ -12,7 +12,7 @@ export class Result implements BaseEntity {
     public successful?: boolean;
     public hasFeedback?: boolean;
 
-    /*
+    /**
      * Current score in percent i.e. between 1 - 100
      * - Can be larger than 100 if bonus points are available
      */
