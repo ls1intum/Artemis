@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -48,8 +49,8 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @BeforeEach
     void init() {
         database.addUsers(2, 2, 0, 2);
-        database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = programmingExerciseRepository.findAll().get(0).getId();
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        programmingExerciseId = course.getExercises().stream().findAny().orElseThrow().getId();
     }
 
     @AfterEach
@@ -159,20 +160,20 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     void deleteCodeHint() {
         addCodeHintToProgrammingExercise();
-        var codeHint = codeHintRepository.findAll().get(0);
+        var codeHint = codeHintRepository.findByExerciseId(programmingExerciseId).stream().findAny().orElseThrow();
         codeHintRepository.delete(codeHint);
         assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).hasSize(1);
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(6);
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);
     }
 
     @Test
     void deleteProgrammingExerciseWithCodeHint() {
         addCodeHintToProgrammingExercise();
         programmingExerciseRepository.deleteById(programmingExerciseId);
-        assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).isEmpty();
-        assertThat(codeHintRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseTestCaseRepository.findAll()).isEmpty();
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).isEmpty();
+        assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).isEmpty();
     }
 
     @Test
@@ -180,8 +181,8 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         addCodeHintToProgrammingExercise();
         var task = programmingExerciseTaskRepository.findAll().get(0);
         programmingExerciseTaskRepository.delete(task);
-        assertThat(codeHintRepository.findAll()).isEmpty();
-        assertThat(programmingExerciseTestCaseRepository.findAll()).hasSize(3);
-        assertThat(programmingExerciseSolutionEntryRepository.findAll()).hasSize(6);
+        assertThat(codeHintRepository.findByExerciseId(programmingExerciseId)).isEmpty();
+        assertThat(programmingExerciseTestCaseRepository.findByExerciseId(programmingExerciseId)).hasSize(3);
+        assertThat(programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExerciseId)).hasSize(6);
     }
 }
