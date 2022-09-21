@@ -14,10 +14,12 @@ import javax.servlet.ServletContext;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Repository;
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.server.MimeMappings;
 import org.springframework.boot.web.server.WebServerFactory;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
@@ -49,6 +51,9 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     private final Environment env;
 
     private final JHipsterProperties jHipsterProperties;
+
+    @Value("${artemis.local-git-server-path}")
+    private String localGitPath;
 
     public WebConfigurer(Environment env, JHipsterProperties jHipsterProperties) {
         this.env = env;
@@ -88,12 +93,27 @@ public class WebConfigurer implements ServletContextInitializer, WebServerFactor
     public ServletRegistrationBean<GitServlet> jgitServlet(ApplicationContext applicationContext) {
 
         try {
-            Repository repository = createNewRepository();
-            populateRepository(repository);
+//            Repository repository = createNewRepository();
+//            populateRepository(repository);
             GitServlet gs = new GitServlet();
             gs.setRepositoryResolver((req, name) -> {
-                repository.incrementOpen();
-                return repository;
+                // req – the current request, may be used to inspect session state including cookies or user authentication.
+                // name – name of the repository, as parsed out of the URL.
+                // Returns the opened repository instance, never null.
+
+                // Find the local repository depending on the name and return an opened instance. Must be closed later on.
+                String projectKey = name.split("-")[0].toUpperCase();
+                File gitDir = new File(localGitPath + "/" + projectKey + "/" + name + ".git");
+
+                Repository repository = null;
+
+                try {
+                    repository = FileRepositoryBuilder.create(gitDir);
+                    return repository;
+                } catch (IOException ex) {
+                    log.error("Could not find local repository with name {}", name);
+                    throw new RepositoryNotFoundException(name);
+                }
             });
 
             return new ServletRegistrationBean<>(gs, "/git/*");
