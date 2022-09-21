@@ -81,7 +81,7 @@ public class PlagiarismCase extends AbstractAuditingEntity {
      * otherwise get all students in {@link #team} in a set.
      * <p>
      * Note that the returned set only contains student(s) from the one side in the relevant plagiarism situation,
-     * you need to check other related @link {@link PlagiarismCase} instances to get all students involved.
+     * you need to check other related {@link PlagiarismCase} instances to get all students involved.
      *
      * @return a set of users
      */
