@@ -17,6 +17,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.enumeration.SubmissionType;
 import de.tum.in.www1.artemis.domain.participation.Participation;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
+import de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry;
 
 /**
  * A ProgrammingSubmission.
@@ -41,6 +42,11 @@ public class ProgrammingSubmission extends Submission {
     @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private List<BuildLogEntry> buildLogEntries = new ArrayList<>();
+
+    @OneToOne(mappedBy = "programmingSubmission", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnoreProperties(value = "programmingSubmission", allowSetters = true)
+    @JoinColumn(unique = true)
+    private BuildLogStatisticsEntry buildLogStatisticsEntry;
 
     /**
      * There can be two reasons for the case that there is no programmingSubmission:
@@ -102,6 +108,14 @@ public class ProgrammingSubmission extends Submission {
 
     public void setBuildLogEntries(List<BuildLogEntry> buildLogEntries) {
         this.buildLogEntries = buildLogEntries;
+    }
+
+    public BuildLogStatisticsEntry getBuildLogStatisticsEntry() {
+        return buildLogStatisticsEntry;
+    }
+
+    public void setBuildLogStatisticsEntry(BuildLogStatisticsEntry buildLogStatisticsEntry) {
+        this.buildLogStatisticsEntry = buildLogStatisticsEntry;
     }
 
     public boolean belongsToTestRepository() {
