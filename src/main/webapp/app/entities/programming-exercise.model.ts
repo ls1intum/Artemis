@@ -86,7 +86,7 @@ export class ProgrammingExercise extends Exercise {
         this.programmingLanguage = ProgrammingLanguage.JAVA; // default value
         this.noVersionControlAndContinuousIntegrationAvailable = false; // default value
         this.checkoutSolutionRepository = false; // default value
-        this.projectType = ProjectType.PLAIN_MAVEN; // default value
+        this.projectType = ProjectType.PLAIN_GRADLE; // default value
         this.showTestNamesToStudents = false; // default value
         this.testwiseCoverageEnabled = false; // default value
     }
