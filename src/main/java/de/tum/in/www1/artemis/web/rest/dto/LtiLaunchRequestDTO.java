@@ -58,8 +58,6 @@ public class LtiLaunchRequestDTO {
 
     private String oauth_signature;
 
-    private String tool_consumer_instance_name;
-
     private Boolean custom_require_existing_user = false;
 
     private Boolean custom_lookup_user_by_email = false;
@@ -265,14 +263,6 @@ public class LtiLaunchRequestDTO {
 
     public void setOauth_signature(String oauth_signature) {
         this.oauth_signature = oauth_signature;
-    }
-
-    public String getTool_consumer_instance_name() {
-        return tool_consumer_instance_name;
-    }
-
-    public void setTool_consumer_instance_name(String tool_consumer_instance_name) {
-        this.tool_consumer_instance_name = tool_consumer_instance_name;
     }
 
     public String getContext_label() {

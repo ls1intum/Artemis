@@ -318,9 +318,10 @@ public class LtiService {
     }
 
     /**
-     * Checks if a LTI request is correctly signed via OAuth with the secret
+     * Checks if an LTI request is correctly signed via OAuth with the secret
      *
      * @param request The request to check
+     * @param onlineCourseConfiguration The configuration containing the secret used to verify the request
      * @return null if the request is valid, otherwise an error message which indicates the reason why the verification failed
      */
     public String verifyRequest(HttpServletRequest request, OnlineCourseConfiguration onlineCourseConfiguration) {

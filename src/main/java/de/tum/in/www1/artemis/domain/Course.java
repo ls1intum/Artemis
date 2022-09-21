@@ -103,7 +103,7 @@ public class Course extends DomainObject {
     @JsonView(QuizView.Before.class)
     private Boolean onlineCourse = false;
 
-    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OneToOne(mappedBy = "course", cascade = CascadeType.ALL, orphanRemoval = true)
     private OnlineCourseConfiguration onlineCourseConfiguration;
 
     @Column(name = "max_complaints")
@@ -670,6 +670,9 @@ public class Course extends DomainObject {
         this.accuracyOfScores = accuracyOfScores;
     }
 
+    /**
+     * Validates that only one of onlineCourse and registrationEnabled is selected
+     */
     public void validateOnlineCourseAndRegistrationEnabled() {
         if (isOnlineCourse() && isRegistrationEnabled()) {
             throw new BadRequestAlertException("Online course and registration enabled cannot be active at the same time", ENTITY_NAME, "onlineCourseRegistrationEnabledInvalid",
@@ -677,6 +680,9 @@ public class Course extends DomainObject {
         }
     }
 
+    /**
+     * Validates that if the course is an online course there is an OnlineCourseConfiguration
+     */
     public void validateOnlineCourseConfiguration() {
         if (isOnlineCourse()) {
             if (getOnlineCourseConfiguration() == null) {
