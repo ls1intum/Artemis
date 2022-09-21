@@ -131,7 +131,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deleteAttachment_noAttachment() throws Exception {
-        request.delete("/api/attachments/1", HttpStatus.NOT_FOUND);
+        request.delete("/api/attachments/-1", HttpStatus.NOT_FOUND);
     }
 
     @Test
