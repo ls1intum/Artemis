@@ -12,11 +12,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.Visibility;
 import de.tum.in.www1.artemis.domain.hestia.*;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
@@ -40,9 +40,6 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     private ProgrammingExerciseTestCaseRepository testCaseRepository;
 
     @Autowired
-    private ProgrammingExerciseRepository programmingExerciseRepository;
-
-    @Autowired
     private ProgrammingExerciseSolutionEntryRepository solutionEntryRepository;
 
     private ProgrammingExercise exercise;
@@ -50,8 +47,8 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
-        database.addCourseWithOneProgrammingExercise();
-        exercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
     }
 
     @AfterEach
@@ -144,8 +141,10 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(codeHints.get(0)).isNotEqualTo(codeHint);
         assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
         assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
-        assertThat(codeHintRepository.findAll()).hasSize(1);
-        assertThat(codeHintRepository.findAll().get(0)).isNotEqualTo(codeHint).isEqualTo(codeHints.get(0));
+
+        final Set<CodeHint> codeHintsAfterSaving = codeHintRepository.findByExerciseId(exercise.getId());
+        assertThat(codeHintsAfterSaving).hasSize(1);
+        assertThat(codeHintsAfterSaving.stream().findAny().orElseThrow()).isNotEqualTo(codeHint).isEqualTo(codeHints.get(0));
     }
 
     @Test
@@ -164,7 +163,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(codeHints.get(0)).isNotEqualTo(codeHint);
         assertThat(codeHints.get(0).getProgrammingExerciseTask()).isEqualTo(task);
         assertThat(codeHints.get(0).getSolutionEntries()).containsExactly(solutionEntry);
-        assertThat(codeHintRepository.findAll()).containsExactlyInAnyOrder(codeHint, codeHints.get(0));
+        assertThat(codeHintRepository.findByExerciseId(exercise.getId())).containsExactlyInAnyOrder(codeHint, codeHints.get(0));
     }
 
     @Test
@@ -180,9 +179,9 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         entryToUpdate.setTestCase(testCase2);
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findAll();
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
-        assertThat(allEntries.get(0).getTestCase().getId()).isEqualTo(testCase2.getId());
+        assertThat(allEntries.stream().findAny().orElseThrow().getTestCase().getId()).isEqualTo(testCase2.getId());
     }
 
     @Test
@@ -201,9 +200,9 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         entry.setFilePath("Updated file path");
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
-        var allEntries = solutionEntryRepository.findAll();
+        var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
         assertThat(allEntries).hasSize(1);
-        assertThat(allEntries.get(0)).isEqualTo(entryToUpdate);
+        assertThat(allEntries.stream().findAny().orElseThrow()).isEqualTo(entryToUpdate);
     }
 
     @Test
@@ -219,8 +218,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         codeHintService.updateSolutionEntriesForCodeHint(codeHint);
 
         var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
-        assertThat(allEntries).hasSize(1);
-        assertThat(allEntries).contains(manuallyCreatedEntry);
+        assertThat(allEntries).containsExactly(manuallyCreatedEntry);
     }
 
     @Test
@@ -239,8 +237,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         assertThat(entriesForHint).isEmpty();
 
         var allEntries = solutionEntryRepository.findByExerciseIdWithTestCases(exercise.getId());
-        assertThat(allEntries).hasSize(1);
-        assertThat(allEntries).contains(entryToRemove);
+        assertThat(allEntries).containsExactly(entryToRemove);
     }
 
     @Test

@@ -262,7 +262,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
 
         request.post("/api/programming-exercises/" + exercise.getId() + "/exercise-hints/", exerciseHint, HttpStatus.CREATED);
-        List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
+        Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseLite.getId());
         assertThat(exerciseHints).hasSize(4);
 
         exerciseHint.setExercise(null);
