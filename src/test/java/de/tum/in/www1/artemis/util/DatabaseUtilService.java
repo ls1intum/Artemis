@@ -2,8 +2,7 @@ package de.tum.in.www1.artemis.util;
 
 import static com.google.gson.JsonParser.parseString;
 import static de.tum.in.www1.artemis.util.ModelFactory.USER_PASSWORD;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
+import static org.assertj.core.api.Assertions.*;
 
 import java.io.FileReader;
 import java.io.IOException;
@@ -360,16 +359,24 @@ public class DatabaseUtilService {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
             var login = loginPrefix + i;
-            if (!userExistsWithLogin(login)) {
-                User user = ModelFactory.generateActivatedUser(login, commonPasswordHash);
-                if (groups != null) {
-                    user.setGroups(Set.of(groups));
-                    user.setAuthorities(authorities);
-                }
-                generatedUsers.add(user);
+            User user = userRepo.findOneByLogin(login).map(this::activateUser).orElseGet(() -> ModelFactory.generateActivatedUser(login, commonPasswordHash));
+            if (groups != null) {
+                user.setGroups(Set.of(groups));
+                user.setAuthorities(authorities);
             }
+            generatedUsers.add(user);
         }
         return generatedUsers;
+    }
+
+    private User activateUser(final User user) {
+        if (user.getActivated()) {
+            return user;
+        }
+        else {
+            user.setActivated(true);
+            return userRepo.save(user);
+        }
     }
 
     /**
