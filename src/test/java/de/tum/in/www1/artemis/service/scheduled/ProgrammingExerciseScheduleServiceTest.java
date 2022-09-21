@@ -218,8 +218,8 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExercise.setBuildAndTestStudentSubmissionsAfterDueDate(plusMillis(ZonedDateTime.now(), delayMS));
         programmingExerciseRepository.save(programmingExercise);
 
-        database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = programmingExerciseRepository.findAll().get(1);
+        var course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise2 = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findAny().orElseThrow();
         programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise2);
 

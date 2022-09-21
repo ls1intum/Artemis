@@ -10,8 +10,6 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.mail.internet.MimeMessage;
-
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -150,13 +148,12 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
 
         // explicitly change the user to prevent issues in the following server call due to userRepository.getUser() (@WithMockUser is not working here)
         database.changeUser("instructor1");
-
-        doNothing().when(javaMailSender).send(any(MimeMessage.class));
     }
 
     @AfterEach
     void resetDatabase() {
         database.resetDatabase();
+        notificationRepository.deleteAllInBatch();
     }
 
     /**
@@ -167,8 +164,8 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
      */
     private void verifyRepositoryCallWithCorrectNotification(int numberOfGroupsAndCalls, String expectedNotificationTitle) {
         List<Notification> capturedNotifications = notificationRepository.findAll();
-        Notification capturedNotification = capturedNotifications.get(0);
-        assertThat(capturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
+        Notification lastCapturedNotification = capturedNotifications.get(capturedNotifications.size() - 1);
+        assertThat(lastCapturedNotification.getTitle()).as("The title of the captured notification should be equal to the expected one").isEqualTo(expectedNotificationTitle);
         assertThat(capturedNotifications).as("The number of created notification should be the same as the number of notified groups/authorities").hasSize(numberOfGroupsAndCalls);
     }
 
@@ -394,7 +391,7 @@ class GroupNotificationServiceTest extends AbstractSpringIntegrationBambooBitbuc
         prepareNotificationSettingForTest(student, NOTIFICATION__EXERCISE_NOTIFICATION__EXERCISE_RELEASED);
         groupNotificationService.notifyAllGroupsAboutReleasedExercise(exercise);
         verifyRepositoryCallWithCorrectNotification(NUMBER_OF_ALL_GROUPS, EXERCISE_RELEASED_TITLE);
-        verifyEmail(1);
+        verify(javaMailSender, timeout(1500).atLeastOnce()).createMimeMessage();
     }
 
     /**
