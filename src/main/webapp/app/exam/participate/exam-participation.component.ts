@@ -1,6 +1,6 @@
 import { Component, HostListener, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { CourseScoreCalculationService } from 'app/overview/course-score-calculation.service';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { JhiWebsocketService } from 'app/core/websocket/websocket.service';
 import { ExamParticipationService } from 'app/exam/participate/exam-participation.service';
 import { StudentExam } from 'app/entities/student-exam.model';
@@ -129,6 +129,7 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
         private courseCalculationService: CourseScoreCalculationService,
         private websocketService: JhiWebsocketService,
         private route: ActivatedRoute,
+        private router: Router,
         private examParticipationService: ExamParticipationService,
         private modelingSubmissionService: ModelingSubmissionService,
         private programmingSubmissionService: ProgrammingSubmissionService,
@@ -414,6 +415,10 @@ export class ExamParticipationComponent implements OnInit, OnDestroy, ComponentC
                         message: 'artemisApp.studentExam.submitSuccessful',
                         timeout: 20000,
                     });
+                    if (this.testRunId) {
+                        // If this is a test run, forward the user directly to the exam summary
+                        this.router.navigate(['course-management', this.courseId, 'exams', this.examId, 'test-runs', this.testRunId, 'summary']);
+                    }
                 },
                 error: (error: Error) => {
                     // Explicitly check whether the error was caused by the submission not being in-time or already present, in this case, set hand in not possible
