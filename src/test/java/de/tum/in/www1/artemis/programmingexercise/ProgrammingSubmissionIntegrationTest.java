@@ -79,7 +79,7 @@ class ProgrammingSubmissionIntegrationTest extends AbstractSpringIntegrationBamb
     void init() {
         database.addUsers(10, 2, 1, 2);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        exercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findFirst().get();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
         database.addSolutionParticipationForProgrammingExercise(exercise);
         database.addTemplateParticipationForProgrammingExercise(exercise);

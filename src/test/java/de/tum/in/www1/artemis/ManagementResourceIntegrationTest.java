@@ -18,6 +18,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.domain.PersistentAuditEvent;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.repository.PersistenceAuditEventRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
@@ -71,7 +72,7 @@ class ManagementResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     void toggleFeatures() throws Exception {
         // This setup only needed in this test case
         var course = database.addCourseWithOneProgrammingExercise();
-        var programmingExercise1 = programmingExerciseRepository.findAll().get(0);
+        var programmingExercise1 = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var programmingExercise2 = ModelFactory.generateProgrammingExercise(ZonedDateTime.now(), ZonedDateTime.now().plusHours(2), course);
         var participation = database.addStudentParticipationForProgrammingExercise(programmingExercise1, "admin");
         database.addProgrammingSubmission(programmingExercise1, new ProgrammingSubmission(), "admin");

@@ -175,7 +175,7 @@ class ApollonDiagramResourceIntegrationTest extends AbstractSpringIntegrationBam
         apollonDiagram.setCourseId(course1.getId());
         ApollonDiagram savedDiagram = apollonDiagramRepository.save(apollonDiagram);
         request.delete("/api/course/" + course1.getId() + "/apollon-diagrams/" + savedDiagram.getId(), HttpStatus.OK);
-        assertThat(apollonDiagramRepository.findAll()).as("repository is empty").isEmpty();
+        assertThat(apollonDiagramRepository.findDiagramsByCourseId(course1.getId())).as("repository is empty").isEmpty();
     }
 
     @Test

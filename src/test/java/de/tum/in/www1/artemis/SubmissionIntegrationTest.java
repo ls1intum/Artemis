@@ -141,7 +141,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
+        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         TextSubmission submission = ModelFactory.generateTextSubmission("submissionText", Language.ENGLISH, true);
         submission = database.saveTextSubmission(textExercise, submission, "student1");
@@ -165,7 +165,7 @@ class SubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetSubmissionsOnPageWithSize_isNotAtLeastInstructorInExercise_forbidden() throws Exception {
         Course course = database.addCourseWithModelingAndTextExercise();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().orElse(null);
+        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         assertThat(textExercise).isNotNull();
         course.setInstructorGroupName("test");
         courseRepository.save(course);

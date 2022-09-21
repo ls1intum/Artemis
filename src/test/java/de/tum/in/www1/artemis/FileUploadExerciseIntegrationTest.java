@@ -254,7 +254,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getFileUploadExerciseFails_wrongId() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
+        database.addCourseWithThreeFileUploadExercise();
         request.get("/api/file-upload-exercises/" + 555555, HttpStatus.NOT_FOUND, FileUploadExercise.class);
     }
 
@@ -292,7 +292,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.OK);
         }
-        assertThat(exerciseRepo.findAll()).isEmpty();
+        assertThat(exerciseRepo.findByCourseIdWithCategories(course.getId())).isEmpty();
     }
 
     @Test
@@ -303,13 +303,13 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
 
-        assertThat(exerciseRepo.findAll()).hasSize(course.getExercises().size());
+        assertThat(exerciseRepo.findByCourseIdWithCategories(course.getId())).hasSize(course.getExercises().size());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deleteFileUploadExerciseFails_WithWrongId() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
+        database.addCourseWithThreeFileUploadExercise();
         request.delete("/api/file-upload-exercises/" + 5555555, HttpStatus.NOT_FOUND);
     }
 
@@ -322,16 +322,15 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         for (var exercise : course.getExercises()) {
             request.delete("/api/file-upload-exercises/" + exercise.getId(), HttpStatus.FORBIDDEN);
         }
-        assertThat(exerciseRepo.findAll()).hasSize(3);
+        assertThat(exerciseRepo.findByCourseIdWithCategories(course.getId())).hasSize(3);
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deleteExamFileUploadExercise() throws Exception {
         FileUploadExercise fileUploadExercise = database.addCourseExamExerciseGroupWithOneFileUploadExercise();
-
         request.delete("/api/file-upload-exercises/" + fileUploadExercise.getId(), HttpStatus.OK);
-        assertThat(exerciseRepo.findAll()).isEmpty();
+        assertThat(exerciseRepo.findByCourseIdWithCategories(fileUploadExercise.getCourseViaExerciseGroupOrCourseMember().getId())).isEmpty();
     }
 
     @Test
@@ -360,8 +359,7 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
         fileUploadExercise.setAssessmentDueDate(ZonedDateTime.now().plusDays(11));
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
-        FileUploadExercise receivedFileUploadExercise = request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise,
-                FileUploadExercise.class, HttpStatus.FORBIDDEN);
+        request.putWithResponseBody("/api/file-upload-exercises/" + fileUploadExercise.getId(), fileUploadExercise, FileUploadExercise.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
@@ -460,36 +458,29 @@ class FileUploadExerciseIntegrationTest extends AbstractSpringIntegrationBambooB
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourse_asInstructor() throws Exception {
-        database.addCourseWithThreeFileUploadExercise();
-        long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
-
-        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.OK, FileUploadExercise.class);
+        var course = database.addCourseWithThreeFileUploadExercise();
+        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.OK,
+                FileUploadExercise.class);
 
         // this seems to be a flaky test, based on the execution order, the following line has a problem with authentication, this should fix it
         database.changeUser("instructor1");
-        assertThat(receivedFileUploadExercises).hasSize(courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getExercises().size());
+        assertThat(receivedFileUploadExercises).hasSize(course.getExercises().size());
     }
 
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void getAllFileUploadExercisesForCourseFails_InstructorNotInGroup() throws Exception {
-        Course course = database.addCourseWithThreeFileUploadExercise();
+        var course = database.addCourseWithThreeFileUploadExercise();
         course.setInstructorGroupName("new-instructor-group-name");
         courseRepo.save(course);
-        long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
-        request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
+        request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void getAllFileUploadExercisesForCourse_asStudent() throws Exception {
-        database.addCourseWithThreeFileUploadExercise();
-        long courseID = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now()).get(0).getId();
-
-        List<FileUploadExercise> receivedFileUploadExercises = request.getList("/api/courses/" + courseID + "/file-upload-exercises", HttpStatus.FORBIDDEN,
-                FileUploadExercise.class);
-
-        assertThat(receivedFileUploadExercises).isNull();
+        var course = database.addCourseWithThreeFileUploadExercise();
+        request.getList("/api/courses/" + course.getId() + "/file-upload-exercises", HttpStatus.FORBIDDEN, FileUploadExercise.class);
     }
 
     @Test

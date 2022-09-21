@@ -71,7 +71,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
 
         database.addUsers(3, 2, 0, 2);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
@@ -219,7 +219,7 @@ class ProgrammingExerciseScheduleServiceTest extends AbstractSpringIntegrationBa
         programmingExerciseRepository.save(programmingExercise);
 
         var course = database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise2 = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findAny().orElseThrow();
+        ProgrammingExercise programmingExercise2 = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise2.setBuildAndTestStudentSubmissionsAfterDueDate(ZonedDateTime.now().minusHours(1));
         programmingExerciseRepository.save(programmingExercise2);
 

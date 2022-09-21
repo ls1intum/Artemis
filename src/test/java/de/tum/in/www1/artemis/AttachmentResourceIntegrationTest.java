@@ -21,9 +21,6 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
     private CourseRepository courseRepo;
 
     @Autowired
-    private ExerciseRepository exerciseRepository;
-
-    @Autowired
     private AttachmentRepository attachmentRepository;
 
     @Autowired
@@ -43,7 +40,7 @@ class AttachmentResourceIntegrationTest extends AbstractSpringIntegrationBambooB
         attachment.setLink("files/temp/example.txt");
 
         var course = database.addCourseWithOneReleasedTextExercise();
-        textExercise = (TextExercise) exerciseRepository.findAll().get(0);
+        textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         lecture = new Lecture();
         lecture.setTitle("test");
         lecture.setDescription("test");

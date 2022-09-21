@@ -52,7 +52,7 @@ class ResultServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest
     void reset() {
         database.addUsers(2, 1, 1, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
-        this.programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
+        this.programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // This is done to avoid proxy issues in the processNewResult method of the ResultService.
         this.programmingExerciseStudentParticipation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, "student1");
 

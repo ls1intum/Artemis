@@ -746,7 +746,7 @@ public class CourseTestService {
     // Tests that average rating and number of ratings are computed correctly in '/for-assessment-dashboard'
     public void testGetCourseForAssessmentDashboard_averageRatingComputedCorrectly() throws Exception {
         var testCourse = database.createCoursesWithExercisesAndLectures(true).get(0);
-        var exercise = (TextExercise) testCourse.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
+        var exercise = database.getFirstExerciseWithType(testCourse, TextExercise.class);
 
         int[] ratings = { 3, 4, 5 };
         for (int i = 0; i < ratings.length; i++) {
@@ -756,7 +756,7 @@ public class CourseTestService {
         }
 
         var responseCourse = request.get("/api/courses/" + testCourse.getId() + "/for-assessment-dashboard", HttpStatus.OK, Course.class);
-        var responseExercise = responseCourse.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
+        var responseExercise = database.getFirstExerciseWithType(responseCourse, TextExercise.class);
 
         // Ensure that average rating and number of ratings is computed correctly
         var averageRating = Arrays.stream(ratings).mapToDouble(Double::valueOf).sum() / ratings.length;
@@ -1573,11 +1573,9 @@ public class CourseTestService {
         var quizDetailsOptional = exerciseDetails.stream().filter(e -> e instanceof QuizExercise).findFirst();
         assertThat(quizDetailsOptional).isPresent();
 
-        var quizExerciseOptional = instructorsCourse.getExercises().stream().filter(e -> e instanceof QuizExercise).findFirst();
-        assertThat(quizExerciseOptional).isPresent();
+        var quizExercise = database.getFirstExerciseWithType(course, QuizExercise.class);
 
         var quizDetails = quizDetailsOptional.get();
-        var quizExercise = quizExerciseOptional.get();
         assertThat(quizDetails.getCategories()).hasSize(quizExercise.getCategories().size());
 
         var detailsCategories = quizDetails.getCategories().stream().findFirst();

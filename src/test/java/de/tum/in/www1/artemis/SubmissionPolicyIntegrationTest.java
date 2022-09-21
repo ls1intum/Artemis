@@ -48,11 +48,11 @@ class SubmissionPolicyIntegrationTest extends AbstractSpringIntegrationBambooBit
     @BeforeEach
     void init() {
         database.addUsers(2, 1, 1, 1);
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addInstructor("other-instructor-group", "other-instructor");
         database.addEditor("other-editor-group", "other-editor");
         database.addStudent("other-student-group", "other-student");
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExerciseId = programmingExercise.getId();
     }
 

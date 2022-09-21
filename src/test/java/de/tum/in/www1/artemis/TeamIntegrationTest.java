@@ -474,10 +474,9 @@ class TeamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<Course> courses = database.createCoursesWithExercisesAndLectures(false);
         Course course = courses.get(0);
 
-        ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny()
-                .orElseThrow();
-        TextExercise textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findAny().orElseThrow();
-        ModelingExercise modelingExercise = (ModelingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findAny().orElseThrow();
+        ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        TextExercise textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        ModelingExercise modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
 
         // make exercises team-based
         Stream.of(programmingExercise, textExercise, modelingExercise).forEach(exercise -> {

@@ -159,8 +159,10 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         learningGoal.setTitle("LearningGoalOne");
         learningGoal.setDescription("This is an example learning goal");
         learningGoal.setCourse(course);
-        List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
-        Set<LectureUnit> connectedLectureUnits = new HashSet<>(allLectureUnits);
+        var lecture1 = lectureRepository.findByIdWithLectureUnits(idOfLectureOne).get();
+        var lecture2 = lectureRepository.findByIdWithLectureUnits(idOfLectureTwo).get();
+        Set<LectureUnit> connectedLectureUnits = new HashSet<>(lecture1.getLectureUnits());
+        connectedLectureUnits.addAll(lecture2.getLectureUnits());
         learningGoal.setLectureUnits(connectedLectureUnits);
         learningGoal = learningGoalRepository.save(learningGoal);
         idOfLearningGoal = learningGoal.getId();
@@ -198,9 +200,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         teamTextExerciseUnit.setExercise(textTeamExercise);
         teamTextExerciseUnit = exerciseUnitRepository.save(teamTextExerciseUnit);
 
-        List<LectureUnit> lectureUnitsOfLectureOne = List.of(textUnit, textExerciseUnit, modelingExerciseUnit, teamTextExerciseUnit);
         Lecture lectureOne = lectureRepository.findByIdWithLectureUnits(idOfLectureOne).get();
-        for (LectureUnit lectureUnit : lectureUnitsOfLectureOne) {
+        for (LectureUnit lectureUnit : List.of(textUnit, textExerciseUnit, modelingExerciseUnit, teamTextExerciseUnit)) {
             lectureOne.addLectureUnit(lectureUnit);
         }
         lectureRepository.save(lectureOne);
@@ -225,9 +226,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         modelingExerciseUnit = exerciseUnitRepository.save(modelingExerciseUnit);
         idOfExerciseUnitModelingOfLectureTwo = modelingExerciseUnit.getId();
 
-        List<LectureUnit> lectureUnitsOfLectureTwo = List.of(textUnit, textExerciseUnit, modelingExerciseUnit);
         Lecture lectureTwo = lectureRepository.findByIdWithLectureUnits(idOfLectureTwo).get();
-        for (LectureUnit lectureUnit : lectureUnitsOfLectureTwo) {
+        for (LectureUnit lectureUnit : List.of(textUnit, textExerciseUnit, modelingExerciseUnit)) {
             lectureTwo.addLectureUnit(lectureUnit);
         }
         lectureRepository.save(lectureTwo);

@@ -123,7 +123,7 @@ class RepositoryIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     void setup() throws Exception {
         database.addUsers(2, 1, 1, 1);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
 
         studentRepository.configureRepos("studentLocalRepo", "studentOriginRepo");

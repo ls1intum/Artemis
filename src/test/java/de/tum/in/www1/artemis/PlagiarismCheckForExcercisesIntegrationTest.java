@@ -12,7 +12,8 @@ import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.Course;
-import de.tum.in.www1.artemis.domain.enumeration.ExerciseType;
+import de.tum.in.www1.artemis.domain.TextExercise;
+import de.tum.in.www1.artemis.domain.modeling.ModelingExercise;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.util.FileUtils;
@@ -39,7 +40,7 @@ class PlagiarismCheckForExercisesIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testCheckPlagiarismResultForTextExercise() throws Exception {
-        var textExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.TEXT).findFirst().get();
+        var textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         String path = "/api/text-exercises/" + textExercise.getId() + "/check-plagiarism";
         createAndTestPlagiarismResult(path);
     }
@@ -47,7 +48,7 @@ class PlagiarismCheckForExercisesIntegrationTest extends AbstractSpringIntegrati
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testCheckPlagiarismResultForModelingExercise() throws Exception {
-        var modelingExercise = course.getExercises().stream().filter(ex -> ex.getExerciseType() == ExerciseType.MODELING).findFirst().get();
+        var modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
         String path = "/api/modeling-exercises/" + modelingExercise.getId() + "/check-plagiarism";
         createAndTestPlagiarismResult(path);
     }

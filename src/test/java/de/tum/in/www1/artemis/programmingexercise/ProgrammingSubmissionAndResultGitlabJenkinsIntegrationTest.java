@@ -76,7 +76,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         database.addUsers(3, 2, 0, 2);
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
 
-        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
 
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
@@ -98,7 +98,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        var exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -129,7 +129,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        var exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -153,7 +153,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -221,7 +221,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -246,7 +246,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         // Precondition: Database has participation without result and a programming
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
-        exercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);

@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ExampleSubmission;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.User;
@@ -32,11 +33,14 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
 
     private Exercise exercise;
 
+    private Course course1;
+
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(1, 5, 0, 1);
         var courses = database.createCoursesWithExercisesAndLectures(true);
-        exercise = courses.get(0).getExercises().iterator().next();
+        course1 = courses.get(0);
+        exercise = course1.getExercises().iterator().next();
     }
 
     @AfterEach
@@ -47,10 +51,11 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testRemoveTutorParticipationForGuidedTour() throws Exception {
-        assertThat(tutorParticipationRepository.findAll()).hasSize(5);
+        var tutorParticipations = tutorParticipationRepository.findAllByAssessedExercise_Course(course1);
+        assertThat(tutorParticipations).hasSize(5);
 
         User tutor = database.getUserByLogin("tutor1");
-        TutorParticipation tutorParticipation = tutorParticipationRepository.findAll().get(0);
+        TutorParticipation tutorParticipation = tutorParticipations.get(0);
         tutorParticipation.tutor(tutor).assessedExercise(exercise);
         tutorParticipationRepository.save(tutorParticipation);
 
@@ -65,7 +70,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
             exerciseRepository.save(exercise);
         }
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
-        assertThat(tutorParticipationRepository.findAll()).as("Removed tutor participation").hasSize(4);
+        assertThat(tutorParticipationRepository.findAllByAssessedExercise_Course(course1)).as("Removed tutor participation").hasSize(4);
     }
 
     @Test
@@ -74,7 +79,7 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
-        assertThat(tutorParticipationRepository.findAll()).as("Does not remove tutor participation with wrong assessedExercise").hasSize(5);
+        assertThat(tutorParticipationRepository.findAllByAssessedExercise_Course(course1)).hasSize(4);
     }
 
     @Test
@@ -85,6 +90,6 @@ class TutorParticipationResourceIntegrationTest extends AbstractSpringIntegratio
         exercise.setTitle("Patterns in Software Engineering");
         exerciseRepository.save(exercise);
         request.delete("/api/guided-tour/exercises/" + exercise.getId() + "/example-submission", HttpStatus.OK);
-        assertThat(tutorParticipationRepository.findAll()).as("Does not remove tutor participation with wrong assessedExercise").hasSize(5);
+        assertThat(tutorParticipationRepository.findAllByAssessedExercise_Course(course1)).hasSize(4);
     }
 }

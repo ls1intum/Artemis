@@ -32,9 +32,6 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     private ResultRepository resultRepo;
 
     @Autowired
-    private SubmissionRepository submissionRepository;
-
-    @Autowired
     private GradingCriterionRepository gradingCriterionRepo;
 
     @Autowired
@@ -62,8 +59,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     void initTestCase() throws Exception {
         database.addUsers(1, 1, 0, 1);
         course = database.addCourseWithModelingAndTextExercise();
-        modelingExercise = (ModelingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ModelingExercise).findFirst().get();
-        textExercise = (TextExercise) course.getExercises().stream().filter(exercise -> exercise instanceof TextExercise).findFirst().get();
+        modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
+        textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
         emptyModel = FileUtils.loadFileFromResources("test-data/model-submission/empty-class-diagram.json");
         validModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
     }
@@ -342,8 +339,8 @@ class ExampleSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBi
     private void testGradingCriteriaAreImported(Exercise exercise) throws Exception {
         List<GradingCriterion> gradingCriteria = database.addGradingInstructionsToExercise(exercise);
         gradingCriterionRepo.saveAll(gradingCriteria);
-        database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, "instructor1");
-        Submission originalSubmission = submissionRepository.findAll().get(0);
+        var studentParticipation = database.addAssessmentWithFeedbackWithGradingInstructionsForExercise(exercise, "instructor1");
+        Submission originalSubmission = studentParticipation.findLatestSubmission().get();
         Optional<Result> orginalResult = resultRepo.findDistinctWithFeedbackBySubmissionId(originalSubmission.getId());
 
         ExampleSubmission exampleSubmission = importExampleSubmission(exercise.getId(), originalSubmission.getId(), HttpStatus.OK);

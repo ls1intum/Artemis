@@ -593,10 +593,9 @@ public class DatabaseUtilService {
 
     public void addInstructor(final String instructorGroup, final String instructorName) {
         if (!userExistsWithLogin(instructorName)) {
-            var instructors = generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
-            if (!instructors.isEmpty()) {
-                var instructor = instructors.get(0);
-                instructor = userRepo.save(instructor);
+            var newUsers = generateActivatedUsers(instructorName, new String[] { instructorGroup, "testgroup" }, instructorAuthorities, 1);
+            if (!newUsers.isEmpty()) {
+                var instructor = userRepo.save(newUsers.get(0));
                 assertThat(instructor.getId()).as("Instructor has been created").isNotNull();
             }
         }
@@ -604,25 +603,31 @@ public class DatabaseUtilService {
 
     public void addEditor(final String editorGroup, final String editorName) {
         if (!userExistsWithLogin(editorName)) {
-            var editor = generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1).get(0);
-            editor = userRepo.save(editor);
-            assertThat(editor.getId()).as("Editor has been created").isNotNull();
+            var newUsers = generateActivatedUsers(editorName, new String[] { editorGroup, "testgroup" }, editorAuthorities, 1);
+            if (!newUsers.isEmpty()) {
+                var editor = userRepo.save(newUsers.get(0));
+                assertThat(editor.getId()).as("Editor has been created").isNotNull();
+            }
         }
     }
 
     public void addTeachingAssistant(final String taGroup, final String taName) {
         if (!userExistsWithLogin(taName)) {
-            var ta = generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1).get(0);
-            ta = userRepo.save(ta);
-            assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+            var newUsers = generateActivatedUsers(taName, new String[] { taGroup, "testgroup" }, tutorAuthorities, 1);
+            if (!newUsers.isEmpty()) {
+                var ta = userRepo.save(newUsers.get(0));
+                assertThat(ta.getId()).as("Teaching assistant has been created").isNotNull();
+            }
         }
     }
 
     public void addStudent(final String studentGroup, final String studentName) {
         if (!userExistsWithLogin(studentName)) {
-            var student = generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1).get(0);
-            student = userRepo.save(student);
-            assertThat(student.getId()).as("Student has been created").isNotNull();
+            var newUsers = generateActivatedUsers(studentName, new String[] { studentGroup, "testgroup" }, studentAuthorities, 1);
+            if (!newUsers.isEmpty()) {
+                var student = userRepo.save(newUsers.get(0));
+                assertThat(student.getId()).as("Student has been created").isNotNull();
+            }
         }
     }
 
@@ -906,7 +911,7 @@ public class DatabaseUtilService {
             // create 5 tutor participations and 5 example submissions and connect all of them (to test the many-to-many relationship)
             var tutorParticipations = new ArrayList<TutorParticipation>();
             for (int i = 1; i < 6; i++) {
-                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i));
+                var tutorParticipation = new TutorParticipation().tutor(getUserByLogin("tutor" + i)).assessedExercise(modelingExercise);
                 tutorParticipationRepo.save(tutorParticipation);
                 tutorParticipations.add(tutorParticipation);
             }
@@ -2025,6 +2030,11 @@ public class DatabaseUtilService {
 
     public Course addCourseWithOneReleasedTextExercise() {
         return addCourseWithOneReleasedTextExercise("Text");
+    }
+
+    public <T extends Exercise> T getFirstExerciseWithType(Course course, Class<T> clazz) {
+        var exercise = course.getExercises().stream().filter(ex -> ex.getClass().equals(clazz)).findFirst().get();
+        return (T) exercise;
     }
 
     public ProgrammingExercise addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases() {
@@ -4231,7 +4241,7 @@ public class DatabaseUtilService {
         return course;
     }
 
-    public void addAssessmentWithFeedbackWithGradingInstructionsForExercise(Exercise exercise, String login) {
+    public StudentParticipation addAssessmentWithFeedbackWithGradingInstructionsForExercise(Exercise exercise, String login) {
         // add participation and submission for exercise
         StudentParticipation studentParticipation = createAndSaveParticipationForExercise(exercise, login);
         Submission submission = null;
@@ -4258,6 +4268,7 @@ public class DatabaseUtilService {
         Feedback feedback = new Feedback();
         feedback.setGradingInstruction(exercise.getGradingCriteria().get(0).getStructuredGradingInstructions().get(0));
         addFeedbackToResult(feedback, result);
+        return studentParticipation;
     }
 
     public List<Result> getResultsForExercise(Exercise exercise) {

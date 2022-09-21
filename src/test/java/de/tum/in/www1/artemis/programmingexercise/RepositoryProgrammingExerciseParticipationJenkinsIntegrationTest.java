@@ -54,7 +54,7 @@ class RepositoryProgrammingExerciseParticipationJenkinsIntegrationTest extends A
     @WithMockUser(username = "student1", roles = "USER")
     void testGetLatestBuildLogsFails() throws Exception {
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        var programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(ex -> ex instanceof ProgrammingExercise).findFirst().get();
+        var programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(programmingExercise.getId()).get();
         database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
 

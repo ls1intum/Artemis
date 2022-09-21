@@ -73,10 +73,9 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
         // Initialize with 3 max complaints and 7 days max complaint deadline
         course = database.addCourseWithModelingAndTextAndFileUploadExercise();
-        modelingExercise = (ModelingExercise) course.getExercises().stream().filter(e -> e instanceof ModelingExercise).findAny().orElseThrow();
+        modelingExercise = database.getFirstExerciseWithType(course, ModelingExercise.class);
         saveModelingSubmissionAndAssessment();
         complaint = new Complaint().result(modelingAssessment).complaintText("This is not fair").complaintType(ComplaintType.COMPLAINT);
-        // complaint.setParticipant(students.get(0));
         moreFeedbackRequest = new Complaint().result(modelingAssessment).complaintText("Please explain").complaintType(ComplaintType.MORE_FEEDBACK);
     }
 
@@ -584,7 +583,7 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void getSubmittedComplaintsForFileUploadExercise() throws Exception {
-        var fileUploadExercise = (FileUploadExercise) course.getExercises().stream().filter(e -> e instanceof FileUploadExercise).findAny().orElseThrow();
+        var fileUploadExercise = database.getFirstExerciseWithType(course, FileUploadExercise.class);
         var fileUploadSubmission = ModelFactory.generateFileUploadSubmission(true);
 
         fileUploadSubmission = database.saveFileUploadSubmissionWithResultAndAssessor(fileUploadExercise, fileUploadSubmission, "student1", "tutor1");

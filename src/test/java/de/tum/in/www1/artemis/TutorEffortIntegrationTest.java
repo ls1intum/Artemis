@@ -15,7 +15,6 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.TextSubmission;
-import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.analytics.TextAssessmentEvent;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
@@ -53,12 +52,11 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     void initTestCase() {
         course = database.createCourseWithTutor("tutor1");
         exercise = course.getExercises().iterator().next();
-        studentParticipation = studentParticipationRepository.findAll().get(0);
-        textSubmission = textSubmissionRepository.findAll().get(0);
-        User user = new User();
-        user.setLogin("instructor");
-        user.setGroups(Set.of(course.getInstructorGroupName()));
-        userRepository.save(user);
+        studentParticipation = studentParticipationRepository.findByExerciseIdWithEagerSubmissionsResultAssessor(exercise.getId()).get(0);
+        textSubmission = (TextSubmission) studentParticipation.findLatestSubmission().get();
+        var instructor = database.createAndSaveUser("instructor");
+        instructor.setGroups(Set.of(course.getInstructorGroupName()));
+        userRepository.save(instructor);
     }
 
     @AfterEach
@@ -69,7 +67,6 @@ class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
     /**
      * Tests the TutorEffortResource.calculateTutorEffort method with a scenario involving a distance between
      * timestamps of 1 minute but
-     * @throws Exception
      */
     @Test
     @WithMockUser(username = "instructor", roles = "INSTRUCTOR")

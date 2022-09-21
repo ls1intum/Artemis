@@ -38,7 +38,7 @@ class ParticipationLifecycleServiceTest extends AbstractSpringIntegrationBambooB
 
         database.addUsers(1, 1, 1, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExercise = (ProgrammingExercise) course.getExercises().stream().filter(exercise -> exercise instanceof ProgrammingExercise).findAny().orElseThrow();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         participation = database.addStudentParticipationForProgrammingExercise(this.programmingExercise, "student1");
     }
 
