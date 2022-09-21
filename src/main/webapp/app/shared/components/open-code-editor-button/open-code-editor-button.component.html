@@ -1,0 +1,46 @@
+<ng-container>
+    <button
+        jhi-exercise-action-button
+        [buttonIcon]="faFolderOpen"
+        class="open-code-editor"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+        [buttonLoading]="loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        *ngIf="participations?.length && participations?.length === 1"
+        [routerLink]="[courseAndExerciseNavigationURL, participations[0].id]"
+    ></button>
+
+    <button
+        jhi-exercise-action-button
+        [buttonIcon]="faFolderOpen"
+        class="open-code-editor"
+        [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+        [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+        [buttonLoading]="loading"
+        [smallButton]="smallButtons"
+        [hideLabelMobile]="false"
+        [ngbPopover]="popContent"
+        [autoClose]="'outside'"
+        placement="right"
+        container="body"
+        *ngIf="participations?.length && participations.length! > 1"
+    ></button>
+    <ng-template #popContent style="max-width: 660px">
+        <div *ngFor="let participation of participations; let i = index">
+            <h5 [class.mt-3]="i > 0">{{ codeEditorHeadlines[i] | artemisTranslate }}</h5>
+            <button
+                jhi-exercise-action-button
+                [buttonIcon]="faFolderOpen"
+                class="open-code-editor"
+                [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
+                [buttonLabel]="'artemisApp.exerciseActions.openCodeEditor' | artemisTranslate"
+                [buttonLoading]="loading"
+                [smallButton]="smallButtons"
+                [hideLabelMobile]="false"
+                [routerLink]="[courseAndExerciseNavigationURL, participation.id]"
+            ></button>
+        </div>
+    </ng-template>
+</ng-container>

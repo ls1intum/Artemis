@@ -4,7 +4,7 @@
         [buttonIcon]="faDownload"
         class="clone-repository"
         [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
-        [buttonLabel]="buttonLabel | artemisTranslate"
+        [buttonLabel]="'artemisApp.exerciseActions.cloneRepository' | artemisTranslate"
         [buttonLoading]="loading"
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
@@ -14,53 +14,65 @@
         container="body"
     ></button>
     <ng-template #popContent style="max-width: 660px">
-        <p>{{ 'artemisApp.exerciseActions.clonePersonalRepository' | artemisTranslate }}</p>
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
-        <div class="d-flex" style="margin: 0; max-width: 100%">
-            <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
-                <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
-                    {{ useSsh ? 'SSH' : 'HTTPS' }}
-                </button>
-                <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
-                    <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
-                    <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
+        <div *ngFor="let url of repositoryURLs; let i = index">
+            <h5 [class.mt-3]="i > 0">{{ cloneHeadlines[i] | artemisTranslate }}</h5>
+            <div class="d-flex" style="margin: 0; max-width: 100%">
+                <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">
+                    <button class="btn btn-primary dropdown-toggle" ngbDropdownToggle type="button" style="border-top-right-radius: 0; border-bottom-right-radius: 0">
+                        {{ useSsh ? 'SSH' : 'HTTPS' }}
+                    </button>
+                    <div class="dropdown-menu" ngbDropdownMenu style="min-width: 100%">
+                        <a (click)="setUseSSH(false)" class="dropdown-item {{ !useSsh ? 'active' : '' }}" id="useHTTPSButton">HTTPS</a>
+                        <a (click)="setUseSSH(true)" class="dropdown-item {{ useSsh ? 'active' : '' }}" id="useSSHButton">SSH</a>
+                    </div>
+                </div>
+                <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side (due to dropdown to select ssh or https)
+                 || useSsh -> Remove round edges and edge on the right side (as ssh repo-links can't be open in the browser)-->
+                <pre
+                    style="flex: 1"
+                    [ngClass]="
+                        sshEnabled && !useSsh
+                            ? 'url-box-remove-line-left url-box-remove-line-right'
+                            : sshEnabled && useSsh
+                            ? 'url-box-remove-line-left'
+                            : 'url-box-remove-line-right'
+                    "
+                    [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(url, false)"
+                    (cdkCopyToClipboardCopied)="onCopyFinished($event, i)"
+                    >{{ getHttpOrSshRepositoryUrl(url) }} </pre
+                >
+                <div *ngIf="!useSsh" class="d-flex align-items-center">
+                    <a
+                        style="flex: 1"
+                        class="btn btn-secondary btn-sm me-2 open-repository-button"
+                        [href]="getHttpRepositoryUrl(url) | safeUrl"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
+                        <fa-icon [icon]="faExternalLink"></fa-icon>
+                    </a>
                 </div>
             </div>
-            <!-- ngStyle: sshEnabled -> Remove round edges and edge on the left side (due to dropdown to select ssh or https)
-             || useSsh -> Remove round edges and edge on the right side (as ssh repo-links can't be open in the browser)-->
-            <pre
-                style="flex: 1"
-                [ngClass]="
-                    sshEnabled && !useSsh ? 'url-box-remove-line-left url-box-remove-line-right' : sshEnabled && useSsh ? 'url-box-remove-line-left' : 'url-box-remove-line-right'
-                "
-                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
-                (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-                >{{ getHttpOrSshRepositoryUrl() }} </pre
+            <p *ngIf="repositoryPassword">
+                {{ 'artemisApp.exerciseActions.repositoryPassword' | artemisTranslate }} <code class="password">{{ repositoryPassword }}</code>
+                {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
+            </p>
+            <button
+                [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(url, false)"
+                (cdkCopyToClipboardCopied)="onCopyFinished($event, i)"
+                [class.btn-success]="wasCopied[i]"
+                class="btn btn-primary btn-sm me-2"
+                type="button"
+                style="min-width: 100px"
             >
-            <div *ngIf="!useSsh" class="d-flex align-items-center">
-                <a style="flex: 1" class="btn btn-secondary btn-sm me-2 open-repository-button" [href]="getHttpRepositoryUrl() | safeUrl" target="_blank" rel="noopener noreferrer">
-                    <fa-icon [icon]="faExternalLink"></fa-icon>
-                </a>
-            </div>
+                {{ wasCopied[i] ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
+            </button>
+            <a class="btn btn-primary btn-sm me-2" style="min-width: 150px" target="hidden-iframe" [href]="buildSourceTreeUrl(url) | safeUrl"
+                >{{ 'artemisApp.exerciseActions.cloneSourceTree' | artemisTranslate }}
+            </a>
+            <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
         </div>
-        <p *ngIf="repositoryPassword">
-            {{ 'artemisApp.exerciseActions.repositoryPassword' | artemisTranslate }} <code class="password">{{ repositoryPassword }}</code>
-            {{ 'artemisApp.exerciseActions.hoverToShow' | artemisTranslate }}
-        </p>
-        <button
-            [cdkCopyToClipboard]="getHttpOrSshRepositoryUrl(false)"
-            (cdkCopyToClipboardCopied)="onCopyFinished($event)"
-            [class.btn-success]="wasCopied"
-            class="btn btn-primary btn-sm me-2"
-            type="button"
-            style="min-width: 100px"
-        >
-            {{ wasCopied ? ('artemisApp.exerciseActions.copiedUrl' | artemisTranslate) : ('artemisApp.exerciseActions.copyUrl' | artemisTranslate) }}
-        </button>
-        <a class="btn btn-primary btn-sm me-2" style="min-width: 150px" target="hidden-iframe" [href]="buildSourceTreeUrl() | safeUrl"
-            >{{ 'artemisApp.exerciseActions.cloneSourceTree' | artemisTranslate }}
-        </a>
-        <iframe name="hidden-iframe" style="visibility: hidden; position: absolute"></iframe>
-        <span [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | artemisTranslate"></span>
+        <div [innerHTML]="'artemisApp.exerciseActions.sourceTreeDescription' | artemisTranslate"></div>
     </ng-template>
 </ng-container>

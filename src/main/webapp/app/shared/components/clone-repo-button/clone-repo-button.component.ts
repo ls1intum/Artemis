@@ -8,6 +8,7 @@ import { User } from 'app/core/user/user.model';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import { LocalStorageService } from 'ngx-webstorage';
 import { faDownload, faExternalLink } from '@fortawesome/free-solid-svg-icons';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 @Component({
     selector: 'jhi-clone-repo-button',
@@ -20,24 +21,23 @@ export class CloneRepoButtonComponent implements OnInit {
     @Input()
     smallButtons: boolean;
     @Input()
-    repositoryUrl: string;
-    // Needed because the repository url is different for teams
+    repositoryUrl?: string;
     @Input()
-    isTeamParticipation: boolean;
-    @Input()
-    buttonLabelAddition?: string;
+    participations?: ProgrammingExerciseStudentParticipation[];
 
     useSsh = false;
     sshKeysUrl: string;
     sshEnabled: boolean;
     sshTemplateUrl: string;
-    buttonLabel = 'artemisApp.exerciseActions.cloneRepository';
     repositoryPassword: string;
     versionControlUrl: string;
     versionControlAccessTokenRequired?: boolean;
-    wasCopied = false;
     FeatureToggle = FeatureToggle;
     user: User;
+    repositoryURLs: string[] = [];
+    cloneHeadlines: string[] = [];
+    wasCopied: boolean[];
+    isTeamParticipation: boolean;
 
     // Icons
     faDownload = faDownload;
@@ -70,8 +70,21 @@ export class CloneRepoButtonComponent implements OnInit {
         this.useSsh = this.localStorage.retrieve('useSsh') || false;
         this.localStorage.observe('useSsh').subscribe((useSsh) => (this.useSsh = useSsh || false));
 
-        if (this.buttonLabelAddition) {
-            this.buttonLabel += this.buttonLabelAddition;
+        if (this.participations?.length) {
+            this.isTeamParticipation = !!this.participations.first()?.team;
+            this.repositoryURLs = this.participations.filter((participation) => !!participation.repositoryUrl).map((participation) => participation.repositoryUrl!);
+            this.cloneHeadlines = this.participations
+                .filter((participation) => !!participation.repositoryUrl)
+                .map((participation) => (participation.testRun ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository'));
+            this.wasCopied = new Array<boolean>(this.participations.length);
+        } else if (this.repositoryUrl) {
+            this.repositoryURLs = [this.repositoryUrl];
+            this.cloneHeadlines = ['artemisApp.exerciseActions.cloneExerciseRepository'];
+            this.wasCopied = [false];
+        } else {
+            this.repositoryURLs = [];
+            this.cloneHeadlines = [];
+            this.wasCopied = [];
         }
     }
 
@@ -80,16 +93,16 @@ export class CloneRepoButtonComponent implements OnInit {
         this.localStorage.store('useSsh', this.useSsh);
     }
 
-    getHttpOrSshRepositoryUrl(insertPlaceholder = true): string {
+    getHttpOrSshRepositoryUrl(url: string, insertPlaceholder = true): string {
         if (this.useSsh) {
-            return this.getSshCloneUrl(this.repositoryUrl) || this.repositoryUrl;
+            return this.getSshCloneUrl(url) || url;
         }
 
         if (this.isTeamParticipation) {
-            return this.addAccessTokenToHttpUrl(this.repositoryUrlForTeam(this.repositoryUrl), insertPlaceholder);
+            return this.addAccessTokenToHttpUrl(this.repositoryUrlForTeam(url), insertPlaceholder);
         }
 
-        return this.addAccessTokenToHttpUrl(this.repositoryUrl, insertPlaceholder);
+        return this.addAccessTokenToHttpUrl(url, insertPlaceholder);
     }
 
     /**
@@ -124,11 +137,11 @@ export class CloneRepoButtonComponent implements OnInit {
      * Used for the Button to open the repository in a separate browser-window
      * @return HTTPS-Repository link of the student
      */
-    getHttpRepositoryUrl(): string {
+    getHttpRepositoryUrl(url: string): string {
         if (this.isTeamParticipation) {
-            return this.repositoryUrlForTeam(this.repositoryUrl);
+            return this.repositoryUrlForTeam(url);
         } else {
-            return this.repositoryUrl;
+            return url;
         }
     }
 
@@ -159,11 +172,11 @@ export class CloneRepoButtonComponent implements OnInit {
     /**
      * set wasCopied for 3 seconds on success
      */
-    onCopyFinished(successful: boolean) {
+    onCopyFinished(successful: boolean, index: number) {
         if (successful) {
-            this.wasCopied = true;
+            this.wasCopied[index] = true;
             setTimeout(() => {
-                this.wasCopied = false;
+                this.wasCopied[index] = false;
             }, 3000);
         }
     }
@@ -172,7 +185,7 @@ export class CloneRepoButtonComponent implements OnInit {
      * build the sourceTreeUrl from the repository url
      * @return sourceTreeUrl
      */
-    buildSourceTreeUrl() {
-        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl(false));
+    buildSourceTreeUrl(url: string) {
+        return this.sourceTreeService.buildSourceTreeUrl(this.versionControlUrl, this.getHttpOrSshRepositoryUrl(url, false));
     }
 }

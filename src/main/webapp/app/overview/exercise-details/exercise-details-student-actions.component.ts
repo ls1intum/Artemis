@@ -231,14 +231,6 @@ export class ExerciseDetailsStudentActionsComponent {
         }
     }
 
-    cloneButtonLabelAddition(participation: StudentParticipation) {
-        if ((this.exercise.studentParticipations?.length ?? 0) > 1 || participation.testRun) {
-            return participation.testRun ? 'Practice' : 'Graded';
-        } else {
-            return '';
-        }
-    }
-
     repositoryUrl(participation: Participation) {
         const programmingParticipation = participation as ProgrammingExerciseStudentParticipation;
         return programmingParticipation.repositoryUrl;

@@ -2,11 +2,41 @@
 Course Info Bar
 ========================================================================== */
 .tab-bar-exercise-details {
-    flex-wrap: wrap;
-    row-gap: 1rem;
+    jhi-submission-result-status {
+        width: auto;
+        flex-basis: auto;
+        flex-grow: 0;
+    }
 
-    jhi-exercise-details-student-actions {
-        flex: 1 0 auto;
+    // switch from two column to one column layout for small devices
+    // 2 buttons have to fit in one row e.g. for programming exercises
+    @media (max-width: 640px) {
+        flex-direction: column;
+
+        jhi-submission-result-status {
+            width: 100%;
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+    }
+
+    @media (max-width: 1000px) {
+        flex-wrap: wrap;
+
+        // prevent result status from breaking due to flex wrap
+        jhi-submission-result-status {
+            flex-basis: auto; // needed for Safari and JavaFX
+            flex-grow: 1;
+        }
+
+        // move instructor actions onto their own line for small/medium devices
+        .instructor-actions {
+            width: 100%;
+            flex-basis: 100%;
+            justify-content: flex-end;
+            margin-top: 10px;
+        }
     }
 }
 
