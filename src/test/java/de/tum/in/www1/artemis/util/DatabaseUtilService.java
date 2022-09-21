@@ -478,25 +478,22 @@ public class DatabaseUtilService {
         return teams;
     }
 
-    public User createUser(String login) {
-        if (!userExistsWithLogin(login)) {
-            return ModelFactory.generateActivatedUser(login);
-        }
-        return getUserByLogin(login);
-    }
-
     public User createAndSaveUser(String login, String hashedPassword) {
-        if (!userExistsWithLogin(login)) {
-            return userRepo.save(ModelFactory.generateActivatedUser(login, hashedPassword));
+        User user = ModelFactory.generateActivatedUser(login, hashedPassword);
+        if (userExistsWithLogin(login)) {
+            // save the user with the newly created values (to override previous changes) with the same ID
+            user.setId(getUserByLogin(login).getId());
         }
-        return getUserByLogin(login);
+        return userRepo.save(user);
     }
 
     public User createAndSaveUser(String login) {
-        if (!userExistsWithLogin(login)) {
-            return userRepo.save(ModelFactory.generateActivatedUser(login));
+        User user = ModelFactory.generateActivatedUser(login);
+        if (userExistsWithLogin(login)) {
+            // save the user with the newly created values (to override previous changes) with the same ID
+            user.setId(getUserByLogin(login).getId());
         }
-        return getUserByLogin(login);
+        return userRepo.save(user);
     }
 
     /**

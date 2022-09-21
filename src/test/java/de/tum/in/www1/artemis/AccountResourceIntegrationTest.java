@@ -1,9 +1,7 @@
 package de.tum.in.www1.artemis;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import java.net.URI;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -13,11 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.function.Executable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.test.context.support.WithAnonymousUser;
 import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.util.ReflectionTestUtils;
-import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.config.Constants;
@@ -55,7 +50,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
 
     @BeforeEach
     void setup() {
-        bitbucketRequestMockProvider.enableMockingOfRequests();
+        bitbucketRequestMockProvider.enableMockingOfRequests(true);
     }
 
     @AfterEach
@@ -246,8 +241,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(AUTHENTICATEDUSER)
     void getAccount() throws Exception {
         // create user in repo
-        User user = database.createUser(AUTHENTICATEDUSER);
-        userRepository.save(user);
+        User user = database.createAndSaveUser(AUTHENTICATEDUSER);
         UserDTO account = request.get("/api/account", HttpStatus.OK, UserDTO.class);
         assertThat(account).isNotNull();
     }
@@ -316,9 +310,9 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
     @WithMockUser(username = AUTHENTICATEDUSER)
     void changePassword() throws Exception {
         // Password Data
-        String updatedPassword = "12345678password-reset-init.component.spec.ts";
+        String updatedPassword = "12345678";
         // create user in repo
-        User user = database.createAndSaveUser(AUTHENTICATEDUSER, ModelFactory.USER_PASSWORD);
+        User user = database.createAndSaveUser(AUTHENTICATEDUSER, passwordService.hashPassword(ModelFactory.USER_PASSWORD));
         bitbucketRequestMockProvider.mockUserExists(AUTHENTICATEDUSER);
         bitbucketRequestMockProvider.mockUpdateUserDetails(user.getLogin(), user.getEmail(), user.getName());
         bitbucketRequestMockProvider.mockUpdateUserPassword(user.getLogin(), updatedPassword, true, true);
@@ -346,7 +340,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         userRepository.save(user);
 
         // Password Data
-        String updatedPassword = "12345678password-reset-init.component.spec.ts";
+        String updatedPassword = "12345678";
 
         PasswordChangeDTO pwChange = new PasswordChangeDTO(ModelFactory.USER_PASSWORD, updatedPassword);
         // make request
@@ -385,7 +379,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
-        request.postWithoutLocation("/api/account/change-language", "de", HttpStatus.OK, null);
+        request.postStringWithoutLocation("/api/account/change-language", "de", HttpStatus.OK, null);
 
         // check result
         Optional<User> updatedUser = userRepository.findOneByLogin(AUTHENTICATEDUSER);
@@ -404,7 +398,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(storedUser.getLangKey()).isEqualTo("en");
 
         // make request
-        request.postWithoutLocation("/api/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
+        request.postStringWithoutLocation("/api/account/change-language", "loremIpsum", HttpStatus.BAD_REQUEST, null);
     }
 
     @Test
@@ -420,9 +414,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getEmail());
-        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
-        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+        request.postStringWithoutLocation("/api/account/reset-password/init", createdUser.getEmail(), HttpStatus.OK, null);
 
         verifyPasswordReset(createdUser, resetKeyBefore);
     }
@@ -440,10 +432,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         assertThat(userBefore).isPresent();
         String resetKeyBefore = userBefore.get().getResetKey();
 
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(createdUser.getLogin());
-        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
-        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
-
+        request.postStringWithoutLocation("/api/account/reset-password/init", createdUser.getLogin(), HttpStatus.OK, null);
         verifyPasswordReset(createdUser, resetKeyBefore);
     }
 
@@ -482,9 +471,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         String resetKeyBefore = userBefore.get().getResetKey();
 
         // init password reset
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content("invalidemail");
-        request.getMvc().perform(req).andExpect(status().is(HttpStatus.OK.value())).andReturn();
-        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+        request.postStringWithoutLocation("/api/account/reset-password/init", "invalidemail", HttpStatus.OK, null);
 
         // check user data
         Optional<User> userPasswordResetInit = userRepository.findOneByEmailIgnoreCase(createdUser.getEmail());
@@ -505,9 +492,7 @@ class AccountResourceIntegrationTest extends AbstractSpringIntegrationBambooBitb
         user.setInternal(false);
         userRepository.saveAndFlush(user);
 
-        var req = MockMvcRequestBuilders.post(new URI("/api/account/reset-password/init")).contentType(MediaType.APPLICATION_JSON).content(email);
-        request.getMvc().perform(req).andExpect(status().is(HttpStatus.BAD_REQUEST.value())).andReturn();
-        ReflectionTestUtils.invokeMethod(request, "restoreSecurityContext");
+        request.postStringWithoutLocation("/api/account/reset-password/init", email, HttpStatus.BAD_REQUEST, null);
     }
 
     @Test

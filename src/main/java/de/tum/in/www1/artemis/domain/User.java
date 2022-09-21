@@ -107,8 +107,8 @@ public class User extends AbstractAuditingEntity implements Participant {
     @Column(name = "hide_notifications_until")
     private ZonedDateTime hideNotificationsUntil = null;
 
-    @Column(name = "is_internal")
-    private boolean isInternal;
+    @Column(name = "is_internal", nullable = false)
+    private boolean isInternal = true;          // default value
 
     /**
      * The token the user can use to authenticate with the VCS.

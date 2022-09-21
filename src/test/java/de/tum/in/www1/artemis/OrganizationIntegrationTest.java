@@ -64,7 +64,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Set<Organization> organizations = new HashSet<>();
         organizations.add(organization);
 
-        User student = database.createUser("ab12cde");
+        User student = database.createAndSaveUser("ab12cde");
         student.setOrganizations(organizations);
         userRepo.save(student);
 
@@ -101,7 +101,7 @@ class OrganizationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         Set<Organization> otherOrganizations = new HashSet<>();
         otherOrganizations.add(otherOrganization);
 
-        User student = database.createUser("ab12cde");
+        User student = database.createAndSaveUser("ab12cde");
         student.setOrganizations(organizations);
         userRepo.save(student);
 

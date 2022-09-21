@@ -54,8 +54,7 @@ class GradeStepIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJ
         database.addUsers(1, 0, 0, 1);
 
         // Student not belonging to any course
-        User student = database.createUser("student2");
-        userRepository.save(student);
+        database.createAndSaveUser("student2");
 
         course = database.addEmptyCourse();
         exam = database.addExamWithExerciseGroup(course, true);

@@ -25,6 +25,7 @@ import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.connectors.gitlab.GitLabUserManagementService;
 import de.tum.in.www1.artemis.service.connectors.jenkins.JenkinsUserManagementService;
 import de.tum.in.www1.artemis.service.user.PasswordService;
+import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.UserTestService;
 import de.tum.in.www1.artemis.web.rest.vm.ManagedUserVM;
 
@@ -404,7 +405,7 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @WithMockUser(username = "admin", roles = "ADMIN")
     void shouldFailIfCannotUpdateDeactivatedUserInGitlab() throws Exception {
         // create unactivated user in repo
-        User user = database.createUser("ab123cd");
+        User user = ModelFactory.generateActivatedUser("ab123cd");
         user.setActivated(false);
         user.setActivationKey("testActivationKey");
 

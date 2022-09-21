@@ -467,12 +467,12 @@ public class CourseTestService {
         course.setTeachingAssistantGroupName("new-ta-group");
 
         // Create instructor in the course
-        User user = database.createUser("instructor11");
+        User user = database.createAndSaveUser("instructor11");
         user.setGroups(Set.of("new-instructor-group"));
         userRepo.save(user);
 
         // Create teaching assisstant in the course
-        user = database.createUser("teaching-assisstant11");
+        user = database.createAndSaveUser("teaching-assisstant11");
         user.setGroups(Set.of("new-ta-group"));
         userRepo.save(user);
 
@@ -1000,8 +1000,7 @@ public class CourseTestService {
 
     // Test
     public void testRegisterForCourse() throws Exception {
-        User student = database.createUser("ab12cde");
-        userRepo.save(student);
+        User student = database.createAndSaveUser("ab12cde");
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);
@@ -1028,8 +1027,7 @@ public class CourseTestService {
 
     // Test
     public void testRegisterForCourse_notMeetsDate() throws Exception {
-        User student = database.createUser("ab12cde");
-        userRepo.save(student);
+        User student = database.createAndSaveUser("ab12cde");
 
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
         ZonedDateTime futureTimestamp = ZonedDateTime.now().plusDays(5);

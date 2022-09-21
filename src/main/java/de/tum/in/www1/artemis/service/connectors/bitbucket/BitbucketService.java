@@ -247,7 +247,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param username     The username of the user
      * @param emailAddress The new email address
      * @param displayName  The new display name
-     * @throws BitbucketException
+     * @throws BitbucketException and exception in case updating the user details does not work correctly
      */
     public void updateUserDetails(String username, String emailAddress, String displayName) throws BitbucketException {
         UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");

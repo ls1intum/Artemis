@@ -102,6 +102,10 @@ public class RequestUtilService {
         restoreSecurityContext();
     }
 
+    public void postStringWithoutLocation(String path, String body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
+        postWithoutLocation(path, request -> request.content(body), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);
+    }
+
     public <T> void postWithoutLocation(String path, T body, HttpStatus expectedStatus, @Nullable HttpHeaders httpHeaders) throws Exception {
         final String jsonBody = mapper.writeValueAsString(body);
         postWithoutLocation(path, request -> request.content(jsonBody), expectedStatus, httpHeaders, MediaType.APPLICATION_JSON_VALUE);

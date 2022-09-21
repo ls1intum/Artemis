@@ -206,15 +206,15 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course.setTeachingAssistantGroupName("new-ta-group");
 
         // Create editor in the course
-        User user = database.createUser("new-editor");
+        User user = database.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-editor-group"));
         userRepo.save(user);
 
-        user = database.createUser("new-ta");
+        user = database.createAndSaveUser("new-ta");
         user.setGroups(Set.of("new-ta-group"));
         userRepo.save(user);
 
-        user = database.createUser("new-instructor");
+        user = database.createAndSaveUser("new-instructor");
         user.setGroups(Set.of("new-instructor-group"));
         userRepo.save(user);
 
@@ -234,7 +234,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course.setInstructorGroupName("new-instructor-group");
 
         // Create editor in the course
-        User user = database.createUser("new-editor");
+        User user = database.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
         user = userRepo.save(user);
 
@@ -249,7 +249,7 @@ class CourseGitlabJenkinsIntegrationTest extends AbstractSpringIntegrationJenkin
         course.setInstructorGroupName("new-instructor-group");
 
         // Create editor in the course
-        User user = database.createUser("new-editor");
+        User user = database.createAndSaveUser("new-editor");
         user.setGroups(Set.of("new-instructor-group"));
         user = userRepo.save(user);
 
