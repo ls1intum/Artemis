@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -43,10 +44,10 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() {
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(1, 1, 1, 1);
 
-        exercise = exerciseRepository.findAll().get(0);
+        exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
     }
 
     @AfterEach
@@ -84,7 +85,7 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
         database.addTasksToProgrammingExercise(exercise);
         database.addSolutionEntriesToProgrammingExercise(exercise);
         database.addCodeHintsToProgrammingExercise(exercise);
-        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintRepository.findAll().get(0).getId());
+        codeHint = codeHintRepository.findByIdWithSolutionEntriesElseThrow(codeHintRepository.findByExerciseId(exercise.getId()).stream().findAny().orElseThrow().getId());
         solutionEntry = codeHint.getSolutionEntries().stream().findFirst().orElseThrow();
     }
 
