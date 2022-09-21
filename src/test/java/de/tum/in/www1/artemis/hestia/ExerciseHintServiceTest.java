@@ -73,21 +73,24 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() {
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+
         database.addUsers(2, 2, 1, 2);
 
         student = userRepository.getUserWithGroupsAndAuthorities("student1");
         database.changeUser("student1");
 
-        programmingExerciseTestCaseRepository.saveAll(programmingExerciseTestCaseRepository.findAll().stream().peek(testCase -> testCase.setActive(true)).toList());
-        exercise = exerciseRepository.findAll().get(0);
+        var activatedTestCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList();
+        programmingExerciseTestCaseRepository.saveAll(activatedTestCases);
+        exercise = exerciseRepository.findByIdElseThrow(programmingExercise.getId());
         exercise = database.loadProgrammingExerciseWithEagerReferences(exercise);
         database.addHintsToExercise(exercise);
         database.addTasksToProgrammingExercise(exercise);
 
         sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
-        hints = exerciseHintRepository.findAll();
+        hints = new ArrayList<>(exerciseHintRepository.findByExerciseId(exercise.getId()));
         hints.get(0).setProgrammingExerciseTask(sortedTasks.get(0));
         hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
         hints.get(2).setProgrammingExerciseTask(sortedTasks.get(2));
@@ -99,6 +102,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @AfterEach
     void tearDown() {
         database.resetDatabase();
+        exerciseHintRepository.deleteAll(hints);
     }
 
     @Test
@@ -225,7 +229,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     void testGetAvailableExerciseHints_skippedTestsConsideredAsNegative() {
         // create result with feedbacks with "null" for attribute "positive"
         addResultWithSuccessfulTestCases(exercise.getTestCases());
-        var results = resultRepository.findAll();
+        var results = resultRepository.findAllByExerciseId(exercise.getId());
         var optionalResult = resultRepository.findWithEagerSubmissionAndFeedbackAndAssessorById(results.get(0).getId());
         assertThat(optionalResult).isPresent();
 
