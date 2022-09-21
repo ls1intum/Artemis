@@ -109,13 +109,13 @@ public class ExerciseDateService {
      * @param exercise for which this should be checked.
      * @return Optional of true, if the due date is before the current time.
      */
-    public Optional<Boolean> earliestDueDateInPast(Exercise exercise) {
+    public Optional<Boolean> isAfterEarliestDueDate(Exercise exercise) {
         final ZonedDateTime now = ZonedDateTime.now();
         return getEarliestIndividualDueDate(exercise).map(now::isAfter);
     }
 
-    public Optional<Boolean> earliestDueDateInFuture(Exercise exercise) {
-        return earliestDueDateInPast(exercise).map(x -> !x);
+    public Optional<Boolean> isBeforeEarliestDueDate(Exercise exercise) {
+        return isAfterEarliestDueDate(exercise).map(x -> !x);
     }
 
     /**
