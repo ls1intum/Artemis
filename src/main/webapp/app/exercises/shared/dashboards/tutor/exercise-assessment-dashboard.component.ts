@@ -592,7 +592,6 @@ export class ExerciseAssessmentDashboardComponent implements OnInit {
      * @param correctionRound Round to check for unassessed submissions
      */
     showSubmissionsForRound(correctionRound: number): boolean {
-        // TODO: booleans based on falsyness defy typescripts intention
         const unassessedSubmissionExist = !!this.unassessedSubmissionByRound?.get(correctionRound)?.id;
         const assessedSubmissionsExist = !!this.assessedSubmissionsByRound.get(correctionRound)?.length;
 

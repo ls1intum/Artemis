@@ -169,8 +169,6 @@ export class ExerciseDetailsStudentActionsComponent {
                     if (participation) {
                         this.alertService.success('artemisApp.exercise.feedbackRequestSent');
                     }
-                    // TODO: message when feedback has already been sent
-                    //       this.alertService.error('artemisApp.exercise.feedbackRequestAlreadySent');
                 },
                 error: (error) => {
                     this.alertService.error(`artemisApp.${error.error.entityName}.errors.${error.error.errorKey}`);
