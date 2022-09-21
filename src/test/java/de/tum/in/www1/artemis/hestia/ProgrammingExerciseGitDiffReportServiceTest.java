@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffEntry;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseGitDiffReport;
@@ -47,10 +48,10 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @BeforeEach
-    void initTestCase() throws Exception {
+    void initTestCase() {
         database.addUsers(1, 1, 1, 1);
-        database.addCourseWithOneProgrammingExercise();
-        exercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExercise();
+        exercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
     }
 
     @AfterEach
@@ -169,9 +170,9 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
         report2.setSolutionRepositoryCommitHash("789");
         report2 = reportRepository.save(report2);
 
-        assertThat(reportRepository.findAll()).hasSize(2);
+        assertThat(reportRepository.findByProgrammingExerciseId(exercise.getId())).hasSize(2);
         var returnedReport = reportService.getReportOfExercise(exercise);
         assertThat(returnedReport).isEqualTo(report2);
-        assertThat(reportRepository.findAll()).hasSize(1);
+        assertThat(reportRepository.findByProgrammingExerciseId(exercise.getId())).hasSize(1);
     }
 }
