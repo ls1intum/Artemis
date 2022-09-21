@@ -74,7 +74,7 @@ class ExerciseHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJi
     @BeforeEach
     void initTestCase() {
         final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
-        final ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        final ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         database.addUsers(2, 2, 1, 2);
 

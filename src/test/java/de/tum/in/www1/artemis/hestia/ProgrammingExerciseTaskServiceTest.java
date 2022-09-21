@@ -44,10 +44,10 @@ class ProgrammingExerciseTaskServiceTest extends AbstractSpringIntegrationBamboo
 
     @BeforeEach
     void init() {
-        final Course course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         database.addUsers(2, 2, 1, 2);
 
-        programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
+        final Course course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         updateProblemStatement("""
                 [task][Task 1](testClass[BubbleSort])
                 [task][Task 2](testMethods[Context])

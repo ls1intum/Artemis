@@ -48,7 +48,7 @@ class CodeHintServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
         final Course course = database.addCourseWithOneProgrammingExercise();
-        exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @AfterEach

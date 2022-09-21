@@ -17,15 +17,11 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
-import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseTestCaseRepository;
 import de.tum.in.www1.artemis.repository.hestia.CodeHintRepository;
 import de.tum.in.www1.artemis.repository.hestia.ProgrammingExerciseSolutionEntryRepository;
 
 class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private ProgrammingExerciseRepository exerciseRepository;
 
     @Autowired
     private CodeHintRepository codeHintRepository;
@@ -44,10 +40,10 @@ class CodeHintIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @BeforeEach
     void initTestCase() {
-        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         database.addUsers(1, 1, 1, 1);
 
-        exercise = (ProgrammingExercise) course.getExercises().stream().findAny().orElseThrow();
+        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @AfterEach

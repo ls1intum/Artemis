@@ -51,7 +51,7 @@ class ProgrammingExerciseGitDiffReportServiceTest extends AbstractSpringIntegrat
     void initTestCase() {
         database.addUsers(1, 1, 1, 1);
         final Course course = database.addCourseWithOneProgrammingExercise();
-        exercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
     }
 
     @AfterEach

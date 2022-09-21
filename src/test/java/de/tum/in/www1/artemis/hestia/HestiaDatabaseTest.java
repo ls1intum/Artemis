@@ -13,6 +13,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
+import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.hestia.CodeHint;
 import de.tum.in.www1.artemis.domain.hestia.ProgrammingExerciseSolutionEntry;
@@ -50,7 +51,7 @@ class HestiaDatabaseTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     void init() {
         database.addUsers(2, 2, 0, 2);
         final Course course = database.addCourseWithOneProgrammingExercise();
-        programmingExerciseId = course.getExercises().stream().findAny().orElseThrow().getId();
+        programmingExerciseId = database.getFirstExerciseWithType(course, ProgrammingExercise.class).getId();
     }
 
     @AfterEach
