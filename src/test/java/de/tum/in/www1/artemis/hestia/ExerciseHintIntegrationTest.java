@@ -3,10 +3,7 @@ package de.tum.in.www1.artemis.hestia;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.ZonedDateTime;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -68,18 +65,21 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @BeforeEach
     void initTestCase() {
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
+        final Course course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        final ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findFirst().orElseThrow();
+
         database.addUsers(2, 2, 1, 2);
 
-        programmingExerciseTestCaseRepository.saveAll(programmingExerciseTestCaseRepository.findAll().stream().peek(testCase -> testCase.setActive(true)).toList());
-        exerciseLite = exerciseRepository.findAll().get(0);
+        programmingExerciseTestCaseRepository
+                .saveAll(programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId()).stream().peek(testCase -> testCase.setActive(true)).toList());
+        exerciseLite = exerciseRepository.findByIdElseThrow(programmingExercise.getId());
         exercise = database.loadProgrammingExerciseWithEagerReferences(exerciseLite);
         database.addHintsToExercise(exercise);
         database.addTasksToProgrammingExercise(exercise);
 
         List<ProgrammingExerciseTask> sortedTasks = programmingExerciseTaskService.getSortedTasks(exercise);
 
-        hints = exerciseHintRepository.findAll();
+        hints = new ArrayList<>(exerciseHintRepository.findByExerciseId(exerciseLite.getId()));
         hints.get(0).setProgrammingExerciseTask(sortedTasks.get(0));
         hints.get(1).setProgrammingExerciseTask(sortedTasks.get(1));
         hints.get(2).setProgrammingExerciseTask(sortedTasks.get(2));
@@ -89,6 +89,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @AfterEach
     void tearDown() {
         database.resetDatabase();
+        exerciseHintRepository.deleteAll(hints);
     }
 
     @Test
@@ -251,7 +252,7 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
         request.post("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/", exerciseHint, HttpStatus.CREATED);
 
-        List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
+        Set<ExerciseHint> exerciseHints = exerciseHintRepository.findByExerciseId(exerciseLite.getId());
         assertThat(exerciseHints).hasSize(4);
     }
 
@@ -356,11 +357,11 @@ class ExerciseHintIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void deleteHintAsInstructor() throws Exception {
-        ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
+        final ExerciseHint exerciseHint = new ExerciseHint().content("content 4").title("title 4").exercise(exerciseLite);
         request.delete("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + 0L, HttpStatus.NOT_FOUND);
         request.post("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints", exerciseHint, HttpStatus.CREATED);
-        List<ExerciseHint> exerciseHints = exerciseHintRepository.findAll();
-        request.delete("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + exerciseHints.get(0).getId(), HttpStatus.NO_CONTENT);
+        final ExerciseHint exerciseHintAfterCreation = exerciseHintRepository.findByExerciseId(exerciseLite.getId()).stream().findAny().orElseThrow();
+        request.delete("/api/programming-exercises/" + exerciseHint.getExercise().getId() + "/exercise-hints/" + exerciseHintAfterCreation.getId(), HttpStatus.NO_CONTENT);
     }
 
     @Test
