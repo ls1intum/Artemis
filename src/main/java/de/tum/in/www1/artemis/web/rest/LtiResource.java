@@ -24,7 +24,6 @@ import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
-import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.security.jwt.TokenProvider;
 import de.tum.in.www1.artemis.service.AuthorizationCheckService;
 import de.tum.in.www1.artemis.service.connectors.LtiService;
@@ -128,11 +127,7 @@ public class LtiResource {
 
         log.debug("handleLaunchRequest done");
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String jwt = tokenProvider.createToken(authentication, true);
-        log.debug("created jwt token: {}", jwt);
-
-        sendRedirect(request, response, exercise, jwt);
+        sendRedirect(request, response, exercise);
     }
 
     /**
@@ -142,11 +137,10 @@ public class LtiResource {
      * @param request       HTTP request
      * @param response      HTTP response
      * @param exercise      The exercise to redirect to
-     * @param jwt           jwt
      * @throws IOException  If an input or output exception occurs
      *
      */
-    private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise, String jwt) throws IOException {
+    private void sendRedirect(HttpServletRequest request, HttpServletResponse response, Exercise exercise) throws IOException {
 
         UriComponentsBuilder redirectUrlComponentsBuilder = UriComponentsBuilder.newInstance().scheme(request.getScheme()).host(request.getServerName());
         if (request.getServerPort() != 80 && request.getServerPort() != 443) {
@@ -159,11 +153,16 @@ public class LtiResource {
 
         if (!user.getActivated()) {
             redirectUrlComponentsBuilder.queryParam("initialize", "");
+
+            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+            String jwt = tokenProvider.createToken(authentication, true);
+            log.debug("created jwt token: {}", jwt);
+            redirectUrlComponentsBuilder.queryParam("jwt", jwt);
         }
-        if (!SecurityUtils.isAuthenticated()) {
-            redirectUrlComponentsBuilder.queryParam("login", "");
+        else {
+            redirectUrlComponentsBuilder.queryParam("jwt", "");
+            redirectUrlComponentsBuilder.queryParam("ltiSuccessLoginRequired", user.getLogin());
         }
-        redirectUrlComponentsBuilder.queryParam("jwt", jwt);
 
         String redirectUrl = redirectUrlComponentsBuilder.build().toString();
         log.info("redirect to url: {}", redirectUrl);

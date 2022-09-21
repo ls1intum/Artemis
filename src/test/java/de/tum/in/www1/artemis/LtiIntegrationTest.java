@@ -169,10 +169,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
-        assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("login")).isNull();
-        assertThat(parameters.getFirst("initialize")).isNotNull();
+        assertParametersNewStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
     }
 
@@ -187,10 +184,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
-        assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("login")).isNull();
-        assertThat(parameters.getFirst("initialize")).isNotNull();
+        assertParametersNewStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
     }
 
@@ -219,10 +213,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
-        assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("initialize")).isNull();
-        assertThat(parameters.getFirst("login")).isNull();
+        assertParametersExistingStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
     }
 
@@ -241,10 +232,7 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         URI header = request.post("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FOUND, MediaType.APPLICATION_FORM_URLENCODED, false);
 
         var uriComponents = UriComponentsBuilder.fromUri(header).build();
-        MultiValueMap<String, String> parameters = UriComponentsBuilder.fromUri(header).build().getQueryParams();
-        assertThat(parameters.getFirst("jwt")).isNotBlank();
-        assertThat(parameters.getFirst("initialize")).isNull();
-        assertThat(parameters.getFirst("login")).isNull();
+        assertParametersExistingStudent(UriComponentsBuilder.fromUri(header).build().getQueryParams());
         assertThat(uriComponents.getPathSegments()).containsSequence("courses", courseId.toString(), "exercises", exerciseId.toString());
 
         Mockito.reset(timeService);
@@ -272,5 +260,17 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         course.setInstructorGroupName("123");
         courseRepository.save(course);
         request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.FORBIDDEN, ExerciseLtiConfigurationDTO.class);
+    }
+
+    private void assertParametersExistingStudent(MultiValueMap<String, String> parameters) {
+        assertThat(parameters.getFirst("jwt")).isEqualTo("");
+        assertThat(parameters.getFirst("initialize")).isNull();
+        assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNotNull();
+    }
+
+    private void assertParametersNewStudent(MultiValueMap<String, String> parameters) {
+        assertThat(parameters.getFirst("jwt")).isNotBlank();
+        assertThat(parameters.getFirst("initialize")).isNotNull();
+        assertThat(parameters.getFirst("ltiSuccessLoginRequired")).isNull();
     }
 }
