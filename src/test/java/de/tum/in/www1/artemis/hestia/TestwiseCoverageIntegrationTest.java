@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
@@ -63,9 +64,9 @@ class TestwiseCoverageIntegrationTest extends AbstractSpringIntegrationBambooBit
 
     @BeforeEach
     void setup() {
-        database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
         database.addUsers(1, 1, 0, 0);
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var solutionParticipation = solutionProgrammingExerciseRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(programmingExercise.getId()).get();
         var unsavedPreviousSubmission = new ProgrammingSubmission();
         unsavedPreviousSubmission.setParticipation(solutionParticipation);

@@ -51,8 +51,8 @@ class TestwiseCoverageReportServiceTest extends AbstractSpringIntegrationBambooB
     @BeforeEach
     void setup() throws Exception {
         database.addUsers(1, 0, 0, 1);
-        database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
 
         programmingExercise = hestiaUtilTestService.setupSolution(
                 Map.ofEntries(Map.entry("src/de/tum/in/ase/BubbleSort.java", "\n ".repeat(28)), Map.entry("src/de/tum/in/ase/Context.java", "\n ".repeat(18))), programmingExercise,

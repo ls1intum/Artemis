@@ -12,6 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
@@ -61,8 +62,8 @@ class BehavioralTestCaseServiceTest extends AbstractSpringIntegrationBambooBitbu
     @BeforeEach
     void initTestCase() throws Exception {
         database.addUsers(0, 0, 0, 1);
-        database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
-        exercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExercise(false, true, ProgrammingLanguage.JAVA);
+        exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         exercise.setTestwiseCoverageEnabled(true);
     }
 

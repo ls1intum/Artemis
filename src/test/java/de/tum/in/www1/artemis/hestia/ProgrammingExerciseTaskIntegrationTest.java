@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.DomainObject;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingExerciseTestCase;
@@ -47,10 +48,10 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
 
     @BeforeEach
     void initTestCases() {
-        database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
         database.addUsers(2, 2, 1, 2);
 
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        final Course course = database.addCourseWithOneProgrammingExerciseAndSpecificTestCases();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         this.testCases = programmingExerciseTestCaseRepository.findByExerciseIdWithSolutionEntries(programmingExercise.getId());
         for (ProgrammingExerciseTestCase testCase : testCases) {
             var solutionEntry = new ProgrammingExerciseSolutionEntry();
@@ -146,10 +147,10 @@ class ProgrammingExerciseTaskIntegrationTest extends AbstractSpringIntegrationBa
     @WithMockUser(username = "tutor1", roles = "TA")
     void testTaskExtractionForEmptyProblemStatement() throws Exception {
         programmingExercise.setProblemStatement("");
-        programmingExerciseRepository.save(programmingExercise);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
 
         request.get("/api/programming-exercises/" + programmingExercise.getId() + "/tasks", HttpStatus.OK, Set.class);
 
-        assertThat(programmingExerciseTaskRepository.findAll()).isEmpty();
+        assertThat(programmingExerciseTaskRepository.findByExerciseId(programmingExercise.getId())).isEmpty();
     }
 }
