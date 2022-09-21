@@ -88,7 +88,6 @@
             },
             "onlineCourseConfiguration": {
                 "title": "Online Course Configuration",
-                "ltiId": "LTI Id",
                 "ltiKey": "LTI Key",
                 "ltiSecret": "LTI Secret",
                 "userPrefix": "User Prefix"

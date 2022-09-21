@@ -126,7 +126,6 @@ export class CourseUpdateComponent implements OnInit {
         this.onlineCourseConfigurationForm = new FormGroup({
             id: new FormControl(this.course.onlineCourseConfiguration?.id),
             course: new FormControl(this.course),
-            ltiId: new FormControl(this.course.onlineCourseConfiguration?.ltiId),
             ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
             ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
             userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [this.noSpacesValidator] }),

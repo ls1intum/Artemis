@@ -19,9 +19,6 @@ public class OnlineCourseConfiguration extends DomainObject {
     @JsonIgnore
     private Course course;
 
-    @Column(name = "lti_id", nullable = false)
-    private String ltiId;
-
     @Column(name = "lti_key", nullable = false)
     private String ltiKey;
 
@@ -40,14 +37,6 @@ public class OnlineCourseConfiguration extends DomainObject {
 
     public void setCourse(Course course) {
         this.course = course;
-    }
-
-    public String getLtiId() {
-        return ltiId;
-    }
-
-    public void setLtiId(String ltiId) {
-        this.ltiId = ltiId;
     }
 
     public String getLtiKey() {

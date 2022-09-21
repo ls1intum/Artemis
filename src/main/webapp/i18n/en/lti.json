@@ -16,7 +16,6 @@
             "ltiSuccessLoginRequired": "Successfully launched LTI exercise. Please login as user {{user}}.",
             "lti": "LTI",
             "configurationForExercise": "LTI configuration for exercise {{ title }}",
-            "ltiId": "LTI ID",
             "ltiKey": "LTI Key",
             "ltiSecret": "LTI Secret",
             "ltiLaunchUrl": "LTI Launch URL",

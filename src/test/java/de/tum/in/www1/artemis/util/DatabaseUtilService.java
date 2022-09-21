@@ -2213,7 +2213,6 @@ public class DatabaseUtilService {
 
     public OnlineCourseConfiguration addOnlineCourseConfigurationToCourse(Course course) {
         OnlineCourseConfiguration onlineCourseConfiguration = new OnlineCourseConfiguration();
-        onlineCourseConfiguration.setLtiId("artemis_lti");
         onlineCourseConfiguration.setLtiKey("artemis_lti_key");
         onlineCourseConfiguration.setLtiSecret("fake-secret");
         onlineCourseConfiguration.setUserPrefix("prefix");

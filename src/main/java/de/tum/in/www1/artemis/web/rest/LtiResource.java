@@ -192,7 +192,6 @@ public class LtiResource {
                 request.getServerName() +              // "myhost" // ":"
                 (request.getServerPort() != 80 && request.getServerPort() != 443 ? ":" + request.getServerPort() : "") + "/api/lti/launch/" + exercise.getId();
 
-        return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ocConfiguration.getLtiId(), ocConfiguration.getLtiKey(), ocConfiguration.getLtiSecret()),
-                HttpStatus.OK);
+        return new ResponseEntity<>(new ExerciseLtiConfigurationDTO(launchUrl, ocConfiguration.getLtiKey(), ocConfiguration.getLtiSecret()), HttpStatus.OK);
     }
 }
