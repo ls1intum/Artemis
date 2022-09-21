@@ -6,11 +6,11 @@
                 <constraints nullable="false" primaryKey="true" primaryKeyName="build_log_statistics_entryPK"/>
             </column>
             <column name="programming_submission_id" type="BIGINT"/>
-            <column name="agent_setup_duration" type="INT"/>
-            <column name="test_duration" type="INT"/>
-            <column name="sca_duration" type="INT"/>
-            <column name="total_job_duration" type="INT"/>
-            <column name="dependencies_downloaded_count" type="INT"/>
+            <column name="agent_setup_duration" type="SMALLINT UNSIGNED"/>
+            <column name="test_duration" type="SMALLINT UNSIGNED"/>
+            <column name="sca_duration" type="SMALLINT UNSIGNED"/>
+            <column name="total_job_duration" type="SMALLINT UNSIGNED"/>
+            <column name="dependencies_downloaded_count" type="SMALLINT UNSIGNED"/>
         </createTable>
         <addForeignKeyConstraint baseColumnNames="programming_submission_id" baseTableName="build_log_statistics_entry" constraintName="FKarrnc5l01jjyixrw6jbu18k6b" deferrable="false" initiallyDeferred="false" referencedColumnNames="id" referencedTableName="submission" validate="true"/>
     </changeSet>
