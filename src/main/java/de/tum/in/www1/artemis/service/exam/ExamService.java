@@ -400,7 +400,6 @@ public class ExamService {
         };
     }
 
-    // TODO: Ata Docs
     private Map<Long, BonusSourceResultDTO> calculateBonusSourceStudentPoints(GradingScale sourceGradingScale, Collection<Long> studentIds) {
         try {
             if (sourceGradingScale.getCourse() != null) {
