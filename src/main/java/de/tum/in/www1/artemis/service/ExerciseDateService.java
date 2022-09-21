@@ -39,7 +39,7 @@ public class ExerciseDateService {
 
     /**
      * Finds the earliest individual due date for participants.
-     * Returns nothing if the exercise itself has no due date.
+     * Returns null if the exercise itself has no due date.
      * @param exercise the exercise for which the earliest due date should be returned.
      * @return the earliest individual due date, or if none exists the exercise due date.
      */
