@@ -324,6 +324,12 @@ public class LtiService {
      * @return null if the request is valid, otherwise an error message which indicates the reason why the verification failed
      */
     public String verifyRequest(HttpServletRequest request, OnlineCourseConfiguration onlineCourseConfiguration) {
+        if (onlineCourseConfiguration == null) {
+            String message = "verifyRequest for LTI is not supported for this course";
+            log.warn(message);
+            return message;
+        }
+
         LtiVerifier ltiVerifier = new LtiOauthVerifier();
         try {
             LtiVerificationResult ltiResult = ltiVerifier.verify(request, onlineCourseConfiguration.getLtiSecret());

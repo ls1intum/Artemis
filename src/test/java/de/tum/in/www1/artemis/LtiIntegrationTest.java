@@ -4,10 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
 
 import java.net.URI;
-import java.time.*;
+import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Objects;
-import java.util.Optional;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -29,8 +28,6 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.exception.ArtemisAuthenticationException;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
-import de.tum.in.www1.artemis.util.ConfigUtil;
-import de.tum.in.www1.artemis.web.rest.LtiResource;
 import de.tum.in.www1.artemis.web.rest.dto.ExerciseLtiConfigurationDTO;
 
 class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
@@ -44,9 +41,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
 
     @Autowired
     private CourseRepository courseRepository;
-
-    @Autowired
-    private LtiResource ltiResource;
 
     private static final String EDX_REQUEST_BODY = """
             custom_component_display_name=Exercise\
@@ -121,6 +115,9 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         database.addUsers(1, 1, 0, 1);
 
         course = database.addCourseWithOneProgrammingExercise();
+        course.setOnlineCourse(true);
+        database.addOnlineCourseConfigurationToCourse(course);
+
         programmingExercise = programmingExerciseRepository.findAll().get(0);
 
         jiraRequestMockProvider.enableMockingOfRequests();
@@ -148,6 +145,17 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
         }
 
         jiraRequestMockProvider.mockAddUserToGroup("tumuser", false);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
+    @WithAnonymousUser
+    void launchAsAnonymousUser_noOnlineCourseConfigurationException(String requestBody) throws Exception {
+        course.setOnlineCourseConfiguration(null);
+        courseRepository.save(course);
+
+        request.postWithoutLocation("/api/lti/launch/" + programmingExercise.getId(), requestBody.getBytes(), HttpStatus.BAD_REQUEST, new HttpHeaders(),
+                MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
     @ParameterizedTest
@@ -202,23 +210,6 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
                 MediaType.APPLICATION_FORM_URLENCODED_VALUE);
     }
 
-    @Test
-    @WithAnonymousUser
-    void launchAsAnonymousUser_withEmptyBody() throws Throwable {
-        Long exerciseId = programmingExercise.getId();
-        request.postWithoutLocation("/api/lti/launch/" + exerciseId, "", HttpStatus.BAD_REQUEST, null);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
-    @WithAnonymousUser
-    void launchAsAnonymousUser_withEmptyConfig(String requestBody) throws Throwable {
-        ConfigUtil.testWithChangedConfig(ltiResource, "LTI_ID", Optional.empty(), () -> {
-            Long exerciseId = programmingExercise.getId();
-            request.postWithoutLocation("/api/lti/launch/" + exerciseId, requestBody, HttpStatus.FORBIDDEN, null);
-        });
-    }
-
     @ParameterizedTest
     @ValueSource(strings = { EDX_REQUEST_BODY, MOODLE_REQUEST_BODY })
     @WithMockUser(username = "student1", roles = "USER")
@@ -269,9 +260,10 @@ class LtiIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTes
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void exerciseLtiConfiguration_withEmptyConfig() throws Throwable {
-        ConfigUtil.testWithChangedConfig(ltiResource, "LTI_OAUTH_KEY", Optional.empty(), () -> {
-            request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.BAD_REQUEST, ExerciseLtiConfigurationDTO.class);
-        });
+        course.setOnlineCourseConfiguration(null);
+        courseRepository.save(course);
+
+        request.get("/api/lti/configuration/" + programmingExercise.getId(), HttpStatus.BAD_REQUEST, ExerciseLtiConfigurationDTO.class);
     }
 
     @Test

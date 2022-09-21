@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.Exercise;
 import de.tum.in.www1.artemis.domain.OnlineCourseConfiguration;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
-import de.tum.in.www1.artemis.repository.OnlineCourseConfigurationRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.security.SecurityUtils;
@@ -50,18 +49,15 @@ public class LtiResource {
 
     private final ExerciseRepository exerciseRepository;
 
-    private final OnlineCourseConfigurationRepository onlineCourseConfigurationRepository;
-
     private final TokenProvider tokenProvider;
 
     private final AuthorizationCheckService authCheckService;
 
-    public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository,
-            OnlineCourseConfigurationRepository onlineCourseConfigurationRepository, TokenProvider tokenProvider, AuthorizationCheckService authCheckService) {
+    public LtiResource(LtiService ltiService, UserRepository userRepository, ExerciseRepository exerciseRepository, TokenProvider tokenProvider,
+            AuthorizationCheckService authCheckService) {
         this.ltiService = ltiService;
         this.userRepository = userRepository;
         this.exerciseRepository = exerciseRepository;
-        this.onlineCourseConfigurationRepository = onlineCourseConfigurationRepository;
         this.tokenProvider = tokenProvider;
         this.authCheckService = authCheckService;
     }
@@ -100,8 +96,11 @@ public class LtiResource {
         Exercise exercise = optionalExercise.get();
         log.debug("found exercise {}", exercise.getTitle());
 
-        OnlineCourseConfiguration onlineCourseConfiguration = onlineCourseConfigurationRepository
-                .findByCourseIdOrElseThrow(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
+        OnlineCourseConfiguration onlineCourseConfiguration = exercise.getCourseViaExerciseGroupOrCourseMember().getOnlineCourseConfiguration();
+        if (onlineCourseConfiguration == null) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Exercise is not part of course configured for LTI");
+            return;
+        }
 
         log.debug("Try to verify LTI Oauth Request");
         // Verify request
@@ -184,12 +183,10 @@ public class LtiResource {
         var exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.INSTRUCTOR, exercise, null);
 
-        Optional<OnlineCourseConfiguration> optionalOcConfiguration = onlineCourseConfigurationRepository
-                .findByCourseId(exercise.getCourseViaExerciseGroupOrCourseMember().getId());
-        if (optionalOcConfiguration.isEmpty()) {
+        OnlineCourseConfiguration ocConfiguration = exercise.getCourseViaExerciseGroupOrCourseMember().getOnlineCourseConfiguration();
+        if (ocConfiguration == null) {
             throw new BadRequestAlertException("LTI is not configured for this course", "LTI", "ltiNotConfigured");
         }
-        OnlineCourseConfiguration ocConfiguration = optionalOcConfiguration.get();
 
         String launchUrl = request.getScheme() + // "https"
                 "://" +                                // "://"

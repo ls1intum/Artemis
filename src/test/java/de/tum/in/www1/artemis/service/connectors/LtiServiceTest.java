@@ -74,6 +74,7 @@ class LtiServiceTest {
                 artemisAuthenticationProvider, ltiUserIdRepository);
         Course course = new Course();
         course.setStudentGroupName(courseStudentGroupName);
+        course.setOnlineCourse(true);
         onlineCourseConfiguration = new OnlineCourseConfiguration();
         onlineCourseConfiguration.setCourse(course);
         exercise = new TextExercise();
@@ -140,6 +141,8 @@ class LtiServiceTest {
         launchRequest.setExt_user_username("username");
         launchRequest.setLis_person_name_given(firstName);
         launchRequest.setLis_person_name_family(lastName);
+
+        onlineCourseConfiguration.setUserPrefix("moodle");
 
         Set<String> groups = new HashSet<>();
         groups.add(LtiService.LTI_GROUP_NAME);
@@ -214,12 +217,12 @@ class LtiServiceTest {
     }
 
     @Test
-    void verifyRequest_oauthSecretNotSpecified() {
-        onlineCourseConfiguration.setLtiSecret(null);
+    void verifyRequest_onlineCourseConfigurationNotSpecified() {
+        onlineCourseConfiguration = null;
 
         HttpServletRequest request = mock(HttpServletRequest.class);
         String message = ltiService.verifyRequest(request, onlineCourseConfiguration);
-        assertThat("verifyRequest for LTI is not supported on this Artemis instance, artemis.lti.oauth-secret was not specified in the yml configuration").isEqualTo(message);
+        assertThat("verifyRequest for LTI is not supported for this course").isEqualTo(message);
     }
 
     @Test
