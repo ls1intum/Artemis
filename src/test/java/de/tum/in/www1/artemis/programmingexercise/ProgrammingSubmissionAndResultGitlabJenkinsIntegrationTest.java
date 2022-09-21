@@ -37,6 +37,7 @@ import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Result;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.connectors.jenkins.dto.CommitDTO;
@@ -141,7 +142,8 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
 
         List<String> logs = new ArrayList<>();
         logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
@@ -165,12 +167,41 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
+    void shouldExtractBuildLogAnalytics_noSca_gradle() throws Exception {
+        // Precondition: Database has participation and a programming submission.
+        String userLogin = "student1";
+        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        exercise.setProjectType(ProjectType.GRADLE_GRADLE);
+        programmingExerciseRepository.save(exercise);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
+
+        List<String> logs = new ArrayList<>();
+        logs.add("[2021-05-10T15:00:00.000Z] Starting a Gradle Daemon"); // Job started
+        logs.add("[2021-05-10T15:00:20.000Z] BUILD SUCCESSFUL in 20 seconds"); // Build & test started
+
+        var notification = createJenkinsNewResultNotification(exercise.getProjectKey(), userLogin, ProgrammingLanguage.JAVA, List.of(), logs, null, new ArrayList<>());
+        postResult(notification, HttpStatus.OK);
+
+        var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
+        assertThat(statistics.getBuildCount()).isEqualTo(1);
+        assertThat(statistics.getAgentSetupDuration()).isNull();
+        assertThat(statistics.getTestDuration()).isEqualTo(20);
+        assertThat(statistics.getScaDuration()).isNull();
+        assertThat(statistics.getTotalJobDuration()).isEqualTo(20);
+        assertThat(statistics.getDependenciesDownloadedCount()).isNull();
+    }
+
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
 
         List<String> logs = new ArrayList<>();
         logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
@@ -202,7 +233,8 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON);
         ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
-        database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
+        database.createProgrammingSubmission(participation, false);
 
         List<String> logs = new ArrayList<>();
         logs.add("[2021-05-10T14:58:30.000Z] Agents is getting prepared");
