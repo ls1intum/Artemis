@@ -1,6 +1,6 @@
 import { ActivatedRoute, Router } from '@angular/router';
 import { Component, OnInit, ViewChild } from '@angular/core';
-import { FormControl, FormGroup, ValidatorFn, Validators, AbstractControl } from '@angular/forms';
+import { FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService, AlertType } from 'app/core/util/alert.service';
 import { Observable } from 'rxjs';
@@ -14,7 +14,7 @@ import { CachingStrategy } from 'app/shared/image/secured-image.component';
 import { ProfileService } from 'app/shared/layouts/profiles/profile.service';
 import dayjs from 'dayjs/esm';
 import { ArtemisNavigationUtilService } from 'app/utils/navigation.utils';
-import { SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
+import { LOGIN_PATTERN, SHORT_NAME_PATTERN } from 'app/shared/constants/input.constants';
 import { Organization } from 'app/entities/organization.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
 import { OrganizationManagementService } from 'app/admin/organization-management/organization-management.service';
@@ -128,7 +128,7 @@ export class CourseUpdateComponent implements OnInit {
             course: new FormControl(this.course),
             ltiKey: new FormControl(this.course.onlineCourseConfiguration?.ltiKey),
             ltiSecret: new FormControl(this.course.onlineCourseConfiguration?.ltiSecret),
-            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [this.noSpacesValidator] }),
+            userPrefix: new FormControl(this.course.onlineCourseConfiguration?.userPrefix, { validators: [regexValidator(LOGIN_PATTERN)] }),
         });
 
         this.courseForm = new FormGroup(
@@ -327,6 +327,10 @@ export class CourseUpdateComponent implements OnInit {
         return this.courseForm.get('shortName')!;
     }
 
+    get userPrefix() {
+        return this.onlineCourseConfigurationForm.get('userPrefix')!;
+    }
+
     /**
      * Enable or disable presentation score input field based on presentationScoreEnabled checkbox
      */
@@ -501,11 +505,6 @@ export class CourseUpdateComponent implements OnInit {
 
     get isValidConfiguration(): boolean {
         return this.isValidDate;
-    }
-
-    noSpacesValidator(control: FormControl) {
-        const hasSpaces = (control.value || '').indexOf(' ') >= 0;
-        return hasSpaces ? { hasSpaces: true } : null;
     }
 }
 

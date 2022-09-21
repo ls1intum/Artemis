@@ -87,10 +87,15 @@
                 "description": "Aktiviere diese Checkbox für externe Onlinekurse (z.B. auf edX), damit Studierende diesen Artemis-Kurs (über die LTI Schnittstelle) nutzen können. Dies ermöglicht auch eine automatische Kontoerstellung, sofern dies vom Artemis Systemadministrator eingestellt ist."
             },
             "onlineCourseConfiguration": {
-                "title": "Online Course Configuration",
+                "title": "Onlinekurs Konfiguration",
                 "ltiKey": "LTI Key",
-                "ltiSecret": "LTI Secret",
-                "userPrefix": "User Prefix"
+                "ltiSecret": "LTI Geheimnis",
+                "userPrefix": "Nutzer Präfix",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "Nutzer Präfix darf keine Sonderzeichen beinhalten."
+                    }
+                }
             },
             "registrationEnabled": {
                 "title": "Kursregistrierung für Studierende aktiviert",

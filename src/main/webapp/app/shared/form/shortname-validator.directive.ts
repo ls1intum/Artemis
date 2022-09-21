@@ -1,7 +1,7 @@
 import { AbstractControl, ValidatorFn } from '@angular/forms';
 
 /**
- * Validator for the required regex pattern of the short name
+ * Validator for the required regex pattern
  * @param regex Regex expression
  */
 export function regexValidator(regex: RegExp): ValidatorFn {

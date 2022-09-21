@@ -379,6 +379,13 @@
                         <div class="form-group">
                             <label class="form-control-label" jhiTranslate="artemisApp.course.onlineCourseConfiguration.userPrefix" for="field_userPrefix">User Prefix</label>
                             <input required type="text" class="form-control" name="userPrefix" id="field_userPrefix" formControlName="userPrefix" />
+                            <ng-container *ngIf="userPrefix.invalid && (userPrefix.dirty || userPrefix.touched)">
+                                <div *ngIf="(userPrefix.errors! | keyvalue | removekeys: ['required']).length > 0" class="alert alert-danger">
+                                    <div *ngFor="let e of userPrefix.errors! | keyvalue | removekeys: ['required']">
+                                        <div [jhiTranslate]="'artemisApp.course.onlineCourseConfiguration.form.userPrefix' + '.' + e.key"></div>
+                                    </div>
+                                </div>
+                            </ng-container>
                         </div>
                     </form>
                 </div>

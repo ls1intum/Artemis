@@ -90,7 +90,12 @@
                 "title": "Online Course Configuration",
                 "ltiKey": "LTI Key",
                 "ltiSecret": "LTI Secret",
-                "userPrefix": "User Prefix"
+                "userPrefix": "User Prefix",
+                "form": {
+                    "userPrefix": {
+                        "forbidden": "User prefix cannot contain special characters."
+                    }
+                }
             },
             "registrationEnabled": {
                 "title": "Student Course Registration Enabled",
