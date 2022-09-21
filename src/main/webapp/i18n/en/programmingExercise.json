@@ -433,7 +433,8 @@
                 "testDuration": "Test execution",
                 "scaDuration": "Static Code Analysis",
                 "totalJobDuration": "Total Job",
-                "dependenciesDownloadedCount": "Number of downloaded dependencies"
+                "dependenciesDownloadedCount": "Number of downloaded dependencies",
+                "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
             }
         },
         "error": {

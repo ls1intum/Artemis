@@ -432,7 +432,8 @@
                 "testDuration": "Testausführung",
                 "scaDuration": "Statische Codeanalyse",
                 "totalJobDuration": "kompletter Job",
-                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten"
+                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
+                "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
             }
         },
         "error": {
