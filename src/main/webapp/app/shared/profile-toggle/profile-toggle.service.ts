@@ -12,6 +12,7 @@ import { HttpClient } from '@angular/common/http';
 // TODO: adjust
 export enum ProfileToggle {
     Scheduling = 'scheduling',
+    LECTURE = 'lecture',
 }
 export type ActiveProfileToggles = Array<ProfileToggle>;
 

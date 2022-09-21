@@ -26,6 +26,7 @@ import {
     faUserCheck,
     faWrench,
 } from '@fortawesome/free-solid-svg-icons';
+import { ProfileToggle } from 'app/shared/profile-toggle/profile-toggle.service';
 
 export enum DoughnutChartType {
     ASSESSMENT = 'ASSESSMENT',
@@ -47,6 +48,8 @@ export class CourseDetailComponent implements OnInit, OnDestroy {
 
     ButtonSize = ButtonSize;
     ActionType = ActionType;
+
+    ProfileToggle = ProfileToggle;
 
     courseDTO: CourseManagementDetailViewDto;
     activeStudents?: number[];

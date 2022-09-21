@@ -10,7 +10,13 @@
                 <fa-icon [icon]="faGraduationCap"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.exams">Exams</span>
             </a>
-            <a *ngIf="course.isAtLeastEditor" [routerLink]="['/course-management', course.id, 'lectures']" class="tab-item btn btn-primary btn-md ms-1" id="lectures">
+            <a
+                *ngIf="course.isAtLeastEditor"
+                [jhiProfileToggleLink]="ProfileToggle.LECTURE"
+                [routerLink]="['/course-management', course.id, 'lectures']"
+                class="tab-item btn btn-primary btn-md ms-1"
+                id="lectures"
+            >
                 <fa-icon [icon]="faFilePdf"></fa-icon>
                 <span jhiTranslate="artemisApp.courseOverview.menu.lectures">Lectures</span>
             </a>
