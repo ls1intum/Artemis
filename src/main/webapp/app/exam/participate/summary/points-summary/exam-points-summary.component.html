@@ -98,7 +98,7 @@
                 </td>
             </tr>
         </table>
-        <span class="grading-key" [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">
+        <span [routerLink]="['overview', 'grading-key']" [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.finalGrade ?? grade }">
             <a class="btn btn-primary">
                 <fa-icon [icon]="faClipboard"></fa-icon>
                 <span
@@ -110,7 +110,6 @@
         </span>
         <span
             *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"
-            class="grading-key"
             [routerLink]="['overview', 'bonus-grading-key']"
             [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus!.bonusGrade }"
         >
