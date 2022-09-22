@@ -26,7 +26,7 @@ export class OpenCodeEditorButtonComponent implements OnInit {
 
     ngOnInit() {
         this.codeEditorHeadlines = this.participations.map((participation) =>
-            participation.testRun ? 'artemisApp.exerciseActions.openPracticeCodeEditor' : 'artemisApp.exerciseGradedActions.openCodeEditor',
+            participation.testRun ? 'artemisApp.exerciseActions.openPracticeCodeEditor' : 'artemisApp.exerciseActions.openCodeEditor',
         );
         this.courseAndExerciseNavigationURL = this.courseAndExerciseNavigationURLSegment.reduce((acc, segment) => acc + '/' + segment);
     }

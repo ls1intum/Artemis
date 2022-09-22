@@ -1,6 +1,6 @@
 <div *ngIf="exercise">
     <!-- HEADER INFORMATION START -->
-    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="ratedStudentParticipation" [submissionPolicy]="submissionPolicy">
+    <jhi-header-exercise-page-with-details [exercise]="exercise" [studentParticipation]="gradedStudentParticipation" [submissionPolicy]="submissionPolicy">
         <span pagetitle>{{ exercise.title }}</span>
     </jhi-header-exercise-page-with-details>
     <!-- HEADER INFORMATION END -->
@@ -24,7 +24,7 @@
         <div class="col-auto">
             <jhi-submission-result-status
                 [exercise]="exercise"
-                [studentParticipation]="ratedStudentParticipation"
+                [studentParticipation]="gradedStudentParticipation"
                 updatingResultClass="me-2"
                 [showBadge]="true"
                 [showUngradedResults]="false"
@@ -33,12 +33,12 @@
             </jhi-submission-result-status>
             <jhi-submission-result-status
                 [exercise]="exercise"
-                [studentParticipation]="unratedStudentParticipation"
+                [studentParticipation]="practiceStudentParticipation"
                 updatingResultClass="me-2"
                 [showBadge]="true"
                 [showUngradedResults]="true"
                 [triggerLastGraded]="false"
-                *ngIf="unratedStudentParticipation"
+                *ngIf="practiceStudentParticipation"
             >
             </jhi-submission-result-status>
         </div>
@@ -127,7 +127,7 @@
                 <jhi-programming-exercise-instructions
                     *ngIf="exercise"
                     [exercise]="exercise"
-                    [participation]="exercise.studentParticipations! && exercise.studentParticipations![0]"
+                    [participation]="practiceStudentParticipation ?? gradedStudentParticipation!"
                     [personalParticipation]="true"
                 >
                 </jhi-programming-exercise-instructions>
@@ -142,7 +142,7 @@
             </ng-template>
             <!-- PROBLEM STATEMENT END -->
             <!-- RESULTS START -->
-            <div class="row" [class.order-first]="unratedStudentParticipation">
+            <div class="row" [class.order-first]="practiceStudentParticipation">
                 <div
                     class="row mb-2 mt-2 align-items-baseline d-none d-md-flex"
                     *ngIf="showResults && ((sortedHistoryResult && sortedHistoryResult.length > 1) || !latestRatedResult?.rated)"
@@ -168,7 +168,7 @@
                         <jhi-result
                             [exercise]="exercise"
                             [result]="sortedHistoryResult![0]"
-                            [participation]="ratedStudentParticipation!"
+                            [participation]="gradedStudentParticipation!"
                             [showUngradedResults]="true"
                             [short]="true"
                         ></jhi-result>
@@ -197,7 +197,7 @@
                                     <jhi-result
                                         [exercise]="exercise"
                                         [result]="result"
-                                        [participation]="ratedStudentParticipation!"
+                                        [participation]="gradedStudentParticipation!"
                                         [showUngradedResults]="true"
                                         [short]="true"
                                     ></jhi-result>
@@ -255,7 +255,7 @@
                 *ngIf="
                     exercise &&
                     exercise.type === PROGRAMMING &&
-                    !!ratedStudentParticipation &&
+                    !!gradedStudentParticipation &&
                     !!latestRatedResult &&
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL ||
                         latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC ||
@@ -263,7 +263,7 @@
                 "
                 class="mb-2 mt-2 ms-3"
                 [exercise]="exercise"
-                [participation]="ratedStudentParticipation!"
+                [participation]="gradedStudentParticipation!"
                 [result]="resultWithComplaint ? resultWithComplaint! : latestRatedResult!"
             >
             </jhi-complaint-student-view>
@@ -271,7 +271,7 @@
                 class="row"
                 *ngIf="
                     exercise?.type === PROGRAMMING &&
-                    ratedStudentParticipation &&
+                    gradedStudentParticipation &&
                     latestRatedResult &&
                     (latestRatedResult.assessmentType === AssessmentType.MANUAL || latestRatedResult.assessmentType === AssessmentType.SEMI_AUTOMATIC)
                 "
