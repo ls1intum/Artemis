@@ -3,7 +3,7 @@
         <div class="result-divider"></div>
     </div>
     <div class="result-history-element" *ngFor="let result of results">
-        <div *ngIf="!!result" class="result-score" [ngbTooltip]="result.completionDate | artemisDate" placement="top" container="body">
+        <div class="result-score" [ngbTooltip]="result.completionDate | artemisDate" placement="top" container="body">
             <div class="result-score-icon" [ngClass]="resultClass(result)">
                 <fa-icon [icon]="resultIcon(result)"></fa-icon>
             </div>
