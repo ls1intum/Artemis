@@ -18,7 +18,7 @@ import { isResultPreliminary } from 'app/exercises/programming/shared/utils/prog
 import { ProgrammingExercise } from 'app/entities/programming-exercise.model';
 import { ProgrammingSubmission } from 'app/entities/programming-submission.model';
 import { captureException } from '@sentry/browser';
-import { Participation } from 'app/entities/participation/participation.model';
+import { Participation, ParticipationType } from 'app/entities/participation/participation.model';
 
 export type EntityResponseType = HttpResponse<Result>;
 export type EntityArrayResponseType = HttpResponse<Result[]>;
@@ -292,7 +292,7 @@ export class ResultService implements IResultService {
     }
 
     public static evaluateBadgeClass(participation: Participation, result: Result): string {
-        if (participation instanceof StudentParticipation) {
+        if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             const studentParticipation = participation as StudentParticipation;
             if (studentParticipation.testRun) {
                 return 'bg-secondary';
@@ -302,7 +302,7 @@ export class ResultService implements IResultService {
     }
 
     public static evaluateBadgeText(participation: Participation, result: Result): string {
-        if (participation instanceof StudentParticipation) {
+        if (participation.type === ParticipationType.STUDENT || participation.type === ParticipationType.PROGRAMMING) {
             const studentParticipation = participation as StudentParticipation;
             if (studentParticipation.testRun) {
                 return 'artemisApp.result.practice';

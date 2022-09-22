@@ -219,15 +219,15 @@
                     <jhi-open-code-editor-button
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
-                        [participations]="exercise.studentParticipations"
-                        [courseAndExerciseNavigationURLSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
+                        [participations]="exercise.studentParticipations!"
+                        [courseAndExerciseNavigationUrlSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
                         *ngIf="!examMode && isOnlineEditorAllowed()"
                     >
                     </jhi-open-code-editor-button>
                     <jhi-clone-repo-button
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
-                        [participations]="exercise.studentParticipations"
+                        [participations]="exercise.studentParticipations!"
                         *ngIf="isOfflineIdeAllowed()"
                     >
                     </jhi-clone-repo-button>

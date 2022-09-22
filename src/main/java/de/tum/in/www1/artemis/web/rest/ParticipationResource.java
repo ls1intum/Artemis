@@ -209,7 +209,7 @@ public class ParticipationResource {
         User user = userRepository.getUserWithGroupsAndAuthorities();
         Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("The practice mode cannot be used in an exam", ENTITY_NAME, "noPracticeModeInExam");
         }
@@ -219,8 +219,8 @@ public class ParticipationResource {
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
         }
-        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
-                || (optionalGradedStudentParticipation.isPresent() && now().isBefore(optionalGradedStudentParticipation.get().getIndividualDueDate()))) {
+        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate()) || (optionalGradedStudentParticipation.isPresent()
+                && optionalGradedStudentParticipation.get().getIndividualDueDate() != null && now().isBefore(optionalGradedStudentParticipation.get().getIndividualDueDate()))) {
             throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
 

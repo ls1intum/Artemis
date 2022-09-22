@@ -15,11 +15,11 @@ export class OpenCodeEditorButtonComponent implements OnInit {
     @Input()
     participations: ProgrammingExerciseStudentParticipation[];
     @Input()
-    courseAndExerciseNavigationURLSegment: any[];
+    courseAndExerciseNavigationUrlSegment: any[];
 
     FeatureToggle = FeatureToggle;
     codeEditorHeadlines: string[] = [];
-    courseAndExerciseNavigationURL: string;
+    courseAndExerciseNavigationUrl: string;
 
     // Icons
     faFolderOpen = faFolderOpen;
@@ -28,6 +28,6 @@ export class OpenCodeEditorButtonComponent implements OnInit {
         this.codeEditorHeadlines = this.participations.map((participation) =>
             participation.testRun ? 'artemisApp.exerciseActions.openPracticeCodeEditor' : 'artemisApp.exerciseActions.openCodeEditor',
         );
-        this.courseAndExerciseNavigationURL = this.courseAndExerciseNavigationURLSegment.reduce((acc, segment) => acc + '/' + segment);
+        this.courseAndExerciseNavigationUrl = this.courseAndExerciseNavigationUrlSegment.reduce((acc, segment) => acc + '/' + segment);
     }
 }

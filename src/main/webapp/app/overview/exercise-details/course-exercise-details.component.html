@@ -156,11 +156,11 @@
                         <jhi-result-history [results]="sortedHistoryResult" [showPreviousDivider]="hasMoreResults"></jhi-result-history>
                     </div>
                 </div>
-                <div class="row justify-content-between" *ngIf="showResults && !latestRatedResult?.rated && sortedHistoryResult?.length === 1">
-                    <div class="col">
+                <div class="row justify-content-between" *ngIf="showResults && sortedHistoryResult?.length === 1">
+                    <div *ngIf="sortedHistoryResult[0].participation" class="col">
                         <h4>
-                            <span class="badge w-100 bg-info">
-                                {{ 'artemisApp.courseOverview.exerciseDetails.notGraded' | artemisTranslate | uppercase }}
+                            <span class="badge w-100" [ngClass]="evaluateBadgeClass(sortedHistoryResult[0].participation, sortedHistoryResult[0])">
+                                {{ evaluateBadgeText(sortedHistoryResult[0].participation, sortedHistoryResult[0]) | artemisTranslate | uppercase }}
                             </span>
                         </h4>
                     </div>

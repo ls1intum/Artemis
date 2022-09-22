@@ -9,7 +9,7 @@
         [smallButton]="smallButtons"
         [hideLabelMobile]="false"
         *ngIf="participations?.length && participations?.length === 1"
-        [routerLink]="[courseAndExerciseNavigationURL, participations[0].id]"
+        [routerLink]="[courseAndExerciseNavigationUrl, participations[0].id]"
     ></button>
 
     <button
@@ -39,7 +39,7 @@
                 [buttonLoading]="loading"
                 [smallButton]="smallButtons"
                 [hideLabelMobile]="false"
-                [routerLink]="[courseAndExerciseNavigationURL, participation.id]"
+                [routerLink]="[courseAndExerciseNavigationUrl, participation.id]"
             ></button>
         </div>
     </ng-template>
