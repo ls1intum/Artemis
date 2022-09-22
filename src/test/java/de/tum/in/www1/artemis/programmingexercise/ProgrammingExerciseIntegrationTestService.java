@@ -155,10 +155,10 @@ class ProgrammingExerciseIntegrationTestService {
         database.addUsers(3, 2, 2, 2);
         course = database.addCourseWithOneProgrammingExerciseAndTestCases();
         programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationById(programmingExercise.getId()).orElseThrow();
         programmingExerciseInExam = database.addCourseExamExerciseGroupWithOneProgrammingExerciseAndTestCases();
         programmingExerciseInExam = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExerciseInExam.getId())
-                .get();
+                .orElseThrow();
 
         participation1 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
         participation2 = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student2");
@@ -571,7 +571,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testProgrammingExerciseDelete_invalidId_notFound() throws Exception {
-        programmingExercise.setId(20L);
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = ROOT + PROGRAMMING_EXERCISE.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.delete(path, HttpStatus.NOT_FOUND);
     }
@@ -638,7 +638,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetProgrammingExerciseWithSetupParticipations_invalidId_notFound() throws Exception {
-        programmingExercise.setId(20L);
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var path = ROOT + PROGRAMMING_EXERCISE_WITH_PARTICIPATIONS.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.get(path, HttpStatus.NOT_FOUND, ProgrammingExercise.class);
     }
@@ -851,7 +851,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTimeline_invalidId_notFound() throws Exception {
-        programmingExercise.setId(20L);
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var endpoint = "/api" + TIMELINE;
         MultiValueMap<String, String> params = new HttpHeaders();
         params.add("notificationText", "The notification text");
@@ -872,7 +872,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateProblemStatement_invalidId_notFound() throws Exception {
-        programmingExercise.setId(20L);
+        programmingExercise.setId(getMaxProgrammingExerciseId() + 1);
         final var endpoint = "/api" + ProgrammingExerciseResourceEndpoints.PROBLEM.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
         request.patchWithResponseBody(endpoint, "a new problem statement", ProgrammingExercise.class, HttpStatus.NOT_FOUND, MediaType.TEXT_PLAIN);
     }
@@ -1331,7 +1331,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_asInstrutor() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var testCases = programmingExerciseTestCaseRepository.findByExerciseId(programmingExercise.getId());
@@ -1362,7 +1362,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void updateTestCases_asInstrutor_triggerBuildFails() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuildFailed(programmingExercise.getTemplateParticipation());
 
@@ -1448,7 +1448,7 @@ class ProgrammingExerciseIntegrationTestService {
 
         final var testCasesResponse = request.patchWithResponseBody(ROOT + endpoint, updates, new TypeReference<List<ProgrammingExerciseTestCase>>() {
         }, HttpStatus.OK);
-        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).getId())).findFirst().get();
+        final var updatedTestCase = testCasesResponse.stream().filter(testCase -> testCase.getId().equals(updates.get(0).getId())).findFirst().orElseThrow();
         assertThat(updatedTestCase.getBonusPoints()).isEqualTo(0d);
         assertThat(testCasesResponse.stream().filter(testCase -> !testCase.getId().equals(updatedTestCase.getId()))).allMatch(testCase -> testCase.getBonusPoints() == 1d);
     }
@@ -1466,7 +1466,7 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void resetTestCaseWeights_asInstructor() throws Exception {
-        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).get();
+        programmingExercise = programmingExerciseRepository.findWithTemplateAndSolutionParticipationTeamAssignmentConfigCategoriesById(programmingExercise.getId()).orElseThrow();
         mockDelegate.mockTriggerBuild(programmingExercise.getSolutionParticipation());
         mockDelegate.mockTriggerBuild(programmingExercise.getTemplateParticipation());
         final var endpoint = ProgrammingExerciseTestCaseResource.Endpoints.RESET.replace("{exerciseId}", String.valueOf(programmingExercise.getId()));
@@ -1650,8 +1650,9 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResult() throws Exception {
-        database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = this.programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
 
         TextPlagiarismResult expectedResult = database.createTextPlagiarismResultForExercise(programmingExercise);
 
@@ -1660,14 +1661,14 @@ class ProgrammingExerciseIntegrationTestService {
     }
 
     void testGetPlagiarismResultWithoutResult() throws Exception {
-        database.addCourseWithOneProgrammingExercise();
-        ProgrammingExercise programmingExercise = programmingExerciseRepository.findAllWithEagerTemplateAndSolutionParticipations().get(0);
+        Course course = database.addCourseWithOneProgrammingExercise();
+        ProgrammingExercise programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         var result = request.get("/api/programming-exercises/" + programmingExercise.getId() + "/plagiarism-result", HttpStatus.OK, String.class);
         assertThat(result).isNullOrEmpty();
     }
 
     void testGetPlagiarismResultWithoutExercise() throws Exception {
-        TextPlagiarismResult result = request.get("/api/programming-exercises/" + 1 + "/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
+        TextPlagiarismResult result = request.get("/api/programming-exercises/-1/plagiarism-result", HttpStatus.NOT_FOUND, TextPlagiarismResult.class);
         assertThat(result).isNull();
     }
 
@@ -1967,5 +1968,9 @@ class ProgrammingExerciseIntegrationTestService {
 
         request.getWithForwardedUrl("/api/programming-exercises/" + programmingExercise.getId() + "/template-files-content", HttpStatus.OK,
                 "/api/repository/" + savedExercise.getTemplateParticipation().getId() + "/files-content");
+    }
+
+    private long getMaxProgrammingExerciseId() {
+        return programmingExerciseRepository.findAll().stream().mapToLong(ProgrammingExercise::getId).max().orElse(1L);
     }
 }
