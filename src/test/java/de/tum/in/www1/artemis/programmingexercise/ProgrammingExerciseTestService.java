@@ -418,7 +418,8 @@ public class ProgrammingExerciseTestService {
 
         examExercise.setId(generatedExercise.getId());
         assertThat(examExercise).isEqualTo(generatedExercise);
-        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+        final Exam loadedExam = examRepository.findWithExerciseGroupsAndExercisesById(examExercise.getExamViaExerciseGroupOrCourseMember().getId()).orElseThrow();
+        assertThat(loadedExam.getNumberOfExercisesInExam()).isEqualTo(1);
     }
 
     // TEST
@@ -434,7 +435,7 @@ public class ProgrammingExerciseTestService {
         setupRepositoryMocks(examExercise, exerciseRepo, solutionRepo, testRepo, auxRepo);
         ExerciseGroup exerciseGroup = examExercise.getExerciseGroup();
         mockDelegate.mockConnectorRequestsForSetup(examExercise, false);
-        ZonedDateTime someMoment = ZonedDateTime.of(2000, 06, 15, 0, 0, 0, 0, ZoneId.of("Z"));
+        ZonedDateTime someMoment = ZonedDateTime.of(2000, 6, 15, 0, 0, 0, 0, ZoneId.of("Z"));
         examExercise.setDueDate(someMoment);
 
         request.postWithResponseBody(ROOT + SETUP, examExercise, ProgrammingExercise.class, HttpStatus.BAD_REQUEST);
@@ -975,7 +976,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = submissionRepository.findAll();
+        var submissions = submissionRepository.findAllByParticipationId(participation.getId());
         assertThat(submissions).hasSize(1);
     }
 
@@ -1012,7 +1013,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = submissionRepository.findAll();
+        var submissions = submissionRepository.findAllByParticipationId(participation.getId());
         assertThat(submissions).hasSize(1);
     }
 
@@ -1045,7 +1046,7 @@ public class ProgrammingExerciseTestService {
 
         // Trigger the build again and make sure no new submission is created
         request.postWithoutLocation(url, null, HttpStatus.OK, new HttpHeaders());
-        var submissions = submissionRepository.findAll();
+        var submissions = submissionRepository.findAllByParticipationId(participation.getId());
         assertThat(submissions).hasSize(1);
     }
 
@@ -1465,6 +1466,8 @@ public class ProgrammingExerciseTestService {
 
         // Create a team with students
         Set<User> students = new HashSet<>(userRepo.findAllInGroupWithAuthorities("tumuser"));
+        int numberOfStudents = students.size();
+
         Team team = new Team().name("Team 1").shortName(teamShortName).exercise(exercise).students(students);
         team = teamRepository.save(exercise, team);
 
@@ -1679,8 +1682,10 @@ public class ProgrammingExerciseTestService {
         examExercise.getExerciseGroup().getExam().setEndDate(endDate);
         examRepository.save(examExercise.getExerciseGroup().getExam());
 
-        var allProgrammingExercises = programmingExerciseRepository.findAll();
-        assertThat(allProgrammingExercises).hasSize(2);
+        var createdExercise = programmingExerciseRepository.findById(exercise.getId());
+        assertThat(createdExercise).isPresent();
+        var createdExamExercise = programmingExerciseRepository.findById(examExercise.getId());
+        assertThat(createdExamExercise).isPresent();
 
         createProgrammingParticipationWithSubmissionAndResult(exercise, "student1", 100D, ZonedDateTime.now().minusDays(2L), false);
         createProgrammingParticipationWithSubmissionAndResult(exercise, "student2", 80D, ZonedDateTime.now().minusDays(6L), false);
@@ -1695,7 +1700,7 @@ public class ProgrammingExerciseTestService {
     private void validateProgrammingExercise(ProgrammingExercise generatedExercise) {
         exercise.setId(generatedExercise.getId());
         assertThat(exercise).isEqualTo(generatedExercise);
-        assertThat(programmingExerciseRepository.count()).isEqualTo(1);
+        assertThat(programmingExerciseRepository.findById(exercise.getId())).isPresent();
     }
 
     private Course getCourseForExercise() {
