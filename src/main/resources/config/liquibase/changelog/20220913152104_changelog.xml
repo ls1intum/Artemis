@@ -10,10 +10,10 @@
         </addColumn>
 
         <createIndex tableName="result" indexName="result_last_modified_date">
-            <column>last_modified_date</column>
+            <column name="last_modified_date" />
         </createIndex>
         <createIndex tableName="participant_score" indexName="participant_score_last_modified_date">
-            <column>last_modified_date</column>
+            <column name="last_modified_date" />
         </createIndex>
     </changeSet>
     <changeSet author="ge65cer" id="20220913152104-2">
