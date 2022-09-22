@@ -199,7 +199,7 @@
             ></button>
             <button
                 [id]="'start-practice-' + exercise.id"
-                class="start-exercise"
+                class="start-practice"
                 jhi-exercise-action-button
                 [buttonIcon]="faRedo"
                 [jhiFeatureToggle]="FeatureToggle.ProgrammingExercises"
@@ -214,13 +214,14 @@
 
             <!-- TODO: Exam mode reuses the whole component at the moment. We need the clone repo button but not the open
             code editor button. We should think about refactoring the clone repo button into an own component -->
-            <ng-container *ngIf="shouldDisplayIDEButtons() && exercise.studentParticipations">
+            <ng-container *ngIf="shouldDisplayIDEButtons()">
                 <ng-container *jhiExtensionPoint="overrideCloneOnlineEditorButton; context: { exercise: exercise }">
                     <jhi-open-code-editor-button
                         [loading]="!!exercise.loading"
                         [smallButtons]="smallButtons"
                         [participations]="exercise.studentParticipations"
                         [courseAndExerciseNavigationURLSegment]="['/courses', courseId, 'programming-exercises', exercise.id, 'code-editor']"
+                        *ngIf="!examMode && isOnlineEditorAllowed()"
                     >
                     </jhi-open-code-editor-button>
                     <jhi-clone-repo-button

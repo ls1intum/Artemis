@@ -187,6 +187,28 @@ describe('Course Management Service', () => {
         tick();
     }));
 
+    it('should start practice', fakeAsync(() => {
+        const participationId = 12345;
+        const participation = new StudentParticipation();
+        participation.id = participationId;
+        participation.exercise = programmingExercise;
+        returnedFromService = { ...participation };
+        const expected = Object.assign(
+            {
+                initializationDate: undefined,
+            },
+            participation,
+        );
+        service
+            .startPractice(exerciseId)
+            .pipe(take(1))
+            .subscribe((res) => expect(res).toEqual(expected));
+
+        requestAndExpectDateConversion('POST', SERVER_API_URL + `api/exercises/${exerciseId}/participations/practice-mode`, returnedFromService, participation.exercise, true);
+        expect(programmingExercise.studentParticipations?.[0]?.id).toBe(participationId);
+        tick();
+    }));
+
     it('should resume programming exercise', fakeAsync(() => {
         const participationId = 12345;
         const participation = new StudentParticipation();

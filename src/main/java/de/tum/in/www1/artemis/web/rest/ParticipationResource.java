@@ -207,8 +207,9 @@ public class ParticipationResource {
         log.debug("REST request to start Exercise : {}", exerciseId);
         Exercise exercise = exerciseRepository.findByIdElseThrow(exerciseId);
         User user = userRepository.getUserWithGroupsAndAuthorities();
+        Optional<StudentParticipation> optionalGradedStudentParticipation = participationService.findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, user, false);
 
-        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, user);
+        authCheckService.checkHasAtLeastRoleForExerciseElseThrow(Role.STUDENT, exercise, null);
         if (exercise.isExamExercise()) {
             throw new BadRequestAlertException("The practice mode cannot be used in an exam", ENTITY_NAME, "noPracticeModeInExam");
         }
@@ -218,11 +219,12 @@ public class ParticipationResource {
         if (!(exercise instanceof ProgrammingExercise)) {
             throw new BadRequestAlertException("The practice can only be used for programming exercises", ENTITY_NAME, "practiceModeOnlyForProgramming");
         }
-        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())) {
-            throw new AccessForbiddenException("The practice mode cannot be started before the due date");
+        if (exercise.getDueDate() == null || now().isBefore(exercise.getDueDate())
+                || (optionalGradedStudentParticipation.isPresent() && now().isBefore(optionalGradedStudentParticipation.get().getIndividualDueDate()))) {
+            throw new AccessForbiddenException("The practice mode can only be started after the due date");
         }
 
-        StudentParticipation participation = participationService.startPracticeMode(exercise, user);
+        StudentParticipation participation = participationService.startPracticeMode(exercise, user, optionalGradedStudentParticipation);
 
         // remove sensitive information before sending participation to the client
         participation.getExercise().filterSensitiveInformation();

@@ -26,6 +26,7 @@ import { Router } from '@angular/router';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
 import { HttpClient } from '@angular/common/http';
 import { CourseExerciseService } from 'app/exercises/shared/course-exercises/course-exercise.service';
+import dayjs from 'dayjs/esm';
 
 describe('ExerciseDetailsStudentActionsComponent', () => {
     let comp: ExerciseDetailsStudentActionsComponent;
@@ -34,6 +35,7 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
     let courseExerciseService: CourseExerciseService;
     let profileService: ProfileService;
     let startExerciseStub: jest.SpyInstance;
+    let startPracticeStub: jest.SpyInstance;
     let getProfileInfoSub: jest.SpyInstance;
 
     const team = { id: 1, students: [{ id: 99 } as User] } as Team;
@@ -78,11 +80,13 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
                 getProfileInfoSub = jest.spyOn(profileService, 'getProfileInfo');
                 getProfileInfoSub.mockReturnValue(of({ inProduction: false, sshCloneURLTemplate: 'ssh://git@testserver.com:1234/' } as ProfileInfo));
                 startExerciseStub = jest.spyOn(courseExerciseService, 'startExercise');
+                startPracticeStub = jest.spyOn(courseExerciseService, 'startPractice');
             });
     });
 
     afterEach(() => {
         startExerciseStub.mockRestore();
+        startPracticeStub.mockRestore();
         getProfileInfoSub.mockRestore();
     });
 
@@ -157,6 +161,54 @@ describe('ExerciseDetailsStudentActionsComponent', () => {
 
         // Check that button "Start exercise" is no longer shown
         const startExerciseButton = fixture.debugElement.query(By.css('.start-exercise'));
+        expect(startExerciseButton).toBeNull();
+
+        // Check that button "Clone repository" is shown
+        const cloneRepositoryButton = fixture.debugElement.query(By.css('jhi-clone-repo-button'));
+        expect(cloneRepositoryButton).not.toBeNull();
+
+        fixture.destroy();
+        flush();
+    }));
+
+    it('should reflect the correct participation state for practice mode', fakeAsync(() => {
+        const exercise = {
+            id: 43,
+            type: ExerciseType.PROGRAMMING,
+            dueDate: dayjs().subtract(5, 'minutes'),
+            allowOfflineIde: true,
+            studentParticipations: [] as StudentParticipation[],
+        } as ProgrammingExercise;
+        const inactivePart = { id: 2, initializationState: InitializationState.UNINITIALIZED, testRun: true } as StudentParticipation;
+        const initPart = { id: 2, initializationState: InitializationState.INITIALIZED, testRun: true } as StudentParticipation;
+        const participationSubject = new Subject<StudentParticipation>();
+
+        comp.exercise = exercise;
+
+        fixture.detectChanges();
+        tick();
+
+        let startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
+        expect(startExerciseButton).not.toBeNull();
+
+        startPracticeStub.mockReturnValue(participationSubject);
+        comp.startPractice();
+        participationSubject.next(inactivePart);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.UNINITIALIZED);
+        expect(startPracticeStub).toHaveBeenCalledOnce();
+        participationSubject.next(initPart);
+
+        fixture.detectChanges();
+        tick();
+
+        expect(comp.participationStatusWrapper(true)).toEqual(ParticipationStatus.INITIALIZED);
+
+        // Check that button "Start practice" is no longer shown
+        startExerciseButton = fixture.debugElement.query(By.css('.start-practice'));
         expect(startExerciseButton).toBeNull();
 
         // Check that button "Clone repository" is shown

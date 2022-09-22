@@ -139,7 +139,7 @@ export class ExerciseDetailsStudentActionsComponent {
             });
     }
 
-    public startPractice(): void {
+    startPractice(): void {
         this.exercise.loading = true;
         this.courseExerciseService
             .startPractice(this.exercise.id!)
@@ -147,8 +147,12 @@ export class ExerciseDetailsStudentActionsComponent {
             .subscribe({
                 next: (participation) => {
                     if (participation) {
-                        this.exercise.studentParticipations = [participation];
-                        this.exercise.participationStatus = this.participationStatusWrapper();
+                        const gradedParticipation = this.participationService.getSpecificStudentParticipation(this.exercise.studentParticipations ?? [], false);
+                        if (gradedParticipation) {
+                            this.exercise.studentParticipations = [gradedParticipation, participation];
+                        } else {
+                            this.exercise.studentParticipations = [participation];
+                        }
                     }
                     if (this.exercise.type === ExerciseType.PROGRAMMING) {
                         if ((this.exercise as ProgrammingExercise).allowOfflineIde) {
@@ -205,12 +209,10 @@ export class ExerciseDetailsStudentActionsComponent {
      * - the participation is inactive (build plan cleaned up), but can not be resumed (e.g. because we're after the due date)
      */
     public shouldDisplayIDEButtons(): boolean {
-        const status = participationStatus(this.exercise);
-        return (
-            (status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise))) &&
-            !!this.exercise.studentParticipations &&
-            this.exercise.studentParticipations!.length > 0
-        );
+        return !!this.exercise.studentParticipations?.some((participation) => {
+            const status = participationStatus(this.exercise, participation.testRun);
+            return status === ParticipationStatus.INITIALIZED || (status === ParticipationStatus.INACTIVE && !isStartExerciseAvailable(this.exercise) && !participation.testRun);
+        });
     }
 
     /**

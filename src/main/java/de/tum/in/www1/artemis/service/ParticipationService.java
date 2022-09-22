@@ -228,12 +228,15 @@ public class ParticipationService {
      * @param participant the user or team who starts the exercise
      * @return the participation connecting the given exercise and user
      */
-    public StudentParticipation startPracticeMode(Exercise exercise, Participant participant) {
+    public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-            throw new IllegalStateException();
+            throw new IllegalStateException("Only programming exercises support the prractice mode at the moment");
         }
 
-        finalizeRatedParticipation(exercise, participant);
+        optionalGradedStudentParticipation.ifPresent(participation -> {
+            participation.setInitializationState(FINISHED);
+            participationRepository.save(participation);
+        });
         Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, true);
         StudentParticipation participation;
         if (optionalStudentParticipation.isEmpty()) {
@@ -255,14 +258,6 @@ public class ParticipationService {
         participation = startProgrammingExercise(programmingExercise, (ProgrammingExerciseStudentParticipation) participation, true);
 
         return studentParticipationRepository.saveAndFlush(participation);
-    }
-
-    private void finalizeRatedParticipation(Exercise exercise, Participant participant) {
-        Optional<StudentParticipation> optionalStudentParticipation = findOneByExerciseAndParticipantAnyStateAndTestRun(exercise, participant, false);
-        optionalStudentParticipation.ifPresent(participation -> {
-            participation.setInitializationState(FINISHED);
-            participationRepository.save(participation);
-        });
     }
 
     /**
