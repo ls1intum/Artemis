@@ -16,8 +16,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.util.LinkedMultiValueMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.AssessmentType;
 import de.tum.in.www1.artemis.domain.enumeration.ComplaintType;
@@ -51,9 +49,6 @@ class AssessmentComplaintIntegrationTest extends AbstractSpringIntegrationBamboo
 
     @Autowired
     private ExamRepository examRepository;
-
-    @Autowired
-    private ObjectMapper mapper;
 
     private ModelingExercise modelingExercise;
 

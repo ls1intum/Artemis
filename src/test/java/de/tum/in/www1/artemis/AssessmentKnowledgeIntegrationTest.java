@@ -243,8 +243,8 @@ class AssessmentKnowledgeIntegrationTest extends AbstractSpringIntegrationBamboo
         for (var i = 0; i < size; i++) {
             var textSubmission1 = textSubmissions1.get(i);
             var textSubmission2 = textSubmissions2.get(i);
-            textSubmission1.setId((long) (i + 1));
-            textSubmission2.setId((long) (i + 10));
+            textSubmission1.setId(database.generateTempId());
+            textSubmission2.setId(database.generateTempId());
             var student = database.getUserByLogin("student" + (i + 1));
             var participation1 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise1, student);
             var participation2 = ModelFactory.generateStudentParticipation(InitializationState.INITIALIZED, exercise2, student);
