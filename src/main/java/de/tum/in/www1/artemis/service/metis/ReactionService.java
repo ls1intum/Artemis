@@ -57,7 +57,7 @@ public class ReactionService {
         // checks
         final User user = this.userRepository.getUserWithGroupsAndAuthorities();
         if (reaction.getId() != null) {
-            throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new reaction cannot already have an ID", METIS_REACTION_ENTITY_NAME, "idExists");
         }
 
         // set user to current user

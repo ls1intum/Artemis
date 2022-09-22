@@ -20,7 +20,7 @@ export class FileUploadSubmissionService {
      * @param exerciseId id of the exercise
      * @param submissionFile the file submitted that will for the exercise
      */
-    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<EntityResponseType> {
+    update(fileUploadSubmission: FileUploadSubmission, exerciseId: number, submissionFile: Blob | File): Observable<HttpResponse<FileUploadSubmission>> {
         const copy = this.submissionService.convert(fileUploadSubmission);
         const formData = new FormData();
         const submissionBlob = new Blob([stringifyCircular(copy)], { type: 'application/json' });
@@ -30,7 +30,7 @@ export class FileUploadSubmissionService {
             .post<FileUploadSubmission>(`api/exercises/${exerciseId}/file-upload-submissions`, formData, {
                 observe: 'response',
             })
-            .pipe(map((res: EntityResponseType) => this.submissionService.convertSubmissionFromServer(res)));
+            .pipe(map((res: EntityResponseType) => this.submissionService.convertSubmissionResponseFromServer(res)));
     }
 
     /**
@@ -50,7 +50,7 @@ export class FileUploadSubmissionService {
         }
         return this.http
             .get<FileUploadSubmission>(url, { params, observe: 'response' })
-            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.submissionService.convertSubmissionFromServer(res)));
+            .pipe(map((res: HttpResponse<FileUploadSubmission>) => this.submissionService.convertSubmissionResponseFromServer(res)));
     }
 
     /**

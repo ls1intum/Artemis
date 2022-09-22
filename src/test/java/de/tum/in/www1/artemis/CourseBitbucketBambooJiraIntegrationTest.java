@@ -192,12 +192,6 @@ class CourseBitbucketBambooJiraIntegrationTest extends AbstractSpringIntegration
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
-    void testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions() throws Exception {
-        courseTestService.testGetCourseWithExercisesAndRelevantParticipationsWithoutPermissions();
-    }
-
-    @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetCoursesWithPermission() throws Exception {
         courseTestService.testGetCoursesWithPermission();

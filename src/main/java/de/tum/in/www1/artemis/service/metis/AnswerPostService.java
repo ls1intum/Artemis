@@ -62,7 +62,7 @@ public class AnswerPostService extends PostingService {
 
         // check
         if (answerPost.getId() != null) {
-            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idexists");
+            throw new BadRequestAlertException("A new answer post cannot already have an ID", METIS_ANSWER_POST_ENTITY_NAME, "idExists");
         }
 
         final Course course = preCheckUserAndCourse(user, courseId);
@@ -97,7 +97,7 @@ public class AnswerPostService extends PostingService {
 
         // checks
         if (answerPost.getId() == null || !Objects.equals(answerPost.getId(), answerPostId)) {
-            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idnull");
+            throw new BadRequestAlertException("Invalid id", METIS_ANSWER_POST_ENTITY_NAME, "idNull");
         }
         AnswerPost existingAnswerPost = this.findById(answerPostId);
         final Course course = preCheckUserAndCourse(user, courseId);

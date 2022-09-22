@@ -11,15 +11,17 @@ describe('Component Tests', () => {
         let fixture: ComponentFixture<ConfigurationComponent>;
         let service: ConfigurationService;
 
-        beforeEach(waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [HttpClientTestingModule],
-                declarations: [ConfigurationComponent],
-                providers: [ConfigurationService],
-            })
-                .overrideTemplate(ConfigurationComponent, '')
-                .compileComponents();
-        }));
+        beforeEach(
+            waitForAsync(() => {
+                TestBed.configureTestingModule({
+                    imports: [HttpClientTestingModule],
+                    declarations: [ConfigurationComponent],
+                    providers: [ConfigurationService],
+                })
+                    .overrideTemplate(ConfigurationComponent, '')
+                    .compileComponents();
+            }),
+        );
 
         beforeEach(() => {
             fixture = TestBed.createComponent(ConfigurationComponent);
@@ -27,8 +29,8 @@ describe('Component Tests', () => {
             service = TestBed.inject(ConfigurationService);
         });
 
-        describe('OnInit', () => {
-            it('Should call load all on init', () => {
+        describe('onInit', () => {
+            it('should call load all on init', () => {
                 // GIVEN
                 const beans: Bean[] = [
                     {
@@ -57,8 +59,8 @@ describe('Component Tests', () => {
                 comp.ngOnInit();
 
                 // THEN
-                expect(service.getBeans).toHaveBeenCalled();
-                expect(service.getPropertySources).toHaveBeenCalled();
+                expect(service.getBeans).toHaveBeenCalledOnce();
+                expect(service.getPropertySources).toHaveBeenCalledOnce();
                 expect(comp.allBeans).toEqual(beans);
                 expect(comp.beans).toEqual(beans);
                 expect(comp.propertySources).toEqual(propertySources);

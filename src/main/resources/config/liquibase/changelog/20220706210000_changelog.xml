@@ -1,0 +1,44 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+                   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                   xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.4.xsd">
+    <!--
+    This changeset adds the table for mapping a bonus source grading scale to a target exam grading scale.
+    -->
+    <changeSet author="akesfeden" id="20220706210000">
+        <createTable tableName="bonus">
+            <column name="id" type="BIGINT" autoIncrement="true">
+                <constraints primaryKey="true" nullable="false"/>
+            </column>
+
+            <column name="weight" type="DOUBLE">
+                <constraints nullable="false"/>
+            </column>
+            <column name="source_grading_scale_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="bonus_to_grading_scale_id" type="BIGINT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+        <addForeignKeyConstraint baseTableName="bonus"
+                                 baseColumnNames="source_grading_scale_id"
+                                 constraintName="fk_bonus_source_grading_scale_id"
+                                 referencedTableName="grading_scale"
+                                 referencedColumnNames="id"/>
+        <addForeignKeyConstraint baseTableName="bonus"
+                                 baseColumnNames="bonus_to_grading_scale_id"
+                                 constraintName="fk_bonus_bonus_to_grading_scale_id"
+                                 referencedTableName="grading_scale"
+                                 referencedColumnNames="id"/>
+        <addUniqueConstraint tableName="bonus"
+                             columnNames="source_grading_scale_id,bonus_to_grading_scale_id"
+                             constraintName="uq_bonus_source_grading_scale_bonus_to_grading_scale"/>
+
+        <addColumn tableName="grading_scale">
+            <column name="bonus_strategy" type="VARCHAR(255)">
+                <constraints nullable="true"/>
+            </column>
+        </addColumn>
+    </changeSet>
+</databaseChangeLog>

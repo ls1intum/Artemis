@@ -248,7 +248,8 @@
             "addAuxiliaryRepository": "Add Auxiliary Repository",
             "toggleToUnsubmitted": "Change Student Exam to Unsubmitted",
             "toggleToSubmitted": "Change Student Exam to Submitted",
-            "endNow": "End Now"
+            "endNow": "End Now",
+            "ldap": "Sync from LDAP"
         },
         "detail": {
             "field": "Field",
@@ -296,32 +297,6 @@
             "invalidPattern": "This field contains an invalid e-mail pattern."
         },
         "timeZoneWarning": "You are currently in the {{ timeZone }} time zone."
-    },
-    "error": {
-        "internalServerError": "Internal server error",
-        "server.not.reachable": "Server not reachable",
-        "url.not.found": "Not found",
-        "NotNull": "Field {{ fieldName }} cannot be empty!",
-        "Size": "Field {{ fieldName }} does not meet min/max size requirements!",
-        "userexists": "Login name already in use!",
-        "emailexists": "Email is already in use!",
-        "idexists": "A new {{ entityName }} cannot already have an ID",
-        "ambiguousContext": "A new {{entityName}} must have an unambiguous context",
-        "missingname": "A new {{entityName}} needs a name",
-        "invalid.template.build.plan.id": "The Template Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
-        "invalid.solution.build.plan.id": "The Solution Build Plan ID seems to be invalid. Please make sure it exists and is accessible for Artemis.",
-        "invalid.template.repository.url": "The Template Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis.",
-        "invalid.solution.repository.url": "The Solution Repository URL seems to be invalid. Please make sure it exists and is accessible for Artemis.",
-        "invalid.auxiliary.repository.id": "The Auxiliary Repository ID seems to be set. Please make sure it does not exist, because it is set by Artemis.",
-        "invalid.auxiliary.repository.name": "At least one Auxiliary Repository name is invalid or duplicated. Please make sure all names are appropriate and do not contain duplications.",
-        "invalid.auxiliary.repository.checkout.directory": "At least one Auxiliary Repository checkout directory is invalid or duplicated. Please make sure all checkout directories are appropriate and do not contain duplications.",
-        "invalid.auxiliary.repository.description": "The description of at least one Auxiliary Repository is too long!",
-        "invalid.testcases.weights": "Before deactivating manual feedback, please give at least one test case a weight greater than zero.",
-        "invalid.page.request": "The page request seems to be invalid. Please make sure that enough {{entityName}} entities exist, so that the request page can be created.",
-        "unexpectedError": "An unexpected error occurred: {{error}}",
-        "manualCodeHintOperation": "This endpoint does not allow to change code hints manually.",
-        "exerciseNotDefined": "The exercise is not defined.",
-        "solutionEntryError": "An error occurred while retrieving the extracted tasks from the problem statement."
     },
     "aboutUs": "About",
     "contact": "Contact us",

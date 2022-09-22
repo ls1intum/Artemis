@@ -4,7 +4,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { MockComponent, MockDirective, MockModule, MockPipe, MockProvider } from 'ng-mocks';
 import { NgbModule } from '@ng-bootstrap/ng-bootstrap';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, ActivatedRouteSnapshot, Params, Router } from '@angular/router';
 import { of } from 'rxjs';
 import { FaIconComponent } from '@fortawesome/angular-fontawesome';
 import { MockRouter } from '../../helpers/mocks/mock-router';
@@ -21,6 +21,7 @@ import { ThemeService } from 'app/core/theme/theme.service';
 describe('GradeKeyOverviewComponent', () => {
     let fixture: ComponentFixture<GradingKeyOverviewComponent>;
     let comp: GradingKeyOverviewComponent;
+    let route: ActivatedRoute;
 
     let gradingSystemService: GradingSystemService;
 
@@ -47,7 +48,21 @@ describe('GradeKeyOverviewComponent', () => {
         maxPoints: 100,
     };
 
+    const studentGrade = '2.0';
+
     beforeEach(() => {
+        route = {
+            snapshot: { params: {} as Params, queryParams: { grade: studentGrade } as Params },
+            parent: {
+                snapshot: { params: {} },
+                parent: {
+                    snapshot: {
+                        params: { courseId: 345, examId: 123 } as Params,
+                    },
+                },
+            },
+        } as ActivatedRoute;
+
         return TestBed.configureTestingModule({
             imports: [MockModule(NgbModule)],
             declarations: [
@@ -59,7 +74,7 @@ describe('GradeKeyOverviewComponent', () => {
                 MockPipe(GradeStepBoundsPipe),
             ],
             providers: [
-                { provide: ActivatedRoute, useValue: { parent: { parent: { params: of({ courseId: 345, examId: 123 }), queryParams: of({ grade: '2.0' }) } } } },
+                { provide: ActivatedRoute, useValue: route },
                 { provide: Router, useClass: MockRouter },
                 MockProvider(GradingSystemService),
                 MockProvider(ArtemisNavigationUtilService),
@@ -78,7 +93,7 @@ describe('GradeKeyOverviewComponent', () => {
         jest.restoreAllMocks();
     });
 
-    it('should initialize', () => {
+    function expectInitialState(grade?: string) {
         jest.spyOn(gradingSystemService, 'findGradeSteps').mockReturnValue(of(gradeStepsDto));
         jest.spyOn(gradingSystemService, 'sortGradeSteps').mockReturnValue([gradeStep1, gradeStep2]);
         const gradePointsSpy = jest.spyOn(gradingSystemService, 'setGradePoints').mockImplementation();
@@ -89,12 +104,36 @@ describe('GradeKeyOverviewComponent', () => {
         expect(comp).toBeTruthy();
         expect(comp.examId).toBe(123);
         expect(comp.courseId).toBe(345);
-        expect(comp.studentGrade).toBe('2.0');
+        expect(comp.studentGrade).toBe(grade);
         expect(comp.title).toBe('Title');
         expect(comp.isBonus).toBeTrue();
         expect(comp.isExam).toBeTrue();
         expect(comp.gradeSteps).toEqual([gradeStep1, gradeStep2]);
         expect(gradePointsSpy).toHaveBeenCalledWith([gradeStep1, gradeStep2], 100);
+    }
+
+    it('should initialize when grade queryParam is not given', () => {
+        route.snapshot.queryParams = {};
+
+        expectInitialState(undefined);
+    });
+
+    it('should initialize when params are in grandparent route', () => {
+        expectInitialState(studentGrade);
+    });
+
+    it('should initialize when params are in parent route', () => {
+        route.parent!.snapshot.params = route.parent?.parent?.snapshot.params!;
+        route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
+
+        expectInitialState(studentGrade);
+    });
+
+    it('should initialize when params are in current route', () => {
+        route.snapshot.params = route.parent?.parent?.snapshot.params!;
+        route.parent!.parent!.snapshot = { params: {} } as ActivatedRouteSnapshot;
+
+        expectInitialState(studentGrade);
     });
 
     it('should print PDF', fakeAsync(() => {
@@ -103,26 +142,8 @@ describe('GradeKeyOverviewComponent', () => {
         comp.printPDF();
 
         tick();
-        expect(printSpy).toHaveBeenCalled();
+        expect(printSpy).toHaveBeenCalledOnce();
     }));
-
-    it('should properly determine that points are not set', () => {
-        comp.gradeSteps = gradeStepsDto.gradeSteps;
-
-        expect(comp.hasPointsSet()).toBeFalse();
-    });
-
-    it('should properly determine that points are set', () => {
-        const gradeStepWithPoints1 = Object.assign({}, gradeStep1);
-        gradeStepWithPoints1.lowerBoundPoints = 0;
-        gradeStepWithPoints1.upperBoundPoints = 50;
-        const gradeStepWithPoints2 = Object.assign({}, gradeStep2);
-        gradeStepWithPoints2.lowerBoundPoints = 50;
-        gradeStepWithPoints2.upperBoundPoints = 100;
-        comp.gradeSteps = [gradeStepWithPoints1, gradeStepWithPoints2];
-
-        expect(comp.hasPointsSet()).toBeTrue();
-    });
 
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();

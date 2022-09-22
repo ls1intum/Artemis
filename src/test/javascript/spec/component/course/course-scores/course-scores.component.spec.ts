@@ -295,7 +295,7 @@ describe('CourseScoresComponent', () => {
         jest.spyOn(courseService, 'findAllParticipationsWithResults').mockReturnValue(of(participations));
         const errorSpy = jest.spyOn(component, 'logErrorOnSentry');
         fixture.detectChanges();
-        expect(errorSpy).toHaveBeenCalledTimes(0);
+        expect(errorSpy).not.toHaveBeenCalled();
     });
 
     it('should log error on sentry when missing participant score calculation', () => {

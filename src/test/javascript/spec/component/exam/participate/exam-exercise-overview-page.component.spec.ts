@@ -58,6 +58,6 @@ describe('Exam Exercise Overview Component', () => {
 
         comp.openExercise(comp.studentExam.exercises![0]);
 
-        expect(comp.onPageChanged.emit).toHaveBeenCalled();
+        expect(comp.onPageChanged.emit).toHaveBeenCalledOnce();
     });
 });

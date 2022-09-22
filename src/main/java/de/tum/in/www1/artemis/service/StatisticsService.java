@@ -127,14 +127,11 @@ public class StatisticsService {
      */
     public CourseManagementStatisticsDTO getCourseStatistics(Long courseId) {
 
-        var courseManagementStatisticsDTO = new CourseManagementStatisticsDTO();
-        Set<Exercise> exercises = exerciseRepository.findByCourseIdWithCategories(courseId);
+        var exercises = exerciseRepository.findByCourseIdWithCategories(courseId);
 
         if (exercises.isEmpty()) {
             // Handle newly created courses that have no exercises
-            courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
-            courseManagementStatisticsDTO.setAverageScoresOfExercises(Collections.emptyList());
-            return courseManagementStatisticsDTO;
+            return new CourseManagementStatisticsDTO(0.0, Collections.emptyList());
         }
 
         Course course = exercises.stream().findFirst().orElseThrow().getCourseViaExerciseGroupOrCourseMember();
@@ -151,21 +148,8 @@ public class StatisticsService {
             exercise.setCategories(fittingExercise.getCategories());
         });
 
-        if (averageScoreForCourse != null && averageScoreForCourse > 0) {
-            courseManagementStatisticsDTO.setAverageScoreOfCourse(roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course));
-        }
-        else {
-            courseManagementStatisticsDTO.setAverageScoreOfCourse(0.0);
-        }
-
-        if (!averageScoreForExercises.isEmpty()) {
-            courseManagementStatisticsDTO.setAverageScoresOfExercises(averageScoreForExercises);
-        }
-        else {
-            courseManagementStatisticsDTO.setAverageScoresOfExercises(Collections.emptyList());
-        }
-
-        return courseManagementStatisticsDTO;
+        double average = averageScoreForCourse != null && averageScoreForCourse > 0 ? roundScoreSpecifiedByCourseSettings(averageScoreForCourse, course) : 0.0;
+        return new CourseManagementStatisticsDTO(average, averageScoreForExercises);
     }
 
     /**

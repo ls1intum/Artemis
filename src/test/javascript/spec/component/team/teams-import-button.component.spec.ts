@@ -22,13 +22,15 @@ describe('TeamsImportButtonComponent', () => {
         comp.exercise = mockExercise;
     }
 
-    beforeEach(waitForAsync(() => {
-        TestBed.configureTestingModule({
-            imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
-            declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
-            providers: [MockProvider(TeamService), MockProvider(NgbModal)],
-        }).compileComponents();
-    }));
+    beforeEach(
+        waitForAsync(() => {
+            TestBed.configureTestingModule({
+                imports: [ArtemisTestModule, MockModule(NgbModule), MockModule(FeatureToggleModule)],
+                declarations: [TeamsImportButtonComponent, ButtonComponent, MockPipe(ArtemisTranslatePipe), MockDirective(TranslateDirective)],
+                providers: [MockProvider(TeamService), MockProvider(NgbModal)],
+            }).compileComponents();
+        }),
+    );
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportButtonComponent);
         comp = fixture.componentInstance;
@@ -57,7 +59,7 @@ describe('TeamsImportButtonComponent', () => {
         it('should open teams import dialog when called', fakeAsync(() => {
             const button = debugElement.nativeElement.querySelector('button');
             button.click();
-            expect(modalServiceStub).toHaveBeenCalled();
+            expect(modalServiceStub).toHaveBeenCalledOnce();
             expect(componentInstance.exercise).toEqual(mockExercise);
             expect(componentInstance.teams).toEqual(mockTeams);
             tick(100);

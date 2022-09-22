@@ -7,7 +7,7 @@
             [ngClass]="value === option.value ? option.btnClass : 'btn-default'"
             (click)="setMode(option.value)"
         >
-            {{ option.labelKey | artemisTranslate }}
+            {{ option.label ?? (option.labelKey | artemisTranslate) }}
         </div>
     </div>
 </div>

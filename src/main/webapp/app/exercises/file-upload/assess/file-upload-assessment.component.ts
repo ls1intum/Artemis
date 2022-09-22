@@ -492,15 +492,7 @@ export class FileUploadAssessmentComponent implements OnInit, OnDestroy {
     }
 
     get readOnly(): boolean {
-        return !isAllowedToModifyFeedback(
-            this.exercise?.isAtLeastInstructor ?? false,
-            this.isTestRun,
-            this.isAssessor,
-            this.hasAssessmentDueDatePassed,
-            this.result,
-            this.complaint,
-            this.exercise,
-        );
+        return !isAllowedToModifyFeedback(this.isTestRun, this.isAssessor, this.hasAssessmentDueDatePassed, this.result, this.complaint, this.exercise);
     }
 
     private onError(error: string) {
