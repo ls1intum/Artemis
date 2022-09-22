@@ -24,6 +24,7 @@ export class ProgrammingExerciseTestScheduleDatePickerComponent implements Contr
     @Input() max?: dayjs.Dayjs;
     @Input() label: string;
     @Input() tooltipText: string;
+    @Input() tooltipPlacement = 'bottom';
     @Input() readOnly: boolean;
     @Output() onDateReset = new EventEmitter();
 
