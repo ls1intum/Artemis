@@ -54,9 +54,9 @@ class ProgrammingExerciseServiceIntegrationTest extends AbstractSpringIntegratio
         bitbucketRequestMockProvider.enableMockingOfRequests();
         database.addUsers(1, 1, 0, 1);
         database.addInstructor("other-instructors", "instructorother");
-        database.addCourseWithOneProgrammingExerciseAndTestCases();
         additionalEmptyCourse = database.addEmptyCourse();
-        programmingExercise = programmingExerciseRepository.findAll().get(0);
+        var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
         // Needed, as we need the test cases for the next steps
         programmingExercise = database.loadProgrammingExerciseWithEagerReferences(programmingExercise);
         database.addHintsToExercise(programmingExercise);
