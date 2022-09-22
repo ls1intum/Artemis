@@ -5,6 +5,8 @@ import static de.tum.in.www1.artemis.service.util.RoundingUtil.roundScoreSpecifi
 import java.time.ZonedDateTime;
 import java.util.*;
 
+import javax.annotation.Nullable;
+
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -137,23 +139,7 @@ public class CourseScoreCalculationService {
             }
             var result = getResultForParticipation(participation, exercise.getDueDate());
             if (result != null && Boolean.TRUE.equals(result.isRated())) {
-                var score = result.getScore();
-                if (score == null) {
-                    score = 0.0;
-                }
-                Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
-                // Note: It is important that we round on the individual exercise level first and then sum up.
-                // This is necessary so that the students arrive at the same overall result when doing their own recalculations.
-                // Let's assume that a student achieved 1.05 points in each of 5 exercises.
-                // In the client, these are now displayed rounded as 1.1 points.
-                // If the student adds up the displayed points, the student gets a total of 5.5 points.
-                // In order to get the same total result as the student, we have to round before summing.
-                double pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(score * SCORE_NORMALIZATION_VALUE * exercise.getMaxPoints(), course);
-                PlagiarismCase plagiarismCase = plagiarismCasesForStudent.get(exercise.getId());
-                double plagiarismPointDeductionPercentage = plagiarismCase != null ? plagiarismCase.getVerdictPointDeduction() : 0.0;
-                if (plagiarismPointDeductionPercentage > 0.0) {
-                    pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(pointsAchievedFromExercise * (100.0 - plagiarismPointDeductionPercentage) / 100.0, course);
-                }
+                double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));
                 pointsAchievedByStudentInCourse += pointsAchievedFromExercise;
             }
             presentationScore += participation.getPresentationScore() != null ? participation.getPresentationScore() : 0;
@@ -167,12 +153,28 @@ public class CourseScoreCalculationService {
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / reachableMaxPointsInCourse * 100.0, course)
                 : 0.0;
 
-        PlagiarismVerdict mostSevereVerdict = null;
-        if (!plagiarismCasesForStudent.isEmpty()) {
-            var studentVerdictsFromExercises = plagiarismCasesForStudent.values().stream().map(PlagiarismCase::getVerdict).toList();
-            mostSevereVerdict = PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
-        }
+        PlagiarismVerdict mostSevereVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
         return new CourseScoresDTO.StudentScore(studentId, absolutePoints, relativeScore, currentRelativeScore, presentationScore, mostSevereVerdict);
+    }
+
+    private double calculatePointsAchievedFromExercise(Exercise exercise, Result result, @Nullable PlagiarismCase plagiarismCaseForExercise) {
+        var score = result.getScore();
+        if (score == null) {
+            score = 0.0;
+        }
+        Course course = exercise.getCourseViaExerciseGroupOrCourseMember();
+        // Note: It is important that we round on the individual exercise level first and then sum up.
+        // This is necessary so that the students arrive at the same overall result when doing their own recalculations.
+        // Let's assume that a student achieved 1.05 points in each of 5 exercises.
+        // In the client, these are now displayed rounded as 1.1 points.
+        // If the student adds up the displayed points, the student gets a total of 5.5 points.
+        // In order to get the same total result as the student, we have to round before summing.
+        double pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(score * SCORE_NORMALIZATION_VALUE * exercise.getMaxPoints(), course);
+        double plagiarismPointDeductionPercentage = plagiarismCaseForExercise != null ? plagiarismCaseForExercise.getVerdictPointDeduction() : 0.0;
+        if (plagiarismPointDeductionPercentage > 0.0) {
+            pointsAchievedFromExercise = roundScoreSpecifiedByCourseSettings(pointsAchievedFromExercise * (100.0 - plagiarismPointDeductionPercentage) / 100.0, course);
+        }
+        return pointsAchievedFromExercise;
     }
 
     Result getResultForParticipation(Participation participation, ZonedDateTime dueDate) {
@@ -265,6 +267,14 @@ public class CourseScoreCalculationService {
     private boolean isAutomaticAssessmentDone(Exercise exercise) {
         return isAssessedAutomatically(exercise) && (((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate() == null
                 || ZonedDateTime.now().isAfter(((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate()));
+    }
+
+    private PlagiarismVerdict findMostServerePlagiarismVerdict(Collection<PlagiarismCase> plagiarismCasesForSingleStudent) {
+        if (plagiarismCasesForSingleStudent.isEmpty()) {
+            return null;
+        }
+        var studentVerdictsFromExercises = plagiarismCasesForSingleStudent.stream().map(PlagiarismCase::getVerdict).toList();
+        return PlagiarismVerdict.findMostSevereVerdict(studentVerdictsFromExercises);
     }
 
 }
