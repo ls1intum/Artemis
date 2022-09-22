@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { AfterViewInit, Component, EventEmitter, Input, Output } from '@angular/core';
 import interact from 'interactjs';
 import { Post } from 'app/entities/metis/post.model';
 import { faArrowLeft, faChevronLeft, faGripLinesVertical, faXmark } from '@fortawesome/free-solid-svg-icons';
@@ -9,7 +9,7 @@ import { AnswerPost } from 'app/entities/metis/answer-post.model';
     templateUrl: './thread-sidebar.component.html',
     styleUrls: ['./thread-sidebar.component.scss'],
 })
-export class ThreadSidebarComponent implements OnInit, AfterViewInit {
+export class ThreadSidebarComponent implements AfterViewInit {
     @Output() closePostThread = new EventEmitter<void>();
 
     post?: Post;
@@ -18,6 +18,7 @@ export class ThreadSidebarComponent implements OnInit, AfterViewInit {
     @Input() set activePost(activePost: Post) {
         if (activePost) {
             this.post = activePost;
+            this.createdAnswerPost = this.createEmptyAnswerPost();
         }
     }
 
@@ -28,13 +29,6 @@ export class ThreadSidebarComponent implements OnInit, AfterViewInit {
     faArrowLeft = faArrowLeft;
 
     constructor() {}
-
-    /**
-     * on initialization: updates the post tags and the context information
-     */
-    ngOnInit(): void {
-        this.createdAnswerPost = this.createEmptyAnswerPost();
-    }
 
     /**
      * makes discussion section expandable by configuring 'interact'
