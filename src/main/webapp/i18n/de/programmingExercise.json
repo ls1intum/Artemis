@@ -409,8 +409,8 @@
                 "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
             },
             "projectTypes": {
-                "PLAIN_MAVEN": "Maven",
                 "PLAIN_GRADLE": "Gradle",
+                "PLAIN_MAVEN": "Maven",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",
