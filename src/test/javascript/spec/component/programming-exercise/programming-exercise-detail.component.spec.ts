@@ -25,8 +25,9 @@ import { MockProgrammingExerciseGradingService } from '../../helpers/mocks/servi
 import { ProgrammingExerciseGitDiffReport } from 'app/entities/hestia/programming-exercise-git-diff-report.model';
 import { ProgrammingExerciseSolutionEntry } from 'app/entities/hestia/programming-exercise-solution-entry.model';
 import { GitDiffReportModalComponent } from 'app/exercises/programming/hestia/git-diff-report/git-diff-report-modal.component';
+import { BuildLogStatisticsDTO } from 'app/exercises/programming/manage/build-log-statistics-dto';
 
-describe('ProgrammingExercise Management Detail Component', () => {
+fdescribe('ProgrammingExercise Management Detail Component', () => {
     let comp: ProgrammingExerciseDetailComponent;
     let fixture: ComponentFixture<ProgrammingExerciseDetailComponent>;
     let statisticsService: StatisticsService;
@@ -35,6 +36,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
     let alertService: AlertService;
     let statisticsServiceStub: jest.SpyInstance;
     let gitDiffReportStub: jest.SpyInstance;
+    let buildLogStatisticsStub: jest.SpyInstance;
 
     const exerciseStatistics = {
         averageScoreOfExercise: 50,
@@ -65,6 +67,15 @@ describe('ProgrammingExercise Management Detail Component', () => {
         ],
     } as ProgrammingExerciseGitDiffReport;
 
+    const buildLogStatistics = {
+        buildCount: 5,
+        agentSetupDuration: 2.5,
+        testDuration: 3,
+        scaDuration: 2,
+        totalJobDuration: 7.5,
+        dependenciesDownloadedCount: 6,
+    } as BuildLogStatisticsDTO;
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, TranslateModule.forRoot()],
@@ -87,6 +98,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
         alertService = fixture.debugElement.injector.get(AlertService);
         exerciseService = fixture.debugElement.injector.get(ProgrammingExerciseService);
         gitDiffReportStub = jest.spyOn(exerciseService, 'getDiffReport').mockReturnValue(of(gitDiffReport));
+        buildLogStatisticsStub = jest.spyOn(exerciseService, 'getBuildLogStatistics').mockReturnValue(of(buildLogStatistics));
         modalService = fixture.debugElement.injector.get(NgbModal);
     });
 
@@ -123,6 +135,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             // THEN
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeFalse();
             expect(comp.doughnutStats.participationsInPercent).toBe(100);
@@ -152,6 +165,7 @@ describe('ProgrammingExercise Management Detail Component', () => {
             // THEN
             expect(statisticsServiceStub).toHaveBeenCalledOnce();
             expect(gitDiffReportStub).toHaveBeenCalledOnce();
+            expect(buildLogStatisticsStub).toHaveBeenCalledOnce();
             expect(comp.programmingExercise).toEqual(programmingExercise);
             expect(comp.isExamExercise).toBeTrue();
             expect(comp.programmingExercise.gitDiffReport).toBeDefined();
