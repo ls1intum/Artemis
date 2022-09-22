@@ -503,28 +503,34 @@ public class DatabaseUtilService {
         return userRepo.save(user);
     }
 
+    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
+        return addUsers("", numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
+    }
+
     /**
      * Adds the provided number of students and tutors into the user repository. Students login is a concatenation of the prefix "student" and a number counting from 1 to
      * numberOfStudents Tutors login is a concatenation of the prefix "tutor" and a number counting from 1 to numberOfStudents Tutors are all in the "tutor" group and students in
      * the "tumuser" group
      *
+     * @param prefix              the prefix for the user login
      * @param numberOfStudents    the number of students that will be added to the database
      * @param numberOfTutors      the number of tutors that will be added to the database
      * @param numberOfEditors     the number of editors that will be added to the database
      * @param numberOfInstructors the number of instructors that will be added to the database
      */
-    public List<User> addUsers(int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
+    public List<User> addUsers(String prefix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
 
         if (authorityRepository.count() == 0) {
             authorityRepository.saveAll(adminAuthorities);
         }
 
-        var students = generateActivatedUsers("student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup" }, studentAuthorities,
+        var students = generateActivatedUsers(prefix + "student", passwordService.hashPassword(USER_PASSWORD), new String[] { "tumuser", "testgroup" }, studentAuthorities,
                 numberOfStudents);
-        var tutors = generateActivatedUsers("tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
-        var editors = generateActivatedUsers("editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup" }, editorAuthorities, numberOfEditors);
-        var instructors = generateActivatedUsers("instructor", passwordService.hashPassword(USER_PASSWORD), new String[] { "instructor", "testgroup" }, instructorAuthorities,
-                numberOfInstructors);
+        var tutors = generateActivatedUsers(prefix + "tutor", passwordService.hashPassword(USER_PASSWORD), new String[] { "tutor", "testgroup" }, tutorAuthorities, numberOfTutors);
+        var editors = generateActivatedUsers(prefix + "editor", passwordService.hashPassword(USER_PASSWORD), new String[] { "editor", "testgroup" }, editorAuthorities,
+                numberOfEditors);
+        var instructors = generateActivatedUsers(prefix + "instructor", passwordService.hashPassword(USER_PASSWORD), new String[] { "instructor", "testgroup" },
+                instructorAuthorities, numberOfInstructors);
 
         List<User> usersToAdd = new ArrayList<>();
         usersToAdd.addAll(students);

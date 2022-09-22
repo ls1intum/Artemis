@@ -20,6 +20,8 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "AttachmentUnitIntegrationTest";
+
     @Autowired
     private AttachmentRepository attachmentRepository;
 
@@ -40,7 +42,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() throws Exception {
-        this.database.addUsers(1, 1, 0, 1);
+        this.database.addUsers(TEST_PREFIX, 1, 1, 0, 1);
         this.attachment = ModelFactory.generateAttachment(null);
         this.attachment.setLink("files/temp/example.txt");
         this.lecture1 = this.database.createCourseWithLecture(true);
@@ -48,9 +50,9 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         this.attachmentUnit.setDescription("Lorem Ipsum");
 
         // Add users that are not in the course
-        database.createAndSaveUser("student42");
-        database.createAndSaveUser("tutor42");
-        database.createAndSaveUser("instructor42");
+        database.createAndSaveUser(TEST_PREFIX + "student42");
+        database.createAndSaveUser(TEST_PREFIX + "tutor42");
+        database.createAndSaveUser(TEST_PREFIX + "instructor42");
     }
 
     private void testAllPreAuthorize() throws Exception {
@@ -65,19 +67,19 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testAll_asTutor() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testAll_asStudent() throws Exception {
         this.testAllPreAuthorize();
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void createAttachmentUnit_asInstructor_shouldCreateAttachmentUnit() throws Exception {
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
@@ -91,13 +93,13 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void createAttachmentUnit_InstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldUpdateAttachmentUnit() throws Exception {
         persistAttachmentUnitWithLecture();
         this.attachment.setAttachmentUnit(this.attachmentUnit);
@@ -113,7 +115,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_asInstructor_shouldKeepOrdering() throws Exception {
         persistAttachmentUnitWithLecture();
 
@@ -140,7 +142,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor42", roles = "INSTRUCTOR")
     void updateAttachmentUnit_notInstructorInCourse_shouldReturnForbidden() throws Exception {
         persistAttachmentUnitWithLecture();
         this.attachment.setAttachmentUnit(this.attachmentUnit);
@@ -151,7 +153,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void updateAttachmentUnit_noId_shouldReturnBadRequest() throws Exception {
         persistAttachmentUnitWithLecture();
 
@@ -164,7 +166,7 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void getAttachmentUnit_correctId_shouldReturnAttachmentUnit() throws Exception {
         persistAttachmentUnitWithLecture();
 
@@ -183,15 +185,16 @@ class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void deleteAttachmentUnit_withAttachment_shouldDeleteAttachment() throws Exception {
         var persistedAttachmentUnit = request.postWithResponseBody("/api/lectures/" + this.lecture1.getId() + "/attachment-units", attachmentUnit, AttachmentUnit.class,
                 HttpStatus.CREATED);
         assertThat(persistedAttachmentUnit.getId()).isNotNull();
         this.attachment.setAttachmentUnit(persistedAttachmentUnit);
         var persistedAttachment = request.postWithResponseBody("/api/attachments", attachment, Attachment.class, HttpStatus.CREATED);
+        assertThat(persistedAttachment.getId()).isNotNull();
 
         request.delete("/api/lectures/" + lecture1.getId() + "/lecture-units/" + persistedAttachmentUnit.getId(), HttpStatus.OK);
-        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachment.getId(), HttpStatus.NOT_FOUND, Attachment.class);
+        request.get("/api/lectures/" + lecture1.getId() + "/attachment-units/" + persistedAttachmentUnit.getId(), HttpStatus.NOT_FOUND, Attachment.class);
     }
 }
