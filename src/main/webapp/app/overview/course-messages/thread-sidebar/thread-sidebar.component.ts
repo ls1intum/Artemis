@@ -40,7 +40,7 @@ export class ThreadSidebarComponent implements AfterViewInit {
                 modifiers: [
                     // Set maximum width
                     interact.modifiers!.restrictSize({
-                        min: { width: 375, height: 0 },
+                        min: { width: 435, height: 0 },
                         max: { width: 600, height: 4000 },
                     }),
                 ],
