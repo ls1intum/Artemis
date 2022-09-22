@@ -90,7 +90,7 @@ export class MessagingService implements OnDestroy {
     }
 
     private channelName(courseId: number, userId: number) {
-        const courseTopicName = MetisWebsocketChannelPrefix + 'courses/' + courseId;
+        const courseTopicName = '/user' + MetisWebsocketChannelPrefix + 'courses/' + courseId;
         const channel = courseTopicName + '/conversations/user/' + userId;
         return channel;
     }

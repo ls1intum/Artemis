@@ -76,6 +76,7 @@ public class MessageService extends PostingService {
             conversation = conversationService.mayInteractWithConversationElseThrow(messagePost.getConversation().getId(), user);
 
             Post savedMessage = messageRepository.save(messagePost);
+            savedMessage.setConversation(conversation);
             conversationService.auditConversationReadTimeOfUser(conversation, user);
 
             conversation.setLastMessageDate(savedMessage.getCreationDate());
@@ -114,7 +115,7 @@ public class MessageService extends PostingService {
             setAuthorRoleOfPostings(conversationPosts.getContent());
 
             conversationService.auditConversationReadTimeOfUser(conversation, user);
-            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user.getId());
+            conversationService.broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
         }
         else {
             throw new BadRequestAlertException("A new message post cannot be associated with more than one context", METIS_POST_ENTITY_NAME, "ambiguousContext");

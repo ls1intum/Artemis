@@ -53,7 +53,7 @@ public class ConversationResource {
 
     /**
      * Post /conversation : updates the time user reads a conversation
-     **
+     * @param conversationId    ID of the read conversation
      */
     @PostMapping("/conversation")
     @PreAuthorize("hasRole('USER')")

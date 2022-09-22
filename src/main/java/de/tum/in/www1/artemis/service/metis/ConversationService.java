@@ -138,17 +138,20 @@ public class ConversationService {
      * Broadcasts a conversation event in a course under a specific topic via websockets
      *
      * @param conversationDTO object including the affected conversation as well as the action
+     * @param user            if not null, the user the message is specifically targeted to
      */
-    public void broadcastForConversation(ConversationDTO conversationDTO, Long userId) {
+    public void broadcastForConversation(ConversationDTO conversationDTO, User user) {
         String courseTopicName = METIS_WEBSOCKET_CHANNEL_PREFIX + "courses/" + conversationDTO.getConversation().getCourse().getId();
         String conversationParticipantTopicName = courseTopicName + "/conversations/user/";
 
-        if (userId == null) {
-            conversationDTO.getConversation().getConversationParticipants().forEach(
-                    conversationParticipant -> messagingTemplate.convertAndSend(conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO));
+        // send websocket message to specific users within threads to prevent blocking due to slow-client issues
+        if (user == null) {
+            conversationDTO.getConversation().getConversationParticipants()
+                    .forEach(conversationParticipant -> new Thread(() -> messagingTemplate.convertAndSendToUser(conversationParticipant.getUser().getLogin(),
+                            conversationParticipantTopicName + conversationParticipant.getUser().getId(), conversationDTO)).start());
         }
         else {
-            messagingTemplate.convertAndSend(conversationParticipantTopicName + userId, conversationDTO);
+            new Thread(() -> messagingTemplate.convertAndSendToUser(user.getLogin(), conversationParticipantTopicName + user.getId(), conversationDTO)).start();
         }
     }
 
@@ -212,7 +215,7 @@ public class ConversationService {
 
         Conversation conversation = mayInteractWithConversationElseThrow(conversationId, user);
         auditConversationReadTimeOfUser(conversation, user);
-        broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user.getId());
+        broadcastForConversation(new ConversationDTO(conversation, MetisCrudAction.READ_CONVERSATION), user);
     }
 
     void auditConversationReadTimeOfUser(Conversation conversation, User user) {

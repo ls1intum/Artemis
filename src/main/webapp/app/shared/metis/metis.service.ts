@@ -509,7 +509,7 @@ export class MetisService implements OnDestroy {
         } else if (this.currentPostContextFilter.lectureId) {
             channel += `lectures/${this.currentPostContextFilter.lectureId}`;
         } else if (this.currentPostContextFilter.conversationId) {
-            channel += `courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
+            channel = `/user${MetisWebsocketChannelPrefix}courses/${this.courseId}/conversations/` + this.currentPostContextFilter.conversationId;
         } else {
             // subscribe to course as this is topic that is emitted on in every case
             channel += `courses/${this.courseId}`;
