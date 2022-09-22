@@ -22,6 +22,7 @@ import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { SafeUrlPipe } from 'app/shared/pipes/safe-url.pipe';
 import { MockTranslateService } from '../../helpers/mocks/service/mock-translate.service';
 import { FeatureToggleDirective } from 'app/shared/feature-toggle/feature-toggle.directive';
+import { ProgrammingExerciseStudentParticipation } from 'app/entities/participation/programming-exercise-student-participation.model';
 
 describe('JhiCloneRepoButtonComponent', () => {
     let component: CloneRepoButtonComponent;
@@ -59,6 +60,8 @@ describe('JhiCloneRepoButtonComponent', () => {
         versionControlAccessToken: true,
     };
 
+    let participation: ProgrammingExerciseStudentParticipation = {};
+
     beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [ArtemisTestModule, ClipboardModule, NgbPopoverModule],
@@ -90,6 +93,8 @@ describe('JhiCloneRepoButtonComponent', () => {
         localStorageUseSshStoreStub = jest.spyOn(localStorageMock, 'store');
         localStorageUseSshObserveStubSubject = new Subject();
         localStorageUseSshObserveStub.mockReturnValue(localStorageUseSshObserveStubSubject);
+
+        participation = {};
     });
 
     afterEach(() => {
@@ -109,89 +114,131 @@ describe('JhiCloneRepoButtonComponent', () => {
     }));
 
     it('should get ssh url (same url for team and individual participation)', () => {
-        component.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
+        participation.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git';
+        participation.team = {};
+        component.participations = [participation];
         component.sshTemplateUrl = 'ssh://git@bitbucket.ase.in.tum.de:7999/';
         component.useSsh = true;
 
         component.isTeamParticipation = true;
-        let url = component.getHttpOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
 
+        participation.team = undefined;
         component.isTeamParticipation = false;
-        url = component.getHttpOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe('ssh://git@bitbucket.ase.in.tum.de:7999/ITCPLEASE1/itcplease1-exercise.git');
     });
 
     it('should get html url (not the same url for team and individual participation)', () => {
-        component.repositoryUrl = info.versionControlUrl!;
+        participation.repositoryUrl = info.versionControlUrl!;
+        participation.team = {};
+        component.participations = [participation];
         component.sshTemplateUrl = 'ssh://git@bitbucket.ase.in.tum.de:7999/';
         component.useSsh = false;
 
         component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
-        let url = component.getHttpOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
+        participation.team = undefined;
         component.isTeamParticipation = false;
-        url = component.getHttpOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(info.versionControlUrl!);
     });
 
     it('should get copy the repository url', () => {
-        component.repositoryUrl = info.versionControlUrl!;
+        participation.repositoryUrl = info.versionControlUrl!;
+        participation.team = {};
+        component.participations = [participation];
         component.useSsh = false;
 
         component.user = { login: 'user1', guidedTourSettings: [], internal: true };
         component.isTeamParticipation = true;
-        let url = component.getHttpOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(`https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
+        participation.team = undefined;
         component.isTeamParticipation = false;
-        url = component.getHttpOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(info.versionControlUrl!);
     });
 
     it('should insert the correct token in the repository url', () => {
         component.user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
-        component.repositoryUrl = `https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUrl = `https://${component.user.login}@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.participations = [participation];
         component.useSsh = false;
         component.isTeamParticipation = false;
 
         component.versionControlAccessTokenRequired = true;
 
         // Placeholder is shown
-        let url = component.getHttpOrSshRepositoryUrl();
+        let url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
-        url = component.getHttpOrSshRepositoryUrl(false);
+        url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl, false);
         expect(url).toBe(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
         // Team participation does not include user name
         component.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.team = {};
         component.isTeamParticipation = true;
 
         // Placeholder is shown
-        url = component.getHttpOrSshRepositoryUrl();
+        url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
 
-        url = component.getHttpOrSshRepositoryUrl(false);
+        url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl, false);
         expect(url).toBe(`https://${component.user.login}:token@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
     });
 
     it('should add the user login and token to the URL', () => {
         component.user = { login: 'user1', guidedTourSettings: [], internal: true, vcsAccessToken: 'token' };
-        component.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        participation.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.participations = [participation];
         component.useSsh = false;
         component.isTeamParticipation = false;
         component.versionControlAccessTokenRequired = true;
 
-        const url = component.getHttpOrSshRepositoryUrl();
+        const url = component.getHttpOrSshRepositoryUrl(participation.repositoryUrl);
         expect(url).toBe(`https://${component.user.login}:**********@bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`);
+    });
+
+    it('should handle multiple participations', () => {
+        const participation1: ProgrammingExerciseStudentParticipation = { repositoryUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git' };
+        const participation2: ProgrammingExerciseStudentParticipation = {
+            repositoryUrl: 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git',
+            testRun: true,
+        };
+        component.participations = [participation1, participation2];
+        component.ngOnInit();
+
+        expect(component.isTeamParticipation).toBeFalse();
+        expect(component.repositoryUrls).toEqual([
+            'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.git',
+            'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-practice.git',
+        ]);
+        expect(component.cloneHeadlines).toEqual(['artemisApp.exerciseActions.cloneRatedRepository', 'artemisApp.exerciseActions.clonePracticeRepository']);
+        expect(component.wasCopied).toHaveLength(2);
+    });
+
+    it('should handle no participation', () => {
+        component.repositoryUrl = 'https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git';
+        component.ngOnInit();
+
+        expect(component.isTeamParticipation).toBeFalsy();
+        expect(component.repositoryUrls).toEqual(['https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise.solution.git']);
+        expect(component.cloneHeadlines).toEqual(['artemisApp.exerciseActions.cloneExerciseRepository']);
+        expect(component.wasCopied).toHaveLength(1);
     });
 
     it('should fetch and store ssh preference', fakeAsync(() => {
         stubServices();
 
+        participation.repositoryUrl = `https://bitbucket.ase.in.tum.de/scm/ITCPLEASE1/itcplease1-exercise-team1.git`;
+        component.participations = [participation];
         component.sshEnabled = true;
 
         fixture.detectChanges();

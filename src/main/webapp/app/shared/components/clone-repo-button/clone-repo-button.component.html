@@ -15,7 +15,7 @@
     ></button>
     <ng-template #popContent style="max-width: 660px">
         <div *ngIf="useSsh" class="alert alert-warning" [innerHTML]="getSshKeyTip()"></div>
-        <div *ngFor="let url of repositoryURLs; let i = index">
+        <div *ngFor="let url of repositoryUrls; let i = index">
             <h5 [class.mt-3]="i > 0">{{ cloneHeadlines[i] | artemisTranslate }}</h5>
             <div class="d-flex" style="margin: 0; max-width: 100%">
                 <div *ngIf="sshEnabled" aria-label="Button group with nested dropdown" class="btn-group" ngbDropdown role="group" style="margin-bottom: 10px">

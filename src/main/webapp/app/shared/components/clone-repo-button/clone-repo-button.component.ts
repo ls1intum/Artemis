@@ -34,7 +34,7 @@ export class CloneRepoButtonComponent implements OnInit {
     versionControlAccessTokenRequired?: boolean;
     FeatureToggle = FeatureToggle;
     user: User;
-    repositoryURLs: string[] = [];
+    repositoryUrls: string[] = [];
     cloneHeadlines: string[] = [];
     wasCopied: boolean[];
     isTeamParticipation: boolean;
@@ -72,17 +72,17 @@ export class CloneRepoButtonComponent implements OnInit {
 
         if (this.participations?.length) {
             this.isTeamParticipation = !!this.participations.first()?.team;
-            this.repositoryURLs = this.participations.filter((participation) => !!participation.repositoryUrl).map((participation) => participation.repositoryUrl!);
+            this.repositoryUrls = this.participations.filter((participation) => !!participation.repositoryUrl).map((participation) => participation.repositoryUrl!);
             this.cloneHeadlines = this.participations
                 .filter((participation) => !!participation.repositoryUrl)
                 .map((participation) => (participation.testRun ? 'artemisApp.exerciseActions.clonePracticeRepository' : 'artemisApp.exerciseActions.cloneRatedRepository'));
             this.wasCopied = new Array<boolean>(this.participations.length);
         } else if (this.repositoryUrl) {
-            this.repositoryURLs = [this.repositoryUrl];
+            this.repositoryUrls = [this.repositoryUrl];
             this.cloneHeadlines = ['artemisApp.exerciseActions.cloneExerciseRepository'];
             this.wasCopied = [false];
         } else {
-            this.repositoryURLs = [];
+            this.repositoryUrls = [];
             this.cloneHeadlines = [];
             this.wasCopied = [];
         }
