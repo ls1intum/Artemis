@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.verify;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
@@ -348,6 +349,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
         Course course = database.addEmptyCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
 
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         User newUser = userTestService.student;
         newUser.setId(null);
         newUser.setLogin("batman");
@@ -364,6 +367,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     void createUserWithGroupsAlreadyFailsInGitlab() throws Exception {
         Course course = database.addEmptyCourse();
         ProgrammingExercise programmingExercise = database.addProgrammingExerciseToCourse(course, false);
+
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
 
         User newUser = userTestService.student;
         newUser.setId(null);
@@ -468,6 +473,8 @@ class UserJenkinsGitlabIntegrationTest extends AbstractSpringIntegrationJenkinsG
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void initializeUserNonLTI() throws Exception {
+        User user = database.getUserByLogin("student1");
+        jenkinsRequestMockProvider.mockUpdateUserAndGroups(user.getLogin(), user, Collections.emptySet(), Collections.emptySet(), true);
         userTestService.initializeUserNonLTI();
     }
 

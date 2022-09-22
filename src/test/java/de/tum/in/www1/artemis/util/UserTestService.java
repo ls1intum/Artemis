@@ -87,9 +87,11 @@ public class UserTestService {
         this.mockDelegate = mockDelegate;
 
         List<User> users = database.addUsers(numberOfStudents, numberOfTutors, numberOfEditors, numberOfInstructors);
-        student = users.get(0);
+        student = userRepository.getUserByLoginElseThrow("student1");
         student.setInternal(true);
         student = userRepository.save(student);
+        student = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
+
         users.forEach(user -> cacheManager.getCache(UserRepository.USERS_CACHE).evict(user.getLogin()));
     }
 
@@ -149,6 +151,7 @@ public class UserTestService {
         var users = database.addUsers(1, 1, 1, 1);
 
         for (var user : users) {
+            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
             mockDelegate.mockDeleteUserInUserManagement(user, true, false, false);
         }
 
@@ -174,13 +177,14 @@ public class UserTestService {
         users.stream().map(User::getLogin).forEach(login -> params.add("login", login));
 
         for (var user : users) {
+            user = userRepository.getUserWithGroupsAndAuthorities(user.getLogin());
             mockDelegate.mockDeleteUserInUserManagement(user, true, true, true);
         }
 
         request.delete("/api/users", HttpStatus.OK, params);
         for (var user : users) {
             var receivedUser = userRepository.findById(user.getId());
-            assertThat(receivedUser.isPresent()).isTrue();
+            assertThat(receivedUser).isPresent();
         }
     }
 
@@ -212,7 +216,7 @@ public class UserTestService {
         var managedUserVM = new ManagedUserVM(student, newPassword);
         managedUserVM.setPassword(newPassword);
         final var response = request.putWithResponseBody("/api/users", managedUserVM, User.class, HttpStatus.OK);
-        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).get();
+        final var updatedUserIndDB = userRepository.findOneWithGroupsAndAuthoritiesByLogin(student.getLogin()).orElseThrow();
 
         assertThat(response).isNotNull();
         assertThat(passwordService.checkPasswordMatch(newPassword, updatedUserIndDB.getPassword())).isTrue();
@@ -228,11 +232,11 @@ public class UserTestService {
     // Test
     public void updateUser_withNullPassword_oldPasswordNotChanged() throws Exception {
         student.setPassword(null);
-        final var oldPassword = userRepository.findById(student.getId()).get().getPassword();
+        final var oldPassword = userRepository.findById(student.getId()).orElseThrow().getPassword();
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
-        final var userInDB = userRepository.findById(student.getId()).get();
+        final var userInDB = userRepository.findById(student.getId()).orElseThrow();
 
         assertThat(oldPassword).as("Password did not change").isEqualTo(userInDB.getPassword());
     }
@@ -244,7 +248,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(oldLogin, student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student), HttpStatus.OK);
-        final var userInDB = userRepository.findById(student.getId()).get();
+        final var userInDB = userRepository.findById(student.getId()).orElseThrow();
 
         assertThat(userInDB.getLogin()).isEqualTo(student.getLogin());
         assertThat(userInDB.getId()).isEqualTo(student.getId());
@@ -257,7 +261,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userRepository.findById(oldId).get();
+        final var userInDB = userRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
@@ -270,7 +274,7 @@ public class UserTestService {
         mockDelegate.mockUpdateUserInUserManagement(student.getLogin(), student, null, student.getGroups());
 
         request.put("/api/users", new ManagedUserVM(student, student.getPassword()), HttpStatus.BAD_REQUEST);
-        final var userInDB = userRepository.findById(oldId).get();
+        final var userInDB = userRepository.findById(oldId).orElseThrow();
         assertThat(userInDB).isNotEqualTo(student);
         assertThat(userRepository.findById(oldId + 1)).isNotEqualTo(student);
     }
@@ -313,6 +317,8 @@ public class UserTestService {
 
     // Test
     public User createExternalUser_asAdmin_isSuccessful() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         String password = "foobar1234";
         student.setId(null);
         student.setLogin("batman");
@@ -323,7 +329,7 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student, password), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
+        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
         assertThat(passwordService.checkPasswordMatch(password, userInDB.getPassword())).isTrue();
         student.setId(response.getId());
 
@@ -356,7 +362,7 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student, student.getPassword()), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
+        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
         userInDB.setPassword(password);
         student.setId(response.getId());
         response.setPassword(password);
@@ -367,10 +373,13 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_hasId() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         student.setId((long) 1337);
         student.setLogin("batman");
         student.setPassword("foobar");
         student.setEmail("batman@secret.invalid");
+        student = userRepository.save(student);
 
         mockDelegate.mockCreateUserInUserManagement(student, false);
 
@@ -466,6 +475,8 @@ public class UserTestService {
 
     // Test
     public void createUser_asAdmin_failInExternalVcsUserManagement_internalError() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         student.setId(null);
         student.setLogin("batman");
         student.setPassword("foobar");
@@ -479,6 +490,8 @@ public class UserTestService {
 
     // Test
     public void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         student.setId(null);
         student.setEmail("batman@invalid.tum");
         student.setLogin("batman");
@@ -488,13 +501,15 @@ public class UserTestService {
 
         final var response = request.postWithResponseBody("/api/users", new ManagedUserVM(student), User.class, HttpStatus.CREATED);
         assertThat(response).isNotNull();
-        final var userInDB = userRepository.findById(response.getId()).get();
+        final var userInDB = userRepository.findById(response.getId()).orElseThrow();
 
         assertThat(userInDB.getPassword()).isNotBlank();
     }
 
     // Test
     public void createUser_withExternalUserManagement() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
+
         var newUser = student;
         newUser.setId(null);
         newUser.setLogin("batman");
@@ -519,6 +534,8 @@ public class UserTestService {
         course = database.addEmptyCourse();
         course.setInstructorGroupName("instructor2");
         courseRepository.save(course);
+
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
 
         var newUser = student;
         newUser.setId(null);
@@ -554,7 +571,7 @@ public class UserTestService {
         params.add("status", "");
         params.add("courseIds", "");
         List<UserDTO> users = request.getList("/api/users", HttpStatus.OK, UserDTO.class, params);
-        assertThat(users).hasSize(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1); // +1 for admin user himself
+        assertThat(users).hasSize((int) userRepository.count());
     }
 
     // Test
@@ -583,7 +600,7 @@ public class UserTestService {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
-        params.add("searchTerm", "student1@test.de");
+        params.add("searchTerm", student.getEmail());
         params.add("sortingOrder", "ASCENDING");
         params.add("sortedColumn", "id");
         params.add("authorities", "USER");
@@ -593,7 +610,7 @@ public class UserTestService {
         params.add("courseIds", "");
         List<User> users = request.getList("/api/users", HttpStatus.OK, User.class, params);
         assertThat(users).hasSize(1);
-        assertThat(users.get(0).getEmail()).isEqualTo("student1@test.de");
+        assertThat(users.get(0).getEmail()).isEqualTo(student.getEmail());
     }
 
     // Test
@@ -632,21 +649,21 @@ public class UserTestService {
     // Test
     public void updateUserNotificationDate_asStudent_isSuccessful() throws Exception {
         request.put("/api/users/notification-date", null, HttpStatus.OK);
-        User userInDB = userRepository.findOneByLogin("student1").get();
+        User userInDB = database.getUserByLogin("student1");
         assertThat(userInDB.getLastNotificationRead()).isAfterOrEqualTo(ZonedDateTime.now().minusSeconds(1));
     }
 
     // Test
     public void updateUserNotificationVisibilityShowAllAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", true, HttpStatus.OK);
-        User userInDB = userRepository.findOneByLogin("student1").get();
+        User userInDB = database.getUserByLogin("student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNull();
     }
 
     // Test
     public void updateUserNotificationVisibilityHideUntilAsStudentIsSuccessful() throws Exception {
         request.put("/api/users/notification-visibility", false, HttpStatus.OK);
-        User userInDB = userRepository.findOneByLogin("student1").get();
+        User userInDB = database.getUserByLogin("student1");
         assertThat(userInDB.getHideNotificationsUntil()).isNotNull();
         assertThat(userInDB.getHideNotificationsUntil()).isStrictlyBetween(ZonedDateTime.now().minusSeconds(1), ZonedDateTime.now().plusSeconds(1));
     }
@@ -654,7 +671,7 @@ public class UserTestService {
     // Test
     public void initializeUser(boolean mock) throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User repoUser = userRepository.findOneByLogin("student1").get();
+        User repoUser = database.getUserByLogin("student1");
         repoUser.setPassword(password);
         repoUser.setInternal(true);
         repoUser.setActivated(false);
@@ -678,7 +695,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNotEmpty();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
+        User currentUser = database.getUserByLogin("student1");
 
         assertThat(passwordService.checkPasswordMatch(dto.getPassword(), currentUser.getPassword())).isTrue();
         assertThat(passwordService.checkPasswordMatch(password, currentUser.getPassword())).isFalse();
@@ -689,7 +706,7 @@ public class UserTestService {
     // Test
     public void initializeUserWithoutFlag() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userRepository.findOneByLogin("student1").get();
+        User user = database.getUserByLogin("student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(true);
@@ -703,7 +720,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
+        User currentUser = database.getUserByLogin("student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -713,17 +730,18 @@ public class UserTestService {
     // Test
     public void initializeUserNonLTI() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userRepository.findOneByLogin("student1").get();
+        User user = database.getUserByLogin("student1");
         user.setPassword(password);
         user.setInternal(true);
         user.setActivated(false);
         userRepository.save(user);
 
+        ltiUserIdRepository.findByUser(user).ifPresent(ltiUserIdRepository::delete);
+
         UserInitializationDTO dto = request.putWithResponseBody("/api/users/initialize", false, UserInitializationDTO.class, HttpStatus.OK);
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
-
+        User currentUser = database.getUserByLogin("student1");
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
         assertThat(currentUser.isInternal()).isTrue();
@@ -732,7 +750,7 @@ public class UserTestService {
     // Test
     public void initializeUserExternal() throws Exception {
         String password = passwordService.hashPassword("ThisIsAPassword");
-        User user = userRepository.findOneByLogin("student1").get();
+        User user = database.getUserByLogin("student1");
         user.setPassword(password);
         user.setInternal(false);
         user.setActivated(false);
@@ -746,7 +764,7 @@ public class UserTestService {
 
         assertThat(dto.getPassword()).isNull();
 
-        User currentUser = userRepository.findOneByLogin("student1").get();
+        User currentUser = database.getUserByLogin("student1");
 
         assertThat(currentUser.getPassword()).isEqualTo(password);
         assertThat(currentUser.getActivated()).isTrue();
@@ -766,7 +784,7 @@ public class UserTestService {
      * @param courseIds which the users are part
      * @return params for request
      */
-    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumber, String status, String courseIds) {
+    private LinkedMultiValueMap<String, String> createParamsForPagingRequest(String authorities, String origins, String registrationNumbers, String status, String courseIds) {
         final var params = new LinkedMultiValueMap<String, String>();
         params.add("page", "0");
         params.add("pageSize", "100");
@@ -775,7 +793,7 @@ public class UserTestService {
         params.add("sortedColumn", "id");
         params.add("authorities", authorities);
         params.add("origins", origins);
-        params.add("registrationNumbers", registrationNumber);
+        params.add("registrationNumbers", registrationNumbers);
         params.add("status", status);
         params.add("courseIds", courseIds);
         return params;
@@ -884,9 +902,10 @@ public class UserTestService {
             users.get(0).setInternal(true);
             users.get(1).setInternal(false);
             userRepository.saveAll(users);
+            final User admin = userRepository.getUserByLoginElseThrow("admin");
+
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(1); // user
-            assertThat(result.get(0)).isEqualTo(users.get(0));
+            assertThat(result).hasSize(2).contains(users.get(0), admin);
         }
     }
 
@@ -907,8 +926,7 @@ public class UserTestService {
             users.get(1).setInternal(false);
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
-            assertThat(result).hasSize(2); // user and admin
-            assertThat(result.get(0)).isEqualTo(users.get(1));
+            assertThat(result).hasSize(1).contains(users.get(1));
         }
     }
 
@@ -950,8 +968,8 @@ public class UserTestService {
         for (int[] number : numbers) {
             userRepository.deleteAll();
             users = database.addUsers(number[0], number[1], number[2], number[3]).stream().peek(user -> user.setGroups(Collections.emptySet())).toList();
-            users.get(0).setRegistrationNumber("");
-            users.get(1).setRegistrationNumber("");
+            users.get(0).setRegistrationNumber(null);
+            users.get(1).setRegistrationNumber(null);
             userRepository.saveAll(users);
             result = request.getList("/api/users", HttpStatus.OK, User.class, params);
             assertThat(result).isEqualTo(Collections.emptyList());

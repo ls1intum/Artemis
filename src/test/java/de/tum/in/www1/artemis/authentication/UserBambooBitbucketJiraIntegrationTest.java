@@ -145,6 +145,7 @@ class UserBambooBitbucketJiraIntegrationTest extends AbstractSpringIntegrationBa
     @Test
     @WithMockUser(username = "admin", roles = "ADMIN")
     void createUser_withNullAsPassword_generatesRandomPassword() throws Exception {
+        userRepository.findOneByLogin("batman").ifPresent(userRepository::delete);
         bitbucketRequestMockProvider.mockUserExists("batman");
         userTestService.createUser_withNullAsPassword_generatesRandomPassword();
     }

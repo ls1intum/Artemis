@@ -519,7 +519,6 @@ public class DatabaseUtilService {
      * @param numberOfInstructors the number of instructors that will be added to the database
      */
     public List<User> addUsers(String prefix, int numberOfStudents, int numberOfTutors, int numberOfEditors, int numberOfInstructors) {
-
         if (authorityRepository.count() == 0) {
             authorityRepository.saveAll(adminAuthorities);
         }
@@ -548,6 +547,7 @@ public class DatabaseUtilService {
         if (usersToAdd.size() > 0) {
             userRepo.saveAll(usersToAdd);
         }
+
         var allUsers = userRepo.findAll();
         assertThat(allUsers).as("all users are created").hasSizeGreaterThanOrEqualTo(numberOfStudents + numberOfTutors + numberOfEditors + numberOfInstructors + 1);
         // assertThat(allUsers).as("users are correctly stored").containsAnyOf(usersToAdd.toArray(new User[0]));
