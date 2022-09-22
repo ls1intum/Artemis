@@ -111,19 +111,19 @@ public class CourseScoreCalculationService {
     /**
      * Calculates the presentation score, relative and absolute points for the given studentId and corresponding participationsOfStudent
      * and takes the effects of related plagiarism verdicts on the grade into account.
-    
-     * @param studentId the id of the student who has participated in the course exercises
-     * @param participationsOfStudent should be non-empty. The exercise participations of the given student
-     * @param maxPointsInCourse max points in the given course
+     *
+     * @param studentId                  the id of the student who has participated in the course exercises
+     * @param participationsOfStudent    should be non-empty. The exercise participations of the given student
+     * @param maxPointsInCourse          max points in the given course
      * @param reachableMaxPointsInCourse max points achievable in the given course depending on the due dates of the exercises
-     * @param plagiarismMapping the plagiarism verdicts for the student for the participated exercises
+     * @param plagiarismMapping          the plagiarism verdicts for the student for the participated exercises
      * @return a StudentScore instance with the presentation score, relative and absolute points achieved by the given student and the most severe plagiarism verdict
      */
     public CourseScoresDTO.StudentScore calculateCourseScoreForStudent(Long studentId, List<StudentParticipation> participationsOfStudent, double maxPointsInCourse,
             double reachableMaxPointsInCourse, PlagiarismMapping plagiarismMapping) {
 
         if (plagiarismMapping.studentHasVerdict(studentId, PlagiarismVerdict.PLAGIARISM)) {
-            return new CourseScoresDTO.StudentScore(studentId, 0.0, 0.0, 0.0, 0, PlagiarismVerdict.PLAGIARISM);
+            return new CourseScoresDTO.StudentScore(studentId, 0.0, 0.0, 0.0, 0, false, PlagiarismVerdict.PLAGIARISM);
         }
 
         double pointsAchievedByStudentInCourse = 0.0;
@@ -152,9 +152,9 @@ public class CourseScoreCalculationService {
         double currentRelativeScore = reachableMaxPointsInCourse > 0
                 ? roundScoreSpecifiedByCourseSettings(pointsAchievedByStudentInCourse / reachableMaxPointsInCourse * 100.0, course)
                 : 0.0;
-
+        boolean presentationScorePassed = isPresentationScoreSufficientForBonus(presentationScore, course.getPresentationScore());
         PlagiarismVerdict mostSevereVerdict = findMostServerePlagiarismVerdict(plagiarismCasesForStudent.values());
-        return new CourseScoresDTO.StudentScore(studentId, absolutePoints, relativeScore, currentRelativeScore, presentationScore, mostSevereVerdict);
+        return new CourseScoresDTO.StudentScore(studentId, absolutePoints, relativeScore, currentRelativeScore, presentationScore, presentationScorePassed, mostSevereVerdict);
     }
 
     private double calculatePointsAchievedFromExercise(Exercise exercise, Result result, @Nullable PlagiarismCase plagiarismCaseForExercise) {
@@ -226,15 +226,16 @@ public class CourseScoreCalculationService {
 
     /**
      * Determines whether a given exercise will be included into course score calculation
-     *
+     * <p>
      * The requirement that has to be fulfilled for every exercise: It has to be included in score.
      * The base case: An exercise that is not an automatically assessed programming exercise
-     *                  -> include in maxPointsInCourse after due date.
+     * -> include in maxPointsInCourse after due date.
      * Edge case 1: An automatically assessed programming exercise without test runs after the due date
-     *                  -> include in maxPointsInCourse directly after release because the student can achieve points immediately.
+     * -> include in maxPointsInCourse directly after release because the student can achieve points immediately.
      * Edge case 2: An automatically assessed programming exercise with test runs after the due date
-     *                  -> include in maxPointsInCourse after the final test run is over, not immediately after release because
-     *                      the test run after due date is important for the final course score (hidden tests).
+     * -> include in maxPointsInCourse after the final test run is over, not immediately after release because
+     * the test run after due date is important for the final course score (hidden tests).
+     *
      * @param exercise the exercise whose involvement should be determined
      */
     private boolean includeIntoScoreCalculation(Exercise exercise) {
@@ -246,12 +247,13 @@ public class CourseScoreCalculationService {
 
     /**
      * Determines whether the max points of a given exercise should be included in the amount of reachable points of a course.
-     *
+     * <p>
      * Base case: points are reachable if the exercise is released and the assessment is over -> It was possible for the student to get points.
-     Addition regarding edge case 1: the exercise score is reachable immediately after release since the student score only depends on the
-     immediate automatic feedback.
-     Addition regarding edge case 2: the exercise score is officially reachable after the final test run
-     (so after the buildAndTestStudentSubmissionsAfterDueDate is over).
+     * Addition regarding edge case 1: the exercise score is reachable immediately after release since the student score only depends on the
+     * immediate automatic feedback.
+     * Addition regarding edge case 2: the exercise score is officially reachable after the final test run
+     * (so after the buildAndTestStudentSubmissionsAfterDueDate is over).
+     *
      * @param exercise the exercise whose assessment state should be determined
      */
     private boolean isAssessmentDone(Exercise exercise) {
@@ -267,6 +269,17 @@ public class CourseScoreCalculationService {
     private boolean isAutomaticAssessmentDone(Exercise exercise) {
         return isAssessedAutomatically(exercise) && (((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate() == null
                 || ZonedDateTime.now().isAfter(((ProgrammingExercise) exercise).getBuildAndTestStudentSubmissionsAfterDueDate()));
+    }
+
+    /**
+     * Checks the presentation score requirement to get the bonus from this course applied to the final exam.
+     *
+     * @param achievedPresentationScore presentation score achieved by the student
+     * @param coursePresentationScore   presentation score limit of the course that needs to be passed to get the bonus for the final exam
+     * @return True if presentation score limit is not set or surpassed, otherwise false.
+     */
+    private boolean isPresentationScoreSufficientForBonus(int achievedPresentationScore, Integer coursePresentationScore) {
+        return coursePresentationScore == null || achievedPresentationScore >= coursePresentationScore;
     }
 
     private PlagiarismVerdict findMostServerePlagiarismVerdict(Collection<PlagiarismCase> plagiarismCasesForSingleStudent) {
