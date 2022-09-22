@@ -134,10 +134,10 @@ class ProgrammingExerciseSolutionEntryIntegrationTest extends AbstractSpringInte
     @Test
     @WithMockUser(username = "editor1", roles = "EDITOR")
     void testGetAllSolutionEntries() throws Exception {
-        var existingEntries = programmingExerciseSolutionEntryRepository.findAll();
+        var existingEntries = programmingExerciseSolutionEntryRepository.findByExerciseIdWithTestCases(programmingExercise.getId());
         final var receivedEntries = request.getList("/api/programming-exercises/" + programmingExercise.getId() + "/solution-entries", HttpStatus.OK,
                 ProgrammingExerciseSolutionEntry.class);
-        assertThat(receivedEntries).isEqualTo(existingEntries);
+        assertThat(receivedEntries).containsExactlyElementsOf(existingEntries);
     }
 
     @Test

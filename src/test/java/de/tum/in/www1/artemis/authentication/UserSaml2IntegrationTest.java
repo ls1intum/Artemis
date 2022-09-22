@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -31,7 +32,7 @@ import de.tum.in.www1.artemis.web.rest.vm.LoginVM;
  */
 class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
-    private static final String STUDENT_NAME = "student1";
+    private static final String STUDENT_NAME = "student_saml_test";
 
     private static final String STUDENT_PASSWORD = "test1234";
 
@@ -45,6 +46,11 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     @Autowired
     private PasswordService passwordService;
+
+    @BeforeEach
+    void clearExistingUser() {
+        userRepository.findOneByLogin(STUDENT_NAME).ifPresent(userRepository::delete);
+    }
 
     @AfterEach
     void clearAuthentication() {
@@ -229,7 +235,7 @@ class UserSaml2IntegrationTest extends AbstractSpringIntegrationSaml2Test {
 
     private void assertStudentNotExists() {
         assertThatThrownBy(() -> this.database.getUserByLogin(STUDENT_NAME)).isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Provided login student1 does not exist in database");
+                .hasMessage("Provided login " + STUDENT_NAME + " does not exist in database");
     }
 
     private void assertStudentExists() {
