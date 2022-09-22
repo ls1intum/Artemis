@@ -31,6 +31,8 @@ public interface BuildLogStatisticsEntryRepository extends JpaRepository<BuildLo
             """)
     BuildLogStatisticsDTO findAverageBuildLogStatisticsEntryForExercise(@Param("exercise") ProgrammingExercise exercise);
 
+    void deleteByProgrammingSubmissionId(long programmingSubmissionId);
+
     /**
      * Generate a BuildLogStatisticsEntry from the given ZonedDateTime (and other parameters) and persist it.
      *
