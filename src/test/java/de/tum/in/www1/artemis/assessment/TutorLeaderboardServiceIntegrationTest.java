@@ -22,6 +22,8 @@ import de.tum.in.www1.artemis.web.rest.dto.TutorLeaderboardDTO;
 
 class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
+    private static final String TEST_PREFIX = "tlbsitest"; // only lower case is supported
+
     @Autowired
     private TutorLeaderboardService tutorLeaderboardService;
 
@@ -38,9 +40,9 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
      */
     @BeforeEach
     void initTestCase() {
-        var users = database.addUsers(10, TUTOR_COUNT, 0, 2);
+        var users = database.addUsers(TEST_PREFIX, 10, TUTOR_COUNT, 0, 2);
         var student1 = users.get(0);
-        var tutor1 = database.getUserByLogin("tutor1");
+        var tutor1 = database.getUserByLogin(TEST_PREFIX + "tutor1");
 
         course = database.addCourseWithOneModelingExercise();
         exercise = course.getExercises().iterator().next();
@@ -74,7 +76,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLeaderboardData_forCourseWithExercises() {
         Long[] exerciseIds = { exercise.getId() };
         var leaderboardData = tutorLeaderboardService.getCourseLeaderboard(course, new HashSet<>(Arrays.asList(exerciseIds)));
@@ -82,7 +84,7 @@ class TutorLeaderboardServiceIntegrationTest extends AbstractSpringIntegrationBa
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testLeaderboardData_forExercise() {
         var leaderboardData = tutorLeaderboardService.getExerciseLeaderboard(exercise);
         assertLeaderboardData(leaderboardData);

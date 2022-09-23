@@ -21,16 +21,12 @@ import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.domain.statistics.tutor.effort.TutorEffort;
 import de.tum.in.www1.artemis.repository.StudentParticipationRepository;
 import de.tum.in.www1.artemis.repository.TextAssessmentEventRepository;
-import de.tum.in.www1.artemis.repository.TextSubmissionRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 
 class TutorEffortIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private UserRepository userRepository;
-
-    @Autowired
-    private TextSubmissionRepository textSubmissionRepository;
 
     @Autowired
     private StudentParticipationRepository studentParticipationRepository;

@@ -15,25 +15,19 @@ import org.springframework.security.test.context.support.WithMockUser;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.Language;
-import de.tum.in.www1.artemis.repository.ExerciseRepository;
 import de.tum.in.www1.artemis.repository.RatingRepository;
-import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.service.RatingService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 
 class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    @Autowired
-    private ExerciseRepository exerciseRepo;
+    private static final String TEST_PREFIX = "ratingresourceintegrationtest"; // only lower case is supported
 
     @Autowired
     private RatingService ratingService;
 
     @Autowired
     private RatingRepository ratingRepo;
-
-    @Autowired
-    private UserRepository userRepo;
 
     private Result result;
 
@@ -43,9 +37,9 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void initTestCase() {
-        List<User> users = database.addUsers(2, 1, 0, 1);
+        List<User> users = database.addUsers(TEST_PREFIX, 2, 1, 0, 1);
         course = database.addCourseWithOneReleasedTextExercise();
-        TextExercise exercise = (TextExercise) exerciseRepo.findAll().get(0);
+        TextExercise exercise = database.getFirstExerciseWithType(course, TextExercise.class);
         User student1 = users.get(0);
         database.createAndSaveParticipationForExercise(exercise, student1.getLogin());
 
@@ -58,17 +52,17 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         rating.setRating(2);
 
         // add instructor of other course
-        database.createAndSaveUser("instructor2");
+        database.createAndSaveUser(TEST_PREFIX + "instructor2");
     }
 
     @AfterEach
     void tearDown() {
-        ratingRepo.deleteAll();
+        ratingRepo.deleteAllInBatch();
         database.resetDatabase();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateRating_asUser() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.CREATED);
         Rating savedRating = ratingService.findRatingByResultId(result.getId()).get();
@@ -77,7 +71,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testCreateInvalidRating_asUser() throws Exception {
         rating.setRating(7);
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.BAD_REQUEST);
@@ -86,34 +80,34 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testCreateRating_asTutor_FORBIDDEN() throws Exception {
         request.post("/api/results/" + result.getId() + "/rating/" + rating.getRating(), null, HttpStatus.FORBIDDEN);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.OK, Rating.class);
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRating_asUser_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.get("/api/results/" + savedRating.getResult().getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRating_asUser_Null() throws Exception {
         Rating savedRating = request.get("/api/results/" + result.getId() + "/rating", HttpStatus.OK, Rating.class);
         assertThat(savedRating).isNull();
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.OK);
@@ -122,7 +116,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testUpdateInvalidRating_asUser() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 7, null, HttpStatus.BAD_REQUEST);
@@ -132,7 +126,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testUpdateRating_asTutor_FORBIDDEN() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         request.put("/api/results/" + savedRating.getResult().getId() + "/rating/" + 5, null, HttpStatus.FORBIDDEN);
@@ -143,7 +137,7 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor1", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor() throws Exception {
         Rating savedRating = ratingService.saveRating(result.getId(), rating.getRating());
         final var ratings = request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.OK, Rating.class);
@@ -153,19 +147,19 @@ class RatingResourceIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     }
 
     @Test
-    @WithMockUser(username = "tutor1", roles = "TA")
+    @WithMockUser(username = TEST_PREFIX + "tutor1", roles = "TA")
     void testGetRatingForInstructorDashboard_asTutor_FORBIDDEN() throws Exception {
         request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = TEST_PREFIX + "student1", roles = "USER")
     void testGetRatingForInstructorDashboard_asStudent_FORBIDDEN() throws Exception {
         request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }
 
     @Test
-    @WithMockUser(username = "instructor2", roles = "INSTRUCTOR")
+    @WithMockUser(username = TEST_PREFIX + "instructor2", roles = "INSTRUCTOR")
     void testGetRatingForInstructorDashboard_asInstructor_FORBIDDEN() throws Exception {
         request.getList("/api/course/" + course.getId() + "/rating", HttpStatus.FORBIDDEN, Rating.class);
     }

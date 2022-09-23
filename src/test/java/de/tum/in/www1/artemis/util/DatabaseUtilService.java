@@ -4303,9 +4303,7 @@ public class DatabaseUtilService {
         textSubmission.setParticipation(participation);
         textSubmissionRepo.saveAndFlush(textSubmission);
         course.addExercises(textExercise);
-        User user = new User();
-        user.setLogin(login);
-        user.setId(1L);
+        User user = createAndSaveUser(login);
         user.setGroups(Set.of(course.getTeachingAssistantGroupName()));
         userRepo.save(user);
         return course;
