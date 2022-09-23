@@ -2,9 +2,11 @@ package de.tum.in.www1.artemis.service.connectors.bamboo;
 
 import static de.tum.in.www1.artemis.config.Constants.ASSIGNMENT_REPO_NAME;
 import static de.tum.in.www1.artemis.config.Constants.SETUP_COMMIT_MESSAGE;
+import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -38,11 +40,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.StaticCodeAnalysisTool;
 import de.tum.in.www1.artemis.domain.participation.Participant;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.domain.participation.StudentParticipation;
 import de.tum.in.www1.artemis.exception.BambooException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -76,8 +80,9 @@ public class BambooService extends AbstractContinuousIntegrationService {
     public BambooService(GitService gitService, ProgrammingSubmissionRepository programmingSubmissionRepository,
             Optional<ContinuousIntegrationUpdateService> continuousIntegrationUpdateService, BambooBuildPlanService bambooBuildPlanService, FeedbackRepository feedbackRepository,
             @Qualifier("bambooRestTemplate") RestTemplate restTemplate, @Qualifier("shortTimeoutBambooRestTemplate") RestTemplate shortTimeoutRestTemplate, ObjectMapper mapper,
-            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+            UrlService urlService, BuildLogEntryService buildLogService, TestwiseCoverageService testwiseCoverageService,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.gitService = gitService;
         this.continuousIntegrationUpdateService = continuousIntegrationUpdateService;
         this.bambooBuildPlanService = bambooBuildPlanService;
@@ -327,9 +332,11 @@ public class BambooService extends AbstractContinuousIntegrationService {
         // Return the logs from Bamboo (and filter them now)
         ProgrammingExerciseParticipation programmingExerciseParticipation = (ProgrammingExerciseParticipation) programmingSubmission.getParticipation();
         ProgrammingLanguage programmingLanguage = programmingExerciseParticipation.getProgrammingExercise().getProgrammingLanguage();
+        ProjectType projectType = programmingExerciseParticipation.getProgrammingExercise().getProjectType();
 
-        var buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId()),
-                programmingLanguage);
+        var buildLogEntries = retrieveLatestBuildLogsFromBamboo(programmingExerciseParticipation.getBuildPlanId());
+        extractAndPersistBuildLogStatistics(programmingSubmission, programmingLanguage, projectType, buildLogEntries);
+        buildLogEntries = buildLogService.removeUnnecessaryLogsForProgrammingLanguage(buildLogEntries, programmingLanguage);
         var savedBuildLogs = buildLogService.saveBuildLogs(buildLogEntries, programmingSubmission);
 
         // Set the received logs in order to avoid duplicate entries (this removes existing logs) & save them into the database
@@ -337,6 +344,43 @@ public class BambooService extends AbstractContinuousIntegrationService {
         programmingSubmissionRepository.save(programmingSubmission);
 
         return buildLogEntries;
+    }
+
+    @Override
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries) {
+        if (buildLogEntries.isEmpty()) {
+            // No logs received -> Do nothing
+            return;
+        }
+
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            // Not supported -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, "started building on agent");
+        ZonedDateTime agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "Executing build");
+        ZonedDateTime testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Tests'");
+        ZonedDateTime testsFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Tests' with result");
+        ZonedDateTime scaStarted = getTimestampForLogEntry(buildLogEntries, "Starting task 'Static Code Analysis'");
+        ZonedDateTime scaFinished = getTimestampForLogEntry(buildLogEntries, "Finished task 'Static Code Analysis'");
+        ZonedDateTime jobFinished = getTimestampForLogEntry(buildLogEntries, "Finished building");
+
+        Integer dependenciesDownloadedCount = null;
+
+        if (ProjectType.isMavenProject(projectType)) {
+            // Not supported for GRADLE projects
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
+        }
+
+        var agentSetupDuration = new BuildJobPartDuration(jobStarted, agentSetupCompleted);
+        var testDuration = new BuildJobPartDuration(testsStarted, testsFinished);
+        var scaDuration = new BuildJobPartDuration(scaStarted, scaFinished);
+        var totalJobDuration = new BuildJobPartDuration(jobStarted, jobFinished);
+
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+                dependenciesDownloadedCount);
     }
 
     /**

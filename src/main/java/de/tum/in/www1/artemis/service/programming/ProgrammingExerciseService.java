@@ -589,7 +589,7 @@ public class ProgrammingExerciseService {
             }
             else {
                 // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
-                boolean isMaven = projectType == null || projectType.isMaven();
+                boolean isMaven = ProjectType.isMavenProject(projectType);
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
 

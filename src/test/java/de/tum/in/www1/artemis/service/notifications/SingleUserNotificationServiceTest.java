@@ -237,7 +237,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
 
         singleUserNotificationService.notifyUsersAboutAssessedExerciseSubmission(testExercise);
 
-        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid paticipation, submission, and result)")
+        assertThat(notificationRepository.findAll()).as("Only one notification should have been created (for the user with a valid participation, submission, and result)")
                 .hasSize(1);
     }
 
@@ -252,7 +252,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         database.changeUser("student1");
         Post post = new Post();
         post.setPlagiarismCase(new PlagiarismCase());
-        post.setContent("You are a bad Plagiatuin!");
+        post.setContent("You plagiarized!");
         plagiarismCase.setPost(new Post());
         singleUserNotificationService.notifyUserAboutNewPlagiarismCase(plagiarismCase, user);
         verifyRepositoryCallWithCorrectNotification(NEW_PLAGIARISM_CASE_STUDENT_TITLE);
@@ -276,6 +276,6 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
      * Checks if an email was created and send
      */
     private void verifyEmail() {
-        verify(javaMailSender, timeout(1000).times(1)).createMimeMessage();
+        verify(javaMailSender, timeout(1000).times(1)).send(any(MimeMessage.class));
     }
 }
