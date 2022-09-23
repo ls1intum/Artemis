@@ -6,7 +6,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { MockRouterLinkDirective } from '../../../../../helpers/mocks/directive/mock-router-link.directive';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { AlertService } from 'app/core/util/alert.service';
-import { ActivatedRoute, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { ArtemisMarkdownService } from 'app/shared/markdown.service';
 import { of } from 'rxjs';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
@@ -14,6 +14,7 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
 import { Course } from 'app/entities/course.model';
+import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 
 describe('TutorialGroupDetailComponent', () => {
     let tutorialGroupDetailComponentFixture: ComponentFixture<TutorialGroupDetailComponent>;
@@ -33,31 +34,12 @@ describe('TutorialGroupDetailComponent', () => {
                 MockProvider(AlertService),
                 MockProvider(ArtemisMarkdownService),
                 { provide: Router, useClass: MockRouter },
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        paramMap: of({
-                            get: (key: string) => {
-                                switch (key) {
-                                    case 'tutorialGroupId':
-                                        return 1;
-                                }
-                            },
-                        }),
-                        parent: {
-                            parent: {
-                                paramMap: of({
-                                    get: (key: string) => {
-                                        switch (key) {
-                                            case 'courseId':
-                                                return 2;
-                                        }
-                                    },
-                                }),
-                            },
-                        },
-                    },
-                },
+                simpleOneLayerActivatedRouteProvider(
+                    new Map([
+                        ['courseId', 2],
+                        ['tutorialGroupId', 1],
+                    ]),
+                ),
             ],
         })
             .compileComponents()

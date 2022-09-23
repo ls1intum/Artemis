@@ -86,6 +86,6 @@ describe('CreateTutorialGroupSessionComponent', () => {
         expect(createStub).toHaveBeenCalledOnce();
         expect(createStub).toHaveBeenCalledWith(courseId, tutorialGroupId, formDataToTutorialGroupSessionDTO(formData));
         expect(navigateSpy).toHaveBeenCalledOnce();
-        expect(navigateSpy).toHaveBeenCalledWith(['course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions']);
+        expect(navigateSpy).toHaveBeenCalledWith(['/course-management', courseId, 'tutorial-groups-management', tutorialGroupId, 'sessions']);
     });
 });

@@ -1,5 +1,5 @@
 import { ComponentFixture, fakeAsync, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
@@ -11,6 +11,7 @@ import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.di
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { generateExampleTutorialGroup } from '../crud/tutorialGroupExampleModels';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -22,7 +23,13 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupRowButtonsComponent, MockComponent(FaIconComponent), MockRouterLinkDirective, MockDirective(DeleteButtonDirective)],
+            declarations: [
+                TutorialGroupRowButtonsComponent,
+                MockComponent(FaIconComponent),
+                MockRouterLinkDirective,
+                MockDirective(DeleteButtonDirective),
+                MockPipe(ArtemisTranslatePipe),
+            ],
             providers: [MockProvider(TutorialGroupsService), { provide: Router, useValue: router }],
         })
             .compileComponents()
@@ -39,15 +46,15 @@ describe('TutorialGroupRowButtonsComponent', () => {
     };
 
     it('should navigate to session management', fakeAsync(() => {
-        testButtonLeadsToRouting('sessions-' + tutorialGroup.id, ['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'sessions']);
+        testButtonLeadsToRouting('sessions-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'sessions']);
     }));
 
     it('should navigate to registrations management', fakeAsync(() => {
-        testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'registered-students']);
+        testButtonLeadsToRouting('registrations-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'registered-students']);
     }));
 
     it('should navigate to edit', fakeAsync(() => {
-        testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'edit']);
+        testButtonLeadsToRouting('edit-' + tutorialGroup.id, ['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id!, 'edit']);
     }));
 
     it('should call delete and emit deleted event', () => {

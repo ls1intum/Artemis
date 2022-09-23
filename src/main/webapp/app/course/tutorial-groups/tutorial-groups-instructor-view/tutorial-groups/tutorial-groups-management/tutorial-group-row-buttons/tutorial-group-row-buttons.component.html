@@ -2,23 +2,27 @@
     <!-- Sessions -->
     <a
         [id]="'sessions-' + tutorialGroup.id"
-        [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions']"
+        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions']"
         class="btn btn-primary btn-sm me-1"
     >
         <fa-icon [icon]="faCalendar"></fa-icon>
-        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.rowButtons.sessions' }}</span>
+        <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.rowButtons.sessions' | artemisTranslate }}</span>
     </a>
     <!-- Registered Students -->
     <a
         [id]="'registrations-' + tutorialGroup.id"
-        [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']"
+        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']"
         class="btn btn-primary btn-sm me-1"
     >
         <fa-icon [icon]="faUsers"></fa-icon>
         <span class="d-none d-md-inline">{{ 'artemisApp.pages.tutorialGroupsManagement.rowButtons.registrations' | artemisTranslate }}</span>
     </a>
     <!-- Edit -->
-    <a [id]="'edit-' + tutorialGroup.id" [routerLink]="['course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']" class="btn btn-warning btn-sm me-1">
+    <a
+        [id]="'edit-' + tutorialGroup.id"
+        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']"
+        class="btn btn-warning btn-sm me-1"
+    >
         <fa-icon [icon]="faWrench"></fa-icon>
         <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
     </a>

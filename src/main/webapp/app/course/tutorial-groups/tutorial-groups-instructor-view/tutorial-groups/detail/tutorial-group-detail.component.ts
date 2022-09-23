@@ -33,12 +33,12 @@ export class TutorialGroupDetailComponent implements OnInit {
 
     ngOnInit(): void {
         this.isLoading = true;
-        combineLatest([this.activatedRoute.paramMap, this.activatedRoute.parent!.parent!.paramMap])
+        combineLatest([this.activatedRoute.paramMap])
             .pipe(
                 take(1),
-                switchMap(([params, parentParams]) => {
+                switchMap(([params]) => {
                     this.tutorialGroupId = Number(params.get('tutorialGroupId'));
-                    this.courseId = Number(parentParams.get('courseId'));
+                    this.courseId = Number(params.get('courseId'));
                     return this.tutorialGroupService.getOneOfCourse(this.courseId, this.tutorialGroupId);
                 }),
                 finalize(() => (this.isLoading = false)),

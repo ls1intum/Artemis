@@ -1,131 +1,14 @@
 {
     "artemisApp": {
         "errors": {
-            "scheduleOverlapsWithSession": "Der Zeitraum überlappt mit den folgenden Terminen der Übungsgruppe: {{ sessions }}"
+            "scheduleOverlapsWithSession": "Der Zeitplan überschneidet sich mit den folgenden Sitzungen: {{ sessions }}"
         },
-        "tutorialGroup": {
-            "deleted": "Übungsgruppe gelöscht"
-        },
-        "tutorialGroups": {
-            "tutorialGroupsButton": "Übungsgruppe"
-        },
-        "createConfiguration": {
-            "title": "Erstelle eine neue Übungsgruppen Konfiguration",
-            "editButton": "Bearbeite Übungsgruppen Konfiguration",
-            "explanation": "Bevor du mit der Erstellung von Übungsgruppen beginnen kannst, musst du einige Eigenschaften festlegen, die alle Lerngruppen betreffen. Diese können auch später noch geändert werden.",
-            "timeZoneInput": {
-                "label": "Zeitzone",
-                "changeWarning": "Wenn du die Zeitzone änderst, werden alle Lerngruppen gelöscht. Bist du sicher, dass du dies tun willst?",
-                "placeholder": "Wähle eine Zeitzone aus",
-                "explanation": "Die Zeitzone, in der die Übungsgruppen stattfinden. Anhand dieser Zeitzone werden die Anfangs- und Endzeiten der Übungsgruppen interpretiert. Du kannst in diesem Feld durch Tippen suchen.",
-                "requiredValidationError": "Du musst eine Zeitzone auswählen"
-            },
-            "periodInput": {
-                "label": "Übungsgruppen-Zeitraum",
-                "explanation": "Der Zeitraum, in dem die Übungsgruppen während des Semesters stattfinden. Dies wird für die Erstellung der einzelnen Sitzungen verwendet.",
-                "requiredValidationError": "Du musst einen Zeitraum auswählen",
-                "parseError": "Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
-                "invalidRange": "Der Zeitraum muss einen gültigen Bereich umfassen"
-            }
-        },
-        "editConfiguration": {
-            "title": "Edit Tutorial Groups Configuration"
-        },
-        "manageTutorialGroups": {
-            "title": "Übungsgruppenverwaltung",
-            "tableCaption": "Übungsgruppen für diesen Kurs",
-            "createButton": "Erstelle Übunsgruppe",
-            "columns": {
-                "id": "ID",
-                "title": "Titel",
-                "teachingAssistant": "Tutor",
-                "capacity": "Kapazität",
-                "registeredStudents": "Registrierte Studenten",
-                "isOnline": "Online/Offline",
-                "online": "Online",
-                "offline": "Offline",
-                "language": "Sprache",
-                "campus": "Campus",
-                "additionalInfo": "Zusätzliche Informationen",
-                "schedule": {
-                    "weekDay": "Wochentag",
-                    "time": "Zeit",
-                    "periodWarning": "Achtung: Der gewählte Zeitraum ist unterschiedlich mit dem Zeitraum der Konfiguration."
-                }
-            },
-            "deleteButton": {
-                "question": "Bist du sicher, dass du die Übungsgruppe mit dem Titel {{ title }} löschen möchtest?",
-                "typeNameToConfirm": "Titel der Übungsgruppe eingeben, um zu bestätigen"
-            }
-        },
-        "createTutorialGroup": {
-            "title": "Erstelle Übungsgruppe"
-        },
-        "editTutorialGroup": {
-            "title": "Übungsgruppe bearbeiten"
-        },
-        "registeredStudents": {
-            "title": "Registrierte Studenten"
-        },
-        "manageSchedule": {
-            "title": "Plan",
-            "timeZoneInfo": "Zeitzone: {{ timeZone }}"
-        },
-        "tutorialGroupDetail": {
-            "title": "Übungsgruppe Details",
-            "course": "Kurs",
-            "teachingAssistantNotSet": "Kein Tutor gesetzt",
-            "capacityNotSet": "Keine Kapazität gesetzt",
-            "campusNotSet": "Kein Campus gesetzt",
-            "additionalInformationNotSet": "Keine zusätzlichen Informationen gesetzt"
-        },
-        "tutorialGroupForm": {
-            "titleInput": {
-                "label": "Titel",
-                "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
-                "requiredValidationError": "Eine Übungsgruppe muss einen Titel haben!",
-                "maxLengthValidationError": "Der Titel darf maximal {{ max }} Zeichen lang sein!"
-            },
-            "teachingAssistantInput": {
-                "label": "Tutor",
-                "placeholder": "Wähle einen Tutors aus, der für diese Gruppe zuständig ist",
-                "loadingText": "Lade Tutoren...",
-                "notFoundText": "Keine Tutoren gefunden in diesem Kurs",
-                "requiredValidationError": "Ein Tutor muss für diese Gruppe ausgewählt werden!",
-                "taHelp": "Du kannst nach einem Tutor suchen indem du in dieses Feld tippst"
-            },
-            "campusInput": {
-                "label": "Campus",
-                "placeholder": "Wähle einen Campus aus, auf dem diese Gruppe stattfindet",
-                "loadingText": "Lade Campusse...",
-                "notFoundText": "Keine Campusse gefunden",
-                "campusHelp": "Du kannst nach Campusse suchen indem du in dieses Feld tippst",
-                "maxLengthValidationError": "Campus ist beschränkt auf {{ max }} Zeichen!"
-            },
-            "additionalInformationInput": {
-                "label": "Zusätzliche Informationen",
-                "placeholder": "Zusätzliche Informationen zu dieser Gruppe",
-                "maxLengthValidationError": "Die zusätzlichen Informationen dürfen maximal {{ max }} Zeichen lang sein!"
-            },
-            "capacityInput": {
-                "label": "Kapazität",
-                "unit": "Studenten",
-                "minValidationError": "Die Kapazität muss mindestens 1 sein!"
-            },
-            "languageInput": {
-                "label": "Sprache",
-                "placeholder": "Wähle eine Sprache aus",
-                "english": "Englisch",
-                "german": "Deutsch"
-            },
-            "isOnlineInput": {
-                "label": "Trifft sich diese Gruppe online oder offline?"
-            }
-        },
-        "scheduleForm": {
-            "title": "Plan",
-            "weekDay": {
-                "label": "Wochentag an dem diese Übung stattfindet",
+        "generic": {
+            "offline": "Offline",
+            "online": "Online",
+            "german": "Deutsch",
+            "english": "Englisch",
+            "weekdays": {
                 "monday": "Montag",
                 "tuesday": "Dienstag",
                 "wednesday": "Mittwoch",
@@ -133,14 +16,260 @@
                 "friday": "Freitag",
                 "saturday": "Samstag",
                 "sunday": "Sonntag"
+            }
+        },
+        "entities": {
+            "tutorialGroup": {
+                "plural": "Übungsgruppen",
+                "course": "Kurs",
+                "title": "Titel",
+                "additionalInformation": "Zusätzliche Informationen",
+                "capacity": "Kapazität",
+                "isOnline": "Offline / Online",
+                "campus": "Campus",
+                "language": "Sprache",
+                "teachingAssistant": "Tutor:in",
+                "registrations": "Registrierungen"
             },
-            "timeInput": {
-                "from": "Übungsgruppe beginnt um",
-                "to": "Übungsgruppe endet um",
-                "invalidTimeRange": "Der Zeitraum muss valide sein!"
+            "tutorialGroupSchedule": {
+                "dayOfWeek": "Wochentag",
+                "time": "Zeit",
+                "startTime": "Startzeit",
+                "endTime": "Endzeit",
+                "location": "Treffpunkt",
+                "repetitionFrequency": "Wiederholungsfrequenz",
+                "validFromInclusive": "Gültig ab",
+                "validToInclusive": "Gültig bis"
             },
-            "periodInput": {
-                "label": "Zeitraum in der Übungsgruppen stattfinden: "
+            "tutorialGroupSession": {
+                "date": "Datum",
+                "start": "Anfang",
+                "end": "Ende",
+                "status": "Status",
+                "location": "Ort"
+            },
+            "tutorialFreePeriod": {
+                "date": "Datum",
+                "reason": "Grund"
+            }
+        },
+        "forms": {
+            "tutorialGroupForm": {
+                "titleInput": {
+                    "label": "Titel",
+                    "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
+                    "requiredValidationError": "Titel ist erforderlich!",
+                    "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!"
+                },
+                "teachingAssistantInput": {
+                    "label": "Tutor:in",
+                    "placeholder": "Wähle eine Tutor:in aus, die für diese Gruppe verantwortlich ist.",
+                    "loadingText": "Tutor:innen laden ...",
+                    "notFoundText": "Keine Tutor:in gefunden.",
+                    "requiredValidationError": "Eine Übungsgruppe braucht eine Tutor:in zugewiesen!",
+                    "taHelp": "In das Feld tippen um nach Tutor:innen zu suchen."
+                },
+                "campusInput": {
+                    "label": "Campus",
+                    "placeholder": "Wähle einen Campus, auf dem sich diese Übungsgruppe trifft.",
+                    "loadingText": "Campus laden ...",
+                    "notFoundText": "Kein Campus gefunden.",
+                    "campusHelp": "In das Feld tippen um nach einem Campus zu suchen.",
+                    "maxLengthValidationError": "Der Campus ist auf {{ max }} Zeichen beschränkt!"
+                },
+                "additionalInformationInput": {
+                    "label": "Zusätzliche Informationen",
+                    "placeholder": "Zusätzliche Informationen zur Übungsgruppe.",
+                    "maxLengthValidationError": "Zusätzliche Informationen sind auf {{ max }} Zeichen beschränkt!"
+                },
+                "capacityInput": {
+                    "label": "Kapazität",
+                    "unit": "Studierende",
+                    "minValidationError": "Die Kapazität muss mindestens 1 sein!"
+                },
+                "languageInput": {
+                    "label": "Sprache",
+                    "placeholder": "Wähle eine Sprache"
+                },
+                "isOnlineInput": {
+                    "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
+                }
+            },
+            "scheduleForm": {
+                "configureRecurringSchedule": "Konfigurieren eines wiederkehrenden Sitzungsplans?",
+                "scheduleChangeWarning": "Der Zeitplan wurde geändert. Alle Sitzungen, die zum alten Zeitplan gehören, werden infolgedessen gelöscht. Soll das wirklich gemacht werden?",
+                "sessionCreationInfo": "Der Zeitplan enthält die folgenden Sitzungen:",
+                "formTitle": "Sitzungsplan",
+                "repetitionFrequencyInput": {
+                    "label": "Sitzung wiederholt alle:",
+                    "weeks": "Wochen",
+                    "requiredValidationError": "Eine Wiederholungsfrequenz muss ausgewählt werden!",
+                    "minValidationError": "Wiederholungsfrequenz muss mindestens {{min}} sein!",
+                    "maxValidationError": "Wiederholungsfrequenz kann höchstens {{max}} sein!"
+                },
+                "weekDayInput": {
+                    "label": "Wochentag"
+                },
+                "locationInput": {
+                    "labelOnline": "Meeting-Link",
+                    "labelOffline": "Treffpunkt",
+                    "placeholderOnline": "Wie können die Studierende dem Online-Meeting beitreten?",
+                    "placeholderOffline": "Wie können die Studierende den Raum finden?",
+                    "maxLengthValidationError": "Der Ort ist auf {{ max }} Zeichen beschränkt!",
+                    "requiredValidationError": "Ein Ort muss angegeben werden!"
+                },
+                "timeInput": {
+                    "from": "Sitzung beginnt um",
+                    "to": "Sitzung endet um",
+                    "invalidTimeRange": "Der Zeitbereich muss ein gültiger Zeitbereich sein!"
+                },
+                "periodInput": {
+                    "label": "Zeitraum, in der sich die Übungsgruppe trifft:",
+                    "periodWarning": "Hinweis: Der Zeitraum, unterscheidet sich vom Zeitraum der globalen Übungsgruppen-Konfiguration!",
+                    "requiredValidationError": "Ein Zeitraum muss angegeben werden!",
+                    "parseError": "Der Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
+                    "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
+                }
+            },
+            "tutorialFreePeriodForm": {
+                "dateInput": {
+                    "label": "Datum",
+                    "requiredDateError": "Ein Datum muss angegeben werden!",
+                    "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
+                },
+                "reasonInput": {
+                    "label": "Grund für keine Übunsgruppen an diesem Tag",
+                    "placeholder": "Nationalfeiertag",
+                    "maxLengthValidationError": "Die Vernunft beschränkt sich auf {{ max }} Zeichen!"
+                }
+            },
+            "sessionForm": {
+                "dateInput": {
+                    "label": "Datum",
+                    "requiredDateError": "Ein Datum muss angegeben werden!",
+                    "parseError": "Das Datum muss im Format 'YYYY-MM-DD' sein"
+                },
+                "timeInput": {
+                    "from": "Sitzung beginnt um",
+                    "to": "Sitzung endet um",
+                    "invalidTimeRange": "Der Zeitbereich muss ein gültiger Zeitbereich sein!"
+                },
+                "locationInput": {
+                    "labelOnline": "Ort / Link",
+                    "placeholder": "Wo können sich die Studierende treffen?",
+                    "maxLengthValidationError": "Der Ort / Link ist auf {{ max }} Zeichen beschränkt!",
+                    "requiredValidationError": "Ein Ort / Link muss angegeben werden!"
+                }
+            },
+            "configurationForm": {
+                "timeZoneInput": {
+                    "label": "Zeitzone",
+                    "changeWarning": "Die Zeitzone wurde geändert. Alle individuell erstellten Sitzungen und freien Tage werden gelöscht. In der neuen Zeitzone werden nur Sitzungen, die einem Zeitplan folgen neu erstellt. Soll das wirklich gemacht werden?",
+                    "placeholder": "Wähle eine Zeitzone aus",
+                    "explanation": "Die Zeitzone, in der die Übungsgruppen auftreten. Dies wird verwendet, um die Start- und Endzeiten der Übungsgruppen zu interpretieren. In das Feld tippen um nach einer Zeitzone zu suchen.",
+                    "requiredValidationError": "Eine Zeitzone muss ausgewählt werden!"
+                },
+                "periodInput": {
+                    "label": "Übungsgruppen-Zeitraum",
+                    "explanation": "Der Zeitraum, in dem die Übungsgruppen im Semester stattfinden. Dies ist der Standardplan jeder Übungsgruppe. Er kann individuell für jede Übungsgruppe angepasst werden.",
+                    "requiredValidationError": "Ein Zeitraum muss angegeben werden!",
+                    "parseError": "Der Zeitraum muss im Format 'YYYY-MM-DD - YYYY-MM-DD' sein",
+                    "invalidRangeError": "Der Zeitraum muss ein gültiger Datumsbereich sein"
+                }
+            }
+        },
+        "pages": {
+            "tutorialGroupsManagement": {
+                "title": "Übungsgruppen-Verwaltung",
+                "freePeriodsButtons": "Freie Tage",
+                "creatTutorialGroupButton": "Neue Übungsgruppe",
+                "editConfigurationButton": "Globale Konfiguration bearbeiten",
+                "rowButtons": {
+                    "sessions": "Sitzungen",
+                    "registrations": "Registrierungen"
+                },
+                "deleteDialog": {
+                    "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
+                    "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
+                }
+            },
+            "createTutorialGroup": {
+                "title": "Übungsgruppe erstellen"
+            },
+            "editTutorialGroup": {
+                "title": "Übungsgruppe bearbeiten"
+            },
+            "tutorialGroupDetail": {
+                "title": "Übungsgruppen-Details",
+                "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
+                "capacityNotSet": "Kapazität nicht eingestellt",
+                "campusNotSet": "Campus nicht gesetzt",
+                "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt"
+            },
+            "tutorialFreePeriodsManagement": {
+                "title": "Freie Tage verwalten",
+                "createFreePeriodButton": "Neuen freien Tag hinzufügen",
+                "timeZoneExplanation": "Jeder Tag wird in der Zeitzone {{ timeZone }} angezeigt",
+                "deleteDialog": {
+                    "question": "Sicher, dass der freie Tag {{ title }} gelöscht werden soll?"
+                }
+            },
+            "createTutorialFreePeriod": {
+                "title": "Freien Tag erstellen"
+            },
+            "editTutorialFreePeriod": {
+                "title": "Freien Tag bearbeiten"
+            },
+            "tutorialGroupSessionManagement": {
+                "title": "Sitzungsverwaltung",
+                "createSessionButton": "Neue Sitzung hinzufügen",
+                "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt",
+                "rowButtons": {
+                    "sessions": "Sitzungen",
+                    "registrations": "Registrierungen",
+                    "cancel": "Sitzung absagen",
+                    "activate": "Sitzung reaktivieren"
+                },
+                "columns": {
+                    "scheduled": "Folgt Zeitplan?",
+                    "isCancelled": "Ist abgesagt?"
+                },
+                "key": {
+                    "label": "Legende",
+                    "cancelled": "Abgesagte Sitzung",
+                    "individual": "Individuelle Sitzung"
+                },
+                "deleteDialog": {
+                    "question": "Sicher, dass die Sitzung {{ title }} gelöscht werden soll?"
+                },
+                "cancelActivateModal": {
+                    "cancelSession": {
+                        "title": "Sitzung absagen",
+                        "question": "Sicher, dass die Sitzung {{label}} abgesagt werden soll?",
+                        "explanation": "Grund für die Absage:",
+                        "maxLengthValidationError": "Der Grund kann max {{ max }} Zeichen lang sein!"
+                    },
+                    "activateSession": {
+                        "title": "Sitzung reaktivieren",
+                        "question": "Sicher, dass die abgesagte Sitzung {{label}} reaktiviert werden soll??"
+                    }
+                }
+            },
+            "registeredStudents": {
+                "title": "Registrierte Studierende"
+            },
+            "createTutorialSession": {
+                "title": "Sitzung erstellen"
+            },
+            "editTutorialSession": {
+                "title": "Sitzung bearbeiten"
+            },
+            "createTutorialGroupsConfiguration": {
+                "title": "Globalen Konfiguration erstellen",
+                "explanation": "Bevor Übungsgruppen erstellt werden können, müssen einige Eigenschaften angeben werden, die alle Übungsgruppen betreffen. Dies kann auch später geändert werden."
+            },
+            "editTutorialGroupsConfiguration": {
+                "title": "Globale Konfiguration bearbeiten"
             }
         }
     }

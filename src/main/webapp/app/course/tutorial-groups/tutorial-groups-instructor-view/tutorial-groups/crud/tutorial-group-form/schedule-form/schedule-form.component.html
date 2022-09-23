@@ -8,7 +8,7 @@
             <label for="repetitionFrequency">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.label' | artemisTranslate }}</label>
             <div class="input-group">
                 <input id="repetitionFrequency" type="number" class="form-control" formControlName="repetitionFrequency" />
-                <div class="input-group-text">{{ 'artemisApp.forms.scheduleForm.repetitionFrequency.weeks' | artemisTranslate }}</div>
+                <div class="input-group-text">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.weeks' | artemisTranslate }}</div>
             </div>
             <div *ngIf="repetitionFrequencyControl?.invalid && (repetitionFrequencyControl?.dirty || repetitionFrequencyControl?.touched)" class="alert alert-danger">
                 <div *ngIf="repetitionFrequencyControl?.errors?.min">
@@ -92,7 +92,7 @@
         <!-- Period -->
         <div>
             <div *ngIf="defaultPeriodChanged" class="alert alert-warning" role="alert">
-                {{ 'artemisApp.manageTutorialGroups.columns.schedule.periodWarning' | artemisTranslate }}
+                {{ 'artemisApp.forms.scheduleForm.periodInput.periodWarning' | artemisTranslate }}
             </div>
             <label class="form-label" for="period">{{ 'artemisApp.forms.scheduleForm.periodInput.label' | artemisTranslate }}</label>
             <div class="input-group">
@@ -110,17 +110,17 @@
                 <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
             </div>
             <div class="form-text">
-                {{ 'artemisApp.createConfiguration.periodInput.explanation' | artemisTranslate }}
+                {{ 'artemisApp.forms.scheduleForm.periodInput.label' | artemisTranslate }}
             </div>
             <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
                 <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
                     {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
                 </div>
                 <div *ngIf="periodControl?.errors?.owlDateTimeParse">
-                    {{ 'artemisApp.createConfiguration.periodInput.parseError' | artemisTranslate }}
+                    {{ 'artemisApp.forms.scheduleForm.periodInput.parseError' | artemisTranslate }}
                 </div>
                 <div *ngIf="periodControl?.errors?.owlDateTimeRange">
-                    {{ 'artemisApp.createConfiguration.periodInput.invalidRangeError' | artemisTranslate }}
+                    {{ 'artemisApp.forms.scheduleForm.periodInput.invalidRangeError' | artemisTranslate }}
                 </div>
             </div>
         </div>

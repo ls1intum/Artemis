@@ -20,6 +20,7 @@
         },
         "entities": {
             "tutorialGroup": {
+                "plural": "Tutorial Groups",
                 "course": "Course",
                 "title": "Title",
                 "additionalInformation": "Additional Information",
@@ -91,7 +92,7 @@
                     "placeholder": "Select a Language"
                 },
                 "isOnlineInput": {
-                    "label": "Does this tutorial group meet online of offline?"
+                    "label": "Does this tutorial group meet online or offline?"
                 }
             },
             "scheduleForm": {
@@ -123,7 +124,11 @@
                     "invalidTimeRange": "Time range must be a valid time range!"
                 },
                 "periodInput": {
-                    "label": "Period in which the tutorial group meets: "
+                    "label": "Period in which the tutorial group meets: ",
+                    "periodWarning": "Note: The period you selected differs from the period of the global tutorial group configuration!",
+                    "requiredValidationError": "You need to enter a period!",
+                    "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
+                    "invalidRangeError": "Period must be a valid date range"
                 }
             },
             "tutorialFreePeriodForm": {
@@ -150,10 +155,10 @@
                     "invalidTimeRange": "Time range must be a valid time range!"
                 },
                 "locationInput": {
-                    "labelOnline": "Meeting Location",
+                    "labelOnline": "Meeting Location / Link",
                     "placeholder": "Where can the students meet?",
-                    "maxLengthValidationError": "Location is limited to {{ max }} characters!",
-                    "requiredValidationError": "You need to enter a location!"
+                    "maxLengthValidationError": "Location / Link is limited to {{ max }} characters!",
+                    "requiredValidationError": "You need to enter a location / link!"
                 }
             },
             "configurationForm": {
@@ -166,10 +171,10 @@
                 },
                 "periodInput": {
                     "label": "Tutorial Group Period",
-                    "explanation": "The period in which the tutorial groups occur in the semester. This will be used to create the individual sessions.",
+                    "explanation": "The period in which the tutorial groups occur in the semester. This will the default schedule of every tutorial group. It can be overridden by individual schedules.",
                     "requiredValidationError": "You need to select a period!",
                     "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
-                    "invalidRange": "Period must be a valid date range"
+                    "invalidRangeError": "Period must be a valid date range"
                 }
             }
         },
@@ -260,11 +265,11 @@
                 "title": "Edit Session"
             },
             "createTutorialGroupsConfiguration": {
-                "title": "Create Course Wide Tutorial Groups Configuration",
+                "title": "Create global Tutorial Groups Configuration",
                 "explanation": "Before you can start creating tutorial groups, you must specify some properties that concern all tutorial groups. This can also be changed later."
             },
             "editTutorialGroupsConfiguration": {
-                "title": "Edit Course Wide Tutorial Groups Configuration"
+                "title": "Edit global Tutorial Groups Configuration"
             }
         }
     }

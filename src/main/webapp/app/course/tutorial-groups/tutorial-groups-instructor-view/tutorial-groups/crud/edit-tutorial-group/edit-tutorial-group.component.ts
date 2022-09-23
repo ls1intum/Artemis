@@ -117,7 +117,7 @@ export class EditTutorialGroupComponent implements OnInit {
             .pipe(
                 finalize(() => {
                     this.isLoading = false;
-                    this.router.navigate(['course-management', this.courseId, 'tutorial-groups-management']);
+                    this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management']);
                 }),
             )
             .subscribe({

@@ -14,6 +14,7 @@ import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';
 import { of } from 'rxjs';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupFreePeriodRowButtonsComponent>;
@@ -33,6 +34,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
                 MockComponent(FaIconComponent),
                 MockRouterLinkDirective,
                 MockDirective(DeleteButtonDirective),
+                MockPipe(ArtemisTranslatePipe),
             ],
             providers: [MockProvider(TutorialGroupFreePeriodService), { provide: Router, useValue: router }],
         })
@@ -72,7 +74,7 @@ describe('TutorialGroupFreePeriodRowButtonsComponent', () => {
         fixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledOnce();
             expect(navigateSpy).toHaveBeenCalledWith([
-                'course-management',
+                '/course-management',
                 courseId,
                 'tutorial-groups-management',
                 'configuration',

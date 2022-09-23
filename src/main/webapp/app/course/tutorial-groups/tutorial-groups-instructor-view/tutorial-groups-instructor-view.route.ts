@@ -30,6 +30,15 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         canActivate: [UserRouteAccessService],
     },
     {
+        path: 'configuration',
+        component: TutorialGroupsManagementComponent,
+        data: {
+            authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
+            pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
+        },
+        canActivate: [UserRouteAccessService],
+    },
+    {
         path: 'configuration/create',
         component: CreateTutorialGroupsConfigurationComponent,
         data: {

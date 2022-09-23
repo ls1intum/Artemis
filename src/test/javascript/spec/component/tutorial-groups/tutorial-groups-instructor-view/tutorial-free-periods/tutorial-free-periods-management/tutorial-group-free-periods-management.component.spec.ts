@@ -94,7 +94,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
         createButton.click();
         fixture.whenStable().then(() => {
             expect(navigateSpy).toHaveBeenCalledWith([
-                'course-management',
+                '/course-management',
                 courseId,
                 'tutorial-groups-management',
                 'configuration',

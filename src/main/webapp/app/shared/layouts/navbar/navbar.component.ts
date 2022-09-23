@@ -306,8 +306,10 @@ export class NavbarComponent implements OnInit, OnDestroy {
         interval: 'artemisApp.gradingSystem.intervalTab.title',
         plagiarism_cases: 'artemisApp.plagiarism.cases.pageTitle',
         code_hint_management: 'artemisApp.codeHint.management.title',
-        tutorial_groups_management: 'artemisApp.manageTutorialGroups.title',
-        registered_students: 'artemisApp.registeredStudents.title',
+        tutorial_groups_management: 'artemisApp.pages.tutorialGroupsManagement.title',
+        registered_students: 'artemisApp.pages.registeredStudents.title',
+        sessions: 'artemisApp.pages.tutorialGroupSessionManagement.title',
+        tutorial_free_days: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
     };
 
     studentPathBreadcrumbTranslations = {
