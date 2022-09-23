@@ -2,7 +2,7 @@
     <div class="row" *ngIf="tutorialGroupsConfiguration && tutorialGroupFreePeriods">
         <div class="col-12">
             <div class="d-flex justify-content-between">
-                <h4>{{ 'artemisApp.manageTutorialFreeDays.title' | artemisTranslate }}</h4>
+                <h4>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.title' | artemisTranslate }}</h4>
                 <div>
                     <a
                         class="btn btn-primary"
@@ -18,23 +18,24 @@
                         ]"
                     >
                         <fa-icon [icon]="faPlus"></fa-icon>
-                        <span>{{ 'artemisApp.manageTutorialFreeDays.createButton' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.pages.tutorialFreePeriodsManagement.createFreePeriodButton' | artemisTranslate }}</span>
                     </a>
                 </div>
             </div>
         </div>
         <div class="col-12 mb-2">
             <div class="alert alert-info">
-                {{ 'artemisApp.manageSessions.timeZone' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
+                {{ 'artemisApp.pages.tutorialFreePeriodsManagement.timeZoneExplanation' | artemisTranslate: { timeZone: tutorialGroupsConfiguration.timeZone } }}
             </div>
         </div>
         <div class="table-responsive" *ngIf="tutorialGroupFreePeriods && tutorialGroupFreePeriods.length > 0">
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th scope="col">{{ 'artemisApp.manageTutorialFreeDays.columns.id' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.manageTutorialFreeDays.columns.date' | artemisTranslate }}</th>
-                        <th scope="col">{{ 'artemisApp.manageTutorialFreeDays.columns.reason' | artemisTranslate }}</th>
+                        <th>{{ 'global.field.id' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.date' | artemisTranslate }}</th>
+                        <th>{{ 'artemisApp.entities.tutorialFreePeriod.reason' | artemisTranslate }}</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>

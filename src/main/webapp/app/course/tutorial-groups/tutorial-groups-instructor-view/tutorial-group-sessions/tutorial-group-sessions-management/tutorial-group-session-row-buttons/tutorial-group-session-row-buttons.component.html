@@ -2,8 +2,10 @@
     <!-- Cancel/Activate -->
     <button [id]="'cancel-activate-' + tutorialGroupSession.id" type="button" class="btn btn-secondary" (click)="openCancellationModal(tutorialGroupSession)">
         {{
-            (tutorialGroupSession.status === tutorialGroupSessionStatus.CANCELLED ? 'artemisApp.manageSessions.activateButton' : 'artemisApp.manageSessions.cancelButton')
-                | artemisTranslate
+            (tutorialGroupSession.status === tutorialGroupSessionStatus.CANCELLED
+                ? 'artemisApp.pages.tutorialGroupSessionManagement.rowButtons.activate'
+                : 'artemisApp.pages.tutorialGroupSessionManagement.rowButtons.cancel'
+            ) | artemisTranslate
         }}
     </button>
     <!-- Edit -->
@@ -13,7 +15,7 @@
         class="btn btn-warning btn-sm me-1"
     >
         <fa-icon [icon]="faWrench"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
     </a>
     <!-- Delete -->
     <button
@@ -22,7 +24,7 @@
         entityTitle="{{ tutorialGroupSession!.start! | artemisDate: 'short-date' }}  {{ tutorialGroupSession!.start! | artemisDate: 'time' }} - {{
             tutorialGroupSession!.end! | artemisDate: 'time'
         }}"
-        deleteQuestion="artemisApp.deleteSession.question"
+        deleteQuestion="artemisApp.pages.tutorialGroupSessionManagement.deleteDialog.question"
         (delete)="deleteTutorialGroupSession()"
         [dialogError]="dialogError$"
     >

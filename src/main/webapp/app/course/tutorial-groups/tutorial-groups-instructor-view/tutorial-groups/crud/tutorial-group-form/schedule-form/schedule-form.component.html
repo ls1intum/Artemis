@@ -1,47 +1,47 @@
 <ng-container [formGroup]="parentFormGroup">
     <div formGroupName="schedule">
         <div>
-            <h3>{{ 'artemisApp.scheduleForm.title' | artemisTranslate }}</h3>
+            <h3>{{ 'artemisApp.forms.scheduleForm.formTitle' | artemisTranslate }}</h3>
         </div>
         <div>
             <!-- repetition frequency -->
-            <label for="repetitionFrequency">{{ 'artemisApp.scheduleForm.repetitionFrequency.label' | artemisTranslate }}</label>
+            <label for="repetitionFrequency">{{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.label' | artemisTranslate }}</label>
             <div class="input-group">
                 <input id="repetitionFrequency" type="number" class="form-control" formControlName="repetitionFrequency" />
-                <div class="input-group-text">{{ 'artemisApp.scheduleForm.repetitionFrequency.weeks' | artemisTranslate }}</div>
+                <div class="input-group-text">{{ 'artemisApp.forms.scheduleForm.repetitionFrequency.weeks' | artemisTranslate }}</div>
             </div>
             <div *ngIf="repetitionFrequencyControl?.invalid && (repetitionFrequencyControl?.dirty || repetitionFrequencyControl?.touched)" class="alert alert-danger">
                 <div *ngIf="repetitionFrequencyControl?.errors?.min">
-                    {{ 'artemisApp.scheduleForm.repetitionFrequency.minValidationError' | artemisTranslate: { min: 1 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.minValidationError' | artemisTranslate: { min: 1 } }}
                 </div>
                 <div *ngIf="repetitionFrequencyControl?.errors?.max">
-                    {{ 'artemisApp.scheduleForm.repetitionFrequency.maxValidationError' | artemisTranslate: { min: 7 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.maxValidationError' | artemisTranslate: { min: 7 } }}
                 </div>
                 <div *ngIf="repetitionFrequencyControl?.errors?.required">
-                    {{ 'artemisApp.scheduleForm.repetitionFrequency.requiredValidationError' | artemisTranslate: { min: 7 } }}
+                    {{ 'artemisApp.forms.scheduleForm.repetitionFrequencyInput.requiredValidationError' | artemisTranslate: { min: 7 } }}
                 </div>
             </div>
             <!-- weekday -->
             <div>
                 <div>
-                    <label> {{ 'artemisApp.scheduleForm.weekDay.label' | artemisTranslate }}</label>
+                    <label> {{ 'artemisApp.forms.scheduleForm.weekDayInput.label' | artemisTranslate }}</label>
                 </div>
                 <ng-container *ngFor="let weekDay of weekDays">
                     <input formControlName="dayOfWeek" type="radio" class="btn-check" name="dayOfWeek" id="{{ weekDay.id }}" autocomplete="off" [value]="weekDay.value" checked />
-                    <label class="btn btn-outline-primary" for="{{ weekDay.id }}">{{ 'artemisApp.scheduleForm.weekDay.' + weekDay.translationKey | artemisTranslate }}</label>
+                    <label class="btn btn-outline-primary" for="{{ weekDay.id }}">{{ 'artemisApp.generic.weekdays.' + weekDay.translationKey | artemisTranslate }}</label>
                 </ng-container>
             </div>
             <!-- Time -->
             <div>
                 <div class="row">
                     <div class="col-auto my-auto">
-                        <span>{{ 'artemisApp.scheduleForm.timeInput.from' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.forms.scheduleForm.timeInput.from' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto">
                         <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
                     </div>
                     <div class="col-auto my-auto">
-                        <span>{{ 'artemisApp.scheduleForm.timeInput.to' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.forms.scheduleForm.timeInput.to' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto my-auto">
                         <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
@@ -49,41 +49,43 @@
                 </div>
                 <div *ngIf="startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)" class="alert alert-danger">
                     <div *ngIf="startTimeControl?.errors?.required">
-                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                        {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
                     </div>
                 </div>
                 <div *ngIf="endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)" class="alert alert-danger">
                     <div *ngIf="endTimeControl?.errors?.required">
-                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                        {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
                     </div>
                 </div>
                 <div *ngIf="formGroup?.invalid && (formGroup?.dirty || formGroup?.touched)">
                     <div *ngIf="formGroup?.errors?.invalidTimeRange" class="alert alert-danger">
-                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                        {{ 'artemisApp.forms.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
                     </div>
                 </div>
             </div>
         </div>
         <!-- Location -->
         <div class="form-group">
-            <label *ngIf="parentIsOnlineControl!.value" for="location">{{ 'artemisApp.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</label>
-            <label *ngIf="!parentIsOnlineControl!.value" for="location">{{ 'artemisApp.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</label>
+            <label *ngIf="parentIsOnlineControl!.value" for="location">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOnline' | artemisTranslate }}</label>
+            <label *ngIf="!parentIsOnlineControl!.value" for="location">{{ 'artemisApp.forms.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</label>
             <textarea
                 class="form-control"
                 id="location"
                 rows="1"
                 formControlName="location"
                 [placeholder]="
-                    (parentIsOnlineControl!.value ? 'artemisApp.scheduleForm.locationInput.placeholderOnline' : 'artemisApp.scheduleForm.locationInput.placeholderOffline')
-                        | artemisTranslate
+                    (parentIsOnlineControl!.value
+                        ? 'artemisApp.forms.scheduleForm.locationInput.placeholderOnline'
+                        : 'artemisApp.forms.scheduleForm.locationInput.placeholderOffline'
+                    ) | artemisTranslate
                 "
             ></textarea>
             <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
                 <div *ngIf="locationControl?.errors?.maxlength">
-                    {{ 'artemisApp.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
+                    {{ 'artemisApp.forms.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
                 </div>
                 <div *ngIf="locationControl?.errors?.required">
-                    {{ 'artemisApp.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
+                    {{ 'artemisApp.forms.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
                 </div>
             </div>
         </div>
@@ -92,7 +94,7 @@
             <div *ngIf="defaultPeriodChanged" class="alert alert-warning" role="alert">
                 {{ 'artemisApp.manageTutorialGroups.columns.schedule.periodWarning' | artemisTranslate }}
             </div>
-            <label class="form-label" for="period">{{ 'artemisApp.scheduleForm.periodInput.label' | artemisTranslate }}</label>
+            <label class="form-label" for="period">{{ 'artemisApp.forms.scheduleForm.periodInput.label' | artemisTranslate }}</label>
             <div class="input-group">
                 <input
                     name="period"
@@ -123,7 +125,7 @@
             </div>
         </div>
         <div *ngIf="createdSessions.length > 0">
-            <span>{{ 'artemisApp.scheduleForm.sessionCreationInfo' | artemisTranslate }} </span>
+            <span>{{ 'artemisApp.forms.scheduleForm.sessionCreationInfo' | artemisTranslate }} </span>
             <span class="font-weight-bold" *ngFor="let session of createdSessions">{{ session | artemisDate: 'short-date' }} | </span>
         </div>
     </div>

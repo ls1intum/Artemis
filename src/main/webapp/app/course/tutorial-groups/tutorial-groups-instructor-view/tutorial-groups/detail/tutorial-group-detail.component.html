@@ -11,11 +11,11 @@
                 ></jhi-tutorial-group-row-buttons>
             </div>
             <hr />
-            <h3>{{ 'artemisApp.tutorialGroupDetail.title' | artemisTranslate }}:</h3>
+            <h3>{{ 'artemisApp.pages.tutorialGroupDetail.title' | artemisTranslate }}:</h3>
             <dl class="row-md jh-entity-details markdown-preview">
                 <!-- Course -->
                 <dt>
-                    <span>{{ 'artemisApp.tutorialGroupDetail.course' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.course' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <div *ngIf="tutorialGroup.course">
@@ -24,34 +24,34 @@
                 </dd>
                 <!-- Title -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.title' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span *ngIf="tutorialGroup.title">{{ tutorialGroup.title }}</span>
                 </dd>
                 <!-- Tutor -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.teachingAssistant' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span *ngIf="tutorialGroup.teachingAssistant; else teachingAssistantNotSet">{{ tutorialGroup.teachingAssistant.name }}</span>
                     <ng-template #teachingAssistantNotSet>
-                        <span>{{ 'artemisApp.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span></ng-template
+                        <span>{{ 'artemisApp.pages.tutorialGroupDetail.teachingAssistantNotSet' | artemisTranslate }}</span></ng-template
                     >
                 </dd>
                 <!-- Capacity -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.capacity' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span *ngIf="tutorialGroup.capacity; else capacityNotSet">{{ tutorialGroup.capacity }}</span>
                     <ng-template #capacityNotSet>
-                        <span>{{ 'artemisApp.tutorialGroupDetail.capacityNotSet' | artemisTranslate }}</span></ng-template
+                        <span>{{ 'artemisApp.pages.tutorialGroupDetail.capacityNotSet' | artemisTranslate }}</span></ng-template
                     >
                 </dd>
                 <!-- Registered Students -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.registeredStudents' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <div *ngIf="tutorialGroup.registrations">
@@ -62,42 +62,39 @@
                 </dd>
                 <!-- Online/Offline -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.isOnline' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span>
-                        {{ (tutorialGroup.isOnline ? 'artemisApp.manageTutorialGroups.columns.online' : 'artemisApp.manageTutorialGroups.columns.offline') | artemisTranslate }}
+                        {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
                     </span>
                 </dd>
                 <!-- Language -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.language' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span *ngIf="tutorialGroup.language">
-                        {{
-                            (tutorialGroup.language === GERMAN ? 'artemisApp.tutorialGroupForm.languageInput.german' : 'artemisApp.tutorialGroupForm.languageInput.english')
-                                | artemisTranslate
-                        }}
+                        {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
                     </span>
                 </dd>
                 <!-- Campus -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.campus' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</span>
                 </dt>
                 <dd>
                     <span *ngIf="tutorialGroup.campus; else campusNotSet">{{ tutorialGroup.campus }}</span>
                     <ng-template #campusNotSet>
-                        <span>{{ 'artemisApp.tutorialGroupDetail.campusNotSet' | artemisTranslate }}</span></ng-template
+                        <span>{{ 'artemisApp.pages.tutorialGroupDetail.campusNotSet' | artemisTranslate }}</span></ng-template
                     >
                 </dd>
                 <!-- Additional Information -->
                 <dt>
-                    <span>{{ 'artemisApp.manageTutorialGroups.columns.additionalInformation' | artemisTranslate }}</span>
+                    <span>{{ 'artemisApp.entities.tutorialGroup.additionalInformation' | artemisTranslate }}</span>
                 </dt>
                 <dd *ngIf="formattedAdditionalInformation; else additionalInformationNotSet" class="editor-outline-background" [innerHTML]="formattedAdditionalInformation"></dd>
                 <ng-template #additionalInformationNotSet
-                    ><span>{{ 'artemisApp.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span></ng-template
+                    ><span>{{ 'artemisApp.pages.tutorialGroupDetail.additionalInformationNotSet' | artemisTranslate }}</span></ng-template
                 >
             </dl>
         </div>

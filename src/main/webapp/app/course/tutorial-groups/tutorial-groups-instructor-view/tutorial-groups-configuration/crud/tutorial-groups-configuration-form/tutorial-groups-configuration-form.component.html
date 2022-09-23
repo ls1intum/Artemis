@@ -4,16 +4,16 @@
             <!-- timezone -->
             <div class="col-auto">
                 <div *ngIf="timeZoneChanged" class="alert alert-danger" role="alert">
-                    {{ 'artemisApp.createConfiguration.timeZoneInput.changeWarning' | artemisTranslate }}
+                    {{ 'artemisApp.forms.configurationForm.timeZoneInput.changeWarning' | artemisTranslate }}
                 </div>
-                <label class="form-label" for="timeZone">{{ 'artemisApp.createConfiguration.timeZoneInput.label' | artemisTranslate }}</label>
+                <label class="form-label" for="timeZone">{{ 'artemisApp.forms.configurationForm.timeZoneInput.label' | artemisTranslate }}</label>
                 <input
                     required
                     id="timeZone"
                     type="text"
                     class="form-control"
                     formControlName="timeZone"
-                    [placeholder]="'artemisApp.createConfiguration.timeZoneInput.placeholder' | artemisTranslate"
+                    [placeholder]="'artemisApp.forms.configurationForm.timeZoneInput.placeholder' | artemisTranslate"
                     [resultFormatter]="tzResultFormatter"
                     [inputFormatter]="tzInputFormatter"
                     [ngbTypeahead]="tzSearch"
@@ -23,17 +23,17 @@
                     (click)="tzClick$.next($any($event).target.value)"
                 />
                 <div class="form-text">
-                    {{ 'artemisApp.createConfiguration.timeZoneInput.explanation' | artemisTranslate }}
+                    {{ 'artemisApp.forms.configurationForm.timeZoneInput.explanation' | artemisTranslate }}
                 </div>
                 <div *ngIf="timeZoneControl?.invalid && (timeZoneControl?.dirty || timeZoneControl?.touched)" class="alert alert-danger">
                     <div *ngIf="timeZoneControl?.errors?.required">
-                        {{ 'artemisApp.createConfiguration.timeZoneInput.requiredValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.configurationForm.timeZoneInput.requiredValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <!-- Period -->
             <div class="col-auto">
-                <label class="form-label" for="period">{{ 'artemisApp.createConfiguration.periodInput.label' | artemisTranslate }}</label>
+                <label class="form-label" for="period">{{ 'artemisApp.forms.configurationForm.periodInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
                     <input
                         name="period"
@@ -51,17 +51,17 @@
                     <owl-date-time [firstDayOfWeek]="1" [pickerType]="'calendar'" #period></owl-date-time>
                 </div>
                 <div class="form-text">
-                    {{ 'artemisApp.createConfiguration.periodInput.explanation' | artemisTranslate }}
+                    {{ 'artemisApp.forms.configurationForm.periodInput.explanation' | artemisTranslate }}
                 </div>
                 <div *ngIf="periodControl?.invalid && (periodControl?.dirty || periodControl?.touched)" class="alert alert-danger">
                     <div *ngIf="periodControl?.errors?.owlRequiredDateTimeRange || periodControl?.errors?.required">
-                        {{ 'artemisApp.createConfiguration.periodInput.requiredValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.configurationForm.periodInput.requiredValidationError' | artemisTranslate }}
                     </div>
                     <div *ngIf="periodControl?.errors?.owlDateTimeParse">
-                        {{ 'artemisApp.createConfiguration.periodInput.parseError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.configurationForm.periodInput.parseError' | artemisTranslate }}
                     </div>
                     <div *ngIf="periodControl?.errors?.owlDateTimeRange">
-                        {{ 'artemisApp.createConfiguration.periodInput.invalidRangeError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.configurationForm.periodInput.invalidRangeError' | artemisTranslate }}
                     </div>
                 </div>
             </div>

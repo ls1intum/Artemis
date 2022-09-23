@@ -2,7 +2,7 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between">
-                <h4>{{ 'artemisApp.manageTutorialGroups.title' | artemisTranslate }}</h4>
+                <h4>{{ 'pages.tutorialGroupsManagement.title' | artemisTranslate }}</h4>
                 <div>
                     <a
                         class="btn btn-primary"
@@ -17,11 +17,11 @@
                         ]"
                     >
                         <fa-icon [icon]="faUmbrellaBeach"></fa-icon>
-                        <span>{{ 'artemisApp.tutorialFreeDays.title' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.freePeriodsButtons' | artemisTranslate }}</span>
                     </a>
                     <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'create']">
                         <fa-icon [icon]="faPlus"></fa-icon>
-                        <span>{{ 'artemisApp.manageTutorialGroups.createButton' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.creatTutorialGroupButton' | artemisTranslate }}</span>
                     </a>
                     <a
                         *ngIf="course?.tutorialGroupsConfiguration"
@@ -29,58 +29,53 @@
                         [routerLink]="['/course-management', courseId, 'tutorial-groups-management', 'configuration', course!.tutorialGroupsConfiguration!.id, 'edit']"
                     >
                         <fa-icon [icon]="faPencil"></fa-icon>
-                        <span>{{ 'artemisApp.createConfiguration.editButton' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.pages.tutorialGroupsManagement.editConfigurationButton' | artemisTranslate }}</span>
                     </a>
                 </div>
             </div>
 
             <div class="table-responsive">
                 <table class="table table-sm table-striped table-hover">
-                    <caption>
-                        {{
-                            'artemisApp.manageTutorialGroups.tableCaption' | artemisTranslate
-                        }}
-                    </caption>
                     <thead>
                         <tr jhiSort [(predicate)]="sortingPredicate" [(ascending)]="ascending" (sortChange)="sortRows()">
                             <th jhiSortBy="id">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.id' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'global.field.id' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="title">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.title' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.title' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="tutorialGroupSchedule.dayOfWeek">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.schedule.weekDay' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.dayOfWeek' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="tutorialGroupSchedule.startTime">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.schedule.time' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroupSchedule.time' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="teachingAssistant.name">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.teachingAssistant' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.teachingAssistant' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="capacity">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.capacity' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.capacity' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="registeredStudents.length">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.registeredStudents' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.registrations' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="isOnline">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.isOnline' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.isOnline' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="language">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.language' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.language' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                             <th jhiSortBy="campus">
-                                <a class="th-link">{{ 'artemisApp.manageTutorialGroups.columns.campus' | artemisTranslate }}</a>
+                                <a class="th-link">{{ 'artemisApp.entities.tutorialGroup.campus' | artemisTranslate }}</a>
                                 <fa-icon [icon]="faSort"></fa-icon>
                             </th>
                         </tr>
@@ -101,16 +96,10 @@
                             <td>{{ tutorialGroup.capacity }}</td>
                             <td>{{ tutorialGroup.registrations?.length }}</td>
                             <td>
-                                {{
-                                    (tutorialGroup.isOnline ? 'artemisApp.manageTutorialGroups.columns.online' : 'artemisApp.manageTutorialGroups.columns.offline')
-                                        | artemisTranslate
-                                }}
+                                {{ (tutorialGroup.isOnline ? 'artemisApp.generic.online' : 'artemisApp.generic.offline') | artemisTranslate }}
                             </td>
                             <td>
-                                {{
-                                    (tutorialGroup.language === GERMAN ? 'artemisApp.tutorialGroupForm.languageInput.german' : 'artemisApp.tutorialGroupForm.languageInput.english')
-                                        | artemisTranslate
-                                }}
+                                {{ (tutorialGroup.language === GERMAN ? 'artemisApp.generic.german' : 'artemisApp.generic.english') | artemisTranslate }}
                             </td>
                             <td>
                                 <span class="d-inline-block text-truncate long-text"> {{ tutorialGroup.campus }} </span>

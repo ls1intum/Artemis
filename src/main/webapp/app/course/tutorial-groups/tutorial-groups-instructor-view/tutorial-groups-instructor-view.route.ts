@@ -25,7 +25,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: TutorialGroupsManagementComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -34,7 +34,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: CreateTutorialGroupsConfigurationComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.createTutorialGroupsConfiguration.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -43,7 +43,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: EditTutorialGroupsConfigurationComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.editTutorialGroupsConfiguration.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -52,7 +52,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: TutorialGroupFreePeriodsManagementComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.tutorialFreePeriodsManagement.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -61,7 +61,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: CreateTutorialGroupFreePeriodComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.createTutorialFreePeriod.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -70,7 +70,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: EditTutorialGroupFreePeriodComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.editTutorialFreeDay.title',
+            pageTitle: 'artemisApp.pages.editTutorialFreePeriod.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -79,7 +79,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: CreateTutorialGroupComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.createTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.createTutorialGroup.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -88,7 +88,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: EditTutorialGroupComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.editTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.editTutorialGroup.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -97,7 +97,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: CreateTutorialGroupSessionComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.editTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.createTutorialSession.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -106,7 +106,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: EditTutorialGroupSessionComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.editSession.title',
+            pageTitle: 'artemisApp.pages.editTutorialSession.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -115,7 +115,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: TutorialGroupSessionsManagement,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.editTutorialGroup.title',
+            pageTitle: 'artemisApp.pages.tutorialGroupSessionManagement.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -124,7 +124,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: RegisteredStudentsComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.registeredStudents.title',
+            pageTitle: 'artemisApp.pages.registeredStudents.title',
         },
         canActivate: [UserRouteAccessService],
     },
@@ -133,7 +133,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
         component: TutorialGroupDetailComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-            pageTitle: 'artemisApp.tutorialGroupDetail.title',
+            pageTitle: 'artemisApp.pages.tutorialGroupDetail.title',
         },
         canActivate: [UserRouteAccessService],
     },

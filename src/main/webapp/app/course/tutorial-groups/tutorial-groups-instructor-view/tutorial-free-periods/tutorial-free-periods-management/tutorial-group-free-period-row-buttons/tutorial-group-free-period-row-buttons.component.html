@@ -15,14 +15,14 @@
         class="btn btn-warning btn-sm me-1"
     >
         <fa-icon [icon]="faWrench"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
     </a>
     <!-- Delete -->
     <button
         [id]="'delete-' + tutorialFreePeriod.id"
         jhiDeleteButton
         entityTitle="{{ tutorialFreePeriod.start | artemisDate: 'long-date':false:tutorialGroupConfiguration.timeZone }}"
-        deleteQuestion="artemisApp.manageTutorialFreeDays.deleteButton.question"
+        deleteQuestion="artemisApp.pages.tutorialFreePeriodsManagement.deleteDialog.question"
         (delete)="deleteTutorialFreePeriod()"
         [dialogError]="dialogError$"
     >

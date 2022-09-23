@@ -3,7 +3,7 @@
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Date -->
             <div>
-                <label class="form-label" for="date">{{ 'artemisApp.tutorialFreeDays.form.dateLabel' | artemisTranslate }}</label>
+                <label class="form-label" for="date">{{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
                     <input name="date" id="date" required formControlName="date" [owlDateTime]="date" placeholder="YYYY-MM-DD" class="form-control" />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
@@ -11,27 +11,27 @@
                 </div>
                 <div *ngIf="dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)" class="alert alert-danger">
                     <div *ngIf="dateControl?.errors?.required">
-                        {{ 'artemisApp.tutorialFreeDays.form.requiredDateWarning' | artemisTranslate }}
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.requiredDateError' | artemisTranslate }}
                     </div>
                     <div *ngIf="dateControl?.errors?.owlDateTimeParse">
-                        {{ 'artemisApp.tutorialFreeDays.form.dateValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.dateInput.parseError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
 
             <!-- Reason -->
             <div class="form-group">
-                <label for="reason">{{ 'artemisApp.tutorialFreeDays.form.reasonLabel' | artemisTranslate }}</label>
+                <label for="reason">{{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.label' | artemisTranslate }}</label>
                 <textarea
                     class="form-control"
                     id="reason"
                     rows="6"
                     formControlName="reason"
-                    [placeholder]="'artemisApp.tutorialFreeDays.form.reasonPlaceholder' | artemisTranslate"
+                    [placeholder]="'artemisApp.forms.tutorialFreePeriodForm.reasonInput.placeholder' | artemisTranslate"
                 ></textarea>
                 <div *ngIf="reasonControl?.invalid && (reasonControl?.dirty || reasonControl?.touched)" class="alert alert-danger">
                     <div *ngIf="reasonControl?.errors?.maxlength">
-                        {{ 'artemisApp.tutorialFreeDays.form.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
+                        {{ 'artemisApp.forms.tutorialFreePeriodForm.reasonInput.maxLengthValidationError' | artemisTranslate: { max: '256' } }}
                     </div>
                 </div>
             </div>

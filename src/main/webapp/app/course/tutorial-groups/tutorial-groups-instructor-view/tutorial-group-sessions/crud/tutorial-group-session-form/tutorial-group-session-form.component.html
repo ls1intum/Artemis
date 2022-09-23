@@ -3,7 +3,7 @@
         <form class="row" *ngIf="form" [formGroup]="form" (ngSubmit)="submitForm()">
             <!-- Date -->
             <div>
-                <label class="form-label" for="date">{{ 'artemisApp.sessionForm.date' | artemisTranslate }}</label>
+                <label class="form-label" for="date">{{ 'artemisApp.forms.sessionForm.dateInput.label' | artemisTranslate }}</label>
                 <div class="input-group">
                     <input name="date" id="date" required formControlName="date" [owlDateTime]="date" placeholder="YYYY-MM-DD" class="form-control" />
                     <button type="button" class="btn btn-secondary" [owlDateTimeTrigger]="date"><fa-icon [icon]="faCalendarAlt"></fa-icon></button>
@@ -11,10 +11,10 @@
                 </div>
                 <div *ngIf="dateControl?.invalid && (dateControl?.dirty || dateControl?.touched)" class="alert alert-danger">
                     <div *ngIf="dateControl?.errors?.required">
-                        {{ 'artemisApp.sessionForm.requiredDateWarning' | artemisTranslate }}
+                        {{ 'artemisApp.forms.sessionForm.dateInput.requiredDateError' | artemisTranslate }}
                     </div>
                     <div *ngIf="dateControl?.errors?.owlDateTimeParse">
-                        {{ 'artemisApp.sessionForm.dateParseError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.sessionForm.dateInput.parseError' | artemisTranslate }}
                     </div>
                 </div>
             </div>
@@ -23,13 +23,13 @@
             <div>
                 <div class="row">
                     <div class="col-auto my-auto">
-                        <span>{{ 'artemisApp.scheduleForm.timeInput.from' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.forms.sessionForm.timeInput.from' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto">
                         <ngb-timepicker formControlName="startTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
                     </div>
                     <div class="col-auto my-auto">
-                        <span>{{ 'artemisApp.scheduleForm.timeInput.to' | artemisTranslate }}</span>
+                        <span>{{ 'artemisApp.forms.sessionForm.timeInput.to' | artemisTranslate }}</span>
                     </div>
                     <div class="col-auto my-auto">
                         <ngb-timepicker formControlName="endTime" [hourStep]="1" [minuteStep]="15"></ngb-timepicker>
@@ -37,36 +37,36 @@
                 </div>
                 <div *ngIf="startTimeControl?.invalid && (startTimeControl?.dirty || startTimeControl?.touched)" class="alert alert-danger">
                     <div *ngIf="startTimeControl?.errors?.required">
-                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                        {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
                     </div>
                 </div>
                 <div *ngIf="endTimeControl?.invalid && (endTimeControl?.dirty || endTimeControl?.touched)" class="alert alert-danger">
                     <div *ngIf="endTimeControl?.errors?.required">
-                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                        {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
                     </div>
                 </div>
                 <div *ngIf="form?.invalid && (form?.dirty || form?.touched)">
                     <div *ngIf="form?.errors?.invalidTimeRange" class="alert alert-danger">
-                        {{ 'artemisApp.scheduleForm.timeInput.invalidTimeRange' | artemisTranslate }}
+                        {{ 'artemisApp.forms.sessionForm.timeInput.invalidTimeRange' | artemisTranslate }}
                     </div>
                 </div>
             </div>
             <!-- Location -->
             <div class="form-group">
-                <label for="location">{{ 'artemisApp.scheduleForm.locationInput.labelOffline' | artemisTranslate }}</label>
+                <label for="location">{{ 'artemisApp.forms.sessionForm.locationInput.labelOnline' | artemisTranslate }}</label>
                 <textarea
                     class="form-control"
                     id="location"
                     rows="1"
                     formControlName="location"
-                    [placeholder]="'artemisApp.scheduleForm.locationInput.placeholderOffline' | artemisTranslate"
+                    [placeholder]="'artemisApp.forms.sessionForm.locationInput.placeholder' | artemisTranslate"
                 ></textarea>
                 <div *ngIf="locationControl?.invalid && (locationControl?.dirty || locationControl?.touched)" class="alert alert-danger">
                     <div *ngIf="locationControl?.errors?.maxlength">
-                        {{ 'artemisApp.scheduleForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
+                        {{ 'artemisApp.forms.sessionForm.locationInput.maxLengthValidationError' | artemisTranslate: { max: '2000' } }}
                     </div>
                     <div *ngIf="locationControl?.errors?.required">
-                        {{ 'artemisApp.scheduleForm.locationInput.requiredValidationError' | artemisTranslate }}
+                        {{ 'artemisApp.forms.sessionForm.locationInput.requiredValidationError' | artemisTranslate }}
                     </div>
                 </div>
             </div>

@@ -3,226 +3,12 @@
         "errors": {
             "scheduleOverlapsWithSession": "The schedule overlaps with the following sessions: {{ sessions }}"
         },
-        "tutorialGroup": {
-            "deleted": "Tutorial group deleted"
-        },
-        "tutorialGroups": {
-            "tutorialGroupsButton": "Tutorial Groups"
-        },
-        "createSession": {
-            "createSessionButton": "Create Session",
-            "title": "Create Individual Session"
-        },
-        "editSession": {
-            "title": "Edit Individual Session"
-        },
-        "deleteSession": {
-            "question": "Are you sure that you want to delete the tutorial group session: {{ title }}?"
-        },
-        "cancelSession": {
-            "title": "Cancel Session",
-            "question": "Do you really want to cancel the session {{label}}?",
-            "explanation": "Give a reason for cancelling the session:",
-            "maxLengthValidationError": "Reason can be max {{ max }} characters long!"
-        },
-        "activateSession": {
-            "title": "Activate cancelled session",
-            "question": "Do you really want to activate the cancelled session {{label}}?"
-        },
-        "editTutorialFreeDay": {
-            "title": "Edit Tutorial Free Day"
-        },
-        "tutorialFreeDays": {
-            "title": "Add Tutorial Free Days",
-            "noReason": "No reason given",
-            "form": {
-                "dateLabel": "Date",
-                "requiredDateWarning": "Date is required!",
-                "dateValidationError": "Date is not valid!",
-                "reasonLabel": "Reason",
-                "reasonPlaceholder": "Reason why no tutorial group is  happening on that day",
-                "maxLengthValidationError": "Reason can be max {{ max }} characters long!"
-            },
-            "create": {
-                "title": "Add Tutorial Free Day",
-                "button": "Add Tutorial Free Day"
-            }
-        },
-        "createConfiguration": {
-            "title": "Create Tutorial Groups Configuration",
-            "editButton": "Edit Tutorial Groups Configuration",
-            "explanation": "Before you can start creating tutorial groups, you must specify some properties that concern all tutorial groups. This can also be changed later.",
-            "timeZoneInput": {
-                "label": "Timezone",
-                "changeWarning": "You have changed the timezone. All individually created sessions and tutorial free days will be deleted. Only schedules sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
-                "placeholder": "Select a time zone",
-                "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
-                "requiredValidationError": "You need to select a time zone!"
-            },
-            "periodInput": {
-                "label": "Tutorial Group Period",
-                "explanation": "The period in which the tutorial groups occur in the semester. This will be used to create the individual sessions.",
-                "requiredValidationError": "You need to select a period!",
-                "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
-                "invalidRange": "Period must be a valid date range"
-            }
-        },
-        "editConfiguration": {
-            "title": "Edit Tutorial Groups Configuration"
-        },
-        "manageTutorialGroups": {
-            "title": "Tutorial Groups Management",
-            "tableCaption": "Tutorial Groups defined for this course",
-            "createButton": "Create Tutorial Group",
-            "columns": {
-                "id": "ID",
-                "title": "Title",
-                "teachingAssistant": "Tutor",
-                "capacity": "Capacity",
-                "registeredStudents": "Registered Students",
-                "isOnline": "Online/Offline",
-                "online": "Online",
-                "offline": "Offline",
-                "language": "Language",
-                "campus": "Campus",
-                "schedule": {
-                    "weekDay": "Weekday",
-                    "time": "Time",
-                    "periodWarning": "Note: The period you selected differs from the period of the tutorial group configuration!"
-                },
-                "additionalInformation": "Additional Information"
-            },
-            "deleteButton": {
-                "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
-                "typeNameToConfirm": "Please enter the title of the tutorial group to confirm."
-            }
-        },
-        "createTutorialGroup": {
-            "title": "Create Tutorial Group"
-        },
-        "editTutorialGroup": {
-            "title": "Edit Tutorial Group"
-        },
-        "registeredStudents": {
-            "title": "Registered Students"
-        },
-        "manageTutorialFreeDays": {
-            "title": "Manage Tutorial Free Days",
-            "createButton": "Create Tutorial Free Day",
-            "columns": {
-                "id": "ID",
-                "date": "Date",
-                "reason": "Reason"
-            },
-            "deleteButton": {
-                "question": "Are you sure that you want to delete the Tutorial Group Free Period on {{ title }}?"
-            }
-        },
-        "manageSessions": {
-            "title": "Manage Sessions",
-            "timeZone": "Everything displayed in the time zone {{ timeZone }}",
-            "tableCaption": "Sessions of the tutorial group {{ title }}",
-            "createButton": "Create Additional Session",
-            "cancelButton": "Cancel Session",
-            "activateButton": "Activate Session",
-            "columns": {
-                "id": "ID",
-                "date": "Date",
-                "followsSchedule": "Follows Schedule",
-                "isCancelled": "Cancelled",
-                "actions": "Actions"
-            },
-            "legend": {
-                "legend": "Legend",
-                "cancelled": "Cancelled Session",
-                "individual": "Individual Session"
-            },
-            "deleteButton": {
-                "question": "Are you sure to delete the session with title {{ title }}?",
-                "typeNameToConfirm": "Please enter the title of the session to confirm."
-            }
-        },
-        "sessionForm": {
-            "startInput": {
-                "label": "Start of the session"
-            },
-            "endInput": {
-                "label": "End of the session"
-            }
-        },
-        "tutorialGroupDetail": {
-            "title": "Tutorial Group Detail",
-            "course": "Course",
-            "teachingAssistantNotSet": "Tutor not set",
-            "capacityNotSet": "Capacity not set",
-            "campusNotSet": "Campus not set",
-            "additionalInformationNotSet": "No additional Information set"
-        },
-        "tutorialGroupForm": {
-            "titleInput": {
-                "label": "Title",
-                "placeholder": "Group 1: Monday {{ from }} - {{ to }}",
-                "requiredValidationError": "Title is required!",
-                "maxLengthValidationError": "Title can be max {{ max }} characters long!"
-            },
-            "teachingAssistantInput": {
-                "label": "Tutor",
-                "placeholder": "Select a tutor that will be responsible for this group.",
-                "loadingText": "Loading tutors...",
-                "notFoundText": "No tutors found.",
-                "requiredValidationError": "A tutorial groups needs a tutor assigned!",
-                "taHelp": "You can search by typing into the field."
-            },
-            "campusInput": {
-                "label": "Campus",
-                "placeholder": "Select a campus where this group meets.",
-                "loadingText": "Loading campus...",
-                "notFoundText": "No campus found.",
-                "campusHelp": "You can search for a campus used in other tutorial groups by typing into the field.",
-                "maxLengthValidationError": "Campus is limited to {{ max }} characters!"
-            },
-            "additionalInformationInput": {
-                "label": "Additional Information",
-                "placeholder": "Additional information about the tutorial group.",
-                "maxLengthValidationError": "Additional information is limited to {{ max }} characters!"
-            },
-            "capacityInput": {
-                "label": "Capacity",
-                "unit": "Students",
-                "minValidationError": "Capacity must be at least 1!"
-            },
-            "languageInput": {
-                "label": "Language",
-                "placeholder": "Select a Language",
-                "english": "English",
-                "german": "German"
-            },
-            "isOnlineInput": {
-                "label": "Does this tutorial group meet online of offline?"
-            }
-        },
-        "scheduleForm": {
-            "configureRecurringSchedule": "Configure recurring session schedule?",
-            "scheduleChangeWarning": "You changed the schedule. All sessions belonging to the old schedule will be deleted as a consequence. Are you sure you want to do this?",
-            "sessionCreationInfo": "The schedule contains the following sessions:",
-            "title": "Schedule",
-            "repetitionFrequency": {
-                "label": "Session repeats every: ",
-                "weeks": "Weeks",
-                "requiredValidationError": "You need to select a repetition frequency!",
-                "minValidationError": "Repetition frequency must be at least {{min}}!",
-                "maxValidationError": "Repetition frequency must be at most {{max}}!"
-            },
-            "locationInput": {
-                "labelOnline": "Meeting Link",
-                "labelOffline": "Meeting Place",
-                "placeholderOnline": "How can the students join the online meeting?",
-                "placeholderOffline": "How can the students find the room?",
-                "maxLengthValidationError": "Location is limited to {{ max }} characters!",
-                "requiredValidationError": "You need to enter a location!"
-            },
-            "weekDay": {
-                "label": "Weekday on which the tutorial group meets",
+        "generic": {
+            "offline": "Offline",
+            "online": "Online",
+            "german": "German",
+            "english": "English",
+            "weekdays": {
                 "monday": "Monday",
                 "tuesday": "Tuesday",
                 "wednesday": "Wednesday",
@@ -230,14 +16,255 @@
                 "friday": "Friday",
                 "saturday": "Saturday",
                 "sunday": "Sunday"
+            }
+        },
+        "entities": {
+            "tutorialGroup": {
+                "course": "Course",
+                "title": "Title",
+                "additionalInformation": "Additional Information",
+                "capacity": "Capacity",
+                "isOnline": "Offline / Online",
+                "campus": "Campus",
+                "language": "Language",
+                "teachingAssistant": "Tutor",
+                "registrations": "Registrations"
             },
-            "timeInput": {
-                "from": "Session starts at",
-                "to": "Session ends at",
-                "invalidTimeRange": "Time range must be a valid time range!"
+            "tutorialGroupSchedule": {
+                "dayOfWeek": "Day of Week",
+                "time": "Time",
+                "startTime": "Start Time",
+                "endTime": "End Time",
+                "location": "Meeting Place",
+                "repetitionFrequency": "Repetition Frequency",
+                "validFromInclusive": "Valid From",
+                "validToInclusive": "Valid Until"
             },
-            "periodInput": {
-                "label": "Period in which the tutorial group meets: "
+            "tutorialGroupSession": {
+                "date": "Date",
+                "start": "Start",
+                "end": "End",
+                "status": "Status",
+                "location": "Location"
+            },
+            "tutorialFreePeriod": {
+                "date": "Date",
+                "reason": "Reason"
+            }
+        },
+        "forms": {
+            "tutorialGroupForm": {
+                "titleInput": {
+                    "label": "Title",
+                    "placeholder": "Group 1: Monday {{ from }} - {{ to }}",
+                    "requiredValidationError": "Title is required!",
+                    "maxLengthValidationError": "Title can be max {{ max }} characters long!"
+                },
+                "teachingAssistantInput": {
+                    "label": "Tutor",
+                    "placeholder": "Select a tutor that will be responsible for this group.",
+                    "loadingText": "Loading tutors...",
+                    "notFoundText": "No tutors found.",
+                    "requiredValidationError": "A tutorial groups needs a tutor assigned!",
+                    "taHelp": "You can search by typing into the field."
+                },
+                "campusInput": {
+                    "label": "Campus",
+                    "placeholder": "Select a campus where this group meets.",
+                    "loadingText": "Loading campus...",
+                    "notFoundText": "No campus found.",
+                    "campusHelp": "You can search for a campus used in other tutorial groups by typing into the field.",
+                    "maxLengthValidationError": "Campus is limited to {{ max }} characters!"
+                },
+                "additionalInformationInput": {
+                    "label": "Additional Information",
+                    "placeholder": "Additional information about the tutorial group.",
+                    "maxLengthValidationError": "Additional information is limited to {{ max }} characters!"
+                },
+                "capacityInput": {
+                    "label": "Capacity",
+                    "unit": "Students",
+                    "minValidationError": "Capacity must be at least 1!"
+                },
+                "languageInput": {
+                    "label": "Language",
+                    "placeholder": "Select a Language"
+                },
+                "isOnlineInput": {
+                    "label": "Does this tutorial group meet online of offline?"
+                }
+            },
+            "scheduleForm": {
+                "configureRecurringSchedule": "Configure recurring session schedule?",
+                "scheduleChangeWarning": "You changed the schedule. All sessions belonging to the old schedule will be deleted as a consequence. Are you sure you want to do this?",
+                "sessionCreationInfo": "The schedule contains the following sessions:",
+                "formTitle": "Schedule",
+                "repetitionFrequencyInput": {
+                    "label": "Session repeats every: ",
+                    "weeks": "Weeks",
+                    "requiredValidationError": "You need to select a repetition frequency!",
+                    "minValidationError": "Repetition frequency must be at least {{min}}!",
+                    "maxValidationError": "Repetition frequency must be at most {{max}}!"
+                },
+                "weekDayInput": {
+                    "label": "Day of Week"
+                },
+                "locationInput": {
+                    "labelOnline": "Meeting Link",
+                    "labelOffline": "Meeting Place",
+                    "placeholderOnline": "How can the students join the online meeting?",
+                    "placeholderOffline": "How can the students find the room?",
+                    "maxLengthValidationError": "Location is limited to {{ max }} characters!",
+                    "requiredValidationError": "You need to enter a location!"
+                },
+                "timeInput": {
+                    "from": "Session starts at",
+                    "to": "Session ends at",
+                    "invalidTimeRange": "Time range must be a valid time range!"
+                },
+                "periodInput": {
+                    "label": "Period in which the tutorial group meets: "
+                }
+            },
+            "tutorialFreePeriodForm": {
+                "dateInput": {
+                    "label": "Date",
+                    "requiredDateError": "You need to select a date for the tutorial free day!",
+                    "parseError": "Date must be in the format 'YYYY-MM-DD'"
+                },
+                "reasonInput": {
+                    "label": "Reason for no sessions on this day",
+                    "placeholder": "National Holiday",
+                    "maxLengthValidationError": "Reason is limited to {{ max }} characters!"
+                }
+            },
+            "sessionForm": {
+                "dateInput": {
+                    "label": "Date",
+                    "requiredDateError": "You need to select a date for the tutorial group session!",
+                    "parseError": "Date must be in the format 'YYYY-MM-DD'"
+                },
+                "timeInput": {
+                    "from": "Session starts at",
+                    "to": "Session ends at",
+                    "invalidTimeRange": "Time range must be a valid time range!"
+                },
+                "locationInput": {
+                    "labelOnline": "Meeting Location",
+                    "placeholder": "Where can the students meet?",
+                    "maxLengthValidationError": "Location is limited to {{ max }} characters!",
+                    "requiredValidationError": "You need to enter a location!"
+                }
+            },
+            "configurationForm": {
+                "timeZoneInput": {
+                    "label": "Timezone",
+                    "changeWarning": "You have changed the timezone. All individually created sessions and tutorial free days will be deleted. Only schedules sessions will be recreated in the new time zone. Are you absolutely sure you want to do this?",
+                    "placeholder": "Select a time zone",
+                    "explanation": "The time zone in which the tutorial groups occur. This will be used to interpret the start and end times of the tutorial groups. You can search for a time zone by typing into the field.",
+                    "requiredValidationError": "You need to select a time zone!"
+                },
+                "periodInput": {
+                    "label": "Tutorial Group Period",
+                    "explanation": "The period in which the tutorial groups occur in the semester. This will be used to create the individual sessions.",
+                    "requiredValidationError": "You need to select a period!",
+                    "parseError": "Period must be in the format 'YYYY-MM-DD - YYYY-MM-DD'",
+                    "invalidRange": "Period must be a valid date range"
+                }
+            }
+        },
+        "pages": {
+            "tutorialGroupsManagement": {
+                "title": "Tutorial Groups Management",
+                "freePeriodsButtons": "Holidays",
+                "creatTutorialGroupButton": "Create New Tutorial Group",
+                "editConfigurationButton": "Edit Global Configuration",
+                "rowButtons": {
+                    "sessions": "Sessions",
+                    "registrations": "Registrations"
+                },
+                "deleteDialog": {
+                    "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
+                    "confirm": "Please enter the title of the tutorial group to confirm."
+                }
+            },
+            "createTutorialGroup": {
+                "title": "Create Tutorial Group"
+            },
+            "editTutorialGroup": {
+                "title": "Edit Tutorial Group"
+            },
+            "tutorialGroupDetail": {
+                "title": "Tutorial Group Detail",
+                "teachingAssistantNotSet": "Tutor not set",
+                "capacityNotSet": "Capacity not set",
+                "campusNotSet": "Campus not set",
+                "additionalInformationNotSet": "No additional Information set"
+            },
+            "tutorialFreePeriodsManagement": {
+                "title": "Tutorial Free Days Management",
+                "createFreePeriodButton": "Add New Free Day",
+                "timeZoneExplanation": "Every day displayed in the time zone {{ timeZone }}",
+                "deleteDialog": {
+                    "question": "Are you sure that you want to delete the tutorial group free day: {{ title }}?"
+                }
+            },
+            "createTutorialFreePeriod": {
+                "title": "Add Tutorial Free Day"
+            },
+            "editTutorialFreePeriod": {
+                "title": "Edit Tutorial Free Day"
+            },
+            "tutorialGroupSessionManagement": {
+                "title": "Tutorial Group Session Management",
+                "createSessionButton": "Create New Tutorial Group Session",
+                "timeZoneExplanation": "Every session displayed in the time zone {{ timeZone }}",
+                "rowButtons": {
+                    "sessions": "Sessions",
+                    "registrations": "Registrations",
+                    "cancel": "Cancel Session",
+                    "activate": "Activate Session"
+                },
+                "columns": {
+                    "scheduled": "Follows Schedule?",
+                    "isCancelled": "Is Cancelled?"
+                },
+                "key": {
+                    "label": "Key",
+                    "cancelled": "Cancelled Session",
+                    "individual": "Individual Session"
+                },
+                "deleteDialog": {
+                    "question": "Are you sure that you want to delete the tutorial group session: {{ title }}?"
+                },
+                "cancelActivateModal": {
+                    "cancelSession": {
+                        "title": "Cancel Session",
+                        "question": "Do you really want to cancel the session {{label}}?",
+                        "explanation": "Give a reason for cancelling the session:",
+                        "maxLengthValidationError": "Reason can be max {{ max }} characters long!"
+                    },
+                    "activateSession": {
+                        "title": "Activate Cancelled Session",
+                        "question": "Do you really want to activate the cancelled session {{label}}?"
+                    }
+                }
+            },
+            "registeredStudents": {
+                "title": "Registered Students"
+            },
+            "createTutorialSession": {
+                "title": "Add Session to tutorial group "
+            },
+            "editTutorialSession": {
+                "title": "Edit Session"
+            },
+            "createTutorialGroupsConfiguration": {
+                "title": "Create Course Wide Tutorial Groups Configuration",
+                "explanation": "Before you can start creating tutorial groups, you must specify some properties that concern all tutorial groups. This can also be changed later."
+            },
+            "editTutorialGroupsConfiguration": {
+                "title": "Edit Course Wide Tutorial Groups Configuration"
             }
         }
     }
