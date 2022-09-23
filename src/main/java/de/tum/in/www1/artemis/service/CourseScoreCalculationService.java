@@ -102,7 +102,7 @@ public class CourseScoreCalculationService {
         double finaLMaxPointsInCourse = maxPointsInCourse; // needed to make the variable effectively final for lambda below
         double finalReachableMaxPointsInCourse = reachableMaxPointsInCourse; // needed to make the variable effectively final for lambda below
         var studentScores = studentIdToParticipations.entrySet().parallelStream()
-                .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finaLMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
+                .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finalMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
                 .toList();
 
         return new CourseScoresDTO(maxPointsInCourse, reachableMaxPointsInCourse, studentScores);
