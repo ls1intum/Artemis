@@ -32,10 +32,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationJenkinsGitlabTest;
-import de.tum.in.www1.artemis.domain.BuildLogEntry;
-import de.tum.in.www1.artemis.domain.ProgrammingExercise;
-import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
-import de.tum.in.www1.artemis.domain.Result;
+import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.repository.*;
@@ -78,12 +75,12 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         var course = database.addCourseWithOneProgrammingExerciseAndTestCases();
 
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
 
         database.addStudentParticipationForProgrammingExercise(exercise, "student1");
         database.addStudentParticipationForProgrammingExercise(exercise, "student2");
 
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
     }
 
     @AfterEach
@@ -100,7 +97,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
@@ -130,7 +127,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
         var exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, true);
@@ -146,8 +143,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_noSca() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, false);
 
@@ -176,8 +174,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_noSca_gradle() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         exercise.setProjectType(ProjectType.GRADLE_GRADLE);
         programmingExerciseRepository.save(exercise);
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
@@ -204,8 +203,9 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, false);
 
@@ -255,7 +255,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getBuildCount()).isZero();
         assertThat(statistics.getAgentSetupDuration()).isNull();
         assertThat(statistics.getTestDuration()).isNull();
         assertThat(statistics.getScaDuration()).isNull();
@@ -276,7 +276,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
@@ -338,7 +338,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         var submission = database.createProgrammingSubmission(participation, false);
@@ -352,7 +352,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
 
         // Call again and assert that no new submissions have been created
         postResult(notification, HttpStatus.OK);
-        assertNoNewSubmissions(submission);
+        assertNoNewSubmissions(participation.getId(), submission);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -363,7 +363,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         String userLogin = "student1";
         var course = database.addCourseWithOneProgrammingExercise(enableStaticCodeAnalysis, false, programmingLanguage);
         exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
-        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).get();
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsById(exercise.getId()).orElseThrow();
 
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
@@ -398,7 +398,7 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         assertThat(submissionWithLogs.getBuildLogEntries()).isEmpty();
 
         // Assert that the build logs can be retrieved from the REST API
-        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).get(), useLegacyBuildLogs);
+        var buildWithDetails = jenkinsRequestMockProvider.mockGetLatestBuildLogs(studentParticipationRepository.findById(participationId).orElseThrow(), useLegacyBuildLogs);
         database.changeUser(userLogin);
         var receivedLogs = request.get("/api/repository/" + participationId + "/buildlogs", HttpStatus.OK, List.class);
         assertThat(receivedLogs).isNotNull().isNotEmpty();
@@ -431,8 +431,8 @@ class ProgrammingSubmissionAndResultGitlabJenkinsIntegrationTest extends Abstrac
         return testService.postSubmission(participationId, expectedStatus, GITLAB_PUSH_EVENT_REQUEST);
     }
 
-    private void assertNoNewSubmissions(ProgrammingSubmission existingSubmission) {
-        var updatedSubmissions = submissionRepository.findAll();
+    private void assertNoNewSubmissions(long participationId, ProgrammingSubmission existingSubmission) {
+        var updatedSubmissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(updatedSubmissions).hasSize(1);
         assertThat(updatedSubmissions.get(0).getId()).isEqualTo(existingSubmission.getId());
     }
