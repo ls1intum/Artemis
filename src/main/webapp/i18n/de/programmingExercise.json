@@ -404,8 +404,8 @@
                 "lineStatTooltipFullEntry": "Gefilterte Zeilen, die beim Vergleich der Vorlagen- und Lösungsversionen dieser Datei hinzugefügt und entfernt wurden. Leere Zeilen werden ausgeschlossen."
             },
             "projectTypes": {
-                "PLAIN_MAVEN": "Maven",
                 "PLAIN_GRADLE": "Gradle",
+                "PLAIN_MAVEN": "Maven",
                 "PLAIN": "Plain",
                 "XCODE": "Xcode",
                 "FACT": "FACT",
@@ -424,6 +424,16 @@
                 "selectTests": "Wähle die Tests aus, für die die Test-abgedeckten Zeilen markiert werden:",
                 "filePath": "Datei-Pfad",
                 "coveredLines": "Abgedeckte Zeilen"
+            },
+            "buildLogStatistics": {
+                "title": "Durchschnittliche Statistiken der Build-Logs",
+                "numberOfBuilds": "# Builds",
+                "agentSetupDuration": "Einrichtung Buildagent",
+                "testDuration": "Testausführung",
+                "scaDuration": "Statische Codeanalyse",
+                "totalJobDuration": "kompletter Job",
+                "dependenciesDownloadedCount": "Anzahl heruntergeladener Abhängigkeiten",
+                "tooltip": "The durchschnittlichen Statistiken werden von allen Builds (Template-, Lösung- und Studierendenabgaben) berechnet. Die Anzahl der heruntergeladenen Abhängigkeiten kann durch Caching im Docker-Image verringert werden."
             }
         },
         "error": {

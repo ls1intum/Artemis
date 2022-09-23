@@ -1,6 +1,9 @@
 package de.tum.in.www1.artemis.service.connectors.jenkins;
 
+import static de.tum.in.www1.artemis.domain.statistics.BuildLogStatisticsEntry.BuildJobPartDuration;
+
 import java.io.IOException;
+import java.time.ZonedDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -22,10 +25,12 @@ import com.offbytwo.jenkins.JenkinsServer;
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.BuildPlanType;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
+import de.tum.in.www1.artemis.domain.enumeration.ProjectType;
 import de.tum.in.www1.artemis.domain.enumeration.RepositoryType;
 import de.tum.in.www1.artemis.domain.participation.ProgrammingExerciseParticipation;
 import de.tum.in.www1.artemis.exception.ContinuousIntegrationException;
 import de.tum.in.www1.artemis.exception.JenkinsException;
+import de.tum.in.www1.artemis.repository.BuildLogStatisticsEntryRepository;
 import de.tum.in.www1.artemis.repository.FeedbackRepository;
 import de.tum.in.www1.artemis.repository.ProgrammingSubmissionRepository;
 import de.tum.in.www1.artemis.service.BuildLogEntryService;
@@ -59,9 +64,9 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
 
     public JenkinsService(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate, JenkinsServer jenkinsServer, ProgrammingSubmissionRepository programmingSubmissionRepository,
             FeedbackRepository feedbackRepository, @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate, BuildLogEntryService buildLogService,
-            JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService, JenkinsInternalUrlService jenkinsInternalUrlService,
-            TestwiseCoverageService testwiseCoverageService) {
-        super(programmingSubmissionRepository, feedbackRepository, buildLogService, restTemplate, shortTimeoutRestTemplate);
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository, JenkinsBuildPlanService jenkinsBuildPlanService, JenkinsJobService jenkinsJobService,
+            JenkinsInternalUrlService jenkinsInternalUrlService, TestwiseCoverageService testwiseCoverageService) {
+        super(programmingSubmissionRepository, feedbackRepository, buildLogService, buildLogStatisticsEntryRepository, restTemplate, shortTimeoutRestTemplate);
         this.jenkinsServer = jenkinsServer;
         this.jenkinsBuildPlanService = jenkinsBuildPlanService;
         this.jenkinsJobService = jenkinsJobService;
@@ -154,6 +159,61 @@ public class JenkinsService extends AbstractContinuousIntegrationService {
     public Optional<String> getWebHookUrl(String projectKey, String buildPlanId) {
         var urlString = serverUrl + "/project/" + projectKey + "/" + buildPlanId;
         return Optional.of(jenkinsInternalUrlService.toInternalCiUrl(urlString));
+    }
+
+    @Override
+    public void extractAndPersistBuildLogStatistics(ProgrammingSubmission programmingSubmission, ProgrammingLanguage programmingLanguage, ProjectType projectType,
+            List<BuildLogEntry> buildLogEntries) {
+        if (buildLogEntries.isEmpty()) {
+            // No logs received -> Do nothing
+            return;
+        }
+
+        if (programmingLanguage != ProgrammingLanguage.JAVA) {
+            // Not supported -> Do nothing
+            return;
+        }
+
+        ZonedDateTime jobStarted = getTimestampForLogEntry(buildLogEntries, ""); // First entry;
+        ZonedDateTime agentSetupCompleted = null;
+        ZonedDateTime testsStarted = null;
+        ZonedDateTime testsFinished = null;
+        ZonedDateTime scaStarted = null;
+        ZonedDateTime scaFinished = null;
+        ZonedDateTime jobFinished = buildLogEntries.get(buildLogEntries.size() - 1).getTime(); // Last entry
+        Integer dependenciesDownloadedCount = null;
+
+        if (ProjectType.isMavenProject(projectType)) {
+            agentSetupCompleted = getTimestampForLogEntry(buildLogEntries, "docker exec");
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...");
+            testsFinished = getTimestampForLogEntry(buildLogEntries, "Total time:");
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Scanning for projects...", 1);
+            scaFinished = getTimestampForLogEntry(buildLogEntries, "Total time:", 1);
+            dependenciesDownloadedCount = countMatchingLogs(buildLogEntries, "Downloaded from");
+        }
+        else if (projectType.isGradle()) {
+            // agentSetupCompleted is not supported
+            testsStarted = getTimestampForLogEntry(buildLogEntries, "Starting a Gradle Daemon");
+            testsFinished = getTimestampForLogEntry(buildLogEntries,
+                    buildLogEntry -> buildLogEntry.getLog().contains("BUILD SUCCESSFUL in") || buildLogEntry.getLog().contains("BUILD FAILED in"));
+            scaStarted = getTimestampForLogEntry(buildLogEntries, "Task :checkstyleMain");
+            scaFinished = getTimestampForLogEntry(buildLogEntries,
+                    buildLogEntry -> buildLogEntry.getLog().contains("BUILD SUCCESSFUL in") || buildLogEntry.getLog().contains("BUILD FAILED in"), 1);
+            // dependenciesDownloadedCount is not supported
+        }
+        else {
+            // A new, unsupported project type was used -> Log it but don't store it since it would only contain null-values
+            log.warn("Received unsupported project type {} for JenkinsService.extractAndPersistBuildLogStatistics, will not store any build log statistics.", projectType);
+            return;
+        }
+
+        var agentSetupDuration = new BuildJobPartDuration(jobStarted, agentSetupCompleted);
+        var testDuration = new BuildJobPartDuration(testsStarted, testsFinished);
+        var scaDuration = new BuildJobPartDuration(scaStarted, scaFinished);
+        var totalJobDuration = new BuildJobPartDuration(jobStarted, jobFinished);
+
+        buildLogStatisticsEntryRepository.saveBuildLogStatisticsEntry(programmingSubmission, agentSetupDuration, testDuration, scaDuration, totalJobDuration,
+                dependenciesDownloadedCount);
     }
 
     @Override

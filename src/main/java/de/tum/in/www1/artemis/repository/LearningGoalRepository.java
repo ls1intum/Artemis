@@ -30,11 +30,18 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     @Query("""
             SELECT learningGoal
             FROM LearningGoal learningGoal
-            LEFT JOIN FETCH learningGoal.lectureUnits lu
-            LEFT JOIN FETCH lu.learningGoals
+            LEFT JOIN FETCH learningGoal.exercises ex
             WHERE learningGoal.id = :#{#learningGoalId}
             """)
-    Optional<LearningGoal> findByIdWithLectureUnitsBidirectional(@Param("learningGoalId") long learningGoalId);
+    Optional<LearningGoal> findByIdWithExercises(@Param("learningGoalId") long learningGoalId);
+
+    @Query("""
+            SELECT learningGoal
+            FROM LearningGoal learningGoal
+            LEFT JOIN FETCH learningGoal.lectureUnits lu
+            WHERE learningGoal.id = :#{#learningGoalId}
+            """)
+    Optional<LearningGoal> findByIdWithLectureUnits(@Param("learningGoalId") long learningGoalId);
 
     @Query("""
             SELECT learningGoal
@@ -83,10 +90,6 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
     @SuppressWarnings("PMD.MethodNamingConventions")
     Page<LearningGoal> findByTitleIgnoreCaseContainingOrCourse_TitleIgnoreCaseContaining(String partialTitle, String partialCourseTitle, Pageable pageable);
 
-    default LearningGoal findByIdWithLectureUnitsBidirectionalElseThrow(long learningGoalId) {
-        return findByIdWithLectureUnitsBidirectional(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
-    }
-
     default LearningGoal findByIdWithLectureUnitsAndCompletionsElseThrow(long learningGoalId) {
         return findByIdWithLectureUnitsAndCompletions(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
@@ -95,8 +98,15 @@ public interface LearningGoalRepository extends JpaRepository<LearningGoal, Long
         return findByIdWithConsecutiveCourses(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
-    default LearningGoal findByIdElseThrow(long learningGoalId) {
+    default LearningGoal findByIdElseThrow(Long learningGoalId) {
         return findById(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
     }
 
+    default LearningGoal findByIdWithLectureUnitsElseThrow(Long learningGoalId) {
+        return findByIdWithLectureUnits(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
+
+    default LearningGoal findByIdWithExercisesElseThrow(Long learningGoalId) {
+        return findByIdWithExercises(learningGoalId).orElseThrow(() -> new EntityNotFoundException("LearningGoal", learningGoalId));
+    }
 }
