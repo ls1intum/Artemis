@@ -47,21 +47,17 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Autowired
     private PlagiarismComparisonRepository plagiarismComparisonRepository;
 
-    private static Course course;
+    private Course course;
 
-    private static TextExercise courseTextExercise;
+    private TextExercise courseTextExercise;
 
-    private static TextExercise examTextExercise;
+    private TextExercise examTextExercise;
 
-    private static PlagiarismCase plagiarismCase1;
+    private PlagiarismCase plagiarismCase1;
 
-    private static PlagiarismCase plagiarismCase2;
+    private List<PlagiarismCase> coursePlagiarismCases;
 
-    private static PlagiarismCase plagiarismCase3;
-
-    private static List<PlagiarismCase> coursePlagiarismCases;
-
-    private static List<PlagiarismCase> examPlagiarismCases;
+    private List<PlagiarismCase> examPlagiarismCases;
 
     @BeforeEach
     void initTestCase() {
@@ -74,8 +70,6 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         courseTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
         coursePlagiarismCases = this.createPlagiarismCases(numberOfPlagiarismCases, courseTextExercise);
         plagiarismCase1 = coursePlagiarismCases.get(0);
-        plagiarismCase2 = coursePlagiarismCases.get(1);
-        plagiarismCase3 = coursePlagiarismCases.get(2);
 
         examTextExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
         examPlagiarismCases = this.createPlagiarismCases(2, examTextExercise);
@@ -148,11 +142,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testGetPlagiarismCasesForCourseForInstructor() throws Exception {
         var plagiarismCasesResponse = request.getList("/api/courses/" + course.getId() + "/plagiarism-cases/for-instructor", HttpStatus.OK, PlagiarismCase.class);
-        assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").isEqualTo(coursePlagiarismCases);
+        assertThat(plagiarismCasesResponse).as("should get course plagiarism cases for instructor").containsExactlyInAnyOrderElementsOf(coursePlagiarismCases);
         for (var submission : plagiarismCasesResponse.get(0).getPlagiarismSubmissions()) {
-            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isEqualTo(null);
-            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isEqualTo(null);
-            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isEqualTo(null);
+            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isNull();
+            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
+            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
         }
     }
 
@@ -361,9 +355,9 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         var plagiarismCase = request.get("/api/courses/" + course.getId() + "/plagiarism-cases/" + plagiarismCase1.getId() + "/for-student", HttpStatus.OK, PlagiarismCase.class);
         assertThat(plagiarismCase).as("should get plagiarism case for student").isEqualTo(plagiarismCase1);
         for (var submission : plagiarismCase.getPlagiarismSubmissions()) {
-            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isEqualTo(null);
-            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isEqualTo(null);
-            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isEqualTo(null);
+            assertThat(submission.getPlagiarismComparison().getPlagiarismResult().getExercise()).as("should prepare plagiarism case response entity").isNull();
+            assertThat(submission.getPlagiarismComparison().getSubmissionA()).as("should prepare plagiarism case response entity").isNull();
+            assertThat(submission.getPlagiarismComparison().getSubmissionB()).as("should prepare plagiarism case response entity").isNull();
         }
     }
 }

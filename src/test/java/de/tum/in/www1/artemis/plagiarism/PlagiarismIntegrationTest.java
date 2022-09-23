@@ -40,15 +40,15 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
     @Autowired
     private PlagiarismResultRepository plagiarismResultRepository;
 
-    private static Course course;
+    private Course course;
 
-    private static TextExercise textExercise;
+    private TextExercise textExercise;
 
-    private static TextPlagiarismResult textPlagiarismResult;
+    private TextPlagiarismResult textPlagiarismResult;
 
-    private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison1;
+    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison1;
 
-    private static PlagiarismComparison<TextSubmissionElement> plagiarismComparison2;
+    private PlagiarismComparison<TextSubmissionElement> plagiarismComparison2;
 
     @BeforeEach
     void initTestCase() {
@@ -107,7 +107,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(updatedComparisonConfirmed.getStatus()).as("should update plagiarism comparison status").isEqualTo(CONFIRMED);
         Optional<PlagiarismCase> plagiarismCaseOptionalPresent = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1",
                 textExercise.getId());
-        assertThat(plagiarismCaseOptionalPresent.isPresent()).as("should create new plagiarism case").isTrue();
+        assertThat(plagiarismCaseOptionalPresent).as("should create new plagiarism case").isPresent();
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison2.getId() + "/status", new PlagiarismComparisonStatusDTO(CONFIRMED),
                 HttpStatus.OK);
@@ -115,7 +115,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(updatedComparisonConfirmed2.getStatus()).as("should update plagiarism comparison status").isEqualTo(CONFIRMED);
         Optional<PlagiarismCase> plagiarismCaseOptionalPresent2 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1",
                 textExercise.getId());
-        assertThat(plagiarismCaseOptionalPresent2.isPresent()).as("should add to existing plagiarism case").isTrue();
+        assertThat(plagiarismCaseOptionalPresent2).as("should add to existing plagiarism case").isPresent();
 
         request.put("/api/courses/" + course.getId() + "/plagiarism-comparisons/" + plagiarismComparison1.getId() + "/status", new PlagiarismComparisonStatusDTO(DENIED),
                 HttpStatus.OK);
@@ -123,13 +123,13 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         assertThat(updatedComparisonDenied.getStatus()).as("should update plagiarism comparison status").isEqualTo(DENIED);
 
         Optional<PlagiarismCase> plagiarismCaseOptionalEmpty1 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student1", textExercise.getId());
-        assertThat(plagiarismCaseOptionalEmpty1.isEmpty()).as("should remove plagiarism case for student 1").isTrue();
+        assertThat(plagiarismCaseOptionalEmpty1).as("should remove plagiarism case for student 1").isEmpty();
 
         Optional<PlagiarismCase> plagiarismCaseOptionalEmpty2 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student2", textExercise.getId());
-        assertThat(plagiarismCaseOptionalEmpty2.isPresent()).as("should NOT remove plagiarism case for student2").isTrue();
+        assertThat(plagiarismCaseOptionalEmpty2).as("should NOT remove plagiarism case for student2").isPresent();
 
         Optional<PlagiarismCase> plagiarismCaseOptionalEmpty3 = plagiarismCaseRepository.findByStudentLoginAndExerciseIdWithPlagiarismSubmissions("student3", textExercise.getId());
-        assertThat(plagiarismCaseOptionalEmpty3.isPresent()).as("should NOT remove plagiarism case for student 3").isTrue();
+        assertThat(plagiarismCaseOptionalEmpty3).as("should NOT remove plagiarism case for student 3").isPresent();
     }
 
     @Test
@@ -191,7 +191,7 @@ class PlagiarismIntegrationTest extends AbstractSpringIntegrationBambooBitbucket
         request.delete("/api/exercises/" + textExercise.getId() + "/plagiarism-results/" + textPlagiarismResult.getId() + "/plagiarism-comparisons?deleteAll=false", HttpStatus.OK);
         var result = plagiarismResultRepository.findFirstByExerciseIdOrderByLastModifiedDateDescOrNull(textExercise.getId());
         assert result != null;
-        assertThat(result.getComparisons().size()).isEqualTo(1);
+        assertThat(result.getComparisons()).hasSize(1);
     }
 
     @Test
