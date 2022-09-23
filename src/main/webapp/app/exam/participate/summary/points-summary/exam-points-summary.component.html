@@ -74,7 +74,7 @@
             'artemisApp.exam.examSummary.points.youAchievedPointsAfterBonus'
                 | artemisTranslate
                     : {
-                          finalPoints: studentExamWithGrade.studentResult.gradeWithBonus!.finalPoints
+                          finalPoints: studentExamWithGrade.studentResult.gradeWithBonus?.finalPoints
                       }
         }}
     </h5>
@@ -111,7 +111,7 @@
         <span
             *ngIf="studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade != undefined"
             [routerLink]="['overview', 'bonus-grading-key']"
-            [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus!.bonusGrade }"
+            [queryParams]="{ grade: studentExamWithGrade.studentResult.gradeWithBonus?.bonusGrade }"
         >
             <a class="btn btn-primary">
                 <fa-icon [icon]="faAward"></fa-icon>

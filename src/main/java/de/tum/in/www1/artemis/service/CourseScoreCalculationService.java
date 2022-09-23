@@ -131,12 +131,12 @@ public class CourseScoreCalculationService {
         var plagiarismCasesForStudent = plagiarismMapping.getPlagiarismCasesForStudent(studentId);
 
         for (StudentParticipation participation : participationsOfStudent) {
-            // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
-            // if input results are already sorted.
             Exercise exercise = participation.getExercise();
             if (!includeIntoScoreCalculation(exercise)) {
                 continue;
             }
+            // getResultForParticipation always sorts the results by completion date, maybe optimize with a flag
+            // if input results are already sorted.
             var result = getResultForParticipation(participation, exercise.getDueDate());
             if (result != null && Boolean.TRUE.equals(result.isRated())) {
                 double pointsAchievedFromExercise = calculatePointsAchievedFromExercise(exercise, result, plagiarismCasesForStudent.get(exercise.getId()));

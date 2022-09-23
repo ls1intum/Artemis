@@ -197,7 +197,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                     if (this.studentResults && this.exerciseGroups) {
                         this.hasPlagiarismVerdicts = this.studentResults.some((studentResult) => studentResult.mostSeverePlagiarismVerdict);
                         this.hasPlagiarismVerdictsInBonusSource =
-                            this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus!.mostSeverePlagiarismVerdict);
+                            this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
 
                         // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
@@ -319,7 +319,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
             }
             scoresToVisualize.push(studentResult.overallScoreAchieved ?? 0);
             if (this.hasBonus) {
-                gradesWithBonusToVisualize.push(studentResult.gradeWithBonus!.finalGrade?.toString() ?? '');
+                gradesWithBonusToVisualize.push(studentResult.gradeWithBonus?.finalGrade?.toString() ?? '');
             }
             this.noOfExamsFiltered++;
             if (!studentResult.exerciseGroupIdToExerciseResult) {
@@ -755,8 +755,8 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.gradingScaleExists) {
             rowData.set(this.isBonus ? BONUS_KEY : GRADE_KEY, studentResult.overallGrade);
             if (this.hasBonus) {
-                rowData.set(BONUS_GRADE_KEY, studentResult.gradeWithBonus!.bonusGrade);
-                rowData.set(FINAL_GRADE_KEY, studentResult.gradeWithBonus!.finalGrade);
+                rowData.set(BONUS_GRADE_KEY, studentResult.gradeWithBonus?.bonusGrade);
+                rowData.set(FINAL_GRADE_KEY, studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade);
             }
         }
         rowData.set(EXAM_SUBMITTED, studentResult.submitted ? 'yes' : 'no');
@@ -769,7 +769,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         }
 
         if (this.hasPlagiarismVerdictsInBonusSource) {
-            rowData.set(PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY, studentResult.gradeWithBonus!.mostSeverePlagiarismVerdict);
+            rowData.set(PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY, studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
         }
         return rowData.build();
     }

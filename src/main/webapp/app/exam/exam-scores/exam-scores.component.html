@@ -498,10 +498,10 @@
                         </td>
                         <ng-container *ngIf="hasBonus">
                             <td>
-                                {{ studentResult.gradeWithBonus!.bonusGrade ?? '-' }}
+                                {{ studentResult.gradeWithBonus?.bonusGrade ?? '-' }}
                             </td>
                             <td>
-                                {{ studentResult.gradeWithBonus!.finalGrade ?? '-' }}
+                                {{ studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade ?? '-' }}
                             </td>
                         </ng-container>
                         <td *ngIf="gradingScaleExists && !isBonus && studentResult.overallGrade && studentResult.hasPassed" style="text-align: center">
@@ -514,7 +514,7 @@
                             {{ studentResult.mostSeverePlagiarismVerdict }}
                         </td>
                         <td *ngIf="hasPlagiarismVerdictsInBonusSource">
-                            {{ studentResult.gradeWithBonus!.mostSeverePlagiarismVerdict }}
+                            {{ studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict }}
                         </td>
                     </tr>
                 </tbody>
