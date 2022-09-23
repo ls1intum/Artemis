@@ -93,17 +93,19 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         existingPosts = existingPostsAndConversationPosts.stream().filter(post -> post.getConversation() == null).toList();
 
+        existingCoursePosts = existingPosts.stream().filter(coursePost -> (coursePost.getPlagiarismCase() == null)).toList();
+
         // filter existing posts with exercise context
-        existingExercisePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
+        existingExercisePosts = existingPosts.stream().filter(coursePost -> (coursePost.getExercise() != null)).toList();
 
         // filter existing posts with lecture context
-        existingLecturePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
+        existingLecturePosts = existingPosts.stream().filter(coursePost -> (coursePost.getLecture() != null)).toList();
 
         // filter existing posts with plagiarism context
         existingPlagiarismPosts = existingPosts.stream().filter(coursePost -> coursePost.getPlagiarismCase() != null).toList();
 
         // filter existing posts with course-wide context
-        existingCourseWidePosts = existingCoursePosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList();
+        existingCourseWidePosts = existingPosts.stream().filter(coursePost -> (coursePost.getCourseWideContext() != null)).toList();
 
         course = existingExercisePosts.get(0).getExercise().getCourseViaExerciseGroupOrCourseMember();
 
@@ -658,7 +660,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         List<Post> returnedPosts = request.getList("/api/courses/" + courseId + "/posts", HttpStatus.OK, Post.class, params);
         database.assertSensitiveInformationHidden(returnedPosts);
         // get posts of current user and compare
-        assertThat(returnedPosts).isEqualTo(existingCoursePosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
+        assertThat(returnedPosts).isEqualTo(existingPosts.stream().filter(post -> student1.getId().equals(post.getAuthor().getId())).toList());
     }
 
     @Test

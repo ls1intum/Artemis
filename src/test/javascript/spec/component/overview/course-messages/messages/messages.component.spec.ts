@@ -86,7 +86,7 @@ describe('MessagesComponent', () => {
                 metisService = fixture.debugElement.injector.get(MetisService);
                 metisServiceGetFilteredPostsSpy = jest.spyOn(metisService, 'getFilteredPosts');
                 fetchNextPageSpy = jest.spyOn(component, 'fetchNextPage');
-                scrollToBottomOfMessagesSpy = jest.spyOn(component, 'scrollToBottom');
+                scrollToBottomOfMessagesSpy = jest.spyOn(component, 'scrollToBottomOfMessages');
             });
     });
 

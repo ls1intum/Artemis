@@ -211,6 +211,7 @@ public class PostService extends PostingService {
         final Course course = preCheckUserAndCourse(reaction.getUser(), courseId);
         post.addReaction(reaction);
         Post updatedPost = postRepository.save(post);
+        updatedPost.setConversation(post.getConversation());
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
     }
 

@@ -4,10 +4,7 @@ import org.springframework.stereotype.Service;
 
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
-import de.tum.in.www1.artemis.domain.metis.AnswerPost;
-import de.tum.in.www1.artemis.domain.metis.Post;
-import de.tum.in.www1.artemis.domain.metis.Posting;
-import de.tum.in.www1.artemis.domain.metis.Reaction;
+import de.tum.in.www1.artemis.domain.metis.*;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.ReactionRepository;
@@ -67,7 +64,7 @@ public class ReactionService {
         Reaction savedReaction;
         if (posting instanceof Post) {
             Post post = postService.findPostOrMessagePostById(posting.getId());
-            mayInteractWithConversationIfConversationMessage(user, post);
+            post.setConversation(mayInteractWithConversationIfConversationMessage(user, post));
             reaction.setPost(post);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -76,7 +73,7 @@ public class ReactionService {
         }
         else {
             AnswerPost answerPost = answerPostService.findAnswerPostOrAnswerMessageById(posting.getId());
-            mayInteractWithConversationIfConversationMessage(user, answerPost.getPost());
+            answerPost.getPost().setConversation(mayInteractWithConversationIfConversationMessage(user, answerPost.getPost()));
             reaction.setAnswerPost(answerPost);
             // save reaction
             savedReaction = reactionRepository.save(reaction);
@@ -121,12 +118,12 @@ public class ReactionService {
         reactionRepository.deleteById(reactionId);
     }
 
-    private void mayInteractWithConversationIfConversationMessage(User user, Post post) {
+    private Conversation mayInteractWithConversationIfConversationMessage(User user, Post post) {
         if (post.getConversation() != null) {
-            conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
+            return conversationService.mayInteractWithConversationElseThrow(post.getConversation().getId(), user);
         }
         else {
-            return;
+            return null;
         }
     }
 }

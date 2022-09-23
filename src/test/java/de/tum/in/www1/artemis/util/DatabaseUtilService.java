@@ -914,7 +914,6 @@ public class DatabaseUtilService {
         List<Post> posts = new ArrayList<>();
         for (int i = 0; i < 3; i++) {
             Post postToAdd = createBasicPost(i, "tutor");
-            postToAdd.setCourse(conversation.getCourse());
             postToAdd.setConversation(conversation);
             postRepository.save(postToAdd);
             posts.add(postToAdd);
@@ -960,8 +959,8 @@ public class DatabaseUtilService {
         conversation = conversationRepository.save(conversation);
 
         List<ConversationParticipant> conversationParticipants = new ArrayList<>();
-        conversationParticipants.add(createConversationParticipant(conversation, "student1"));
-        conversationParticipants.add(createConversationParticipant(conversation, "student2"));
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor1"));
+        conversationParticipants.add(createConversationParticipant(conversation, "tutor2"));
 
         conversation.setConversationParticipants(new HashSet<>(conversationParticipants));
         return conversationRepository.save(conversation);

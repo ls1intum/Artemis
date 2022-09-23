@@ -18,11 +18,11 @@ import { MockRouter } from '../../../helpers/mocks/mock-router';
 import { MockLocalStorageService } from '../../../helpers/mocks/service/mock-local-storage.service';
 import { ConversationService } from 'app/shared/metis/conversation.service';
 import { MockConversationService } from '../../../helpers/mocks/service/mock-conversation.service';
-import { CourseMessagesService } from 'app/shared/metis/course.messages.service';
 import { ConversationSidebarComponent } from 'app/overview/course-messages/conversation-sidebar/conversation-sidebar.component';
 
 import { conversationBetweenUser1User2, conversationsOfUser1, metisCourse, metisTutor, metisUser2 } from '../../../helpers/sample/metis-sample-data';
 import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
+import { MessagingService } from 'app/shared/metis/messaging.service';
 
 describe('ConversationSidebarComponent', () => {
     let component: ConversationSidebarComponent;
@@ -52,7 +52,7 @@ describe('ConversationSidebarComponent', () => {
             providers: [
                 FormBuilder,
                 MockProvider(SessionStorageService),
-                { provide: CourseMessagesService, useClass: CourseMessagesService },
+                { provide: MessagingService, useClass: MessagingService },
                 { provide: ConversationService, useClass: MockConversationService },
                 { provide: ActivatedRoute, useValue: route },
                 { provide: TranslateService, useClass: MockTranslateService },

@@ -8,6 +8,7 @@ import org.springframework.stereotype.Service;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.metis.AnswerPost;
+import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.CourseRepository;
 import de.tum.in.www1.artemis.repository.ExerciseRepository;
@@ -60,7 +61,7 @@ public class AnswerMessageService extends PostingService {
 
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = messageRepository.findMessagePostByIdElseThrow(answerMessage.getPost().getId());
-        conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
+        Conversation conversation = conversationService.mayInteractWithConversationElseThrow(answerMessage.getPost().getConversation().getId(), user);
 
         // use post from database rather than user input
         answerMessage.setPost(post);
@@ -69,6 +70,7 @@ public class AnswerMessageService extends PostingService {
         // on creation of an answer message, we set the resolves_post field to false per default since this feature is not used for messages
         answerMessage.setResolvesPost(false);
         AnswerPost savedAnswerMessage = answerPostRepository.save(answerMessage);
+        savedAnswerMessage.getPost().setConversation(conversation);
         this.preparePostAndBroadcast(savedAnswerMessage, course);
 
         return savedAnswerMessage;
@@ -97,19 +99,23 @@ public class AnswerMessageService extends PostingService {
         AnswerPost updatedAnswerMessage;
 
         // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
-        mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
+        Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 
         updatedAnswerMessage = answerPostRepository.save(existingAnswerMessage);
+        updatedAnswerMessage.getPost().setConversation(conversation);
         this.preparePostAndBroadcast(updatedAnswerMessage, course);
         return updatedAnswerMessage;
     }
 
-    private void mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
+    private Conversation mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
         // only the author of an answerMessage having postMessage with conversation context should edit or delete the entity
         if (existingAnswerPost.getPost().getConversation() != null && !existingAnswerPost.getAuthor().getId().equals(user.getId())) {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
+        }
+        else {
+            return conversationService.getConversationById(existingAnswerPost.getPost().getConversation().getId());
         }
     }
 
@@ -126,7 +132,7 @@ public class AnswerMessageService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerMessage = this.findById(answerMessageId);
-        mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
+        Conversation conversation = mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);
@@ -134,6 +140,7 @@ public class AnswerMessageService extends PostingService {
         // we need to explicitly remove the answer post from the answers of the broadcast post to share up-to-date information
         Post updatedMessage = answerMessage.getPost();
         updatedMessage.removeAnswerPost(answerMessage);
+        updatedMessage.setConversation(conversation);
         broadcastForPost(new PostDTO(updatedMessage, MetisCrudAction.UPDATE), course);
     }
 

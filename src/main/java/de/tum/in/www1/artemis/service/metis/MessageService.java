@@ -142,13 +142,14 @@ public class MessageService extends PostingService {
         }
         final Course course = preCheckUserAndCourse(user, courseId);
 
-        Post existingPost = messageRepository.findMessagePostByIdElseThrow(postId);
-        mayUpdateOrDeleteMessageElseThrow(existingPost, user);
+        Post existingMessage = messageRepository.findMessagePostByIdElseThrow(postId);
+        Conversation conversation = mayUpdateOrDeleteMessageElseThrow(existingMessage, user);
 
         // update: allow overwriting of values only for depicted fields
-        existingPost.setContent(messagePost.getContent());
+        existingMessage.setContent(messagePost.getContent());
 
-        Post updatedPost = messageRepository.save(existingPost);
+        Post updatedPost = messageRepository.save(existingMessage);
+        updatedPost.setConversation(conversation);
 
         // emit a post update via websocket
         broadcastForPost(new PostDTO(updatedPost, MetisCrudAction.UPDATE), course);
@@ -169,18 +170,20 @@ public class MessageService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         Post post = messageRepository.findMessagePostByIdElseThrow(postId);
-        mayUpdateOrDeleteMessageElseThrow(post, user);
+        post.setConversation(mayUpdateOrDeleteMessageElseThrow(post, user));
 
         // delete
         messageRepository.deleteById(postId);
         broadcastForPost(new PostDTO(post, MetisCrudAction.DELETE), course);
     }
 
-    // TODO share code snippet for answerPost check
-    private void mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {
+    private Conversation mayUpdateOrDeleteMessageElseThrow(Post existingMessagePost, User user) {
         // non-message posts should not be manipulated from this endpoint and only the author of a message post should edit or delete the entity
         if (existingMessagePost.getConversation() == null || !existingMessagePost.getAuthor().getId().equals(user.getId())) {
             throw new AccessForbiddenException("Post", existingMessagePost.getId());
+        }
+        else {
+            return conversationService.getConversationById(existingMessagePost.getConversation().getId());
         }
     }
 

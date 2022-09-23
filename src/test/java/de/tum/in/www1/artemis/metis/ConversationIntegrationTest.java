@@ -19,8 +19,10 @@ import org.springframework.util.LinkedMultiValueMap;
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
 import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
+import de.tum.in.www1.artemis.domain.enumeration.DisplayPriority;
 import de.tum.in.www1.artemis.domain.metis.Conversation;
 import de.tum.in.www1.artemis.domain.metis.ConversationParticipant;
+import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.ConversationRepository;
 import de.tum.in.www1.artemis.service.metis.ConversationService;
 import de.tum.in.www1.artemis.web.websocket.dto.metis.ConversationDTO;
@@ -68,8 +70,8 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
         assertThat(conversationRepository.findById(createdConversation.getId())).isNotEmpty();
 
-        // checks if members of the created conversation were notified via broadcast
-        verify(messagingTemplate, times(2)).convertAndSend(anyString(), any(ConversationDTO.class));
+        // members of the created conversation are only notified in case the first message within the conversation is created
+        verify(messagingTemplate, times(0)).convertAndSend(anyString(), any(ConversationDTO.class));
     }
 
     @Test
@@ -96,19 +98,27 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testGetConversationParticipantByUserId() throws Exception {
+    @WithMockUser(username = "tutor1", roles = "USER")
+    void testGetActiveConversationsOfCurrentUser() throws Exception {
         var params = new LinkedMultiValueMap<String, String>();
         List<Conversation> conversationsOfUser;
 
+        // we need to create a post within the conversation so that it is active and returned by the conversation service
+        Post post = new Post();
+        post.setAuthor(database.getUserByLogin("tutor1"));
+        post.setDisplayPriority(DisplayPriority.NONE);
+        post.setConversation(existingConversation);
+
+        request.postWithResponseBody("/api/courses/" + course.getId() + "/messages", post, Post.class, HttpStatus.CREATED);
+
         conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
-        database.changeUser("student2");
+        database.changeUser("tutor2");
         conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser.get(0)).isEqualTo(existingConversation);
 
-        database.changeUser("student3");
+        database.changeUser("tutor3");
         conversationsOfUser = request.getList("/api/courses/" + course.getId() + "/conversations/", HttpStatus.OK, Conversation.class, params);
         assertThat(conversationsOfUser).isEmpty();
     }
@@ -146,15 +156,13 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(createdConversation).isNotNull();
         assertThat(createdConversation.getId()).isNotNull();
         assertThat(createdConversation.getCreationDate()).isNotNull();
-        assertThat(createdConversation.getLastMessageDate()).isNotNull();
-        assertThat(createdConversation.getCreationDate()).isNotNull();
+        assertThat(createdConversation.getLastMessageDate()).isNull();
     }
 
     private void checkCreatedConversationParticipants(Set<ConversationParticipant> conversationParticipants) {
         // check each individual conversationParticipant
         conversationParticipants.forEach(conversationParticipant -> {
             assertThat(conversationParticipant.getUser()).isNotNull();
-            assertThat(conversationParticipant.getLastRead()).isNotNull();
         });
     }
 }

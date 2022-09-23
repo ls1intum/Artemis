@@ -39,7 +39,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
     @BeforeEach
     void initTestCase() {
 
-        database.addUsers(5, 5, 0, 1);
+        database.addUsers(5, 5, 4, 1);
 
         // initialize test setup and get all existing posts with answers (four posts, one in each context, are initialized with one answer each): 4 answers in total (with author
         // student1)
@@ -71,7 +71,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
     // CREATE
 
     @Test
-    @WithMockUser(username = "student1", roles = "USER")
+    @WithMockUser(username = "tutor1", roles = "USER")
     void testCreateConversationAnswerPost() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
 
