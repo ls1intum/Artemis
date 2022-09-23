@@ -29,7 +29,7 @@ import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.service.notifications.GroupNotificationService;
 
-public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private PostRepository postRepository;
@@ -49,7 +49,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
     private Validator validator;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
         // used to test hibernate validation using custom PostContextConstraintValidator
         validator = Validation.buildDefaultValidatorFactory().getValidator();
 
@@ -82,13 +82,13 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateConversationPost() throws Exception {
+    void testCreateConversationPost() throws Exception {
         Post postToSave = createPostWithConversation();
 
         Post createdPost = request.postWithResponseBody("/api/courses/" + courseId + "/messages", postToSave, Post.class, HttpStatus.CREATED);
@@ -100,7 +100,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student3", roles = "USER")
-    public void testCreateConversationPost_forbidden() throws Exception {
+    void testCreateConversationPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it
 
         Post postToSave = createPostWithConversation();
@@ -114,7 +114,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testValidatePostContextConstraintViolation() throws Exception {
+    void testValidatePostContextConstraintViolation() throws Exception {
         Post invalidPost = createPostWithConversation();
         invalidPost.setCourseWideContext(CourseWideContext.RANDOM);
         request.postWithResponseBody("/api/courses/" + courseId + "/messages", invalidPost, Post.class, HttpStatus.BAD_REQUEST);
@@ -144,7 +144,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetConversationPost() throws Exception {
+    void testGetConversationPost() throws Exception {
         // conversation set will fetch all posts of conversation if the user is involved
         var params = new LinkedMultiValueMap<String, String>();
         params.add("conversationId", existingConversationPosts.get(0).getConversation().getId().toString());
@@ -156,7 +156,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1")
-    public void testEditConversationPost() throws Exception {
+    void testEditConversationPost() throws Exception {
         // conversation post of student1 must be editable by them
         Post conversationPostToUpdate = existingConversationPosts.get(0);
         conversationPostToUpdate.setContent("User changes one of their conversation posts");
@@ -169,7 +169,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditConversationPost_forbidden() throws Exception {
+    void testEditConversationPost_forbidden() throws Exception {
         // conversation post of student1 must not be editable by tutors
         Post conversationPostToUpdate = existingConversationPosts.get(0);
         conversationPostToUpdate.setContent("Tutor attempts to change some other user's conversation post");
@@ -182,7 +182,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "student1")
-    public void testDeleteConversationPost() throws Exception {
+    void testDeleteConversationPost() throws Exception {
         // conversation post of student1 must be deletable by them
         Post conversationPostToDelete = existingConversationPosts.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.OK);
@@ -192,7 +192,7 @@ public class PostMessageIntegrationTest extends AbstractSpringIntegrationBambooB
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteConversationPost_forbidden() throws Exception {
+    void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of student1 must not be deletable by tutors
         Post conversationPostToDelete = existingConversationPosts.get(0);
         request.delete("/api/courses/" + courseId + "/messages/" + conversationPostToDelete.getId(), HttpStatus.FORBIDDEN);

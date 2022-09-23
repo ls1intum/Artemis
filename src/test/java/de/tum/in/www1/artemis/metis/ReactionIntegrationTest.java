@@ -94,7 +94,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = "student2", roles = "USER")
-    public void testCreateOwnPostReactionOnAnotherUsersConversationMessage() throws Exception {
+    void testCreateOwnPostReactionOnAnotherUsersConversationMessage() throws Exception {
         // student 1 is the author of the message and student2 reacts on this post
         Post messageReactedOn = existingConversationPosts.get(0);
         Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);
@@ -106,7 +106,7 @@ class ReactionIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJi
 
     @Test
     @WithMockUser(username = "student3", roles = "USER")
-    public void testCreateReactionOnConversationBetweenOtherUsers_forbidden() throws Exception {
+    void testCreateReactionOnConversationBetweenOtherUsers_forbidden() throws Exception {
         // student 1 is the author of the message between student1 & student2 and student3 not part of the conversation tries to react on it
         Post messageReactedOn = existingConversationPosts.get(0);
         Reaction reactionToSaveOnMessage = createReactionOnPost(messageReactedOn);

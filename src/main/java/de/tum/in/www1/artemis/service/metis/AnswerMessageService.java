@@ -97,7 +97,7 @@ public class AnswerMessageService extends PostingService {
         AnswerPost updatedAnswerMessage;
 
         // check if requesting user is allowed to update the content, i.e. if user is author of answer post or at least tutor
-        mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user, course);
+        mayUpdateOrDeleteAnswerMessageElseThrow(existingAnswerMessage, user);
         // only the content of the message can be updated
         existingAnswerMessage.setContent(answerMessage.getContent());
 
@@ -106,7 +106,7 @@ public class AnswerMessageService extends PostingService {
         return updatedAnswerMessage;
     }
 
-    private void mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user, Course course) {
+    private void mayUpdateOrDeleteAnswerMessageElseThrow(AnswerPost existingAnswerPost, User user) {
         // only the author of an answerMessage having postMessage with conversation context should edit or delete the entity
         if (existingAnswerPost.getPost().getConversation() != null && !existingAnswerPost.getAuthor().getId().equals(user.getId())) {
             throw new AccessForbiddenException("Answer Post", existingAnswerPost.getId());
@@ -126,7 +126,7 @@ public class AnswerMessageService extends PostingService {
         // checks
         final Course course = preCheckUserAndCourse(user, courseId);
         AnswerPost answerMessage = this.findById(answerMessageId);
-        mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user, course);
+        mayUpdateOrDeleteAnswerMessageElseThrow(answerMessage, user);
 
         // delete
         answerPostRepository.deleteById(answerMessageId);

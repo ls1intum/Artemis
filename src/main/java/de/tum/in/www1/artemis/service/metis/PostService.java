@@ -506,11 +506,11 @@ public class PostService extends PostingService {
     /**
      * Retrieve post or message post from database by id
      *
-     * @param id id of requested post
+     * @param postOrMessageId ID of requested post or message
      * @return retrieved post
      */
-    public Post findPostOrMessagePostById(Long id) {
-        return postRepository.findPostOrMessagePostByIdElseThrow(id);
+    public Post findPostOrMessagePostById(Long postOrMessageId) {
+        return postRepository.findPostOrMessagePostByIdElseThrow(postOrMessageId);
     }
 
     /**

@@ -210,6 +210,10 @@ public class ConversationService {
         return CONVERSATION_ENTITY_NAME;
     }
 
+    /**
+     * Updates the time a user last reads a conversation
+     * @param   conversationId ID of the read conversation
+     */
     public void auditConversationReadTimeOfUser(Long conversationId) {
         final User user = this.userRepository.getUser();
 

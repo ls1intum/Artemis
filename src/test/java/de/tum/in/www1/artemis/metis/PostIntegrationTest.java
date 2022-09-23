@@ -679,7 +679,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsForCourse_WithPostId() throws Exception {
+    void testGetPostsForCourse_WithPostId() throws Exception {
 
         var params = new LinkedMultiValueMap<String, String>();
         params.add("searchText", "#1");
@@ -757,7 +757,7 @@ class PostIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testGetPostsPageForCourse() throws Exception {
+    void testGetPostsPageForCourse() throws Exception {
         // pagingEnabled set; will fetch a page of course posts
         var params = new LinkedMultiValueMap<String, String>();
 

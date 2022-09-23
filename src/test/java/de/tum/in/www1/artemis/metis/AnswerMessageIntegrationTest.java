@@ -37,7 +37,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
     private Long courseId;
 
     @BeforeEach
-    public void initTestCase() {
+    void initTestCase() {
 
         database.addUsers(5, 5, 0, 1);
 
@@ -64,7 +64,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
     }
 
     @AfterEach
-    public void tearDown() {
+    void tearDown() {
         database.resetDatabase();
     }
 
@@ -72,7 +72,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateConversationAnswerPost() throws Exception {
+    void testCreateConversationAnswerPost() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
 
         AnswerPost createdAnswerPost = request.postWithResponseBody("/api/courses/" + courseId + "/answer-messages", answerPostToSave, AnswerPost.class, HttpStatus.CREATED);
@@ -85,7 +85,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testCreateConversationAnswerPost_badRequest() throws Exception {
+    void testCreateConversationAnswerPost_badRequest() throws Exception {
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
         answerPostToSave.setId(999L);
 
@@ -96,7 +96,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student3", roles = "USER")
-    public void testCreateConversationAnswerPost_forbidden() throws Exception {
+    void testCreateConversationAnswerPost_forbidden() throws Exception {
         // only participants of a conversation can create posts for it
         // attempt to save new answerPost under someone elses conversation
         AnswerPost answerPostToSave = createAnswerPost(existingConversationPostsWithAnswers.get(0));
@@ -110,7 +110,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1")
-    public void testEditConversationAnswerPost() throws Exception {
+    void testEditConversationAnswerPost() throws Exception {
         // conversation answerPost of student1 must be editable by them
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
@@ -123,7 +123,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testEditConversationAnswerPost_forbidden() throws Exception {
+    void testEditConversationAnswerPost_forbidden() throws Exception {
         // conversation answerPost of student1 must not be editable by tutors
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("Tutor attempts to change some other user's conversation answerPost");
@@ -136,7 +136,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
+    void testEditAnswerPostWithIdIsNull_badRequest() throws Exception {
         // updated answerMessage and provided answerMessageId should match
         AnswerPost conversationAnswerPostToUpdate = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         conversationAnswerPostToUpdate.setContent("User changes one of their conversation answerPosts");
@@ -150,7 +150,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithInvalidId_badRequest() throws Exception {
+    void testEditAnswerPostWithInvalidId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
 
         AnswerPost updatedAnswerPostServer = request.putWithResponseBody("/api/courses/" + courseId + "/answer-messages/" + answerPostToUpdate.getId(), answerPostToUpdate,
@@ -160,7 +160,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
+    void testEditAnswerPostWithWrongCourseId_badRequest() throws Exception {
         AnswerPost answerPostToUpdate = createAnswerPost(existingPostsWithAnswersCourseWide.get(0));
         Course dummyCourse = database.createCourse();
 
@@ -173,14 +173,14 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "student1", roles = "USER")
-    public void testDeleteAnswerPost_asTutor_notFound() throws Exception {
+    void testDeleteAnswerPost_asTutor_notFound() throws Exception {
         request.delete("/api/courses/" + courseId + "/answer-messages/" + 9999L, HttpStatus.NOT_FOUND);
         assertThat(answerPostRepository.count()).isEqualTo(existingAnswerPosts.size());
     }
 
     @Test
     @WithMockUser(username = "student1")
-    public void testDeleteConversationPost() throws Exception {
+    void testDeleteConversationPost() throws Exception {
         // conversation post of student1 must be deletable by them
         AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         request.delete("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToDelete.getId(), HttpStatus.OK);
@@ -190,7 +190,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
 
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
-    public void testDeleteConversationPost_forbidden() throws Exception {
+    void testDeleteConversationPost_forbidden() throws Exception {
         // conversation post of student1 must not be deletable by tutors
         AnswerPost conversationAnswerPostToDelete = existingConversationPostsWithAnswers.get(0).getAnswers().iterator().next();
         request.delete("/api/courses/" + courseId + "/answer-messages/" + conversationAnswerPostToDelete.getId(), HttpStatus.FORBIDDEN);
@@ -206,11 +206,6 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         answerPost.setPost(post);
         post.addAnswerPost(answerPost);
         return answerPost;
-    }
-
-    private AnswerPost editExistingAnswerPost(AnswerPost answerPostToUpdate) {
-        answerPostToUpdate.setContent("New Test Answer Post");
-        return answerPostToUpdate;
     }
 
     private void checkCreatedAnswerPost(AnswerPost expectedAnswerPost, AnswerPost createdAnswerPost) {
