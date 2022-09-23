@@ -10,6 +10,7 @@ import org.hibernate.annotations.CacheConcurrencyStrategy;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
+import de.tum.in.www1.artemis.domain.lecture.ExerciseUnit;
 import de.tum.in.www1.artemis.domain.lecture.LectureUnit;
 
 @Entity
@@ -31,7 +32,7 @@ public class LearningGoal extends DomainObject {
 
     @ManyToMany
     @JoinTable(name = "learning_goal_exercise", joinColumns = @JoinColumn(name = "learning_goal_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "exercise_id", referencedColumnName = "id"))
-    @JsonIgnoreProperties({ "learningGoals", "lecture" })
+    @JsonIgnoreProperties({ "learningGoals", "course" })
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
     private Set<Exercise> exercises = new HashSet<>();
 
@@ -97,12 +98,30 @@ public class LearningGoal extends DomainObject {
         this.lectureUnits = lectureUnits;
     }
 
+    /**
+     * Adds the lecture unit to the learning goal (bidirectional)
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #addExercise(Exercise)})
+     * @param lectureUnit The lecture unit to add
+     */
     public void addLectureUnit(LectureUnit lectureUnit) {
+        if (lectureUnit instanceof ExerciseUnit) {
+            // The learning goals of ExerciseUnits are taken from the corresponding exercise
+            throw new IllegalArgumentException("ExerciseUnits can not be connected to learning goals");
+        }
         this.lectureUnits.add(lectureUnit);
         lectureUnit.getLearningGoals().add(this);
     }
 
+    /**
+     * Removes the lecture unit from the learning goal (bidirectional)
+     * Note: ExerciseUnits are not accepted, should be set via the connected exercise (see {@link #removeExercise(Exercise)})
+     * @param lectureUnit The lecture unit to remove
+     */
     public void removeLectureUnit(LectureUnit lectureUnit) {
+        if (lectureUnit instanceof ExerciseUnit) {
+            // The learning goals of ExerciseUnits are taken from the corresponding exercise
+            throw new IllegalArgumentException("ExerciseUnits can not be disconnected from learning goals");
+        }
         this.lectureUnits.remove(lectureUnit);
         lectureUnit.getLearningGoals().remove(this);
     }
@@ -113,6 +132,15 @@ public class LearningGoal extends DomainObject {
 
     public void setConsecutiveCourses(Set<Course> consecutiveCourses) {
         this.consecutiveCourses = consecutiveCourses;
+    }
+
+    /**
+     * Ensure that exercise units are connected to learning goals through the corresponding exercise
+     */
+    @PrePersist
+    @PreUpdate
+    public void prePersistOrUpdate() {
+        this.lectureUnits.removeIf(lectureUnit -> lectureUnit instanceof ExerciseUnit);
     }
 
     public enum LearningGoalSearchColumn {

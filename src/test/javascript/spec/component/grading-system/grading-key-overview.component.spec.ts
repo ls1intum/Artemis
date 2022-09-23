@@ -145,24 +145,6 @@ describe('GradeKeyOverviewComponent', () => {
         expect(printSpy).toHaveBeenCalledOnce();
     }));
 
-    it('should properly determine that points are not set', () => {
-        comp.gradeSteps = gradeStepsDto.gradeSteps;
-
-        expect(comp.hasPointsSet()).toBeFalse();
-    });
-
-    it('should properly determine that points are set', () => {
-        const gradeStepWithPoints1 = Object.assign({}, gradeStep1);
-        gradeStepWithPoints1.lowerBoundPoints = 0;
-        gradeStepWithPoints1.upperBoundPoints = 50;
-        const gradeStepWithPoints2 = Object.assign({}, gradeStep2);
-        gradeStepWithPoints2.lowerBoundPoints = 50;
-        gradeStepWithPoints2.upperBoundPoints = 100;
-        comp.gradeSteps = [gradeStepWithPoints1, gradeStepWithPoints2];
-
-        expect(comp.hasPointsSet()).toBeTrue();
-    });
-
     it('should round correctly', () => {
         expect(comp.round(undefined)).toBeUndefined();
         expect(comp.round(5)).toBe(5);

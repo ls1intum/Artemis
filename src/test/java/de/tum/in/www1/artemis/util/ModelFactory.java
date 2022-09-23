@@ -6,6 +6,7 @@ import static org.assertj.core.api.Assertions.fail;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.*;
 
@@ -33,6 +34,7 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.domain.submissionpolicy.LockRepositoryPolicy;
 import de.tum.in.www1.artemis.security.Role;
 import de.tum.in.www1.artemis.service.FilePathService;
+import de.tum.in.www1.artemis.service.FileService;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildLogDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildPlanDTO;
 import de.tum.in.www1.artemis.service.connectors.bamboo.dto.BambooBuildResultNotificationDTO;
@@ -57,6 +59,7 @@ public class ModelFactory {
 
     /**
      * Create a dummy attachment for testing
+     *
      * @param date The optional upload and release date to set on the attachment
      * @return Attachment that was created
      */
@@ -73,6 +76,7 @@ public class ModelFactory {
 
     /**
      * Create a dummy attachment for testing with a placeholder image file on disk
+     *
      * @param startDate The release date to set on the attachment
      * @return Attachment that was created with its link set to a testing file on disk
      */
@@ -85,7 +89,7 @@ public class ModelFactory {
         catch (IOException ex) {
             fail("Failed while copying test attachment files", ex);
         }
-        attachment.setLink(Path.of("/api/files/temp/", testFileName).toString());
+        attachment.setLink(Path.of(FileService.DEFAULT_FILE_SUBPATH, testFileName).toString());
         return attachment;
     }
 
@@ -182,6 +186,7 @@ public class ModelFactory {
         final var repoName = programmingExercise.generateRepositoryName(RepositoryType.TESTS);
         String testRepoUrl = String.format("http://some.test.url/scm/%s/%s.git", programmingExercise.getProjectKey(), repoName);
         programmingExercise.setTestRepositoryUrl(testRepoUrl);
+        programmingExercise.setBranch(DEFAULT_BRANCH);
     }
 
     public static ModelingExercise generateModelingExercise(ZonedDateTime releaseDate, ZonedDateTime dueDate, ZonedDateTime assessmentDueDate, DiagramType diagramType,
@@ -291,10 +296,10 @@ public class ModelFactory {
     /**
      * Generate users that have registration numbers
      *
-     * @param loginPrefix prefix that will be added in front of every user's login
-     * @param groups groups that the users will be added
-     * @param authorities authorities that the users will have
-     * @param amount amount of users to generate
+     * @param loginPrefix              prefix that will be added in front of every user's login
+     * @param groups                   groups that the users will be added
+     * @param authorities              authorities that the users will have
+     * @param amount                   amount of users to generate
      * @param registrationNumberPrefix prefix that will be added in front of every user
      * @return users that were generated
      */
@@ -328,13 +333,13 @@ public class ModelFactory {
     /**
      * Generate a team
      *
-     * @param exercise exercise of the team
-     * @param name name of the team
-     * @param shortName short name of the team
-     * @param loginPrefix prefix that will be added in front of every user's login
-     * @param numberOfStudents amount of users to generate for team as students
-     * @param owner owner of the team generally a tutor
-     * @param creatorLogin login of user that creates the teams
+     * @param exercise           exercise of the team
+     * @param name               name of the team
+     * @param shortName          short name of the team
+     * @param loginPrefix        prefix that will be added in front of every user's login
+     * @param numberOfStudents   amount of users to generate for team as students
+     * @param owner              owner of the team generally a tutor
+     * @param creatorLogin       login of user that creates the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return team that was generated
      */
@@ -361,11 +366,11 @@ public class ModelFactory {
     /**
      * Generate a team
      *
-     * @param exercise exercise of the team
-     * @param name name of the team
-     * @param shortName short name of the team
+     * @param exercise         exercise of the team
+     * @param name             name of the team
+     * @param shortName        short name of the team
      * @param numberOfStudents amount of users to generate for team as students
-     * @param owner owner of the team generally a tutor
+     * @param owner            owner of the team generally a tutor
      * @return team that was generated
      */
     public static Team generateTeamForExercise(Exercise exercise, String name, String shortName, int numberOfStudents, User owner) {
@@ -375,12 +380,12 @@ public class ModelFactory {
     /**
      * Generate teams
      *
-     * @param exercise exercise of the teams
+     * @param exercise        exercise of the teams
      * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix prefix that will be added in front of every student's login
-     * @param numberOfTeams amount of teams to generate
-     * @param owner owner of the teams generally a tutor
-     * @param creatorLogin login of user that created the teams
+     * @param loginPrefix     prefix that will be added in front of every student's login
+     * @param numberOfTeams   amount of teams to generate
+     * @param owner           owner of the teams generally a tutor
+     * @param creatorLogin    login of user that created the teams
      * @return teams that were generated
      */
     public static List<Team> generateTeamsForExercise(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner, String creatorLogin) {
@@ -390,12 +395,12 @@ public class ModelFactory {
     /**
      * Generate teams
      *
-     * @param exercise exercise of the teams
-     * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix prefix that will be added in front of every student's login
-     * @param numberOfTeams amount of teams to generate
-     * @param owner owner of the teams generally a tutor
-     * @param creatorLogin login of user that created the teams
+     * @param exercise           exercise of the teams
+     * @param shortNamePrefix    prefix that will be added in front of every team's short name
+     * @param loginPrefix        prefix that will be added in front of every student's login
+     * @param numberOfTeams      amount of teams to generate
+     * @param owner              owner of the teams generally a tutor
+     * @param creatorLogin       login of user that created the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
      * @return teams that were generated
      */
@@ -412,14 +417,14 @@ public class ModelFactory {
     /**
      * Generate teams
      *
-     * @param exercise exercise of the teams
-     * @param shortNamePrefix prefix that will be added in front of every team's short name
-     * @param loginPrefix prefix that will be added in front of every student's login
-     * @param numberOfTeams amount of teams to generate
-     * @param owner owner of the teams generally a tutor
-     * @param creatorLogin login of user that created the teams
+     * @param exercise           exercise of the teams
+     * @param shortNamePrefix    prefix that will be added in front of every team's short name
+     * @param loginPrefix        prefix that will be added in front of every student's login
+     * @param numberOfTeams      amount of teams to generate
+     * @param owner              owner of the teams generally a tutor
+     * @param creatorLogin       login of user that created the teams
      * @param registrationPrefix prefix that will be added in front of every student's registration number
-     * @param teamSize size of each individual team
+     * @param teamSize           size of each individual team
      * @return teams that were generated
      */
     public static List<Team> generateTeamsForExerciseFixedTeamSize(Exercise exercise, String shortNamePrefix, String loginPrefix, int numberOfTeams, User owner,
@@ -565,14 +570,14 @@ public class ModelFactory {
     /**
      * Generates a TextAssessment event with the given parameters
      *
-     * @param eventType the type of the event
-     * @param feedbackType the type of the feedback
-     * @param segmentType the segment type of the event
-     * @param courseId the course id of the event
-     * @param userId the userid of the event
-     * @param exerciseId the exercise id of the event
+     * @param eventType       the type of the event
+     * @param feedbackType    the type of the feedback
+     * @param segmentType     the segment type of the event
+     * @param courseId        the course id of the event
+     * @param userId          the userid of the event
+     * @param exerciseId      the exercise id of the event
      * @param participationId the participation id of the event
-     * @param submissionId the submission id of the event
+     * @param submissionId    the submission id of the event
      * @return the TextAssessment event with all the properties applied
      */
     public static TextAssessmentEvent generateTextAssessmentEvent(TextAssessmentEventType eventType, FeedbackType feedbackType, TextBlockType segmentType, Long courseId,
@@ -593,11 +598,11 @@ public class ModelFactory {
     /**
      * Generates a list of different combinations of assessment events based on the given parameters
      *
-     * @param courseId the course id of the event
-     * @param userId the userid of the event
-     * @param exerciseId the exercise id of the event
+     * @param courseId        the course id of the event
+     * @param userId          the userid of the event
+     * @param exerciseId      the exercise id of the event
      * @param participationId the participation id of the event
-     * @param submissionId the submission id of the event
+     * @param submissionId    the submission id of the event
      * @return a list of TextAssessment events that are generated
      */
     public static List<TextAssessmentEvent> generateMultipleTextAssessmentEvents(Long courseId, Long userId, Long exerciseId, Long participationId, Long submissionId) {
@@ -664,7 +669,7 @@ public class ModelFactory {
     /**
      * Helper method to create an exam
      *
-     * @param course the associated course
+     * @param course   the associated course
      * @param testExam Boolean flag to determine whether it is a test exam
      * @return the created Exam
      */
@@ -918,7 +923,7 @@ public class ModelFactory {
      * Generates a minimal student participation without a specific user attached.
      *
      * @param initializationState the state of the participation
-     * @param exercise the referenced exercise of the participation
+     * @param exercise            the referenced exercise of the participation
      * @return the StudentParticipation created
      */
     public static StudentParticipation generateStudentParticipationWithoutUser(InitializationState initializationState, Exercise exercise) {
@@ -1038,10 +1043,10 @@ public class ModelFactory {
      *     <li>CustomFailedMessage: failed test with a message</li>
      * </ul>
      *
-     * @param repoName name of the repository
-     * @param successfulTestNames names of successful tests
-     * @param failedTestNames names of failed tests
-     * @param programmingLanguage programming language to use
+     * @param repoName                    name of the repository
+     * @param successfulTestNames         names of successful tests
+     * @param failedTestNames             names of failed tests
+     * @param programmingLanguage         programming language to use
      * @param enableStaticAnalysisReports should the notification include static analysis reports
      * @return TestResultDTO with dummy data
      */
@@ -1084,6 +1089,11 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
             List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
+        return generateBambooBuildResult(repoName, planKey, testSummaryDescription, buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, failedTestNames.isEmpty());
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResult(String repoName, String planKey, String testSummaryDescription, ZonedDateTime buildCompletionDate,
+            List<String> successfulTestNames, List<String> failedTestNames, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
 
         final var summary = new BambooBuildResultNotificationDTO.BambooTestSummaryDTO(42, 0, failedTestNames.size(), failedTestNames.size(), 0, successfulTestNames.size(),
                 testSummaryDescription, 0, 0, successfulTestNames.size() + failedTestNames.size(), failedTestNames.size());
@@ -1095,7 +1105,7 @@ public class ModelFactory {
         final var plan = new BambooBuildPlanDTO(planKey != null ? planKey : "TEST201904BPROGRAMMINGEXERCISE6-STUDENT1");
 
         final var build = new BambooBuildResultNotificationDTO.BambooBuildDTO(false, 42, "foobar", buildCompletionDate != null ? buildCompletionDate : now().minusSeconds(5),
-                failedTestNames.isEmpty(), summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
+                successful, summary, vcsDtos != null && vcsDtos.size() > 0 ? vcsDtos : List.of(vcs), List.of(job));
 
         return new BambooBuildResultNotificationDTO("secret", "TestNotification", plan, build);
     }
@@ -1113,7 +1123,12 @@ public class ModelFactory {
      */
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos) {
-        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos);
+        return generateBambooBuildResultWithLogs(buildPlanKey, repoName, successfulTestNames, failedTestNames, buildCompletionDate, vcsDtos, failedTestNames.isEmpty());
+    }
+
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean successful) {
+        var notification = generateBambooBuildResult(repoName, buildPlanKey, "No tests found", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, successful);
 
         String logWith254Chars = "a".repeat(254);
 
@@ -1134,6 +1149,40 @@ public class ModelFactory {
         return notification;
     }
 
+    public static BambooBuildResultNotificationDTO generateBambooBuildResultWithAnalyticsLogs(String buildPlanKey, String repoName, List<String> successfulTestNames,
+            List<String> failedTestNames, ZonedDateTime buildCompletionDate, List<BambooBuildResultNotificationDTO.BambooVCSDTO> vcsDtos, boolean sca) {
+        var notification = generateBambooBuildResult(repoName, buildPlanKey, "Test executed", buildCompletionDate, successfulTestNames, failedTestNames, vcsDtos, true);
+
+        var jobStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 14, 58, 30, 0, ZoneId.systemDefault()), "started building on agent 1", null);
+
+        var executingBuild = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 0, 0, ZoneId.systemDefault()), "Executing build", null);
+
+        var testingStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 5, 0, ZoneId.systemDefault()), "Starting task 'Tests'", null);
+
+        var dependency1Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 10, 0, ZoneId.systemDefault()), "Dependency 1 Downloaded from", null);
+
+        var testingFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 15, 0, ZoneId.systemDefault()), "Finished task 'Tests' with result", null);
+
+        var scaStarted = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 16, 0, ZoneId.systemDefault()), "Starting task 'Static Code Analysis'", null);
+
+        var dependency2Downloaded = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 20, 0, ZoneId.systemDefault()), "Dependency 2 Downloaded from", null);
+
+        var scaFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 27, 0, ZoneId.systemDefault()), "Finished task 'Static Code Analysis'", null);
+
+        var jobFinished = new BambooBuildLogDTO(ZonedDateTime.of(2021, 5, 10, 15, 0, 30, 0, ZoneId.systemDefault()), "Finished building", null);
+
+        notification.getBuild().jobs().get(0).logs().clear();
+        if (sca) {
+            notification.getBuild().jobs().get(0).logs().addAll(
+                    List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, scaStarted, dependency2Downloaded, scaFinished, jobFinished));
+        }
+        else {
+            notification.getBuild().jobs().get(0).logs().addAll(List.of(jobStarted, executingBuild, testingStarted, dependency1Downloaded, testingFinished, jobFinished));
+        }
+
+        return notification;
+    }
+
     public static Feedback createSCAFeedbackWithInactiveCategory(Result result) {
         return new Feedback().result(result).text(Feedback.STATIC_CODE_ANALYSIS_FEEDBACK_IDENTIFIER).reference("CHECKSTYLE").detailText("{\"category\": \"miscellaneous\"}")
                 .type(FeedbackType.AUTOMATIC).positive(false);
@@ -1141,7 +1190,7 @@ public class ModelFactory {
 
     public static BambooBuildResultNotificationDTO generateBambooBuildResultWithStaticCodeAnalysisReport(String repoName, List<String> successfulTestNames,
             List<String> failedTestNames, ProgrammingLanguage programmingLanguage) {
-        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>());
+        var notification = generateBambooBuildResult(repoName, null, null, null, successfulTestNames, failedTestNames, new ArrayList<>(), true);
         var reports = generateStaticCodeAnalysisReports(programmingLanguage);
         notification.getBuild().jobs().get(0).staticCodeAnalysisReports().addAll(reports);
         return notification;
@@ -1236,11 +1285,11 @@ public class ModelFactory {
     /**
      * Generate an example organization entity
      *
-     * @param name of organization
-     * @param shortName of organization
-     * @param url of organization
-     * @param description of organization
-     * @param logoUrl of organization
+     * @param name         of organization
+     * @param shortName    of organization
+     * @param url          of organization
+     * @param description  of organization
+     * @param logoUrl      of organization
      * @param emailPattern of organization
      * @return An organization entity
      */
@@ -1253,5 +1302,32 @@ public class ModelFactory {
         organization.setLogoUrl(logoUrl);
         organization.setEmailPattern(emailPattern);
         return organization;
+    }
+
+    /**
+     * Generates a Bonus instance with given arguments.
+     *
+     * @param bonusStrategy       of bonus
+     * @param weight              of bonus
+     * @param sourceGradingScaleId  of sourceGradingScale of bonus
+     * @param bonusToGradingScaleId of bonusToGradingScale bonus
+     * @return a new Bonus instance associated with the gradins scales corresonding to ids bonusToGradingScaleId and bonusToGradingScaleId.
+     */
+    public static Bonus generateBonus(BonusStrategy bonusStrategy, Double weight, long sourceGradingScaleId, long bonusToGradingScaleId) {
+        Bonus bonus = new Bonus();
+        bonus.setBonusStrategy(bonusStrategy);
+        bonus.setWeight(weight);
+        // New object is created to avoid circular dependency on json serialization.
+        var sourceGradingScale = new GradingScale();
+        sourceGradingScale.setId(sourceGradingScaleId);
+        bonus.setSourceGradingScale(sourceGradingScale);
+
+        // New object is created to avoid circular dependency on json serialization.
+        var bonusToGradingScale = new GradingScale();
+        bonusToGradingScale.setId(bonusToGradingScaleId);
+        bonus.setBonusToGradingScale(bonusToGradingScale);
+
+        return bonus;
+
     }
 }
