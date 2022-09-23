@@ -10,10 +10,7 @@ import static org.mockito.Mockito.*;
 import java.time.Duration;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Stream;
 
 import javax.validation.constraints.NotNull;
@@ -153,7 +150,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Api should return not found.
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + fakeParticipationId, obj, HttpStatus.NOT_FOUND, new HttpHeaders());
         // No submission should be created for the fake participation.
-        assertThat(submissionRepository.findAll()).isEmpty();
+        assertThat(submissionRepository.findAllByParticipationIdWithResults(fakeParticipationId)).isEmpty();
     }
 
     private ProgrammingSubmission mockCommitInfoAndPostSubmission(long participationId) throws Exception {
@@ -242,7 +239,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Do a call to new-result again and assert that no new submission is created.
         postResult(participation.getBuildPlanId(), HttpStatus.OK, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participation.getId(), submission);
     }
 
     /**
@@ -283,7 +280,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Do a call to new-result again and assert that no new submission is created.
         postResult(participationType, 0, HttpStatus.OK, additionalCommit);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participationId, submission);
     }
 
     private static Stream<Arguments> participationTypeAndAdditionalCommitProvider() {
@@ -317,10 +314,10 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postResult(participationType, 0, HttpStatus.OK, false);
 
         // Make sure there's only 1 submission
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participationId, submission);
 
         // The results should be linked to the submission.
-        List<Result> results = resultRepository.findAll();
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(2);
         results.forEach(result -> {
             var resultWithSubmission = resultRepository.findWithEagerSubmissionAndFeedbackById(result.getId());
@@ -360,7 +357,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postResult(participationType, 0, HttpStatus.OK, false);
 
         // There should only be one submission and this submission should be linked to the created result.
-        List<Result> results = resultRepository.findAll();
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         Result result = resultRepository.findWithEagerSubmissionAndFeedbackById(results.get(0).getId()).get();
         submission = submissionRepository.findWithEagerResultsById(submission.getId()).get();
@@ -371,7 +368,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Do another call to new-result again and assert that no new submission is created.
         postResult(participationType, 0, HttpStatus.OK, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participationId, submission);
     }
 
     // TODO: write a test case that invokes processNewProgrammingSubmission on ProgrammingSubmissionService with two identical commits. This test should then expect an
@@ -392,8 +389,8 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         Participation participation = participationRepository.findWithEagerLegalSubmissionsById(participationId).get();
 
         // Now a submission for the manual build should exist.
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
-        List<Result> results = resultRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(submissions).hasSize(1);
         ProgrammingSubmission submission = submissions.get(0);
         assertThat(results).hasSize(1);
@@ -406,7 +403,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertThat(participation.getSubmissions()).hasSize(1);
 
         postResult(participationType, 0, HttpStatus.OK, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participation.getId(), submission);
     }
 
     /**
@@ -425,7 +422,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         triggerBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
         ProgrammingSubmission submission = submissions.get(0);
         assertThat(submission.getCommitHash()).isEqualTo(COMMIT_HASH_OBJECT_ID.getName());
@@ -437,9 +434,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postResult(participationType, 0, HttpStatus.OK, false);
 
         // The new result should be attached to the created submission, no new submission should have been created.
-        submissions = submissionRepository.findAll();
+        submissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
-        List<Result> results = resultRepository.findAll();
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
@@ -447,7 +444,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Do another call to new-result again and assert that no new submission is created.
         postResult(participationType, 0, HttpStatus.OK, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participation.getId(), submission);
     }
 
     /**
@@ -469,7 +466,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         triggerInstructorBuild(participationType, 0);
 
         // Now a submission for the manual build should exist.
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
         ProgrammingSubmission submission = submissions.get(0);
         assertThat(submission.getCommitHash()).isEqualTo(objectId.getName());
@@ -481,9 +478,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         postResult(participationType, 0, HttpStatus.OK, false);
 
         // The new result should be attached to the created submission, no new submission should have been created.
-        submissions = submissionRepository.findAll();
+        submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
         assertThat(submissions).hasSize(1);
-        List<Result> results = resultRepository.findAll();
+        List<Result> results = resultRepository.findByParticipationIdOrderByCompletionDateDesc(participationId);
         assertThat(results).hasSize(1);
         Result result = results.get(0);
         assertThat(result.getSubmission().getId()).isEqualTo(submission.getId());
@@ -492,7 +489,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Do another call to new-result again and assert that no new submission is created.
         postResult(participationType, 0, HttpStatus.OK, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participation.getId(), submission);
     }
 
     @Test
@@ -522,7 +519,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // There are two student participations, so after the test notification two new submissions should have been created.
         List<Participation> participations = new ArrayList<>();
         participations.add(participationRepository.findWithEagerLegalSubmissionsById(solutionParticipationId).get());
-        List<ProgrammingSubmission> submissions = submissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = submissionRepository.findAllByParticipationIdWithResults(solutionParticipationId);
         // We only create submissions for the solution participation after a push to the test repository.
         assertThat(submissions).hasSize(1);
         for (Participation participation : participations) {
@@ -533,18 +530,27 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         // Phase 2: Now the CI informs Artemis about the participation build results.
         postResult(IntegrationTestParticipationType.SOLUTION, 0, HttpStatus.OK, false);
         // The number of total participations should not have changed.
-        assertThat(participationRepository.count()).isEqualTo(4);
+        assertThat(participationRepository.findByExerciseId(exerciseId)).hasSize(2);
+
         // Now for both student's submission a result should have been created and assigned to the submission.
-        List<Result> results = resultRepository.findAll();
         submissions = submissionRepository.findAll();
-        participations = new ArrayList<>();
-        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
+
         // After a push to the test repository, only the solution and template repository are built.
+        List<Result> results = resultRepository.findAllByExerciseId(exerciseId);
+        assertThat(results).isEmpty();
+        solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).map(Participation::getResults)
+                .ifPresent(results::addAll);
+        templateProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).map(Participation::getResults)
+                .ifPresent(results::addAll);
         assertThat(results).hasSize(1);
+
         for (Result r : results) {
             boolean hasMatchingSubmission = submissions.stream().anyMatch(s -> s.getId().equals(r.getSubmission().getId()));
             assertThat(hasMatchingSubmission).isTrue();
         }
+
+        participations = new ArrayList<>();
+        participations.add(solutionProgrammingExerciseParticipationRepository.findWithEagerResultsAndSubmissionsByProgrammingExerciseId(exerciseId).get());
         for (Participation p : participations) {
             assertThat(p.getSubmissions()).hasSize(1);
             assertThat(p.getResults()).hasSize(1);
@@ -627,7 +633,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         // Do another call to new-result again and assert that no new submission is created.
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participation.getId(), submission);
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
@@ -648,13 +654,14 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
         assertBuildError(participation.getId(), userLogin, programmingLanguage);
 
         // Do another call to new-result again and assert that no new submission is created.
-        var submission = submissionRepository.findAll().get(0);
+        var submissions = submissionRepository.findAllByParticipationIdWithResults(participation.getId());
+        assertThat(submissions).hasSize(1);
         postResultWithBuildLogs(participation.getBuildPlanId(), HttpStatus.OK, false, false);
-        assertNoNewSubmissionsAndIsSubmission(submission);
+        assertNoNewSubmissionsAndIsSubmission(participation.getId(), submissions.get(0));
     }
 
-    private void assertNoNewSubmissionsAndIsSubmission(ProgrammingSubmission submission) {
-        var submissions = submissionRepository.findAll();
+    private void assertNoNewSubmissionsAndIsSubmission(long participationId, ProgrammingSubmission submission) {
+        var submissions = submissionRepository.findAllByParticipationIdWithResults(participationId);
         assertThat(submissions).hasSize(1);
         assertThat(submissions.get(0).getId()).isEqualTo(submission.getId());
     }
@@ -686,8 +693,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldExtractBuildLogAnalytics_sca() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        Course course = database.addCourseWithOneProgrammingExercise(true, false, ProgrammingLanguage.JAVA);
+        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
         database.createProgrammingSubmission(participation, false);
@@ -708,8 +716,9 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
     void shouldExtractBuildLogAnalytics_unsupportedProgrammingLanguage() throws Exception {
         // Precondition: Database has participation and a programming submission but no result.
         String userLogin = "student1";
-        database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
-        ProgrammingExercise exercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, ProgrammingLanguage.PYTHON); // Python is not supported
+        ProgrammingExercise exercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        exercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(exercise.getId()).orElseThrow();
         bitbucketRequestMockProvider.mockGetPushDate(exercise.getProjectKey(), "9b3a9bd71a0d80e5bbc42204c319ed3d1d4f0d6d", ZonedDateTime.now());
         var participation = database.addStudentParticipationForProgrammingExercise(exercise, userLogin);
 
@@ -717,7 +726,7 @@ class ProgrammingSubmissionAndResultBitbucketBambooIntegrationTest extends Abstr
 
         var statistics = buildLogStatisticsEntryRepository.findAverageBuildLogStatisticsEntryForExercise(exercise);
         // Should not extract any statistics
-        assertThat(statistics.getBuildCount()).isEqualTo(0);
+        assertThat(statistics.getBuildCount()).isZero();
         assertThat(statistics.getAgentSetupDuration()).isNull();
         assertThat(statistics.getTestDuration()).isNull();
         assertThat(statistics.getScaDuration()).isNull();

@@ -14,6 +14,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.ProgrammingSubmission;
 import de.tum.in.www1.artemis.domain.Submission;
@@ -48,8 +49,9 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
     public ProgrammingExerciseParticipation participation;
 
     public void setUp_shouldSetSubmissionDateForBuildCorrectlyIfOnlyOnePushIsReceived() {
-        database.addCourseWithOneProgrammingExercise(false, false, JAVA);
-        programmingExercise = programmingExerciseRepository.findAllWithEagerParticipationsAndLegalSubmissions().get(1);
+        Course course = database.addCourseWithOneProgrammingExercise(false, false, JAVA);
+        programmingExercise = database.getFirstExerciseWithType(course, ProgrammingExercise.class);
+        programmingExercise = programmingExerciseRepository.findWithEagerStudentParticipationsStudentAndLegalSubmissionsById(programmingExercise.getId()).orElseThrow();
         participation = database.addStudentParticipationForProgrammingExercise(programmingExercise, "student1");
     }
 
@@ -92,7 +94,7 @@ public class ProgrammingSubmissionAndResultIntegrationTestService {
         // Api should return ok.
         request.postWithoutLocation(PROGRAMMING_SUBMISSION_RESOURCE_API_PATH + participationId, obj, expectedStatus, new HttpHeaders());
 
-        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAll();
+        List<ProgrammingSubmission> submissions = programmingSubmissionRepository.findAllByParticipationIdWithResults(participationId);
 
         // Submission should have been created for the participation.
         assertThat(submissions).hasSize(1);
