@@ -482,24 +482,6 @@ public class ExamResource {
     }
 
     /**
-     * GET /courses/{courseId}/exams/{examId}/scores-for-export : Find scores for an exam by id.
-     *
-     * @param courseId the course to which the exam belongs
-     * @param examId   the exam to find
-     * @return the ResponseEntity with status 200 (OK) and with the found ExamScoreDTO as body
-     */
-    @GetMapping("/courses/{courseId}/exams/{examId}/scores-for-export")
-    @PreAuthorize("hasRole('INSTRUCTOR')")
-    public ResponseEntity<ExamScoresDTO> getExamForExport(@PathVariable Long courseId, @PathVariable Long examId) {
-        long start = System.currentTimeMillis();
-        log.info("REST request to get score for exam export : {}", examId);
-        examAccessService.checkCourseAndExamAccessForInstructorElseThrow(courseId, examId);
-        ExamScoresDTO examScoresDTO = examService.calculateExamScores(examId);
-        log.info("get scores for exam export {} took {}ms", examId, System.currentTimeMillis() - start);
-        return ResponseEntity.ok(examScoresDTO);
-    }
-
-    /**
      * GET /courses/:courseId/exams/:examId/exam-for-assessment-dashboard
      *
      * @param courseId the id of the course to retrieve
