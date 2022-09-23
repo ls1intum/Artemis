@@ -184,13 +184,7 @@ public class CourseScoreCalculationService {
         var resultsSet = participation.getResults();
         Result chosenResult;
 
-        if (resultsSet != null) {
-
-            if (resultsSet.isEmpty()) {
-                chosenResult = new Result();
-                chosenResult.setScore(0.0);
-                return chosenResult;
-            }
+        if (resultsSet != null && !resultsSet.isEmpty()) {
 
             var resultsList = new ArrayList<>(resultsSet);
 
