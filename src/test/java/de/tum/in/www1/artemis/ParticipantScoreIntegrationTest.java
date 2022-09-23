@@ -98,7 +98,7 @@ class ParticipantScoreIntegrationTest extends AbstractSpringIntegrationBambooBit
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("ExampleLearningGoal");
         learningGoal.setCourse(course);
-        learningGoal.addLectureUnit(exerciseUnit);
+        learningGoal.addExercise(textExercise);
         learningGoalRepository.saveAndFlush(learningGoal);
         idOfIndividualTextExercise = textExercise.getId();
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
