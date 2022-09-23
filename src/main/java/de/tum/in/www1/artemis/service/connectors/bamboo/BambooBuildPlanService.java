@@ -182,7 +182,7 @@ public class BambooBuildPlanService {
                 // the project type can be null for Kotlin exercises and exercises created before the project type was
                 // added to Artemis. The project type for these exercises is implicitly Maven (because Gradle did not
                 // exist in Artemis yet)
-                boolean isMavenProject = projectType == null || projectType.isMaven();
+                boolean isMavenProject = ProjectType.isMavenProject(projectType);
 
                 var defaultTasks = new ArrayList<Task<?, ?>>();
                 defaultTasks.add(checkoutTask);

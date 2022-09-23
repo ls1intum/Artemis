@@ -65,12 +65,15 @@ public class ParticipationService {
 
     private final CoverageReportRepository coverageReportRepository;
 
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
     public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
             StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
             ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
             ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, ParticipationRepository participationRepository,
             Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
-            ParticipantScoreRepository participantScoreRepository, UrlService urlService, CoverageReportRepository coverageReportRepository) {
+            ParticipantScoreRepository participantScoreRepository, UrlService urlService, CoverageReportRepository coverageReportRepository,
+            BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.programmingExerciseRepository = programmingExerciseRepository;
         this.participationRepository = participationRepository;
         this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
@@ -88,6 +91,7 @@ public class ParticipationService {
         this.participantScoreRepository = participantScoreRepository;
         this.urlService = urlService;
         this.coverageReportRepository = coverageReportRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -654,6 +658,7 @@ public class ParticipationService {
         submissions.forEach(submission -> {
             resultsToBeDeleted.addAll(submission.getResults());
             coverageReportRepository.deleteBySubmissionId(submission.getId());
+            buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
         resultsToBeDeleted.forEach(result -> participantScoreRepository.deleteAllByResultIdTransactional(result.getId()));
