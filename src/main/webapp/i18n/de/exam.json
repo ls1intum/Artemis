@@ -57,9 +57,9 @@
                     "youAchievedWithBonus": "Du hast {{achievedPoints}} Punkte von {{normalPoints}} möglichen Punkten, und {{bonusPoints}} Bonuspunkten erreicht.",
                     "youAchieved": "Du hast {{achievedPoints}} von möglichen {{normalPoints}} Punkten",
                     "youAchievedFromBonus": {
-                        "GRADES_CONTINUOUS": "Du hast {{achievedBonus}} Bonusnote(n) von {{bonusFromTitle}}",
-                        "GRADES_DISCRETE": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}",
-                        "POINTS": "Du hast {{achievedBonus}} Bonusnotenstufe(n) von {{bonusFromTitle}}"
+                        "GRADES_CONTINUOUS": "Du hast einen Notenbonus von {{achievedBonus}} aus {{bonusFromTitle}}",
+                        "GRADES_DISCRETE": "Du hast einen Notenbonus von {{achievedBonus}} Stufe(n) gemäß der Notenskala erhalten, was {{gradePointDifference}} von {{bonusFromTitle}} entspricht",
+                        "POINTS": "Du hast {{achievedBonus}} Bonuspunkte von {{bonusFromTitle}}"
                     },
                     "youAchievedPointsAfterBonus": "Deine endgültigen Punkte sind {{finalPoints}} nach dem Bonus",
                     "maxPointsNotSet": "Die maximale Punktzahl in der Klausur ist nicht gesetzt."

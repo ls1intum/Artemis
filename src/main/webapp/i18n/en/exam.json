@@ -57,9 +57,9 @@
                     "youAchievedWithBonus": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points and an additional {{bonusPoints}} bonus points",
                     "youAchieved": "You achieved {{achievedPoints}} out of {{normalPoints}} possible points",
                     "youAchievedFromBonus": {
-                        "GRADES_CONTINUOUS": "You got {{achievedBonus}} bonus grade(s) from {{bonusFromTitle}}",
-                        "GRADES_DISCRETE": "You got {{achievedBonus}} bonus points from {{bonusFromTitle}}",
-                        "POINTS": "You got {{achievedBonus}} bonus grade step(s) from {{bonusFromTitle}}"
+                        "GRADES_CONTINUOUS": "You got a grade bonus of {{achievedBonus}} from {{bonusFromTitle}}",
+                        "GRADES_DISCRETE": "You got a grade bonus of {{achievedBonus}} step(s) according to the grading scale which equals {{gradePointDiff}} from {{bonusFromTitle}}",
+                        "POINTS": "You got {{achievedBonus}} bonus points from {{bonusFromTitle}}"
                     },
                     "youAchievedPointsAfterBonus": "Your final points are {{finalPoints}} after the bonus",
                     "maxPointsNotSet": "The maximum number of points in the exam is not set."
