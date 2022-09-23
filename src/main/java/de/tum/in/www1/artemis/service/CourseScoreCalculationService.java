@@ -99,7 +99,7 @@ public class CourseScoreCalculationService {
             plagiarismCases = plagiarismCaseRepository.findByCourseId(courseId);
         }
         var plagiarismMapping = PlagiarismMapping.createFromPlagiarismCases(plagiarismCases);
-        double finaLMaxPointsInCourse = maxPointsInCourse; // needed to make the variable effectively final for lambda below
+        double finalMaxPointsInCourse = maxPointsInCourse; // needed to make the variable effectively final for lambda below
         double finalReachableMaxPointsInCourse = reachableMaxPointsInCourse; // needed to make the variable effectively final for lambda below
         var studentScores = studentIdToParticipations.entrySet().parallelStream()
                 .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finalMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
