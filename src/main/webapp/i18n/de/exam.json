@@ -172,6 +172,7 @@
             "passedColumn": "Bestanden",
             "mostSeverePlagiarismVerdictColumn": "Urteil",
             "mostSeverePlagiarismVerdictInBonusColumn": "Urteil in Bonus",
+            "presentationScoreThresholdColumn": "Präsentationsergebnis Schwelle: {{ threshold }}",
             "exportCSV": "Exportiere Ergebnisse als CSV",
             "filterForSubmittedExams": "Berücksichtige nur abgegebene Klausuren",
             "filterForNonEmptySubmissions": "Berücksichtige nur Aufgaben mit mindestens einer nicht leeren Abgabe",

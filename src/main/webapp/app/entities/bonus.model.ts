@@ -36,6 +36,8 @@ export class BonusResult {
     public finalPoints?: number;
     public finalGrade?: number | string;
     public mostSeverePlagiarismVerdict?: PlagiarismVerdict;
+    public achievedPresentationScore?: number;
+    public presentationScoreThreshold?: number;
 
     constructor() {}
 }

@@ -173,6 +173,7 @@
             "passedColumn": "Passed",
             "mostSeverePlagiarismVerdictColumn": "Plagiarism Verdict",
             "mostSeverePlagiarismVerdictInBonusColumn": "Plagiarism Verdict in Bonus",
+            "presentationScoreThresholdColumn": "Presentation Score Threshold: {{ threshold }}",
             "exportCSV": "Export Results as CSV",
             "filterForSubmittedExams": "Include only submitted exams",
             "filterForNonEmptySubmissions": "Include only exercises with at least one non-empty submission",

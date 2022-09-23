@@ -104,8 +104,8 @@ public class CourseScoreCalculationService {
         var studentScores = studentIdToParticipations.entrySet().parallelStream()
                 .map(entry -> calculateCourseScoreForStudent(entry.getKey(), entry.getValue(), finalMaxPointsInCourse, finalReachableMaxPointsInCourse, plagiarismMapping))
                 .toList();
-
-        return new CourseScoresDTO(maxPointsInCourse, reachableMaxPointsInCourse, studentScores);
+        var course = courseExercises.iterator().next().getCourseViaExerciseGroupOrCourseMember();
+        return new CourseScoresDTO(maxPointsInCourse, reachableMaxPointsInCourse, course.getPresentationScore(), studentScores);
     }
 
     /**

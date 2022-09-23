@@ -9,11 +9,11 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismVerdict;
 
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public record CourseScoresDTO(double maxPoints, double reachablePoints, List<StudentScore> studentScores) {
+public record CourseScoresDTO(double maxPoints, double reachablePoints, Integer presentationScoreThreshold, List<StudentScore> studentScores) {
 
     @JsonInclude(JsonInclude.Include.NON_EMPTY)
-    public record StudentScore(Long studentId, double absolutePoints, double relativeScore, double currentRelativeScore, int presentationScore, boolean presentationScorePassed,
-            PlagiarismVerdict mostSeverePlagiarismVerdict) {
+    public record StudentScore(Long studentId, double absolutePoints, double relativeScore, double currentRelativeScore, int achievedPresentationScore,
+            boolean presentationScorePassed, PlagiarismVerdict mostSeverePlagiarismVerdict) {
 
         public double getAbsolutePointsEligibleForBonus() {
             return presentationScorePassed ? absolutePoints : 0.0;
@@ -21,7 +21,7 @@ public record CourseScoresDTO(double maxPoints, double reachablePoints, List<Stu
     }
 
     public Map<Long, BonusSourceResultDTO> toBonusSourceResultMap() {
-        return studentScores.stream().collect(Collectors.toMap(StudentScore::studentId,
-                studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(), studentScore.mostSeverePlagiarismVerdict())));
+        return studentScores.stream().collect(Collectors.toMap(StudentScore::studentId, studentScore -> new BonusSourceResultDTO(studentScore.getAbsolutePointsEligibleForBonus(),
+                studentScore.mostSeverePlagiarismVerdict(), studentScore.achievedPresentationScore(), presentationScoreThreshold)));
     }
 }

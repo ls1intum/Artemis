@@ -392,11 +392,20 @@ public class ExamService {
         BonusStrategy bonusStrategy = bonus.getBonusToGradingScale().getBonusStrategy();
         return (studentId, achievedPointsOfBonusTo) -> {
             BonusSourceResultDTO result = scoresMap != null ? scoresMap.get(studentId) : null;
-            Double achievedPointsOfSource = result != null ? result.achievedPoints() : 0.0;
+            Double achievedPointsOfSource = 0.0;
+            PlagiarismVerdict verdict = null;
+            Integer presentationScoreThreshold = null;
+            Integer achievedPresentationScore = null;
+            if (result != null) {
+                achievedPointsOfSource = result.achievedPoints();
+                verdict = result.mostSeverePlagiarismVerdict();
+                achievedPresentationScore = result.achievedPresentationScore();
+                presentationScoreThreshold = result.presentationScoreThreshold();
+            }
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
-            PlagiarismVerdict verdict = result != null ? result.mostSeverePlagiarismVerdict() : null;
+
             return new BonusResultDTO(bonusStrategy, bonusFromTitle, bonusExample.studentPointsOfBonusSource(), bonusExample.bonusGrade(), bonusExample.finalPoints(),
-                    bonusExample.finalGrade(), verdict);
+                    bonusExample.finalGrade(), verdict, achievedPresentationScore, presentationScoreThreshold);
         };
     }
 
@@ -425,12 +434,12 @@ public class ExamService {
 
             StudentExamWithGradeDTO studentExamWithGradeDTO = getStudentExamGradesForSummaryAsStudent(targetUser, studentExam);
             var studentResult = studentExamWithGradeDTO.studentResult();
-            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict()));
+            return Map.of(studentId, new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null));
         }
         var scores = calculateExamScores(examId);
         var studentIdSet = new HashSet<>(studentIds);
         return scores.studentResults().stream().filter(studentResult -> studentIdSet.contains(studentResult.userId())).collect(Collectors.toMap(ExamScoresDTO.StudentResult::userId,
-                studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict())));
+                studentResult -> new BonusSourceResultDTO(studentResult.overallPointsAchieved(), studentResult.mostSeverePlagiarismVerdict(), null, null)));
 
     }
 

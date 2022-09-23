@@ -58,6 +58,7 @@ import {
     FINAL_GRADE_KEY,
     PLAGIARISM_VERDICT_KEY,
     PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY,
+    PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY,
 } from 'app/shared/export/export-constants';
 
 export enum MedianType {
@@ -118,6 +119,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
     hasPlagiarismVerdictsInBonusSource?: boolean;
     hasSecondCorrectionAndStarted: boolean;
     hasNumericGrades: boolean;
+    presentationScoreThreshold?: number;
 
     course?: Course;
 
@@ -198,6 +200,11 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
                         this.hasPlagiarismVerdicts = this.studentResults.some((studentResult) => studentResult.mostSeverePlagiarismVerdict);
                         this.hasPlagiarismVerdictsInBonusSource =
                             this.hasBonus && this.studentResults.some((studentResult) => studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
+
+                        if (this.hasBonus) {
+                            const firstStudentResultWithPresentationScore = this.studentResults.find((studentResult) => studentResult.gradeWithBonus?.presentationScoreThreshold);
+                            this.presentationScoreThreshold = firstStudentResultWithPresentationScore?.gradeWithBonus!.presentationScoreThreshold;
+                        }
 
                         // Exam statistics must only be calculated once as they are not filter dependent
                         this.calculateExamStatistics();
@@ -693,6 +700,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.gradingScaleExists) {
             headers.push(this.isBonus ? BONUS_KEY : GRADE_KEY);
             if (this.hasBonus) {
+                if (this.presentationScoreThreshold != undefined) {
+                    headers.push(`${PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY} ${this.presentationScoreThreshold}`);
+                }
                 headers.push(BONUS_GRADE_KEY);
                 headers.push(FINAL_GRADE_KEY);
             }
@@ -755,6 +765,9 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.gradingScaleExists) {
             rowData.set(this.isBonus ? BONUS_KEY : GRADE_KEY, studentResult.overallGrade);
             if (this.hasBonus) {
+                if (this.presentationScoreThreshold != undefined) {
+                    rowData.set(`${PRESENTATION_SCORE_IN_BONUS_SOURCE_KEY} ${this.presentationScoreThreshold}`, studentResult.gradeWithBonus?.achievedPresentationScore);
+                }
                 rowData.set(BONUS_GRADE_KEY, studentResult.gradeWithBonus?.bonusGrade);
                 rowData.set(FINAL_GRADE_KEY, studentResult.gradeWithBonus?.finalGrade ?? studentResult.overallGrade);
             }
@@ -771,6 +784,7 @@ export class ExamScoresComponent implements OnInit, OnDestroy {
         if (this.hasPlagiarismVerdictsInBonusSource) {
             rowData.set(PLAGIARISM_VERDICT_IN_BONUS_SOURCE_KEY, studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict);
         }
+
         return rowData.build();
     }
 

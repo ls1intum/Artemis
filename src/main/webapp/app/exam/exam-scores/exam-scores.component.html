@@ -450,6 +450,10 @@
                             <fa-icon [icon]="faSort"></fa-icon>
                         </th>
                         <ng-container *ngIf="hasBonus">
+                            <th *ngIf="presentationScoreThreshold != undefined" jhiSortBy="gradeWithBonus.achievedPresentationScore">
+                                <span>{{ 'artemisApp.examScores.presentationScoreThresholdColumn' | artemisTranslate: { threshold: presentationScoreThreshold } }}</span>
+                                <fa-icon [icon]="faSort"></fa-icon>
+                            </th>
                             <th jhiSortBy="gradeWithBonus.bonusGrade">
                                 <span>{{ 'artemisApp.examScores.bonusGradeColumn' | artemisTranslate }}</span>
                                 <fa-icon [icon]="faSort"></fa-icon>
@@ -497,6 +501,9 @@
                             {{ studentResult.overallGrade !== null ? studentResult.overallGrade : '-' }}
                         </td>
                         <ng-container *ngIf="hasBonus">
+                            <td *ngIf="presentationScoreThreshold != undefined">
+                                {{ studentResult.gradeWithBonus?.achievedPresentationScore ?? '-' }}
+                            </td>
                             <td>
                                 {{ studentResult.gradeWithBonus?.bonusGrade ?? '-' }}
                             </td>
@@ -511,10 +518,10 @@
                             <fa-icon [icon]="faTimes" style="color: #ca2024; font-size: 1.5em"></fa-icon>
                         </td>
                         <td *ngIf="hasPlagiarismVerdicts">
-                            {{ studentResult.mostSeverePlagiarismVerdict }}
+                            {{ studentResult.mostSeverePlagiarismVerdict ?? '-' }}
                         </td>
                         <td *ngIf="hasPlagiarismVerdictsInBonusSource">
-                            {{ studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict }}
+                            {{ studentResult.gradeWithBonus?.mostSeverePlagiarismVerdict ?? '-' }}
                         </td>
                     </tr>
                 </tbody>
