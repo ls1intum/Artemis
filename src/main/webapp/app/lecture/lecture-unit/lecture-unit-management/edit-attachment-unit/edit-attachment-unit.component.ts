@@ -8,10 +8,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { AlertService } from 'app/core/util/alert.service';
 import { AttachmentUnitFormComponent, AttachmentUnitFormData } from 'app/lecture/lecture-unit/lecture-unit-management/attachment-unit-form/attachment-unit-form.component';
 import { Attachment, AttachmentType } from 'app/entities/attachment.model';
-import { FileUploaderService } from 'app/shared/http/file-uploader.service';
-import { AttachmentService } from 'app/lecture/attachment.service';
-import { forkJoin, combineLatest } from 'rxjs';
-import dayjs from 'dayjs/esm';
+import { combineLatest } from 'rxjs';
+import { objectToJsonBlob } from 'app/utils/blob-util';
 
 @Component({
     selector: 'jhi-edit-attachment-unit',
@@ -28,14 +26,7 @@ export class EditAttachmentUnitComponent implements OnInit {
     lectureId: number;
     notificationText: string;
 
-    constructor(
-        private activatedRoute: ActivatedRoute,
-        private router: Router,
-        private attachmentUnitService: AttachmentUnitService,
-        private attachmentService: AttachmentService,
-        private alertService: AlertService,
-        private fileUploaderService: FileUploaderService,
-    ) {}
+    constructor(private activatedRoute: ActivatedRoute, private router: Router, private attachmentUnitService: AttachmentUnitService, private alertService: AlertService) {}
 
     ngOnInit(): void {
         this.isLoading = true;
@@ -76,9 +67,9 @@ export class EditAttachmentUnitComponent implements OnInit {
             });
     }
 
-    updateAttachmentUnit(formData: AttachmentUnitFormData) {
-        const { description, name, releaseDate, updateNotificationText } = formData.formProperties;
-        const { file, fileName } = formData.fileProperties;
+    updateAttachmentUnit(attachmentUnitFormData: AttachmentUnitFormData) {
+        const { description, name, releaseDate, updateNotificationText } = attachmentUnitFormData.formProperties;
+        const { file, fileName } = attachmentUnitFormData.fileProperties;
 
         // optional update notification text for students
         if (updateNotificationText) {
@@ -93,44 +84,20 @@ export class EditAttachmentUnitComponent implements OnInit {
         this.attachmentUnit.description = description;
 
         this.isLoading = true;
-        // when the file has changed the new file needs to be uploaded first before making the put request
-        if (file) {
-            this.fileUploaderService.uploadFile(file, fileName, { keepFileName: true }).then(
-                (result) => {
-                    // we only update the version when the underlying file has changed
-                    this.attachment.version = this.attachment.version! + 1;
-                    this.attachment.uploadDate = dayjs();
-                    // update link to the path provided by the server
-                    this.attachment.link = result.path;
-                    this.performUpdate();
-                },
-                (error) => {
-                    // displaying the file upload error in the form but not resetting the form
-                    this.attachmentUnitForm.setFileUploadError(error.message);
-                    this.isLoading = false;
-                },
-            );
-        } else {
-            this.performUpdate();
-        }
-    }
 
-    performUpdate() {
-        const attachmentUnitObservable = this.attachmentUnitService.update(this.attachmentUnit, this.lectureId);
-        const requestOptions = {} as any;
-        if (this.notificationText) {
-            requestOptions.notificationText = this.notificationText;
+        const formData = new FormData();
+        if (file) {
+            formData.append('file', file, fileName);
         }
-        const attachmentObservable = this.attachmentService.update(this.attachment, requestOptions);
-        forkJoin([attachmentUnitObservable, attachmentObservable])
-            .pipe(
-                finalize(() => {
-                    this.isLoading = false;
-                    this.router.navigate(['../../../'], { relativeTo: this.activatedRoute });
-                }),
-            )
+        formData.append('attachment', objectToJsonBlob(this.attachment));
+        formData.append('attachmentUnit', objectToJsonBlob(this.attachmentUnit));
+
+        this.attachmentUnitService
+            .update(this.lectureId, this.attachmentUnit.id!, formData, this.notificationText)
             .subscribe({
+                next: () => this.router.navigate(['../../../'], { relativeTo: this.activatedRoute }),
                 error: (res: HttpErrorResponse) => onError(this.alertService, res),
-            });
+            })
+            .add(() => (this.isLoading = false));
     }
 }

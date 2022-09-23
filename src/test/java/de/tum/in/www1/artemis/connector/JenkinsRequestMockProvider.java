@@ -378,8 +378,7 @@ public class JenkinsRequestMockProvider {
     }
 
     private void mockGetUser(String userLogin, boolean userExists, boolean shouldFailToGetUser) throws URISyntaxException, JsonProcessingException {
-        var jenkinsUser = new JenkinsUserDTO();
-        jenkinsUser.id = userLogin;
+        var jenkinsUser = new JenkinsUserDTO(userLogin, null, null);
 
         final var uri = UriComponentsBuilder.fromUri(jenkinsServerUrl.toURI()).pathSegment("user", userLogin, "api", "json").build().toUri();
         if (userExists) {

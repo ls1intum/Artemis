@@ -17,6 +17,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
@@ -29,8 +30,12 @@ import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.ProgrammingExercise;
 import de.tum.in.www1.artemis.domain.VcsRepositoryUrl;
 import de.tum.in.www1.artemis.exception.VersionControlException;
+import de.tum.in.www1.artemis.repository.ProgrammingExerciseRepository;
 
 class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
+
+    @Autowired
+    private ProgrammingExerciseRepository programmingExerciseRepository;
 
     @Value("${artemis.version-control.url}")
     private URL gitlabServerUrl;
@@ -97,7 +102,11 @@ class GitlabServiceTest extends AbstractSpringIntegrationJenkinsGitlabTest {
     @Test
     void testGetOrRetrieveDefaultBranch() throws GitLabApiException {
         Course course = database.addCourseWithOneProgrammingExercise();
+
         ProgrammingExercise programmingExercise = (ProgrammingExercise) course.getExercises().stream().findAny().get();
+        programmingExercise.setBranch(null);
+        programmingExercise = programmingExerciseRepository.save(programmingExercise);
+
         database.addTemplateParticipationForProgrammingExercise(programmingExercise);
         database.addSolutionParticipationForProgrammingExercise(programmingExercise);
         gitlabRequestMockProvider.mockGetDefaultBranch(defaultBranch);

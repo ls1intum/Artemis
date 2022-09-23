@@ -56,6 +56,13 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
 
     @Query("""
             SELECT e FROM Exercise e
+            LEFT JOIN FETCH e.learningGoals
+            WHERE e.id = :exerciseId
+            """)
+    Optional<Exercise> findByIdWithLearningGoals(@Param("exerciseId") Long exerciseId);
+
+    @Query("""
+            SELECT e FROM Exercise e
             WHERE e.course.testCourse = FALSE
             	AND e.dueDate >= :now
             ORDER BY e.dueDate ASC
@@ -412,6 +419,11 @@ public interface ExerciseRepository extends JpaRepository<Exercise, Long> {
     @NotNull
     default Exercise findByIdElseThrow(Long exerciseId) throws EntityNotFoundException {
         return findById(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
+    }
+
+    @NotNull
+    default Exercise findByIdWithLearningGoalsElseThrow(Long exerciseId) throws EntityNotFoundException {
+        return findByIdWithLearningGoals(exerciseId).orElseThrow(() -> new EntityNotFoundException("Exercise", exerciseId));
     }
 
     /**

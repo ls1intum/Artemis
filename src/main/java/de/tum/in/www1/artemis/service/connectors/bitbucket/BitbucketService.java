@@ -46,7 +46,6 @@ import de.tum.in.www1.artemis.service.connectors.ConnectorHealth;
 import de.tum.in.www1.artemis.service.connectors.GitService;
 import de.tum.in.www1.artemis.service.connectors.VersionControlRepositoryPermission;
 import de.tum.in.www1.artemis.service.connectors.bitbucket.dto.*;
-import de.tum.in.www1.artemis.service.user.PasswordService;
 
 @Service
 @Profile("bitbucket")
@@ -71,7 +70,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     private final RestTemplate shortTimeoutRestTemplate;
 
-    public BitbucketService(PasswordService passwordService, @Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
+    public BitbucketService(@Qualifier("bitbucketRestTemplate") RestTemplate restTemplate, UserRepository userRepository, UrlService urlService,
             @Qualifier("shortTimeoutBitbucketRestTemplate") RestTemplate shortTimeoutRestTemplate, GitService gitService, ApplicationContext applicationContext,
             ProgrammingExerciseStudentParticipationRepository studentParticipationRepository, ProgrammingExerciseRepository programmingExerciseRepository) {
         super(applicationContext, gitService, urlService, studentParticipationRepository, programmingExerciseRepository);
@@ -187,8 +186,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
     @Override
     public VcsRepositoryUrl getCloneRepositoryUrl(String projectKey, String repositorySlug) {
-        final var cloneUrl = new BitbucketRepositoryUrl(projectKey, repositorySlug);
-        return cloneUrl;
+        return new BitbucketRepositoryUrl(projectKey, repositorySlug);
     }
 
     private BitbucketProjectDTO getBitbucketProject(String projectKey) {
@@ -247,7 +245,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @param username     The username of the user
      * @param emailAddress The new email address
      * @param displayName  The new display name
-     * @throws BitbucketException and exception in case updating the user details does not work correctly
+     * @throws BitbucketException the exception of the bitbucket system when updating the user does not work
      */
     public void updateUserDetails(String username, String emailAddress, String displayName) throws BitbucketException {
         UriComponentsBuilder userDetailsBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users");
@@ -277,7 +275,7 @@ public class BitbucketService extends AbstractVersionControlService {
      *
      * @param username The username of the user to update
      * @param password The new password
-     * @throws BitbucketException
+     * @throws BitbucketException the exception of the bitbucket system when updating the password does not work
      */
     public void updateUserPassword(String username, String password) throws BitbucketException {
         UriComponentsBuilder passwordBuilder = UriComponentsBuilder.fromHttpUrl(bitbucketServerUrl + "/rest/api/latest/admin/users/credentials");
@@ -480,32 +478,11 @@ public class BitbucketService extends AbstractVersionControlService {
                 throw new BitbucketException("Unable to get default branch for repository " + repositorySlug);
             }
 
-            return defaultBranchDTO.getDisplayId();
+            return defaultBranchDTO.displayId();
         }
         catch (HttpClientErrorException e) {
             log.error("Unable to get default branch for repository {}", repositorySlug, e);
             throw new BitbucketException("Unable to get default branch for repository " + repositorySlug, e);
-        }
-    }
-
-    /**
-     * Set the default branch of the repository
-     *
-     * @param repositoryUrl The repository url to set the default branch for.
-     * @param branchName    The name of the branch to set as default, e.g. 'main'
-     */
-    public void setDefaultBranchOfRepository(VcsRepositoryUrl repositoryUrl, String branchName) throws BitbucketException {
-        var projectKey = urlService.getProjectKeyFromRepositoryUrl(repositoryUrl);
-        var repositorySlug = urlService.getRepositorySlugFromRepositoryUrl(repositoryUrl);
-        var getDefaultBranchUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug.toLowerCase() + "/branches/default";
-
-        try {
-            var payload = new BitbucketDefaultBranchDTO("refs/heads/" + branchName);
-            restTemplate.exchange(getDefaultBranchUrl, HttpMethod.PUT, new HttpEntity<>(payload), Void.class);
-        }
-        catch (HttpClientErrorException e) {
-            log.error("Unable to set default branch for repository {}", repositorySlug, e);
-            throw new BitbucketException("Unable to set default branch for repository " + repositorySlug, e);
         }
     }
 
@@ -561,7 +538,7 @@ public class BitbucketService extends AbstractVersionControlService {
         try {
             // first check that the project key is unique, if the project does not exist, we expect a 404 Not Found status
             var project = getBitbucketProject(projectKey);
-            log.warn("Bitbucket project with key {} already exists: {}", projectKey, project.getName());
+            log.warn("Bitbucket project with key {} already exists: {}", projectKey, project.name());
             return true;
         }
         catch (HttpClientErrorException e) {
@@ -573,8 +550,8 @@ public class BitbucketService extends AbstractVersionControlService {
                         new ParameterizedTypeReference<BitbucketSearchDTO<BitbucketProjectDTO>>() {
                         });
 
-                if (response.getBody() != null && response.getBody().getSize() > 0) {
-                    final var exists = response.getBody().getSearchResults().stream().anyMatch(project -> project.getName().equalsIgnoreCase(projectName));
+                if (response.getBody() != null && response.getBody().size() > 0) {
+                    final var exists = response.getBody().searchResults().stream().anyMatch(project -> project.name().equalsIgnoreCase(projectName));
                     if (exists) {
                         log.warn("Bitbucket project with name {} already exists", projectName);
                         return true;
@@ -655,8 +632,7 @@ public class BitbucketService extends AbstractVersionControlService {
      * @throws BitbucketException if the repo could not be created
      */
     private void createRepository(String projectKey, String repoName) throws BitbucketException {
-        final var body = new BitbucketRepositoryDTO(repoName.toLowerCase());
-        body.setDefaultBranch(defaultBranch);
+        final var body = new BitbucketRepositoryDTO(repoName.toLowerCase(), defaultBranch);
         HttpEntity<?> entity = new HttpEntity<>(body, null);
 
         log.debug("Creating Bitbucket repo {} with parent key {}", repoName, projectKey);
@@ -720,7 +696,7 @@ public class BitbucketService extends AbstractVersionControlService {
 
         if (response.getStatusCode().equals(HttpStatus.OK) && response.getBody() != null) {
             // TODO: BitBucket uses a pagination API to split up the responses, so we might have to check all pages
-            return response.getBody().getSearchResults();
+            return response.getBody().searchResults();
         }
         log.error("Error while getting existing WebHooks for {}-{}: Invalid response", projectKey, repositorySlug);
         throw new BitbucketException("Error while getting existing WebHooks: Invalid response");
@@ -734,7 +710,7 @@ public class BitbucketService extends AbstractVersionControlService {
     private void createWebHook(String projectKey, String repositorySlug, String notificationUrl, String webHookName) {
         log.debug("Creating WebHook for Repository {}-{} ({})", projectKey, repositorySlug, notificationUrl);
         String baseUrl = bitbucketServerUrl + "/rest/api/latest/projects/" + projectKey + "/repos/" + repositorySlug + "/webhooks";
-        final var body = new BitbucketWebHookDTO(webHookName, notificationUrl, List.of("repo:refs_changed"));
+        final var body = new BitbucketWebHookDTO(null, webHookName, notificationUrl, List.of("repo:refs_changed"));
         // TODO: We might want to add a token to ensure the notification is valid
 
         HttpEntity<?> entity = new HttpEntity<>(body, null);
@@ -842,13 +818,13 @@ public class BitbucketService extends AbstractVersionControlService {
                 if (response.getStatusCode() != HttpStatus.OK || response.getBody() == null) {
                     throw new BitbucketException("Unable to get push date for participation " + participation.getId() + "\n" + response.getBody());
                 }
-                final var changeActivities = response.getBody().getValues();
+                final var changeActivities = response.getBody().values();
 
-                final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.getRefChange().getToHash())).findFirst();
+                final var activityOfPush = changeActivities.stream().filter(activity -> commitHash.equals(activity.refChange().toHash())).findFirst();
                 if (activityOfPush.isPresent()) {
-                    return Instant.ofEpochMilli(activityOfPush.get().getCreatedDate()).atZone(ZoneOffset.UTC);
+                    return Instant.ofEpochMilli(activityOfPush.get().createdDate()).atZone(ZoneOffset.UTC);
                 }
-                isLastPage = response.getBody().getLastPage();
+                isLastPage = response.getBody().isLastPage();
                 start += perPage;
             }
             catch (URISyntaxException e) {

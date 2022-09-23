@@ -27,16 +27,28 @@ artemis:
     # Defines the used docker images for certain programming languages
         build:
             images:
-                JAVA: "~~invalid~~"
-                KOTLIN: "~~invalid~~"
-                EMPTY: "~~invalid~~"
-                PYTHON: "~~invalid~~"
-                C: "~~invalid~~"
-                HASKELL: "~~invalid~~"
-                VHDL: "~~invalid~~"
-                ASSEMBLER: "~~invalid~~"
-                SWIFT: "~~invalid~~"
-                OCAML: "~~invalid~~"
+                # java intentionally uppercase to make sure both variants are
+                # accepted
+                JAVA:
+                    default: "~~invalid~~"
+                kotlin:
+                    default: "~~invalid~~"
+                empty:
+                    default: "~~invalid~~"
+                python:
+                    default: "~~invalid~~"
+                c:
+                    default: "~~invalid~~"
+                haskell:
+                    default: "~~invalid~~"
+                vhdl:
+                    default: "~~invalid~~"
+                assembler:
+                    default: "~~invalid~~"
+                swift:
+                    default: "~~invalid~~"
+                ocaml:
+                    default: "~~invalid~~"
 
 spring:
     application:

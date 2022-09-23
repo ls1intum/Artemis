@@ -423,4 +423,22 @@ class ProgrammingExerciseBitbucketBambooIntegrationTest extends AbstractSpringIn
         programmingExerciseTestService.exportSolutionRepository_shouldReturnFileOrForbidden();
     }
 
+    @Test
+    @WithMockUser(username = "student1", roles = "USER")
+    void testBuildLogStatistics_unauthorized() throws Exception {
+        programmingExerciseTestService.buildLogStatistics_unauthorized();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testBuildLogStatistics_noStatistics() throws Exception {
+        programmingExerciseTestService.buildLogStatistics_noStatistics();
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    void testBuildLogStatistics() throws Exception {
+        programmingExerciseTestService.buildLogStatistics();
+    }
+
 }

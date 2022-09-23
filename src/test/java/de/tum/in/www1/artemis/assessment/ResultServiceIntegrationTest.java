@@ -148,13 +148,12 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
 
         var resultNotification1 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
                 ProgrammingLanguage.JAVA);
-        for (var reports : resultNotification1.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports()) {
+        for (var reports : resultNotification1.getBuild().jobs().iterator().next().staticCodeAnalysisReports()) {
             for (var issue : reports.getIssues()) {
                 issue.setFilePath(pathWithoutWorkingDir);
             }
         }
-        var staticCodeAnalysisFeedback1 = feedbackRepository
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+        var staticCodeAnalysisFeedback1 = feedbackRepository.createFeedbackFromStaticCodeAnalysisReports(resultNotification1.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback1) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());
@@ -164,7 +163,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
         // 2. Test that null or empty paths default to FeedbackService.DEFAULT_FILEPATH
         var resultNotification2 = ModelFactory.generateBambooBuildResultWithStaticCodeAnalysisReport(Constants.ASSIGNMENT_REPO_NAME, List.of("test1"), List.of(),
                 ProgrammingLanguage.JAVA);
-        var reports2 = resultNotification2.getBuild().getJobs().iterator().next().getStaticCodeAnalysisReports();
+        var reports2 = resultNotification2.getBuild().jobs().iterator().next().staticCodeAnalysisReports();
         for (int i = 0; i < reports2.size(); i++) {
             var report = reports2.get(i);
             // Set null or empty String to test both
@@ -180,7 +179,7 @@ class ResultServiceIntegrationTest extends AbstractSpringIntegrationBambooBitbuc
             }
         }
         final var staticCodeAnalysisFeedback2 = feedbackRepository
-                .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().getJobs().get(0).getStaticCodeAnalysisReports());
+                .createFeedbackFromStaticCodeAnalysisReports(resultNotification2.getBuild().jobs().get(0).staticCodeAnalysisReports());
 
         for (var feedback : staticCodeAnalysisFeedback2) {
             JSONObject issueJSON = new JSONObject(feedback.getDetailText());

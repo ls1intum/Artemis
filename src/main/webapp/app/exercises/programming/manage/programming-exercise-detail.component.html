@@ -554,6 +554,58 @@
                         <span>{{ programmingExercise?.coveredLinesRatio ? (programmingExercise?.coveredLinesRatio! * 100).toFixed(1) + ' %' : 'n.a.' }}</span>
                     </dd>
                 </div>
+                <div *ngIf="programmingExercise.isAtLeastEditor && programmingExercise.buildLogStatistics">
+                    <dt>
+                        <span jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.title">Build Log Statistics</span>
+                        <jhi-help-icon placement="auto" text="artemisApp.programmingExercise.buildLogStatistics.tooltip"></jhi-help-icon>
+                    </dt>
+                    <dd>
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.numberOfBuilds"># Builds</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.agentSetupDuration">Docker Setup</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.testDuration">Test Execution</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.scaDuration">Static Code Analysis</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.totalJobDuration">Total Job Duration</th>
+                                    <th jhiTranslate="artemisApp.programmingExercise.buildLogStatistics.dependenciesDownloadedCount">Number of downloaded dependencies</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>{{ programmingExercise.buildLogStatistics.buildCount ?? 0 }}</td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.agentSetupDuration
+                                                ? (programmingExercise.buildLogStatistics.agentSetupDuration | number: '1.2-2') + 's'
+                                                : '-'
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.testDuration
+                                                ? (programmingExercise.buildLogStatistics.testDuration | number: '1.2-2') + 's'
+                                                : '-'
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.scaDuration ? (programmingExercise.buildLogStatistics.scaDuration | number: '1.2-2') + 's' : '-'
+                                        }}
+                                    </td>
+                                    <td>
+                                        {{
+                                            programmingExercise.buildLogStatistics.totalJobDuration
+                                                ? (programmingExercise.buildLogStatistics.totalJobDuration | number: '1.2-2') + 's'
+                                                : '-'
+                                        }}
+                                    </td>
+                                    <td>{{ programmingExercise.buildLogStatistics.dependenciesDownloadedCount ?? '-' }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </dd>
+                </div>
             </dl>
         </div>
     </div>
