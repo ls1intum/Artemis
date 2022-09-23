@@ -217,7 +217,11 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
      * @return grade step corresponding to the given points
      */
     default GradeStep matchPointsToGradeStep(double points, GradingScale gradingScale) {
-        double maxPoints = gradingScale.getMaxPoints();
+        int maxPoints = gradingScale.getMaxPoints();
+        if (maxPoints <= 0) {
+            throw new BadRequestAlertException("Max points for the grading scale must be set to a value greater than 0", "gradingScale", "invalidMaxPoints");
+        }
+
         double percentage = points / maxPoints * 100.0;
 
         return this.matchPercentageToGradeStep(percentage, gradingScale.getGradeSteps());

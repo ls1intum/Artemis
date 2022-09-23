@@ -1683,17 +1683,17 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
         var finalExam = examRepository.findById(finalStudentExam.getExam().getId()).orElseThrow();
         var bonusExam = examRepository.findById(bonusStudentExam.getExam().getId()).orElseThrow();
 
-        GradingScale gradingScale = createGradeScale(false);
-        gradingScale.setExam(finalExam);
-        gradingScale.setBonusStrategy(bonusStrategy);
-        gradingScaleRepository.save(gradingScale);
+        GradingScale finalExamGradingScale = createGradeScale(false);
+        finalExamGradingScale.setExam(finalExam);
+        finalExamGradingScale.setBonusStrategy(bonusStrategy);
+        gradingScaleRepository.save(finalExamGradingScale);
 
         GradingScale bonusGradingScale = createGradeScale(true);
         bonusGradingScale.setExam(bonusExam);
         gradingScaleRepository.save(bonusGradingScale);
 
         double weight = bonusStrategy == BonusStrategy.POINTS ? 1.0 : -1.0;
-        var bonus = ModelFactory.generateBonus(bonusStrategy, weight, bonusGradingScale.getId(), gradingScale.getId());
+        var bonus = ModelFactory.generateBonus(bonusStrategy, weight, bonusGradingScale.getId(), finalExamGradingScale.getId());
         bonusRepository.save(bonus);
 
         StudentParticipation participationWithLatestResult = studentParticipationRepository
