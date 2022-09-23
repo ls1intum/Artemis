@@ -64,7 +64,7 @@ public class ScheduleService {
      * @param lifecycle ExerciseLifecycle
      * @param task Runnable task to be executed on the lifecycle hook
      */
-    void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
+    public void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Runnable task) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
@@ -79,7 +79,7 @@ public class ScheduleService {
      * @param lifecycle ExerciseLifecycle
      * @param tasks Runnable tasks to be executed at the associated ZonedDateTimes
      */
-    void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
+    public void scheduleTask(Exercise exercise, ExerciseLifecycle lifecycle, Set<Tuple<ZonedDateTime, Runnable>> tasks) {
         // check if already scheduled for exercise. if so, cancel.
         // no exercise should be scheduled more than once.
         cancelScheduledTaskForLifecycle(exercise.getId(), lifecycle);
@@ -94,7 +94,7 @@ public class ScheduleService {
      * @param lifecycle at which the task should be scheduled.
      * @param task Runnable task to be executed on the lifecycle hook
      */
-    void scheduleParticipationTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
+    public void scheduleParticipationTask(Participation participation, ParticipationLifecycle lifecycle, Runnable task) {
         cancelScheduledTaskForParticipationLifecycle(participation.getExercise().getId(), participation.getId(), lifecycle);
         participationLifecycleService.scheduleTask(participation, lifecycle, task).ifPresent(scheduledTask -> addScheduledTask(participation, lifecycle, Set.of(scheduledTask)));
     }
@@ -106,7 +106,7 @@ public class ScheduleService {
      *
      * @param exerciseId if of the exercise for which a potential scheduled task is canceled
      */
-    void cancelScheduledTaskForLifecycle(Long exerciseId, ExerciseLifecycle lifecycle) {
+    public void cancelScheduledTaskForLifecycle(Long exerciseId, ExerciseLifecycle lifecycle) {
         Tuple<Long, ExerciseLifecycle> taskId = new Tuple<>(exerciseId, lifecycle);
         Set<ScheduledFuture<?>> futures = scheduledExerciseTasks.get(taskId);
         if (futures != null) {
@@ -136,7 +136,7 @@ public class ScheduleService {
      *
      * @param participationId of the participation for which a potential scheduled task is cancelled.
      */
-    void cancelScheduledTaskForParticipationLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
+    public void cancelScheduledTaskForParticipationLifecycle(Long exerciseId, Long participationId, ParticipationLifecycle lifecycle) {
         Triple<Long, Long, ParticipationLifecycle> taskId = Triple.of(exerciseId, participationId, lifecycle);
         Set<ScheduledFuture<?>> futures = scheduledParticipationTasks.get(taskId);
         if (futures != null) {

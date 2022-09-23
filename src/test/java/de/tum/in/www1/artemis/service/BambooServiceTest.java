@@ -11,8 +11,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import de.tum.in.www1.artemis.AbstractSpringIntegrationBambooBitbucketJiraTest;
-import de.tum.in.www1.artemis.ContinuousIntegrationTestService;
 import de.tum.in.www1.artemis.domain.Repository;
+import de.tum.in.www1.artemis.programmingexercise.ContinuousIntegrationTestService;
 
 class BambooServiceTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 

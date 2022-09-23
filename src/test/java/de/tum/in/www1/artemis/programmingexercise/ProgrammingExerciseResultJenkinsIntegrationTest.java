@@ -38,7 +38,7 @@ class ProgrammingExerciseResultJenkinsIntegrationTest extends AbstractSpringInte
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
         programmingExerciseResultTestService.tearDown();
         gitlabRequestMockProvider.reset();
     }

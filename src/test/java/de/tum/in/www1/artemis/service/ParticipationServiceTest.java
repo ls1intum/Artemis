@@ -36,12 +36,14 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
 
     private ProgrammingExercise programmingExercise;
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
         database.addUsers(3, 0, 0, 1);
         Course course = database.addCourseWithOneProgrammingExercise();
         this.programmingExercise = database.findProgrammingExerciseWithTitle(course.getExercises(), "Programming");
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         jenkinsRequestMockProvider.enableMockingOfRequests(jenkinsServer);
         gitlabRequestMockProvider.enableMockingOfRequests();
     }
@@ -51,6 +53,9 @@ class ParticipationServiceTest extends AbstractSpringIntegrationJenkinsGitlabTes
         database.resetDatabase();
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     /**

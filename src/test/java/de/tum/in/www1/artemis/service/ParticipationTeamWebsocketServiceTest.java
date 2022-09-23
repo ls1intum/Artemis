@@ -32,6 +32,8 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         return "/topic/participations/" + participation.getId() + "/team";
     }
 
+    private AutoCloseable closeable;
+
     @BeforeEach
     void init() {
         database.addUsers(3, 0, 0, 0);
@@ -39,12 +41,15 @@ class ParticipationTeamWebsocketServiceTest extends AbstractSpringIntegrationBam
         ModelingExercise modelingExercise = database.findModelingExerciseWithTitle(course.getExercises(), "ClassDiagram");
         participation = database.createAndSaveParticipationForExercise(modelingExercise, "student1");
 
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
         participationTeamWebsocketService.clearDestinationTracker();
     }
 
     @AfterEach
-    void tearDown() {
+    void tearDown() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
         database.resetDatabase();
     }
 

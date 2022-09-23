@@ -50,7 +50,7 @@ public class UMLClassDiagram extends UMLDiagram implements Serializable {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(classList);
         modelElements.addAll(relationshipList);

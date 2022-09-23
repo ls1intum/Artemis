@@ -35,6 +35,8 @@ public class ApollonRequestMockProvider {
     @Value("${artemis.apollon.conversion-service-url}")
     private String apollonConversionUrl;
 
+    private AutoCloseable closeable;
+
     public ApollonRequestMockProvider(@Qualifier("apollonRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutApollonRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -44,19 +46,21 @@ public class ApollonRequestMockProvider {
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
     /**
      * Resets the mock servers
      */
-    public void reset() {
+    public void reset() throws Exception {
         if (mockServer != null) {
             mockServer.reset();
         }
-
         if (mockServerShortTimeout != null) {
             mockServerShortTimeout.reset();
+        }
+        if (closeable != null) {
+            closeable.close();
         }
     }
 

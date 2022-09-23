@@ -38,7 +38,7 @@ class JenkinsJobPermissionServiceTest extends AbstractSpringIntegrationJenkinsGi
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockedJenkinsJobPermissionsUtils.close();

@@ -7,7 +7,6 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
-import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 
@@ -54,7 +53,7 @@ class JenkinsAuthorizationInterceptorTest extends AbstractSpringIntegrationJenki
     }
 
     @AfterEach
-    void tearDown() throws IOException {
+    void tearDown() throws Exception {
         gitlabRequestMockProvider.reset();
         jenkinsRequestMockProvider.reset();
         mockRestServiceServer.reset();

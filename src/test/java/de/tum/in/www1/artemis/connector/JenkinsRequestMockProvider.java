@@ -78,6 +78,8 @@ public class JenkinsRequestMockProvider {
     @Autowired
     private ProgrammingExerciseRepository programmingExerciseRepository;
 
+    private AutoCloseable closeable;
+
     public JenkinsRequestMockProvider(@Qualifier("jenkinsRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutJenkinsRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -94,12 +96,19 @@ public class JenkinsRequestMockProvider {
         mockServer = MockRestServiceServer.bindTo(restTemplate).ignoreExpectOrder(true).bufferContent().build();
         shortTimeoutMockServer = MockRestServiceServer.bindTo(shortTimeoutRestTemplate).ignoreExpectOrder(true).bufferContent().build();
         this.jenkinsServer = jenkinsServer;
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    public void reset() {
-        mockServer.reset();
-        shortTimeoutMockServer.reset();
+    public void reset() throws Exception {
+        if (closeable != null) {
+            closeable.close();
+        }
+        if (mockServer != null) {
+            mockServer.reset();
+        }
+        if (shortTimeoutMockServer != null) {
+            shortTimeoutMockServer.reset();
+        }
     }
 
     /**

@@ -46,7 +46,7 @@ public class UMLCommunicationDiagram extends UMLDiagram {
     }
 
     @Override
-    protected List<UMLElement> getModelElements() {
+    public List<UMLElement> getModelElements() {
         List<UMLElement> modelElements = new ArrayList<>();
         modelElements.addAll(objectList);
         modelElements.addAll(communicationLinkList);

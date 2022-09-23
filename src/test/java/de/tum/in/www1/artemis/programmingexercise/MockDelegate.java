@@ -73,7 +73,7 @@ public interface MockDelegate {
 
     void mockTriggerInstructorBuildAll(ProgrammingExerciseStudentParticipation participation) throws Exception;
 
-    void resetMockProvider();
+    void resetMockProvider() throws Exception;
 
     void verifyMocks();
 

@@ -96,6 +96,8 @@ public class GitlabRequestMockProvider {
     @Autowired
     private UrlService urlService;
 
+    private AutoCloseable closeable;
+
     public GitlabRequestMockProvider(@Qualifier("gitlabRestTemplate") RestTemplate restTemplate,
             @Qualifier("shortTimeoutGitlabRestTemplate") RestTemplate shortTimeoutRestTemplate) {
         this.restTemplate = restTemplate;
@@ -105,11 +107,16 @@ public class GitlabRequestMockProvider {
     public void enableMockingOfRequests() {
         mockServer = MockRestServiceServer.createServer(restTemplate);
         mockServerShortTimeout = MockRestServiceServer.createServer(shortTimeoutRestTemplate);
-        MockitoAnnotations.openMocks(this);
+        closeable = MockitoAnnotations.openMocks(this);
     }
 
-    public void reset() {
-        mockServer.reset();
+    public void reset() throws Exception {
+        if (mockServer != null) {
+            mockServer.reset();
+        }
+        if (closeable != null) {
+            closeable.close();
+        }
     }
 
     /**
