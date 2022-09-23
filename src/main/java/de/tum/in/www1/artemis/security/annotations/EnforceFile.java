@@ -9,7 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 
 /**
  * This annotation is used to enforce an endpoint using a file token authentication.
- * It should only be used with endpoints starting with {@code /api/file/}
+ * It should only be used with endpoints starting with {@code /api/files/}.
  * <p>
  * It's only addable to methods. The intention is that a developer can see the required role without the need to scroll up.
  * This also prevents overrides of the annotation.
