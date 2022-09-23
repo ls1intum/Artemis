@@ -3404,7 +3404,9 @@ public class DatabaseUtilService {
     }
 
     public User getUserByLogin(String login) {
-        return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login).orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
+        // we convert to lowercase for convenience, because logins have to be lower case
+        return userRepo.findOneWithGroupsAndAuthoritiesByLogin(login.toLowerCase())
+                .orElseThrow(() -> new IllegalArgumentException("Provided login " + login + " does not exist in database"));
     }
 
     public boolean userExistsWithLogin(String login) {

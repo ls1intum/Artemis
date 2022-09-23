@@ -58,8 +58,8 @@ spring:
     jmx:
         enabled: false
     jpa:
-        database-platform: org.hibernate.dialect.MySQL8Dialect # Alternatives org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
-        database: MYSQL        # Alternatives POSTGRESQL / MYSQL
+        database-platform: org.hibernate.dialect.PostgreSQL10Dialect # Alternatives org.hibernate.dialect.PostgreSQL10Dialect / org.hibernate.dialect.MySQL8Dialect
+        database: POSTGRESQL        # Alternatives POSTGRESQL / MYSQL
         open-in-view: false
         show-sql: false
         hibernate:
@@ -136,7 +136,7 @@ spring:
 zonky:
     test:
         database:
-            type: MYSQL  # Alternatives: MYSQL / POSTGRES
+            type: POSTGRES  # Alternatives: MYSQL / POSTGRES
             postgres:
                 docker:
                     image: "postgres:14.5-alpine"

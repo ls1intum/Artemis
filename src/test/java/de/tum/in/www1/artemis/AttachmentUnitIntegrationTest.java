@@ -20,16 +20,13 @@ import de.tum.in.www1.artemis.util.ModelFactory;
 
 class AttachmentUnitIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
-    private static final String TEST_PREFIX = "AttachmentUnitIntegrationTest";
+    private static final String TEST_PREFIX = "attachmentunitintegrationtest"; // only lower case is supported
 
     @Autowired
     private AttachmentRepository attachmentRepository;
 
     @Autowired
     private AttachmentUnitRepository attachmentUnitRepository;
-
-    @Autowired
-    private UserRepository userRepository;
 
     @Autowired
     private LectureRepository lectureRepository;
