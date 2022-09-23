@@ -81,7 +81,7 @@ describe('ConversationSidebarComponent', () => {
         expect(component.course).toBe(metisCourse);
         expect(component.conversations).toBe(conversationsOfUser1);
         expect(component.activeConversation).toBe(conversationsOfUser1.first());
-        expect(emitActiveConversationSpy).toHaveBeenCalledTimes(1);
+        expect(emitActiveConversationSpy).toHaveBeenCalledOnce();
         expect(emitActiveConversationSpy).toHaveBeenCalledWith(conversationsOfUser1.first());
     }));
 
@@ -99,7 +99,7 @@ describe('ConversationSidebarComponent', () => {
             expect(component.searchFailed).toBeFalse();
         });
 
-        expect(userServiceSpy).toHaveBeenCalledTimes(1);
+        expect(userServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should return empty if search with less than 3 characters', () => {
@@ -133,7 +133,7 @@ describe('ConversationSidebarComponent', () => {
             expect(component.searchFailed).toBeFalse();
         });
 
-        expect(userServiceSpy).toHaveBeenCalledTimes(1);
+        expect(userServiceSpy).toHaveBeenCalledOnce();
     });
 
     it('should find if there is existing conversation with searched user', fakeAsync(() => {
@@ -161,10 +161,10 @@ describe('ConversationSidebarComponent', () => {
         component.onAutocompleteSelect(metisUser2);
         fixture.detectChanges();
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(metisUser2);
         expect(component.activeConversation).toBe(conversationBetweenUser1User2);
-        expect(emitActiveConversationSpy).toHaveBeenCalledTimes(1);
+        expect(emitActiveConversationSpy).toHaveBeenCalledOnce();
     });
 
     it('should handle selection of a user from the search list without existing conversation', () => {
@@ -175,10 +175,10 @@ describe('ConversationSidebarComponent', () => {
         component.onAutocompleteSelect(metisTutor);
         fixture.detectChanges();
 
-        expect(spy).toHaveBeenCalledTimes(1);
+        expect(spy).toHaveBeenCalledOnce();
         expect(spy).toHaveBeenCalledWith(metisTutor);
         expect(component.activeConversation).toBe(component.conversations[0]);
-        expect(emitActiveConversationSpy).toHaveBeenCalledTimes(1);
+        expect(emitActiveConversationSpy).toHaveBeenCalledOnce();
     });
 
     it('should format search result', () => {

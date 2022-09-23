@@ -122,7 +122,7 @@ describe('MessagesComponent', () => {
         expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
 
         scrollableDiv.dispatchEvent(new Event('scrolledUp'));
-        expect(fetchNextPageSpy).toHaveBeenCalledTimes(1);
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
     it('if user has conversation, posts should be fetched on page load and displayed in reversed order', fakeAsync(() => {
@@ -131,14 +131,14 @@ describe('MessagesComponent', () => {
         component.conversation = conversationsOfUser1.first();
         component.onSelectContext();
         expect(component.posts).toEqual(messagesBetweenUser1User2.slice().reverse());
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(1);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledOnce();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith(component.currentPostContextFilter);
     }));
 
     it('should fetch posts on activeConversation input outside of the component', fakeAsync(() => {
         initializeFixtureForCourseMessagesPage();
         component.activeConversation = conversationsOfUser1.first()!;
-        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledTimes(1);
+        expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledOnce();
         expect(metisServiceGetFilteredPostsSpy).toHaveBeenCalledWith({ ...component.currentPostContextFilter, page: 0 });
         expect(component.conversation).toBe(conversationsOfUser1.first());
     }));
@@ -151,7 +151,7 @@ describe('MessagesComponent', () => {
         tick();
         fixture.detectChanges();
 
-        expect(scrollToBottomOfMessagesSpy).toHaveBeenCalledTimes(1);
+        expect(scrollToBottomOfMessagesSpy).toHaveBeenCalledOnce();
     }));
 
     function initializeFixtureForCourseMessagesPage() {

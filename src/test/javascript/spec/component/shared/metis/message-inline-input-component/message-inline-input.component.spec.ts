@@ -53,6 +53,6 @@ describe('MessageInlineInputComponent', () => {
         });
         tick();
         expect(component.isLoading).toBeFalse();
-        expect(onCreateSpy).toHaveBeenCalledTimes(1);
+        expect(onCreateSpy).toHaveBeenCalledOnce();
     }));
 });

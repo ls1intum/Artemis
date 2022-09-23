@@ -383,7 +383,7 @@ describe('CourseDiscussionComponent', () => {
         expect(fetchNextPageSpy).toHaveBeenCalledTimes(0);
 
         scrollableDiv.dispatchEvent(new Event('scrolled'));
-        expect(fetchNextPageSpy).toHaveBeenCalledTimes(1);
+        expect(fetchNextPageSpy).toHaveBeenCalledOnce();
     }));
 
     function expectGetFilteredPostsToBeCalled() {
