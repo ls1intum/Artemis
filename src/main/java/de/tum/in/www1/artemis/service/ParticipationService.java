@@ -48,19 +48,9 @@ public class ParticipationService {
 
     private final ProgrammingExerciseRepository programmingExerciseRepository;
 
-    private final ResultRepository resultRepository;
-
     private final SubmissionRepository submissionRepository;
 
-    private final ComplaintResponseRepository complaintResponseRepository;
-
-    private final ComplaintRepository complaintRepository;
-
-    private final RatingRepository ratingRepository;
-
     private final TeamRepository teamRepository;
-
-    private final ParticipantScoreRepository participantScoreRepository;
 
     private final UrlService urlService;
 
@@ -68,30 +58,27 @@ public class ParticipationService {
 
     private final CoverageReportRepository coverageReportRepository;
 
-    public ParticipationService(ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository,
-            StudentParticipationRepository studentParticipationRepository, ExerciseRepository exerciseRepository, ProgrammingExerciseRepository programmingExerciseRepository,
-            ResultRepository resultRepository, SubmissionRepository submissionRepository, ComplaintResponseRepository complaintResponseRepository,
-            ComplaintRepository complaintRepository, TeamRepository teamRepository, GitService gitService, ParticipationRepository participationRepository,
-            Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService, RatingRepository ratingRepository,
-            ParticipantScoreRepository participantScoreRepository, UrlService urlService, ResultService resultService, CoverageReportRepository coverageReportRepository) {
-        this.programmingExerciseRepository = programmingExerciseRepository;
-        this.participationRepository = participationRepository;
-        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
-        this.studentParticipationRepository = studentParticipationRepository;
-        this.exerciseRepository = exerciseRepository;
-        this.resultRepository = resultRepository;
-        this.submissionRepository = submissionRepository;
-        this.complaintResponseRepository = complaintResponseRepository;
-        this.complaintRepository = complaintRepository;
-        this.teamRepository = teamRepository;
+    private final BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository;
+
+    public ParticipationService(GitService gitService, Optional<ContinuousIntegrationService> continuousIntegrationService, Optional<VersionControlService> versionControlService,
+            ParticipationRepository participationRepository, StudentParticipationRepository studentParticipationRepository,
+            ProgrammingExerciseStudentParticipationRepository programmingExerciseStudentParticipationRepository, ExerciseRepository exerciseRepository,
+            ProgrammingExerciseRepository programmingExerciseRepository, SubmissionRepository submissionRepository, TeamRepository teamRepository, UrlService urlService,
+            ResultService resultService, CoverageReportRepository coverageReportRepository, BuildLogStatisticsEntryRepository buildLogStatisticsEntryRepository) {
         this.gitService = gitService;
         this.continuousIntegrationService = continuousIntegrationService;
         this.versionControlService = versionControlService;
-        this.ratingRepository = ratingRepository;
-        this.participantScoreRepository = participantScoreRepository;
+        this.participationRepository = participationRepository;
+        this.studentParticipationRepository = studentParticipationRepository;
+        this.programmingExerciseStudentParticipationRepository = programmingExerciseStudentParticipationRepository;
+        this.exerciseRepository = exerciseRepository;
+        this.programmingExerciseRepository = programmingExerciseRepository;
+        this.submissionRepository = submissionRepository;
+        this.teamRepository = teamRepository;
         this.urlService = urlService;
         this.resultService = resultService;
         this.coverageReportRepository = coverageReportRepository;
+        this.buildLogStatisticsEntryRepository = buildLogStatisticsEntryRepository;
     }
 
     /**
@@ -654,6 +641,7 @@ public class ParticipationService {
         // The result of the submissions will be deleted via cascade
         submissions.forEach(submission -> {
             coverageReportRepository.deleteBySubmissionId(submission.getId());
+            buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.getId());
             submissionRepository.deleteById(submission.getId());
         });
         // The results that are only connected to a participation are also deleted

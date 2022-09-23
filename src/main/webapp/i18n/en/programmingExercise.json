@@ -425,6 +425,16 @@
                 "selectTests": "Select the tests for which the covered lines are marked:",
                 "filePath": "File Path",
                 "coveredLines": "Covered Lines"
+            },
+            "buildLogStatistics": {
+                "title": "Average build log statistics",
+                "numberOfBuilds": "# Builds",
+                "agentSetupDuration": "Setup build agent",
+                "testDuration": "Test execution",
+                "scaDuration": "Static Code Analysis",
+                "totalJobDuration": "Total Job",
+                "dependenciesDownloadedCount": "Number of downloaded dependencies",
+                "tooltip": "The average build duration is calculated based on all builds (template, solution and student submissions). The number of downloaded dependencies can be reduced by caching dependencies in the Docker image."
             }
         },
         "error": {
