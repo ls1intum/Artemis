@@ -1986,8 +1986,6 @@ public class DatabaseUtilService {
      * @return A course with one specified modeling exercise
      */
     public Course addCourseWithOneModelingExercise(String title) {
-        long currentCourseRepoSize = courseRepo.count();
-        long currentExerciseRepoSize = exerciseRepo.count();
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         ModelingExercise modelingExercise = ModelFactory.generateModelingExercise(pastTimestamp, futureTimestamp, futureFutureTimestamp, DiagramType.ClassDiagram, course);
         modelingExercise.setTitle(title);
@@ -1996,8 +1994,6 @@ public class DatabaseUtilService {
         course.setMaxComplaintTimeDays(14);
         course = courseRepo.save(course);
         modelingExercise = exerciseRepo.save(modelingExercise);
-        assertThat(exerciseRepo.count()).as("one exercise got stored").isEqualTo(currentExerciseRepoSize + 1L);
-        assertThat(courseRepo.count()).as("a course got stored").isEqualTo(currentCourseRepoSize + 1L);
         assertThat(course.getExercises()).as("course contains the exercise").containsExactlyInAnyOrder(modelingExercise);
         assertThat(modelingExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
         return course;
@@ -2017,12 +2013,8 @@ public class DatabaseUtilService {
         textExercise.setTitle(title);
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
         course.addExercises(textExercise);
-        final var exercisesNrBefore = exerciseRepo.count();
-        final var courseNrBefore = courseRepo.count();
-        courseRepo.save(course);
-        exerciseRepo.save(textExercise);
-        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
-        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        course = courseRepo.save(course);
+        textExercise = exerciseRepo.save(textExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(textExercise);
         assertThat(textExercise.getPresentationScoreEnabled()).as("presentation score is enabled").isTrue();
 
@@ -2122,11 +2114,8 @@ public class DatabaseUtilService {
         if (title != null) {
             textExercise.setTitle(title);
         }
-        final var exercisesNrBefore = exerciseRepo.count();
         textExercise.setKnowledge(textAssessmentKnowledgeService.createNewKnowledge());
-        exerciseRepo.save(textExercise);
-        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
-        return textExercise;
+        return exerciseRepo.save(textExercise);
     }
 
     public TextExercise addCourseExamExerciseGroupWithOneTextExercise() {
@@ -2136,35 +2125,22 @@ public class DatabaseUtilService {
     public TextExercise addCourseExamWithReviewDatesExerciseGroupWithOneTextExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamWithReviewDatesAndCourse(true);
         TextExercise textExercise = ModelFactory.generateTextExerciseForExam(exerciseGroup);
-        final var exercisesNrBefore = exerciseRepo.count();
-        exerciseRepo.save(textExercise);
-        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
-        return textExercise;
+        return exerciseRepo.save(textExercise);
     }
 
     public FileUploadExercise addCourseExamExerciseGroupWithOneFileUploadExercise() {
         ExerciseGroup exerciseGroup = addExerciseGroupWithExamAndCourse(true);
         FileUploadExercise fileUploadExercise = ModelFactory.generateFileUploadExerciseForExam("pdf", exerciseGroup);
-        final var exercisesNrBefore = exerciseRepo.count();
-        exerciseRepo.save(fileUploadExercise);
-        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
-        return fileUploadExercise;
+        return exerciseRepo.save(fileUploadExercise);
     }
 
     public ExerciseGroup addExerciseGroupWithExamAndCourse(boolean mandatory) {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExam(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
-        final var courseNrBefore = courseRepo.count();
-        final var examNrBefore = examRepository.count();
-        final var exerciseGroupNrBefore = exerciseGroupRepository.count();
 
-        courseRepo.save(course);
-        examRepository.save(exam);
-
-        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
-        assertThat(examNrBefore + 1).as("an exam got stored").isEqualTo(examRepository.count());
-        assertThat(exerciseGroupNrBefore + 1).as("an exerciseGroup got stored").isEqualTo(exerciseGroupRepository.count());
+        course = courseRepo.save(course);
+        exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
@@ -2188,16 +2164,9 @@ public class DatabaseUtilService {
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         Exam exam = ModelFactory.generateExamWithStudentReviewDates(course);
         ExerciseGroup exerciseGroup = ModelFactory.generateExerciseGroup(mandatory, exam);
-        final var courseNrBefore = courseRepo.count();
-        final var examNrBefore = examRepository.count();
-        final var exerciseGroupNrBefore = exerciseGroupRepository.count();
 
-        courseRepo.save(course);
-        examRepository.save(exam);
-
-        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
-        assertThat(examNrBefore + 1).as("an exam got stored").isEqualTo(examRepository.count());
-        assertThat(exerciseGroupNrBefore + 1).as("an exerciseGroup got stored").isEqualTo(exerciseGroupRepository.count());
+        course = courseRepo.save(course);
+        exam = examRepository.save(exam);
 
         Optional<Course> optionalCourse = courseRepo.findById(course.getId());
         assertThat(optionalCourse).as("course can be retrieved").isPresent();
@@ -2218,19 +2187,12 @@ public class DatabaseUtilService {
     }
 
     public Course addCourseWithOneFinishedTextExercise() {
-        long numberOfCourses = courseRepo.count();
-        long numberOfExercises = exerciseRepo.count();
-
         Course course = ModelFactory.generateCourse(null, pastTimestamp, futureFutureTimestamp, new HashSet<>(), "tumuser", "tutor", "editor", "instructor");
         TextExercise finishedTextExercise = ModelFactory.generateTextExercise(pastTimestamp, pastTimestamp.plusHours(12), pastTimestamp.plusHours(24), course);
         finishedTextExercise.setTitle("Finished");
         course.addExercises(finishedTextExercise);
-        courseRepo.save(course);
+        course = courseRepo.save(course);
         exerciseRepo.save(finishedTextExercise);
-        List<Course> courseRepoContent = courseRepo.findAllActiveWithEagerExercisesAndLectures(ZonedDateTime.now());
-        List<Exercise> exerciseRepoContent = exerciseRepo.findAll();
-        assertThat(exerciseRepoContent.size()).as("one exercise got stored").isEqualTo(numberOfExercises + 1);
-        assertThat(courseRepoContent.size()).as("a course got stored").isEqualTo(numberOfCourses + 1);
         return course;
     }
 
@@ -2268,7 +2230,6 @@ public class DatabaseUtilService {
     }
 
     public Course addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(String similarSubmissionModel, int studentsAmount, Course course) {
-
         // Add text exercise to the course
         ModelingExercise exercise = ModelFactory.generateModelingExercise(pastTimestamp, pastTimestamp, futureTimestamp, DiagramType.ClassDiagram, course);
         exercise.setTitle("finished");
@@ -2377,12 +2338,8 @@ public class DatabaseUtilService {
         assertThat(quizExercise.getQuizQuestions()).isNotEmpty();
         assertThat(quizExercise.isValid()).isTrue();
         course.addExercises(quizExercise);
-        final var exercisesNrBefore = exerciseRepo.count();
-        final var courseNrBefore = courseRepo.count();
-        courseRepo.save(course);
-        exerciseRepo.save(quizExercise);
-        assertThat(exercisesNrBefore + 1).as("one exercise got stored").isEqualTo(exerciseRepo.count());
-        assertThat(courseNrBefore + 1).as("a course got stored").isEqualTo(courseRepo.count());
+        course = courseRepo.save(course);
+        quizExercise = exerciseRepo.save(quizExercise);
         assertThat(courseRepo.findWithEagerExercisesById(course.getId()).getExercises()).as("course contains the exercise").contains(quizExercise);
         return course;
     }
@@ -2566,8 +2523,7 @@ public class DatabaseUtilService {
         List<ProgrammingExerciseTestCase> tests = new ArrayList<>(testCaseRepository.findByExerciseId(programmingExercise.getId()));
         assertThat(tests).as("test case is initialized").hasSize(3);
 
-        courseRepo.findById(course.getId()).get();
-        return course;
+        return courseRepo.findById(course.getId()).get();
     }
 
     public ProgrammingExercise addCourseWithOneProgrammingExerciseAndStaticCodeAnalysisCategories() {
