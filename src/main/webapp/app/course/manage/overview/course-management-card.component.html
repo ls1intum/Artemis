@@ -244,11 +244,11 @@
             [routerLink]="['/course-management', course.id, 'tutorial-groups-management']"
             [jhiFeatureToggleLink]="FeatureToggle.TutorialGroups"
             class="btn btn-primary me-1 mb-1 hidden-if-mobile"
-            [ngbTooltip]="'artemisApp.tutorialGroups.tutorialGroupsButton' | artemisTranslate"
+            [ngbTooltip]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate"
             id="course-card-open-tutorial-groups"
         >
             <fa-icon [icon]="faPersonChalkboard"></fa-icon>
-            <span [innerHTML]="'artemisApp.tutorialGroups.tutorialGroupsButton' | artemisTranslate" class="d-none d-xl-inline"></span>
+            <span [innerHTML]="'artemisApp.entities.tutorialGroup.plural' | artemisTranslate" class="d-none d-xl-inline"></span>
         </a>
         <a
             *ngIf="course.isAtLeastTutor"

@@ -1,91 +1,105 @@
 {
     "artemisApp": {
-        "tutorialGroup": {
-            "deleted": "Übungsgruppe gelöscht"
-        },
-        "tutorialGroups": {
-            "tutorialGroupsButton": "Übungsgruppe"
-        },
-        "manageTutorialGroups": {
-            "title": "Übungsgruppenverwaltung",
-            "tableCaption": "Übungsgruppen für diesen Kurs",
-            "createButton": "Erstelle Übunsgruppe",
-            "columns": {
-                "id": "ID",
-                "title": "Titel",
-                "teachingAssistant": "Tutor",
-                "capacity": "Kapazität",
-                "registeredStudents": "Registrierte Studenten",
-                "isOnline": "Online/Offline",
-                "online": "Online",
-                "offline": "Offline",
-                "language": "Sprache",
-                "campus": "Campus",
-                "additionalInformation": "Zusätzliche Informationen"
-            },
-            "deleteButton": {
-                "question": "Bist du sicher, dass du die Übungsgruppe mit dem Titel {{ title }} löschen möchtest?",
-                "typeNameToConfirm": "Titel der Übungsgruppe eingeben, um zu bestätigen"
+        "generic": {
+            "offline": "Offline",
+            "online": "Online",
+            "german": "Deutsch",
+            "english": "Englisch",
+            "weekdays": {
+                "monday": "Montag",
+                "tuesday": "Dienstag",
+                "wednesday": "Mittwoch",
+                "thursday": "Donnerstag",
+                "friday": "Freitag",
+                "saturday": "Samstag",
+                "sunday": "Sonntag"
             }
         },
-        "createTutorialGroup": {
-            "title": "Erstelle Übungsgruppe"
+        "entities": {
+            "tutorialGroup": {
+                "plural": "Übungsgruppen",
+                "course": "Kurs",
+                "title": "Titel",
+                "additionalInformation": "Zusätzliche Informationen",
+                "capacity": "Kapazität",
+                "isOnline": "Offline / Online",
+                "campus": "Campus",
+                "language": "Sprache",
+                "teachingAssistant": "Tutor:in",
+                "registrations": "Registrierungen"
+            }
         },
-        "editTutorialGroup": {
-            "title": "Übungsgruppe bearbeiten"
+        "forms": {
+            "tutorialGroupForm": {
+                "titleInput": {
+                    "label": "Titel",
+                    "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
+                    "requiredValidationError": "Titel ist erforderlich!",
+                    "maxLengthValidationError": "Der Titel kann max {{ max }} Zeichen lang sein!"
+                },
+                "teachingAssistantInput": {
+                    "label": "Tutor:in",
+                    "placeholder": "Wähle eine Tutor:in aus, die für diese Gruppe verantwortlich ist.",
+                    "loadingText": "Tutor:innen laden ...",
+                    "notFoundText": "Keine Tutor:in gefunden.",
+                    "requiredValidationError": "Eine Übungsgruppe braucht eine Tutor:in zugewiesen!",
+                    "taHelp": "In das Feld tippen um nach Tutor:innen zu suchen."
+                },
+                "campusInput": {
+                    "label": "Campus",
+                    "placeholder": "Wähle einen Campus, auf dem sich diese Übungsgruppe trifft.",
+                    "loadingText": "Campus laden ...",
+                    "notFoundText": "Kein Campus gefunden.",
+                    "campusHelp": "In das Feld tippen um nach einem Campus zu suchen.",
+                    "maxLengthValidationError": "Der Campus ist auf {{ max }} Zeichen beschränkt!"
+                },
+                "additionalInformationInput": {
+                    "label": "Zusätzliche Informationen",
+                    "placeholder": "Zusätzliche Informationen zur Übungsgruppe.",
+                    "maxLengthValidationError": "Zusätzliche Informationen sind auf {{ max }} Zeichen beschränkt!"
+                },
+                "capacityInput": {
+                    "label": "Kapazität",
+                    "unit": "Studierende",
+                    "minValidationError": "Die Kapazität muss mindestens 1 sein!"
+                },
+                "languageInput": {
+                    "label": "Sprache",
+                    "placeholder": "Wähle eine Sprache"
+                },
+                "isOnlineInput": {
+                    "label": "Trifft sich sich diese Übungsgruppe online oder offline?"
+                }
+            }
         },
-        "registeredStudents": {
-            "title": "Registrierte Studenten"
-        },
-        "tutorialGroupDetail": {
-            "title": "Übungsgruppe Details",
-            "course": "Kurs",
-            "teachingAssistantNotSet": "Kein Tutor gesetzt",
-            "capacityNotSet": "Keine Kapazität gesetzt",
-            "campusNotSet": "Kein Campus gesetzt",
-            "additionalInformationNotSet": "Keine zusätzlichen Informationen gesetzt"
-        },
-        "tutorialGroupForm": {
-            "titleInput": {
-                "label": "Titel",
-                "placeholder": "Gruppe 1: Montag {{ from }} - {{ to }}",
-                "requiredValidationError": "Eine Übungsgruppe muss einen Titel haben!",
-                "maxLengthValidationError": "Der Titel darf maximal {{ max }} Zeichen lang sein!"
+        "pages": {
+            "tutorialGroupsManagement": {
+                "title": "Übungsgruppen-Verwaltung",
+                "creatTutorialGroupButton": "Neue Übungsgruppe",
+                "editConfigurationButton": "Globale Konfiguration bearbeiten",
+                "rowButtons": {
+                    "registrations": "Registrierungen"
+                },
+                "deleteDialog": {
+                    "question": "Sicher, dass die Übungsgruppe mit dem Titel {{ title }} gelöscht werden soll?",
+                    "confirm": "Bitte den Titel der Übungsgruppe zur Bestätigung eingeben"
+                }
             },
-            "teachingAssistantInput": {
-                "label": "Tutor",
-                "placeholder": "Wähle einen Tutors aus, der für diese Gruppe zuständig ist",
-                "loadingText": "Lade Tutoren...",
-                "notFoundText": "Keine Tutoren gefunden in diesem Kurs",
-                "requiredValidationError": "Ein Tutor muss für diese Gruppe ausgewählt werden!",
-                "taHelp": "Du kannst suchen indem du in dieses Feld tippst"
+            "createTutorialGroup": {
+                "title": "Übungsgruppe erstellen"
             },
-            "campusInput": {
-                "label": "Campus",
-                "placeholder": "Wähle einen Campus aus, auf dem diese Gruppe stattfindet",
-                "loadingText": "Lade Campusse...",
-                "notFoundText": "Keine Campusse gefunden",
-                "campusHelp": "Du kannst nach Campusse suchen indem du in dieses Feld tippst",
-                "maxLengthValidationError": "Campus ist beschränkt auf {{ max }} Zeichen!"
+            "editTutorialGroup": {
+                "title": "Übungsgruppe bearbeiten"
             },
-            "additionalInformationInput": {
-                "label": "Zusätzliche Informationen",
-                "placeholder": "Zusätzliche Informationen zu dieser Gruppe",
-                "maxLengthValidationError": "Die zusätzlichen Informationen dürfen maximal {{ max }} Zeichen lang sein!"
+            "tutorialGroupDetail": {
+                "title": "Übungsgruppen-Details",
+                "teachingAssistantNotSet": "Tutor:in nicht gesetzt",
+                "capacityNotSet": "Kapazität nicht eingestellt",
+                "campusNotSet": "Campus nicht gesetzt",
+                "additionalInformationNotSet": "Keine zusätzlichen Informationen festgelegt"
             },
-            "capacityInput": {
-                "label": "Kapazität",
-                "unit": "Studenten",
-                "minValidationError": "Die Kapazität muss mindestens 1 sein!"
-            },
-            "languageInput": {
-                "label": "Sprache",
-                "placeholder": "Wähle eine Sprache aus",
-                "english": "Englisch",
-                "german": "Deutsch"
-            },
-            "isOnlineInput": {
-                "label": "Trifft sich diese Gruppe online oder offline?"
+            "registeredStudents": {
+                "title": "Registrierte Studierende"
             }
         }
     }

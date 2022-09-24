@@ -175,7 +175,7 @@ export const courseManagementState: Routes = [
                 component: TutorialGroupsManagementComponent,
                 data: {
                     authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                    pageTitle: 'artemisApp.manageTutorialGroups.title',
+                    pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
                 },
                 canActivate: [UserRouteAccessService],
             },
@@ -183,7 +183,7 @@ export const courseManagementState: Routes = [
                 // Create a new path without a component defined to prevent the TutorialsGroupManagementComponent from being always rendered
                 path: 'tutorial-groups-management',
                 data: {
-                    pageTitle: 'artemisApp.manageTutorialGroups.title',
+                    pageTitle: 'artemisApp.pages.tutorialGroupsManagement.title',
                 },
                 children: [
                     {
@@ -191,7 +191,7 @@ export const courseManagementState: Routes = [
                         component: CreateTutorialGroupComponent,
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.createTutorialGroup.title',
+                            pageTitle: 'artemisApp.pages.createTutorialGroup.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -200,7 +200,7 @@ export const courseManagementState: Routes = [
                         component: EditTutorialGroupComponent,
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.editTutorialGroup.title',
+                            pageTitle: 'artemisApp.pages.editTutorialGroup.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -209,7 +209,7 @@ export const courseManagementState: Routes = [
                         component: RegisteredStudentsComponent,
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.registeredStudents.title',
+                            pageTitle: 'artemisApp.pages.registeredStudents.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },
@@ -218,7 +218,7 @@ export const courseManagementState: Routes = [
                         component: TutorialGroupDetailComponent,
                         data: {
                             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
-                            pageTitle: 'artemisApp.tutorialGroupDetail.title',
+                            pageTitle: 'artemisApp.pages.tutorialGroupDetail.title',
                         },
                         canActivate: [UserRouteAccessService],
                     },

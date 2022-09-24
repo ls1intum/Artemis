@@ -2,19 +2,19 @@
     <!-- Registered Students -->
     <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'registered-students']" class="btn btn-primary btn-sm me-1">
         <fa-icon [icon]="faUsers"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="artemisApp.registeredStudents.title">Registered Students</span>
+        <span class="d-none d-md-inline">{{ 'artemisApp.pages.registeredStudents.title' | artemisTranslate }}</span>
     </a>
     <!-- Edit -->
     <a [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'edit']" class="btn btn-warning btn-sm me-1">
         <fa-icon [icon]="faWrench"></fa-icon>
-        <span class="d-none d-md-inline" jhiTranslate="entity.action.edit">Edit</span>
+        <span class="d-none d-md-inline">{{ 'entity.action.edit' | artemisTranslate }}</span>
     </a>
     <!-- Delete -->
     <button
         jhiDeleteButton
         [entityTitle]="tutorialGroup.title || ''"
-        deleteQuestion="artemisApp.manageTutorialGroups.deleteButton.question"
-        deleteConfirmationText="artemisApp.manageTutorialGroups.deleteButton.typeNameToConfirm"
+        deleteQuestion="artemisApp.pages.tutorialGroupsManagement.deleteDialog.question"
+        deleteConfirmationText="artemisApp.pages.tutorialGroupsManagement.deleteDialog.confirm"
         (delete)="deleteTutorialGroup()"
         [dialogError]="dialogError$"
     >
