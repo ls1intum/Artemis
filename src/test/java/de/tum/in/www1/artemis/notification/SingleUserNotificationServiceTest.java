@@ -70,7 +70,7 @@ class SingleUserNotificationServiceTest extends AbstractSpringIntegrationBambooB
         List<User> users = database.addUsers(3, 0, 0, 0);
         user = users.get(0);
 
-        notificationRepository.deleteAll();
+        notificationRepository.deleteAllInBatch();
 
         exercise = new TextExercise();
         exercise.setCourse(course);
