@@ -54,7 +54,7 @@ export class CreateTutorialGroupFreePeriodComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.router.navigate([
-                        'course-management',
+                        '/course-management',
                         this.courseId,
                         'tutorial-groups-management',
                         'configuration',

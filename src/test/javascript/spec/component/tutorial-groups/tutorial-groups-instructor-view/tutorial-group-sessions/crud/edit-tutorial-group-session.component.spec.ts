@@ -15,7 +15,11 @@ import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services
 import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { Router } from '@angular/router';
-import { formDataToTutorialGroupSessionDTO, generateExampleTutorialGroupSession, tutorialGroupSessionToTutorialGroupSessionFormData } from './tutorialGroupSessionExampleModels';
+import {
+    formDataToTutorialGroupSessionDTO,
+    generateExampleTutorialGroupSession,
+    tutorialGroupSessionToTutorialGroupSessionFormData,
+} from '../../../helpers/tutorialGroupSessionExampleModels';
 
 describe('EditTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupSessionComponent>;

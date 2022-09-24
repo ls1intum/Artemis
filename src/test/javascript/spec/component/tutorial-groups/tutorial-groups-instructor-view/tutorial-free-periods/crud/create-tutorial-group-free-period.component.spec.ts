@@ -18,7 +18,7 @@ import {
     formDataToTutorialGroupFreePeriodDTO,
     generateExampleTutorialGroupFreePeriod,
     tutorialGroupFreePeriodToTutorialGroupFreePeriodFormData,
-} from './tutorialGroupFreePeriodExampleModel';
+} from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 
 describe('CreateTutorialGroupFreePeriodComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupFreePeriodComponent>;

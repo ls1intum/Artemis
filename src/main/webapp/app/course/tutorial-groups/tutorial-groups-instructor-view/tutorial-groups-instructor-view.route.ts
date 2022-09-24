@@ -9,7 +9,7 @@ import { CreateTutorialGroupFreePeriodComponent } from 'app/course/tutorial-grou
 import { EditTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/edit-tutorial-group/edit-tutorial-group.component';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
-import { TutorialGroupSessionsManagement } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
 import { TutorialGroupsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-management.component';
 import { CreateTutorialGroupComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/create-tutorial-group/create-tutorial-group.component';
@@ -121,7 +121,7 @@ export const tutorialGroupInstructorViewRoutes: Routes = [
     },
     {
         path: ':tutorialGroupId/sessions',
-        component: TutorialGroupSessionsManagement,
+        component: TutorialGroupSessionsManagementComponent,
         data: {
             authorities: [Authority.ADMIN, Authority.INSTRUCTOR],
             pageTitle: 'artemisApp.pages.tutorialGroupSessionManagement.title',

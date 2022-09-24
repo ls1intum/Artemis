@@ -13,12 +13,12 @@ import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { HttpResponse } from '@angular/common/http';
 import { TutorialGroupRowButtonsStubComponent } from '../../../stubs/tutorial-group-row-buttons-stub.component';
-import { Course } from 'app/entities/course.model';
 import { simpleOneLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 
 describe('TutorialGroupDetailComponent', () => {
-    let tutorialGroupDetailComponentFixture: ComponentFixture<TutorialGroupDetailComponent>;
-    let tutorialGroupDetailComponent: TutorialGroupDetailComponent;
+    let fixture: ComponentFixture<TutorialGroupDetailComponent>;
+    let component: TutorialGroupDetailComponent;
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -44,8 +44,8 @@ describe('TutorialGroupDetailComponent', () => {
         })
             .compileComponents()
             .then(() => {
-                tutorialGroupDetailComponentFixture = TestBed.createComponent(TutorialGroupDetailComponent);
-                tutorialGroupDetailComponent = tutorialGroupDetailComponentFixture.componentInstance;
+                fixture = TestBed.createComponent(TutorialGroupDetailComponent);
+                component = fixture.componentInstance;
             });
     });
 
@@ -54,18 +54,14 @@ describe('TutorialGroupDetailComponent', () => {
     });
 
     it('should initialize', () => {
-        tutorialGroupDetailComponentFixture.detectChanges();
-        expect(tutorialGroupDetailComponent).not.toBeNull();
+        fixture.detectChanges();
+        expect(component).not.toBeNull();
     });
 
     it('should load tutorial group', () => {
         const tutorialGroupService = TestBed.inject(TutorialGroupsService);
 
-        const tutorialGroupOfResponse = new TutorialGroup();
-        tutorialGroupOfResponse.id = 1;
-        tutorialGroupOfResponse.title = 'test';
-        tutorialGroupOfResponse.course = new Course();
-        tutorialGroupOfResponse.course.id = 2;
+        const tutorialGroupOfResponse = generateExampleTutorialGroup();
 
         const response: HttpResponse<TutorialGroup> = new HttpResponse({
             body: tutorialGroupOfResponse,
@@ -73,10 +69,10 @@ describe('TutorialGroupDetailComponent', () => {
         });
 
         const findByIdStub = jest.spyOn(tutorialGroupService, 'getOneOfCourse').mockReturnValue(of(response));
-        tutorialGroupDetailComponentFixture.detectChanges();
-        expect(tutorialGroupDetailComponent.tutorialGroup).toEqual(tutorialGroupOfResponse);
-        expect(tutorialGroupDetailComponent.tutorialGroupId).toBe(1);
-        expect(tutorialGroupDetailComponent.courseId).toBe(2);
+        fixture.detectChanges();
+        expect(component.tutorialGroup).toEqual(tutorialGroupOfResponse);
+        expect(component.tutorialGroupId).toBe(1);
+        expect(component.courseId).toBe(2);
         expect(findByIdStub).toHaveBeenCalledWith(2, 1);
         expect(findByIdStub).toHaveBeenCalledOnce();
     });

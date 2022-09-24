@@ -224,6 +224,7 @@
                 "title": "Sitzungsverwaltung",
                 "createSessionButton": "Neue Sitzung hinzufügen",
                 "timeZoneExplanation": "Jede Sitzung wird in der Zeitzone {{ timeZone }} angezeigt",
+                "divider": " Bevorstehende ↑ Vergangene ↓",
                 "rowButtons": {
                     "sessions": "Sitzungen",
                     "registrations": "Registrierungen",
@@ -233,11 +234,6 @@
                 "columns": {
                     "scheduled": "Folgt Zeitplan?",
                     "isCancelled": "Ist abgesagt?"
-                },
-                "key": {
-                    "label": "Legende",
-                    "cancelled": "Abgesagte Sitzung",
-                    "individual": "Individuelle Sitzung"
                 },
                 "deleteDialog": {
                     "question": "Sicher, dass die Sitzung {{ title }} gelöscht werden soll?"

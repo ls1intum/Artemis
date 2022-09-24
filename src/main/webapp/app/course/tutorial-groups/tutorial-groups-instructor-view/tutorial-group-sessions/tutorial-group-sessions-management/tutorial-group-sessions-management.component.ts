@@ -7,11 +7,10 @@ import { finalize, map, switchMap, take } from 'rxjs/operators';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { onError } from 'app/shared/util/global.utils';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
-import { TutorialGroupSession, TutorialGroupSessionStatus } from 'app/entities/tutorial-group/tutorial-group-session.model';
+import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-group-schedule.model';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { SortService } from 'app/shared/service/sort.service';
-import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import dayjs from 'dayjs/esm';
 
@@ -19,14 +18,13 @@ import dayjs from 'dayjs/esm';
     selector: 'jhi-session-management',
     templateUrl: './tutorial-group-sessions-management.component.html',
 })
-export class TutorialGroupSessionsManagement implements OnInit {
+export class TutorialGroupSessionsManagementComponent implements OnInit {
     isLoading = false;
 
     constructor(
         private activatedRoute: ActivatedRoute,
         private router: Router,
         private tutorialGroupService: TutorialGroupsService,
-        private tutorialGroupSessionService: TutorialGroupSessionService,
         private alertService: AlertService,
         private sortService: SortService,
         private changeDetectorRef: ChangeDetectorRef,
@@ -40,18 +38,6 @@ export class TutorialGroupSessionsManagement implements OnInit {
     tutorialGroupSchedule: TutorialGroupSchedule;
     upcomingSessions: TutorialGroupSession[] = [];
     pastSessions: TutorialGroupSession[] = [];
-
-    tutorialGroupSessionStatus = TutorialGroupSessionStatus;
-
-    determineRowClass(session: TutorialGroupSession): string {
-        if (session.status === TutorialGroupSessionStatus.CANCELLED) {
-            return 'table-danger';
-        }
-        if (!session.tutorialGroupSchedule) {
-            return 'table-warning';
-        }
-        return '';
-    }
 
     ngOnInit(): void {
         this.loadAll();
@@ -98,14 +84,20 @@ export class TutorialGroupSessionsManagement implements OnInit {
             });
     }
 
+    public getCurrentDate(): dayjs.Dayjs {
+        return dayjs();
+    }
+
     private splitIntoUpcomingAndPastSessions(sessions: TutorialGroupSession[]) {
         const upcoming: TutorialGroupSession[] = [];
         const past: TutorialGroupSession[] = [];
+        const now = this.getCurrentDate();
+
         for (const session of sessions) {
-            if (session.end?.isBefore(dayjs())) {
-                upcoming.push(session);
-            } else {
+            if (session.end!.isBefore(now)) {
                 past.push(session);
+            } else {
+                upcoming.push(session);
             }
         }
         this.upcomingSessions = upcoming;

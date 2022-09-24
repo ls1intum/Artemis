@@ -224,6 +224,7 @@
                 "title": "Tutorial Group Session Management",
                 "createSessionButton": "Create New Tutorial Group Session",
                 "timeZoneExplanation": "Every session displayed in the time zone {{ timeZone }}",
+                "divider": "UPCOMING ↑ PAST ↓",
                 "rowButtons": {
                     "sessions": "Sessions",
                     "registrations": "Registrations",
@@ -233,11 +234,6 @@
                 "columns": {
                     "scheduled": "Follows Schedule?",
                     "isCancelled": "Is Cancelled?"
-                },
-                "key": {
-                    "label": "Key",
-                    "cancelled": "Cancelled Session",
-                    "individual": "Individual Session"
                 },
                 "deleteDialog": {
                     "question": "Are you sure that you want to delete the tutorial group session: {{ title }}?"

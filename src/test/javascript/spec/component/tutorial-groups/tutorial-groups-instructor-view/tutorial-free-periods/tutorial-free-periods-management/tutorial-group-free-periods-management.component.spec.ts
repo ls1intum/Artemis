@@ -17,8 +17,8 @@ import { TutorialGroupFreePeriodsManagementComponent } from 'app/course/tutorial
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { Router } from '@angular/router';
-import { generateExampleTutorialGroupsConfiguration } from '../../tutorial-groups-configuration/crud/tutorialGroupsConfigurationExampleModels';
-import { generateExampleTutorialGroupFreePeriod } from '../crud/tutorialGroupFreePeriodExampleModel';
+import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import dayjs from 'dayjs/esm';
 import { By } from '@angular/platform-browser';
 
@@ -36,7 +36,7 @@ describe('TutorialGroupFreePeriodsManagementComponent', () => {
     const courseId = 1;
     const tutorialGroupConfigurationId = 1;
     let configurationService: TutorialGroupsConfigurationService;
-    let findConfigurationSpy = jest.SpyInstance;
+    let findConfigurationSpy: jest.SpyInstance;
 
     let firstOfJanuaryPeriod: TutorialGroupFreePeriod;
     let secondOfJanuaryPeriod: TutorialGroupFreePeriod;

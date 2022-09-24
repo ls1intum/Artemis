@@ -3,13 +3,12 @@ import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model'
 import { ActivatedRoute, Router } from '@angular/router';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { map, finalize } from 'rxjs';
+import { map, finalize, combineLatest } from 'rxjs';
 import { AlertService } from 'app/core/util/alert.service';
 import { faPencil, faPlus, faSort, faUmbrellaBeach } from '@fortawesome/free-solid-svg-icons';
 import { SortService } from 'app/shared/service/sort.service';
 import { Course, Language } from 'app/entities/course.model';
-import { CourseManagementService } from 'app/course/manage/course-management.service';
-import { switchMap } from 'rxjs/operators';
+import { switchMap, take } from 'rxjs/operators';
 import { onError } from 'app/shared/util/global.utils';
 import { getDayTranslationKey } from '../../../shared/weekdays';
 
@@ -35,7 +34,6 @@ export class TutorialGroupsManagementComponent implements OnInit {
 
     constructor(
         private tutorialGroupService: TutorialGroupsService,
-        private courseManagementService: CourseManagementService,
         private sortService: SortService,
         private router: Router,
         private activatedRoute: ActivatedRoute,
@@ -43,25 +41,21 @@ export class TutorialGroupsManagementComponent implements OnInit {
     ) {}
 
     ngOnInit(): void {
-        this.activatedRoute.parent!.paramMap.subscribe((parentParams) => {
-            this.courseId = Number(parentParams.get('courseId'));
-            if (this.courseId) {
-                this.loadAll();
-            }
-        });
+        this.loadAll();
     }
+
     public loadAll() {
         this.isLoading = true;
-        this.courseManagementService
-            .find(this.courseId)
+        combineLatest([this.activatedRoute.data])
             .pipe(
-                switchMap((res: HttpResponse<Course>) => {
-                    this.course = res.body!;
-                    return this.tutorialGroupService.getAllOfCourse(this.course.id!);
+                take(1),
+                switchMap(([data]) => {
+                    this.course = data['course'];
+                    this.courseId = this.course.id!;
+                    return this.tutorialGroupService.getAllOfCourse(this.course.id!).pipe(finalize(() => (this.isLoading = false)));
                 }),
-                map((res: HttpResponse<TutorialGroup[]>) => res.body!),
-                finalize(() => {
-                    this.isLoading = false;
+                map((res: HttpResponse<TutorialGroup[]>) => {
+                    return res.body;
                 }),
             )
             .subscribe({
@@ -80,7 +74,7 @@ export class TutorialGroupsManagementComponent implements OnInit {
 
     private checkIfTutorialGroupsConfigured() {
         if (!this.course.tutorialGroupsConfiguration) {
-            this.router.navigate(['configuration', 'create'], { relativeTo: this.activatedRoute });
+            this.router.navigate(['/course-management', this.courseId, 'tutorial-groups-management', 'configuration', 'create']);
         }
     }
 

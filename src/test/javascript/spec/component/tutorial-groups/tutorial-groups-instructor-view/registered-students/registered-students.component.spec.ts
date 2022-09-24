@@ -1,6 +1,5 @@
 import { HttpResponse } from '@angular/common/http';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { ActivatedRoute } from '@angular/router';
 import { User } from 'app/core/user/user.model';
 import { Course, CourseGroup } from 'app/entities/course.model';
 import { MockDirective, MockProvider } from 'ng-mocks';
@@ -14,6 +13,7 @@ import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial
 import { TutorialGroupRegistration, TutorialGroupRegistrationType } from 'app/entities/tutorial-group/tutorial-group-registration.model';
 import { ArtemisTestModule } from '../../../../test.module';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
+import { simpleTwoLayerActivatedRouteProvider } from '../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 
 @Component({ selector: 'jhi-course-group', template: '' })
 class CourseGroupStubComponent {
@@ -63,29 +63,7 @@ describe('Registered Students Component', () => {
             providers: [
                 MockProvider(TutorialGroupsService),
                 MockProvider(CourseManagementService),
-                {
-                    provide: ActivatedRoute,
-                    useValue: {
-                        paramMap: of({
-                            get: (key: string) => {
-                                switch (key) {
-                                    case 'tutorialGroupId':
-                                        return 123;
-                                }
-                            },
-                        }),
-                        parent: {
-                            paramMap: of({
-                                get: (key: string) => {
-                                    switch (key) {
-                                        case 'courseId':
-                                            return 123;
-                                    }
-                                },
-                            }),
-                        },
-                    },
-                },
+                simpleTwoLayerActivatedRouteProvider(new Map([['tutorialGroupId', 123]]), new Map([['courseId', 123]])),
             ],
         })
             .compileComponents()

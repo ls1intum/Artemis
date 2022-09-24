@@ -14,7 +14,7 @@ import { TutorialGroupFormStubComponent } from '../../../stubs/tutorial-group-fo
 import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/stubs/loading-indicator-container-stub.component';
 import { CourseManagementService } from 'app/course/manage/course-management.service';
 import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
-import { tutorialGroupToTutorialGroupFormData, generateExampleTutorialGroup } from './tutorialGroupExampleModels';
+import { tutorialGroupToTutorialGroupFormData, generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 
 describe('EditTutorialGroupComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupComponent>;

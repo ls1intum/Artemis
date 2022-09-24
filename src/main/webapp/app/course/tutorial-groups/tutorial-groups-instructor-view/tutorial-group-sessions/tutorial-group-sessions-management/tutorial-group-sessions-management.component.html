@@ -4,17 +4,16 @@
             <div class="d-flex justify-content-between">
                 <h4>{{ 'artemisApp.pages.tutorialGroupSessionManagement.title' | artemisTranslate }}</h4>
                 <div>
-                    <a class="btn btn-primary" [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions', 'create']">
+                    <a
+                        id="create-session-button"
+                        class="btn btn-primary"
+                        [routerLink]="['/course-management', courseId, 'tutorial-groups-management', tutorialGroup.id, 'sessions', 'create']"
+                    >
                         <fa-icon [icon]="faPlus"></fa-icon>
                         <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.createSessionButton' | artemisTranslate }}</span>
                     </a>
                 </div>
             </div>
-        </div>
-        <div class="col-12 mb-2">
-            <span>{{ 'artemisApp.pages.tutorialGroupSessionManagement.key.label' | artemisTranslate }}:</span>
-            <span class="badge bg-danger">{{ 'artemisApp.pages.tutorialGroupSessionManagement.key.cancelled' | artemisTranslate }}</span>
-            <span class="badge bg-warning">{{ 'artemisApp.pages.tutorialGroupSessionManagement.key.individual' | artemisTranslate }}</span>
         </div>
         <div class="col-12 mb-2">
             <div class="alert alert-info">
@@ -32,45 +31,25 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr *ngFor="let session of upcomingSessions" [class]="determineRowClass(session)">
-                        <td>
-                            {{ session.start | artemisDate: 'short-date':false:this.tutorialGroupsConfiguration.timeZone }}
-                            {{ session.start | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }} -
-                            {{ session.end | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }}
-                        </td>
-                        <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                        <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                        <td>
-                            <jhi-tutorial-group-session-row-buttons-component
-                                [tutorialGroupSession]="session"
-                                [courseId]="courseId"
-                                [tutorialGroupId]="tutorialGroup.id!"
-                                (cancelOrActivatePressed)="loadAll()"
-                                (tutorialGroupSessionDeleted)="loadAll()"
-                            ></jhi-tutorial-group-session-row-buttons-component>
-                        </td>
-                    </tr>
+                    <tr
+                        jhi-session-row
+                        *ngFor="let session of upcomingSessions"
+                        [session]="session"
+                        [courseId]="courseId"
+                        [tutorialGroupId]="tutorialGroup!.id!"
+                        (actionPerformed)="loadAll()"
+                    ></tr>
                     <tr class="table-dark text-center">
-                        <td colspan="4">UPCOMING ↑ PAST ↓</td>
+                        <td colspan="4">{{ 'artemisApp.pages.tutorialGroupSessionManagement.divider' | artemisTranslate }}</td>
                     </tr>
-                    <tr *ngFor="let session of pastSessions" [class]="determineRowClass(session)">
-                        <td>
-                            {{ session.start | artemisDate: 'short-date':false:this.tutorialGroupsConfiguration.timeZone }}
-                            {{ session.start | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }} -
-                            {{ session.end | artemisDate: 'time':false:this.tutorialGroupsConfiguration!.timeZone! }}
-                        </td>
-                        <td>{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                        <td>{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
-                        <td>
-                            <jhi-tutorial-group-session-row-buttons-component
-                                [tutorialGroupSession]="session"
-                                [courseId]="courseId"
-                                [tutorialGroupId]="tutorialGroup.id!"
-                                (cancelOrActivatePressed)="loadAll()"
-                                (tutorialGroupSessionDeleted)="loadAll()"
-                            ></jhi-tutorial-group-session-row-buttons-component>
-                        </td>
-                    </tr>
+                    <tr
+                        jhi-session-row
+                        *ngFor="let session of pastSessions"
+                        [session]="session"
+                        [courseId]="courseId"
+                        [tutorialGroupId]="tutorialGroup!.id!"
+                        (actionPerformed)="loadAll()"
+                    ></tr>
                 </tbody>
             </table>
         </div>

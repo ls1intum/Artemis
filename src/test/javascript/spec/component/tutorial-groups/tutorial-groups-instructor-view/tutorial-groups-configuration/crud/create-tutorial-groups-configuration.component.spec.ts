@@ -13,7 +13,7 @@ import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/moc
 import { CreateTutorialGroupsConfigurationComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/create-tutorial-groups-configuration/create-tutorial-groups-configuration.component';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
 import { TutorialGroupsConfigurationFormStubComponent } from '../../../stubs/tutorial-groups-configuration-form-sub.component';
-import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from './tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 
 describe('CreateTutorialGroupsConfigurationComponent', () => {

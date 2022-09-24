@@ -13,10 +13,14 @@ import { LoadingIndicatorContainerStubComponent } from '../../../../../helpers/s
 import { simpleTwoLayerActivatedRouteProvider } from '../../../../../helpers/mocks/activated-route/simple-activated-route-providers';
 import { CreateTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/create-tutorial-group-session/create-tutorial-group-session.component';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
-import { formDataToTutorialGroupSessionDTO, generateExampleTutorialGroupSession, tutorialGroupSessionToTutorialGroupSessionFormData } from './tutorialGroupSessionExampleModels';
+import {
+    formDataToTutorialGroupSessionDTO,
+    generateExampleTutorialGroupSession,
+    tutorialGroupSessionToTutorialGroupSessionFormData,
+} from '../../../helpers/tutorialGroupSessionExampleModels';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
 import { TutorialGroupSessionFormStubComponent } from '../../../stubs/tutorial-group-session-form-stub.component';
-import { generateExampleTutorialGroup } from '../../tutorial-groups/crud/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 
 describe('CreateTutorialGroupSessionComponent', () => {
     let fixture: ComponentFixture<CreateTutorialGroupSessionComponent>;

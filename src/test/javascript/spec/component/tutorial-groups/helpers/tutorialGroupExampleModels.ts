@@ -5,9 +5,9 @@ import { TutorialGroupSchedule } from 'app/entities/tutorial-group/tutorial-grou
 import dayjs from 'dayjs/esm';
 import { TutorialGroupFormData } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/crud/tutorial-group-form/tutorial-group-form.component';
 
-export const generateExampleTutorialGroup = () => {
+export const generateExampleTutorialGroup = (id?: number) => {
     const exampleTutorialGroup = new TutorialGroup();
-    exampleTutorialGroup.id = 1;
+    exampleTutorialGroup.id = id ?? 1;
     exampleTutorialGroup.title = 'Example';
     exampleTutorialGroup.capacity = 10;
     exampleTutorialGroup.campus = 'Example Campus';

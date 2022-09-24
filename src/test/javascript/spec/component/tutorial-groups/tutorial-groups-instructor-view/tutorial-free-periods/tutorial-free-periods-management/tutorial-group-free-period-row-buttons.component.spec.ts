@@ -8,8 +8,8 @@ import { TutorialGroupFreePeriodService } from 'app/course/tutorial-groups/servi
 import { ArtemisDatePipe } from 'app/shared/pipes/artemis-date.pipe';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupFreePeriod } from 'app/entities/tutorial-group/tutorial-group-free-day.model';
-import { generateExampleTutorialGroupsConfiguration } from '../../tutorial-groups-configuration/crud/tutorialGroupsConfigurationExampleModels';
-import { generateExampleTutorialGroupFreePeriod } from '../crud/tutorialGroupFreePeriodExampleModel';
+import { generateExampleTutorialGroupsConfiguration } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupFreePeriod } from '../../../helpers/tutorialGroupFreePeriodExampleModel';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
 import { HttpResponse } from '@angular/common/http';

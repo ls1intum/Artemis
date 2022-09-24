@@ -1,7 +1,7 @@
 // tslint:disable:max-line-length
 import { RegisteredStudentsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/registered-students/registered-students.component';
 import { TutorialGroupFreePeriodFormComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-free-periods/crud/tutorial-free-period-form/tutorial-group-free-period-form.component';
-import { TutorialGroupSessionsManagement } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
+import { TutorialGroupSessionsManagementComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-sessions-management.component';
 import { TutorialGroupsConfigurationFormComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups-configuration/crud/tutorial-groups-configuration-form/tutorial-groups-configuration-form.component';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { EditTutorialGroupSessionComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/crud/edit-tutorial-group-session/edit-tutorial-group-session.component';
@@ -30,6 +30,7 @@ import { NgModule } from '@angular/core';
 import { TutorialGroupFreePeriodRowButtonsComponent } from './tutorial-free-periods/tutorial-free-periods-management/tutorial-group-free-period-row-buttons/tutorial-group-free-period-row-buttons.component';
 import { EditTutorialGroupFreePeriodComponent } from './tutorial-free-periods/crud/edit-tutorial-group-free-period/edit-tutorial-group-free-period.component';
 import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-group-detail.component';
+import { TutorialGroupSessionRowComponent } from './tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-session-row/tutorial-group-session-row.component';
 
 @NgModule({
     imports: [
@@ -49,7 +50,7 @@ import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-
         TutorialGroupRowButtonsComponent,
         RegisteredStudentsComponent,
         TutorialGroupDetailComponent,
-        TutorialGroupSessionsManagement,
+        TutorialGroupSessionsManagementComponent,
         ScheduleFormComponent,
         TutorialGroupsConfigurationFormComponent,
         CreateTutorialGroupsConfigurationComponent,
@@ -64,6 +65,7 @@ import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-
         TutorialGroupSessionRowButtonsComponent,
         TutorialGroupFreePeriodRowButtonsComponent,
         EditTutorialGroupFreePeriodComponent,
+        TutorialGroupSessionRowComponent,
     ],
 })
 export class ArtemisTutorialGroupsInstructorViewModule {}

@@ -10,7 +10,7 @@ import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
 import { MockRouter } from '../../../../../helpers/mocks/mock-router';
 import { Router } from '@angular/router';
-import { generateExampleTutorialGroup } from '../crud/tutorialGroupExampleModels';
+import { generateExampleTutorialGroup } from '../../../helpers/tutorialGroupExampleModels';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TutorialGroupRowButtonsComponent', () => {

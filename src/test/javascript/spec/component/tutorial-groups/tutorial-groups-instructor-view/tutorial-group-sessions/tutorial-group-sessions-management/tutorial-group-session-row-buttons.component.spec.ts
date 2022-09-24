@@ -11,7 +11,7 @@ import { of } from 'rxjs';
 import { TutorialGroupSessionRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-group-sessions/tutorial-group-sessions-management/tutorial-group-session-row-buttons/tutorial-group-session-row-buttons.component';
 import { TutorialGroupSessionService } from 'app/course/tutorial-groups/services/tutorial-group-session.service';
 import { TutorialGroupSession } from 'app/entities/tutorial-group/tutorial-group-session.model';
-import { generateExampleTutorialGroupSession } from '../crud/tutorialGroupSessionExampleModels';
+import { generateExampleTutorialGroupSession } from '../../../helpers/tutorialGroupSessionExampleModels';
 import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 import { NgbModal, NgbModalRef } from '@ng-bootstrap/ng-bootstrap';
 import { MockNgbModalService } from '../../../../../helpers/mocks/service/mock-ngb-modal.service';

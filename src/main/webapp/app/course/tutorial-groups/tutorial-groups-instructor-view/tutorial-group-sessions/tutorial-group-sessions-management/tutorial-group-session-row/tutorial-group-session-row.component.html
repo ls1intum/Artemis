@@ -1,0 +1,18 @@
+<ng-container>
+    <td>
+        {{ session.start | artemisDate: 'short-date':false:timeZone }}
+        {{ session.start | artemisDate: 'time':false:timeZone! }} -
+        {{ session.end | artemisDate: 'time':false:timeZone! }}
+    </td>
+    <td [class.table-warning]="!hasSchedule">{{ (session.tutorialGroupSchedule ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+    <td [class.table-danger]="isCancelled">{{ (session.status === tutorialGroupSessionStatus.CANCELLED ? 'global.generic.yes' : 'global.generic.no') | artemisTranslate }}</td>
+    <td>
+        <jhi-tutorial-group-session-row-buttons-component
+            [tutorialGroupSession]="session"
+            [courseId]="courseId"
+            [tutorialGroupId]="tutorialGroupId"
+            (cancelOrActivatePressed)="actionPerformed.emit()"
+            (tutorialGroupSessionDeleted)="actionPerformed.emit()"
+        ></jhi-tutorial-group-session-row-buttons-component>
+    </td>
+</ng-container>

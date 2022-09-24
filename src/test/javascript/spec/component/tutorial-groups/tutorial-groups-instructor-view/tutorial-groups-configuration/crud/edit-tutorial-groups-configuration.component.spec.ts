@@ -13,7 +13,7 @@ import { EditTutorialGroupsConfigurationComponent } from 'app/course/tutorial-gr
 import { TutorialGroupsConfigurationFormStubComponent } from '../../../stubs/tutorial-groups-configuration-form-sub.component';
 import { TutorialGroupsConfiguration } from 'app/entities/tutorial-group/tutorial-groups-configuration.model';
 import { TutorialGroupsConfigurationService } from 'app/course/tutorial-groups/services/tutorial-groups-configuration.service';
-import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from './tutorialGroupsConfigurationExampleModels';
+import { generateExampleTutorialGroupsConfiguration, tutorialsGroupsConfigurationToFormData } from '../../../helpers/tutorialGroupsConfigurationExampleModels';
 
 describe('EditTutorialGroupsConfigurationComponent', () => {
     let fixture: ComponentFixture<EditTutorialGroupsConfigurationComponent>;

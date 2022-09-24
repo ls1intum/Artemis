@@ -82,7 +82,7 @@ export class EditTutorialGroupFreePeriodComponent implements OnInit {
             .subscribe({
                 next: () => {
                     this.router.navigate([
-                        'course-management',
+                        '/course-management',
                         this.courseId,
                         'tutorial-groups-management',
                         'configuration',

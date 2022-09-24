@@ -31,6 +31,8 @@
     </form>
 </div>
 <div class="modal-footer">
-    <button type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">{{ 'global.form.cancel' | artemisTranslate }}</button>
-    <button type="button" class="btn btn-success" (click)="cancelOrActivate()" [disabled]="!isSubmitPossible">{{ 'global.form.confirm' | artemisTranslate }}</button>
+    <button id="dismiss-button" type="button" class="btn btn-outline-secondary" (click)="activeModal.dismiss()">{{ 'global.form.cancel' | artemisTranslate }}</button>
+    <button id="cancel-activate-button" type="button" class="btn btn-success" (click)="cancelOrActivate()" [disabled]="!isSubmitPossible">
+        {{ 'global.form.confirm' | artemisTranslate }}
+    </button>
 </div>

@@ -69,5 +69,8 @@ export function toISO8601DateTimeString(date: Date | undefined | null) {
  * @param dayOfWeekZeroSunday dayOfWeek sunday(0) to saturday(6)
  */
 export function dayOfWeekZeroSundayToZeroMonday(dayOfWeekZeroSunday: number): number {
+    if (dayOfWeekZeroSunday < 0 || dayOfWeekZeroSunday > 6) {
+        throw new Error('dayOfWeekZeroSunday must be between 0 and 6');
+    }
     return (dayOfWeekZeroSunday + 6) % 7;
 }

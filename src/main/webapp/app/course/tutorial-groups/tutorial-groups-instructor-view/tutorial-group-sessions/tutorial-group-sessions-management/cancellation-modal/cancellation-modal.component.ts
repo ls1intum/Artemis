@@ -23,8 +23,6 @@ export class CancellationModalComponent implements OnInit {
 
     @Input()
     tutorialGroupSession: TutorialGroupSession;
-    @Input()
-    refreshCallback: () => void;
 
     constructor(
         public activeModal: NgbActiveModal,
