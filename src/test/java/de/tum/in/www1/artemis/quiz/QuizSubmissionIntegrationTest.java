@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -34,7 +33,6 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.service.QuizBatchService;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
@@ -53,9 +51,6 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @Autowired
     private QuizExerciseRepository quizExerciseRepository;
-
-    @Autowired
-    private QuizScheduleService quizScheduleService;
 
     @Autowired
     private QuizSubmissionWebsocketService quizSubmissionWebsocketService;
@@ -79,15 +74,9 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     @BeforeEach
     void init() {
+        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
         quizScheduleService.stopSchedule();
         database.addUsers(10 * multiplier, 5, 0, 1);
-        // do not use the schedule service based on a time interval in the tests, because this would result in flaky tests that run much slower
-    }
-
-    @AfterEach
-    void tearDown() {
-        quizScheduleService.clearAllQuizData();
-        database.resetDatabase();
     }
 
     @Test

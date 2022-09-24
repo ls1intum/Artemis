@@ -6,6 +6,7 @@ import static org.mockito.Mockito.doReturn;
 
 import javax.mail.internet.MimeMessage;
 
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,6 +29,7 @@ import de.tum.in.www1.artemis.service.programming.ProgrammingExerciseParticipati
 import de.tum.in.www1.artemis.service.programming.ProgrammingTriggerService;
 import de.tum.in.www1.artemis.service.scheduled.ProgrammingExerciseScheduleService;
 import de.tum.in.www1.artemis.service.scheduled.ScheduleService;
+import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 
 /**
  * this test should be completely independent of any profiles or configurations (e.g. VCS, CIS)
@@ -102,6 +104,9 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     protected TextBlockService textBlockService;
 
     @Autowired
+    protected QuizScheduleService quizScheduleService;
+
+    @Autowired
     protected DatabaseUtilService database;
 
     @Autowired
@@ -113,6 +118,12 @@ public abstract class AbstractArtemisIntegrationTest implements MockDelegate {
     @BeforeEach
     void mockMailService() {
         doNothing().when(javaMailSender).send(any(MimeMessage.class));
+    }
+
+    @AfterEach()
+    void stopQuizScheduler() {
+        quizScheduleService.stopSchedule();
+        quizScheduleService.clearAllQuizData();
     }
 
     public void resetSpyBeans() {

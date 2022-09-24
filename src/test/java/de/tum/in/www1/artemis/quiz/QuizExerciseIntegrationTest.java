@@ -9,7 +9,6 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -31,7 +30,6 @@ import de.tum.in.www1.artemis.domain.quiz.*;
 import de.tum.in.www1.artemis.repository.*;
 import de.tum.in.www1.artemis.security.SecurityUtils;
 import de.tum.in.www1.artemis.service.QuizExerciseService;
-import de.tum.in.www1.artemis.service.scheduled.cache.quiz.QuizScheduleService;
 import de.tum.in.www1.artemis.util.ExerciseIntegrationTestUtils;
 import de.tum.in.www1.artemis.util.ModelFactory;
 import de.tum.in.www1.artemis.util.QuizUtilService;
@@ -40,9 +38,6 @@ import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
 import de.tum.in.www1.artemis.web.websocket.QuizSubmissionWebsocketService;
 
 class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private QuizScheduleService quizScheduleService;
 
     @Autowired
     private QuizExerciseService quizExerciseService;
@@ -114,13 +109,6 @@ class QuizExerciseIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void init() {
         database.addUsers(15, 5, 1, 1);
         quizScheduleService.startSchedule(5 * 1000);
-    }
-
-    @AfterEach
-    void tearDown() {
-        // database.resetDatabase();
-        quizScheduleService.stopSchedule();
-        quizScheduleService.clearAllQuizData();
     }
 
     @ParameterizedTest(name = "{displayName} [{index}] {argumentsWithNames}")
