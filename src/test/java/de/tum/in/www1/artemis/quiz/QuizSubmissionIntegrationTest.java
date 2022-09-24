@@ -274,8 +274,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExercise = quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and no participants
-        assertThat(quizSubmissionRepository.findAll()).isEmpty();
-        assertThat(participationRepository.findAll()).isEmpty();
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
         int numberOfParticipants = 10;
 
@@ -306,8 +306,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizScheduleService.processCachedQuizSubmissions();
 
         // check whether all submissions were saved to the database
-        assertThat(quizSubmissionRepository.findAll()).hasSize(numberOfParticipants);
-        assertThat(participationRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
     }
 
     private void joinQuizBatch(QuizExercise quizExercise, QuizBatch batch, String username) {
@@ -417,8 +417,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExerciseService.save(quizExercise);
 
         // at the beginning there are no submissions and participants
-        assertThat(quizSubmissionRepository.findAll()).isEmpty();
-        assertThat(participationRepository.findAll()).isEmpty();
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
+        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).isEmpty();
 
         var numberOfParticipants = 10;
 
@@ -431,8 +431,8 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
 
         // after the quiz has ended, all submission are saved to the database
-        assertThat(quizSubmissionRepository.findAll()).hasSize(numberOfParticipants);
-        assertThat(participationRepository.findAll()).hasSize(numberOfParticipants);
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).hasSize(numberOfParticipants);
+        assertThat(participationRepository.findByExerciseId(quizExercise.getId())).hasSize(numberOfParticipants);
 
         // processing the quiz submissions will update the statistics
         quizScheduleService.processCachedQuizSubmissions();
@@ -492,7 +492,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         quizExerciseServer.setIsOpenForPractice(false);
         quizExerciseService.save(quizExerciseServer);
 
-        assertThat(quizSubmissionRepository.findAll()).isEmpty();
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
 
         QuizSubmission quizSubmission = new QuizSubmission();
         for (var question : quizExerciseServer.getQuizQuestions()) {
@@ -519,7 +519,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         QuizExercise quizExerciseServer = database.createQuizForExam(exerciseGroup);
         quizExerciseService.save(quizExerciseServer);
 
-        assertThat(quizSubmissionRepository.findAll()).isEmpty();
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExerciseServer.getId())).isEmpty();
 
         QuizSubmission quizSubmission = database.generateSubmissionForThreeQuestions(quizExerciseServer, 1, true, null);
         // exam quiz not open for practice --> bad request expected
@@ -621,7 +621,7 @@ class QuizSubmissionIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         }
 
         // in the preview the submission will not be saved to the database
-        assertThat(quizSubmissionRepository.findAll()).isEmpty();
+        assertThat(quizSubmissionRepository.findByParticipation_Exercise_Id(quizExercise.getId())).isEmpty();
 
         quizScheduleService.processCachedQuizSubmissions();
 

@@ -3,6 +3,7 @@ package de.tum.in.www1.artemis.repository;
 import static org.springframework.data.jpa.repository.EntityGraph.EntityGraphType.LOAD;
 
 import java.util.Optional;
+import java.util.Set;
 
 import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -31,4 +32,6 @@ public interface QuizSubmissionRepository extends JpaRepository<QuizSubmission, 
 
     @EntityGraph(type = LOAD, attributePaths = { "submittedAnswers" })
     QuizSubmission findWithEagerSubmittedAnswersById(@Param("submissionId") long submissionId);
+
+    Set<QuizSubmission> findByParticipation_Exercise_Id(long exerciseId);
 }
