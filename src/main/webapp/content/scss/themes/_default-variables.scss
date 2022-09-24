@@ -470,9 +470,10 @@ $apollon-primary-contrast: $gray-900;
 $apollon-secondary: $gray-600;
 $apollon-warning-yellow: $warning;
 $apollon-background: white;
-$apollon-background-variant: rgba(36, 39, 36, 0.1);
+$apollon-background-variant: $gray-100;
 $apollon-gray: $gray-200;
 $apollon-gray-variant: $gray-700;
+$apollon-grid: rgba(36, 39, 36, 0.1);
 
 // NGX Graph Colors
 $graph-light-grey: rgba(153, 153, 153, 1);
