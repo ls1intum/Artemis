@@ -58,7 +58,7 @@ public interface GradingScaleRepository extends JpaRepository<GradingScale, Long
     /**
      * Find a grading scale for exam by id with applied bonus
      *
-     * @param examId the courses id
+     * @param examId the exam id
      * @return an Optional with the grading scale if such scale exists and an empty Optional otherwise
      */
     @Query("""
