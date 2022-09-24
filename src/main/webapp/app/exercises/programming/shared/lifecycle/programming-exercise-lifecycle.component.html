@@ -10,15 +10,17 @@
                 label="artemisApp.exercise.releaseDate"
                 tooltipText="artemisApp.programmingExercise.timeline.releaseDateTooltip"
             ></jhi-programming-exercise-test-schedule-date-picker>
+
             <div class="test-schedule-date me-2">
                 <div class="mb-2">
                     <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.automaticTests"> Automatic Tests </span>
-                    <jhi-help-icon placement="top" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
+                    <jhi-help-icon placement="bottom" text="artemisApp.programmingExercise.timeline.automaticTestsMandatoryTooltip"></jhi-help-icon>
                 </div>
                 <div class="btn btn-light scheduled-test btn-lifecycle" [class.btn-lifecycle--disabled]="readOnly">
                     <fa-icon [icon]="faCogs" size="lg"></fa-icon>
                 </div>
             </div>
+
             <jhi-programming-exercise-test-schedule-date-picker
                 *ngIf="!isExamMode"
                 [(ngModel)]="exercise.dueDate"
@@ -32,6 +34,7 @@
                 tooltipText="artemisApp.programmingExercise.timeline.dueDateTooltip"
             >
             </jhi-programming-exercise-test-schedule-date-picker>
+
             <div *ngIf="isExamMode || exercise.dueDate">
                 <jhi-programming-exercise-test-schedule-date-picker
                     class="test-schedule-date me-2"
@@ -43,11 +46,12 @@
                     tooltipText="artemisApp.programmingExercise.timeline.afterDueDateTooltip"
                 >
                 </jhi-programming-exercise-test-schedule-date-picker>
+
                 <div class="test-schedule-date me-2">
                     <div class="mb-2">
                         <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.assessmentType"> Assessment Type </span>
                         <jhi-help-icon
-                            placement="top"
+                            placement="bottom"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.assessmentType === assessmentType.SEMI_AUTOMATIC ? 'assessmentTypeTooltipManualAssessment' : 'assessmentTypeTooltipAutomaticAssessment')
@@ -69,11 +73,12 @@
                         }}
                     </div>
                 </div>
+
                 <div *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode" class="test-schedule-date me-2">
                     <div class="mb-2">
                         <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.allowFeedbackRequests">requests</span>
                         <jhi-help-icon
-                            placement="top"
+                            placement="bottom"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowManualFeedbackRequests ? 'feedbackRequestsEnabledTooltip' : 'feedbackRequestsDisabledTooltip')
@@ -96,6 +101,7 @@
                         }}
                     </div>
                 </div>
+
                 <jhi-programming-exercise-test-schedule-date-picker
                     *ngIf="exercise.assessmentType === assessmentType.SEMI_AUTOMATIC && !isExamMode && !exercise.allowManualFeedbackRequests"
                     class="test-schedule-date"
@@ -110,7 +116,7 @@
                     <div class="mb-2">
                         <span class="font-weight-bold" jhiTranslate="artemisApp.programmingExercise.timeline.complaintOnAutomaticAssessment"> Complaints </span>
                         <jhi-help-icon
-                            placement="top"
+                            placement="bottom"
                             [text]="
                                 'artemisApp.programmingExercise.timeline.' +
                                 (exercise.allowComplaintsForAutomaticAssessments ? 'allowComplaintOnAutomaticAssessmentTooltip' : 'disallowComplaintOnAutomaticAssessmentTooltip')
