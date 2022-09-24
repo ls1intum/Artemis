@@ -19,7 +19,7 @@ import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismComparison;
 import de.tum.in.www1.artemis.domain.plagiarism.PlagiarismResult;
 import de.tum.in.www1.artemis.util.FileUtils;
 
-class PlagiarismCheckForExercisesIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class PlagiarismCheckIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     private Course course;
 
@@ -27,7 +27,7 @@ class PlagiarismCheckForExercisesIntegrationTest extends AbstractSpringIntegrati
     void initTestCase() throws IOException {
         String submissionText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit";
         String submissionModel = FileUtils.loadFileFromResources("test-data/model-submission/model.54727.json");
-        int studentAmount = 25;
+        int studentAmount = 5;
 
         course = database.addCourseWithOneFinishedTextExerciseAndSimilarSubmissions(submissionText, studentAmount);
         database.addOneFinishedModelingExerciseAndSimilarSubmissionsToTheCourse(submissionModel, studentAmount, course);

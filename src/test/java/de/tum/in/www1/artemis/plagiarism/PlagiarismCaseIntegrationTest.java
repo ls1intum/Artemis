@@ -22,7 +22,6 @@ import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.domain.plagiarism.*;
 import de.tum.in.www1.artemis.domain.plagiarism.text.TextSubmissionElement;
-import de.tum.in.www1.artemis.repository.TextExerciseRepository;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.metis.PostRepository;
 import de.tum.in.www1.artemis.repository.plagiarism.PlagiarismCaseRepository;
@@ -31,9 +30,6 @@ import de.tum.in.www1.artemis.web.rest.dto.PlagiarismCaseInfoDTO;
 import de.tum.in.www1.artemis.web.rest.dto.PlagiarismVerdictDTO;
 
 class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
-
-    @Autowired
-    private TextExerciseRepository textExerciseRepository;
 
     @Autowired
     private PlagiarismCaseRepository plagiarismCaseRepository;
@@ -49,7 +45,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
     private Course course;
 
-    private TextExercise courseTextExercise;
+    private TextExercise textExercise;
 
     private TextExercise examTextExercise;
 
@@ -62,17 +58,17 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @BeforeEach
     void initTestCase() {
         // Per case, we have always 2 students
-        int numberOfPlagiarismCases = 100;
+        int numberOfPlagiarismCases = 5;
         database.addUsers(numberOfPlagiarismCases * 2, 1, 1, 1);
         course = database.addCourseWithOneFinishedTextExercise();
 
         // We need at least 3 cases
-        courseTextExercise = textExerciseRepository.findByCourseIdWithCategories(course.getId()).get(0);
-        coursePlagiarismCases = this.createPlagiarismCases(numberOfPlagiarismCases, courseTextExercise);
+        textExercise = database.getFirstExerciseWithType(course, TextExercise.class);
+        coursePlagiarismCases = createPlagiarismCases(numberOfPlagiarismCases, textExercise);
         plagiarismCase1 = coursePlagiarismCases.get(0);
 
         examTextExercise = database.addCourseExamExerciseGroupWithOneTextExercise();
-        examPlagiarismCases = this.createPlagiarismCases(2, examTextExercise);
+        examPlagiarismCases = createPlagiarismCases(2, examTextExercise);
     }
 
     /***
@@ -262,7 +258,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetPlagiarismCaseInfoReturnsEmptyWithoutPostForStudent() throws Exception {
-        var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK, String.class);
+        var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-case", HttpStatus.OK, String.class);
         assertThat(plagiarismCaseInfo).as("should not get plagiarism case for exercise for student if there is no notification post yet").isNullOrEmpty();
     }
 
@@ -271,7 +267,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testGetPlagiarismCaseInfoWithoutVerdictForExerciseForStudent() throws Exception {
         addPost();
 
-        var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK,
+        var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-case", HttpStatus.OK,
                 PlagiarismCaseInfoDTO.class);
         assertThat(plagiarismCaseInfo.id()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
         assertThat(plagiarismCaseInfo.verdict()).as("should get null verdict before it is set").isNull();
@@ -297,7 +293,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
 
         addPost();
 
-        var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + courseTextExercise.getId() + "/plagiarism-case", HttpStatus.OK,
+        var plagiarismCaseInfo = request.get("/api/courses/" + course.getId() + "/exercises/" + textExercise.getId() + "/plagiarism-case", HttpStatus.OK,
                 PlagiarismCaseInfoDTO.class);
         assertThat(plagiarismCaseInfo.id()).as("should get plagiarism case for exercise for student").isEqualTo(plagiarismCase1.getId());
         assertThat(plagiarismCaseInfo.verdict()).as("should get the verdict after it is set").isEqualTo(verdict);
@@ -307,8 +303,7 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     @WithMockUser(username = "student1", roles = "USER")
     void testGetMultiplePlagiarismCaseInfosForStudent() throws Exception {
         var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + course.getId() + "/plagiarism-case?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK,
-                String.class);
+                "/api/courses/" + course.getId() + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
 
         assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
 
@@ -318,11 +313,11 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
         request.get("/api/courses/" + course.getId() + "/plagiarism-cases", HttpStatus.BAD_REQUEST, String.class);
 
         var plagiarismCaseInfosResponse = request.getMap(
-                "/api/courses/" + course.getId() + "/plagiarism-cases?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK,
-                Long.class, PlagiarismCaseInfoDTO.class);
+                "/api/courses/" + course.getId() + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, Long.class,
+                PlagiarismCaseInfoDTO.class);
 
         assertThat(plagiarismCaseInfosResponse).hasSize(1);
-        assertThat(plagiarismCaseInfosResponse.get(courseTextExercise.getId()).id()).as("should only return plagiarism cases with post").isEqualTo(plagiarismCase1.getId());
+        assertThat(plagiarismCaseInfosResponse.get(textExercise.getId()).id()).as("should only return plagiarism cases with post").isEqualTo(plagiarismCase1.getId());
 
     }
 
@@ -331,15 +326,14 @@ class PlagiarismCaseIntegrationTest extends AbstractSpringIntegrationBambooBitbu
     void testGetMultiplePlagiarismCaseInfosForStudent_conflict() throws Exception {
         long wrongCourseId = course.getId() + 1;
         var emptyPlagiarismCaseInfosResponse = request.get(
-                "/api/courses/" + wrongCourseId + "/plagiarism-case?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK,
-                String.class);
+                "/api/courses/" + wrongCourseId + "/plagiarism-case?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.OK, String.class);
 
         assertThat(emptyPlagiarismCaseInfosResponse).as("should return empty list when no post is sent").isNullOrEmpty();
 
         addPost();
 
-        request.getMap("/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + courseTextExercise.getId() + "&exerciseId=" + examTextExercise.getId(),
-                HttpStatus.CONFLICT, Long.class, PlagiarismCaseInfoDTO.class);
+        request.getMap("/api/courses/" + wrongCourseId + "/plagiarism-cases?exerciseId=" + textExercise.getId() + "&exerciseId=" + examTextExercise.getId(), HttpStatus.CONFLICT,
+                Long.class, PlagiarismCaseInfoDTO.class);
 
     }
 
