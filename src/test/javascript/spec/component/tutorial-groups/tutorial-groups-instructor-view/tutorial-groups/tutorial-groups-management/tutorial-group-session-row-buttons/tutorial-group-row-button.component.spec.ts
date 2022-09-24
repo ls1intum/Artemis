@@ -1,5 +1,5 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockDirective, MockProvider } from 'ng-mocks';
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { TutorialGroupsService } from 'app/course/tutorial-groups/services/tutorial-groups.service';
 import { TutorialGroup } from 'app/entities/tutorial-group/tutorial-group.model';
 import { TutorialGroupRowButtonsComponent } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-group-row-buttons/tutorial-group-row-buttons.component';
@@ -8,6 +8,7 @@ import { MockRouterLinkDirective } from '../../../../../../helpers/mocks/directi
 import { of } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
 import { DeleteButtonDirective } from 'app/shared/delete-dialog/delete-button.directive';
+import { ArtemisTranslatePipe } from 'app/shared/pipes/artemis-translate.pipe';
 
 describe('TutorialGroupRowButtonsComponent', () => {
     let fixture: ComponentFixture<TutorialGroupRowButtonsComponent>;
@@ -15,7 +16,13 @@ describe('TutorialGroupRowButtonsComponent', () => {
 
     beforeEach(() => {
         TestBed.configureTestingModule({
-            declarations: [TutorialGroupRowButtonsComponent, MockComponent(FaIconComponent), MockRouterLinkDirective, MockDirective(DeleteButtonDirective)],
+            declarations: [
+                TutorialGroupRowButtonsComponent,
+                MockPipe(ArtemisTranslatePipe),
+                MockComponent(FaIconComponent),
+                MockRouterLinkDirective,
+                MockDirective(DeleteButtonDirective),
+            ],
             providers: [MockProvider(TutorialGroupsService)],
         })
             .compileComponents()
