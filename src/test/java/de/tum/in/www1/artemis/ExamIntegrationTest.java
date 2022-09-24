@@ -1712,10 +1712,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
     private void configureCourseAsBonusWithIndividualAndTeamResults(Course course, GradingScale bonusToGradingScale) {
         ZonedDateTime pastTimestamp = ZonedDateTime.now().minusDays(5);
-        Long courseId = course.getId();
         TextExercise textExercise = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         Long individualTextExerciseId = textExercise.getId();
-        TextExercise exerciseWithoutParticipants = database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
+        database.createIndividualTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
 
         Exercise teamExercise = database.createTeamTextExercise(course, pastTimestamp, pastTimestamp, pastTimestamp);
         User student1 = userRepo.findOneByLogin("student1").get();
@@ -1727,18 +1726,17 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         User tutor2 = userRepo.findOneByLogin("tutor2").get();
         Long team2Id = database.createTeam(Set.of(student2, student3), tutor2, teamExercise, "team2").getId();
 
-        // Creating result for student1
         database.createParticipationSubmissionAndResult(individualTextExerciseId, student1, 10.0, 10.0, 50, true);
-        // Creating 2 results for team1
+
         Team team1 = teamRepository.findById(team1Id).get();
         var result = database.createParticipationSubmissionAndResult(teamTextExerciseId, team1, 10.0, 10.0, 40, true);
+        // Creating a second results for team1 to test handling multiple results.
         database.createSubmissionAndResult((StudentParticipation) result.getParticipation(), 50, true);
 
-        // Creating result for student2
         var student2Result = database.createParticipationSubmissionAndResult(individualTextExerciseId, student2, 10.0, 10.0, 50, true);
-        // Creating result for student3
+
         var student3Result = database.createParticipationSubmissionAndResult(individualTextExerciseId, student3, 10.0, 10.0, 30, true);
-        // Creating result for team2
+
         Team team2 = teamRepository.findById(team2Id).get();
         database.createParticipationSubmissionAndResult(teamTextExerciseId, team2, 10.0, 10.0, 80, true);
 
