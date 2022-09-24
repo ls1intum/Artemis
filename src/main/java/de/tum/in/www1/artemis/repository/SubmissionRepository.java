@@ -47,6 +47,8 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
      */
     List<Submission> findAllByParticipationId(long participationId);
 
+    List<Submission> findByParticipation_Exercise_ExerciseGroup_Exam_Id(long examId);
+
     /**
      * Get all submissions of a participation and eagerly load results
      *
@@ -299,18 +301,6 @@ public interface SubmissionRepository extends JpaRepository<Submission, Long> {
             GROUP BY e.id
              """)
     List<ExerciseMapEntry> countByExerciseIdsSubmittedBeforeDueDate(@Param("exerciseIds") Set<Long> exerciseIds);
-
-    /**
-     * Gets the number of unique submissions made for the given exercise
-     *
-     * @param exerciseId the exercise id to get the number for
-     * @return the number of participations (= unique submissions) of the exercise
-     */
-    @Query("""
-            SELECT COUNT (DISTINCT p.id) FROM StudentParticipation p
-            WHERE p.exercise.id = :exerciseId
-                """)
-    long countUniqueSubmissionsByExerciseId(@Param("exerciseId") long exerciseId);
 
     /**
      * Should be used for exam dashboard to ignore test run submissions

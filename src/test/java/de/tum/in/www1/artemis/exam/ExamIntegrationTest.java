@@ -420,7 +420,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int noGeneratedParticipations = prepareExerciseStart(exam2);
         verify(gitService, times(getNumberOfProgrammingExercises(exam2))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam2.getId());
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(textExercise);
@@ -477,7 +477,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         int noGeneratedParticipations = prepareExerciseStart(exam2);
         verify(gitService, times(getNumberOfProgrammingExercises(exam2))).combineAllCommitsOfRepositoryIntoOne(any());
         assertThat(noGeneratedParticipations).isEqualTo(exam2.getStudentExams().size());
-        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam2.getId());
 
         for (Participation participation : studentParticipations) {
             assertThat(participation.getExercise()).isEqualTo(modelingExercise);
@@ -527,25 +527,25 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.OK);
 
-        List<Participation> studentParticipations = participationTestRepository.findAllWithSubmissions();
+        List<Participation> studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).isEmpty();
 
         // invoke start exercises
         studentExamService.startExercises(exam.getId()).join();
 
-        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).hasSize(16);
 
         request.postListWithResponseBody("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/generate-student-exams", Optional.empty(), StudentExam.class,
                 HttpStatus.OK);
 
-        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).isEmpty();
 
         // invoke start exercises
         studentExamService.startExercises(exam.getId()).join();
 
-        studentParticipations = participationTestRepository.findAllWithSubmissions();
+        studentParticipations = participationTestRepository.findByExercise_ExerciseGroup_Exam_Id(exam.getId());
         assertThat(studentParticipations).hasSize(16);
 
         // Make sure delete also works if so many objects have been created before
@@ -1661,7 +1661,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "tutor1", roles = "TA")
     void testGetExamForExamAssessmentDashboard_notFound() throws Exception {
-        request.get("/api/courses/1/exams/1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
+        request.get("/api/courses/-1/exams/-1/exam-for-assessment-dashboard", HttpStatus.NOT_FOUND, Course.class);
     }
 
     @Test
@@ -1732,7 +1732,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                 StudentExam.class, HttpStatus.OK);
         assertThat(studentExams).hasSize(exam.getRegisteredUsers().size());
 
-        assertThat(studentExamRepository.findAll()).hasSize(registeredStudents.size() + 1); // We create one studentExam in the before Method
+        assertThat(studentExamRepository.findByExamId(exam.getId())).hasSize(registeredStudents.size());
 
         // start exercises
         int noGeneratedParticipations = ExamPrepareExercisesTestUtil.prepareExerciseStart(request, exam, course);
@@ -2176,6 +2176,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testArchiveExamAsInstructor() throws Exception {
+        archiveExamAsInstructor();
+    }
+
+    private Course archiveExamAsInstructor() throws Exception {
         var course = database.createCourseWithExamAndExercises();
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().get();
 
@@ -2186,6 +2190,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         var updatedExam = examRepository.findById(examId).get();
         assertThat(updatedExam.getExamArchivePath()).isNotEmpty();
+        return course;
     }
 
     @Test
@@ -2234,7 +2239,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         course = courseRepo.save(course);
 
         // Return not found if the exam doesn't exist
-        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/" + 12 + "/download-archive", HttpStatus.NOT_FOUND, String.class);
+        var downloadedArchive = request.get("/api/courses/" + course.getId() + "/exams/-1/download-archive", HttpStatus.NOT_FOUND, String.class);
         assertThat(downloadedArchive).isNull();
 
         // Returns not found if there is no archive
@@ -2258,11 +2263,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testDownloadExamArchiveAsInstructor() throws Exception {
-        testArchiveExamAsInstructor();
+        var course = archiveExamAsInstructor();
 
         // Download the archive
-        var courses = courseRepo.findAll();
-        var course = courses.get(courses.size() - 1);
         var exam = examRepository.findByCourseId(course.getId()).stream().findFirst().get();
         var archive = request.getFile("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/download-archive", HttpStatus.OK, new LinkedMultiValueMap<>());
         assertThat(archive).isNotNull();
@@ -2277,7 +2280,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
             filenames = files.filter(Files::isRegularFile).map(Path::getFileName).toList();
         }
 
-        var submissions = submissionRepository.findAll();
+        var submissions = submissionRepository.findByParticipation_Exercise_ExerciseGroup_Exam_Id(exam.getId());
 
         var savedSubmission = submissions.stream().filter(submission -> submission instanceof FileUploadSubmission).findFirst().get();
         assertSubmissionFilename(filenames, savedSubmission, ".png");
@@ -2925,7 +2928,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         exam.setVisibleDate(ZonedDateTime.ofInstant(exam.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setVisibleDate(ZonedDateTime.ofInstant(received.getVisibleDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
-        assertThat(received.getVisibleDate()).isEqualTo(exam.getVisibleDate());
+        assertThat(received.getVisibleDate()).isEqualToIgnoringSeconds(exam.getVisibleDate());
         exam.setStartDate(ZonedDateTime.ofInstant(exam.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         received.setStartDate(ZonedDateTime.ofInstant(received.getStartDate().truncatedTo(ChronoUnit.MILLIS).toInstant(), ZoneId.of("UTC")));
         assertThat(received.getStartDate()).isEqualTo(exam.getStartDate());
