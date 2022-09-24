@@ -30,6 +30,8 @@ import org.springframework.util.MultiValueMap;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import de.tum.in.www1.artemis.web.rest.dto.SearchResultPageDTO;
+
 @Service
 public class RequestUtilService {
 
@@ -425,6 +427,20 @@ public class RequestUtilService {
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType) throws Exception {
         return getList(path, expectedStatus, listElementType, new LinkedMultiValueMap<>());
+    }
+
+    public <T> SearchResultPageDTO<T> getSearchResult(String path, HttpStatus expectedStatus, Class<T> searchElementType, MultiValueMap<String, String> params) throws Exception {
+        MvcResult res = mvc.perform(MockMvcRequestBuilders.get(new URI(path)).params(params)).andExpect(status().is(expectedStatus.value())).andReturn();
+        restoreSecurityContext();
+
+        if (!expectedStatus.is2xxSuccessful()) {
+            if (res.getResponse().getContentType() != null && !res.getResponse().getContentType().equals("application/problem+json")) {
+                assertThat(res.getResponse().getContentAsString()).isNullOrEmpty();
+            }
+            return null;
+        }
+
+        return mapper.readValue(res.getResponse().getContentAsString(), mapper.getTypeFactory().constructParametricType(SearchResultPageDTO.class, searchElementType));
     }
 
     public <T> List<T> getList(String path, HttpStatus expectedStatus, Class<T> listElementType, MultiValueMap<String, String> params) throws Exception {

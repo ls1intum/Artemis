@@ -995,7 +995,6 @@ public class ExamResource {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<StudentExam> getStudentExamForStart(@PathVariable Long courseId, @PathVariable Long examId) {
         log.debug("REST request to get exam {} for conduction", examId);
-
         StudentExam exam = examAccessService.getExamInCourseElseThrow(courseId, examId);
         return ResponseEntity.ok(exam);
     }

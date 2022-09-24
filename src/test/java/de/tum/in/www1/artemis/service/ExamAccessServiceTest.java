@@ -95,8 +95,6 @@ class ExamAccessServiceTest extends AbstractSpringIntegrationBambooBitbucketJira
     @AfterEach
     void tearDown() {
         database.resetDatabase();
-        courseRepository.deleteAll();
-        examRepository.deleteAll();
     }
 
     @Test
