@@ -360,11 +360,13 @@ public class DatabaseUtilService {
         List<User> generatedUsers = new ArrayList<>();
         for (int i = 1; i <= amount; i++) {
             var login = loginPrefix + i;
-            User user = userRepo.findOneByLogin(login).map(this::activateUser).orElseGet(() -> ModelFactory.generateActivatedUser(login, commonPasswordHash));
+            // the following line either creates the user or resets and existing user to its original state
+            User user = createAndSaveUser(login, commonPasswordHash);
             if (groups != null) {
                 user.setGroups(Set.of(groups));
                 user.setAuthorities(authorities);
             }
+            user = userRepo.save(user);
             generatedUsers.add(user);
         }
         return generatedUsers;

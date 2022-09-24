@@ -173,7 +173,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam1 = database.addExam(course1);
         exam2 = database.addExamWithExerciseGroup(course1, true);
         testExam1 = database.addTestExam(course1);
-        studentExam1 = database.addStudentExamForTestExam(testExam1, users.get(0));
+        studentExam1 = database.addStudentExamForTestExam(testExam1, student1);
 
         instructor = database.getUserByLogin("instructor1");
 
@@ -1372,7 +1372,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "student1", roles = "USER")
     void testGetStudentExamForStart() throws Exception {
-        Exam exam = database.addActiveExamWithRegisteredUser(course1, users.get(0));
+        Exam exam = database.addActiveExamWithRegisteredUser(course1, database.getUserByLogin("student1"));
         StudentExam response = request.get("/api/courses/" + course1.getId() + "/exams/" + exam.getId() + "/start", HttpStatus.OK, StudentExam.class);
         assertThat(response.getExam()).isEqualTo(exam);
         verify(examAccessService, times(1)).getExamInCourseElseThrow(course1.getId(), exam.getId());
@@ -1405,8 +1405,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
 
         exam = examRepository.findWithRegisteredUsersById(exam.getId()).get();
 
-        // 10 normal students + our custom student99
-        assertThat(exam.getRegisteredUsers()).hasSize(this.numberOfStudents + 1);
+        int numberOfStudentsInCourse = userRepo.findAllInGroup(course.getStudentGroupName()).size();
+
+        // the course students + our custom student99
+        assertThat(exam.getRegisteredUsers()).hasSize(numberOfStudentsInCourse + 1);
         assertThat(exam.getRegisteredUsers()).contains(student99);
         verify(examAccessService, times(1)).checkCourseAndExamAccessForInstructorElseThrow(course.getId(), exam.getId());
     }
@@ -2103,23 +2105,25 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         exam1.setEndDate(now);
         final var exam = examRepository.save(exam1);
 
+        var student1 = database.getUserByLogin("student1");
+
         final var studentExam1 = new StudentExam();
         studentExam1.setExam(exam);
-        studentExam1.setUser(users.get(0));
+        studentExam1.setUser(student1);
         studentExam1.setWorkingTime(120);
         studentExam1.setTestRun(false);
         studentExamRepository.save(studentExam1);
 
         final var studentExam2 = new StudentExam();
         studentExam2.setExam(exam);
-        studentExam2.setUser(users.get(0));
+        studentExam2.setUser(student1);
         studentExam2.setWorkingTime(120);
         studentExam2.setTestRun(false);
         studentExamRepository.save(studentExam2);
 
         final var studentExam3 = new StudentExam();
         studentExam3.setExam(exam);
-        studentExam3.setUser(users.get(0));
+        studentExam3.setUser(student1);
         studentExam3.setWorkingTime(60);
         studentExam3.setTestRun(false);
         studentExamRepository.save(studentExam3);
@@ -2143,9 +2147,10 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Test
     @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
     void testIsUserRegisteredForExam() {
-        exam1.addRegisteredUser(users.get(0));
+        var student1 = database.getUserByLogin("student1");
+        exam1.addRegisteredUser(student1);
         final var exam = examRepository.save(exam1);
-        final var isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), users.get(0).getId());
+        final var isUserRegistered = examRegistrationService.isUserRegisteredForExam(exam.getId(), student1.getId());
         final var isCurrentUserRegistered = examRegistrationService.isCurrentUserRegisteredForExam(exam.getId());
         assertThat(isUserRegistered).isTrue();
         assertThat(isCurrentUserRegistered).isFalse();
