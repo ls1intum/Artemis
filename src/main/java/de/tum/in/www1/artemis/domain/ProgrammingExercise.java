@@ -642,9 +642,10 @@ public class ProgrammingExercise extends Exercise {
      */
     public boolean areManualResultsAllowed() {
         // Only allow manual results for programming exercises if option was enabled and due dates have passed;
+        // The date check is entirely ignored if manual feedback requests are possible
         final var relevantDueDate = getBuildAndTestStudentSubmissionsAfterDueDate() != null ? getBuildAndTestStudentSubmissionsAfterDueDate() : getDueDate();
         return (getAssessmentType() == AssessmentType.SEMI_AUTOMATIC || getAllowComplaintsForAutomaticAssessments())
-                && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()));
+                && (relevantDueDate == null || relevantDueDate.isBefore(ZonedDateTime.now()) || getAllowManualFeedbackRequests());
     }
 
     /**
