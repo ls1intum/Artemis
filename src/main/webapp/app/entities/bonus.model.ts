@@ -32,7 +32,7 @@ export class BonusResult {
     public bonusStrategy?: BonusStrategy;
     public bonusFromTitle?: string;
     public studentPointsOfBonusSource?: number | undefined;
-    public bonusGrade?: number;
+    public bonusGrade?: number | string;
     public finalPoints?: number;
     public finalGrade?: number | string;
     public mostSeverePlagiarismVerdict?: PlagiarismVerdict;

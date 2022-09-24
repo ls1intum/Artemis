@@ -2012,7 +2012,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     case "student1" -> {
                         assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isNull();
                         assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(10.0);
-                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(0.0);
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo("0.0");
                         assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
                     }
                     case "student2" -> {
@@ -2023,7 +2023,7 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
                     case "student3" -> {
                         assertThat(studentResult.gradeWithBonus().mostSeverePlagiarismVerdict()).isEqualTo(PlagiarismVerdict.PLAGIARISM);
                         assertThat(studentResult.gradeWithBonus().studentPointsOfBonusSource()).isEqualTo(0.0);
-                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(0.0);
+                        assertThat(studentResult.gradeWithBonus().bonusGrade()).isEqualTo(GradeStep.PLAGIARISM_GRADE);
                         assertThat(studentResult.gradeWithBonus().finalGrade()).isEqualTo("1.0");
                     }
                     default -> {

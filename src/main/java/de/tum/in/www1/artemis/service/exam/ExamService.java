@@ -403,9 +403,16 @@ public class ExamService {
                 presentationScoreThreshold = result.presentationScoreThreshold();
             }
             BonusExampleDTO bonusExample = bonusService.calculateGradeWithBonus(bonus, achievedPointsOfBonusTo, achievedPointsOfSource);
+            String bonusGrade = null;
+            if (verdict == PlagiarismVerdict.PLAGIARISM) {
+                bonusGrade = GradeStep.PLAGIARISM_GRADE;
+            }
+            else if (bonusExample.bonusGrade() != null) {
+                bonusGrade = bonusExample.bonusGrade().toString();
+            }
 
-            return new BonusResultDTO(bonusStrategy, bonusFromTitle, bonusExample.studentPointsOfBonusSource(), bonusExample.bonusGrade(), bonusExample.finalPoints(),
-                    bonusExample.finalGrade(), verdict, achievedPresentationScore, presentationScoreThreshold);
+            return new BonusResultDTO(bonusStrategy, bonusFromTitle, bonusExample.studentPointsOfBonusSource(), bonusGrade, bonusExample.finalPoints(), bonusExample.finalGrade(),
+                    verdict, achievedPresentationScore, presentationScoreThreshold);
         };
     }
 
