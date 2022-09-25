@@ -75,7 +75,6 @@ export class MessagingService implements OnDestroy {
             if (conversationDTO.crudAction === MetisPostAction.CREATE || conversationDTO.crudAction === MetisPostAction.UPDATE) {
                 if (conversationIndexInCache !== -1) {
                     this.conversationsOfUser.splice(conversationIndexInCache, 1);
-                    this.conversationService.auditConversationReadTimeOfUser(conversationDTO.conversation.id!);
                 }
 
                 // add created/updated conversation to the beginning of the conversation list

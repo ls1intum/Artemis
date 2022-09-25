@@ -123,13 +123,6 @@ class ConversationIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         assertThat(conversationsOfUser).isEmpty();
     }
 
-    @Test
-    @WithMockUser(username = "student1", roles = "USER")
-    void testGetConversationById() {
-        Conversation conversation = conversationService.getConversationById(existingConversation.getId());
-        assertThat(conversation).isEqualTo(existingConversation);
-    }
-
     private void createConversationBadRequest(Conversation conversationToSave) throws Exception {
         Conversation createdConversation = request.postWithResponseBody("/api/courses/" + course.getId() + "/conversations/", conversationToSave, Conversation.class,
                 HttpStatus.BAD_REQUEST);

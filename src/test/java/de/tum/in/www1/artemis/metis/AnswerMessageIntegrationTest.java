@@ -19,16 +19,12 @@ import de.tum.in.www1.artemis.domain.metis.AnswerPost;
 import de.tum.in.www1.artemis.domain.metis.Post;
 import de.tum.in.www1.artemis.repository.metis.AnswerPostRepository;
 
-public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
+class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTest {
 
     @Autowired
     private AnswerPostRepository answerPostRepository;
 
-    private List<Post> existingPostsWithAnswers;
-
     private List<Post> existingConversationPostsWithAnswers;
-
-    private List<Post> existingPostsWithAnswersInExercise;
 
     private List<Post> existingPostsWithAnswersCourseWide;
 
@@ -46,7 +42,7 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         List<Post> existingPostsAndConversationPostsWithAnswers = database.createPostsWithAnswerPostsWithinCourse().stream().filter(coursePost -> (coursePost.getAnswers() != null))
                 .toList();
 
-        existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
+        List<Post> existingPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() == null).collect(Collectors.toList());
 
         existingConversationPostsWithAnswers = existingPostsAndConversationPostsWithAnswers.stream().filter(post -> post.getConversation() != null).collect(Collectors.toList());
 
@@ -54,7 +50,8 @@ public class AnswerMessageIntegrationTest extends AbstractSpringIntegrationBambo
         existingAnswerPosts = existingPostsAndConversationPostsWithAnswers.stream().map(Post::getAnswers).flatMap(Collection::stream).toList();
 
         // get all existing posts with answers in exercise context
-        existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
+        List<Post> existingPostsWithAnswersInExercise = existingPostsWithAnswers.stream()
+                .filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getExercise() != null).toList();
 
         // get all existing posts with answers in lecture context
         existingPostsWithAnswersCourseWide = existingPostsWithAnswers.stream().filter(coursePost -> (coursePost.getAnswers() != null) && coursePost.getCourseWideContext() != null)
