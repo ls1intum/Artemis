@@ -571,7 +571,7 @@ public class SubmissionService {
                 }
             }
 
-            if (exerciseDateService.isBeforeEarliestDueDate(exercise).orElse(false)) {
+            if (exerciseDateService.getOptionalIsBeforeEarliestDueDate(exercise).orElse(false)) {
                 log.debug("The due date of exercise '{}' has not been reached yet.", exercise.getTitle());
                 throw new AccessForbiddenException("The due date of exercise '" + exercise.getTitle() + "' has not been reached yet.");
             }
