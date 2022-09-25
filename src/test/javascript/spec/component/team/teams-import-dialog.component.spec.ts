@@ -53,26 +53,24 @@ describe('TeamsImportDialogComponent', () => {
         comp.conflictingRegistrationNumbersSet = new Set();
     }
 
-    beforeEach(
-        waitForAsync(() => {
-            TestBed.configureTestingModule({
-                imports: [ArtemisTestModule],
-                declarations: [
-                    TeamsImportDialogComponent,
-                    MockComponent(TeamsImportFromFileFormComponent),
-                    MockDirective(DeleteButtonDirective),
-                    MockDirective(TranslateDirective),
-                    TranslatePipeMock,
-                    MockComponent(TeamExerciseSearchComponent),
-                    MockComponent(TeamStudentsListComponent),
-                    MockComponent(HelpIconComponent),
-                    MockDirective(NgModel),
-                    MockDirective(NgForm),
-                ],
-                providers: [MockProvider(TeamService), MockProvider(NgbActiveModal)],
-            }).compileComponents();
-        }),
-    );
+    beforeEach(waitForAsync(() => {
+        TestBed.configureTestingModule({
+            imports: [ArtemisTestModule],
+            declarations: [
+                TeamsImportDialogComponent,
+                MockComponent(TeamsImportFromFileFormComponent),
+                MockDirective(DeleteButtonDirective),
+                MockDirective(TranslateDirective),
+                TranslatePipeMock,
+                MockComponent(TeamExerciseSearchComponent),
+                MockComponent(TeamStudentsListComponent),
+                MockComponent(HelpIconComponent),
+                MockDirective(NgModel),
+                MockDirective(NgForm),
+            ],
+            providers: [MockProvider(TeamService), MockProvider(NgbActiveModal)],
+        }).compileComponents();
+    }));
 
     beforeEach(() => {
         fixture = TestBed.createComponent(TeamsImportDialogComponent);
