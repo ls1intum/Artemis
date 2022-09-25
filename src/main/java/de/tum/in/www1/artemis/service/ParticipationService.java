@@ -217,11 +217,12 @@ public class ParticipationService {
      *
      * @param exercise the exercise which is started, a programming exercise needs to have the template and solution participation eagerly loaded
      * @param participant the user or team who starts the exercise
+     * @param optionalGradedStudentParticipation the optional graded participation before the deadline
      * @return the participation connecting the given exercise and user
      */
     public StudentParticipation startPracticeMode(Exercise exercise, Participant participant, Optional<StudentParticipation> optionalGradedStudentParticipation) {
         if (!(exercise instanceof ProgrammingExercise programmingExercise)) {
-            throw new IllegalStateException("Only programming exercises support the prractice mode at the moment");
+            throw new IllegalStateException("Only programming exercises support the practice mode at the moment");
         }
 
         optionalGradedStudentParticipation.ifPresent(participation -> {
