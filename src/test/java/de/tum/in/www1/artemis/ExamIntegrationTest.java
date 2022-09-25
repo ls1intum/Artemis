@@ -132,6 +132,9 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
     @Autowired
     private ObjectMapper objectMapper;
 
+    @Autowired
+    private ParticipantScoreRepository participantScoreRepository;
+
     private List<User> users;
 
     private Course course1;
@@ -1835,6 +1838,8 @@ class ExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucketJiraTe
         gradingScale.setGradeType(GradeType.GRADE);
         gradingScale.setGradeSteps(database.generateGradeStepSet(gradingScale, true));
         gradingScaleRepository.save(gradingScale);
+
+        await().until(() -> participantScoreRepository.count() == 90);
 
         var response = request.get("/api/courses/" + course.getId() + "/exams/" + exam.getId() + "/scores", HttpStatus.OK, ExamScoresDTO.class);
 

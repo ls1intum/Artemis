@@ -50,7 +50,6 @@ describe('Bonus Service', () => {
 
     let service: BonusService;
     let httpMock: HttpTestingController;
-    let elemDefault: GradingScale;
 
     const bonusToGradeStepsDTO: GradeStepsDTO = {
         title: 'Exam Title',
@@ -93,8 +92,6 @@ describe('Bonus Service', () => {
         });
         service = TestBed.inject(BonusService);
         httpMock = TestBed.inject(HttpTestingController);
-
-        elemDefault = new GradingScale();
     });
 
     afterEach(() => {
