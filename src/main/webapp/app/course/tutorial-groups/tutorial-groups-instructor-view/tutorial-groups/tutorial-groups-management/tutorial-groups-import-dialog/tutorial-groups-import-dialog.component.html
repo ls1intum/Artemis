@@ -1,0 +1,110 @@
+<form>
+    <div class="modal-header">
+        <h4 class="modal-title">
+            <span>{{ 'artemisApp.pages.tutorialGroupsManagement.import.dialogTitle' | artemisTranslate }} </span>
+        </h4>
+        <button type="button" class="btn-close" data-dismiss="modal" aria-hidden="true" (click)="clear()"></button>
+    </div>
+    <div class="modal-body">
+        <!-- Intro Text-->
+        <div class="form-group">
+            <p class="intro-text">{{ 'artemisApp.pages.tutorialGroupsManagement.import.introText' | artemisTranslate }}</p>
+            <p class="intro-text">{{ 'artemisApp.pages.tutorialGroupsManagement.import.dialogText' | artemisTranslate }}</p>
+        </div>
+        <!-- File Upload -->
+        <div class="form-group">
+            <div class="d-flex align-items-end">
+                <div>
+                    <label class="label-narrow font-weight-bold">
+                        {{ 'artemisApp.pages.tutorialGroupsManagement.import.csvLabel' | artemisTranslate }}
+                    </label>
+                    <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.csvTooltip" class="me-1"> </jhi-help-icon>
+                </div>
+                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
+            </div>
+            <div class="mt-2">
+                <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
+                <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
+                    <div>
+                        {{ 'artemisApp.pages.tutorialGroupsManagement.import.importFailed' | artemisTranslate }}
+                    </div>
+                    <ul class="mt-1">
+                        <li>
+                            <b> {{ 'artemisApp.pages.tutorialGroupsManagement.import.failedRows' | artemisTranslate }}</b>
+                            <b [innerHTML]="validationError"> </b>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- Overview Table -->
+        <div *ngIf="tutorialGroupRegistrationImportDTOs && tutorialGroupRegistrationImportDTOs.length > 0" class="form-group mt-4">
+            <div>
+                <label class="label-narrow font-weight-bold">{{ 'artemisApp.pages.tutorialGroupsManagement.import.label' | artemisTranslate }}</label>
+                <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.tooltip" class="me-1"></jhi-help-icon>
+            </div>
+            <table class="table table-striped table-sm header-fixed mt-2">
+                <thead>
+                    <tr>
+                        <th scope="col">#</th>
+                        <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
+                    </tr>
+                </thead>
+                <tbody class="table-body--students">
+                    <tr
+                        *ngFor="let registration of tutorialGroupRegistrationImportDTOs; let i = index"
+                        [class.import-success]="wasImported(registration)"
+                        [class.import-fail]="wasNotImported(registration)"
+                    >
+                        <th scope="row">{{ i + 1 }}</th>
+                        <td style="width: 300px">{{ registration.title }}</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="modal-footer justify-content-between">
+        <div *ngIf="tutorialGroupRegistrationImportDTOs && tutorialGroupRegistrationImportDTOs.length > 0" class="flex-shrink-0 me-2 d-flex">
+            <div *ngIf="!hasImported; else numbersAfterImport">
+                <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrations' | artemisTranslate }}</strong>
+                <span>&nbsp;{{ tutorialGroupRegistrationImportDTOs.length }}</span>
+            </div>
+            <ng-template #numbersAfterImport>
+                <div>
+                    <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsImported' | artemisTranslate }}</strong>
+                    <span>{{ numberOfTutorialGroupsImported }}</span>
+                </div>
+                <div class="ms-2">
+                    <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsNotImported' | artemisTranslate }}</strong>
+                    <span
+                        ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                    >
+                </div>
+            </ng-template>
+        </div>
+        <div class="flex-grow-1 d-flex justify-content-end">
+            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+                <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span>{{ 'entity.action.cancel' | artemisTranslate }}</span>
+            </button>
+            <button
+                *ngIf="!hasImported; else buttonAfterImport"
+                type="submit"
+                id="import"
+                name="importButton"
+                class="btn btn-primary"
+                [disabled]="isSubmitDisabled"
+                (click)="import()"
+            >
+                <fa-icon [icon]="faUpload" class="me-2"></fa-icon>
+                <span jhiTranslate="entity.action.to-import">Import</span>
+                <fa-icon class="ms-1" [hidden]="!isImporting" [spin]="true" [icon]="faCircleNotch"></fa-icon>
+            </button>
+            <ng-template #buttonAfterImport>
+                <button class="btn btn-success" id="finish-button" (click)="onFinish()">
+                    <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
+                    <span>{{ 'entity.action.finish' | artemisTranslate }}'}</span>
+                </button>
+            </ng-template>
+        </div>
+    </div>
+</form>

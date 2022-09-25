@@ -74,6 +74,27 @@
                 "deleteDialog": {
                     "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
                     "confirm": "Please enter the title of the tutorial group to confirm."
+                },
+                "import": {
+                    "introText": "ToDo",
+                    "dialogText": "ToDo",
+                    "dialogTitle": "Import Tutorial Group Registrations",
+                    "genericErrorMessage": "Import of tutorial groups failed!",
+                    "importButton": "Import Tutorial Groups",
+                    "csvLabel": "Select a .csv file",
+                    "csvTooltip": "ToDo",
+                    "importFailed": "Please repair the file, it could not be read due to the following error:",
+                    "failedRows": "ToDo:",
+                    "label": "ToDo",
+                    "tooltip": "ToDo",
+                    "table": {
+                        "columns": {
+                            "title": "Tutorial Group"
+                        }
+                    },
+                    "numberOfRegistrations": "Number of registrations:",
+                    "numberOfRegistrationsImported": "Imported:",
+                    "numberOfRegistrationsNotImported": "Not found:"
                 }
             },
             "createTutorialGroup": {

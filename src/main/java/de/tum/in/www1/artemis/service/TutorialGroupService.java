@@ -5,23 +5,30 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import de.tum.in.www1.artemis.domain.Course;
 import de.tum.in.www1.artemis.domain.User;
 import de.tum.in.www1.artemis.domain.enumeration.tutorialgroups.TutorialGroupRegistrationType;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroupRegistration;
 import de.tum.in.www1.artemis.repository.UserRepository;
 import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRegistrationRepository;
+import de.tum.in.www1.artemis.repository.tutorialgroups.TutorialGroupRepository;
 import de.tum.in.www1.artemis.service.dto.StudentDTO;
+import de.tum.in.www1.artemis.web.rest.tutorialgroups.TutorialGroupResource;
 
 @Service
 public class TutorialGroupService {
 
     private final TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository;
 
+    private final TutorialGroupRepository tutorialGroupRepository;
+
     private final UserRepository userRepository;
 
-    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, UserRepository userRepository) {
+    public TutorialGroupService(TutorialGroupRegistrationRepository tutorialGroupRegistrationRepository, TutorialGroupRepository tutorialGroupRepository,
+            UserRepository userRepository) {
         this.tutorialGroupRegistrationRepository = tutorialGroupRegistrationRepository;
+        this.tutorialGroupRepository = tutorialGroupRepository;
         this.userRepository = userRepository;
     }
 
@@ -83,6 +90,22 @@ public class TutorialGroupService {
         }
         registerMultipleStudentsToTutorialGroup(foundStudents, tutorialGroup, registrationType);
         return notFoundStudentDTOs;
+    }
+
+    public Set<TutorialGroupResource.TutorialGroupRegistrationImportDTO> importRegistrations(Course course,
+            Set<TutorialGroupResource.TutorialGroupRegistrationImportDTO> importDTOs) {
+        var existingTutorialGroups = tutorialGroupRepository.findAllByCourseId(course.getId());
+        var existingTitles = existingTutorialGroups.stream().map(TutorialGroup::getTitle).collect(Collectors.toSet());
+        var nonExistingTitles = importDTOs.stream().map(TutorialGroupResource.TutorialGroupRegistrationImportDTO::title).filter(title -> !existingTitles.contains(title))
+                .collect(Collectors.toSet());
+        var tutorialGroupsToCreate = nonExistingTitles.stream().map(title -> {
+            var tutorialGroup = new TutorialGroup();
+            tutorialGroup.setTitle(title);
+            tutorialGroup.setCourse(course);
+            return tutorialGroup;
+        }).collect(Collectors.toSet());
+        tutorialGroupRepository.saveAll(tutorialGroupsToCreate);
+        return Collections.emptySet();
     }
 
     private Optional<User> findStudent(StudentDTO studentDto, String studentCourseGroupName) {

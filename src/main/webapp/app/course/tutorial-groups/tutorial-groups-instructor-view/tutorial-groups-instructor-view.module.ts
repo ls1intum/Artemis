@@ -12,9 +12,12 @@ import { NgxDatatableModule } from '@flaviosantoro92/ngx-datatable';
 import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.module';
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-group-detail.component';
+import { TutorialGroupsImportButtonComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
+import { TutorialGroupsImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-import-dialog.component';
+import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
 
 @NgModule({
-    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule],
+    imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule, ArtemisSharedComponentModule],
     declarations: [
         TutorialGroupsManagementComponent,
         TutorialGroupFormComponent,
@@ -23,6 +26,8 @@ import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-
         TutorialGroupRowButtonsComponent,
         RegisteredStudentsComponent,
         TutorialGroupDetailComponent,
+        TutorialGroupsImportButtonComponent,
+        TutorialGroupsImportDialogComponent,
     ],
 })
 export class ArtemisTutorialGroupsInstructorViewModule {}

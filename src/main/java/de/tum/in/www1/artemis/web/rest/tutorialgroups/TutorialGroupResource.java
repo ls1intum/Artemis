@@ -278,6 +278,25 @@ public class TutorialGroupResource {
         return ResponseEntity.ok().body(notFoundStudentDtos);
     }
 
+    /**
+     * POST /courses/:courseId/tutorial-groups/import: Import tutorial groups and student registrations
+     *
+     * @param courseId the id of the course to which the tutorial groups belong
+     * @param import   the list of students who should be registered to the tutorial group
+     * @return the list of registrations who could not be performed.
+     */
+    @PostMapping("/courses/{courseId}/tutorial-groups/import")
+    @PreAuthorize("hasRole('INSTRUCTOR')")
+    @FeatureToggle(Feature.TutorialGroups)
+    public ResponseEntity<Set<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
+            @RequestBody Set<TutorialGroupRegistrationImportDTO> importDTOs) {
+        log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
+        var courseFromDatabase = this.courseRepository.findByIdElseThrow(courseId);
+        authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseFromDatabase, null);
+        Set<TutorialGroupRegistrationImportDTO> uncompletedRegistrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
+        return ResponseEntity.ok().body(uncompletedRegistrations);
+    }
+
     private void trimStringFields(TutorialGroup tutorialGroup) {
         if (tutorialGroup.getTitle() != null) {
             tutorialGroup.setTitle(tutorialGroup.getTitle().trim());
@@ -318,6 +337,12 @@ public class TutorialGroupResource {
                         "tutorialGroupIdMismatch");
             }
         });
+    }
+
+    /**
+     * DTO used for the import of tutorial groups and student registrations from csv files
+     */
+    public record TutorialGroupRegistrationImportDTO(String title) {
     }
 
 }

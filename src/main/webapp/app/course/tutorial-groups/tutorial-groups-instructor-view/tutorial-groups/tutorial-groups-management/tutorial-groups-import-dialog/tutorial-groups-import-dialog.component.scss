@@ -1,0 +1,107 @@
+$success-text-color: #155724;
+$success-bg-color: #d4edda;
+
+$error-text-color: #dc3545;
+$error-bg-color: #f8d7da;
+
+:host {
+    display: block;
+}
+
+.loading-spinner {
+    position: relative;
+    top: -2px;
+}
+
+.label-narrow {
+    display: inline-block;
+    margin-bottom: 0.1rem;
+}
+
+.import-success,
+.import-fail {
+    position: relative;
+
+    &:nth-child(odd):before {
+        content: '';
+        pointer-events: none;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.03);
+    }
+}
+
+table.table.table-striped .import-success {
+    td,
+    th {
+        color: $success-text-color;
+        background-color: $success-bg-color;
+    }
+}
+
+table.table.table-striped .import-fail {
+    td,
+    th {
+        color: $error-text-color;
+        background-color: $error-bg-color;
+    }
+}
+
+.header-fixed {
+    width: 100%;
+
+    thead,
+    tbody,
+    thead > tr,
+    tbody > tr,
+    thead > tr > th,
+    tbody > tr > td,
+    th {
+        display: block;
+    }
+
+    tbody > tr:after,
+    thead > tr:after {
+        content: ' ';
+        display: block;
+        visibility: hidden;
+        clear: both;
+    }
+
+    thead {
+        overflow-y: scroll;
+    }
+
+    tbody {
+        overflow-y: scroll;
+        min-height: 150px;
+        max-height: max(300px, 100vh - 500px);
+    }
+
+    tbody > tr > td,
+    tbody > tr > td,
+    th {
+        width: 25%; // divide by the number of table columns: calc(100% / 4)
+        float: left;
+    }
+
+    tr {
+        display: flex !important;
+    }
+
+    td,
+    th {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+.modal-footer {
+    button[disabled] {
+        cursor: not-allowed;
+    }
+}
