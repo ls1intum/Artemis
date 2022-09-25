@@ -2,12 +2,8 @@ package de.tum.in.www1.artemis.web.rest.tutorialgroups;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -286,18 +282,19 @@ public class TutorialGroupResource {
      *
      * @param courseId the id of the course to which the tutorial groups belong
      * @param import   the list of students who should be registered to the tutorial group
-     * @return the list of registrations who could not be performed.
+     * @return the list of registrations with information about the success of the import sorted by tutorial group title
      */
     @PostMapping("/courses/{courseId}/tutorial-groups/import")
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
-    public ResponseEntity<Set<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
-                                                                                       @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {
+    public ResponseEntity<List<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
+            @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
         var courseFromDatabase = this.courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseFromDatabase, null);
-        Set<TutorialGroupRegistrationImportDTO> uncompletedRegistrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
-        return ResponseEntity.ok().body(uncompletedRegistrations);
+        Set<TutorialGroupRegistrationImportDTO> registrations = tutorialGroupService.importRegistrations(courseFromDatabase, importDTOs);
+        List<TutorialGroupRegistrationImportDTO> sortedRegistrations = registrations.stream().sorted(Comparator.comparing(TutorialGroupRegistrationImportDTO::title)).toList();
+        return ResponseEntity.ok().body(sortedRegistrations);
     }
 
     private void trimStringFields(TutorialGroup tutorialGroup) {
@@ -345,7 +342,32 @@ public class TutorialGroupResource {
     /**
      * DTO used for the import of tutorial groups and student registrations from csv files
      */
-    public record TutorialGroupRegistrationImportDTO(@NotNull String title, @Nullable StudentDTO student) {}
+    public record TutorialGroupRegistrationImportDTO(@NotNull String title, @Nullable StudentDTO student, @Nullable Boolean importSuccessful) {
+
+        public TutorialGroupRegistrationImportDTO withImportResult(boolean importSuccessful) {
+            return new TutorialGroupRegistrationImportDTO(title(), student(), importSuccessful);
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o)
+                return true;
+            if (o == null || getClass() != o.getClass())
+                return false;
+
+            TutorialGroupRegistrationImportDTO that = (TutorialGroupRegistrationImportDTO) o;
+
+            if (!title.equals(that.title))
+                return false;
+            return Objects.equals(student, that.student);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = title.hashCode();
+            result = 31 * result + (student != null ? student.hashCode() : 0);
+            return result;
+        }
     }
 
 }

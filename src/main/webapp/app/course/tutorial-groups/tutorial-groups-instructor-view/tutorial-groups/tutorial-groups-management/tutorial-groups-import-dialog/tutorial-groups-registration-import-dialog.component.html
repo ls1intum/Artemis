@@ -38,7 +38,7 @@
             </div>
         </div>
         <!-- Overview Table -->
-        <div *ngIf="registrationsToImport && registrationsToImport.length > 0" class="form-group mt-4">
+        <div *ngIf="registrations && registrations.length > 0" class="form-group mt-4">
             <div>
                 <label class="label-narrow font-weight-bold">{{ 'artemisApp.pages.tutorialGroupsManagement.import.label' | artemisTranslate }}</label>
                 <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.tooltip" class="me-1"></jhi-help-icon>
@@ -48,15 +48,15 @@
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
-                        <th scope="col" style="width: 300px">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate}}</th>
-                        <th scope="col">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate}}</th>
-                        <th scope="col">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName'|artemisTranslate}}</th>
-                        <th scope="col">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.lastName' | artemisTranslate}}</th>
+                        <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate }}</th>
+                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate }}</th>
+                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName' | artemisTranslate }}</th>
+                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.lastName' | artemisTranslate }}</th>
                     </tr>
                 </thead>
                 <tbody class="table-body--students">
                     <tr
-                        *ngFor="let registration of registrationsToImport; let i = index"
+                        *ngFor="let registration of registrations; let i = index"
                         [class.import-success]="wasImported(registration)"
                         [class.import-fail]="wasNotImported(registration)"
                     >
@@ -72,20 +72,20 @@
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="registrationsToImport && registrationsToImport.length > 0" class="flex-shrink-0 me-2 d-flex">
+        <div *ngIf="registrations && registrations.length > 0" class="flex-shrink-0 me-2 d-flex">
             <div *ngIf="!isImportDone; else numbersAfterImport">
                 <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrations' | artemisTranslate }}</strong>
-                <span>&nbsp;{{ registrationsToImport.length }}</span>
+                <span>&nbsp;{{ registrations.length }}</span>
             </div>
             <ng-template #numbersAfterImport>
                 <div>
                     <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsImported' | artemisTranslate }}</strong>
-                    <span>{{ numberOfRegistrationsImported }}</span>
+                    <span>{{ numberOfImportedRegistrations }}</span>
                 </div>
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsNotImported' | artemisTranslate }}</strong>
                     <span
-                        ><b style="color: red">{{ numberOfRegistrationsNotImported }}</b></span
+                        ><b style="color: red">{{ numberOfUnImportedRegistration }}</b></span
                     >
                 </div>
             </ng-template>
@@ -110,7 +110,7 @@
             <ng-template #buttonAfterImport>
                 <button class="btn btn-success" id="finish-button" (click)="onFinish()">
                     <fa-icon [icon]="faCheck" class="me-2"></fa-icon>
-                    <span>{{ 'entity.action.finish' | artemisTranslate }}'}</span>
+                    <span>{{ 'entity.action.finish' | artemisTranslate }}</span>
                 </button>
             </ng-template>
         </div>

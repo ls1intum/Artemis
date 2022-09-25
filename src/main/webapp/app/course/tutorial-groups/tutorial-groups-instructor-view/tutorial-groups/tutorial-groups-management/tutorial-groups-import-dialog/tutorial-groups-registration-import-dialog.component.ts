@@ -35,13 +35,14 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
 
     @Input() courseId: number;
 
-    registrationsToImport: TutorialGroupRegistrationImportDTO[] = [];
-    notImportedRegistrations: TutorialGroupRegistrationImportDTO[] = [];
+    registrations: TutorialGroupRegistrationImportDTO[] = [];
 
     isCSVParsing = false;
     validationError?: string;
     isImporting = false;
     isImportDone = false;
+    numberOfImportedRegistrations = 0;
+    numberOfUnImportedRegistration = 0;
 
     private dialogErrorSource = new Subject<string>();
     dialogError$ = this.dialogErrorSource.asObservable();
@@ -59,21 +60,15 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         this.dialogErrorSource.unsubscribe();
     }
 
-    get numberOfRegistrationsImported(): number {
-        return !this.isImportDone ? 0 : this.registrationsToImport.length - this.numberOfRegistrationsNotImported;
-    }
-    get numberOfRegistrationsNotImported(): number {
-        return !this.isImportDone ? 0 : this.notImportedRegistrations.length;
-    }
-
     get isSubmitDisabled(): boolean {
-        return this.isImporting || !this.registrationsToImport?.length;
+        return this.isImporting || !this.registrations?.length;
     }
 
     private resetDialog() {
-        this.registrationsToImport = [];
-        this.notImportedRegistrations = [];
+        this.registrations = [];
         this.isImportDone = false;
+        this.numberOfImportedRegistrations = 0;
+        this.numberOfUnImportedRegistration = 0;
     }
 
     async onCSVFileSelected(event: Event) {
@@ -82,7 +77,7 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         if (target.files && target.files.length > 0) {
             this.resetDialog();
             if (target.files[0]) {
-                this.registrationsToImport = await this.readRegistrationsFromCSVFile(event, target.files[0]);
+                this.registrations = await this.readRegistrationsFromCSVFile(event, target.files[0]);
             }
         }
     }
@@ -122,24 +117,26 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         const usedLastNameHeader = parsedHeaders.find((value) => POSSIBLE_LAST_NAME_HEADERS.includes(value)) || '';
 
         // convert the 'raw' csv rows into a list of TutorialGroupImportDTOs
-        return csvRows.map((csvRow) => {
-            const registration: TutorialGroupRegistrationImportDTO = {
-                title: csvRow[usedTitleHeader]?.trim() || '',
-            } as TutorialGroupRegistrationImportDTO;
-            registration.student = {
-                registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
-                login: csvRow[usedLoginHeader]?.trim() || '',
-                firstName: csvRow[usedFirstNameHeader]?.trim() || '',
-                lastName: csvRow[usedLastNameHeader]?.trim() || '',
-            } as StudentDTO;
+        return csvRows
+            .map((csvRow) => {
+                const registration: TutorialGroupRegistrationImportDTO = {
+                    title: csvRow[usedTitleHeader]?.trim() || '',
+                } as TutorialGroupRegistrationImportDTO;
+                registration.student = {
+                    registrationNumber: csvRow[usedRegistrationNumberHeader]?.trim() || '',
+                    login: csvRow[usedLoginHeader]?.trim() || '',
+                    firstName: csvRow[usedFirstNameHeader]?.trim() || '',
+                    lastName: csvRow[usedLastNameHeader]?.trim() || '',
+                } as StudentDTO;
 
-            return registration;
-        });
+                return registration;
+            })
+            .sort((a, b) => a.title.localeCompare(b.title));
     }
 
     import() {
         this.isImporting = true;
-        this.tutorialGroupService.import(this.courseId, this.registrationsToImport).subscribe({
+        this.tutorialGroupService.import(this.courseId, this.registrations).subscribe({
             next: (res) => this.onSaveSuccess(res),
             error: () => this.onSaveError(),
         });
@@ -191,10 +188,13 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
         this.activeModal.close();
     }
 
-    onSaveSuccess(notImportedRegistrations: HttpResponse<TutorialGroupRegistrationImportDTO[]>) {
+    onSaveSuccess(registrations: HttpResponse<TutorialGroupRegistrationImportDTO[]>) {
         this.isImporting = false;
         this.isImportDone = true;
-        this.notImportedRegistrations = notImportedRegistrations.body ?? [];
+        this.registrations = registrations.body ?? [];
+        this.registrations = this.registrations.sort((a, b) => a.title.localeCompare(b.title));
+        this.numberOfImportedRegistrations = this.registrations.filter((registration) => registration.importSuccessful === true).length;
+        this.numberOfUnImportedRegistration = this.registrations.length - this.numberOfImportedRegistrations;
     }
 
     onSaveError() {
@@ -203,30 +203,11 @@ export class TutorialGroupsRegistrationImportDialog implements OnDestroy {
     }
 
     wasImported(registration: TutorialGroupRegistrationImportDTO): boolean {
-        return this.isImportDone && !this.wasNotImported(registration);
+        return this.isImportDone && registration.importSuccessful === true;
     }
 
     wasNotImported(registration: TutorialGroupRegistrationImportDTO): boolean {
-        if (this.isImportDone && this.notImportedRegistrations?.length === 0) {
-            return false;
-        }
-
-        // try to find a not imported registration that matches the given registration
-        return this.notImportedRegistrations?.some((notImportedRegistration) => {
-            const hasSameTutorialGroupTitle = notImportedRegistration.title === registration.title;
-            if (!hasSameTutorialGroupTitle) {
-                return false;
-            } else {
-                // if the tutorial group title matches, we check if the student data matches if it is present
-                if (!registration.student?.registrationNumber && !notImportedRegistration.student?.registrationNumber) {
-                    return notImportedRegistration.student.registrationNumber === registration.student.registrationNumber;
-                }
-                if (!registration.student?.login && !notImportedRegistration.student?.login) {
-                    return notImportedRegistration.student.login === registration.student.login;
-                }
-                return true;
-            }
-        });
+        return this.isImportDone && !this.wasImported(registration);
     }
 
     /**
