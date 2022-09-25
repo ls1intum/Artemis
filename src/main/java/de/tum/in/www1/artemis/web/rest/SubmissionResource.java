@@ -87,7 +87,7 @@ public class SubmissionResource {
         checkAccessPermissionAtInstructor(submission.get());
         List<Result> results = submission.get().getResults();
         for (Result result : results) {
-            resultService.deleteResultWithComplaint(result.getId());
+            resultService.deleteResult(result.getId());
         }
         buildLogStatisticsEntryRepository.deleteByProgrammingSubmissionId(submission.get().getId());
         submissionRepository.deleteById(id);
