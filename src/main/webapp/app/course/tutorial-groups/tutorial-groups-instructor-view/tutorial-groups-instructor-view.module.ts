@@ -13,8 +13,8 @@ import { ArtemisCourseGroupModule } from 'app/shared/course-group/course-group.m
 import { ArtemisMarkdownModule } from 'app/shared/markdown.module';
 import { TutorialGroupDetailComponent } from './tutorial-groups/detail/tutorial-group-detail.component';
 import { TutorialGroupsImportButtonComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-button/tutorial-groups-import-button.component';
-import { TutorialGroupsImportDialogComponent } from './tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-import-dialog.component';
 import { ArtemisSharedComponentModule } from 'app/shared/components/shared-component.module';
+import { TutorialGroupsRegistrationImportDialog } from 'app/course/tutorial-groups/tutorial-groups-instructor-view/tutorial-groups/tutorial-groups-management/tutorial-groups-import-dialog/tutorial-groups-registration-import-dialog.component';
 
 @NgModule({
     imports: [ArtemisSharedModule, RouterModule, ArtemisDataTableModule, NgxDatatableModule, ArtemisCourseGroupModule, ArtemisMarkdownModule, ArtemisSharedComponentModule],
@@ -27,7 +27,7 @@ import { ArtemisSharedComponentModule } from 'app/shared/components/shared-compo
         RegisteredStudentsComponent,
         TutorialGroupDetailComponent,
         TutorialGroupsImportButtonComponent,
-        TutorialGroupsImportDialogComponent,
+        TutorialGroupsRegistrationImportDialog,
     ],
 })
 export class ArtemisTutorialGroupsInstructorViewModule {}

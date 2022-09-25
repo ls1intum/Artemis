@@ -20,10 +20,10 @@
                     </label>
                     <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.csvTooltip" class="me-1"> </jhi-help-icon>
                 </div>
-                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isParsing"></fa-icon>
+                <fa-icon class="loading-spinner ms-1" [icon]="faSpinner" [spin]="true" *ngIf="isCSVParsing"></fa-icon>
             </div>
             <div class="mt-2">
-                <input type="file" accept=".csv" (change)="onCSVFileSelect($event)" />
+                <input type="file" accept=".csv" (change)="onCSVFileSelected($event)" />
                 <div *ngIf="validationError" class="mt-4 mb-2 text-danger">
                     <div>
                         {{ 'artemisApp.pages.tutorialGroupsManagement.import.importFailed' | artemisTranslate }}
@@ -38,7 +38,7 @@
             </div>
         </div>
         <!-- Overview Table -->
-        <div *ngIf="tutorialGroupRegistrationImportDTOs && tutorialGroupRegistrationImportDTOs.length > 0" class="form-group mt-4">
+        <div *ngIf="registrationsToImport && registrationsToImport.length > 0" class="form-group mt-4">
             <div>
                 <label class="label-narrow font-weight-bold">{{ 'artemisApp.pages.tutorialGroupsManagement.import.label' | artemisTranslate }}</label>
                 <jhi-help-icon placement="top" text="artemisApp.pages.tutorialGroupsManagement.import.tooltip" class="me-1"></jhi-help-icon>
@@ -47,47 +47,55 @@
                 <thead>
                     <tr>
                         <th scope="col">#</th>
-                        <th scope="col" style="width: 300px">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
+                        <th scope="col">{{ 'artemisApp.pages.tutorialGroupsManagement.import.table.columns.title' | artemisTranslate }}</th>
+                        <th scope="col" style="width: 300px">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.registrationNumber' | artemisTranslate}}</th>
+                        <th scope="col">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.login' | artemisTranslate}}</th>
+                        <th scope="col">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.firstName'|artemisTranslate}}</th>
+                        <th scope="col">{{'artemisApp.pages.tutorialGroupsManagement.import.table.columns.lastName' | artemisTranslate}}</th>
                     </tr>
                 </thead>
                 <tbody class="table-body--students">
                     <tr
-                        *ngFor="let registration of tutorialGroupRegistrationImportDTOs; let i = index"
+                        *ngFor="let registration of registrationsToImport; let i = index"
                         [class.import-success]="wasImported(registration)"
                         [class.import-fail]="wasNotImported(registration)"
                     >
                         <th scope="row">{{ i + 1 }}</th>
-                        <td style="width: 300px">{{ registration.title }}</td>
+                        <td>{{ registration?.title ?? '' }}</td>
+                        <td style="width: 300px">{{ registration?.student?.registrationNumber ?? '' }}</td>
+                        <td>{{ registration?.student?.login ?? '' }}</td>
+                        <td>{{ registration?.student?.firstName ?? '' }}</td>
+                        <td>{{ registration?.student?.lastName ?? '' }}</td>
                     </tr>
                 </tbody>
             </table>
         </div>
     </div>
     <div class="modal-footer justify-content-between">
-        <div *ngIf="tutorialGroupRegistrationImportDTOs && tutorialGroupRegistrationImportDTOs.length > 0" class="flex-shrink-0 me-2 d-flex">
-            <div *ngIf="!hasImported; else numbersAfterImport">
+        <div *ngIf="registrationsToImport && registrationsToImport.length > 0" class="flex-shrink-0 me-2 d-flex">
+            <div *ngIf="!isImportDone; else numbersAfterImport">
                 <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrations' | artemisTranslate }}</strong>
-                <span>&nbsp;{{ tutorialGroupRegistrationImportDTOs.length }}</span>
+                <span>&nbsp;{{ registrationsToImport.length }}</span>
             </div>
             <ng-template #numbersAfterImport>
                 <div>
                     <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsImported' | artemisTranslate }}</strong>
-                    <span>{{ numberOfTutorialGroupsImported }}</span>
+                    <span>{{ numberOfRegistrationsImported }}</span>
                 </div>
                 <div class="ms-2">
                     <strong>{{ 'artemisApp.pages.tutorialGroupsManagement.import.numberOfRegistrationsNotImported' | artemisTranslate }}</strong>
                     <span
-                        ><b style="color: red">{{ numberOfUsersNotImported }}</b></span
+                        ><b style="color: red">{{ numberOfRegistrationsNotImported }}</b></span
                     >
                 </div>
             </ng-template>
         </div>
         <div class="flex-grow-1 d-flex justify-content-end">
-            <button *ngIf="!hasImported" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
+            <button *ngIf="!isImportDone" type="button" class="btn btn-default cancel" data-dismiss="modal" (click)="clear()">
                 <fa-icon [icon]="faBan"></fa-icon>&nbsp;<span>{{ 'entity.action.cancel' | artemisTranslate }}</span>
             </button>
             <button
-                *ngIf="!hasImported; else buttonAfterImport"
+                *ngIf="!isImportDone; else buttonAfterImport"
                 type="submit"
                 id="import"
                 name="importButton"

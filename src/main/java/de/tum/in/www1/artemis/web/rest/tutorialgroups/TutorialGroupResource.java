@@ -7,7 +7,10 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.BadRequestException;
 
 import org.slf4j.Logger;
@@ -289,7 +292,7 @@ public class TutorialGroupResource {
     @PreAuthorize("hasRole('INSTRUCTOR')")
     @FeatureToggle(Feature.TutorialGroups)
     public ResponseEntity<Set<TutorialGroupRegistrationImportDTO>> importRegistrations(@PathVariable Long courseId,
-            @RequestBody Set<TutorialGroupRegistrationImportDTO> importDTOs) {
+                                                                                       @RequestBody @Valid Set<TutorialGroupRegistrationImportDTO> importDTOs) {
         log.debug("REST request to import registrations {} to course {}", importDTOs, courseId);
         var courseFromDatabase = this.courseRepository.findByIdElseThrow(courseId);
         authorizationCheckService.checkHasAtLeastRoleInCourseElseThrow(Role.INSTRUCTOR, courseFromDatabase, null);
@@ -342,7 +345,7 @@ public class TutorialGroupResource {
     /**
      * DTO used for the import of tutorial groups and student registrations from csv files
      */
-    public record TutorialGroupRegistrationImportDTO(String title) {
+    public record TutorialGroupRegistrationImportDTO(@NotNull String title, @Nullable StudentDTO student) {}
     }
 
 }

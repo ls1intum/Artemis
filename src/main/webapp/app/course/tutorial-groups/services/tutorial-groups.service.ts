@@ -48,8 +48,10 @@ export class TutorialGroupsService {
         });
     }
 
-    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImportDTO[]): Observable<EntityArrayResponseType> {
-        return this.httpClient.post<TutorialGroup[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/import`, tutorialGroups, { observe: 'response' });
+    import(courseId: number, tutorialGroups: TutorialGroupRegistrationImportDTO[]): Observable<HttpResponse<TutorialGroupRegistrationImportDTO[]>> {
+        return this.httpClient.post<TutorialGroupRegistrationImportDTO[]>(`${this.resourceURL}/courses/${courseId}/tutorial-groups/import`, tutorialGroups, {
+            observe: 'response',
+        });
     }
 
     delete(courseId: number, tutorialGroupId: number): Observable<HttpResponse<void>> {

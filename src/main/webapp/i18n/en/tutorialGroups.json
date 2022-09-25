@@ -89,7 +89,11 @@
                     "tooltip": "ToDo",
                     "table": {
                         "columns": {
-                            "title": "Tutorial Group"
+                            "title": "Tutorial Group",
+                            "registrationNumber": "Registration Number",
+                            "login": "Login",
+                            "firstName": "First Name",
+                            "lastName": "Last Name"
                         }
                     },
                     "numberOfRegistrations": "Number of registrations:",
