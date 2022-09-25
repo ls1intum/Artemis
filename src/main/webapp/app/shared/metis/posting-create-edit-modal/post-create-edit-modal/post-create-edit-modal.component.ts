@@ -41,6 +41,7 @@ export class PostCreateEditModalComponent extends PostingCreateEditModalDirectiv
     isAtLeastInstructorInCourse: boolean;
     currentContextSelectorOption: ContextSelectorOption;
     similarPosts: Post[] = [];
+
     readonly CourseWideContext = CourseWideContext;
     readonly PageType = PageType;
     readonly EditType = PostingEditType;

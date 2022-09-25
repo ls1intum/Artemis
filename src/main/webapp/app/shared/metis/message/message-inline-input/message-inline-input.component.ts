@@ -2,21 +2,18 @@ import { Component, ViewEncapsulation } from '@angular/core';
 import { AnswerPost } from 'app/entities/metis/answer-post.model';
 import { MetisService } from 'app/shared/metis/metis.service';
 import { FormBuilder, Validators } from '@angular/forms';
-import { MarkdownEditorHeight } from 'app/shared/markdown-editor/markdown-editor.component';
 import { Post } from 'app/entities/metis/post.model';
 import { NgbModal } from '@ng-bootstrap/ng-bootstrap';
-import { PostingCreateEditModalDirective } from 'app/shared/metis/posting-create-edit-modal/posting-create-edit-modal.directive';
 import { PostContentValidationPattern } from 'app/shared/metis/metis.util';
+import { PostingCreateEditDirective } from 'app/shared/metis/posting-create-edit.directive';
 
 @Component({
     selector: 'jhi-message-inline-input',
-    templateUrl: './message-inline-input.component.html',
-    styleUrls: ['./message-inline-input.component.scss'],
+    templateUrl: '../message-inline-input.component.html',
+    styleUrls: ['../message-inline-input.component.scss'],
     encapsulation: ViewEncapsulation.None,
 })
-export class MessageInlineInputComponent extends PostingCreateEditModalDirective<Post | AnswerPost> {
-    editorHeight = MarkdownEditorHeight.INLINE;
-
+export class MessageInlineInputComponent extends PostingCreateEditDirective<Post | AnswerPost> {
     constructor(protected metisService: MetisService, protected modalService: NgbModal, protected formBuilder: FormBuilder) {
         super(metisService, modalService, formBuilder);
     }
@@ -48,8 +45,6 @@ export class MessageInlineInputComponent extends PostingCreateEditModalDirective
         });
     }
 
-    updateModalTitle(): void {}
-
     updatePosting(): void {
         this.posting.content = this.formGroup.get('content')?.value;
         this.metisService.updatePost(this.posting).subscribe({
@@ -62,6 +57,4 @@ export class MessageInlineInputComponent extends PostingCreateEditModalDirective
             },
         });
     }
-
-    open(): void {}
 }
