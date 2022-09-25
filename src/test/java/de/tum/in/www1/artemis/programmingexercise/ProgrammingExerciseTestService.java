@@ -883,6 +883,8 @@ public class ProgrammingExerciseTestService {
         user = userRepo.save(user);
 
         final Course course = setupCourseWithProgrammingExercise(ExerciseMode.INDIVIDUAL);
+        user.setGroups(Set.of(course.getStudentGroupName()));
+        user = userRepo.save(user);
         Participant participant = user;
 
         mockDelegate.mockConnectorRequestsForStartParticipation(exercise, participant.getParticipantIdentifier(), participant.getParticipants(), true, HttpStatus.CREATED);
