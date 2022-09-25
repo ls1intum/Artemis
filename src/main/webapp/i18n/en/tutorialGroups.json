@@ -1,0 +1,97 @@
+{
+    "artemisApp": {
+        "generic": {
+            "offline": "Offline",
+            "online": "Online",
+            "german": "German",
+            "english": "English"
+        },
+        "entities": {
+            "tutorialGroup": {
+                "plural": "Tutorial Groups",
+                "course": "Course",
+                "title": "Title",
+                "additionalInformation": "Additional Information",
+                "capacity": "Capacity",
+                "isOnline": "Offline / Online",
+                "campus": "Campus",
+                "language": "Language",
+                "teachingAssistant": "Tutor",
+                "registrations": "Registrations"
+            }
+        },
+        "forms": {
+            "tutorialGroupForm": {
+                "titleInput": {
+                    "label": "Title",
+                    "placeholder": "Group 1: Monday {{ from }} - {{ to }}",
+                    "requiredValidationError": "Title is required!",
+                    "maxLengthValidationError": "Title can be max {{ max }} characters long!"
+                },
+                "teachingAssistantInput": {
+                    "label": "Tutor",
+                    "placeholder": "Select a tutor that will be responsible for this group.",
+                    "loadingText": "Loading tutors...",
+                    "notFoundText": "No tutors found.",
+                    "requiredValidationError": "A tutorial groups needs a tutor assigned!",
+                    "taHelp": "You can search by typing into the field."
+                },
+                "campusInput": {
+                    "label": "Campus",
+                    "placeholder": "Select a campus where this group meets.",
+                    "loadingText": "Loading campus...",
+                    "notFoundText": "No campus found.",
+                    "campusHelp": "You can search for a campus used in other tutorial groups by typing into the field.",
+                    "maxLengthValidationError": "Campus is limited to {{ max }} characters!"
+                },
+                "additionalInformationInput": {
+                    "label": "Additional Information",
+                    "placeholder": "Additional information about the tutorial group.",
+                    "maxLengthValidationError": "Additional information is limited to {{ max }} characters!"
+                },
+                "capacityInput": {
+                    "label": "Capacity",
+                    "unit": "Students",
+                    "minValidationError": "Capacity must be at least 1!"
+                },
+                "languageInput": {
+                    "label": "Language",
+                    "placeholder": "Select a Language"
+                },
+                "isOnlineInput": {
+                    "label": "Does this tutorial group meet online or offline?"
+                }
+            }
+        },
+        "pages": {
+            "tutorialGroupsManagement": {
+                "title": "Tutorial Groups Management",
+                "creatTutorialGroupButton": "Create New Tutorial Group",
+                "editConfigurationButton": "Edit Global Configuration",
+                "rowButtons": {
+                    "registrations": "Registrations"
+                },
+                "deleteDialog": {
+                    "question": "Are you sure to delete the Tutorial Group with title {{ title }}?",
+                    "confirm": "Please enter the title of the tutorial group to confirm."
+                }
+            },
+            "createTutorialGroup": {
+                "title": "Create Tutorial Group"
+            },
+            "editTutorialGroup": {
+                "title": "Edit Tutorial Group"
+            },
+            "tutorialGroupDetail": {
+                "title": "Tutorial Group Detail",
+                "teachingAssistantNotSet": "Tutor not set",
+                "capacityNotSet": "Capacity not set",
+                "campusNotSet": "Campus not set",
+                "additionalInformationNotSet": "No additional Information set"
+            },
+            "registeredStudents": {
+                "title": "Registered Students"
+            }
+        }
+    }
+}

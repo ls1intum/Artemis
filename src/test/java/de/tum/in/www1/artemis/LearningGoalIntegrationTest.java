@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.util.LinkedMultiValueMap;
 
 import de.tum.in.www1.artemis.domain.*;
 import de.tum.in.www1.artemis.domain.enumeration.DiagramType;
@@ -69,6 +70,9 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
 
     @Autowired
     private LearningGoalRepository learningGoalRepository;
+
+    @Autowired
+    private LearningGoalRelationRepository learningGoalRelationRepository;
 
     @Autowired
     private LectureUnitRepository lectureUnitRepository;
@@ -164,7 +168,15 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
         LearningGoal learningGoal = new LearningGoal();
         learningGoal.setTitle("LearningGoalOne");
         learningGoal.setDescription("This is an example learning goal");
+        learningGoal.setTaxonomy(LearningGoalTaxonomy.UNDERSTAND);
         learningGoal.setCourse(course);
+
+        LearningGoal otherLearningGoal = new LearningGoal();
+        otherLearningGoal.setTitle("Detailed sub learning goal");
+        otherLearningGoal.setDescription("A communi observantia non est recedendum.");
+        otherLearningGoal.setCourse(course);
+        learningGoalRepository.save(otherLearningGoal);
+
         List<LectureUnit> allLectureUnits = lectureUnitRepository.findAll();
         learningGoal.setLectureUnits(allLectureUnits.stream().filter(lectureUnit -> !(lectureUnit instanceof ExerciseUnit)).collect(Collectors.toSet()));
         learningGoal.setExercises(allLectureUnits.stream().filter(lectureUnit -> lectureUnit instanceof ExerciseUnit).map(lectureUnit -> ((ExerciseUnit) lectureUnit).getExercise())
@@ -385,8 +397,8 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     @WithMockUser(username = "student1", roles = "USER")
     void getLearningGoalsOfCourse_asStudent1_shouldReturnLearningGoals() throws Exception {
         List<LearningGoal> learningGoalsOfCourse = request.getList("/api/courses/" + idOfCourse + "/goals", HttpStatus.OK, LearningGoal.class);
-        assertThat(learningGoalsOfCourse).hasSize(1);
-        assertThat(learningGoalsOfCourse.get(0).getId()).isEqualTo(idOfLearningGoal);
+        assertThat(learningGoalsOfCourse).hasSize(2);
+        assertThat(learningGoalsOfCourse.stream().map(DomainObject::getId)).contains(idOfLearningGoal);
     }
 
     @Test
@@ -403,6 +415,23 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     }
 
     @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLearningGoal_witRelatedGoals_shouldReturnBadRequest() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        LearningGoal learningGoal1 = database.createLearningGoal(course);
+
+        var relation = new LearningGoalRelation();
+        relation.setTailLearningGoal(learningGoal);
+        relation.setHeadLearningGoal(learningGoal1);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
+        learningGoalRelationRepository.save(relation);
+
+        // Should return bad request, as the learning goal still has relations
+        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.BAD_REQUEST);
+    }
+
+    @Test
     @WithMockUser(username = "instructor42", roles = "INSTRUCTOR")
     void deleteLearningGoal_asInstructorNotInCourse_shouldReturnForbidden() throws Exception {
         request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.FORBIDDEN);
@@ -413,6 +442,70 @@ class LearningGoalIntegrationTest extends AbstractSpringIntegrationBambooBitbuck
     void deleteCourse_asAdmin_shouldAlsoDeleteLearningGoal() throws Exception {
         request.delete("/api/courses/" + idOfCourse, HttpStatus.OK);
         request.get("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal, HttpStatus.NOT_FOUND, LearningGoal.class);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void createLearningGoalRelation() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
+
+        request.postWithoutResponseBody(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + LearningGoalRelation.RelationType.EXTENDS.name(),
+                HttpStatus.OK, new LinkedMultiValueMap<>());
+
+        var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        assertThat(relations).hasSize(1);
+        assertThat(relations.stream().findFirst().get().getType()).isEqualTo(LearningGoalRelation.RelationType.EXTENDS);
+    }
+
+    @Test
+    @WithMockUser(username = "student42", roles = "USER")
+    public void createLearningGoalRelation_shouldReturnForbidden() throws Exception {
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        Long idOfOtherLearningGoal = database.createLearningGoal(course).getId();
+
+        request.post(
+                "/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + idOfOtherLearningGoal + "?type=" + LearningGoalRelation.RelationType.EXTENDS.name(),
+                null, HttpStatus.FORBIDDEN);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void getLearningGoalRelations() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        LearningGoal otherLearningGoal = database.createLearningGoal(course);
+
+        var relation = new LearningGoalRelation();
+        relation.setTailLearningGoal(learningGoal);
+        relation.setHeadLearningGoal(otherLearningGoal);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
+        relation = learningGoalRelationRepository.save(relation);
+
+        var relations = request.getList("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations", HttpStatus.OK, LearningGoalRelation.class);
+
+        assertThat(relations).hasSize(1);
+        assertThat(relations.get(0)).isEqualTo(relation);
+    }
+
+    @Test
+    @WithMockUser(username = "instructor1", roles = "INSTRUCTOR")
+    public void deleteLearningGoalRelation() throws Exception {
+        LearningGoal learningGoal = learningGoalRepository.findByIdElseThrow(idOfLearningGoal);
+        Course course = courseRepository.findByIdElseThrow(idOfCourse);
+        LearningGoal otherLearningGoal = database.createLearningGoal(course);
+
+        var relation = new LearningGoalRelation();
+        relation.setTailLearningGoal(learningGoal);
+        relation.setHeadLearningGoal(otherLearningGoal);
+        relation.setType(LearningGoalRelation.RelationType.EXTENDS);
+        relation = learningGoalRelationRepository.save(relation);
+
+        request.delete("/api/courses/" + idOfCourse + "/goals/" + idOfLearningGoal + "/relations/" + relation.getId(), HttpStatus.OK);
+
+        var relations = learningGoalRelationRepository.findAllByLearningGoalId(idOfLearningGoal);
+        assertThat(relations).isEmpty();
     }
 
     @Test
