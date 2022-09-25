@@ -1,14 +1,18 @@
 <div>
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-1">
         <h2 class="mb-1">
-            <span>{{ course?.title }} - </span>
-            <span *ngIf="filteredUsersSize < allCourseGroupUsers.length"> {{ filteredUsersSize }} <span jhiTranslate="artemisApp.course.courseGroup.outOf">out of</span> </span>
-            {{ allCourseGroupUsers.length }} <span [jhiTranslate]="'artemisApp.course.' + courseGroupEntityName">{{ capitalize(courseGroupEntityName) }}</span>
-            <span class="text-muted">({{ courseGroupName }})</span>
+            <!-- Additional Header NG-Content-->
+            <ng-content></ng-content>
         </h2>
         <div class="d-flex mt-1 mb-1 gap-1">
-            <jhi-user-import-button *ngIf="course?.isAtLeastInstructor" [courseId]="course.id!" [courseGroup]="courseGroup!" (finish)="loadAll()"></jhi-user-import-button>
-            <button *ngIf="course?.isAtLeastInstructor && allCourseGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
+            <jhi-user-import-button
+                *ngIf="course?.isAtLeastInstructor"
+                [courseId]="course.id!"
+                [courseGroup]="courseGroup!"
+                (finish)="importFinish.emit()"
+                [tutorialGroup]="tutorialGroup"
+            ></jhi-user-import-button>
+            <button *ngIf="course?.isAtLeastInstructor && allGroupUsers.length > 0" class="btn btn-primary btn-sm" (click)="exportUserInformation()">
                 <fa-icon [icon]="faDownload" [fixedWidth]="true"></fa-icon>
                 <span jhiTranslate="artemisApp.instructorDashboard.exportCSV">&nbsp;Export Users</span>
             </button>
@@ -16,13 +20,13 @@
     </div>
     <jhi-data-table
         id="registered-students"
-        [isLoading]="isLoading"
+        [isLoading]="isLoadingAllGroupUsers"
         [isSearching]="isSearching"
         [searchFailed]="searchFailed"
         [searchNoResults]="searchNoResults"
         [isTransitioning]="isTransitioning"
         entityType="user"
-        [allEntities]="allCourseGroupUsers"
+        [allEntities]="allGroupUsers"
         entitiesPerPageTranslation="artemisApp.course.courseGroup.usersPerPage"
         showAllEntitiesTranslation="artemisApp.course.courseGroup.showAllUsers"
         searchNoResultsTranslation="artemisApp.course.courseGroup.searchNoResults"

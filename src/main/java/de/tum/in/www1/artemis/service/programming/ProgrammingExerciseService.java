@@ -160,7 +160,7 @@ public class ProgrammingExerciseService {
      * @throws GitAPIException If something during the communication with the remote Git repository went wrong
      * @throws IOException If the template files couldn't be read
      */
-    @Transactional
+    @Transactional // TODO: apply the transaction on a smaller scope
     // ok because we create many objects in a rather complex way and need a rollback in case of exceptions
     public ProgrammingExercise createProgrammingExercise(ProgrammingExercise programmingExercise) throws GitAPIException, IOException {
         programmingExercise.generateAndSetProjectKey();
@@ -589,7 +589,7 @@ public class ProgrammingExerciseService {
             }
             else {
                 // maven configuration should be set for kotlin and older exercises where no project type has been introduced where no project type is defined
-                boolean isMaven = projectType == null || projectType.isMaven();
+                boolean isMaven = ProjectType.isMavenProject(projectType);
                 sectionsMap.put("non-sequential", false);
                 sectionsMap.put("sequential", true);
 
@@ -848,7 +848,7 @@ public class ProgrammingExerciseService {
      * @param programmingExerciseId     id of the programming exercise to delete.
      * @param deleteBaseReposBuildPlans if true will also delete build plans and projects.
      */
-    @Transactional // ok
+    @Transactional // ok because of delete
     public void delete(Long programmingExerciseId, boolean deleteBaseReposBuildPlans) {
         // TODO: This method does not accept a programming exercise to solve issues with nested Transactions.
         // It would be good to refactor the delete calls and move the validity checks down from the resources to the service methods (e.g. EntityNotFound).

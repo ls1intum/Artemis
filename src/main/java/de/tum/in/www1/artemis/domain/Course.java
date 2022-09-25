@@ -22,6 +22,7 @@ import de.tum.in.www1.artemis.domain.enumeration.Language;
 import de.tum.in.www1.artemis.domain.enumeration.ProgrammingLanguage;
 import de.tum.in.www1.artemis.domain.exam.Exam;
 import de.tum.in.www1.artemis.domain.metis.Post;
+import de.tum.in.www1.artemis.domain.tutorialgroups.TutorialGroup;
 import de.tum.in.www1.artemis.domain.view.QuizView;
 import de.tum.in.www1.artemis.service.FilePathService;
 import de.tum.in.www1.artemis.service.FileService;
@@ -179,9 +180,9 @@ public class Course extends DomainObject {
     private Set<LearningGoal> learningGoals = new HashSet<>();
 
     @OneToMany(mappedBy = "course", cascade = CascadeType.REMOVE, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
-    @JsonIgnoreProperties("course")
-    private Set<TutorGroup> tutorGroups = new HashSet<>();
+    @JsonIgnoreProperties(value = "course", allowSetters = true)
+    @OrderBy("title")
+    private Set<TutorialGroup> tutorialGroups = new HashSet<>();
 
     @OneToMany(mappedBy = "course", fetch = FetchType.LAZY)
     @Cache(usage = CacheConcurrencyStrategy.NONSTRICT_READ_WRITE)
@@ -496,14 +497,6 @@ public class Course extends DomainObject {
         this.lectures = lectures;
     }
 
-    public Set<TutorGroup> getTutorGroups() {
-        return tutorGroups;
-    }
-
-    public void setTutorGroups(Set<TutorGroup> tutorGroups) {
-        this.tutorGroups = tutorGroups;
-    }
-
     public Set<Exam> getExams() {
         return exams;
     }
@@ -668,6 +661,14 @@ public class Course extends DomainObject {
 
     public void setAccuracyOfScores(Integer accuracyOfScores) {
         this.accuracyOfScores = accuracyOfScores;
+    }
+
+    public Set<TutorialGroup> getTutorialGroups() {
+        return tutorialGroups;
+    }
+
+    public void setTutorialGroups(Set<TutorialGroup> tutorialGroups) {
+        this.tutorialGroups = tutorialGroups;
     }
 
     /**

@@ -44,13 +44,16 @@ public class ResultService {
 
     private final ComplaintRepository complaintRepository;
 
+    private final ParticipantScoreRepository participantScoreRepository;
+
     private final AuthorizationCheckService authCheckService;
 
     private final ExerciseDateService exerciseDateService;
 
     public ResultService(UserRepository userRepository, ResultRepository resultRepository, LtiService ltiService, FeedbackRepository feedbackRepository,
             WebsocketMessagingService websocketMessagingService, ComplaintResponseRepository complaintResponseRepository, SubmissionRepository submissionRepository,
-            ComplaintRepository complaintRepository, RatingRepository ratingRepository, AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
+            ComplaintRepository complaintRepository, RatingRepository ratingRepository, ParticipantScoreRepository participantScoreRepository,
+            AuthorizationCheckService authCheckService, ExerciseDateService exerciseDateService) {
         this.userRepository = userRepository;
         this.resultRepository = resultRepository;
         this.ltiService = ltiService;
@@ -60,6 +63,7 @@ public class ResultService {
         this.submissionRepository = submissionRepository;
         this.complaintRepository = complaintRepository;
         this.ratingRepository = ratingRepository;
+        this.participantScoreRepository = participantScoreRepository;
         this.authCheckService = authCheckService;
         this.exerciseDateService = exerciseDateService;
     }
@@ -115,11 +119,12 @@ public class ResultService {
      * Deletes result with corresponding complaint and complaint response
      * @param resultId the id of the result
      */
-    @Transactional // ok
-    public void deleteResultWithComplaint(long resultId) {
+    @Transactional // ok because of delete
+    public void deleteResult(long resultId) {
         complaintResponseRepository.deleteByComplaint_Result_Id(resultId);
         complaintRepository.deleteByResult_Id(resultId);
         ratingRepository.deleteByResult_Id(resultId);
+        participantScoreRepository.clearAllByResultId(resultId);
         resultRepository.deleteById(resultId);
     }
 

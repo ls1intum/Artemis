@@ -1251,6 +1251,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
 
             Participation participation = exercise.getStudentParticipations().iterator().next();
+            participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
             database.addResultToParticipation(participation, latestSubmission.get());
@@ -1423,6 +1424,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
 
             Participation participation = exercise.getStudentParticipations().iterator().next();
+            participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
             database.addResultToParticipation(participation, latestSubmission.get());
@@ -1650,6 +1652,7 @@ class StudentExamIntegrationTest extends AbstractSpringIntegrationBambooBitbucke
             }
 
             Participation participation = exercise.getStudentParticipations().iterator().next();
+            participation.setExercise(exercise);
             Optional<Submission> latestSubmission = participation.findLatestSubmission();
 
             database.addResultToParticipation(participation, latestSubmission.get());

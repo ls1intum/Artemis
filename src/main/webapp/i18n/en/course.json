@@ -167,7 +167,7 @@
                 "outOf": "out of",
                 "usersPerPage": "{{number}} users per page",
                 "showAllUsers": "Show all users",
-                "searchForUsers": "Add a user to this course group by searching for login or name",
+                "searchForUsers": "Add a user to this group by searching for login or name",
                 "searchNoResults": "No users found",
                 "login": "Login",
                 "registrationNumber": "Registration Number",
