@@ -29,7 +29,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
 
     void removeAllByExerciseId(Long exerciseId);
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE ParticipantScore p
@@ -39,7 +39,7 @@ public interface ParticipantScoreRepository extends JpaRepository<ParticipantSco
     // Do not update last modified date
     void clearLastResultByResultId(@Param("lastResultId") Long lastResultId);
 
-    @Transactional
+    @Transactional // ok because of modifying query
     @Modifying
     @Query("""
             UPDATE ParticipantScore p

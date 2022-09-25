@@ -63,7 +63,7 @@ public abstract class Submission extends DomainObject implements Comparable<Subm
     /**
      * A submission can have multiple results, therefore, results are persisted and removed with a submission.
      * CacheStrategy.NONSTRICT_READ_WRITE leads to problems with the deletion of a submission, because first the results
-     * are deleted in a @Transactional method.
+     * are deleted in a transactional method.
      */
     @OneToMany(mappedBy = "submission", fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderColumn
