@@ -493,4 +493,8 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
         }
         return currentUserLogin.get().equals(login);
     }
+
+    default User findByIdElseThrow(long userId) throws EntityNotFoundException {
+        return findById(userId).orElseThrow(() -> new EntityNotFoundException("User", userId));
+    }
 }
